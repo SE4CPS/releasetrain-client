@@ -1,4 +1,5 @@
 """
+Summer 2025 Research
 Python script to:
 1. Verify total count of updates in the last 7 days
 2. Verify average number of updates in the last 7 days
