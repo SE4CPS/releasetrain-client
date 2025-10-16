@@ -24,6 +24,28 @@
     a { color: inherit; text-decoration: underline; }
     a:focus, button:focus, select:focus, input:focus { outline: 2px solid var(--focus); outline-offset: 2px; }
 
+    /* ===== Loader line (top of page) ===== */
+    #loader {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 2px;
+      width: 100%;
+      pointer-events: none;
+      z-index: 9999;
+      background: transparent;
+      opacity: 0;
+      transition: opacity 200ms ease;
+    }
+    #loader .bar {
+      height: 100%;
+      width: 100%;
+      background: var(--fg);
+      transform-origin: left center;
+      transform: scaleX(0);
+      transition: transform 200ms linear;
+    }
+
     /* Compact header with centered pager */
     header {
       padding: 4px 8px;
@@ -110,6 +132,9 @@
   </style>
 </head>
 <body>
+  <!-- Loader line -->
+  <div id="loader" aria-hidden="true"><div class="bar"></div></div>
+
   <header>
     <div style="width: 20%;"></div>
     <div class="pager">
@@ -181,6 +206,44 @@
 
       const state = { page: 1, limit: 500, raw: [] };
 
+      const loader = document.getElementById('loader');
+      const loaderBar = loader.querySelector('.bar');
+      let loaderTimer = null;
+      let loaderProg = 0;
+
+      function startLoader() {
+        clearInterval(loaderTimer);
+        loaderProg = 0;
+        loader.style.opacity = '1';
+        loaderBar.style.transform = 'scaleX(0)';
+        // Progress to ~85% while in-flight
+        loaderTimer = setInterval(() => {
+          // ease toward 0.85
+          loaderProg += (0.85 - loaderProg) * 0.2;
+          loaderBar.style.transform = `scaleX(${loaderProg})`;
+        }, 120);
+      }
+
+      function finishLoader() {
+        clearInterval(loaderTimer);
+        // snap to 100%, then fade out
+        loaderBar.style.transform = 'scaleX(1)';
+        setTimeout(() => { loader.style.opacity = '0'; }, 150);
+        // reset transform after fade (for next cycle)
+        setTimeout(() => { loaderBar.style.transform = 'scaleX(0)'; }, 400);
+      }
+
+      // Wrap fetch with loader
+      async function fetchWithLoader(url, options) {
+        startLoader();
+        try {
+          const res = await fetch(url, options);
+          return res;
+        } finally {
+          finishLoader();
+        }
+      }
+
       const statusEl = document.getElementById('status');
       const tbody = document.getElementById('tbody');
       const empty = document.getElementById('empty');
@@ -236,7 +299,7 @@
         empty.hidden = true;
         pageText.textContent = state.page;
         try {
-          const res = await fetch(buildQuery());
+          const res = await fetchWithLoader(buildQuery());
           if (!res.ok) throw new Error(res.statusText);
           const data = await res.json();
           state.raw = Array.isArray(data) ? data : [];
@@ -322,7 +385,12 @@
           const label=displayToLabel(sel.value);
           const payload={metadata:{isUpdateRelated:label==='positive'?true:label==='negative'?false:null}};
           try{
-            await fetch(UPDATE_ENDPOINT(rid),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+            const res = await fetchWithLoader(UPDATE_ENDPOINT(rid),{
+              method:'PUT',
+              headers:{'Content-Type':'application/json'},
+              body:JSON.stringify(payload)
+            });
+            if (!res.ok) throw new Error(await res.text().catch(()=>res.statusText));
             doc.metadata={...(doc.metadata||{}),isUpdateRelated:payload.metadata.isUpdateRelated};
             setStatus(`Saved ${sel.value}`);
           }catch(e){console.error(e);setStatus('Save failed');sel.value=labelToDisplay(docLabel(doc));}
