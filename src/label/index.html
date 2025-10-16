@@ -175,7 +175,7 @@
       const LIST_ENDPOINT = `${API_BASE}/api/reddit`;
       const UPDATE_ENDPOINT = (redditId) => `${API_BASE}/api/reddit/${encodeURIComponent(redditId)}`;
 
-      const state = { page: 1, limit: 100, raw: [] };
+      const state = { page: 1, limit: 500, raw: [] };
 
       const statusEl = document.getElementById('status');
       const tbody = document.getElementById('tbody');
@@ -313,7 +313,7 @@
       prevBtn.onclick=()=>{state.page=Math.max(1,state.page-1);fetchList();};
       nextBtn.onclick=()=>{state.page=Math.max(1,state.page+1);fetchList();};
       reloadBtn.onclick=fetchList;
-      limitInput.onchange=()=>{const v=parseInt(limitInput.value,10);state.limit=Math.max(1,Math.min(500,v||100));fetchList();};
+      limitInput.onchange=()=>{const v=parseInt(limitInput.value,10);state.limit=Math.max(1,Math.min(500,v||500));fetchList();};
       [labelFilter,withDescription,withTitle].forEach(el=>el.onchange=render);
       searchText.oninput=render;
 
