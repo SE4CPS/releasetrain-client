@@ -12,6 +12,7 @@
       --line: #dcdcdc;
       --focus: #000000;
       --accent: #111111;
+      --hl: #fff59d; /* highlight color */
     }
     * { box-sizing: border-box; }
     body {
@@ -103,6 +104,9 @@
     }
     .desc { white-space: pre-wrap; word-break: break-word; }
     .center { text-align: center; }
+
+    /* highlight style */
+    .hl { background: var(--hl); }
   </style>
 </head>
 <body>
@@ -196,6 +200,24 @@
       const nonEmpty = v => !!s(v).trim();
       const setStatus = msg => statusEl.textContent = msg;
 
+      // XSS-safe escape
+      function escapeHTML(str){
+        return s(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+      // Highlight query (>=3 chars) with <mark class="hl">
+      function highlightHTML(text, query){
+        const safe = escapeHTML(text);
+        const q = s(query).trim();
+        if (q.length < 3) return safe;
+        const rx = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+        return safe.replace(rx, m => `<mark class="hl">${m}</mark>`);
+      }
+
       const docLabel = doc => {
         const meta = doc.metadata || {};
         const val = meta.isUpdateRelated;
@@ -264,6 +286,8 @@
       function renderRow(doc){
         const tr=document.createElement('tr');
         const rid=s(doc.redditId||doc._id||'');
+        const q = searchText.value.trim();
+
         const idTd=document.createElement('td');
         const idA=document.createElement('a');
         idA.href=`${API_BASE}/api/reddit/${encodeURIComponent(rid)}`;
@@ -272,12 +296,12 @@
         idTd.appendChild(idA);
 
         const titleTd=document.createElement('td');
-        titleTd.textContent=s(doc.title);
+        titleTd.innerHTML = highlightHTML(s(doc.title), q);
 
         const descTd=document.createElement('td');
         const d=document.createElement('div');
         d.className='desc';
-        d.textContent=s(doc.author_description);
+        d.innerHTML = highlightHTML(s(doc.author_description), q);
         descTd.appendChild(d);
 
         const linkTd=document.createElement('td');
