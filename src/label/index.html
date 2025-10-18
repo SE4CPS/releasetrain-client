@@ -204,7 +204,7 @@
       const LIST_ENDPOINT = `${API_BASE}/api/reddit`;
       const UPDATE_ENDPOINT = (redditId) => `${API_BASE}/api/reddit/${encodeURIComponent(redditId)}`;
 
-      const state = { page: 1, limit: 500, raw: [] };
+      const state = { page: 1, limit: 500, raw: [], total: 0 };
 
       const loader = document.getElementById('loader');
       const loaderBar = loader.querySelector('.bar');
@@ -291,7 +291,8 @@
       const labelToDisplay = l => l === 'positive' ? 'Positive' : l === 'negative' ? 'Negative' : 'Not Labeled';
       const displayToLabel = d => d.toLowerCase().includes('pos') ? 'positive' : d.toLowerCase().includes('neg') ? 'negative' : 'unlabeled';
 
-      const buildQuery = () => `${LIST_ENDPOINT}?page=${Math.max(1,state.page)}&limit=${Math.max(1,Math.min(500,state.limit))}`;
+      const buildQuery = () =>
+        `${LIST_ENDPOINT}?page=${Math.max(1,state.page)}&limit=${Math.max(1,Math.min(500,state.limit))}`;
 
       async function fetchList() {
         setStatus('Loading…');
@@ -299,17 +300,30 @@
         empty.hidden = true;
         pageText.textContent = state.page;
         try {
-          const res = await fetchWithLoader(buildQuery());
+          const res  = await fetchWithLoader(buildQuery());
           if (!res.ok) throw new Error(res.statusText);
-          const data = await res.json();
-          state.raw = Array.isArray(data) ? data : [];
-          pageInfo.textContent = `Last load: ${state.raw.length} items`;
+
+          const body = await res.json();
+
+          // Accept both legacy array and new object shape
+          const rows = Array.isArray(body) ? body
+                    : (body && Array.isArray(body.data) ? body.data : []);
+
+          state.raw = rows;
+
+          // Prefer server totalCount if present; otherwise fallback to rows length
+          state.total = (body && typeof body.totalCount === 'number')
+            ? body.totalCount
+            : rows.length;
+
+          pageInfo.textContent = `Last load: ${rows.length} items`;
           setStatus('Loaded');
           render();
         } catch (e) {
           console.error(e);
           setStatus('Load error');
           state.raw = [];
+          state.total = 0;
           pageInfo.textContent = 'Last load: 0 items';
           render();
         }
@@ -332,7 +346,7 @@
       }
 
       function updateCounts(filtered){
-        countBadge.textContent = `Showing ${filtered} / ${state.raw.length}`;
+        countBadge.textContent = `Showing ${filtered} / ${state.total}`;
       }
 
       function render(){
