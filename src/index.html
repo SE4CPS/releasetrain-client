@@ -491,7 +491,7 @@
             <button type="button" id="clearBtn" class="secondary">Clear</button>
         </form>
 
-        <div class="togglesWrap" role="group" aria-label="Quick filters (OR)">
+        <div class="togglesWrap" role="group" aria-label="Quick filters (AND)">
             <div class="toggles" id="fixedToggles">
                 <button class="toggle" data-key="major" aria-pressed="false" type="button">Major <span class="count"
                         id="btn-major">(0)</span></button>
@@ -503,8 +503,8 @@
                         id="btn-cve">(0)</span></button>
                 <button class="toggle" data-key="reddit" aria-pressed="false" type="button">Reddit <span class="count"
                         id="btn-reddit">(0)</span></button>
-                <button class="toggle disabled" data-key="reddit-risk" aria-pressed="false" type="button"
-                    aria-disabled="true" title="coming soon">Reddit Risks</button>
+                <!-- Enabled Reddit Risks button -->
+                <button class="toggle" data-key="reddit-risk" aria-pressed="false" type="button" title="Filter Reddit to AI-detected update-related posts">Reddit Risks</button>
             </div>
             <div class="toggles" id="typeToggles"></div>
         </div>
@@ -583,6 +583,17 @@
             return "./img/default.png";
         };
 
+        // ---------- Reddit Risk helpers ----------
+        const isUpdateRelated = (p) => !!(p && p.metadata && (p.metadata.isUpdateRelated || (p.metadata.update_classification && p.metadata.update_classification.is_update)));
+        const getUpdateScore = (p) => {
+            const s = p && p.metadata && p.metadata.update_classification && p.metadata.update_classification.update_score;
+            return (typeof s === "number" && isFinite(s)) ? s : null;
+        };
+        const scoreBracket = (p) => {
+            const s = getUpdateScore(p);
+            return s != null ? ` [${s.toFixed(4)}]` : "";
+        };
+
         // ---------- Loader controls (also update offsets) ----------
         function showLoader() { $("#navLoader").classList.add("active"); updateOffsets(); }
         function hideLoader() { $("#navLoader").classList.remove("active"); updateOffsets(); }
@@ -598,6 +609,7 @@
                 return json.versions || [];
             },
             async reddit() {
+                // keep backend wide-open (server only filters when true)
                 const url = `${API_BASE}reddit?isUpdateRelated=false&showCount=true&limit=${REDDIT_LIMIT}`;
                 const res = await fetch(url, { headers: { Accept: "application/json" } });
                 if (!res.ok) throw new Error(`${res.status} ${res.statusText} @ ${url}`);
@@ -618,7 +630,7 @@
             loading: false,
             filters: {
                 components: [],
-                toggles: new Set(), // 'major','minor','patch','cve','reddit','type:<name>'
+                toggles: new Set(), // 'major','minor','patch','cve','reddit','reddit-risk','type:<name>'
             }
         };
 
@@ -659,20 +671,29 @@
                     for (const p of arr) {
                         if (seen.has(p.redditId)) continue;
                         pool.push(p); seen.add(p.redditId);
-                        if (pool.length >= limit) return pool;
+                        if (pool.length >= limit) break;
+                    }
+                }
+                if (pool.length >= limit) break;
+            }
+
+            // title fallback
+            if (pool.length < limit) {
+                for (const p of STATE.redditAll) {
+                    if (seen.has(p.redditId)) continue;
+                    const title = (p.title || "").toLowerCase();
+                    if (keys.some(k => title.includes(k))) {
+                        pool.push(p); seen.add(p.redditId);
+                        if (pool.length >= limit) break;
                     }
                 }
             }
 
-            // title fallback
-            for (const p of STATE.redditAll) {
-                if (seen.has(p.redditId)) continue;
-                const title = (p.title || "").toLowerCase();
-                if (keys.some(k => title.includes(k))) {
-                    pool.push(p); seen.add(p.redditId);
-                    if (pool.length >= limit) return pool;
-                }
+            // If "Reddit Risks" filter is active, keep only update-related posts
+            if (STATE.filters.toggles.has('reddit-risk')) {
+                pool = pool.filter(isUpdateRelated);
             }
+
             return pool;
         }
 
@@ -794,35 +815,6 @@
         }
 
         // ---------- Filtering (versions mode) ----------
-        // function matchesToggles(v, redditCount){
-        //   const set = STATE.filters.toggles;
-        //   if(set.size===0) return true;
-
-        //   const channel = norm(v.versionReleaseChannel);
-        //   const compTypes = (v.classification && Array.isArray(v.classification.componentType) ? v.classification.componentType.map(norm) : []);
-        //   const isCve = !!v.isCve;
-
-        //   const map = new Map();
-        //   map.set('major', channel==="major");
-        //   map.set('minor', channel==="minor");
-        //   map.set('patch', channel==="patch");
-        //   map.set('cve', isCve);
-        //   map.set('reddit', redditCount>0);
-
-        //   // dynamic type keys (OR)
-        //   for(const key of set){
-        //     if(key.startsWith("type:")){
-        //       const t = key.slice(5);
-        //       if(compTypes.includes(t)) return true;
-        //     }
-        //   }
-        //   // fixed toggles (OR)
-        //   for(const key of ['major','minor','patch','cve','reddit']){
-        //     if(set.has(key) && map.get(key)) return true;
-        //   }
-        //   return false;
-        // }
-
         function matchesToggles(v, redditCount) {
             const set = STATE.filters.toggles;
             if (set.size === 0) return true; // no filters → include all
@@ -848,6 +840,9 @@
                 if (key.startsWith("type:")) {
                     const typeName = key.slice(5);
                     if (!compTypes.includes(typeName)) return false; // must include this type
+                } else if (key === 'reddit-risk') {
+                    // satisfied at match selection step (we already filter Reddit matches)
+                    continue;
                 } else {
                     if (!truth[key]) return false; // must satisfy this fixed key
                 }
@@ -910,10 +905,12 @@
                 const when = p.created_utc ? new Date(p.created_utc).toLocaleString() : "";
                 const rclass = redditRiskClass(p.title);
                 const riskChip = rclass ? ` ${chip("⚠️", rclass)}` : "";
+                // Always warn + score if update-related
+                const alwaysWarn = isUpdateRelated(p) ? ` ${chip("update", "warn")}${scoreBracket(p)}` : "";
                 return `
           <div class="redditItem">
             <a href="${p.url}" target="_blank" rel="noopener">${p.title}</a>
-            <div class="redditMeta">r/${p.subreddit} • ▲ ${p.score || 0} • 💬 ${p.num_comments || 0} • ${when}${riskChip}</div>
+            <div class="redditMeta">r/${p.subreddit} • ▲ ${p.score || 0} • 💬 ${p.num_comments || 0} • ${when}${riskChip}${alwaysWarn}</div>
           </div>`;
             }).join("");
             return `
@@ -1085,7 +1082,8 @@
                 const when = p.created_utc ? new Date(p.created_utc).toLocaleString() : "";
                 const rclass = redditRiskClass(p.title);
                 const riskChip = rclass ? ` ${chip("⚠️", rclass)}` : "";
-                meta.innerHTML = `r/${p.subreddit} • ▲ ${p.score || 0} • 💬 ${p.num_comments || 0} • ${when}${riskChip}`;
+                const alwaysWarn = isUpdateRelated(p) ? ` ${chip("update", "warn")}${scoreBracket(p)}` : "";
+                meta.innerHTML = `r/${p.subreddit} • ▲ ${p.score || 0} • 💬 ${p.num_comments || 0} • ${when}${riskChip}${alwaysWarn}`;
                 title.appendChild(meta);
 
                 body.appendChild(title);
@@ -1100,7 +1098,11 @@
 
         function applyRedditOnly() {
             const comps = STATE.filters.components;
-            const filtered = filterRedditByComponents(STATE.redditAll, comps);
+            let filtered = filterRedditByComponents(STATE.redditAll, comps);
+            // If "Reddit Risks" is active, filter to update-related posts only
+            if (STATE.filters.toggles.has('reddit-risk')) {
+                filtered = filtered.filter(isUpdateRelated);
+            }
 
             $("#kpi-page").textContent = 0;
             $("#kpi-range").innerHTML = `Date Range: <em>—</em>`;
@@ -1226,7 +1228,7 @@
             boot();
         });
 
-        // fixed toggles (OR logic)
+        // fixed toggles (AND logic)
         $("#fixedToggles").addEventListener("click", (e) => {
             const btn = e.target.closest(".toggle");
             if (!btn || btn.classList.contains('disabled')) return;
