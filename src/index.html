@@ -25,6 +25,9 @@
             --shadow: 0 6px 20px rgba(0, 0, 0, .25);
             --topbar-h: 0px;
             --navloader-h: 0px;
+            --risk-bg: rgba(239, 68, 68, 0.08);
+            --risk-border: rgba(239, 68, 68, 0.35);
+            --risk-chip-bg: rgba(245, 158, 11, .12);
         }
 
         @media (prefers-color-scheme: light) {
@@ -44,17 +47,15 @@
                 --reddit: #ff4500;
                 --link: #1d4ed8;
                 --shadow: 0 6px 20px rgba(0, 0, 0, .08);
+                --risk-bg: rgba(220, 38, 38, 0.06);
+                --risk-border: rgba(220, 38, 38, 0.25);
+                --risk-chip-bg: rgba(217, 119, 6, .10);
             }
         }
 
-        * {
-            box-sizing: border-box
-        }
+        * { box-sizing: border-box }
 
-        html,
-        body {
-            height: 100%
-        }
+        html, body { height: 100% }
 
         body {
             margin: 0;
@@ -65,413 +66,141 @@
             -moz-osx-font-smoothing: grayscale
         }
 
-        /* fixed topbar (brand + filters + toggles + GitHub) */
         .topbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-            background: var(--panel);
-            border-bottom: 1px solid var(--line);
-            padding: 10px 12px;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            background: var(--panel); border-bottom: 1px solid var(--line);
+            padding: 10px 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
         }
 
-        .brand {
-            font-weight: 700;
-            letter-spacing: .2px
-        }
+        .brand { font-weight: 700; letter-spacing: .2px }
+        .brand b { color: var(--brand) }
+        .spacer { flex: 1 1 auto }
 
-        .brand b {
-            color: var(--brand)
-        }
-
-        .spacer {
-            flex: 1 1 auto
-        }
-
-        /* GitHub link (top right) */
         .gh-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: transparent;
-            border: 1px solid var(--line);
-            color: var(--text);
-            padding: 8px 10px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 700
+            display: inline-flex; align-items: center; gap: 6px;
+            background: transparent; border: 1px solid var(--line);
+            color: var(--text); padding: 8px 10px; border-radius: 8px;
+            text-decoration: none; font-weight: 700
         }
 
-        .gh-link:hover {
-            background: var(--chip);
-            text-decoration: none
-        }
+        .gh-link:hover { background: var(--chip); text-decoration: none }
 
-        /* loader directly under fixed bar */
         .navloader {
-            position: fixed;
-            top: var(--topbar-h);
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: transparent;
-            overflow: hidden;
-            z-index: 999;
-            display: none;
+            position: fixed; top: var(--topbar-h); left: 0; right: 0; height: 3px;
+            background: transparent; overflow: hidden; z-index: 999; display: none;
         }
-
-        .navloader.active {
-            display: block
-        }
-
+        .navloader.active { display: block }
         .navloader::after {
-            content: "";
-            display: block;
-            width: 40%;
-            height: 100%;
+            content: ""; display: block; width: 40%; height: 100%;
             background: linear-gradient(90deg, var(--brand), #9bbcfb, var(--brand));
             animation: slide 1s infinite ease-in-out;
         }
+        @keyframes slide { 0% { margin-left: -40% } 100% { margin-left: 100% } }
 
-        @keyframes slide {
-            0% {
-                margin-left: -40%
-            }
+        main { max-width: 1100px; margin: 0 auto; padding: calc(var(--topbar-h) + var(--navloader-h) + 12px) 12px 12px }
 
-            100% {
-                margin-left: 100%
-            }
+        .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap }
+        .field { display: flex; align-items: center; gap: 6px }
+        .field label { font-size: 12px; color: var(--muted) }
+
+        input[type="text"], button {
+            background: var(--bg); color: var(--text);
+            border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font: inherit
         }
+        input[type="text"] { min-width: 240px }
+        input[type="text"]:focus, button:focus { outline: 2px solid var(--focus); outline-offset: 2px }
 
-        main {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: calc(var(--topbar-h) + var(--navloader-h) + 12px) 12px 12px
-        }
+        button { background: var(--brand); color: #fff; border-color: transparent; cursor: pointer; font-weight: 600 }
+        button.secondary { background: transparent; color: var(--text); border-color: var(--line) }
 
-        .controls {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            flex-wrap: wrap
-        }
-
-        .field {
-            display: flex;
-            align-items: center;
-            gap: 6px
-        }
-
-        .field label {
-            font-size: 12px;
-            color: var(--muted)
-        }
-
-        input[type="text"],
-        button {
-            background: var(--bg);
-            color: var(--text);
-            border: 1px solid var(--line);
-            border-radius: 8px;
-            padding: 8px 10px;
-            font: inherit
-        }
-
-        input[type="text"] {
-            min-width: 240px
-        }
-
-        input[type="text"]:focus,
-        button:focus {
-            outline: 2px solid var(--focus);
-            outline-offset: 2px
-        }
-
-        button {
-            background: var(--brand);
-            color: #fff;
-            border-color: transparent;
-            cursor: pointer;
-            font-weight: 600
-        }
-
-        button.secondary {
-            background: transparent;
-            color: var(--text);
-            border-color: var(--line)
-        }
-
-        .togglesWrap {
-            width: 100%;
-            display: flex;
-            gap: 10px;
-            align-items: flex-start;
-            flex-wrap: wrap
-        }
-
-        .toggles {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap
-        }
-
+        .togglesWrap { width: 100%; display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap }
+        .toggles { display: flex; gap: 6px; flex-wrap: wrap }
         .toggle {
-            background: var(--chip);
-            border: 1px solid var(--line);
-            color: var(--chipText);
-            padding: 6px 10px;
-            border-radius: 999px;
-            cursor: pointer;
-            font-weight: 700;
-            font-size: 12px;
-            user-select: none
+            background: var(--chip); border: 1px solid var(--line); color: var(--chipText);
+            padding: 6px 10px; border-radius: 999px; cursor: pointer; font-weight: 700; font-size: 12px; user-select: none
+        }
+        .toggle[aria-pressed="true"] { background: var(--brand); border-color: transparent; color: #fff }
+        .toggle.disabled { opacity: .55; cursor: not-allowed }
+
+        /* Subtle highlight for Reddit Risks button */
+        .toggle.redditRisk {
+            border-color: var(--warn);
+            color: var(--warn);
+            background: var(--risk-chip-bg);
+            box-shadow: inset 0 0 0 1px var(--warn);
+        }
+        .toggle.redditRisk[aria-pressed="true"] {
+            background: var(--warn);
+            border-color: var(--warn);
+            color: #111;
         }
 
-        .toggle[aria-pressed="true"] {
-            background: var(--brand);
-            border-color: transparent;
-            color: #fff
-        }
-
-        .toggle.disabled {
-            opacity: .55;
-            cursor: not-allowed
-        }
-
-        .kpis {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin: 8px 0
-        }
-
+        .kpis { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 }
         .kpi {
-            background: var(--chip);
-            color: var(--chipText);
-            border: 1px solid var(--line);
-            padding: 6px 10px;
-            border-radius: 999px;
-            font-size: 12px
+            background: var(--chip); color: var(--chipText); border: 1px solid var(--line);
+            padding: 6px 10px; border-radius: 999px; font-size: 12px
         }
+        .kpi em { font-style: normal; color: var(--brand); font-weight: 700 }
 
-        .kpi em {
-            font-style: normal;
-            color: var(--brand);
-            font-weight: 700
-        }
+        .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; box-shadow: var(--shadow) }
+        .panel header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 8px }
+        .status { color: var(--muted); font-size: 12px }
 
-        .panel {
-            background: var(--panel);
-            border: 1px solid var(--line);
-            border-radius: 12px;
-            padding: 12px;
-            box-shadow: var(--shadow)
-        }
+        .feedGroup { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin-bottom: 12px }
+        summary { cursor: pointer; padding: 10px 12px; list-style: none; user-select: none; font-weight: 700; background: var(--chip) }
+        summary::-webkit-details-marker { display: none }
+        summary .meta { font-weight: 400; color: var(--muted) }
 
-        .panel header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            gap: 8px
-        }
-
-        .status {
-            color: var(--muted);
-            font-size: 12px
-        }
-
-        .feedGroup {
-            border: 1px solid var(--line);
-            border-radius: 10px;
-            overflow: hidden;
-            margin-bottom: 12px
-        }
-
-        summary {
-            cursor: pointer;
-            padding: 10px 12px;
-            list-style: none;
-            user-select: none;
-            font-weight: 700;
-            background: var(--chip)
-        }
-
-        summary::-webkit-details-marker {
-            display: none
-        }
-
-        summary .meta {
-            font-weight: 400;
-            color: var(--muted)
-        }
-
-        .updates {
-            padding: 8px 10px
-        }
-
+        .updates { padding: 8px 10px }
         .item {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 10px;
-            padding: 10px 0;
+            display: grid; grid-template-columns: auto 1fr; gap: 10px; padding: 10px 0;
             border-bottom: 1px dashed var(--line)
         }
+        .item:last-child { border-bottom: none }
 
-        .item:last-child {
-            border-bottom: none
+        .item.riskSection {
+            background: var(--risk-bg);
+            border: 1px solid var(--risk-border);
+            border-radius: 10px;
+            padding: 10px;
+            margin-top: 6px; /* requested */
         }
 
-        .avatar {
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            border: 1px solid var(--line);
-            object-fit: cover
-        }
+        .avatar { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line); object-fit: cover }
 
-        .titleRow {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            flex-wrap: wrap
-        }
+        .titleRow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap }
+        .titleRow a { color: var(--link); text-decoration: none; font-weight: 700 }
+        .titleRow a:hover { text-decoration: underline }
+        .meta { color: var(--muted); font-size: 12px }
 
-        .titleRow a {
-            color: var(--link);
-            text-decoration: none;
-            font-weight: 700
-        }
-
-        .titleRow a:hover {
-            text-decoration: underline
-        }
-
-        .meta {
-            color: var(--muted);
-            font-size: 12px
-        }
-
-        .chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-top: 6px
-        }
-
+        .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px }
         .chip {
-            background: var(--chip);
-            color: var(--chipText);
-            border: 1px solid var(--line);
-            font-size: 11px;
-            padding: 2px 6px;
-            border-radius: 999px;
-            white-space: nowrap
+            background: var(--chip); color: var(--chipText); border: 1px solid var(--line);
+            font-size: 11px; padding: 2px 6px; border-radius: 999px; white-space: nowrap
         }
+        .chip.bad { background: rgba(239, 68, 68, .12); color: var(--bad); border-color: rgba(239, 68, 68, .35) }
+        .chip.warn { background: rgba(245, 158, 11, .12); color: var(--warn); border-color: rgba(245, 158, 11, .35) }
+        .chip.ok { background: rgba(34, 197, 94, .12); color: var(--ok); border-color: rgba(34, 197, 94, .35) }
+        .chip.link a { color: inherit; text-decoration: none }
 
-        .chip.bad {
-            background: rgba(239, 68, 68, .12);
-            color: var(--bad);
-            border-color: rgba(239, 68, 68, .35)
-        }
+        .desc { margin-top: 6px; color: var(--text); opacity: .9 }
+        .desc a { color: var(--link) }
 
-        .chip.warn {
-            background: rgba(245, 158, 11, .12);
-            color: var(--warn);
-            border-color: rgba(245, 158, 11, .35)
-        }
-
-        .chip.ok {
-            background: rgba(34, 197, 94, .12);
-            color: var(--ok);
-            border-color: rgba(34, 197, 94, .35)
-        }
-
-        .chip.link a {
-            color: inherit;
-            text-decoration: none
-        }
-
-        .desc {
-            margin-top: 6px;
-            color: var(--text);
-            opacity: .9
-        }
-
-        .desc a {
-            color: var(--link)
-        }
-
-        .redditWrap {
-            margin-top: 8px;
-            padding: 8px;
-            border: 1px dashed var(--line);
-            border-radius: 8px;
-            background: transparent
-        }
-
-        .redditHead {
-            font-weight: 700;
-            color: var(--reddit);
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            margin-bottom: 6px
-        }
-
-        .redditList {
-            display: flex;
-            flex-direction: column;
-            gap: 6px
-        }
-
-        .redditItem a {
-            color: var(--text);
-            text-decoration: none
-        }
-
-        .redditItem a:hover {
-            text-decoration: underline
-        }
-
-        .redditMeta {
-            font-size: 12px;
-            color: var(--muted)
-        }
+        .redditWrap { margin-top: 8px; padding: 8px; border: 1px dashed var(--line); border-radius: 8px; background: transparent }
+        .redditHead { font-weight: 700; color: var(--reddit); display: flex; gap: 8px; align-items: center; margin-bottom: 6px }
+        .redditList { display: flex; flex-direction: column; gap: 6px }
+        .redditItem a { color: var(--text); text-decoration: none }
+        .redditItem a:hover { text-decoration: underline }
+        .redditMeta { font-size: 12px; color: var(--muted) }
 
         .skeleton {
-            border: 1px solid var(--line);
-            border-radius: 10px;
-            padding: 12px;
-            margin-bottom: 12px;
-            background: linear-gradient(90deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
-            background-size: 200% 100%;
-            animation: shimmer 1.2s infinite
+            border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 12px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+            background-size: 200% 100%; animation: shimmer 1.2s infinite
         }
+        @keyframes shimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
 
-        @keyframes shimmer {
-            0% {
-                background-position: 200% 0
-            }
-
-            100% {
-                background-position: -200% 0
-            }
-        }
-
-        .sentinel {
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--muted)
-        }
+        .sentinel { height: 60px; display: flex; align-items: center; justify-content: center; color: var(--muted) }
     </style>
 </head>
 
@@ -493,18 +222,15 @@
 
         <div class="togglesWrap" role="group" aria-label="Quick filters (AND)">
             <div class="toggles" id="fixedToggles">
-                <button class="toggle" data-key="major" aria-pressed="false" type="button">Major <span class="count"
-                        id="btn-major">(0)</span></button>
-                <button class="toggle" data-key="minor" aria-pressed="false" type="button">Minor <span class="count"
-                        id="btn-minor">(0)</span></button>
-                <button class="toggle" data-key="patch" aria-pressed="false" type="button">Patch <span class="count"
-                        id="btn-patch">(0)</span></button>
-                <button class="toggle" data-key="cve" aria-pressed="false" type="button">CVE <span class="count"
-                        id="btn-cve">(0)</span></button>
-                <button class="toggle" data-key="reddit" aria-pressed="false" type="button">Reddit <span class="count"
-                        id="btn-reddit">(0)</span></button>
-                <!-- Enabled Reddit Risks button -->
-                <button class="toggle" data-key="reddit-risk" aria-pressed="false" type="button" title="Filter Reddit to AI-detected update-related posts">Reddit Risks</button>
+                <button class="toggle" data-key="major" aria-pressed="false" type="button">Major <span class="count" id="btn-major">(0)</span></button>
+                <button class="toggle" data-key="minor" aria-pressed="false" type="button">Minor <span class="count" id="btn-minor">(0)</span></button>
+                <button class="toggle" data-key="patch" aria-pressed="false" type="button">Patch <span class="count" id="btn-patch">(0)</span></button>
+                <button class="toggle" data-key="cve" aria-pressed="false" type="button">CVE <span class="count" id="btn-cve">(0)</span></button>
+                <button class="toggle" data-key="reddit" aria-pressed="false" type="button">Reddit <span class="count" id="btn-reddit">(0)</span></button>
+                <!-- Reddit Risks button with subtle highlight and count -->
+                <button class="toggle redditRisk" data-key="reddit-risk" aria-pressed="false" type="button" title="Filter to AI-detected update-related or score>0.5 posts">
+                    ⚠️ Reddit Risks <span class="count" id="btn-reddit-risk">(0)</span>
+                </button>
             </div>
             <div class="toggles" id="typeToggles"></div>
         </div>
@@ -583,18 +309,29 @@
             return "./img/default.png";
         };
 
-        // ---------- Reddit Risk helpers ----------
-        const isUpdateRelated = (p) => !!(p && p.metadata && (p.metadata.isUpdateRelated || (p.metadata.update_classification && p.metadata.update_classification.is_update)));
+        // ---------- Reddit Risk helpers (NEW METADATA STRUCTURE) ----------
+        // A post is a "risk" if metadata.labeled.isUpdateRelated OR metadata.predicted.isUpdateRelated OR positiveScore > 0.5
+        const isUpdateRelatedBoolean = (p) => {
+            const meta = p && p.metadata;
+            if (!meta) return false;
+            const labeled = meta.labeled && (meta.labeled.isUpdateRelated === true);
+            const predicted = meta.predicted && (meta.predicted.isUpdateRelated === true);
+            return !!(labeled || predicted);
+        };
         const getUpdateScore = (p) => {
-            const s = p && p.metadata && p.metadata.update_classification && p.metadata.update_classification.update_score;
+            const s = p && p.metadata && p.metadata.predicted && p.metadata.predicted.positiveScore;
             return (typeof s === "number" && isFinite(s)) ? s : null;
+        };
+        const isRisk = (p) => {
+            const score = getUpdateScore(p);
+            return isUpdateRelatedBoolean(p) || (score != null && score > 0.5);
         };
         const scoreBracket = (p) => {
             const s = getUpdateScore(p);
             return s != null ? ` [${s.toFixed(4)}]` : "";
         };
 
-        // ---------- Loader controls (also update offsets) ----------
+        // ---------- Loader controls ----------
         function showLoader() { $("#navLoader").classList.add("active"); updateOffsets(); }
         function hideLoader() { $("#navLoader").classList.remove("active"); updateOffsets(); }
 
@@ -609,7 +346,6 @@
                 return json.versions || [];
             },
             async reddit() {
-                // keep backend wide-open (server only filters when true)
                 const url = `${API_BASE}reddit?isUpdateRelated=false&showCount=true&limit=${REDDIT_LIMIT}`;
                 const res = await fetch(url, { headers: { Accept: "application/json" } });
                 if (!res.ok) throw new Error(`${res.status} ${res.statusText} @ ${url}`);
@@ -620,7 +356,7 @@
 
         // ---------- State ----------
         const STATE = {
-            mode: "versions", // 'versions' | 'reddit-only'
+            mode: "versions",
             rawVersions: [],
             redditAll: [],
             redditBySub: new Map(),
@@ -652,7 +388,7 @@
             }
         }
 
-        function redditMatchesForVersion(v, limit = 6) {
+        function redditMatchesForVersionBase(v, limit = 6, onlyRisks = false) {
             const keysRaw = uniq([
                 safe(v.versionProductName, ""),
                 safe(v.versionProductBrand, ""),
@@ -689,12 +425,15 @@
                 }
             }
 
-            // If "Reddit Risks" filter is active, keep only update-related posts
-            if (STATE.filters.toggles.has('reddit-risk')) {
-                pool = pool.filter(isUpdateRelated);
+            if (onlyRisks) {
+                pool = pool.filter(isRisk);
             }
-
             return pool;
+        }
+
+        function redditMatchesForVersion(v, limit = 6) {
+            const onlyRisks = STATE.filters.toggles.has('reddit-risk');
+            return redditMatchesForVersionBase(v, limit, onlyRisks);
         }
 
         // ---------- Risk color for Reddit titles ----------
@@ -754,7 +493,7 @@
 
         // ---------- Aggregates + dynamic types ----------
         function computeAggregates(list) {
-            let major = 0, minor = 0, patch = 0, cve = 0, reddit = 0;
+            let major = 0, minor = 0, patch = 0, cve = 0, reddit = 0, redditRisk = 0;
             let uniqComps = new Set();
             const typeCounts = new Map();
 
@@ -764,7 +503,12 @@
                 else if (ch === "minor") minor++;
                 else if (ch === "patch") patch++;
                 if (it.isCve) cve++;
-                if (redditMatchesForVersion(it).length > 0) reddit++;
+
+                const allMatches = redditMatchesForVersionBase(it, 6, false);
+                const riskMatches = redditMatchesForVersionBase(it, 6, true);
+                if (allMatches.length > 0) reddit++;
+                if (riskMatches.length > 0) redditRisk++;
+
                 uniqComps.add(norm(it.versionProductName));
 
                 const types = (it.classification && Array.isArray(it.classification.componentType) ? it.classification.componentType : []);
@@ -774,7 +518,7 @@
                     typeCounts.set(key, (typeCounts.get(key) || 0) + 1);
                 }
             }
-            return { major, minor, patch, cve, reddit, uniq: uniqComps.size, typeCounts };
+            return { major, minor, patch, cve, reddit, redditRisk, uniq: uniqComps.size, typeCounts };
         }
 
         function paintFixedCounts(ag) {
@@ -783,6 +527,7 @@
             $("#btn-patch").textContent = `(${ag.patch})`;
             $("#btn-cve").textContent = `(${ag.cve})`;
             $("#btn-reddit").textContent = `(${ag.reddit})`;
+            $("#btn-reddit-risk").textContent = `(${ag.redditRisk})`;
             $("#kpi-uniq").textContent = ag.uniq;
         }
 
@@ -815,9 +560,9 @@
         }
 
         // ---------- Filtering (versions mode) ----------
-        function matchesToggles(v, redditCount) {
+        function matchesToggles(v, redditCount, redditRiskCount) {
             const set = STATE.filters.toggles;
-            if (set.size === 0) return true; // no filters → include all
+            if (set.size === 0) return true;
 
             const channel = norm(v.versionReleaseChannel);
             const compTypes = (v.classification && Array.isArray(v.classification.componentType)
@@ -825,32 +570,27 @@
                 : []);
             const isCve = !!v.isCve;
             const hasReddit = redditCount > 0;
+            const hasRedditRisk = redditRiskCount > 0;
 
-            // Create a truth map for fixed keys
             const truth = {
                 major: channel === "major",
                 minor: channel === "minor",
                 patch: channel === "patch",
                 cve: isCve,
                 reddit: hasReddit,
+                'reddit-risk': hasRedditRisk
             };
 
-            // Check all toggles must match (AND)
             for (const key of set) {
                 if (key.startsWith("type:")) {
                     const typeName = key.slice(5);
-                    if (!compTypes.includes(typeName)) return false; // must include this type
-                } else if (key === 'reddit-risk') {
-                    // satisfied at match selection step (we already filter Reddit matches)
-                    continue;
+                    if (!compTypes.includes(typeName)) return false;
                 } else {
-                    if (!truth[key]) return false; // must satisfy this fixed key
+                    if (!truth[key]) return false;
                 }
             }
-
-            return true; // passes all toggles
+            return true;
         }
-
 
         function applyFilters() {
             if (STATE.mode === "reddit-only") {
@@ -872,8 +612,9 @@
             buildTypeButtons(ag.typeCounts);
 
             const filtered = candidates.filter(v => {
-                const matches = redditMatchesForVersion(v);
-                return matchesToggles(v, matches.length);
+                const matches = redditMatchesForVersionBase(v, 6, false);
+                const riskMatches = redditMatchesForVersionBase(v, 6, true);
+                return matchesToggles(v, matches.length, riskMatches.length);
             });
 
             STATE.groupsFiltered = groupVersionsByDate(filtered);
@@ -905,12 +646,12 @@
                 const when = p.created_utc ? new Date(p.created_utc).toLocaleString() : "";
                 const rclass = redditRiskClass(p.title);
                 const riskChip = rclass ? ` ${chip("⚠️", rclass)}` : "";
-                // Always warn + score if update-related
-                const alwaysWarn = isUpdateRelated(p) ? ` ${chip("update", "warn")}${scoreBracket(p)}` : "";
+                // Warn if "risk" (boolean OR score>0.5)
+                const warnChip = isRisk(p) ? ` ${chip("warn", "warn")}${scoreBracket(p)}` : "";
                 return `
           <div class="redditItem">
             <a href="${p.url}" target="_blank" rel="noopener">${p.title}</a>
-            <div class="redditMeta">r/${p.subreddit} • ▲ ${p.score || 0} • 💬 ${p.num_comments || 0} • ${when}${riskChip}${alwaysWarn}</div>
+            <div class="redditMeta">r/${p.subreddit} • ▲ ${p.score || 0} • 💬 ${p.num_comments || 0} • ${when}${riskChip}${warnChip}</div>
           </div>`;
             }).join("");
             return `
@@ -993,7 +734,19 @@
                     body.appendChild(desc);
                 }
 
+                // Reddit matches & risk highlighting
                 const matches = redditMatchesForVersion(it);
+                const riskMatches = redditMatchesForVersionBase(it, 6, true);
+                const hasRisk = riskMatches.length > 0;
+
+                if (hasRisk) {
+                    row.classList.add("riskSection");
+                    const warn = document.createElement("span");
+                    warn.textContent = "⚠️";
+                    warn.setAttribute("title", "Reddit risk detected (isUpdateRelated or score>0.5)");
+                    title.insertBefore(warn, title.firstChild);
+                }
+
                 const redditHTML = renderRedditBlock(matches);
                 if (redditHTML) body.insertAdjacentHTML("beforeend", redditHTML);
 
@@ -1082,8 +835,8 @@
                 const when = p.created_utc ? new Date(p.created_utc).toLocaleString() : "";
                 const rclass = redditRiskClass(p.title);
                 const riskChip = rclass ? ` ${chip("⚠️", rclass)}` : "";
-                const alwaysWarn = isUpdateRelated(p) ? ` ${chip("update", "warn")}${scoreBracket(p)}` : "";
-                meta.innerHTML = `r/${p.subreddit} • ▲ ${p.score || 0} • 💬 ${p.num_comments || 0} • ${when}${riskChip}${alwaysWarn}`;
+                const warnChip = isRisk(p) ? ` ${chip("warn", "warn")}${scoreBracket(p)}` : "";
+                meta.innerHTML = `r/${p.subreddit} • ▲ ${p.score || 0} • 💬 ${p.num_comments || 0} • ${when}${riskChip}${warnChip}`;
                 title.appendChild(meta);
 
                 body.appendChild(title);
@@ -1099,9 +852,8 @@
         function applyRedditOnly() {
             const comps = STATE.filters.components;
             let filtered = filterRedditByComponents(STATE.redditAll, comps);
-            // If "Reddit Risks" is active, filter to update-related posts only
             if (STATE.filters.toggles.has('reddit-risk')) {
-                filtered = filtered.filter(isUpdateRelated);
+                filtered = filtered.filter(isRisk);
             }
 
             $("#kpi-page").textContent = 0;
@@ -1127,7 +879,6 @@
             showLoader();
             resetFeed();
             try {
-                // initial tokens from URL
                 const url = new URL(location.href);
                 const compCsv = url.searchParams.get("q") || "";
                 $("#components").value = compCsv;
