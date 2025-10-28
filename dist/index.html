@@ -647,7 +647,7 @@
                 const rclass = redditRiskClass(p.title);
                 const riskChip = rclass ? ` ${chip("⚠️", rclass)}` : "";
                 // Warn if "risk" (boolean OR score>0.5)
-                const warnChip = isRisk(p) ? ` ${chip("update risk", "warn")}${scoreBracket(p)}` : "";
+                const warnChip = isRisk(p) ? ` ${chip("warn", "warn")}${scoreBracket(p)}` : "";
                 return `
           <div class="redditItem">
             <a href="${p.url}" target="_blank" rel="noopener">${p.title}</a>
