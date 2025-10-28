@@ -53,8 +53,14 @@
             }
         }
 
-        * { box-sizing: border-box }
-        html, body { height: 100% }
+        * {
+            box-sizing: border-box
+        }
+
+        html,
+        body {
+            height: 100%
+        }
 
         body {
             margin: 0;
@@ -66,60 +72,180 @@
         }
 
         .topbar {
-            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
-            background: var(--panel); border-bottom: 1px solid var(--line);
-            padding: 10px 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: var(--panel);
+            border-bottom: 1px solid var(--line);
+            padding: 10px 12px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
         }
 
-        .brand { font-weight: 700; letter-spacing: .2px }
-        .brand b { color: var(--brand) }
-        .spacer { flex: 1 1 auto }
+        .brand {
+            font-weight: 700;
+            letter-spacing: .2px
+        }
+
+        .brand b {
+            color: var(--brand)
+        }
+
+        .spacer {
+            flex: 1 1 auto
+        }
 
         .gh-link {
-            display: inline-flex; align-items: center; gap: 6px;
-            background: transparent; border: 1px solid var(--line);
-            color: var(--text); padding: 8px 10px; border-radius: 8px;
-            text-decoration: none; font-weight: 700
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: transparent;
+            border: 1px solid var(--line);
+            color: var(--text);
+            padding: 8px 10px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700
         }
 
-        .gh-link:hover { background: var(--chip); text-decoration: none }
+        .gh-link:hover {
+            background: var(--chip);
+            text-decoration: none
+        }
 
         .navloader {
-            position: fixed; top: var(--topbar-h); left: 0; right: 0; height: 3px;
-            background: transparent; overflow: hidden; z-index: 999; display: none;
+            position: fixed;
+            top: var(--topbar-h);
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: transparent;
+            overflow: hidden;
+            z-index: 999;
+            display: none;
         }
-        .navloader.active { display: block }
+
+        .navloader.active {
+            display: block
+        }
+
         .navloader::after {
-            content: ""; display: block; width: 40%; height: 100%;
+            content: "";
+            display: block;
+            width: 40%;
+            height: 100%;
             background: linear-gradient(90deg, var(--brand), #9bbcfb, var(--brand));
             animation: slide 1s infinite ease-in-out;
         }
-        @keyframes slide { 0% { margin-left: -40% } 100% { margin-left: 100% } }
 
-        main { max-width: 1100px; margin: 0 auto; padding: calc(var(--topbar-h) + var(--navloader-h) + 12px) 12px 12px }
+        @keyframes slide {
+            0% {
+                margin-left: -40%
+            }
 
-        .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap }
-        .field { display: flex; align-items: center; gap: 6px }
-        .field label { font-size: 12px; color: var(--muted) }
-
-        input[type="text"], button {
-            background: var(--bg); color: var(--text);
-            border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font: inherit
+            100% {
+                margin-left: 100%
+            }
         }
-        input[type="text"] { min-width: 240px }
-        input[type="text"]:focus, button:focus { outline: 2px solid var(--focus); outline-offset: 2px }
 
-        button { background: var(--brand); color: #fff; border-color: transparent; cursor: pointer; font-weight: 600 }
-        button.secondary { background: transparent; color: var(--text); border-color: var(--line) }
+        main {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: calc(var(--topbar-h) + var(--navloader-h) + 12px) 12px 12px
+        }
 
-        .togglesWrap { width: 100%; display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap }
-        .toggles { display: flex; gap: 6px; flex-wrap: wrap }
+        .controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap
+        }
+
+        .field {
+            display: flex;
+            align-items: center;
+            gap: 6px
+        }
+
+        .field label {
+            font-size: 12px;
+            color: var(--muted)
+        }
+
+        input[type="text"],
+        button {
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 8px 10px;
+            font: inherit
+        }
+
+        input[type="text"] {
+            min-width: 240px
+        }
+
+        input[type="text"]:focus,
+        button:focus {
+            outline: 2px solid var(--focus);
+            outline-offset: 2px
+        }
+
+        button {
+            background: var(--brand);
+            color: #fff;
+            border-color: transparent;
+            cursor: pointer;
+            font-weight: 600
+        }
+
+        button.secondary {
+            background: transparent;
+            color: var(--text);
+            border-color: var(--line)
+        }
+
+        .togglesWrap {
+            width: 100%;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            flex-wrap: wrap
+        }
+
+        .toggles {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap
+        }
+
         .toggle {
-            background: var(--chip); border: 1px solid var(--line); color: var(--chipText);
-            padding: 6px 10px; border-radius: 999px; cursor: pointer; font-weight: 700; font-size: 12px; user-select: none
+            background: var(--chip);
+            border: 1px solid var(--line);
+            color: var(--chipText);
+            padding: 6px 10px;
+            border-radius: 999px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 12px;
+            user-select: none
         }
-        .toggle[aria-pressed="true"] { background: var(--brand); border-color: transparent; color: #fff }
-        .toggle.disabled { opacity: .55; cursor: not-allowed }
+
+        .toggle[aria-pressed="true"] {
+            background: var(--brand);
+            border-color: transparent;
+            color: #fff
+        }
+
+        .toggle.disabled {
+            opacity: .55;
+            cursor: not-allowed
+        }
 
         .toggle.redditRisk {
             border-color: var(--warn);
@@ -127,34 +253,96 @@
             background: var(--risk-chip-bg);
             box-shadow: inset 0 0 0 1px var(--warn);
         }
+
         .toggle.redditRisk[aria-pressed="true"] {
             background: var(--warn);
             border-color: var(--warn);
             color: #111;
         }
 
-        .kpis { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 }
-        .kpi {
-            background: var(--chip); color: var(--chipText); border: 1px solid var(--line);
-            padding: 6px 10px; border-radius: 999px; font-size: 12px
+        .kpis {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 8px 0
         }
-        .kpi em { font-style: normal; color: var(--brand); font-weight: 700 }
 
-        .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; box-shadow: var(--shadow) }
-        .panel header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 8px }
-        .status { color: var(--muted); font-size: 12px }
+        .kpi {
+            background: var(--chip);
+            color: var(--chipText);
+            border: 1px solid var(--line);
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px
+        }
 
-        .feedGroup { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin-bottom: 12px }
-        summary { cursor: pointer; padding: 10px 12px; list-style: none; user-select: none; font-weight: 700; background: var(--chip) }
-        summary::-webkit-details-marker { display: none }
-        summary .meta { font-weight: 400; color: var(--muted) }
+        .kpi em {
+            font-style: normal;
+            color: var(--brand);
+            font-weight: 700
+        }
 
-        .updates { padding: 8px 10px }
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: var(--shadow)
+        }
+
+        .panel header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            gap: 8px
+        }
+
+        .status {
+            color: var(--muted);
+            font-size: 12px
+        }
+
+        .feedGroup {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 12px
+        }
+
+        summary {
+            cursor: pointer;
+            padding: 10px 12px;
+            list-style: none;
+            user-select: none;
+            font-weight: 700;
+            background: var(--chip)
+        }
+
+        summary::-webkit-details-marker {
+            display: none
+        }
+
+        summary .meta {
+            font-weight: 400;
+            color: var(--muted)
+        }
+
+        .updates {
+            padding: 8px 10px
+        }
+
         .item {
-            display: grid; grid-template-columns: auto 1fr; gap: 10px; padding: 10px 0;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 10px;
+            padding: 10px 0;
             border-bottom: 1px dashed var(--line)
         }
-        .item:last-child { border-bottom: none }
+
+        .item:last-child {
+            border-bottom: none
+        }
 
         .item.riskSection {
             background: var(--risk-bg);
@@ -164,41 +352,150 @@
             margin-top: 6px;
         }
 
-        .avatar { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line); object-fit: cover }
-
-        .titleRow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap }
-        .titleRow a { color: var(--link); text-decoration: none; font-weight: 700 }
-        .titleRow a:hover { text-decoration: underline }
-        .meta { color: var(--muted); font-size: 12px }
-
-        .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px }
-        .chip {
-            background: var(--chip); color: var(--chipText); border: 1px solid var(--line);
-            font-size: 11px; padding: 2px 6px; border-radius: 999px; white-space: nowrap
+        .avatar {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 1px solid var(--line);
+            object-fit: cover
         }
-        .chip.bad { background: rgba(239, 68, 68, .12); color: var(--bad); border-color: rgba(239, 68, 68, .35) }
-        .chip.warn { background: rgba(245, 158, 11, .12); color: var(--warn); border-color: rgba(245, 158, 11, .35) }
-        .chip.ok { background: rgba(34, 197, 94, .12); color: var(--ok); border-color: rgba(34, 197, 94, .35) }
-        .chip.link a { color: inherit; text-decoration: none }
 
-        .desc { margin-top: 6px; color: var(--text); opacity: .9 }
-        .desc a { color: var(--link) }
+        .titleRow {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap
+        }
 
-        .redditWrap { margin-top: 8px; padding: 8px; border: 1px dashed var(--line); border-radius: 8px; background: transparent }
-        .redditHead { font-weight: 700; color: var(--reddit); display: flex; gap: 8px; align-items: center; margin-bottom: 6px }
-        .redditList { display: flex; flex-direction: column; gap: 6px }
-        .redditItem a { color: var(--text); text-decoration: none }
-        .redditItem a:hover { text-decoration: underline }
-        .redditMeta { font-size: 12px; color: var(--muted) }
+        .titleRow a {
+            color: var(--link);
+            text-decoration: none;
+            font-weight: 700
+        }
+
+        .titleRow a:hover {
+            text-decoration: underline
+        }
+
+        .meta {
+            color: var(--muted);
+            font-size: 12px
+        }
+
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 6px
+        }
+
+        .chip {
+            background: var(--chip);
+            color: var(--chipText);
+            border: 1px solid var(--line);
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 999px;
+            white-space: nowrap
+        }
+
+        .chip.bad {
+            background: rgba(239, 68, 68, .12);
+            color: var(--bad);
+            border-color: rgba(239, 68, 68, .35)
+        }
+
+        .chip.warn {
+            background: rgba(245, 158, 11, .12);
+            color: var(--warn);
+            border-color: rgba(245, 158, 11, .35)
+        }
+
+        .chip.ok {
+            background: rgba(34, 197, 94, .12);
+            color: var(--ok);
+            border-color: rgba(34, 197, 94, .35)
+        }
+
+        .chip.link a {
+            color: inherit;
+            text-decoration: none
+        }
+
+        .desc {
+            margin-top: 6px;
+            color: var(--text);
+            opacity: .9
+        }
+
+        .desc a {
+            color: var(--link)
+        }
+
+        .redditWrap {
+            margin-top: 8px;
+            padding: 8px;
+            border: 1px dashed var(--line);
+            border-radius: 8px;
+            background: transparent
+        }
+
+        .redditHead {
+            font-weight: 700;
+            color: var(--reddit);
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 6px
+        }
+
+        .redditList {
+            display: flex;
+            flex-direction: column;
+            gap: 6px
+        }
+
+        .redditItem a {
+            color: var(--text);
+            text-decoration: none
+        }
+
+        .redditItem a:hover {
+            text-decoration: underline
+        }
+
+        .redditMeta {
+            font-size: 12px;
+            color: var(--muted)
+        }
 
         .skeleton {
-            border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 12px;
-            background: linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.08), rgba(255,255,255,0.04));
-            background-size: 200% 100%; animation: shimmer 1.2s infinite
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
+            background-size: 200% 100%;
+            animation: shimmer 1.2s infinite
         }
-        @keyframes shimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
 
-        .sentinel { height: 60px; display: flex; align-items: center; justify-content: center; color: var(--muted) }
+        @keyframes shimmer {
+            0% {
+                background-position: 200% 0
+            }
+
+            100% {
+                background-position: -200% 0
+            }
+        }
+
+        .sentinel {
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--muted)
+        }
     </style>
 </head>
 
@@ -220,12 +517,18 @@
 
         <div class="togglesWrap" role="group" aria-label="Quick filters (AND)">
             <div class="toggles" id="fixedToggles">
-                <button class="toggle" data-key="major" aria-pressed="false" type="button">Major <span class="count" id="btn-major">(0)</span></button>
-                <button class="toggle" data-key="minor" aria-pressed="false" type="button">Minor <span class="count" id="btn-minor">(0)</span></button>
-                <button class="toggle" data-key="patch" aria-pressed="false" type="button">Patch <span class="count" id="btn-patch">(0)</span></button>
-                <button class="toggle" data-key="cve" aria-pressed="false" type="button">CVE <span class="count" id="btn-cve">(0)</span></button>
-                <button class="toggle" data-key="reddit" aria-pressed="false" type="button">Reddit <span class="count" id="btn-reddit">(0)</span></button>
-                <button class="toggle redditRisk" data-key="reddit-risk" aria-pressed="false" type="button" title="Filter to AI-detected update-related or score>0.5 posts">
+                <button class="toggle" data-key="major" aria-pressed="false" type="button">Major <span class="count"
+                        id="btn-major">(0)</span></button>
+                <button class="toggle" data-key="minor" aria-pressed="false" type="button">Minor <span class="count"
+                        id="btn-minor">(0)</span></button>
+                <button class="toggle" data-key="patch" aria-pressed="false" type="button">Patch <span class="count"
+                        id="btn-patch">(0)</span></button>
+                <button class="toggle" data-key="cve" aria-pressed="false" type="button">CVE <span class="count"
+                        id="btn-cve">(0)</span></button>
+                <button class="toggle" data-key="reddit" aria-pressed="false" type="button">Reddit <span class="count"
+                        id="btn-reddit">(0)</span></button>
+                <button class="toggle redditRisk" data-key="reddit-risk" aria-pressed="false" type="button"
+                    title="Filter to AI-detected update-related or score>0.5 posts">
                     ⚠️ Reddit Risks <span class="count" id="btn-reddit-risk">(0)</span>
                 </button>
             </div>
@@ -342,13 +645,34 @@
                 return json.versions || [];
             },
             // Use the "positive" endpoint (score > 0.5)
+            // Use the "positive" endpoint (score > 0.5) and fetch ALL pages
             async reddit() {
-                const url = `${API_BASE}reddit/query/positive`;
-                const res = await fetch(url, { headers: { Accept: "application/json" } });
-                if (!res.ok) throw new Error(`${res.status} ${res.statusText} @ ${url}`);
-                const json = await res.json();
-                const list = Array.isArray(json) ? json : (json.data || json.posts || json.results || []);
-                return list.map(p => ({
+                const base = `${API_BASE}reddit/query/positive`;
+                const limit = 250; // tune if your API allows; 250/500/1000, etc.
+                let page = 1;
+                let total = null;
+                let out = [];
+
+                while (true) {
+                    const url = `${base}?limit=${limit}&page=${page}`;
+                    const res = await fetch(url, { headers: { Accept: "application/json" } });
+                    if (!res.ok) throw new Error(`${res.status} ${res.statusText} @ ${url}`);
+                    const json = await res.json();
+
+                    // normalize list & totals
+                    const list = Array.isArray(json) ? json : (json.data || json.posts || json.results || []);
+                    if (total == null) total = (json.total != null ? json.total : list.length);
+
+                    out.push(...list);
+
+                    // stop when we’ve got everything or there’s no next page
+                    const pageCount = json.pageCount || Math.ceil(total / limit) || 1;
+                    if (page >= pageCount || out.length >= total || list.length === 0) break;
+                    page++;
+                }
+
+                // map to the simplified shape you render
+                return out.map(p => ({
                     redditId: p.redditId || p._id || p.id,
                     title: p.title,
                     subreddit: p.subreddit,
@@ -359,6 +683,7 @@
                     metadata: p.metadata
                 }));
             }
+
         };
 
         // ---------- State ----------
