@@ -54,7 +54,6 @@
         }
 
         * { box-sizing: border-box }
-
         html, body { height: 100% }
 
         body {
@@ -163,7 +162,7 @@
             border: 1px solid var(--risk-border);
             border-radius: 10px;
             padding: 10px;
-            margin-top: 6px; /* requested */
+            margin-top: 6px;
         }
 
         .avatar { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line); object-fit: cover }
@@ -279,7 +278,7 @@
         // ---------- Constants ----------
         const API_BASE = "https://releasetrain.io/api/";
         const GROUPS_BATCH = 6;
-        const REDDIT_LIMIT = 400;
+        const REDDIT_LIMIT = 400; // kept for compatibility
         const MAX_VER_DESC = 260;
         const TOP_TYPES = 10;
 
@@ -345,12 +344,26 @@
                 const json = await res.json();
                 return json.versions || [];
             },
+            // ⬇️ UPDATED: pull ALL update-risk Reddit posts from the positive endpoint
             async reddit() {
-                const url = `${API_BASE}reddit?isUpdateRelated=false&showCount=true&limit=${REDDIT_LIMIT}`;
+                // Source of truth for "update risk" posts (positiveScore > 0.5)
+                const url = `${API_BASE}reddit/query/positive`;
                 const res = await fetch(url, { headers: { Accept: "application/json" } });
                 if (!res.ok) throw new Error(`${res.status} ${res.statusText} @ ${url}`);
                 const json = await res.json();
-                return Array.isArray(json) ? json : (json.data || []);
+                // Be resilient to different shapes: {data:[...]} | [...]
+                const list = Array.isArray(json) ? json : (json.data || json.posts || json.results || []);
+                // Ensure simple/good feed items: only the fields we actually use
+                return list.map(p => ({
+                    redditId: p.redditId || p._id || p.id,
+                    title: p.title,
+                    subreddit: p.subreddit,
+                    url: p.url,
+                    created_utc: p.created_utc || p.createdAt || p.updatedAt,
+                    num_comments: p.num_comments,
+                    score: p.score,
+                    metadata: p.metadata
+                }));
             }
         };
 
