@@ -646,32 +646,29 @@
             },
             // Use the "positive" endpoint (score > 0.5)
             // Use the "positive" endpoint (score > 0.5) and fetch ALL pages
+            // Fetch ALL pages from /reddit/query/positive without relying on total/pageCount
             async reddit() {
                 const base = `${API_BASE}reddit/query/positive`;
-                const limit = 250; // tune if your API allows; 250/500/1000, etc.
+                const limit = 250;              // adjust if your API caps lower; 200 also fine
                 let page = 1;
-                let total = null;
-                let out = [];
+                const out = [];
 
                 while (true) {
                     const url = `${base}?limit=${limit}&page=${page}`;
                     const res = await fetch(url, { headers: { Accept: "application/json" } });
                     if (!res.ok) throw new Error(`${res.status} ${res.statusText} @ ${url}`);
-                    const json = await res.json();
 
-                    // normalize list & totals
-                    const list = Array.isArray(json) ? json : (json.data || json.posts || json.results || []);
-                    if (total == null) total = (json.total != null ? json.total : list.length);
+                    const json = await res.json();
+                    const list = Array.isArray(json) ? json
+                        : (json.data || json.posts || json.results || []);
 
                     out.push(...list);
 
-                    // stop when we’ve got everything or there’s no next page
-                    const pageCount = json.pageCount || Math.ceil(total / limit) || 1;
-                    if (page >= pageCount || out.length >= total || list.length === 0) break;
+                    // keep going while we still get full pages
+                    if (list.length < limit) break;
                     page++;
                 }
 
-                // map to the simplified shape you render
                 return out.map(p => ({
                     redditId: p.redditId || p._id || p.id,
                     title: p.title,
@@ -683,7 +680,6 @@
                     metadata: p.metadata
                 }));
             }
-
         };
 
         // ---------- State ----------
