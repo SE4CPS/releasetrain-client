@@ -121,7 +121,6 @@
         .toggle[aria-pressed="true"] { background: var(--brand); border-color: transparent; color: #fff }
         .toggle.disabled { opacity: .55; cursor: not-allowed }
 
-        /* Subtle highlight for Reddit Risks button */
         .toggle.redditRisk {
             border-color: var(--warn);
             color: var(--warn);
@@ -226,7 +225,6 @@
                 <button class="toggle" data-key="patch" aria-pressed="false" type="button">Patch <span class="count" id="btn-patch">(0)</span></button>
                 <button class="toggle" data-key="cve" aria-pressed="false" type="button">CVE <span class="count" id="btn-cve">(0)</span></button>
                 <button class="toggle" data-key="reddit" aria-pressed="false" type="button">Reddit <span class="count" id="btn-reddit">(0)</span></button>
-                <!-- Reddit Risks button with subtle highlight and count -->
                 <button class="toggle redditRisk" data-key="reddit-risk" aria-pressed="false" type="button" title="Filter to AI-detected update-related or score>0.5 posts">
                     ⚠️ Reddit Risks <span class="count" id="btn-reddit-risk">(0)</span>
                 </button>
@@ -262,7 +260,7 @@
     </main>
 
     <script>
-        // ---------- Dynamic offsets for fixed topbar + loader ----------
+        // ---------- Dynamic offsets ----------
         const updateOffsets = () => {
             const tb = document.querySelector('.topbar');
             const nl = document.getElementById('navLoader');
@@ -278,7 +276,7 @@
         // ---------- Constants ----------
         const API_BASE = "https://releasetrain.io/api/";
         const GROUPS_BATCH = 6;
-        const REDDIT_LIMIT = 400; // kept for compatibility
+        const REDDIT_LIMIT = 400; // retained (unused with new endpoint but harmless)
         const MAX_VER_DESC = 260;
         const TOP_TYPES = 10;
 
@@ -308,8 +306,7 @@
             return "./img/default.png";
         };
 
-        // ---------- Reddit Risk helpers (NEW METADATA STRUCTURE) ----------
-        // A post is a "risk" if metadata.labeled.isUpdateRelated OR metadata.predicted.isUpdateRelated OR positiveScore > 0.5
+        // ---------- Reddit Risk helpers ----------
         const isUpdateRelatedBoolean = (p) => {
             const meta = p && p.metadata;
             if (!meta) return false;
@@ -330,7 +327,7 @@
             return s != null ? ` [${s.toFixed(4)}]` : "";
         };
 
-        // ---------- Loader controls ----------
+        // ---------- Loader ----------
         function showLoader() { $("#navLoader").classList.add("active"); updateOffsets(); }
         function hideLoader() { $("#navLoader").classList.remove("active"); updateOffsets(); }
 
@@ -344,16 +341,13 @@
                 const json = await res.json();
                 return json.versions || [];
             },
-            // ⬇️ UPDATED: pull ALL update-risk Reddit posts from the positive endpoint
+            // Use the "positive" endpoint (score > 0.5)
             async reddit() {
-                // Source of truth for "update risk" posts (positiveScore > 0.5)
                 const url = `${API_BASE}reddit/query/positive`;
                 const res = await fetch(url, { headers: { Accept: "application/json" } });
                 if (!res.ok) throw new Error(`${res.status} ${res.statusText} @ ${url}`);
                 const json = await res.json();
-                // Be resilient to different shapes: {data:[...]} | [...]
                 const list = Array.isArray(json) ? json : (json.data || json.posts || json.results || []);
-                // Ensure simple/good feed items: only the fields we actually use
                 return list.map(p => ({
                     redditId: p.redditId || p._id || p.id,
                     title: p.title,
@@ -418,8 +412,9 @@
                 const arr = STATE.redditBySub.get(k);
                 if (arr) {
                     for (const p of arr) {
-                        if (seen.has(p.redditId)) continue;
-                        pool.push(p); seen.add(p.redditId);
+                        const id = p.redditId || p._id || p.id;
+                        if (seen.has(id)) continue;
+                        pool.push(p); seen.add(id);
                         if (pool.length >= limit) break;
                     }
                 }
@@ -429,10 +424,11 @@
             // title fallback
             if (pool.length < limit) {
                 for (const p of STATE.redditAll) {
-                    if (seen.has(p.redditId)) continue;
+                    const id = p.redditId || p._id || p.id;
+                    if (seen.has(id)) continue;
                     const title = (p.title || "").toLowerCase();
                     if (keys.some(k => title.includes(k))) {
-                        pool.push(p); seen.add(p.redditId);
+                        pool.push(p); seen.add(id);
                         if (pool.length >= limit) break;
                     }
                 }
@@ -449,7 +445,22 @@
             return redditMatchesForVersionBase(v, limit, onlyRisks);
         }
 
-        // ---------- Risk color for Reddit titles ----------
+        // ---------- Unique Reddit counts across visible versions ----------
+        function uniqueRedditCounts(versions) {
+            const seenAll = new Set();
+            const seenRisk = new Set();
+            for (const v of versions) {
+                for (const p of redditMatchesForVersionBase(v, 6, false)) {
+                    seenAll.add(p.redditId || p._id || p.id);
+                }
+                for (const p of redditMatchesForVersionBase(v, 6, true)) {
+                    seenRisk.add(p.redditId || p._id || p.id);
+                }
+            }
+            return { redditUnique: seenAll.size, redditRiskUnique: seenRisk.size };
+        }
+
+        // ---------- Risk label from title ----------
         function redditRiskClass(title = "") {
             const t = String(title).toLowerCase();
             const BAD = [/cve-?\d{4}-\d+/, "0day", "zero-day", "zeroday", "rce", "remote code", "exploit", "breach", "ransomware", "data leak", "privilege escalation", "arbitrary code", "critical"];
@@ -620,7 +631,14 @@
                 return compTokens.some(t => name.includes(t) || brand.includes(t) || tagStr.includes(t));
             });
 
+            // Base aggregates (per-version)
             const ag = computeAggregates(candidates);
+
+            // 🔸 Override Reddit counts with UNIQUE post counts across all visible versions
+            const { redditUnique, redditRiskUnique } = uniqueRedditCounts(candidates);
+            ag.reddit = redditUnique;
+            ag.redditRisk = redditRiskUnique;
+
             paintFixedCounts(ag);
             buildTypeButtons(ag.typeCounts);
 
@@ -659,7 +677,6 @@
                 const when = p.created_utc ? new Date(p.created_utc).toLocaleString() : "";
                 const rclass = redditRiskClass(p.title);
                 const riskChip = rclass ? ` ${chip("⚠️", rclass)}` : "";
-                // Warn if "risk" (boolean OR score>0.5)
                 const warnChip = isRisk(p) ? ` ${chip("warn", "warn")}${scoreBracket(p)}` : "";
                 return `
           <div class="redditItem">
@@ -926,7 +943,7 @@
                 STATE.mode = "versions";
                 STATE.rawVersions = versions;
 
-                applyFilters(); // builds groups & renders first batch
+                applyFilters();
                 $("#status").textContent = `Loaded ${versions.length} items`;
             } catch (err) {
                 console.error(err);
@@ -937,7 +954,6 @@
             }
         }
 
-        // form submit
         $("#filterForm").addEventListener("submit", async (e) => {
             e.preventDefault();
             const compCsv = $("#components").value.trim().replace(/\s+/g, '');
@@ -979,20 +995,17 @@
             }
         });
 
-        // clear
         $("#clearBtn").addEventListener("click", () => {
             $("#components").value = "";
             STATE.filters.components = [];
             const u = new URL(location.href);
             u.searchParams.delete("q");
             history.replaceState({}, "", u.toString());
-            // also clear all toggles
             STATE.filters.toggles.clear();
             $$('#fixedToggles .toggle, #typeToggles .toggle').forEach(b => b.setAttribute('aria-pressed', 'false'));
             boot();
         });
 
-        // fixed toggles (AND logic)
         $("#fixedToggles").addEventListener("click", (e) => {
             const btn = e.target.closest(".toggle");
             if (!btn || btn.classList.contains('disabled')) return;
