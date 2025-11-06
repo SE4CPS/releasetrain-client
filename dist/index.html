@@ -1,1025 +1,570 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="utf-8" />
-    <title>releasetrain.io — Updates Feed + Reddit Fallback</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Software component version releases with Reddit fallback" />
-    <style>
-        :root {
-            --bg: #0f1115;
-            --panel: #171a21;
-            --muted: #9aa3af;
-            --text: #e5e7eb;
-            --brand: #60a5fa;
-            --line: #2a2f3a;
-            --chip: #1f2430;
-            --chipText: #e5e7eb;
-            --focus: #a5b4fc;
-            --bad: #ef4444;
-            --warn: #f59e0b;
-            --ok: #22c55e;
-            --reddit: #ff4500;
-            --link: #93c5fd;
-            --shadow: 0 6px 20px rgba(0, 0, 0, .25);
-            --topbar-h: 0px;
-            --navloader-h: 0px;
-            --risk-bg: rgba(239, 68, 68, 0.08);
-            --risk-border: rgba(239, 68, 68, 0.35);
-            --risk-chip-bg: rgba(245, 158, 11, .12);
-        }
+  <meta charset="utf-8" />
+  <title>releasetrain.io — Component List (dates left, newest first)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Single list per component with leading tags, CVE highlight, strict subreddit matches, and left-side dates" />
+  <style>
+    :root{
+      --bg:#0f1115;--panel:#171a21;--muted:#9aa3af;--text:#e5e7eb;--brand:#60a5fa;--line:#2a2f3a;--chip:#1f2430;--chipText:#e5e7eb;--focus:#a5b4fc;
+      --bad:#ef4444;--warn:#f59e0b;--ok:#22c55e;--reddit:#ff4500;--link:#93c5fd;--shadow:0 6px 20px rgba(0,0,0,.25);
+      --topbar-h:0px;--navloader-h:0px;--risk-bg:rgba(239,68,68,.08);--risk-border:rgba(239,68,68,.35)
+    }
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg:#f7f7fb;--panel:#ffffff;--muted:#6b7280;--text:#0f172a;--brand:#2563eb;--line:#e5e7eb;--chip:#eef2ff;--chipText:#1f2937;--focus:#4f46e5;
+        --bad:#dc2626;--warn:#d97706;--ok:#16a34a;--reddit:#ff4500;--link:#1d4ed8;--shadow:0 6px 20px rgba(0,0,0,.08);
+        --risk-bg:rgba(220,38,38,.06);--risk-border:rgba(220,38,38,.25)
+      }
+    }
+    *{box-sizing:border-box}html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
 
-        @media (prefers-color-scheme: light) {
-            :root {
-                --bg: #f7f7fb;
-                --panel: #ffffff;
-                --muted: #6b7280;
-                --text: #0f172a;
-                --brand: #2563eb;
-                --line: #e5e7eb;
-                --chip: #eef2ff;
-                --chipText: #1f2937;
-                --focus: #4f46e5;
-                --bad: #dc2626;
-                --warn: #d97706;
-                --ok: #16a34a;
-                --reddit: #ff4500;
-                --link: #1d4ed8;
-                --shadow: 0 6px 20px rgba(0, 0, 0, .08);
-                --risk-bg: rgba(220, 38, 38, 0.06);
-                --risk-border: rgba(220, 38, 38, 0.25);
-                --risk-chip-bg: rgba(217, 119, 6, .10);
-            }
-        }
+    .topbar{position:fixed;top:0;left:0;right:0;z-index:1000;background:var(--panel);border-bottom:1px solid var(--line);padding:10px 12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .brand{font-weight:700;letter-spacing:.2px}.brand b{color:var(--brand)}.spacer{flex:1 1 auto}
+    .gh-link{display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px solid var(--line);color:var(--text);padding:8px 10px;border-radius:8px;text-decoration:none;font-weight:700}
+    .gh-link:hover{background:var(--chip)}
 
-        * { box-sizing: border-box }
-        html, body { height: 100% }
+    .navloader{position:fixed;top:var(--topbar-h);left:0;right:0;height:3px;background:transparent;overflow:hidden;z-index:999;display:none}
+    .navloader.active{display:block}
+    .navloader::after{content:"";display:block;width:40%;height:100%;background:linear-gradient(90deg,var(--brand),#9bbcfb,var(--brand));animation:slide 1s infinite}
+    @keyframes slide{0%{margin-left:-40%}100%{margin-left:100%}}
 
-        body {
-            margin: 0;
-            background: var(--bg);
-            color: var(--text);
-            font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, "Helvetica Neue", Arial;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale
-        }
+    main{max-width:1100px;margin:0 auto;padding:calc(var(--topbar-h) + var(--navloader-h) + 12px) 12px 12px}
 
-        .topbar {
-            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
-            background: var(--panel); border-bottom: 1px solid var(--line);
-            padding: 10px 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
-        }
+    .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .field{display:flex;align-items:center;gap:6px}.field label{font-size:12px;color:var(--muted)}
+    input[type="text"],button{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit}
+    input[type="text"]{min-width:240px}input[type="text"]:focus,button:focus{outline:2px solid var(--focus);outline-offset:2px}
+    button{background:var(--brand);color:#fff;border-color:transparent;cursor:pointer;font-weight:600}
+    button.secondary{background:transparent;color:var(--text);border:1px solid var(--line)}
 
-        .brand { font-weight: 700; letter-spacing: .2px }
-        .brand b { color: var(--brand) }
-        .spacer { flex: 1 1 auto }
+    .togglesWrap{width:100%;display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
+    .toggles{display:flex;gap:6px;flex-wrap:wrap}
+    .toggle{background:var(--chip);border:1px solid var(--line);color:var(--chipText);padding:6px 10px;border-radius:999px;cursor:pointer;font-weight:700;font-size:12px}
+    .toggle[aria-pressed="true"]{background:var(--brand);border-color:transparent;color:#fff}
+    .toggle.disabled{opacity:.55;cursor:not-allowed}
+    .toggle.redditRisk{border-color:var(--warn);color:var(--warn);background:rgba(245,158,11,.12);box-shadow:inset 0 0 0 1px var(--warn)}
+    .toggle.redditRisk[aria-pressed="true"]{background:var(--warn);border-color:var(--warn);color:#111}
 
-        .gh-link {
-            display: inline-flex; align-items: center; gap: 6px;
-            background: transparent; border: 1px solid var(--line);
-            color: var(--text); padding: 8px 10px; border-radius: 8px;
-            text-decoration: none; font-weight: 700
-        }
+    .kpis{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+    .kpi{background:var(--chip);color:var(--chipText);border:1px solid var(--line);padding:6px 10px;border-radius:999px;font-size:12px}
+    .kpi em{font-style:normal;color:var(--brand);font-weight:700}
 
-        .gh-link:hover { background: var(--chip); text-decoration: none }
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:var(--shadow)}
+    .panel header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px}
+    .status{color:var(--muted);font-size:12px}
 
-        .navloader {
-            position: fixed; top: var(--topbar-h); left: 0; right: 0; height: 3px;
-            background: transparent; overflow: hidden; z-index: 999; display: none;
-        }
-        .navloader.active { display: block }
-        .navloader::after {
-            content: ""; display: block; width: 40%; height: 100%;
-            background: linear-gradient(90deg, var(--brand), #9bbcfb, var(--brand));
-            animation: slide 1s infinite ease-in-out;
-        }
-        @keyframes slide { 0% { margin-left: -40% } 100% { margin-left: 100% } }
+    .feedGroup{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:12px}
+    summary{cursor:pointer;padding:10px 12px;list-style:none;user-select:none;font-weight:700;background:var(--chip)}
+    summary::-webkit-details-marker{display:none}
+    summary .meta{font-weight:400;color:var(--muted)}
 
-        main { max-width: 1100px; margin: 0 auto; padding: calc(var(--topbar-h) + var(--navloader-h) + 12px) 12px 12px }
+    .updates{padding:8px 10px}
+    .list{display:flex;flex-direction:column;gap:10px;margin:6px 0 2px}
 
-        .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap }
-        .field { display: flex; align-items: center; gap: 6px }
-        .field label { font-size: 12px; color: var(--muted) }
+    /* rows now have a DATE column on the left */
+    .li{
+      display:grid;
+      grid-template-columns: 92px 26px 1fr; /* date | avatar | content */
+      gap:10px;
+      padding:10px 0;
+      border-bottom:1px dashed var(--line)
+    }
+    .li:last-child{border-bottom:none}
+    .li.cve{background:var(--risk-bg);border:1px solid var(--risk-border);border-radius:10px;padding:10px}
 
-        input[type="text"], button {
-            background: var(--bg); color: var(--text);
-            border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font: inherit
-        }
-        input[type="text"] { min-width: 240px }
-        input[type="text"]:focus, button:focus { outline: 2px solid var(--focus); outline-offset: 2px }
+    .datecol{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.2;
+      display:flex;
+      flex-direction:column;
+      align-items:flex-start;
+      justify-content:center;
+      white-space:nowrap;
+    }
+    .datecol .day{font-weight:700; color:var(--text)}
+    .datecol .time{opacity:.9}
 
-        button { background: var(--brand); color: #fff; border-color: transparent; cursor: pointer; font-weight: 600 }
-        button.secondary { background: transparent; color: var(--text); border-color: var(--line) }
+    .avatar{width:22px;height:22px;border-radius:50%;border:1px solid var(--line);object-fit:cover;align-self:center}
 
-        .togglesWrap { width: 100%; display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap }
-        .toggles { display: flex; gap: 6px; flex-wrap: wrap }
-        .toggle {
-            background: var(--chip); border: 1px solid var(--line); color: var(--chipText);
-            padding: 6px 10px; border-radius: 999px; cursor: pointer; font-weight: 700; font-size: 12px; user-select: none
-        }
-        .toggle[aria-pressed="true"] { background: var(--brand); border-color: transparent; color: #fff }
-        .toggle.disabled { opacity: .55; cursor: not-allowed }
+    .titleRow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .titleRow a{color:var(--link);text-decoration:none;font-weight:700}
+    .titleRow a:hover{text-decoration:underline}
 
-        .toggle.redditRisk {
-            border-color: var(--warn);
-            color: var(--warn);
-            background: var(--risk-chip-bg);
-            box-shadow: inset 0 0 0 1px var(--warn);
-        }
-        .toggle.redditRisk[aria-pressed="true"] {
-            background: var(--warn);
-            border-color: var(--warn);
-            color: #111;
-        }
+    .meta{color:var(--muted);font-size:12px}
 
-        .kpis { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 }
-        .kpi {
-            background: var(--chip); color: var(--chipText); border: 1px solid var(--line);
-            padding: 6px 10px; border-radius: 999px; font-size: 12px
-        }
-        .kpi em { font-style: normal; color: var(--brand); font-weight: 700 }
-
-        .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; box-shadow: var(--shadow) }
-        .panel header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 8px }
-        .status { color: var(--muted); font-size: 12px }
-
-        .feedGroup { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin-bottom: 12px }
-        summary { cursor: pointer; padding: 10px 12px; list-style: none; user-select: none; font-weight: 700; background: var(--chip) }
-        summary::-webkit-details-marker { display: none }
-        summary .meta { font-weight: 400; color: var(--muted) }
-
-        .updates { padding: 8px 10px }
-        .item {
-            display: grid; grid-template-columns: auto 1fr; gap: 10px; padding: 10px 0;
-            border-bottom: 1px dashed var(--line)
-        }
-        .item:last-child { border-bottom: none }
-
-        .item.riskSection {
-            background: var(--risk-bg);
-            border: 1px solid var(--risk-border);
-            border-radius: 10px;
-            padding: 10px;
-            margin-top: 6px;
-        }
-
-        .avatar { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line); object-fit: cover }
-
-        .titleRow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap }
-        .titleRow a { color: var(--link); text-decoration: none; font-weight: 700 }
-        .titleRow a:hover { text-decoration: underline }
-        .meta { color: var(--muted); font-size: 12px }
-
-        .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px }
-        .chip {
-            background: var(--chip); color: var(--chipText); border: 1px solid var(--line);
-            font-size: 11px; padding: 2px 6px; border-radius: 999px; white-space: nowrap
-        }
-        .chip.bad { background: rgba(239, 68, 68, .12); color: var(--bad); border-color: rgba(239, 68, 68, .35) }
-        .chip.warn { background: rgba(245, 158, 11, .12); color: var(--warn); border-color: rgba(245, 158, 11, .35) }
-        .chip.ok { background: rgba(34, 197, 94, .12); color: var(--ok); border-color: rgba(34, 197, 94, .35) }
-        .chip.link a { color: inherit; text-decoration: none }
-
-        .desc { margin-top: 6px; color: var(--text); opacity: .9 }
-        .desc a { color: var(--link) }
-
-        .redditWrap { margin-top: 8px; padding: 8px; border: 1px dashed var(--line); border-radius: 8px; background: transparent }
-        .redditHead { font-weight: 700; color: var(--reddit); display: flex; gap: 8px; align-items: center; margin-bottom: 6px }
-        .redditList { display: flex; flex-direction: column; gap: 6px }
-        .redditItem a { color: var(--text); text-decoration: none }
-        .redditItem a:hover { text-decoration: underline }
-        .redditMeta { font-size: 12px; color: var(--muted) }
-
-        .skeleton {
-            border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 12px;
-            background: linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.08), rgba(255,255,255,0.04));
-            background-size: 200% 100%; animation: shimmer 1.2s infinite
-        }
-        @keyframes shimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
-
-        .sentinel { height: 60px; display: flex; align-items: center; justify-content: center; color: var(--muted) }
-    </style>
+    .chips{display:inline-flex;gap:6px;flex-wrap:wrap}
+    .chip{background:var(--chip);color:var(--chipText);border:1px solid var(--line);font-size:11px;padding:2px 6px;border-radius:999px;white-space:nowrap}
+    .chip.bad{background:rgba(239,68,68,.12);color:var(--bad);border-color:rgba(239,68,68,.35)}
+    .chip.warn{background:rgba(245,158,11,.12);color:var(--warn);border-color:rgba(245,158,11,.35)}
+    .chip.ok{background:rgba(34,197,94,.12);color:var(--ok);border-color:rgba(34,197,94,.35)}
+    .chip.reddit{background:rgba(255,69,0,.15);color:var(--reddit);border-color:rgba(255,69,0,.45)}
+    .chip.link a{color:inherit;text-decoration:none}
+  </style>
 </head>
-
 <body>
-    <div class="topbar">
-        <div class="brand">Releasetrain <b>v3.1.0</b></div>
-        <div class="spacer" aria-hidden="true"></div>
-        <a class="gh-link" href="https://github.com/SE4CPS/releasetrain-client" target="_blank" rel="noopener"
-            title="Contribute on GitHub">GitHub ↗</a>
+  <div class="topbar">
+    <div class="brand">Releasetrain <b>v3.8.0</b></div>
+    <div class="spacer"></div>
+    <a class="gh-link" href="https://github.com/SE4CPS/releasetrain-client" target="_blank" rel="noopener">GitHub ↗</a>
 
-        <form id="filterForm" class="controls" aria-label="Filters">
-            <div class="field">
-                <label for="components">Components</label>
-                <input id="components" name="components" type="text" placeholder="aws, linux, nginx" />
-            </div>
-            <button type="submit">Search</button>
-            <button type="button" id="clearBtn" class="secondary">Clear</button>
-        </form>
+    <form id="filterForm" class="controls" aria-label="Filters">
+      <div class="field">
+        <label for="components">Components</label>
+        <input id="components" name="components" type="text" placeholder="aws, chrome, linux" />
+      </div>
+      <button type="submit">Search</button>
+      <button type="button" id="clearBtn" class="secondary">Clear</button>
+    </form>
 
-        <div class="togglesWrap" role="group" aria-label="Quick filters (AND)">
-            <div class="toggles" id="fixedToggles">
-                <button class="toggle" data-key="major" aria-pressed="false" type="button">Major <span class="count" id="btn-major">(0)</span></button>
-                <button class="toggle" data-key="minor" aria-pressed="false" type="button">Minor <span class="count" id="btn-minor">(0)</span></button>
-                <button class="toggle" data-key="patch" aria-pressed="false" type="button">Patch <span class="count" id="btn-patch">(0)</span></button>
-                <button class="toggle" data-key="cve" aria-pressed="false" type="button">CVE <span class="count" id="btn-cve">(0)</span></button>
-                <button class="toggle" data-key="reddit" aria-pressed="false" type="button">Reddit <span class="count" id="btn-reddit">(0)</span></button>
-                <button class="toggle redditRisk" data-key="reddit-risk" aria-pressed="false" type="button" title="Filter to AI-detected update-related or score>0.5 posts">
-                    ⚠️ Reddit Risks <span class="count" id="btn-reddit-risk">(0)</span>
-                </button>
-            </div>
-            <div class="toggles" id="typeToggles"></div>
-        </div>
+    <div class="togglesWrap" role="group" aria-label="Quick filters (AND)">
+      <div class="toggles" id="fixedToggles">
+        <button class="toggle" data-key="major" aria-pressed="false" type="button">Major <span class="count" id="btn-major">(0)</span></button>
+        <button class="toggle" data-key="minor" aria-pressed="false" type="button">Minor <span class="count" id="btn-minor">(0)</span></button>
+        <button class="toggle" data-key="patch" aria-pressed="false" type="button">Patch <span class="count" id="btn-patch">(0)</span></button>
+        <button class="toggle" data-key="cve" aria-pressed="false" type="button">CVE <span class="count" id="btn-cve">(0)</span></button>
+        <button class="toggle" data-key="reddit" aria-pressed="false" type="button">Reddit <span class="count" id="btn-reddit">(0)</span></button>
+        <button class="toggle redditRisk" data-key="reddit-risk" aria-pressed="false" type="button">⚠️ Reddit Risks <span class="count" id="btn-reddit-risk">(0)</span></button>
+        <button class="toggle" data-key="mode:component" aria-pressed="true" type="button">Group by component</button>
+        <button class="toggle" data-key="mode:date" aria-pressed="false" type="button">Group by date</button>
+      </div>
+      <div class="toggles" id="typeToggles"></div>
+    </div>
+  </div>
+
+  <div id="navLoader" class="navloader" aria-hidden="true"></div>
+
+  <main>
+    <div class="kpis" role="status" aria-live="polite">
+      <div class="kpi">Cards: <em id="kpi-page">0</em></div>
+      <div class="kpi" id="kpi-range">Date Range: <em>—</em></div>
+      <div class="kpi">Unique Components: <em id="kpi-uniq">0</em></div>
+      <div class="kpi">Reddit Posts: <em id="kpi-reddit">0</em></div>
     </div>
 
-    <div id="navLoader" class="navloader" aria-hidden="true"></div>
+    <section class="panel" aria-label="Updates Feed">
+      <header>
+        <h2 style="margin:0;font-size:16px">Recent Updates</h2>
+        <div id="status" class="status">Idle</div>
+      </header>
 
-    <main>
-        <div class="kpis" role="status" aria-live="polite">
-            <div class="kpi">Page Versions: <em id="kpi-page">0</em></div>
-            <div class="kpi" id="kpi-range">Date Range: <em>—</em></div>
-            <div class="kpi">Unique Components: <em id="kpi-uniq">0</em></div>
-            <div class="kpi">Reddit Posts: <em id="kpi-reddit">0</em></div>
-        </div>
+      <div id="feed">
+        <div class="skeleton" aria-hidden="true" style="height:80px"></div>
+        <div class="skeleton" aria-hidden="true" style="height:80px"></div>
+        <div class="skeleton" aria-hidden="true" style="height:80px"></div>
+      </div>
 
-        <section class="panel" aria-label="Updates Feed">
-            <header>
-                <h2 style="margin:0;font-size:16px">Recent Updates</h2>
-                <div id="status" class="status">Idle</div>
-            </header>
+      <div id="sentinel" class="sentinel" role="status" aria-live="polite">Loading more…</div>
+    </section>
+  </main>
 
-            <div id="feed">
-                <div class="skeleton" aria-hidden="true" style="height:80px"></div>
-                <div class="skeleton" aria-hidden="true" style="height:80px"></div>
-                <div class="skeleton" aria-hidden="true" style="height:80px"></div>
-            </div>
+  <script>
+    // ------- constants & helpers -------
+    const API_BASE="https://releasetrain.io/api/", GROUPS_BATCH=6, TOP_TYPES=10, REDDIT_LIMIT=400, MAX_VER_DESC=260;
+    const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+    const safe=(v,d="")=>v==null?d:v, uniq=a=>Array.from(new Set(a)), norm=s=>String(s||"").toLowerCase().trim();
+    const tokens=s=>uniq(String(s||"").split(",").map(t=>norm(t)).filter(Boolean));
+    const truncate=(str,n=MAX_VER_DESC)=> (str && str.length>n)?(str.slice(0,n-1)+"…"):(str||"");
 
-            <div id="sentinel" class="sentinel" role="status" aria-live="polite">Loading more…</div>
-        </section>
-    </main>
+    const dayLabelFromMillis=(ms)=>{
+      try{
+        const dt=new Date(ms);
+        const today=new Date(); today.setHours(0,0,0,0);
+        const yest=new Date(today); yest.setDate(today.getDate()-1);
+        const dStart=new Date(dt); dStart.setHours(0,0,0,0);
+        if(dStart.getTime()===today.getTime()) return "Today";
+        if(dStart.getTime()===yest.getTime()) return "Yesterday";
+        return dt.toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric",year:"numeric"});
+      }catch{ return ""; }
+    };
+    const shortTime=iso=>{ try{ return new Date(iso).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}); }catch{ return ""; } };
 
-    <script>
-        // ---------- Dynamic offsets ----------
-        const updateOffsets = () => {
-            const tb = document.querySelector('.topbar');
-            const nl = document.getElementById('navLoader');
-            const tbH = tb ? tb.offsetHeight : 0;
-            const nlH = (nl && nl.classList.contains('active')) ? nl.offsetHeight : 0;
-            document.documentElement.style.setProperty('--topbar-h', tbH + 'px');
-            document.documentElement.style.setProperty('--navloader-h', nlH + 'px');
-        };
-        window.addEventListener('load', updateOffsets);
-        window.addEventListener('resize', updateOffsets);
-        new ResizeObserver(updateOffsets).observe(document.querySelector('.topbar'));
+    const avatarFor=(it)=>{
+      const url=(it.versionUrl||"")+""; 
+      if(url.includes("github.com/")){const u=url.split("/")[3]; if(u) return `https://github.com/${u}.png`;}
+      if(url.startsWith("https://nvd.nist.gov/")) return "./img/cve.png";
+      return "./img/default.png";
+    };
+    const showLoader=()=>{$("#navLoader").classList.add("active");updateOffsets();}, hideLoader=()=>{$("#navLoader").classList.remove("active");updateOffsets();};
+    const updateOffsets=()=>{const tb=document.querySelector('.topbar'),nl=$("#navLoader");document.documentElement.style.setProperty('--topbar-h',(tb?tb.offsetHeight:0)+"px");document.documentElement.style.setProperty('--navloader-h',(nl&&nl.classList.contains('active')?nl.offsetHeight:0)+"px");};
+    window.addEventListener('load',updateOffsets);window.addEventListener('resize',updateOffsets);new ResizeObserver(updateOffsets).observe(document.querySelector('.topbar'));
 
-        // ---------- Constants ----------
-        const API_BASE = "https://releasetrain.io/api/";
-        const GROUPS_BATCH = 6;
-        const REDDIT_LIMIT = 400; // retained (unused with new endpoint but harmless)
-        const MAX_VER_DESC = 260;
-        const TOP_TYPES = 10;
+    // ------- reddit helpers -------
+    const isUpdateRelatedBoolean = p => !!(p?.metadata?.labeled?.isUpdateRelated || p?.metadata?.predicted?.isUpdateRelated);
+    const getUpdateScore = p => (typeof p?.metadata?.predicted?.positiveScore==="number")?p.metadata.predicted.positiveScore:null;
+    const isRisk = p => isUpdateRelatedBoolean(p) || ((getUpdateScore(p)??-1) > 0.5);
+    const scoreBracket = p => {const s=getUpdateScore(p); return s!=null?` [${s.toFixed(4)}]`:"";};
 
-        // ---------- Helpers ----------
-        const $ = s => document.querySelector(s);
-        const $$ = s => Array.from(document.querySelectorAll(s));
-        const safe = (v, d = "") => v == null ? d : v;
-        const uniq = a => Array.from(new Set(a));
-        const norm = s => String(s || "").toLowerCase().trim();
-        const tokens = s => uniq(String(s || "").split(",").map(t => norm(t)).filter(Boolean));
+    // ------- API -------
+    const Api={
+      async versions(qCsv){ const q=qCsv?`?q=${encodeURIComponent(qCsv)}`:""; const url=`${API_BASE}v/${q}`;
+        const res=await fetch(url,{headers:{Accept:"application/json"}}); if(!res.ok) throw new Error(`${res.status} ${res.statusText} @ ${url}`);
+        const json=await res.json(); return json.versions||[]; },
+      async reddit(){ const url=`${API_BASE}reddit/query/positive`;
+        const res=await fetch(url,{headers:{Accept:"application/json"}}); if(!res.ok) throw new Error(`${res.status} ${res.statusText} @ ${url}`);
+        const json=await res.json(); const list=Array.isArray(json)?json:(json.data||json.posts||json.results||[]);
+        return list.map(p=>({ redditId:p.redditId||p._id||p.id, title:p.title, subreddit:p.subreddit, url:p.url,
+                              created_utc:p.created_utc||p.createdAt||p.updatedAt, num_comments:p.num_comments, score:p.score, metadata:p.metadata })); }
+    };
 
-        const fmtDateToken = (yyyymmdd) => {
-            if (!/^\d{8}$/.test(yyyymmdd)) return yyyymmdd || "Unknown";
-            const y = +yyyymmdd.slice(0, 4), m = +yyyymmdd.slice(4, 6) - 1, d = +yyyymmdd.slice(6, 8);
-            const dt = new Date(y, m, d);
-            const today = new Date(), yest = new Date(); yest.setDate(today.getDate() - 1);
-            if (dt.toDateString() === today.toDateString()) return "Today";
-            if (dt.toDateString() === yest.toDateString()) return "Yesterday";
-            return dt.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" });
-        };
-        const shortTime = (iso) => { try { return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); } catch { return ""; } };
-        const truncate = (str, n = MAX_VER_DESC) => (str && str.length > n) ? (str.slice(0, n - 1) + "…") : (str || "");
-        const avatarFor = (item) => {
-            const url = (item.versionUrl || "") + "";
-            if (url.includes("github.com/")) { const user = url.split("/")[3]; if (user) return `https://github.com/${user}.png`; }
-            if (url.startsWith("https://nvd.nist.gov/")) return "./img/cve.png";
-            return "./img/default.png";
-        };
+    // ------- state -------
+    const STATE={mode:"component",rawVersions:[],redditAll:[],redditBySub:new Map(),groupsFiltered:[],groupIndex:0,observer:null,loading:false,
+      filters:{components:[],toggles:new Set(["mode:component"])}};
 
-        // ---------- Reddit Risk helpers ----------
-        const isUpdateRelatedBoolean = (p) => {
-            const meta = p && p.metadata;
-            if (!meta) return false;
-            const labeled = meta.labeled && (meta.labeled.isUpdateRelated === true);
-            const predicted = meta.predicted && (meta.predicted.isUpdateRelated === true);
-            return !!(labeled || predicted);
-        };
-        const getUpdateScore = (p) => {
-            const s = p && p.metadata && p.metadata.predicted && p.metadata.predicted.positiveScore;
-            return (typeof s === "number" && isFinite(s)) ? s : null;
-        };
-        const isRisk = (p) => {
-            const score = getUpdateScore(p);
-            return isUpdateRelatedBoolean(p) || (score != null && score > 0.5);
-        };
-        const scoreBracket = (p) => {
-            const s = getUpdateScore(p);
-            return s != null ? ` [${s.toFixed(4)}]` : "";
-        };
+    // ------- reddit index / STRICT subreddit match -------
+    function buildRedditIndex(list){
+      STATE.redditBySub=new Map();
+      for(const p of list){
+        const k=norm(p.subreddit);
+        if(!k) continue;
+        if(!STATE.redditBySub.has(k)) STATE.redditBySub.set(k,[]);
+        STATE.redditBySub.get(k).push(p);
+      }
+      for(const arr of STATE.redditBySub.values()){
+        arr.sort((a,b)=> (+new Date(b.created_utc||0))-(+new Date(a.created_utc||0)) || (b.score||0)-(a.score||0) );
+      }
+    }
 
-        // ---------- Loader ----------
-        function showLoader() { $("#navLoader").classList.add("active"); updateOffsets(); }
-        function hideLoader() { $("#navLoader").classList.remove("active"); updateOffsets(); }
-
-        // ---------- API ----------
-        const Api = {
-            async versions(componentCsv) {
-                const q = componentCsv ? `?q=${encodeURIComponent(componentCsv)}` : "";
-                const url = `${API_BASE}v/${q}`;
-                const res = await fetch(url, { headers: { Accept: "application/json" } });
-                if (!res.ok) throw new Error(`${res.status} ${res.statusText} @ ${url}`);
-                const json = await res.json();
-                return json.versions || [];
-            },
-            // Use the "positive" endpoint (score > 0.5)
-            async reddit() {
-                const url = `${API_BASE}reddit/query/positive`;
-                const res = await fetch(url, { headers: { Accept: "application/json" } });
-                if (!res.ok) throw new Error(`${res.status} ${res.statusText} @ ${url}`);
-                const json = await res.json();
-                const list = Array.isArray(json) ? json : (json.data || json.posts || json.results || []);
-                return list.map(p => ({
-                    redditId: p.redditId || p._id || p.id,
-                    title: p.title,
-                    subreddit: p.subreddit,
-                    url: p.url,
-                    created_utc: p.created_utc || p.createdAt || p.updatedAt,
-                    num_comments: p.num_comments,
-                    score: p.score,
-                    metadata: p.metadata
-                }));
-            }
-        };
-
-        // ---------- State ----------
-        const STATE = {
-            mode: "versions",
-            rawVersions: [],
-            redditAll: [],
-            redditBySub: new Map(),
-            groupsFiltered: [],
-            groupIndex: 0,
-            observer: null,
-            loading: false,
-            filters: {
-                components: [],
-                toggles: new Set(), // 'major','minor','patch','cve','reddit','reddit-risk','type:<name>'
-            }
-        };
-
-        // ---------- Reddit index & matching ----------
-        function buildRedditIndex(list) {
-            STATE.redditBySub = new Map();
-            for (const p of list) {
-                const key = norm(p.subreddit);
-                if (!key) continue;
-                if (!STATE.redditBySub.has(key)) STATE.redditBySub.set(key, []);
-                STATE.redditBySub.get(key).push(p);
-            }
-            for (const arr of STATE.redditBySub.values()) {
-                arr.sort((a, b) => {
-                    const da = +new Date(a.created_utc || 0), db = +new Date(b.created_utc || 0);
-                    if (db !== da) return db - da;
-                    return (b.score || 0) - (a.score || 0);
-                });
-            }
+    // STRICT: ONLY subreddit === versionProductName (normalized)
+    function redditMatchesForVersionBase(v, limit = 6, onlyRisks = false) {
+      const name = norm(safe(v.versionProductName, ""));
+      if (!name) return [];
+      let pool = [];
+      const arr = STATE.redditBySub.get(name);
+      if (arr && arr.length) {
+        for (const p of arr) {
+          pool.push(p);
+          if (pool.length >= limit) break;
         }
+      }
+      if (onlyRisks) pool = pool.filter(isRisk);
+      return pool;
+    }
 
-        function redditMatchesForVersionBase(v, limit = 6, onlyRisks = false) {
-            const keysRaw = uniq([
-                safe(v.versionProductName, ""),
-                safe(v.versionProductBrand, ""),
-                ...(Array.isArray(v.versionSearchTags) ? v.versionSearchTags : []),
-                ...(v.classification && Array.isArray(v.classification.componentType) ? v.classification.componentType : [])
-            ]).filter(Boolean);
+    // ------- grouping by component -------
+    function groupByComponent(list){
+      const map=new Map();
+      for(const v of list){
+        const key=`${norm(v.versionProductBrand||"")}|${norm(v.versionProductName||"")}` || "unknown";
+        if(!map.has(key)) map.set(key,{ key, brand:v.versionProductBrand||"", name:v.versionProductName||"", items:[] });
+        map.get(key).items.push(v);
+      }
+      const arr=Array.from(map.values());
+      // newest activity per component first
+      arr.forEach(g=>g.items.sort((a,b)=>(+new Date(b.versionTimestampLastUpdate||b.versionTimestamp||0))-(+new Date(a.versionTimestampLastUpdate||a.versionTimestamp||0))));
+      arr.sort((a,b)=> (+new Date(b.items[0]?.versionTimestampLastUpdate||b.items[0]?.versionTimestamp||0)) - (+new Date(a.items[0]?.versionTimestampLastUpdate||a.items[0]?.versionTimestamp||0)) );
+      return arr;
+    }
 
-            const keys = keysRaw.map(norm).filter(k => k.length >= 3);
-            let pool = [];
-            const seen = new Set();
+    // ------- aggregates / filters -------
+    function computeAggregates(list){
+      let major=0,minor=0,patch=0,cve=0,reddit=0,redditRisk=0,uniqComps=new Set(),typeCounts=new Map();
+      for(const it of list){
+        const ch=norm(it.versionReleaseChannel);
+        if(ch==="major") major++; else if(ch==="minor") minor++; else if(ch==="patch") patch++;
+        if(it.isCve) cve++;
+        const allR=redditMatchesForVersionBase(it,6,false), riskR=redditMatchesForVersionBase(it,6,true);
+        if(allR.length) reddit++; if(riskR.length) redditRisk++;
+        uniqComps.add(`${norm(it.versionProductBrand)}|${norm(it.versionProductName)}`);
+        for(const t of (it.classification?.componentType||[])){ if(!t||t==="UNKNOWN") continue; const k=String(t).toLowerCase(); typeCounts.set(k,(typeCounts.get(k)||0)+1); }
+      }
+      return {major,minor,patch,cve,reddit,redditRisk,uniq:uniqComps.size,typeCounts};
+    }
+    function paintFixedCounts(a){ $("#btn-major").textContent=`(${a.major})`; $("#btn-minor").textContent=`(${a.minor})`; $("#btn-patch").textContent=`(${a.patch})`;
+      $("#btn-cve").textContent=`(${a.cve})`; $("#btn-reddit").textContent=`(${a.reddit})`; $("#btn-reddit-risk").textContent=`(${a.redditRisk})`; $("#kpi-uniq").textContent=a.uniq; }
+    function buildTypeButtons(typeCounts){
+      const host=$("#typeToggles"); host.innerHTML="";
+      const entries=Array.from(typeCounts.entries()).sort((a,b)=>b[1]-a[1]).slice(0,TOP_TYPES);
+      if(!entries.length){ host.innerHTML=`<button class="toggle disabled" type="button" aria-disabled="true">No types</button>`; return; }
+      for(const [type,count] of entries){
+        const btn=document.createElement("button"); btn.className="toggle"; btn.type="button"; btn.dataset.key=`type:${type}`;
+        btn.setAttribute("aria-pressed", STATE.filters.toggles.has(`type:${type}`) ? "true" : "false");
+        btn.innerHTML=`${type} <span class="count">(${count})</span>`;
+        btn.addEventListener("click",()=>{ const key=btn.dataset.key; const on=btn.getAttribute("aria-pressed")==="true";
+          btn.setAttribute("aria-pressed",on?"false":"true"); if(on) STATE.filters.toggles.delete(key); else STATE.filters.toggles.add(key); applyFilters(); });
+        host.appendChild(btn);
+      }
+    }
+    function matchesToggles(v,rc,rrc){
+      const set=STATE.filters.toggles, channel=norm(v.versionReleaseChannel);
+      const compTypes=(v.classification?.componentType||[]).map(norm), isCve=!!v.isCve, hasReddit=rc>0, hasRisk=rrc>0;
+      const truth={major:channel==="major",minor:channel==="minor",patch:channel==="patch",cve:isCve,reddit:hasReddit,'reddit-risk':hasRisk};
+      for(const k of set){
+        if(k.startsWith("type:")){ if(!compTypes.includes(k.slice(5))) return false; }
+        else if(k==="mode:component"||k==="mode:date"){ /* ignore */ }
+        else if(!truth[k]) return false;
+      }
+      return true;
+    }
 
-            // subreddit exact matches
-            for (const k of keys) {
-                const arr = STATE.redditBySub.get(k);
-                if (arr) {
-                    for (const p of arr) {
-                        const id = p.redditId || p._id || p.id;
-                        if (seen.has(id)) continue;
-                        pool.push(p); seen.add(id);
-                        if (pool.length >= limit) break;
-                    }
-                }
-                if (pool.length >= limit) break;
-            }
+    function applyFilters(){
+      const comps=STATE.filters.components;
+      const candidates=STATE.rawVersions.filter(v=>{
+        if(!comps.length) return true;
+        const name=norm(v.versionProductName), brand=norm(v.versionProductBrand);
+        const tags=(Array.isArray(v.versionSearchTags)?v.versionSearchTags.join(","):"").toLowerCase();
+        return comps.some(t=>name.includes(t)||brand.includes(t)||tags.includes(t));
+      });
+      const ag=computeAggregates(candidates); paintFixedCounts(ag); buildTypeButtons(ag.typeCounts);
 
-            // title fallback
-            if (pool.length < limit) {
-                for (const p of STATE.redditAll) {
-                    const id = p.redditId || p._id || p.id;
-                    if (seen.has(id)) continue;
-                    const title = (p.title || "").toLowerCase();
-                    if (keys.some(k => title.includes(k))) {
-                        pool.push(p); seen.add(id);
-                        if (pool.length >= limit) break;
-                    }
-                }
-            }
+      const filtered=candidates.filter(v=>{ const r=redditMatchesForVersionBase(v,6,false); const rr=redditMatchesForVersionBase(v,6,true); return matchesToggles(v,r.length,rr.length); });
 
-            if (onlyRisks) {
-                pool = pool.filter(isRisk);
-            }
-            return pool;
+      $("#kpi-reddit").textContent=STATE.redditAll.length;
+      if(filtered.length){
+        const getMs=v=>+new Date(v.versionTimestampLastUpdate||v.versionTimestamp||0);
+        const min=new Date(Math.min(...filtered.map(getMs))), max=new Date(Math.max(...filtered.map(getMs)));
+        $("#kpi-range").innerHTML=`Date Range: <em>${min.toLocaleDateString()} – ${max.toLocaleDateString()}</em>`;
+      } else { $("#kpi-range").innerHTML=`Date Range: <em>—</em>`; }
+
+      const wantComponent=STATE.filters.toggles.has("mode:component");
+      STATE.mode=wantComponent?"component":"versions";
+      STATE.groupsFiltered=wantComponent?groupByComponent(filtered):groupVersionsByDate(filtered);
+      $("#feed").innerHTML=""; STATE.groupIndex=0; $("#kpi-page").textContent=wantComponent?STATE.groupsFiltered.length:filtered.length;
+      $("#sentinel").textContent=STATE.groupsFiltered.length?"Loading more…":"No results"; appendNextGroups();
+      $("#status").textContent=wantComponent?`Grouped by component (${STATE.groupsFiltered.length})`:`Loaded ${filtered.length} items`;
+    }
+
+    // ------- rendering helpers -------
+    const chip=(t,k)=>`<span class="chip ${k||""}">${t}</span>`;
+
+    function renderGroupNode(group){ // date mode (per-date bucket)
+      const det=document.createElement("details"); det.className="feedGroup"; det.open = document.querySelectorAll(".feedGroup").length===0;
+      const sum=document.createElement("summary"); sum.innerHTML=`${group.date} <span class="meta">(${group.items.length} updates)</span>`; det.appendChild(sum);
+      const wrap=document.createElement("div"); wrap.className="updates";
+      group.items
+        .slice()
+        .sort((a,b)=>(+new Date(b.versionTimestampLastUpdate||b.versionTimestamp||0))-(+new Date(a.versionTimestampLastUpdate||a.versionTimestamp||0)))
+        .forEach(it=>wrap.appendChild(renderVersionItem(it)));
+      det.appendChild(wrap); return det;
+    }
+
+    function renderVersionItem(it){ // used in date mode rows
+      const ms=+new Date(it.versionTimestampLastUpdate||it.versionTimestamp||0);
+      const row=document.createElement("div"); row.className="li"+(it.isCve?" cve":"");
+
+      // date (left)
+      const dcol=document.createElement("div"); dcol.className="datecol";
+      dcol.innerHTML = `<div class="day">${dayLabelFromMillis(ms)}</div><div class="time">${shortTime(ms)}</div>`;
+      row.appendChild(dcol);
+
+      // avatar
+      const img=document.createElement("img"); img.className="avatar"; img.alt=safe(it.versionProductName,"").slice(0,40); img.src=avatarFor(it); row.appendChild(img);
+
+      // body
+      const body=document.createElement("div");
+      const title=document.createElement("div"); title.className="titleRow";
+
+      // chips FIRST
+      const chips=document.createElement("div"); chips.className="chips";
+      if(it.isCve){
+        chips.insertAdjacentHTML("beforeend", chip("CVE","bad"));
+        if(it._id) chips.insertAdjacentHTML("beforeend", `<span class="chip link"><a href="https://releasetrain.io/api/v/${it._id}" target="_blank" rel="noopener">api</a></span>`);
+      } else {
+        const ch=(it.versionReleaseChannel||"other").toLowerCase();
+        const color=ch==="major"?"ok":ch==="patch"?"warn":ch==="minor"?"":"";
+        chips.insertAdjacentHTML("beforeend", chip(ch,color));
+      }
+      title.appendChild(chips);
+
+      // link
+      const best=(it.versionUrl?.startsWith("http"))?it.versionUrl:((it.versionReleaseNotes?.startsWith("http"))?it.versionReleaseNotes:"#");
+      const a=document.createElement("a"); a.href=best; a.target="_blank"; a.rel="noopener"; a.textContent=`${safe(it.versionProductName,"")} ${it.versionNumber||""}`; title.appendChild(a);
+
+      body.appendChild(title);
+      // optional blurb
+      const descText = truncate(safe(it.versionReleaseNotes,"")) || safe(it.versionReleaseComments,"");
+      if(descText){ const d=document.createElement("div"); d.className="meta"; d.style.opacity=".9"; d.innerHTML=descText; body.appendChild(d); }
+
+      row.appendChild(body);
+      return row;
+    }
+
+    // ------- COMPONENT MODE: timeline with date on the left, newest first -------
+    function renderComponentNode(group){
+      const onlyRisks=STATE.filters.toggles.has("reddit-risk");
+      const seen=new Set(); let rUnion=[];
+      for(const v of group.items){
+        for(const p of redditMatchesForVersionBase(v,REDDIT_LIMIT,onlyRisks)){
+          const id=p.redditId||p._id||p.id; if(seen.has(id)) continue; seen.add(id); rUnion.push(p);
         }
-
-        function redditMatchesForVersion(v, limit = 6) {
-            const onlyRisks = STATE.filters.toggles.has('reddit-risk');
-            return redditMatchesForVersionBase(v, limit, onlyRisks);
-        }
-
-        // ---------- Unique Reddit counts across visible versions ----------
-        function uniqueRedditCounts(versions) {
-            const seenAll = new Set();
-            const seenRisk = new Set();
-            for (const v of versions) {
-                for (const p of redditMatchesForVersionBase(v, 6, false)) {
-                    seenAll.add(p.redditId || p._id || p.id);
-                }
-                for (const p of redditMatchesForVersionBase(v, 6, true)) {
-                    seenRisk.add(p.redditId || p._id || p.id);
-                }
-            }
-            return { redditUnique: seenAll.size, redditRiskUnique: seenRisk.size };
-        }
-
-        // ---------- Risk label from title ----------
-        function redditRiskClass(title = "") {
-            const t = String(title).toLowerCase();
-            const BAD = [/cve-?\d{4}-\d+/, "0day", "zero-day", "zeroday", "rce", "remote code", "exploit", "breach", "ransomware", "data leak", "privilege escalation", "arbitrary code", "critical"];
-            const WARN = ["outage", "downtime", "incident", "vulnerability", "csrf", "xss", "dos", "ddos", "leak", "security"];
-            if (BAD.some(k => k instanceof RegExp ? k.test(t) : t.includes(k))) return "bad";
-            if (WARN.some(k => t.includes(k))) return "warn";
-            return null;
-        }
-
-        // ---------- Grouping: versions ----------
-        function groupVersionsByDate(list) {
-            const map = new Map();
-            for (const v of list) {
-                const d = String(safe(v.versionReleaseDate, "")).slice(0, 8);
-                if (!d) continue;
-                const k = fmtDateToken(d);
-                if (!map.has(k)) map.set(k, []);
-                map.get(k).push(v);
-            }
-            const ordered = Array.from(map.keys()).sort((a, b) => {
-                if (a === "Today") return -1; if (b === "Today") return 1;
-                if (a === "Yesterday") return -1; if (b === "Yesterday") return 1;
-                return new Date(b) - new Date(a);
-            });
-            return ordered.map(k => {
-                const items = map.get(k).slice().sort((a, b) => {
-                    const da = +new Date(a.versionTimestampLastUpdate || a.versionTimestamp || 0);
-                    const db = +new Date(b.versionTimestampLastUpdate || b.versionTimestamp || 0);
-                    return db - da;
-                });
-                return { date: k, items };
-            });
-        }
-
-        // ---------- Grouping: reddit-only ----------
-        function filterRedditByComponents(all, compTokens) {
-            if (!compTokens.length) return all.slice();
-            return all.filter(p => {
-                const sub = norm(p.subreddit);
-                const title = (p.title || "").toLowerCase();
-                return compTokens.some(t => sub.includes(t) || title.includes(t));
-            });
-        }
-        function groupRedditBySub(list) {
-            const map = new Map();
-            for (const p of list) {
-                const key = "r/" + (norm(p.subreddit) || "unknown");
-                if (!map.has(key)) map.set(key, []);
-                map.get(key).push(p);
-            }
-            const keys = Array.from(map.keys()).sort((a, b) => map.get(b).length - map.get(a).length);
-            return keys.map(k => ({ subreddit: k, posts: map.get(k) }));
-        }
-
-        // ---------- Aggregates + dynamic types ----------
-        function computeAggregates(list) {
-            let major = 0, minor = 0, patch = 0, cve = 0, reddit = 0, redditRisk = 0;
-            let uniqComps = new Set();
-            const typeCounts = new Map();
-
-            for (const it of list) {
-                const ch = norm(it.versionReleaseChannel);
-                if (ch === "major") major++;
-                else if (ch === "minor") minor++;
-                else if (ch === "patch") patch++;
-                if (it.isCve) cve++;
-
-                const allMatches = redditMatchesForVersionBase(it, 6, false);
-                const riskMatches = redditMatchesForVersionBase(it, 6, true);
-                if (allMatches.length > 0) reddit++;
-                if (riskMatches.length > 0) redditRisk++;
-
-                uniqComps.add(norm(it.versionProductName));
-
-                const types = (it.classification && Array.isArray(it.classification.componentType) ? it.classification.componentType : []);
-                for (const t of types) {
-                    if (!t || t === "UNKNOWN") continue;
-                    const key = String(t).toLowerCase();
-                    typeCounts.set(key, (typeCounts.get(key) || 0) + 1);
-                }
-            }
-            return { major, minor, patch, cve, reddit, redditRisk, uniq: uniqComps.size, typeCounts };
-        }
-
-        function paintFixedCounts(ag) {
-            $("#btn-major").textContent = `(${ag.major})`;
-            $("#btn-minor").textContent = `(${ag.minor})`;
-            $("#btn-patch").textContent = `(${ag.patch})`;
-            $("#btn-cve").textContent = `(${ag.cve})`;
-            $("#btn-reddit").textContent = `(${ag.reddit})`;
-            $("#btn-reddit-risk").textContent = `(${ag.redditRisk})`;
-            $("#kpi-uniq").textContent = ag.uniq;
-        }
-
-        function buildTypeButtons(typeCounts) {
-            const host = $("#typeToggles");
-            host.innerHTML = "";
-            const entries = Array.from(typeCounts.entries())
-                .sort((a, b) => b[1] - a[1]).slice(0, TOP_TYPES);
-
-            if (entries.length === 0) {
-                host.innerHTML = `<button class="toggle disabled" type="button" aria-disabled="true">No types</button>`;
-                return;
-            }
-            for (const [type, count] of entries) {
-                const btn = document.createElement("button");
-                btn.className = "toggle"; btn.type = "button";
-                btn.dataset.key = `type:${type}`;
-                btn.setAttribute("aria-pressed", STATE.filters.toggles.has(`type:${type}`) ? "true" : "false");
-                btn.innerHTML = `${type} <span class="count">(${count})</span>`;
-                btn.addEventListener("click", () => {
-                    const key = btn.dataset.key;
-                    const pressed = btn.getAttribute("aria-pressed") === "true";
-                    btn.setAttribute("aria-pressed", pressed ? "false" : "true");
-                    if (pressed) STATE.filters.toggles.delete(key);
-                    else STATE.filters.toggles.add(key);
-                    applyFilters();
-                });
-                host.appendChild(btn);
-            }
-        }
-
-        // ---------- Filtering (versions mode) ----------
-        function matchesToggles(v, redditCount, redditRiskCount) {
-            const set = STATE.filters.toggles;
-            if (set.size === 0) return true;
-
-            const channel = norm(v.versionReleaseChannel);
-            const compTypes = (v.classification && Array.isArray(v.classification.componentType)
-                ? v.classification.componentType.map(norm)
-                : []);
-            const isCve = !!v.isCve;
-            const hasReddit = redditCount > 0;
-            const hasRedditRisk = redditRiskCount > 0;
-
-            const truth = {
-                major: channel === "major",
-                minor: channel === "minor",
-                patch: channel === "patch",
-                cve: isCve,
-                reddit: hasReddit,
-                'reddit-risk': hasRedditRisk
-            };
-
-            for (const key of set) {
-                if (key.startsWith("type:")) {
-                    const typeName = key.slice(5);
-                    if (!compTypes.includes(typeName)) return false;
-                } else {
-                    if (!truth[key]) return false;
-                }
-            }
-            return true;
-        }
-
-        function applyFilters() {
-            if (STATE.mode === "reddit-only") {
-                return applyRedditOnly();
-            }
-
-            const compTokens = STATE.filters.components;
-
-            const candidates = STATE.rawVersions.filter(v => {
-                if (!compTokens.length) return true;
-                const name = norm(v.versionProductName);
-                const brand = norm(v.versionProductBrand);
-                const tagStr = (Array.isArray(v.versionSearchTags) ? v.versionSearchTags.join(",") : "").toLowerCase();
-                return compTokens.some(t => name.includes(t) || brand.includes(t) || tagStr.includes(t));
-            });
-
-            // Base aggregates (per-version)
-            const ag = computeAggregates(candidates);
-
-            // 🔸 Override Reddit counts with UNIQUE post counts across all visible versions
-            const { redditUnique, redditRiskUnique } = uniqueRedditCounts(candidates);
-            ag.reddit = redditUnique;
-            ag.redditRisk = redditRiskUnique;
-
-            paintFixedCounts(ag);
-            buildTypeButtons(ag.typeCounts);
-
-            const filtered = candidates.filter(v => {
-                const matches = redditMatchesForVersionBase(v, 6, false);
-                const riskMatches = redditMatchesForVersionBase(v, 6, true);
-                return matchesToggles(v, matches.length, riskMatches.length);
-            });
-
-            STATE.groupsFiltered = groupVersionsByDate(filtered);
-            STATE.groupIndex = 0;
-
-            $("#kpi-page").textContent = filtered.length;
-            $("#kpi-reddit").textContent = STATE.redditAll.length;
-            if (filtered.length) {
-                const dates = filtered.map(v => v.versionReleaseDate).filter(Boolean).sort();
-                $("#kpi-range").innerHTML = `Date Range: <em>${fmtDateToken(dates[0])} – ${fmtDateToken(dates[dates.length - 1])}</em>`;
-            } else {
-                $("#kpi-range").innerHTML = `Date Range: <em>—</em>`;
-            }
-
-            $("#feed").innerHTML = "";
-            $("#sentinel").textContent = STATE.groupsFiltered.length ? "Loading more…" : "No results";
-            appendNextGroups();
-        }
-
-        // ---------- Rendering (versions) ----------
-        function chip(text, kind) {
-            const cls = kind === 'bad' ? 'chip bad' : kind === 'warn' ? 'chip warn' : kind === 'ok' ? 'chip ok' : 'chip';
-            return `<span class="${cls}">${text}</span>`;
-        }
-
-        function renderRedditBlock(matches) {
-            if (!matches || !matches.length) return "";
-            const items = matches.slice(0, 3).map(p => {
-                const when = p.created_utc ? new Date(p.created_utc).toLocaleString() : "";
-                const rclass = redditRiskClass(p.title);
-                const riskChip = rclass ? ` ${chip("⚠️", rclass)}` : "";
-                const warnChip = isRisk(p) ? ` ${chip("warn", "warn")}${scoreBracket(p)}` : "";
-                return `
-          <div class="redditItem">
-            <a href="${p.url}" target="_blank" rel="noopener">${p.title}</a>
-            <div class="redditMeta">r/${p.subreddit} • ▲ ${p.score || 0} • 💬 ${p.num_comments || 0} • ${when}${riskChip}${warnChip}</div>
-          </div>`;
-            }).join("");
-            return `
-        <div class="redditWrap" role="region" aria-label="Related Reddit discussions">
-          <div class="redditHead">Reddit matches</div>
-          <div class="redditList">${items}</div>
-        </div>`;
-        }
-
-        function renderGroupNode(group) {
-            const det = document.createElement("details");
-            det.className = "feedGroup";
-            det.open = document.querySelectorAll(".feedGroup").length === 0;
-
-            const sum = document.createElement("summary");
-            sum.innerHTML = `${group.date} <span class="meta">(${group.items.length} updates)</span>`;
-            det.appendChild(sum);
-
-            const wrap = document.createElement("div");
-            wrap.className = "updates";
-
-            group.items.forEach(it => {
-                const row = document.createElement("article");
-                row.className = "item";
-
-                const img = document.createElement("img");
-                img.className = "avatar";
-                img.alt = (safe(it.versionProductName, "")).slice(0, 40);
-                img.src = avatarFor(it);
-                row.appendChild(img);
-
-                const body = document.createElement("div");
-                const title = document.createElement("div");
-                title.className = "titleRow";
-
-                const bestUrl = (it.versionUrl && it.versionUrl.startsWith("http")) ? it.versionUrl
-                    : (it.versionReleaseNotes && it.versionReleaseNotes.startsWith("http")) ? it.versionReleaseNotes
-                        : "#";
-                const link = document.createElement("a");
-                link.href = bestUrl; link.target = "_blank"; link.rel = "noopener";
-                link.textContent = `${safe(it.versionProductName, "")}${it.versionNumber ? (" " + it.versionNumber) : ""}`;
-                title.appendChild(link);
-
-                const ts = safe(it.versionTimestampLastUpdate, "");
-                if (ts) {
-                    const t = document.createElement("span");
-                    t.className = "meta";
-                    t.textContent = `(${shortTime(ts)})`;
-                    title.appendChild(t);
-                }
-                body.appendChild(title);
-
-                const chips = document.createElement("div");
-                chips.className = "chips";
-                const ch = (safe(it.versionReleaseChannel, "other") + "").toLowerCase();
-                const color = ch === "major" ? "ok" : ch === "patch" ? "warn" : ch === "minor" ? "" : "bad";
-                chips.insertAdjacentHTML("beforeend", chip(ch || "other", color));
-                if (it.isCve) chips.insertAdjacentHTML("beforeend", chip("cve", "bad"));
-                if (it.versionProductBrand) chips.insertAdjacentHTML("beforeend", chip(String(it.versionProductBrand).toLowerCase(), ""));
-                if (it.versionId || it._id) chips.insertAdjacentHTML("beforeend", `<span class="chip link"><a href="https://releasetrain.io/api/v/${it._id}" target="_blank" rel="noopener">id:${String(it._id || "").slice(-8)}</a></span>`);
-                const compTypes = (it.classification && Array.isArray(it.classification.componentType) ? it.classification.componentType : []);
-                compTypes.filter(v => v && v !== "UNKNOWN").forEach(v => chips.insertAdjacentHTML("beforeend", chip(String(v).toLowerCase(), "")));
-                const secTypes = (it.classification && Array.isArray(it.classification.securityType) ? it.classification.securityType : []);
-                secTypes.filter(v => v && v !== "UNKNOWN").forEach(v => chips.insertAdjacentHTML("beforeend", chip(String(v).toLowerCase(), "bad")));
-                const brkTypes = (it.classification && Array.isArray(it.classification.breakingType) ? it.classification.breakingType : []);
-                brkTypes.filter(v => v && v !== "UNKNOWN").forEach(v => chips.insertAdjacentHTML("beforeend", chip(String(v).toLowerCase(), "warn")));
-                if (Array.isArray(it.versionSearchTags) && it.versionSearchTags.length) {
-                    it.versionSearchTags.slice(0, 6).forEach(t => {
-                        chips.insertAdjacentHTML("beforeend", chip(String(t).toLowerCase(), ""));
-                    });
-                }
-                body.appendChild(chips);
-
-                const descText = truncate(safe(it.versionReleaseNotes, "")) || safe(it.versionReleaseComments, "");
-                if (descText) {
-                    const desc = document.createElement("div");
-                    desc.className = "desc";
-                    const more = (bestUrl && bestUrl !== "#") ? ` <a href="${bestUrl}" target="_blank" rel="noopener">read more ↗</a>` : "";
-                    desc.innerHTML = `${descText}${more}`;
-                    body.appendChild(desc);
-                }
-
-                // Reddit matches & risk highlighting
-                const matches = redditMatchesForVersion(it);
-                const riskMatches = redditMatchesForVersionBase(it, 6, true);
-                const hasRisk = riskMatches.length > 0;
-
-                if (hasRisk) {
-                    row.classList.add("riskSection");
-                    const warn = document.createElement("span");
-                    warn.textContent = "⚠️";
-                    warn.setAttribute("title", "Reddit risk detected (isUpdateRelated or score>0.5)");
-                    title.insertBefore(warn, title.firstChild);
-                }
-
-                const redditHTML = renderRedditBlock(matches);
-                if (redditHTML) body.insertAdjacentHTML("beforeend", redditHTML);
-
-                row.appendChild(body);
-                wrap.appendChild(row);
-            });
-
-            det.appendChild(wrap);
-            return det;
-        }
-
-        function appendNextGroups() {
-            if (STATE.loading) return;
-            if (STATE.groupIndex >= STATE.groupsFiltered.length) {
-                $("#sentinel").textContent = "End of results";
-                return;
-            }
-            STATE.loading = true;
-
-            const feed = $("#feed");
-            const end = Math.min(STATE.groupIndex + GROUPS_BATCH, STATE.groupsFiltered.length);
-
-            if (STATE.mode === "versions") {
-                for (let i = STATE.groupIndex; i < end; i++) {
-                    feed.appendChild(renderGroupNode(STATE.groupsFiltered[i]));
-                }
-            } else {
-                for (let i = STATE.groupIndex; i < end; i++) {
-                    feed.appendChild(renderRedditGroupNode(STATE.groupsFiltered[i]));
-                }
-            }
-
-            STATE.groupIndex = end;
-            STATE.loading = false;
-        }
-
-        function resetFeed() {
-            $("#feed").innerHTML = "";
-            $("#sentinel").textContent = "Loading more…";
-            STATE.groupIndex = 0;
-        }
-
-        function setupObserver() {
-            if (STATE.observer) STATE.observer.disconnect();
-            STATE.observer = new IntersectionObserver((entries) => {
-                const e = entries[0];
-                if (e && e.isIntersecting) appendNextGroups();
-            }, { rootMargin: "400px 0px" });
-            STATE.observer.observe($("#sentinel"));
-        }
-
-        // ---------- Reddit-only rendering ----------
-        function renderRedditGroupNode(group) {
-            const det = document.createElement("details");
-            det.className = "feedGroup";
-            det.open = document.querySelectorAll(".feedGroup").length === 0;
-
-            const sum = document.createElement("summary");
-            sum.innerHTML = `${group.subreddit} <span class="meta">(${group.posts.length} posts)</span>`;
-            det.appendChild(sum);
-
-            const wrap = document.createElement("div");
-            wrap.className = "updates";
-
-            group.posts.slice(0, 30).forEach(p => {
-                const row = document.createElement("article");
-                row.className = "item";
-
-                const avatar = document.createElement("div");
-                avatar.style.width = "22px"; avatar.style.height = "22px";
-                avatar.style.borderRadius = "50%"; avatar.style.border = `1px solid var(--line)`;
-                avatar.style.background = "var(--reddit)";
-                row.appendChild(avatar);
-
-                const body = document.createElement("div");
-
-                const title = document.createElement("div");
-                title.className = "titleRow";
-                const link = document.createElement("a");
-                link.href = p.url; link.target = "_blank"; link.rel = "noopener";
-                link.textContent = p.title;
-                title.appendChild(link);
-
-                const meta = document.createElement("span");
-                meta.className = "meta";
-                const when = p.created_utc ? new Date(p.created_utc).toLocaleString() : "";
-                const rclass = redditRiskClass(p.title);
-                const riskChip = rclass ? ` ${chip("⚠️", rclass)}` : "";
-                const warnChip = isRisk(p) ? ` ${chip("warn", "warn")}${scoreBracket(p)}` : "";
-                meta.innerHTML = `r/${p.subreddit} • ▲ ${p.score || 0} • 💬 ${p.num_comments || 0} • ${when}${riskChip}${warnChip}`;
-                title.appendChild(meta);
-
-                body.appendChild(title);
-                row.appendChild(avatar);
-                row.appendChild(body);
-                wrap.appendChild(row);
-            });
-
-            det.appendChild(wrap);
-            return det;
-        }
-
-        function applyRedditOnly() {
-            const comps = STATE.filters.components;
-            let filtered = filterRedditByComponents(STATE.redditAll, comps);
-            if (STATE.filters.toggles.has('reddit-risk')) {
-                filtered = filtered.filter(isRisk);
-            }
-
-            $("#kpi-page").textContent = 0;
-            $("#kpi-range").innerHTML = `Date Range: <em>—</em>`;
-            $("#kpi-uniq").textContent = 0;
-            $("#kpi-reddit").textContent = filtered.length;
-
-            $("#status").textContent = filtered.length
-                ? `No versions found — showing Reddit posts (${filtered.length})`
-                : `No versions found — no matching Reddit posts`;
-
-            STATE.groupsFiltered = groupRedditBySub(filtered);
-            STATE.groupIndex = 0;
-
-            $("#feed").innerHTML = "";
-            $("#sentinel").textContent = STATE.groupsFiltered.length ? "Loading more…" : "No results";
-            appendNextGroups();
-        }
-
-        // ---------- Boot + Wiring ----------
-        async function boot() {
-            $("#status").textContent = "Loading…";
-            showLoader();
-            resetFeed();
-            try {
-                const url = new URL(location.href);
-                const compCsv = url.searchParams.get("q") || "";
-                $("#components").value = compCsv;
-                STATE.filters.components = tokens(compCsv);
-
-                const [versions, reddit] = await Promise.all([
-                    Api.versions(compCsv),
-                    Api.reddit().catch(() => [])
-                ]);
-
-                STATE.redditAll = reddit;
-                buildRedditIndex(reddit);
-                $("#kpi-reddit").textContent = reddit.length;
-
-                if ((versions || []).length === 0) {
-                    STATE.mode = "reddit-only";
-                    applyRedditOnly();
-                    $("#status").textContent = `Loaded Reddit (${reddit.length})`;
-                    hideLoader();
-                    return;
-                }
-
-                versions.sort((a, b) => {
-                    if (a.versionReleaseDate !== b.versionReleaseDate) {
-                        return String(b.versionReleaseDate).localeCompare(String(a.versionReleaseDate));
-                    }
-                    const da = +new Date(a.versionTimestampLastUpdate || a.versionTimestamp || 0);
-                    const db = +new Date(b.versionTimestampLastUpdate || b.versionTimestamp || 0);
-                    return db - da;
-                });
-
-                STATE.mode = "versions";
-                STATE.rawVersions = versions;
-
-                applyFilters();
-                $("#status").textContent = `Loaded ${versions.length} items`;
-            } catch (err) {
-                console.error(err);
-                $("#feed").innerHTML = `<div class="meta">Error: ${err.message}</div>`;
-                $("#status").textContent = "Failed to load (check network/CORS)";
-            } finally {
-                hideLoader();
-            }
-        }
-
-        $("#filterForm").addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const compCsv = $("#components").value.trim().replace(/\s+/g, '');
-            const u = new URL(location.href);
-            if (compCsv) u.searchParams.set("q", compCsv); else u.searchParams.delete("q");
-            history.replaceState({}, "", u.toString());
-
-            $("#status").textContent = "Filtering…";
-            showLoader();
-            try {
-                STATE.filters.components = tokens(compCsv);
-                const versions = await Api.versions(compCsv);
-
-                if ((versions || []).length === 0) {
-                    STATE.mode = "reddit-only";
-                    applyRedditOnly();
-                    return;
-                }
-
-                versions.sort((a, b) => {
-                    if (a.versionReleaseDate !== b.versionReleaseDate) {
-                        return String(b.versionReleaseDate).localeCompare(String(a.versionReleaseDate));
-                    }
-                    const da = +new Date(a.versionTimestampLastUpdate || a.versionTimestamp || 0);
-                    const db = +new Date(b.versionTimestampLastUpdate || b.versionTimestamp || 0);
-                    return db - da;
-                });
-
-                STATE.mode = "versions";
-                STATE.rawVersions = versions;
-
-                applyFilters();
-                $("#status").textContent = `Filtered (${versions.length})`;
-            } catch (err) {
-                console.error(err);
-                $("#status").textContent = "Filter failed";
-            } finally {
-                hideLoader();
-            }
+      }
+
+      const timeline=[];
+      for(const v of group.items){
+        timeline.push({
+          t:+new Date(v.versionTimestampLastUpdate||v.versionTimestamp||0),
+          kind:v.isCve?"cve":"update",
+          channel:(v.versionReleaseChannel||"other").toLowerCase(),
+          label:`${safe(v.versionProductName,"")} ${v.versionNumber||""}`,
+          url:(v.versionUrl?.startsWith("http"))?v.versionUrl:((v.versionReleaseNotes?.startsWith("http"))?v.versionReleaseNotes:"#"),
+          raw:v
         });
-
-        $("#clearBtn").addEventListener("click", () => {
-            $("#components").value = "";
-            STATE.filters.components = [];
-            const u = new URL(location.href);
-            u.searchParams.delete("q");
-            history.replaceState({}, "", u.toString());
-            STATE.filters.toggles.clear();
-            $$('#fixedToggles .toggle, #typeToggles .toggle').forEach(b => b.setAttribute('aria-pressed', 'false'));
-            boot();
+      }
+      for(const p of rUnion){
+        timeline.push({
+          t:+new Date(p.created_utc||0),
+          kind:"reddit",
+          channel:null,
+          label:p.title,
+          url:p.url,
+          raw:p
         });
+      }
 
-        $("#fixedToggles").addEventListener("click", (e) => {
-            const btn = e.target.closest(".toggle");
-            if (!btn || btn.classList.contains('disabled')) return;
-            const key = btn.dataset.key;
-            const pressed = btn.getAttribute("aria-pressed") === "true";
-            btn.setAttribute("aria-pressed", pressed ? "false" : "true");
-            if (pressed) STATE.filters.toggles.delete(key);
-            else STATE.filters.toggles.add(key);
-            applyFilters();
-        });
+      // NEWEST → OLDEST
+      timeline.sort((a,b)=>b.t - a.t);
 
-        setupObserver();
-        boot();
-    </script>
+      const det=document.createElement("details"); det.className="feedGroup"; det.open = document.querySelectorAll(".feedGroup").length===0;
+      const sum=document.createElement("summary");
+      sum.innerHTML = `${group.name}${group.brand ? " — " + group.brand : ""} <span class="meta">(${timeline.length} items)</span>`;
+      det.appendChild(sum);
+
+      const wrap=document.createElement("div"); wrap.className="updates";
+      const list=document.createElement("div"); list.className="list";
+
+      for(const it of timeline){
+        const li=document.createElement("div"); li.className="li"+(it.kind==="cve"?" cve":"");
+
+        // date (left)
+        const dcol=document.createElement("div"); dcol.className="datecol";
+        dcol.innerHTML = `<div class="day">${dayLabelFromMillis(it.t)}</div><div class="time">${shortTime(it.t)}</div>`;
+        li.appendChild(dcol);
+
+        // avatar / reddit dot
+        if(it.kind==="reddit"){
+          const av=document.createElement("div");
+          av.style.width="22px"; av.style.height="22px"; av.style.border=`1px solid var(--line)`;
+          av.style.borderRadius="50%"; av.style.background="var(--reddit)"; av.style.alignSelf="center";
+          li.appendChild(av);
+        }else{
+          const av=document.createElement("img"); av.className="avatar"; av.alt=group.name; av.src=avatarFor(it.raw); li.appendChild(av);
+        }
+
+        const body=document.createElement("div");
+        const title=document.createElement("div"); title.className="titleRow";
+
+        // chips FIRST
+        const chips=document.createElement("div"); chips.className="chips";
+        if(it.kind==="reddit"){
+          chips.insertAdjacentHTML("beforeend", chip("REDDIT","reddit"));
+        }else if(it.kind==="cve"){
+          chips.insertAdjacentHTML("beforeend", chip("CVE","bad"));
+          if(it.raw && it.raw._id){
+            chips.insertAdjacentHTML("beforeend", `<span class="chip link"><a href="https://releasetrain.io/api/v/${it.raw._id}" target="_blank" rel="noopener">api</a></span>`);
+          }
+        }else{
+          const ch=it.channel||"other"; const color=ch==="major"?"ok":ch==="patch"?"warn":ch==="minor"?"":"";
+          chips.insertAdjacentHTML("beforeend", chip(ch, color));
+        }
+        title.appendChild(chips);
+
+        // then the link
+        const a=document.createElement("a"); a.href=it.url||"#"; a.target="_blank"; a.rel="noopener"; a.textContent=it.label; title.appendChild(a);
+
+        // optional update blurb
+        if(it.kind!=="reddit"){
+          const descTxt = truncate(safe(it.raw.versionReleaseNotes,"")) || safe(it.raw.versionReleaseComments,"");
+          if(descTxt){
+            const d=document.createElement("div"); d.className="meta"; d.style.opacity=".9"; d.innerHTML=descTxt;
+            body.appendChild(d);
+          }
+        }
+
+        body.appendChild(title);
+        li.appendChild(body);
+        list.appendChild(li);
+      }
+
+      wrap.appendChild(list);
+      det.appendChild(wrap);
+      return det;
+    }
+
+    // ------- infinite scroll & date mode helpers -------
+    function appendNextGroups(){
+      if(STATE.loading) return;
+      if(STATE.groupIndex>=STATE.groupsFiltered.length){ $("#sentinel").textContent="End of results"; return; }
+      STATE.loading=true;
+      const feed=$("#feed"); const end=Math.min(STATE.groupIndex+GROUPS_BATCH, STATE.groupsFiltered.length);
+      if(STATE.mode==="component"){ for(let i=STATE.groupIndex;i<end;i++) feed.appendChild(renderComponentNode(STATE.groupsFiltered[i])); }
+      else { for(let i=STATE.groupIndex;i<end;i++) feed.appendChild(renderGroupNode(STATE.groupsFiltered[i])); }
+      STATE.groupIndex=end; STATE.loading=false;
+    }
+    function setupObserver(){ if(STATE.observer) STATE.observer.disconnect();
+      STATE.observer=new IntersectionObserver(es=>{const e=es[0]; if(e&&e.isIntersecting) appendNextGroups();},{rootMargin:"400px 0px"});
+      STATE.observer.observe($("#sentinel"));
+    }
+    function groupVersionsByDate(list){
+      const map=new Map();
+      for(const v of list){
+        const ms=+new Date(v.versionTimestampLastUpdate||v.versionTimestamp||0);
+        const label=dayLabelFromMillis(ms);
+        if(!map.has(label)) map.set(label,[]);
+        map.get(label).push(v);
+      }
+      const ordered=Array.from(map.entries())
+        .map(([label,items])=>({label,items, tMax: Math.max(...items.map(x=>+new Date(x.versionTimestampLastUpdate||x.versionTimestamp||0))) }))
+        .sort((a,b)=>b.tMax - a.tMax);
+      return ordered.map(x=>({date:x.label,items:x.items}));
+    }
+    function filterRedditByComponents(all, toks){ if(!toks.length) return all.slice(); return all.filter(p=> toks.some(t=>norm(p.subreddit).includes(t))); }
+    function groupRedditBySub(list){ const m=new Map(); for(const p of list){const k="r/"+(norm(p.subreddit)||"unknown"); if(!m.has(k)) m.set(k, []); m.get(k).push(p); }
+      const keys=Array.from(m.keys()).sort((a,b)=>m.get(b).length-m.get(a).length); return keys.map(k=>({subreddit:k,posts:m.get(k)})); }
+    function applyRedditOnly(){ const comps=STATE.filters.components; let f=filterRedditByComponents(STATE.redditAll,comps); if(STATE.filters.toggles.has('reddit-risk')) f=f.filter(isRisk);
+      $("#kpi-page").textContent=0; $("#kpi-range").innerHTML=`Date Range: <em>—</em>`; $("#kpi-uniq").textContent=0; $("#kpi-reddit").textContent=f.length;
+      $("#status").textContent = f.length?`No versions found — showing Reddit posts (${f.length})`:`No versions found — no matching Reddit posts`;
+      STATE.groupsFiltered=groupRedditBySub(f); STATE.groupIndex=0; $("#feed").innerHTML=""; $("#sentinel").textContent=STATE.groupsFiltered.length?"Loading more…":"No results"; appendNextGroups(); }
+
+    // ------- boot & events -------
+    async function boot(){
+      $("#status").textContent="Loading…"; showLoader(); $("#feed").innerHTML=""; STATE.groupIndex=0;
+      try{
+        const u=new URL(location.href); const compCsv=u.searchParams.get("q")||""; const mode=u.searchParams.get("mode");
+        $("#components").value=compCsv; STATE.filters.components=tokens(compCsv);
+        if(mode==="date"){ STATE.filters.toggles.delete("mode:component"); STATE.filters.toggles.add("mode:date"); $(`#fixedToggles .toggle[data-key="mode:component"]`).setAttribute("aria-pressed","false"); $(`#fixedToggles .toggle[data-key="mode:date"]`).setAttribute("aria-pressed","true"); }
+        const [vers, reddit]=await Promise.all([Api.versions(compCsv), Api.reddit().catch(()=>[])]);
+        STATE.redditAll=reddit; buildRedditIndex(reddit); $("#kpi-reddit").textContent=reddit.length;
+        if(!(vers||[]).length){ STATE.mode="reddit-only"; applyRedditOnly(); $("#status").textContent=`Loaded Reddit (${reddit.length})`; return; }
+        vers.sort((a,b)=>(+new Date(b.versionTimestampLastUpdate||b.versionTimestamp||0))-(+new Date(a.versionTimestampLastUpdate||a.versionTimestamp||0)));
+        STATE.rawVersions=vers; STATE.mode=STATE.filters.toggles.has("mode:component")?"component":"versions"; applyFilters();
+      }catch(e){ console.error(e); $("#feed").innerHTML=`<div class="meta">Error: ${e.message}</div>`; $("#status").textContent="Failed to load"; }
+      finally{ hideLoader(); }
+    }
+
+    $("#filterForm").addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      const compCsv=$("#components").value.trim().replace(/\s+/g,''); const u=new URL(location.href);
+      if(compCsv) u.searchParams.set("q",compCsv); else u.searchParams.delete("q"); history.replaceState({}, "", u.toString());
+      $("#status").textContent="Filtering…"; showLoader();
+      try{
+        STATE.filters.components=tokens(compCsv);
+        const vers=await Api.versions(compCsv);
+        if(!(vers||[]).length){ STATE.mode="reddit-only"; applyRedditOnly(); return; }
+        vers.sort((a,b)=>(+new Date(b.versionTimestampLastUpdate||b.versionTimestamp||0))-(+new Date(a.versionTimestampLastUpdate||a.versionTimestamp||0)));
+        STATE.rawVersions=vers; applyFilters(); $("#status").textContent=`Filtered (${vers.length})`;
+      }catch(e){ console.error(e); $("#status").textContent="Filter failed"; }
+      finally{ hideLoader(); }
+    });
+
+    $("#clearBtn").addEventListener("click", ()=>{ $("#components").value=""; STATE.filters.components=[]; const u=new URL(location.href); u.searchParams.delete("q"); u.searchParams.delete("mode"); history.replaceState({}, "", u.toString()); STATE.filters.toggles=new Set(["mode:component"]); $$('#fixedToggles .toggle, #typeToggles .toggle').forEach(b=>b.setAttribute('aria-pressed','false')); $(`#fixedToggles .toggle[data-key="mode:component"]`).setAttribute('aria-pressed','true'); boot(); });
+
+    $("#fixedToggles").addEventListener("click",(e)=>{
+      const btn=e.target.closest(".toggle"); if(!btn||btn.classList.contains("disabled")) return;
+      const key=btn.dataset.key; const on=btn.getAttribute("aria-pressed")==="true";
+      if(key==="mode:component"||key==="mode:date"){
+        $$('#fixedToggles .toggle[data-key="mode:component"], #fixedToggles .toggle[data-key="mode:date"]').forEach(b=>{b.setAttribute("aria-pressed","false"); STATE.filters.toggles.delete(b.dataset.key);});
+        btn.setAttribute("aria-pressed","true"); STATE.filters.toggles.add(key);
+        const u=new URL(location.href); if(key==="mode:date") u.searchParams.set("mode","date"); else u.searchParams.delete("mode"); history.replaceState({}, "", u.toString());
+      }else{
+        btn.setAttribute("aria-pressed", on?"false":"true"); if(on) STATE.filters.toggles.delete(key); else STATE.filters.toggles.add(key);
+      }
+      applyFilters();
+    });
+
+    setupObserver(); boot();
+  </script>
 </body>
-
 </html>
