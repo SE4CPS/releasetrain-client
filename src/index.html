@@ -64,7 +64,7 @@
     .updates{padding:6px 10px}
     .list{display:flex;flex-direction:column;gap:8px;margin:6px 0 2px}
 
-    /* ROW GRID — widened date column + larger gap to prevent any visual crowding */
+    /* ROW GRID */
     .li{
       display:grid;
       grid-template-columns: 128px 30px 1fr; /* date | icon | content */
@@ -76,24 +76,34 @@
     .li:last-child{border-bottom:none}
     .li.cve{background:var(--risk-bg);border:1px solid var(--risk-border);border-radius:10px;padding:8px}
 
-    /* DATE CELL — right aligned with some padding so text never touches the icon column */
+    /* DATE CELL */
     .datecol{
       color:var(--muted);
       font-size:12px;
       line-height:1.2;
       display:flex;
       flex-direction:column;
-      align-items:flex-end; /* right align */
+      align-items:flex-end;
       justify-content:center;
       white-space:nowrap;
-      padding-right:6px;   /* breathing room from the icon */
+      padding-right:6px;
     }
     .datecol .day{font-weight:800;color:var(--text)}
     .datecol .time{opacity:.9}
 
     /* ICONS */
     .avatar{width:22px;height:22px;border-radius:50%;border:1px solid var(--line);object-fit:cover;align-self:center}
-    .reddot{width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:var(--reddit);align-self:center;box-shadow:0 0 0 2px transparent}
+
+    /* Reddit image icon */
+    .redditIcon{
+      border-color: rgba(255,122,69,.45);
+      box-shadow: 0 0 0 3px rgba(255,122,69,.14) inset;
+      background: transparent;
+    }
+    .redditIcon.risky{
+      border-color: rgba(255,122,69,.7);
+      box-shadow: 0 0 0 3px rgba(255,122,69,.22) inset;
+    }
 
     .titleRow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
     .titleRow a{color:var(--link);text-decoration:none;font-weight:800}
@@ -113,7 +123,7 @@
 </head>
 <body>
   <div class="topbar">
-    <div class="brand">Releasetrain <b>v3.13.1</b></div>
+    <div class="brand">Releasetrain <b>v3.13.2</b></div>
     <div class="spacer"></div>
     <a class="gh-link" href="https://github.com/SE4CPS/releasetrain-client" target="_blank" rel="noopener">GitHub ↗</a>
 
@@ -249,7 +259,7 @@
 
     /* =================== State =================== */
     const STATE={mode:"component",rawVersions:[],redditAll:[],redditBySub:new Map(),groupsFiltered:[],groupIndex:0,observer:null,loading:false,
-      filters:{components:[],toggles:new Set()}}; // no mode toggles anymore
+      filters:{components:[],toggles:new Set()}}; // only filter toggles
 
     /* =================== Reddit index & strict matching =================== */
     function buildRedditIndex(list){
@@ -337,7 +347,7 @@
       const comps=STATE.filters.components;
       const candidates=STATE.rawVersions.filter(v=>{
         const ts = +new Date(v.versionTimestampLastUpdate || v.versionTimestamp || 0);
-        if (!isFinite(ts) || ts < SIX_MONTHS_AGO) return false; // 6-month window
+        if (!isFinite(ts) || ts < SIX_MONTHS_AGO) return false; // last 6 months
         if(!comps.length) return true;
         const name=norm(v.versionProductName);
         const tags=(Array.isArray(v.versionSearchTags)?v.versionSearchTags.join(","):"").toLowerCase();
@@ -421,9 +431,14 @@
         dcol.innerHTML = `<div class="day">${dayLabelFromMillis(it.t)}</div><div class="time">${shortTime(it.t)}</div>`;
         li.appendChild(dcol);
 
-        // icon column (image avatar or reddit dot)
+        // icon column (image avatar or reddit image)
         if(it.kind==="reddit"){
-          const av=document.createElement("div"); av.className="reddot"; li.appendChild(av);
+          const av=document.createElement("img");
+          av.className="avatar redditIcon"+(isRisk(it.raw)?" risky":"");
+          av.src="./img/reddit.png";
+          av.alt="reddit";
+          av.title = isRisk(it.raw) ? "Reddit (risk)" : "Reddit";
+          li.appendChild(av);
         }else{
           const av=document.createElement("img"); av.className="avatar"; av.alt=group.name; av.src=avatarFor(it.raw); li.appendChild(av);
         }
@@ -435,6 +450,9 @@
         const chips=document.createElement("div"); chips.className="chips";
         if(it.kind==="reddit"){
           chips.insertAdjacentHTML("beforeend", chip("REDDIT","reddit"));
+          if(isRisk(it.raw)) chips.insertAdjacentHTML("beforeend", chip("risk","warn"));
+          const sc = (typeof (it.raw && it.raw.score) === "number") ? it.raw.score : (typeof getUpdateScore(it.raw) === "number" ? getUpdateScore(it.raw) : null);
+          if(sc!=null) chips.insertAdjacentHTML("beforeend", chip(`score ${Number(sc).toFixed(4)}`,"soft"));
         }else if(it.kind==="cve"){
           chips.insertAdjacentHTML("beforeend", chip("CVE","bad"));
           if(it.raw && it.raw._id){
@@ -445,7 +463,7 @@
           chips.insertAdjacentHTML("beforeend", chip(ch, color));
         }
 
-        // extra info tags (subtle)
+        // extra info tags
         if(it.kind!=="reddit" && it.raw){
           const r = it.raw;
           if(r.versionProductBrand) chips.insertAdjacentHTML("beforeend", chip(String(r.versionProductBrand).toLowerCase(),"soft"));
