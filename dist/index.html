@@ -64,7 +64,6 @@
     .updates{padding:6px 10px}
     .list{display:flex;flex-direction:column;gap:8px;margin:6px 0 2px}
 
-    /* ROW GRID */
     .li{
       display:grid;
       grid-template-columns: 128px 30px 1fr; /* date | icon | content */
@@ -76,7 +75,6 @@
     .li:last-child{border-bottom:none}
     .li.cve{background:var(--risk-bg);border:1px solid var(--risk-border);border-radius:10px;padding:8px}
 
-    /* DATE CELL */
     .datecol{
       color:var(--muted);
       font-size:12px;
@@ -91,10 +89,8 @@
     .datecol .day{font-weight:800;color:var(--text)}
     .datecol .time{opacity:.9}
 
-    /* ICONS */
     .avatar{width:22px;height:22px;border-radius:50%;border:1px solid var(--line);object-fit:cover;align-self:center}
 
-    /* Reddit image icon */
     .redditIcon{
       border-color: rgba(255,122,69,.45);
       box-shadow: 0 0 0 3px rgba(255,122,69,.14) inset;
@@ -123,7 +119,7 @@
 </head>
 <body>
   <div class="topbar">
-    <div class="brand">Releasetrain <b>v3.13.2</b></div>
+    <div class="brand">Releasetrain <b>v3.13.3</b></div>
     <div class="spacer"></div>
     <a class="gh-link" href="https://github.com/SE4CPS/releasetrain-client" target="_blank" rel="noopener">GitHub ↗</a>
 
@@ -365,7 +361,6 @@
         $("#kpi-range").innerHTML=`Date Range: <em>${min.toLocaleDateString()} – ${max.toLocaleDateString()}</em>`;
       } else { $("#kpi-range").innerHTML=`Date Range: <em>—</em>`; }
 
-      // Always component mode
       STATE.groupsFiltered=groupByComponentName(filtered);
       $("#feed").innerHTML=""; STATE.groupIndex=0; $("#kpi-page").textContent=STATE.groupsFiltered.length;
       $("#sentinel").textContent=STATE.groupsFiltered.length?"Loading more…":"No results"; appendNextGroups();
@@ -450,9 +445,16 @@
         const chips=document.createElement("div"); chips.className="chips";
         if(it.kind==="reddit"){
           chips.insertAdjacentHTML("beforeend", chip("REDDIT","reddit"));
-          if(isRisk(it.raw)) chips.insertAdjacentHTML("beforeend", chip("risk","warn"));
-          const sc = (typeof (it.raw && it.raw.score) === "number") ? it.raw.score : (typeof getUpdateScore(it.raw) === "number" ? getUpdateScore(it.raw) : null);
-          if(sc!=null) chips.insertAdjacentHTML("beforeend", chip(`score ${Number(sc).toFixed(4)}`,"soft"));
+          const scorePred = getUpdateScore(it.raw);
+          const scoreField = (typeof it.raw?.score === "number") ? it.raw.score : null;
+          const scoreVal = (typeof scorePred === "number") ? scorePred : scoreField;
+          if(isRisk(it.raw)){
+            // combined chip
+            const label = scoreVal!=null ? `risk score: ${Number(scoreVal).toFixed(4)}` : "risk score: —";
+            chips.insertAdjacentHTML("beforeend", chip(label,"warn"));
+          }else if(scoreVal!=null){
+            chips.insertAdjacentHTML("beforeend", chip(`score: ${Number(scoreVal).toFixed(4)}`,"soft"));
+          }
         }else if(it.kind==="cve"){
           chips.insertAdjacentHTML("beforeend", chip("CVE","bad"));
           if(it.raw && it.raw._id){
