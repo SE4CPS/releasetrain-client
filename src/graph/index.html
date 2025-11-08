@@ -11,23 +11,22 @@
   <script src="./../lib/sigma.min.js"></script>
 
   <style>
+    /* ==== theme aligned with main page, white text everywhere ==== */
     :root{
-      --border:#e5e7eb;
-      --muted:#6b7280;
-      --bg:#ffffff;
-      --panel:#fafafa;
-      --accent:#4c8bf5;
-      --danger:#ff5050;
+      --bg:#0f1115;        --panel:#171a21;     --text:#ffffff;     --muted:#c7cbd3;
+      --brand:#60a5fa;     --line:#202532;      --chip:#1a1f2b;     --chipText:#ffffff;
+      --focus:#a5b4fc;     --bad:#ef4444;       --warn:#f59e0b;
     }
+
     *{ box-sizing: border-box; }
     html,body{ height:100%; width:100%; }
     body{
       margin:0;
-      font-family: Arial, sans-serif;
-      color:#333;
-      background:#fff;
-      font-size: 11px;          /* laptop default */
-      overflow:hidden;          /* no scroll on laptop */
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, "Helvetica Neue", Arial, sans-serif;
+      color:var(--text);
+      background:var(--bg);
+      font-size: 11px;
+      overflow:hidden;
     }
 
     /* loading bar */
@@ -35,22 +34,22 @@
       position: fixed;
       left:0; top:0;
       height:3px; width:0%;
-      background: var(--accent);
+      background: var(--brand);
       z-index: 2000;
       transition: width .25s ease-out, opacity .25s ease-out;
       opacity: 0;
     }
 
-    /* 3x3 grid (full viewport) */
+    /* layout uses full page height */
     .grid3x3{
       display:grid;
       grid-template-columns: 1fr 1.6fr 1fr;  /* left / center / right */
-      grid-template-rows: 1.2fr 6.0fr 0.8fr; /* top / middle / bottom */
+      grid-template-rows: auto 1fr auto;     /* top / graph(fill) / bottom(empty) */
       grid-template-areas:
         "top top top"
         "left center right"
         "emptyBL emptyBC emptyBR";
-      height:100vh;
+      height:100vh;           /* 100% height of page */
       width:100vw;
     }
 
@@ -62,8 +61,8 @@
       justify-content:space-between;
       gap:8px;
       padding:6px 10px;
-      border-bottom:1px solid var(--border);
-      background:#fff;
+      border-bottom:1px solid var(--line);
+      background:var(--panel);
       min-height:46px;
     }
     .top-left{
@@ -77,10 +76,11 @@
     }
     .chip{
       display:inline-flex; align-items:center; gap:6px;
-      padding:3px 8px; border:1px solid var(--border); border-radius:12px;
-      background:#f9fafb; font-size:11px; white-space:nowrap; user-select:none;
+      padding:3px 8px; border:1px solid var(--line); border-radius:12px;
+      background:var(--chip); color:var(--chipText);
+      font-size:11px; white-space:nowrap; user-select:none;
     }
-    .chip .x{ font-weight:bold; opacity:.65; cursor:pointer; }
+    .chip .x{ font-weight:bold; opacity:.85; cursor:pointer; }
     .chip .x:hover{ opacity:1; }
 
     .top-mid{
@@ -89,71 +89,89 @@
     }
     .add-wrap{
       display:flex; align-items:center; gap:6px;
-      border:1px solid var(--border); border-radius: 10px; padding:2px 6px;
-      background:#fafafa;
+      border:1px solid var(--line); border-radius: 10px; padding:2px 6px;
+      background:var(--bg);
     }
     #addInput{
-      border:none; outline:none; background:transparent; width: 180px; font-size:11px;
+      border:none; outline:none; background:transparent; width: 180px; font-size:11px; color:var(--text);
     }
-    #addBtn, .ghost-btn{
-      border:1px solid var(--border);
-      background:#fff; border-radius:8px; padding:2px 8px; font-size:11px; cursor:pointer;
+    #addInput:focus{ outline:2px solid var(--focus); outline-offset:2px; border-radius:6px; }
+    #addBtn{
+      border:1px solid var(--line);
+      background:var(--panel); color:var(--text);
+      border-radius:8px; padding:2px 8px; font-size:11px; cursor:pointer;
     }
-    #addBtn:hover, .ghost-btn:hover{ background:#f3f4f6; }
+    #addBtn:hover{ background:var(--chip); }
 
     .top-right{
       display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+      color:var(--text);
     }
-    .switch{ display:flex; align-items:center; gap:4px; font-size:11px; }
+    .switch{ display:flex; align-items:center; gap:4px; font-size:11px; color:var(--text); }
+    .switch input{ accent-color: var(--brand); }
+
+    /* "Main" button styled like main page link pill */
+    .linkchip{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 10px; border-radius:999px;
+      border:1px solid var(--line); background:transparent;
+      color:var(--text); text-decoration:none; font-weight:700; font-size:12px; opacity:.9;
+    }
+    .linkchip:hover{ background:var(--chip); opacity:1; }
 
     /* left regulator */
     .left{
       grid-area: left;
-      border-right:1px solid var(--border);
+      border-right:1px solid var(--line);
       background: var(--panel);
       padding:8px;
-      overflow:hidden;
+      overflow:auto;
       display:flex; flex-direction:column; gap:6px;
+      color:var(--text);
     }
     h4{ margin:2px 0 6px; font-size: 12px; }
     .hint{ color:var(--muted); font-size:10px; margin:0 0 6px; }
-    table{ width:100%; border-collapse: collapse; background:#fff; table-layout: fixed; }
-    th, td{ border:1px solid var(--border); padding:4px; text-align:left; font-size:11px; }
-    th{ background:#f9fafb; color:#111; }
+    table{ width:100%; border-collapse: collapse; background:var(--panel); table-layout: fixed; color:var(--text); }
+    th, td{ border:1px solid var(--line); padding:4px; text-align:left; font-size:11px; }
+    th{ background:var(--chip); color:var(--chipText); }
     .row-compact td, .row-compact th { padding:3px; }
-    input[type=range]{ width:100%; height: 16px; }
+    input[type=range]{ width:100%; height:16px; }
+    input[type=range]::-webkit-slider-thumb{ accent-color: var(--brand); }
 
     /* component type filters */
     .type-filters{
       display:flex; flex-wrap:wrap; gap:6px;
-      background:#fff; border:1px solid var(--border); border-radius:8px; padding:6px;
-      max-height:100px; overflow:auto;
+      background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:6px;
+      max-height:140px; overflow:auto;
     }
     .type-filters label{
       display:inline-flex; align-items:center; gap:4px;
-      padding:2px 6px; border:1px solid var(--border); border-radius:10px;
-      background:#fafafa; font-size:11px; white-space:nowrap; cursor:pointer;
+      padding:2px 6px; border:1px solid var(--line); border-radius:10px;
+      background:var(--chip); color:var(--chipText);
+      font-size:11px; white-space:nowrap; cursor:pointer;
     }
-    .type-filters input{ margin:0; }
+    .type-filters input{ margin:0; accent-color: var(--brand); }
 
-    /* center graph */
+    /* center graph fills all remaining space */
     .center{
       grid-area: center;
-      background:#fff;
+      background:var(--panel);
       padding:0;
       overflow:hidden;
       position: relative;
+      height:100%;
     }
-    #graphContainer{ position:absolute; inset:0; }
+    #graphContainer{ position:absolute; inset:0; height:100%; width:100%; }
 
     /* right metrics */
     .right{
       grid-area: right;
-      border-left:1px solid var(--border);
-      background:#fff;
+      border-left:1px solid var(--line);
+      background:var(--panel);
       padding:8px;
-      overflow:hidden;
+      overflow:auto;
       display:flex; flex-direction:column; gap:6px;
+      color:var(--text);
     }
 
     .nowrap{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -164,20 +182,18 @@
       body{ overflow:auto; font-size:12px; }
       .grid3x3{
         grid-template-columns: 1fr;
-        grid-template-rows: auto auto auto auto;
+        grid-template-rows: auto minmax(360px, 1fr) auto auto;
         grid-template-areas:
           "top"
           "center"
           "left"
           "right";
+        height:100vh;
       }
       .top{ flex-wrap:wrap; gap:6px; }
       .chips{ max-width:100%; flex-wrap:wrap; }
       .top-mid{ order:3; width:100%; }
       .top-right{ order:2; width:100%; justify-content:flex-start; }
-      .left, .right{ overflow:auto; }
-      .center{ height:60vh; min-height:360px; }
-      #graphContainer{ position:relative; height:100%; width:100%; }
       .type-filters{ max-height:none; }
     }
     @media (max-width: 420px){
@@ -218,7 +234,7 @@
           <input type="checkbox" id="toggleRealOnly">
           <label for="toggleRealOnly">Real only</label>
         </div>
-        <button id="homeBtn" class="ghost-btn" title="Go to releasetrain.io with the same q param">Main</button>
+        <a id="homeBtn" class="linkchip" href="#" title="Back to releasetrain.io with the same query">Main ↗</a>
       </div>
     </div>
 
@@ -323,8 +339,10 @@
       for (const n of list){ const k=normalizeKey(n); if (seen.has(k)) continue; seen.add(k); dedup.push(n); }
       const params = new URLSearchParams(window.location.search);
       if(dedup.length) params.set("q", dedup.join(",")); else params.delete("q");
+      // keep commas literal (no %2C)
       const qs = params.toString().replace(/%2C/g,",").replace(/\+/g," ");
       history.replaceState({}, "", window.location.pathname + (qs ? ("?"+qs) : ""));
+      setMainHref();
     }
     function readQList(){
       const raw = (getParam("q")||"").split(",").map(s=>s.trim()).filter(Boolean);
@@ -334,9 +352,14 @@
     }
     function buildMainUrl(){
       const params = new URLSearchParams(window.location.search);
-      const q = params.get("q");
-      const base = "https://releasetrain.io/";
-      return q ? `${base}?q=${encodeURIComponent(q)}` : base;
+      const q = params.get("q") || "";
+      if (!q) return "https://releasetrain.io/";
+      const qParam = encodeURIComponent(q).replace(/%2C/gi, ","); // preserve commas
+      return `https://releasetrain.io/?q=${qParam}`;
+    }
+    function setMainHref(){
+      const a=document.getElementById("homeBtn");
+      if(a) a.href = buildMainUrl();
     }
     function isRealComponent(nameLower, tagsSet){
       const n = (nameLower||"").trim().toLowerCase();
@@ -420,7 +443,8 @@
         attributeObjectList:{},
         typeSet:new Set(),
         selectedTypes:null,
-        cost:0
+        cost:0,
+        tagCounts: new Map(),   // global tag frequency for common-tag thresholding
       };
 
       const reg = document.getElementById("regTable");
@@ -479,6 +503,7 @@
       eco.components = {};
       eco.edges = {};
       eco.typeSet = new Set();
+      eco.tagCounts = new Map();
       eco.attributeArrayList.forEach(a=>{ eco.attributeObjectList[a].count = 0; });
 
       const uniqType = document.getElementById("toggleUniqueType").checked;
@@ -515,7 +540,10 @@
         eco.components[key].attributeObjectList["version"].count++;
         eco.components[key].attributeObjectList["component"].count = 1;
 
-        (v.versionSearchTags||[]).forEach(t=> eco.components[key].tags.add(normalizeKey(t)));
+        (v.versionSearchTags||[]).forEach(t=>{
+          const nt = normalizeKey(t);
+          eco.components[key].tags.add(nt);
+        });
 
         eco.attributeObjectList[ch].count++;
         eco.attributeObjectList["version"].count++;
@@ -540,14 +568,28 @@
         });
       }
 
-      // edges by shared tags
-      const keys = Object.keys(eco.components);
-      for (let i=0;i<keys.length;i++){
-        for (let j=i+1;j<keys.length;j++){
-          const A = eco.components[keys[i]], B = eco.components[keys[j]];
+      // Global tag frequencies across components (for "common tag" thresholding)
+      const keysForTags = Object.keys(eco.components);
+      for (const k of keysForTags){
+        for (const t of eco.components[k].tags){
+          eco.tagCounts.set(t, (eco.tagCounts.get(t)||0) + 1);
+        }
+      }
+      const nComps = Math.max(1, keysForTags.length);
+      const COMMON_THRESHOLD = 0.12; // 12%
+
+      // edges by shared non-common tags only
+      for (let i=0;i<keysForTags.length;i++){
+        for (let j=i+1;j<keysForTags.length;j++){
+          const A = eco.components[keysForTags[i]], B = eco.components[keysForTags[j]];
           const inter = [...A.tags]
             .filter(t=>B.tags.has(t))
-            .filter(t=>!STOPWORDS.has(t) && t!=="production" && t!=="beta" && isNaN(t));
+            .filter(t=>{
+              const freq = (eco.tagCounts.get(t)||0) / nComps;
+              return freq <= COMMON_THRESHOLD &&
+                     !STOPWORDS.has(t) &&
+                     t!=="production" && t!=="beta" && isNaN(t);
+            });
           if (inter.length>0){
             const id = `${A.id}-${B.id}`;
             eco.edges[id] = { id, source:A.id, target:B.id, weight: inter.length };
@@ -665,13 +707,13 @@
 
         if (comp.cost > maxCost){ maxCost = comp.cost; maxKey = k; }
 
-        nodes.push({ id:k, label: comp.display || comp.label || k, x, y, size:1, color:"#bbb" });
+        nodes.push({ id:k, label: comp.display || comp.label || k, x, y, size:1, color:"#9aa3af" });
       });
 
       const visibleSet = new Set(keys);
       Object.values(eco.edges).forEach(e=>{
         if (visibleSet.has(e.source) && visibleSet.has(e.target)){
-          edges.push({ id:e.id, source:e.source, target:e.target, size: Math.min(6, Math.max(1, e.weight)), color:"#d3d7df" });
+          edges.push({ id:`${e.source}-${e.target}`, source:e.source, target:e.target, size: Math.min(6, Math.max(1, e.weight)), color:"#6b7280" });
         }
       });
 
@@ -679,13 +721,13 @@
       const minC = costs.length ? Math.min(...costs) : 0;
       const maxC = costs.length ? Math.max(...costs) : 0;
       function grayFor(cost){
-        if (maxC===minC) return `rgb(200,200,200)`;
+        if (maxC===minC) return `rgb(180,180,180)`;
         const t = (cost - minC) / (maxC - minC);
-        const v = Math.round(220 - t*140);
+        const v = Math.round(210 - t*140);  /* 210 -> 70 */
         return `rgb(${v},${v},${v})`;
       }
       nodes.forEach(n=>{ n.color = grayFor(eco.components[n.id].cost); });
-      if (maxKey){ const winner = nodes.find(n=>n.id===maxKey); if (winner) winner.color = "rgb(255,80,80)"; }
+      if (maxKey){ const winner = nodes.find(n=>n.id===maxKey); if (winner) winner.color = "#ff5050"; }
 
       document.getElementById("graphContainer").innerHTML = "";
       const s = new sigma({
@@ -695,8 +737,14 @@
           drawLabels: true,
           labelSize: 10,
           defaultLabelSize: 10,
+          /* ==== force graph labels to WHITE ==== */
+          defaultLabelColor: "#ffffff",
+          labelColor: "default",
+          font: "system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Arial, sans-serif",
           drawEdgeLabels: false,
-          batchEdgesDrawing: true
+          batchEdgesDrawing: true,
+          defaultNodeColor: "#9aa3af",
+          defaultEdgeColor: "#6b7280"
         }
       });
 
@@ -771,7 +819,9 @@
       bindAddBox();
       loadNameSuggestions();
 
-      document.getElementById("homeBtn").addEventListener("click", ()=>{ window.location.href = buildMainUrl(); });
+      // set main link (keeps commas literal)
+      setMainHref();
+      document.getElementById("homeBtn").addEventListener("click", (e)=>{ setMainHref(); });
 
       const q = getParam("q") || "";
       if (q){
