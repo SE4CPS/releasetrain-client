@@ -1,570 +1,804 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <title>releasetrain.io – Graph</title>
-  <link rel="icon" href="https://releasetrain.io/img/favicon.png" type="image/png"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta charset="UTF-8" />
+  <title>releasetrain.io — Graph</title>
+  <link rel="icon" href="https://releasetrain.io/img/favicon.png" type="image/png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Vendor -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet"/>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
-
-  <!-- Sigma -->
+  <!-- libs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <script src="./../lib/sigma.min.js"></script>
-  <script src="./../lib/sigma.canvas.edges.labels.curve.js"></script>
-  <script src="./../lib/sigma.canvas.edges.labels.curvedArrow.js"></script>
-  <script src="./../lib/sigma.canvas.edges.labels.def.js"></script>
 
   <style>
-    :root { --panel-w: 360px; --border:#e8e8e8; --muted:#6b7280; --accent:#4f46e5; }
-
-    * { box-sizing: border-box; }
+    :root{
+      --border:#e5e7eb;
+      --muted:#6b7280;
+      --bg:#ffffff;
+      --panel:#fafafa;
+      --accent:#4c8bf5;
+      --danger:#ff5050;
+    }
+    *{ box-sizing: border-box; }
+    html,body{ height:100%; width:100%; }
     body{
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-      color:#111827;
-      background:#ffffff;
       margin:0;
+      font-family: Arial, sans-serif;
+      color:#333;
+      background:#fff;
+      font-size: 11px;          /* laptop default */
+      overflow:hidden;          /* no scroll on laptop */
     }
 
-    /* Loading bar */
-    #loader {
+    /* loading bar */
+    #loadingBar{
       position: fixed;
-      top: 0; left: 0;
-      height: 3px;
-      width: 0;
-      background: linear-gradient(90deg, var(--accent), #22c55e);
-      box-shadow: 0 0 6px rgba(79,70,229,.5);
-      z-index: 9999;
-      transition: width .35s ease, opacity .25s ease;
+      left:0; top:0;
+      height:3px; width:0%;
+      background: var(--accent);
+      z-index: 2000;
+      transition: width .25s ease-out, opacity .25s ease-out;
       opacity: 0;
     }
-    #loader.active { opacity: 1; }
 
-    /* Layout with vertical divider */
-    .app{
+    /* 3x3 grid (full viewport) */
+    .grid3x3{
       display:grid;
-      grid-template-columns: var(--panel-w) 1fr;
+      grid-template-columns: 1fr 1.6fr 1fr;  /* left / center / right */
+      grid-template-rows: 1.2fr 6.0fr 0.8fr; /* top / middle / bottom */
+      grid-template-areas:
+        "top top top"
+        "left center right"
+        "emptyBL emptyBC emptyBR";
       height:100vh;
-    }
-    .left{
-      border-right:1px solid var(--border);
-      padding:14px 14px 18px 16px;
-      overflow-y:auto;        /* vertical scroll only */
-      overflow-x:hidden;      /* no horizontal scroll */
-      background:#fafafa;
-    }
-    .right{
-      padding:10px;
-      height:100%;
-    }
-    #container{
-      height:100%;
-      width:100%;
-      border-left:1px solid var(--border);
+      width:100vw;
     }
 
-    /* Controls */
-    .label{
-      font-size:12px;
-      color:var(--muted);
-      letter-spacing:.02em;
-      margin-bottom:6px;
-      text-transform:uppercase;
+    /* top row */
+    .top{
+      grid-area: top;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      padding:6px 10px;
+      border-bottom:1px solid var(--border);
+      background:#fff;
+      min-height:46px;
     }
-    .select2-container{ width:100%!important; }
-    .hint{ font-size:12px; color:var(--muted); margin-top:6px; }
-
-    /* Tables */
-    table{ width:100%; border-collapse:collapse; margin-top:10px; background:#fff; }
-    th, td{ border:1px solid var(--border); padding:8px 10px; text-align:left; vertical-align:top; }
-    th{ background:#f6f7f9; font-weight:600; color:#111827; }
-    td span.badge{
-      padding:2px 6px; border-radius:6px; background:#eef2ff; font-size:12px; color:#3730a3;
-      display:inline-block; white-space:nowrap;
+    .top-left{
+      display:flex; align-items:center; gap:8px; min-width:0;
+    }
+    .chips{
+      display:flex; align-items:center; gap:6px;
+      flex-wrap:nowrap;
+      overflow:hidden;
+      max-width: 48vw;
     }
     .chip{
-      display:inline-block; padding:2px 8px; border:1px solid #d5d7dd; border-radius:9999px;
-      font-size:12px; color:#374151; background:#fff; margin:2px 6px 2px 0;
+      display:inline-flex; align-items:center; gap:6px;
+      padding:3px 8px; border:1px solid var(--border); border-radius:12px;
+      background:#f9fafb; font-size:11px; white-space:nowrap; user-select:none;
+    }
+    .chip .x{ font-weight:bold; opacity:.65; cursor:pointer; }
+    .chip .x:hover{ opacity:1; }
+
+    .top-mid{
+      display:flex; align-items:center; gap:6px; min-width: 260px;
+      flex: 1 1 auto;
+    }
+    .add-wrap{
+      display:flex; align-items:center; gap:6px;
+      border:1px solid var(--border); border-radius: 10px; padding:2px 6px;
+      background:#fafafa;
+    }
+    #addInput{
+      border:none; outline:none; background:transparent; width: 180px; font-size:11px;
+    }
+    #addBtn, .ghost-btn{
+      border:1px solid var(--border);
+      background:#fff; border-radius:8px; padding:2px 8px; font-size:11px; cursor:pointer;
+    }
+    #addBtn:hover, .ghost-btn:hover{ background:#f3f4f6; }
+
+    .top-right{
+      display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    }
+    .switch{ display:flex; align-items:center; gap:4px; font-size:11px; }
+
+    /* left regulator */
+    .left{
+      grid-area: left;
+      border-right:1px solid var(--border);
+      background: var(--panel);
+      padding:8px;
+      overflow:hidden;
+      display:flex; flex-direction:column; gap:6px;
+    }
+    h4{ margin:2px 0 6px; font-size: 12px; }
+    .hint{ color:var(--muted); font-size:10px; margin:0 0 6px; }
+    table{ width:100%; border-collapse: collapse; background:#fff; table-layout: fixed; }
+    th, td{ border:1px solid var(--border); padding:4px; text-align:left; font-size:11px; }
+    th{ background:#f9fafb; color:#111; }
+    .row-compact td, .row-compact th { padding:3px; }
+    input[type=range]{ width:100%; height: 16px; }
+
+    /* component type filters */
+    .type-filters{
+      display:flex; flex-wrap:wrap; gap:6px;
+      background:#fff; border:1px solid var(--border); border-radius:8px; padding:6px;
+      max-height:100px; overflow:auto;
+    }
+    .type-filters label{
+      display:inline-flex; align-items:center; gap:4px;
+      padding:2px 6px; border:1px solid var(--border); border-radius:10px;
+      background:#fafafa; font-size:11px; white-space:nowrap; cursor:pointer;
+    }
+    .type-filters input{ margin:0; }
+
+    /* center graph */
+    .center{
+      grid-area: center;
+      background:#fff;
+      padding:0;
+      overflow:hidden;
+      position: relative;
+    }
+    #graphContainer{ position:absolute; inset:0; }
+
+    /* right metrics */
+    .right{
+      grid-area: right;
+      border-left:1px solid var(--border);
+      background:#fff;
+      padding:8px;
+      overflow:hidden;
+      display:flex; flex-direction:column; gap:6px;
     }
 
-    input[type="range"]{ width:100%; }
+    .nowrap{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .muted{ color:var(--muted); }
 
     /* Mobile */
-    @media (max-width: 1024px){
-      .app{ grid-template-columns: 1fr; }
-      .right{ display:none; } /* hide graph on small screens */
+    @media (max-width: 900px){
+      body{ overflow:auto; font-size:12px; }
+      .grid3x3{
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto auto;
+        grid-template-areas:
+          "top"
+          "center"
+          "left"
+          "right";
+      }
+      .top{ flex-wrap:wrap; gap:6px; }
+      .chips{ max-width:100%; flex-wrap:wrap; }
+      .top-mid{ order:3; width:100%; }
+      .top-right{ order:2; width:100%; justify-content:flex-start; }
+      .left, .right{ overflow:auto; }
+      .center{ height:60vh; min-height:360px; }
+      #graphContainer{ position:relative; height:100%; width:100%; }
+      .type-filters{ max-height:none; }
+    }
+    @media (max-width: 420px){
+      .add-wrap{ flex:1; }
+      #addInput{ width: 100%; }
+      .top-left strong{ display:none; }
     }
   </style>
 </head>
 <body>
-  <!-- loader bar -->
-  <div id="loader"></div>
+  <div id="loadingBar"></div>
 
-  <main class="app">
+  <div class="grid3x3">
+    <div class="top">
+      <div class="top-left">
+        <strong style="font-size:12px;">Components:</strong>
+        <div id="chipContainer" class="chips" title="Top 10 from today on load"></div>
+      </div>
+
+      <div class="top-mid">
+        <div class="add-wrap" title="Type a component and press Enter or +">
+          <input id="addInput" list="nameList" placeholder="Add component…" autocomplete="off" />
+          <button id="addBtn">+</button>
+        </div>
+        <datalist id="nameList"></datalist>
+      </div>
+
+      <div class="top-right">
+        <div class="switch">
+          <input type="checkbox" id="toggleOnlyToday" checked>
+          <label for="toggleOnlyToday">Only today</label>
+        </div>
+        <div class="switch">
+          <input type="checkbox" id="toggleUniqueType" checked>
+          <label for="toggleUniqueType">Unique type</label>
+        </div>
+        <div class="switch">
+          <input type="checkbox" id="toggleRealOnly">
+          <label for="toggleRealOnly">Real only</label>
+        </div>
+        <button id="homeBtn" class="ghost-btn" title="Go to releasetrain.io with the same q param">Main</button>
+      </div>
+    </div>
+
     <aside class="left">
-      <div class="label">Components</div>
-      <select id="mySelect2" class="js-example-basic-multiple" multiple="multiple"></select>
-      <div class="hint">Choose from the dropdown, or click a node in the graph to inspect details.</div>
+      <h4>Component Types</h4>
+      <div id="typeFilters" class="type-filters" title="Toggle which types appear in the graph"></div>
+      <div class="hint">Toggle to show or hide types in the graph.</div>
 
-      <table id="ecoTableId">
-        <tr>
-          <th style="width:160px">Ecosystem</th>
-          <th colspan="2" id="ecoTitleTableId"></th>
-        </tr>
-        <tr>
-          <td>Maintenance Cost</td>
-          <td style="width:120px"><span id="maintenanceEquationId">&sum; (attribute × impact)</span></td>
-          <td style="width:120px"><span id="maintenanceCostId">0</span></td>
-        </tr>
-        <tr>
-          <td>Unique Component Types</td>
-          <td colspan="2" id="typesListId"></td>
-        </tr>
-        <tr>
-          <th>Attribute</th>
-          <th>Impact</th>
-          <th>Count</th>
-        </tr>
-      </table>
-
-      <table id="ecoComponentTableId">
-        <tr>
-          <th>Component</th>
-          <th id="componentTitleTableId">Click a node</th>
-        </tr>
-        <tr>
-          <th style="width:160px">Attribute</th>
-          <th>Count</th>
-        </tr>
-        <tr>
-          <td>Cost Component</td>
-          <td><span id="costComponentId">0</span></td>
-        </tr>
-        <tr>
-          <td>Cost Latest Version</td>
-          <td><span id="costComponentVersionId">0</span></td>
+      <h4>Regulator</h4>
+      <div class="hint">Adjust impact weights.</div>
+      <table id="regTable">
+        <tr class="row-compact">
+          <th class="nowrap">Attribute</th>
+          <th class="nowrap">Impact</th>
         </tr>
       </table>
     </aside>
 
-    <section class="right">
-      <div id="container"></div>
-    </section>
-  </main>
+    <main class="center">
+      <div id="graphContainer"></div>
+    </main>
+
+    <aside class="right">
+      <h4>Ecosystem</h4>
+      <table id="ecoTable">
+        <tr class="row-compact">
+          <th class="nowrap">Scope</th>
+          <th class="nowrap" colspan="2" id="ecoTitle"></th>
+        </tr>
+        <tr class="row-compact">
+          <td class="nowrap">Maintenance Cost</td>
+          <td class="nowrap"><span id="maintenanceEquation">&sum;(attribute)</span></td>
+          <td class="nowrap"><span id="maintenanceCost">0</span></td>
+        </tr>
+        <tr class="row-compact">
+          <th class="nowrap">Attribute</th>
+          <th class="nowrap">Impact</th>
+          <th class="nowrap">Count</th>
+        </tr>
+      </table>
+
+      <h4>Component</h4>
+      <table id="componentTable">
+        <tr class="row-compact">
+          <th class="nowrap">Component</th>
+          <th class="nowrap" id="componentTitle">Click a node</th>
+        </tr>
+        <tr class="row-compact"><th class="nowrap">Attribute</th><th class="nowrap">Count</th></tr>
+        <tr class="row-compact"><td class="nowrap">Cost Component</td><td class="nowrap"><span id="costComponent">0</span></td></tr>
+        <tr class="row-compact"><td class="nowrap">Cost Latest Version</td><td class="nowrap"><span id="costComponentVersion">0</span></td></tr>
+      </table>
+    </aside>
+  </div>
 
   <script>
-    // -------------------- constants / helpers --------------------
-    const URL_API_ENDPOINT = "https://releasetrain.io/api";
-    const URL_HOMEPAGE     = "https://releasetrain.io";
-
-    const params   = new URLSearchParams(window.location.search);
-    const qParam   = params.get("q") || "";                 // user-selected components (comma-separated)
-    const todayStr = yyyymmdd(new Date());                  // for default selection
-
+    /* ---------------------------- constants / utils ---------------------------- */
+    const URL_API = "https://releasetrain.io/api";
+    const STOPWORDS = new Set([
+      "github","gitlab","bitbucket","access","can","core","enterprise","management","downloads","users",
+      "union","man","tc","oss","beta","production","link","version","component"
+    ]);
     const versionChannel = { major:"major", minor:"minor", patch:"patch", cve:"cve", invalid:"invalid" };
-    const table = document.getElementById("ecoTableId");
+
+    // 24h helpers
+    function nowMs(){ return Date.now(); }
+    function ms(days){ return days*24*60*60*1000; }
+    function yyyymmddFromDate(d){ return d.getFullYear()+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0"); }
+    function yyyymmddOffset(days){ const d=new Date(nowMs()+ms(days)); return yyyymmddFromDate(d); }
+    function isInLast24Hours(v){
+      const now = nowMs();
+      let t = null;
+      if (v.versionReleaseEpochMs != null) t = Number(v.versionReleaseEpochMs);
+      else if (v.versionReleaseEpoch != null) t = Number(v.versionReleaseEpoch)*1000;
+      else if (v.versionReleaseDateISO) t = Date.parse(v.versionReleaseDateISO);
+      else if (v.versionReleaseDateTime) t = Date.parse(v.versionReleaseDateTime);
+      if (Number.isFinite(t)) return (now - t) >= 0 && (now - t) <= ms(1);
+      const d = String(v.versionReleaseDate||"").trim();
+      if (!d) return false;
+      const today = yyyymmddFromDate(new Date(now));
+      const yesterday = yyyymmddOffset(-1);
+      return d===today || d===yesterday;
+    }
+
+    function loadingStart(){
+      const bar = document.getElementById("loadingBar");
+      bar.style.opacity = "1";
+      bar.style.width = "15%";
+      let pct = 15;
+      bar._tick = setInterval(()=>{ pct=Math.min(90,pct+Math.random()*7); bar.style.width=pct+"%"; },160);
+    }
+    function loadingDone(){
+      const bar = document.getElementById("loadingBar");
+      clearInterval(bar._tick);
+      bar.style.width="100%";
+      setTimeout(()=>{ bar.style.opacity="0"; bar.style.width="0"; },260);
+    }
+    function getParam(name){ return new URLSearchParams(window.location.search).get(name); }
+    function normalizeKey(name){ return String(name||"").trim().toLowerCase(); }
+
+    function setParamComma(list){
+      const seen = new Set(), dedup=[];
+      for (const n of list){ const k=normalizeKey(n); if (seen.has(k)) continue; seen.add(k); dedup.push(n); }
+      const params = new URLSearchParams(window.location.search);
+      if(dedup.length) params.set("q", dedup.join(",")); else params.delete("q");
+      const qs = params.toString().replace(/%2C/g,",").replace(/\+/g," ");
+      history.replaceState({}, "", window.location.pathname + (qs ? ("?"+qs) : ""));
+    }
+    function readQList(){
+      const raw = (getParam("q")||"").split(",").map(s=>s.trim()).filter(Boolean);
+      const seen = new Set(), out=[];
+      for (const n of raw){ const k=normalizeKey(n); if (seen.has(k)) continue; seen.add(k); out.push(n); }
+      return out;
+    }
+    function buildMainUrl(){
+      const params = new URLSearchParams(window.location.search);
+      const q = params.get("q");
+      const base = "https://releasetrain.io/";
+      return q ? `${base}?q=${encodeURIComponent(q)}` : base;
+    }
+    function isRealComponent(nameLower, tagsSet){
+      const n = (nameLower||"").trim().toLowerCase();
+      if (!n) return false;
+      if (STOPWORDS.has(n)) return false;
+      if (n.length <= 2) return false;
+      if (/^[0-9]+$/.test(n)) return false;
+      if (/^[a-z]{1,4}$/.test(n)) return false;
+      if (n.includes("sourcecodester")) return false;
+      if (tagsSet && tagsSet.size && tagsSet.size < 2) return false;
+      return true;
+    }
+    function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+
+    /* ---------------------------- top chips ---------------------------- */
+    function renderChips(names){
+      const wrap = document.getElementById("chipContainer");
+      wrap.innerHTML = "";
+      names.forEach(n=>{
+        const div = document.createElement("div");
+        div.className = "chip";
+        div.dataset.name = n;
+        div.innerHTML = `<span>${n}</span><span class="x" title="Remove">×</span>`;
+        div.querySelector(".x").onclick = (ev)=>{ ev.stopPropagation(); removeChip(n); };
+        wrap.appendChild(div);
+      });
+    }
+    function addChip(name){
+      if(!name) return;
+      const cur = readQList();
+      const clean = name.trim();
+      if(!clean) return;
+      const present = new Set(cur.map(x=>normalizeKey(x)));
+      if (present.has(normalizeKey(clean))) return;
+      cur.push(clean);
+      const next = cur.slice(0,10);
+      setParamComma(next);
+      renderChips(next);
+      fetchAndRender();
+    }
+    function removeChip(name){
+      const cur = readQList();
+      const idx = cur.findIndex(x => normalizeKey(x) === normalizeKey(name));
+      if (idx>=0) cur.splice(idx,1);
+      setParamComma(cur);
+      renderChips(cur);
+      fetchAndRender();
+    }
+
+    /* add box bindings */
+    async function loadNameSuggestions(){
+      try{
+        const res = await fetch(`${URL_API}/c/names`);
+        const names = await res.json();
+        const dl = document.getElementById("nameList");
+        dl.innerHTML = "";
+        names.slice(0,1500).forEach(n=>{
+          const opt = document.createElement("option");
+          opt.value = n;
+          dl.appendChild(opt);
+        });
+      }catch(e){ /* ignore */ }
+    }
+    function bindAddBox(){
+      const input = document.getElementById("addInput");
+      const btn = document.getElementById("addBtn");
+      btn.addEventListener("click", ()=>{ addChip(input.value); input.value = ""; input.focus(); });
+      input.addEventListener("keydown", (e)=>{ if (e.key === "Enter"){ addChip(input.value); input.value = ""; } });
+    }
+
+    /* ---------------------------- data model ---------------------------- */
     let eco = null;
 
-    // tags that are always ignored
-    const STATIC_TAG_BLOCKLIST = new Set([
-      "release","releases","version","versions","update","updates","latest","stable",
-      "download","downloads","changelog","general","misc",
-      "github","git","source","sources","binary","binaries","package","packages","install","installer",
-      "windows","linux","mac","macos","os","x64","x86","amd64","arm64",
-      "tool","tools","framework","app","application"
-    ]);
+    function initEcoAttributesIfNeeded(){
+      if (eco && eco.attributeArrayList) return;
 
-    function yyyymmdd(d){
-      const y = d.getUTCFullYear();
-      const m = String(d.getUTCMonth()+1).padStart(2,"0");
-      const day = String(d.getUTCDate()).padStart(2,"0");
-      return `${y}${m}${day}`;
-    }
-    function isAlphaStart(s){ return /^[A-Za-z]/.test(String(s||"").charAt(0)); }
-    function uniq(arr){ return Array.from(new Set(arr)); }
-    function cap(s){ return String(s).charAt(0).toUpperCase() + String(s).slice(1); }
+      eco = {
+        components:{},
+        edges:{},
+        attributeArrayList:["component","link","version","major","minor","patch","cve","today"],
+        attributeObjectList:{},
+        typeSet:new Set(),
+        selectedTypes:null,
+        cost:0
+      };
 
-    // -------------------- loader bar --------------------
-    const loader = document.getElementById("loader");
-    function loaderStart(){
-      loader.classList.add("active");
-      loader.style.width = "0";
-      requestAnimationFrame(()=>{ loader.style.width = "70%"; });
-    }
-    function loaderFinish(){
-      loader.style.width = "100%";
-      setTimeout(()=>{ loader.classList.remove("active"); loader.style.opacity = "0"; }, 250);
-      setTimeout(()=>{ loader.style.width = "0"; loader.style.opacity = "1"; }, 400);
+      const reg = document.getElementById("regTable");
+      eco.attributeArrayList.forEach(attr=>{
+        const tr = document.createElement("tr");
+        tr.className = "row-compact";
+        tr.id = attr + "RowId";
+        const initVal = (["today"].includes(attr)) ? 2 : (["link","major","minor","patch","cve","invalid","version"].includes(attr) ? 0 : 1);
+        tr.innerHTML = `
+          <td class="nowrap">${cap(attr)}</td>
+          <td class="nowrap"><input id="factor${cap(attr)}Id" type="range" min="0" max="2" value="${initVal}" /></td>
+        `;
+        reg.appendChild(tr);
+
+        eco.attributeObjectList[attr] = { factor:initVal, factorHtmlElementId:`factor${cap(attr)}Id`, count:0 };
+      });
+
+      eco.attributeArrayList.forEach(attr=>{
+        const el = document.getElementById(eco.attributeObjectList[attr].factorHtmlElementId);
+        el.addEventListener("input", ()=>{ recalcEcosystem(); renderGraph(); renderRightTables(); });
+      });
     }
 
-    // -------------------- select2 init --------------------
-    $("#mySelect2").select2({
-      placeholder:"Filter components…",
-      ajax:{
-        url:`${URL_API_ENDPOINT}/c/names`,
-        delay:150,
-        processResults: data => {
-          const list = Array.isArray(data) ? data : [];
-          return { results: list.filter(isAlphaStart).map(x=>({id:x, text:x})) };
+    function channelByVersion(v){
+      const nums = String(v.versionNumber||"0").split(".");
+      let ch = versionChannel.invalid;
+      ch = (nums[1]!=0 && nums[2]==0) ? versionChannel.minor : ch;
+      ch = (v.versionReleaseChannel===versionChannel.patch || nums[2]!=0) ? versionChannel.patch : ch;
+      ch = (nums[1]==0 && nums[2]==0) ? versionChannel.major : ch;
+      ch = (v.versionReleaseChannel===versionChannel.cve) ? versionChannel.cve : ch;
+      return ch;
+    }
+    function setDisplayName(comp, candidate){ if (!comp.display) comp.display = candidate; }
+
+    // Robust type extractor: checks several common fields
+    function extractType(v){
+      const candidates = [
+        v.versionPredictedComponentType,
+        v.predictedComponentType,
+        v.componentType,
+        v.versionComponentType,
+        v.versionType,
+        v.productType,
+      ];
+      for (const c of candidates){
+        const t = String(c||"").trim();
+        if (t) return t;
+      }
+      return "";
+    }
+
+    function transform(raw, typeByKey){
+      initEcoAttributesIfNeeded();
+
+      // reset
+      eco.components = {};
+      eco.edges = {};
+      eco.typeSet = new Set();
+      eco.attributeArrayList.forEach(a=>{ eco.attributeObjectList[a].count = 0; });
+
+      const uniqType = document.getElementById("toggleUniqueType").checked;
+      const realOnly = document.getElementById("toggleRealOnly").checked;
+
+      for (const v of raw){
+        const nameRaw = (v.versionProductName || "").trim();
+        if (!nameRaw) continue;
+
+        const key = normalizeKey(nameRaw);
+        const tags = new Set((v.versionSearchTags||[]).map(t=>normalizeKey(t)));
+        if (realOnly && !isRealComponent(key,tags)) continue;
+
+        if (!eco.components[key]){
+          eco.components[key] = {
+            id:key, label:key, display:nameRaw, color:"#bbb", x:0, y:0, size:1,
+            cost:0, costLatestVersion:0,
+            type:null,
+            tags:new Set(), attributeObjectList:{}
+          };
+          eco.attributeArrayList.forEach(a=>{ eco.components[key].attributeObjectList[a] = { count:0 }; });
         }
-      },
-      multiple:true
-    });
+        setDisplayName(eco.components[key], nameRaw);
 
-    // Build URL with comma-separated values (commas unencoded)
-    $("#mySelect2").on("change", function(){
-      const selected = $(this).find(":selected").map(function(){ return $(this).text(); }).get();
-      const qStr = selected.map(v => encodeURIComponent(v)).join(","); // encode parts, keep commas
-      window.location.href = `${URL_HOMEPAGE}/graph?q=${qStr}`;
-    });
+        // 1) Try type from this record
+        const tCandidate = normalizeKey(extractType(v)||"");
+        if (tCandidate){
+          if (!eco.components[key].type || uniqType){ eco.components[key].type = tCandidate; }
+          eco.typeSet.add(tCandidate);
+        }
 
-    // -------------------- boot --------------------
-    document.getElementById("ecoTitleTableId").textContent = qParam ? decodeURIComponent(qParam) : `Updates from ${todayStr}`;
-    extractData();
+        const ch = channelByVersion(v);
+        eco.components[key].attributeObjectList[ch].count++;
+        eco.components[key].attributeObjectList["version"].count++;
+        eco.components[key].attributeObjectList["component"].count = 1;
 
-    // -------------------- data fetch --------------------
-    function extractData(){
-      loaderStart();
-      $.ajax({
-        url: `${URL_API_ENDPOINT}/v?q=${qParam}`,
-        method: "GET",
-        dataType: "json",
-        success: (payload)=>{
-          let items = [];
-          if (payload && Array.isArray(payload.versions)) items = payload.versions;
-          else if (Array.isArray(payload)) items = payload;
+        (v.versionSearchTags||[]).forEach(t=> eco.components[key].tags.add(normalizeKey(t)));
 
-          // Sort by ascending release date
-          items.sort((a,b)=> (Number(a.versionReleaseDate)||0) - (Number(b.versionReleaseDate)||0));
+        eco.attributeObjectList[ch].count++;
+        eco.attributeObjectList["version"].count++;
+        eco.attributeObjectList["component"].count = Object.keys(eco.components).length;
 
-          // Default to today's components when q missing
-          if (!qParam) {
-            const todays = items.filter(v => String(v.versionReleaseDate) === todayStr);
-            const todaysNames = uniq(todays.map(v => v.versionProductName).filter(Boolean));
+        if (isInLast24Hours(v)){
+          eco.attributeObjectList["today"].count++;
+          eco.components[key].attributeObjectList["today"].count++;
+        }
+      }
 
-            // Preselect in input
-            $("#mySelect2").val(null).trigger("change");
-            todaysNames.forEach(name=>{
-              const opt = new Option(name, name, true, true);
-              $("#mySelect2").append(opt).trigger("change.select2");
-            });
-
-            if (todays.length) transform(todays);
-            else {
-              const last50 = items.slice(-50);
-              document.getElementById("ecoTitleTableId").textContent = "Last 50 updates";
-              transform(last50);
+      // 2) Backfill missing types from the full dataset map
+      if (typeByKey){
+        Object.keys(eco.components).forEach(k=>{
+          if (!eco.components[k].type && typeByKey.has(k)){
+            const t = typeByKey.get(k);
+            if (t){
+              eco.components[k].type = t;
+              eco.typeSet.add(t);
             }
-          } else {
-            transform(items);
           }
-        },
-        error: (xhr, status, err)=> console.error("API error /api/v", status, err),
-        complete: loaderFinish
-      });
-    }
-
-    // -------------------- transform + render --------------------
-    function transform(data){
-      transformEcosystemInitialize(data);
-      transformEcosystemUpdate();
-      loadEcosystem();
-    }
-
-    function transformEcosystemInitialize(data){
-      if (eco !== null) return;
-
-      eco = { components:{}, edges:{}, attributeArrayList:["component","link","version","major","minor","patch","cve","invalid","today"], tagStats:{}, popularTags:new Set() };
-
-      // discover extra (unique) component types
-      data.forEach(v=>{
-        if (v.versionPredictedComponentType) {
-          const k = String(v.versionPredictedComponentType).toLowerCase();
-          if (!eco.attributeArrayList.includes(k)) eco.attributeArrayList.push(k);
-        }
-      });
-
-      // attribute rows (sliders)
-      eco.attributeObjectList = {};
-      eco.attributeArrayList.forEach(attr=>{
-        eco.attributeObjectList[attr] = { factor: defaultFactor(attr), factorHtmlElementId: `factor${cap(attr)}Id`, count: 0 };
-        table.appendChild(createSliderRow(attr));
-      });
-
-      // seed components and counts; also accumulate tag stats
-      data.forEach(v=>{
-        if (!validVersion(v)) { eco.attributeObjectList.invalid.count++; return; }
-
-        const ch = channelOf(v);
-        const name = v.versionProductName;
-
-        if (!eco.components[name]) {
-          eco.components[name] = newComponent(v);
-          eco.components[name].attributeObjectList = {};
-          eco.attributeArrayList.forEach(a=> eco.components[name].attributeObjectList[a] = { count:0 });
-        }
-
-        eco.components[name].attributeObjectList[ch].count++;
-        eco.components[name].attributeObjectList.version.count++;
-        eco.components[name].attributeObjectList.component.count = 1;
-
-        if (!eco.components[name].tags) eco.components[name].tags = new Set();
-        (v.versionSearchTags || []).forEach(t => {
-          const tag = String(t).trim().toLowerCase();
-          eco.components[name].tags.add(tag);
         });
+      }
 
-        if (v.versionPredictedComponentType){
-          const key = String(v.versionPredictedComponentType).toLowerCase();
-          eco.components[name].versionPredictedComponentType = key;
-          eco.components[name].attributeObjectList[key].count = 1;
-        }
-
-        eco.attributeObjectList[ch].count += 1;
-        eco.attributeObjectList.version.count += 1;
-        eco.attributeObjectList.component.count = Object.keys(eco.components).length;
-
-        if (String(v.versionReleaseDate) === todayStr) {
-          eco.attributeObjectList.today.count += 1;
-          eco.components[name].attributeObjectList.today.count += 1;
-        }
-      });
-
-      // build global tag frequency map (by component presence, not by total appearances)
-      const compNames = Object.keys(eco.components);
-      compNames.forEach(name=>{
-        eco.components[name].tags.forEach(tag=>{
-          eco.tagStats[tag] = (eco.tagStats[tag] || 0) + 1;
-        });
-      });
-
-      // compute popularity threshold: ≥ 12% of components or at least 3 components
-      const minPopularCount = Math.max(3, Math.round(0.12 * compNames.length));
-      Object.entries(eco.tagStats).forEach(([tag,count])=>{
-        if (count >= minPopularCount) eco.popularTags.add(tag);
-      });
-
-      // edges by tag overlap (thickness scales with number of shared *useful* tags)
-      for (const A of compNames) {
-        for (const B of compNames) {
-          if (A===B) continue;
-          const inter = intersectUsefulTags(A,B);
-          if (inter.length) addEdge(A,B,inter.length);
+      // edges by shared tags
+      const keys = Object.keys(eco.components);
+      for (let i=0;i<keys.length;i++){
+        for (let j=i+1;j<keys.length;j++){
+          const A = eco.components[keys[i]], B = eco.components[keys[j]];
+          const inter = [...A.tags]
+            .filter(t=>B.tags.has(t))
+            .filter(t=>!STOPWORDS.has(t) && t!=="production" && t!=="beta" && isNaN(t));
+          if (inter.length>0){
+            const id = `${A.id}-${B.id}`;
+            eco.edges[id] = { id, source:A.id, target:B.id, weight: inter.length };
+            eco.attributeObjectList["link"].count++;
+            A.attributeObjectList["link"].count++;
+          }
         }
       }
+
+      renderTypeFilters();
+      recalcEcosystem();
     }
 
-    function transformEcosystemUpdate(){
+    function recalcEcosystem(){
       eco.cost = 0;
-      const relevant = ["major","minor","patch","cve","today"];
+      eco.attributeArrayList.forEach(a=>{
+        const obj = eco.attributeObjectList[a];
+        obj.factor = Number(document.getElementById(obj.factorHtmlElementId).value);
+      });
+      Object.keys(eco.components).forEach(k=>{
+        eco.components[k].cost = 0;
+        eco.components[k].costLatestVersion = 0;
+      });
 
-      for (const c in eco.components){
-        eco.components[c].cost = 0;
-        eco.components[c].costLatestVersion = 0;
-      }
-
-      eco.attributeArrayList.forEach(attr=>{
-        const factor = Number(document.getElementById(eco.attributeObjectList[attr].factorHtmlElementId).value);
-        eco.attributeObjectList[attr].factor = factor;
-
-        eco.cost += eco.attributeObjectList[attr].count * factor;
-
-        for (const c in eco.components){
-          const cnt = eco.components[c].attributeObjectList[attr].count;
-          eco.components[c].cost += cnt * factor;
-          if (relevant.includes(attr)){ eco.components[c].costLatestVersion += (cnt>0 ? 1 : 0) * factor; }
-        }
+      const versionRelevant = new Set(["major","minor","patch","cve","today"]);
+      eco.attributeArrayList.forEach(a=>{
+        eco.cost += eco.attributeObjectList[a].count * eco.attributeObjectList[a].factor;
+        Object.keys(eco.components).forEach(k=>{
+          const comp = eco.components[k];
+          const cnt = comp.attributeObjectList[a].count;
+          comp.cost += cnt * eco.attributeObjectList[a].factor;
+          if (versionRelevant.has(a)){
+            comp.costLatestVersion += (cnt>0 ? 1 : 0) * eco.attributeObjectList[a].factor;
+          }
+        });
       });
     }
 
-    function loadEcosystem(){
-      renderGraph();
-      renderEcoTable();
-      renderComponentTable(); // default zeros
-    }
+    /* ---------------------------- type filters (left switches) ---------------------------- */
+    function renderTypeFilters(){
+      const wrap = document.getElementById("typeFilters");
+      wrap.innerHTML = "";
 
-    // -------------------- graph --------------------
-    function renderGraph(){
-      const graph = { nodes:[], edges:[] };
-      document.getElementById("container").innerHTML = "";
+      const types = Array.from(eco.typeSet).sort();
 
-      // compute max cost first
-      let i=0, maxVal=0;
-      for (const name in eco.components) {
-        if (eco.components[name].cost > maxVal) maxVal = eco.components[name].cost;
-      }
-
-      for (const name in eco.components){
-        const n = eco.components[name];
-        n.t = 3*Math.PI*i/100;
-        n.x = Math.round(30*Math.cos(n.t));
-        n.y = Math.round(30*Math.sin(n.t));
-        n.size = 1;
-        n.label = `${name} • cost ${n.cost}`;
-
-        // grayscale based on cost (0 -> #eee, max -> ~#3a3a3a)
-        n.color = nodeColorScaled(n.cost, maxVal);
-        graph.nodes.push(n);
-        i += 4;
-      }
-
-      for (const e in eco.edges) graph.edges.push(eco.edges[e]);
-
-      const s = new sigma({
-        graph,
-        renderer: { container: document.getElementById("container"), type: sigma.renderers.canvas },
-        settings: {
-          drawEdgeLabels: false,         // removed labels
-          drawLabels: true,
-          batchEdgesDrawing:true,
-          labelThreshold: 0,
-          defaultEdgeColor: "#c7cbd4",
-          edgeColor: "default"
-        }
-      });
-
-      // color the max as red
-      let winner = null, winnerCost = -1;
-      graph.nodes.forEach(n => { if (n.cost > winnerCost){ winnerCost = n.cost; winner = n; }});
-      if (winner) winner.color = "rgb(255, 80, 80)";
-
-      s.refresh();
-
-      s.bind("clickNode", (e)=>{
-        const comp = e.data.node.label.split(" • ")[0];
-        renderComponentTable(comp);
-      });
-    }
-
-    function nodeColorScaled(cost, maxCost){
-      if (!maxCost || cost <= 0) return "rgb(238,238,238)";           // very light gray when 0
-      const v = Math.round(230 - (170 * (cost / maxCost)));           // 230 → 60
-      return `rgb(${v},${v},${v})`;
-    }
-
-    // -------------------- tables --------------------
-    function renderEcoTable(){
-      // unique component types (discovered attributes minus base)
-      const base = new Set(["component","link","version","major","minor","patch","cve","invalid","today"]);
-      const types = eco.attributeArrayList.filter(a => !base.has(a));
-      const typesHtml = types.length ? types.map(t=>`<span class="chip">${t}</span>`).join("") : '<span class="chip">none</span>';
-      document.getElementById("typesListId").innerHTML = typesHtml;
-
-      eco.attributeArrayList.forEach(attr=>{
-        const el = document.getElementById(`${attr}AllId`);
-        if (el) el.innerHTML = ecoCountPretty(attr);
-      });
-      document.getElementById("maintenanceCostId").textContent = eco.cost;
-    }
-
-    function renderComponentTable(component){
-      const t = document.getElementById("ecoComponentTableId");
-      const keep = 4;
-      while (t.rows.length > keep) t.deleteRow(keep);
-
-      document.getElementById("costComponentId").textContent = "0";
-      document.getElementById("costComponentVersionId").textContent = "0";
-
-      if (!component || !eco.components[component]){
-        document.getElementById("componentTitleTableId").textContent = "Click a node";
+      if (types.length === 0){
+        eco.selectedTypes = null; // no types to filter; show all
         return;
       }
 
-      document.getElementById("componentTitleTableId").innerHTML =
-        `<a href="${URL_HOMEPAGE}?q=${encodeURIComponent(component)}" target="_blank">${component}</a>`;
+      if (!eco.selectedTypes){
+        eco.selectedTypes = new Set(types);
+      }else{
+        types.forEach(t=> eco.selectedTypes.add(t));
+      }
 
-      eco.attributeArrayList.forEach(attr=>{
-        const cnt = eco.components[component].attributeObjectList[attr].count;
-        if (cnt>0){
-          const row = t.insertRow();
-          row.insertCell(0).innerText = attr;
-          const cell = row.insertCell(1);
-          const factor = eco.attributeObjectList[attr].factor;
-          const total  = cnt * factor;
-          cell.innerHTML = `<span class="badge">${cnt} × ${factor} = ${total}</span>`;
+      types.forEach(t=>{
+        const id = `type-${t.replace(/[^a-z0-9]+/g,'-')}`;
+        const label = document.createElement("label");
+        label.innerHTML = `<input type="checkbox" id="${id}" ${eco.selectedTypes.has(t) ? "checked":""}/> ${t || "unknown"}`;
+        wrap.appendChild(label);
+        label.querySelector("input").addEventListener("change", (e)=>{
+          if (e.target.checked) eco.selectedTypes.add(t);
+          else eco.selectedTypes.delete(t);
+          renderGraph();
+        });
+      });
+    }
+
+    /* ---------------------------- render ---------------------------- */
+    function renderRightTables(){
+      const q = getParam("q") || "";
+      document.getElementById("ecoTitle").textContent = q ? q : "Today’s top 10";
+
+      const ecoTbl = document.getElementById("ecoTable");
+      while (ecoTbl.rows.length > 3) ecoTbl.deleteRow(ecoTbl.rows.length-1);
+
+      eco.attributeArrayList.forEach(a=>{
+        const tr = ecoTbl.insertRow(-1);
+        tr.className = "row-compact";
+        const factor = eco.attributeObjectList[a].factor;
+        const count  = eco.attributeObjectList[a].count;
+        tr.innerHTML = `
+          <td class="nowrap">${cap(a)}</td>
+          <td class="nowrap">${factor}</td>
+          <td class="nowrap">${count}</td>
+        `;
+      });
+
+      document.getElementById("maintenanceCost").textContent = eco.cost;
+    }
+
+    function renderGraph(){
+      const nodes=[], edges=[];
+      const keysAll = Object.keys(eco.components);
+
+      let keys;
+      if (!eco.selectedTypes || eco.selectedTypes.size === 0){
+        keys = keysAll.slice();
+      }else{
+        keys = keysAll.filter(k=>{
+          const comp = eco.components[k];
+          return !comp.type || eco.selectedTypes.has(comp.type);
+        });
+      }
+
+      let maxCost = -Infinity;
+      let maxKey = null;
+
+      keys.forEach((k, i)=>{
+        const comp = eco.components[k];
+        const t = 2*Math.PI*i / Math.max(1,keys.length);
+        const x = Math.round(30*Math.cos(t));
+        const y = Math.round(30*Math.sin(t));
+
+        if (comp.cost > maxCost){ maxCost = comp.cost; maxKey = k; }
+
+        nodes.push({ id:k, label: comp.display || comp.label || k, x, y, size:1, color:"#bbb" });
+      });
+
+      const visibleSet = new Set(keys);
+      Object.values(eco.edges).forEach(e=>{
+        if (visibleSet.has(e.source) && visibleSet.has(e.target)){
+          edges.push({ id:e.id, source:e.source, target:e.target, size: Math.min(6, Math.max(1, e.weight)), color:"#d3d7df" });
         }
       });
 
-      document.getElementById("costComponentId").textContent = eco.components[component].cost;
-      document.getElementById("costComponentVersionId").textContent = eco.components[component].costLatestVersion;
-    }
-
-    // -------------------- eco build helpers --------------------
-    function ecoCountPretty(attr){
-      const { count, factor } = eco.attributeObjectList[attr];
-      return `<span class="badge">${count} × ${factor} = ${count*factor}</span>`;
-    }
-    function validVersion(v){
-      if (!v || !v.versionNumber) return false;
-      const p = String(v.versionNumber).split(".");
-      if (isNaN(Number(p[0])) && v.versionReleaseChannel !== "patch") return false;
-      return true;
-    }
-    function channelOf(v){
-      const p = String(v.versionNumber||"").split(".").map(n=>Number(n)||0);
-      if (v.versionReleaseChannel==="cve") return "cve";
-      if (v.versionReleaseChannel==="patch" || p[2]>0) return "patch";
-      if (p[1]>0 && p[2]===0) return "minor";
-      if (p[1]===0 && p[2]===0) return "major";
-      return "invalid";
-    }
-    function newComponent(v){
-      return { id:v.versionProductName, label:v.versionProductName, color:"black", x:0,y:0,size:1, cost:0, costLatestVersion:0, tags:new Set() };
-    }
-
-    // tag utility checks
-    function isUsefulTag(tag){
-      if (!tag || typeof tag !== "string") return false;
-      if (STATIC_TAG_BLOCKLIST.has(tag)) return false;      // remove known generic tags
-      if (eco.popularTags.has(tag)) return false;           // remove globally common tags
-      if (tag.length < 3) return false;                     // ignore very short tokens
-      return true;
-    }
-
-    // intersect by *useful* tags only (no date influence)
-    function intersectUsefulTags(a,b){
-      return Array.from(eco.components[a].tags).filter(t => {
-        return isUsefulTag(t) && eco.components[b].tags.has(t);
-      });
-    }
-
-    // Edge creation with thickness = f(sharedTags)
-    function edgeSizeFor(count){
-      // map 1..N to ~0.8..6 (cap)
-      return Math.min(6, 0.8 + count * 1.2);
-    }
-    function addEdge(a,b,sharedCount){
-      const id = a+b;
-      if (!eco.edges[id]){
-        eco.edges[id] = {
-          id,
-          source:a,
-          target:b,
-          size: edgeSizeFor(sharedCount),   // thickness
-          color: "#c7cbd4"                  // subtle gray
-        };
-        eco.attributeObjectList.link.count++;
-        eco.components[a].attributeObjectList.link.count++;
+      const costs = keys.map(k=>eco.components[k].cost);
+      const minC = costs.length ? Math.min(...costs) : 0;
+      const maxC = costs.length ? Math.max(...costs) : 0;
+      function grayFor(cost){
+        if (maxC===minC) return `rgb(200,200,200)`;
+        const t = (cost - minC) / (maxC - minC);
+        const v = Math.round(220 - t*140);
+        return `rgb(${v},${v},${v})`;
       }
+      nodes.forEach(n=>{ n.color = grayFor(eco.components[n.id].cost); });
+      if (maxKey){ const winner = nodes.find(n=>n.id===maxKey); if (winner) winner.color = "rgb(255,80,80)"; }
+
+      document.getElementById("graphContainer").innerHTML = "";
+      const s = new sigma({
+        graph: { nodes, edges },
+        renderer: { container: document.getElementById("graphContainer"), type: 'canvas' },
+        settings: {
+          drawLabels: true,
+          labelSize: 10,
+          defaultLabelSize: 10,
+          drawEdgeLabels: false,
+          batchEdgesDrawing: true
+        }
+      });
+
+      s.bind("clickNode", (e)=>{
+        const key = e.data.node.id;
+        const comp = eco.components[key];
+        const disp = comp.display || comp.label || key;
+        document.getElementById("componentTitle").textContent = `${disp} • cost ${comp.cost}`;
+        document.getElementById("costComponent").textContent = comp.cost;
+        document.getElementById("costComponentVersion").textContent = comp.costLatestVersion;
+      });
+
+      renderRightTables();
     }
 
-    function createSliderRow(attr){
-      const row = document.createElement('tr');
-      row.id = `${attr}RowId`;
-      row.innerHTML = `
-        <td>${cap(attr)}</td>
-        <td><input id="factor${cap(attr)}Id" type="range" min="0" max="2" value="${defaultFactor(attr)}" oninput="onImpactChange()"></td>
-        <td><span id="${attr}AllId"><span class="badge">0 × ${defaultFactor(attr)} = 0</span></span></td>`;
-      return row;
+    /* ---------------------------- helpers ---------------------------- */
+    function top10TodayNames(versions){
+      const map = new Map();
+      versions.forEach(v=>{
+        if (!isInLast24Hours(v)) return;
+        const raw = (v.versionProductName||"").trim();
+        if (!raw) return;
+        const k = normalizeKey(raw);
+        if (!map.has(k)) map.set(k, { count:0, display:raw });
+        map.get(k).count += 1;
+      });
+      const sorted = [...map.entries()].sort((a,b)=>b[1].count - a[1].count).map(([k,v])=>v.display);
+      const pick = sorted.slice(0,10);
+      if (pick.length) return pick;
+      const seen = new Set(), out=[];
+      for (const v of versions){
+        const raw=(v.versionProductName||"").trim(); const k=normalizeKey(raw);
+        if (!raw || seen.has(k)) continue;
+        seen.add(k); out.push(raw);
+        if (out.length>=10) break;
+      }
+      return out;
     }
-    function defaultFactor(attr){
-      if (["link","major","minor","patch","cve","invalid","version"].includes(attr)) return 0;
-      if (attr==="today") return 2;
-      return 1;
+
+    /* ---------------------------- data fetch & boot ---------------------------- */
+    async function fetchAndRender(){
+      loadingStart();
+
+      const components = readQList();
+      const onlyToday = document.getElementById("toggleOnlyToday").checked;
+
+      let url = `${URL_API}/v`;
+      if (components.length) url += `?q=${components.join(",")}`;
+
+      const res = await fetch(url);
+      const payload = await res.json();
+      const versions = Array.isArray(payload) ? payload : (payload.versions || []);
+
+      // Build a type map from the FULL dataset (robust to last-24h filtering)
+      const typeByKey = new Map();
+      versions.forEach(v=>{
+        const nameRaw = (v.versionProductName||"").trim();
+        if (!nameRaw) return;
+        const k = normalizeKey(nameRaw);
+        const t = normalizeKey(extractType(v)||"");
+        if (t && !typeByKey.has(k)) typeByKey.set(k, t);
+      });
+
+      const filtered = onlyToday ? versions.filter(isInLast24Hours) : versions;
+
+      transform(filtered, typeByKey);
+      renderGraph();
+      loadingDone();
     }
-    window.onImpactChange = function(){ transformEcosystemUpdate(); renderEcoTable(); renderGraph(); };
+
+    async function initialLoad(){
+      bindAddBox();
+      loadNameSuggestions();
+
+      document.getElementById("homeBtn").addEventListener("click", ()=>{ window.location.href = buildMainUrl(); });
+
+      const q = getParam("q") || "";
+      if (q){
+        const names = readQList().slice(0,10);
+        renderChips(names);
+        setParamComma(names);
+        await fetchAndRender();
+        return;
+      }
+
+      loadingStart();
+      const res = await fetch(`${URL_API}/v`);
+      const payload = await res.json();
+      const all = Array.isArray(payload) ? payload : (payload.versions || []);
+      const names = top10TodayNames(all);
+      renderChips(names);
+      setParamComma(names);
+      loadingDone();
+      await fetchAndRender();
+    }
+
+    // toggles
+    document.getElementById("toggleOnlyToday").addEventListener("change", fetchAndRender);
+    document.getElementById("toggleUniqueType").addEventListener("change", fetchAndRender);
+    document.getElementById("toggleRealOnly").addEventListener("change", fetchAndRender);
+
+    (async function boot(){ await initialLoad(); })();
   </script>
 </body>
 </html>
