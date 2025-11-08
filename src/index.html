@@ -26,6 +26,11 @@
     .gh-link{display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px solid var(--line);color:var(--text);padding:8px 10px;border-radius:10px;text-decoration:none;font-weight:700}
     .gh-link:hover{background:var(--chip)}
 
+    /* subtle "Graph" pill */
+    .linkchip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--text);text-decoration:none;font-weight:700;font-size:13px;opacity:.85}
+    .linkchip:hover{background:var(--chip);opacity:1}
+    .linkchip small{color:var(--muted);font-weight:600}
+
     .navloader{position:fixed;top:var(--topbar-h);left:0;right:0;height:3px;background:transparent;overflow:hidden;z-index:999;display:none}
     .navloader.active{display:block}
     .navloader::after{content:"";display:block;width:40%;height:100%;background:linear-gradient(90deg,var(--brand),#9bbcfb,var(--brand));animation:slide 1s infinite}
@@ -121,6 +126,10 @@
   <div class="topbar">
     <div class="brand">Releasetrain <b>v3.13.3</b></div>
     <div class="spacer"></div>
+
+    <!-- Subtle link to /graph keeping ?q=... -->
+    <a id="graphLink" class="linkchip" href="/graph" title="Open graph view with the same query">Graph ↗ <small>/graph</small></a>
+
     <a class="gh-link" href="https://github.com/SE4CPS/releasetrain-client" target="_blank" rel="noopener">GitHub ↗</a>
 
     <form id="filterForm" class="controls" aria-label="Filters">
@@ -220,6 +229,16 @@
       document.documentElement.style.setProperty('--navloader-h',(nl&&nl.classList.contains('active')?nl.offsetHeight:0)+"px");
     }
     window.addEventListener('load',updateOffsets);window.addEventListener('resize',updateOffsets);new ResizeObserver(updateOffsets).observe(document.querySelector('.topbar'));
+
+    /* ---------- keep /graph link synced with ?q=... ---------- */
+    function setGraphHref(){
+      const u=new URL(location.href);
+      const q=u.searchParams.get("q");
+      const base = `${location.origin}/graph/`;
+      const href = q ? `${base}?q=${encodeURIComponent(q)}` : base;
+      const a=$("#graphLink");
+      if(a) a.href = href;
+    }
 
     /* =================== Reddit helpers =================== */
     const isUpdateRelatedBoolean = p => !!(p?.metadata?.labeled?.isUpdateRelated || p?.metadata?.predicted?.isUpdateRelated);
@@ -449,7 +468,6 @@
           const scoreField = (typeof it.raw?.score === "number") ? it.raw.score : null;
           const scoreVal = (typeof scorePred === "number") ? scorePred : scoreField;
           if(isRisk(it.raw)){
-            // combined chip
             const label = scoreVal!=null ? `risk score: ${Number(scoreVal).toFixed(4)}` : "risk score: —";
             chips.insertAdjacentHTML("beforeend", chip(label,"warn"));
           }else if(scoreVal!=null){
@@ -527,6 +545,7 @@
       try{
         const u=new URL(location.href); const compCsv=u.searchParams.get("q")||"";
         $("#components").value=compCsv; STATE.filters.components=tokens(compCsv);
+        setGraphHref();
 
         const [vers, reddit]=await Promise.all([Api.versions(compCsv), Api.reddit().catch(()=>[])]);
 
@@ -548,6 +567,8 @@
       e.preventDefault();
       const compCsv=$("#components").value.trim().replace(/\s+/g,''); const u=new URL(location.href);
       if(compCsv) u.searchParams.set("q",compCsv); else u.searchParams.delete("q"); history.replaceState({}, "", u.toString());
+      setGraphHref();
+
       $("#status").textContent="Filtering…"; showLoader();
       try{
         STATE.filters.components=tokens(compCsv);
@@ -562,6 +583,7 @@
     $("#clearBtn").addEventListener("click", ()=>{
       $("#components").value=""; STATE.filters.components=[];
       const u=new URL(location.href); u.searchParams.delete("q"); history.replaceState({}, "", u.toString());
+      setGraphHref();
       STATE.filters.toggles.clear();
       $$('#fixedToggles .toggle, #typeToggles .toggle').forEach(b=>b.setAttribute('aria-pressed','false'));
       boot();
