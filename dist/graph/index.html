@@ -1,813 +1,570 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-    <title>releasetrain.io</title>
-    <link rel="icon" href="https://releasetrain.io/img/favicon.png" type="image/png">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta charset="UTF-8">
-    <meta name="description" content="Software Component Version Releases">
-    <meta name="keywords" content="Version, Release, Agile">
-    <meta name="author" content="Solomon Berhe">
-    <meta http-equiv="refresh" content="3600" />
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-79349402-1"></script>
-    <script src="./../lib/googleanalytics.js"></script>
-    <link href="./../reset.css" rel="stylesheet" />
-    <link href="./../graph/graph.css" rel="stylesheet" />
-    <script type="text/javascript" src="./../lib/sigma.min.js"></script>
-    <script type="text/javascript" src="./../lib/sigma.canvas.edges.labels.curve.js"></script>
-    <script type="text/javascript" src="./../lib/sigma.canvas.edges.labels.curvedArrow.js"></script>
-    <script type="text/javascript" src="./../lib/sigma.canvas.edges.labels.def.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
-    <style type="text/css">
-    body {
-        font-family: Arial, sans-serif;
-        color: #333;
-        background-color: #fff;
-        padding: 5px;
-        overflow: hidden;
-        font-size: 8pt;
+  <meta charset="UTF-8"/>
+  <title>releasetrain.io – Graph</title>
+  <link rel="icon" href="https://releasetrain.io/img/favicon.png" type="image/png"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+  <!-- Vendor -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+  <!-- Sigma -->
+  <script src="./../lib/sigma.min.js"></script>
+  <script src="./../lib/sigma.canvas.edges.labels.curve.js"></script>
+  <script src="./../lib/sigma.canvas.edges.labels.curvedArrow.js"></script>
+  <script src="./../lib/sigma.canvas.edges.labels.def.js"></script>
+
+  <style>
+    :root { --panel-w: 360px; --border:#e8e8e8; --muted:#6b7280; --accent:#4f46e5; }
+
+    * { box-sizing: border-box; }
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color:#111827;
+      background:#ffffff;
+      margin:0;
     }
 
-    table {
-        width: 100%;
-        border-collapse: collapse;
+    /* Loading bar */
+    #loader {
+      position: fixed;
+      top: 0; left: 0;
+      height: 3px;
+      width: 0;
+      background: linear-gradient(90deg, var(--accent), #22c55e);
+      box-shadow: 0 0 6px rgba(79,70,229,.5);
+      z-index: 9999;
+      transition: width .35s ease, opacity .25s ease;
+      opacity: 0;
+    }
+    #loader.active { opacity: 1; }
+
+    /* Layout with vertical divider */
+    .app{
+      display:grid;
+      grid-template-columns: var(--panel-w) 1fr;
+      height:100vh;
+    }
+    .left{
+      border-right:1px solid var(--border);
+      padding:14px 14px 18px 16px;
+      overflow-y:auto;        /* vertical scroll only */
+      overflow-x:hidden;      /* no horizontal scroll */
+      background:#fafafa;
+    }
+    .right{
+      padding:10px;
+      height:100%;
+    }
+    #container{
+      height:100%;
+      width:100%;
+      border-left:1px solid var(--border);
     }
 
-    th,
-    td {
-        border: 1px solid #ddd;
-        padding: 4px;
-        text-align: left;
+    /* Controls */
+    .label{
+      font-size:12px;
+      color:var(--muted);
+      letter-spacing:.02em;
+      margin-bottom:6px;
+      text-transform:uppercase;
+    }
+    .select2-container{ width:100%!important; }
+    .hint{ font-size:12px; color:var(--muted); margin-top:6px; }
+
+    /* Tables */
+    table{ width:100%; border-collapse:collapse; margin-top:10px; background:#fff; }
+    th, td{ border:1px solid var(--border); padding:8px 10px; text-align:left; vertical-align:top; }
+    th{ background:#f6f7f9; font-weight:600; color:#111827; }
+    td span.badge{
+      padding:2px 6px; border-radius:6px; background:#eef2ff; font-size:12px; color:#3730a3;
+      display:inline-block; white-space:nowrap;
+    }
+    .chip{
+      display:inline-block; padding:2px 8px; border:1px solid #d5d7dd; border-radius:9999px;
+      font-size:12px; color:#374151; background:#fff; margin:2px 6px 2px 0;
     }
 
-    th {
-        background-color: #f2f2f2;
-        color: #333;
-        /* Improved contrast */
-        font-factor: bold;
-        /* Enhance visibility */
+    input[type="range"]{ width:100%; }
+
+    /* Mobile */
+    @media (max-width: 1024px){
+      .app{ grid-template-columns: 1fr; }
+      .right{ display:none; } /* hide graph on small screens */
     }
-
-    input[type=range] {
-        width: 100%;
-    }
-
-    section {
-        margin: 0px;
-        padding: 0px;
-    }
-
-    input[type=number] {
-        width: 30px;
-    }
-
-    .container {
-        max-width: 600px;
-        margin: auto;
-    }
-
-    .attribute {
-        border: 1px solid #333;
-        margin-bottom: 10px;
-        padding: 10px;
-    }
-
-    .attribute label {
-        display: block;
-        margin-bottom: 5px;
-        font-factor: bold;
-        /* Enhanced visibility */
-    }
-
-    .slider {
-        width: 100%;
-    }
-
-    .flex-container {
-        height: 95vh;
-        display: flex;
-    }
-
-    .flex-left {
-        width: 350px;
-        overflow-y: auto;
-    }
-
-    .flex-right {
-        width: calc(100% - 350px);
-        background-color: transparent;
-        max-height: 100vh;
-    }
-
-    .circle {
-        height: 10px;
-        width: 10px;
-        background-color: #bbb;
-        border-radius: 50%;
-        display: inline-block;
-        margin-right: 4px;
-    }
-
-    /* CSS for mobile devices */
-    @media only screen and (max-width: 767px) {
-        #container {
-            display: none;
-        }
-
-        .flex-left {
-            width: 100%;
-        }
-    }
-
-    /* CSS for tablet devices */
-    @media only screen and (min-width: 768px) and (max-width: 1024px) {
-        #container {
-            display: none;
-        }
-
-        .flex-left {
-            width: 100%;
-        }
-    }
-
-    .select2-container--default .select2-selection--multiple {
-        background-color: #f2f2f2;
-        border: 1px solid #d4d4d4;
-        border-radius: 4px;
-    }
-
-    .select2-dropdown {
-        background-color: #f9f9f9;
-        border: 1px solid #d4d4d4;
-    }
-
-    .select2-results__option {
-        color: #333;
-    }
-
-    .select2-results__option--highlighted[aria-selected] {
-        background-color: #e9e9e9;
-    }
-    </style>
+  </style>
 </head>
-
 <body>
-    <section class="flex-container">
-        <section id="containerLeftId" class="flex-left">
-            <select id="mySelect2" class="js-example-basic-multiple" name="states[]" multiple="multiple"></select>
-            <table id="ecoTableId" style="margin-top:5px">
-                <tr>
-                    <th>Ecosystem:</th>
-                    <th colspan="2" id="ecoTitleTableId"></th>
-                </tr>
-                <tr>
-                    <td>Maintenance Cost</td>
-                    <td><span id="maintenanceEquationId">&sum;(attribute) </span></td>
-                    <td><span id="maintenanceCostId"></span></td>
-                </tr>
-                <tr>
-                    <th style="width: 150px">Attribute</th>
-                    <th style="width: 20px">Impact</th>
-                    <th style="width: 100px;">Count</th>
-                </tr>
-            </table>
-            <br>
-            <table id="ecoComponentTableId" style="margin-top: 10px; width: 100%;">
-                <tr>
-                    <th>Component:</th>
-                    <th colspan="2" id="componentTitleTableId">Click graph node for details</th>
-                </tr>
-                <tr>
-                    <th style="width: 125px">Attribute</th>
-                    <th style="width: 125px;">Count</th>
-                </tr>
-                <tr>
-                    <td>Cost Component</td>
-                    <td><span id="costComponentId"></span></td>
-                </tr>
-                <tr>
-                    <td>Cost Latest Version</td>
-                    <td><span id="costComponentVersionId"></span></td>
-                </tr>
-            </table>
-        </section>
-        <section id="container" class="flex-right">
-        </section>
+  <!-- loader bar -->
+  <div id="loader"></div>
+
+  <main class="app">
+    <aside class="left">
+      <div class="label">Components</div>
+      <select id="mySelect2" class="js-example-basic-multiple" multiple="multiple"></select>
+      <div class="hint">Choose from the dropdown, or click a node in the graph to inspect details.</div>
+
+      <table id="ecoTableId">
+        <tr>
+          <th style="width:160px">Ecosystem</th>
+          <th colspan="2" id="ecoTitleTableId"></th>
+        </tr>
+        <tr>
+          <td>Maintenance Cost</td>
+          <td style="width:120px"><span id="maintenanceEquationId">&sum; (attribute × impact)</span></td>
+          <td style="width:120px"><span id="maintenanceCostId">0</span></td>
+        </tr>
+        <tr>
+          <td>Unique Component Types</td>
+          <td colspan="2" id="typesListId"></td>
+        </tr>
+        <tr>
+          <th>Attribute</th>
+          <th>Impact</th>
+          <th>Count</th>
+        </tr>
+      </table>
+
+      <table id="ecoComponentTableId">
+        <tr>
+          <th>Component</th>
+          <th id="componentTitleTableId">Click a node</th>
+        </tr>
+        <tr>
+          <th style="width:160px">Attribute</th>
+          <th>Count</th>
+        </tr>
+        <tr>
+          <td>Cost Component</td>
+          <td><span id="costComponentId">0</span></td>
+        </tr>
+        <tr>
+          <td>Cost Latest Version</td>
+          <td><span id="costComponentVersionId">0</span></td>
+        </tr>
+      </table>
+    </aside>
+
+    <section class="right">
+      <div id="container"></div>
     </section>
-    <script>
-    console.log("start");
+  </main>
 
+  <script>
+    // -------------------- constants / helpers --------------------
     const URL_API_ENDPOINT = "https://releasetrain.io/api";
-    // const URL_HOMEPAGE = "http://localhost:8080";
-    const URL_HOMEPAGE = "https://releasetrain.io";
-    const urlParams = new URLSearchParams(window.location.search);
-    const q = urlParams.get('q') === null ? "" : urlParams.get('q');
+    const URL_HOMEPAGE     = "https://releasetrain.io";
 
-    let urlSelectOptions = URL_API_ENDPOINT + '/c/names';
+    const params   = new URLSearchParams(window.location.search);
+    const qParam   = params.get("q") || "";                 // user-selected components (comma-separated)
+    const todayStr = yyyymmdd(new Date());                  // for default selection
 
-    let counterId = 0;
-
-    q.split(",").forEach(component => {
-        if (q === "") {
-            return;
-        }
-        let initialValue = { id: counterId, text: component };
-        let newOption = new Option(initialValue.text, initialValue.id, true, true);
-        $('#mySelect2').append(newOption).trigger('change');
-        counterId = counterId + 1;
-    })
-
-    $('#mySelect2').select2({
-        ajax: {
-            url: urlSelectOptions,
-            processResults: function(data) {
-                counterId = 1000;
-                let resultsArray = [];
-                data.forEach(version => {
-
-                    if (version.hasOwnProperty('versionProductName') === false) {
-                        return;
-                    }
-
-                    if (isFirstLetterAlphabetic(version.versionProductName) === false) {
-                        return;
-                    }
-
-                    resultsArray.push({ "id": counterId, "text": version.versionProductName })
-
-                    counterId = counterId + 1;
-                })
-
-                return {
-                    results: resultsArray
-                };
-            }
-        }
-    });
-
-    $('#mySelect2').on('change', function() {
-        var selectedTexts = $(this).find(':selected').map(function() {
-            return $(this).text();
-        }).get();
-
-        console.log(selectedTexts);
-
-        // Convert array of values to a string if multiple selection is enabled
-        var valuesAsString = selectedTexts.join(',');
-
-        // Define the URL to call
-        var urlToCall = URL_HOMEPAGE + '/graph?q=' + valuesAsString;
-
-        window.location.href = urlToCall;
-    });
-
-    function isFirstLetterAlphabetic(str) {
-        if (str.length === 0) return false; // Check if the string is empty
-        return /^[A-Za-z]/.test(str.charAt(0));
-    }
-
-    const versionChannel = {
-        major: "major",
-        minor: "minor",
-        patch: "patch",
-        cve: "cve",
-        invalid: "invalid"
-    }
-
-    const table = document.getElementById('ecoTableId');
-
-    document.getElementById("ecoTitleTableId").innerHTML = q === "" ? "Last 50 updates" : q;
-
+    const versionChannel = { major:"major", minor:"minor", patch:"patch", cve:"cve", invalid:"invalid" };
+    const table = document.getElementById("ecoTableId");
     let eco = null;
 
+    // tags that are always ignored
+    const STATIC_TAG_BLOCKLIST = new Set([
+      "release","releases","version","versions","update","updates","latest","stable",
+      "download","downloads","changelog","general","misc",
+      "github","git","source","sources","binary","binaries","package","packages","install","installer",
+      "windows","linux","mac","macos","os","x64","x86","amd64","arm64",
+      "tool","tools","framework","app","application"
+    ]);
+
+    function yyyymmdd(d){
+      const y = d.getUTCFullYear();
+      const m = String(d.getUTCMonth()+1).padStart(2,"0");
+      const day = String(d.getUTCDate()).padStart(2,"0");
+      return `${y}${m}${day}`;
+    }
+    function isAlphaStart(s){ return /^[A-Za-z]/.test(String(s||"").charAt(0)); }
+    function uniq(arr){ return Array.from(new Set(arr)); }
+    function cap(s){ return String(s).charAt(0).toUpperCase() + String(s).slice(1); }
+
+    // -------------------- loader bar --------------------
+    const loader = document.getElementById("loader");
+    function loaderStart(){
+      loader.classList.add("active");
+      loader.style.width = "0";
+      requestAnimationFrame(()=>{ loader.style.width = "70%"; });
+    }
+    function loaderFinish(){
+      loader.style.width = "100%";
+      setTimeout(()=>{ loader.classList.remove("active"); loader.style.opacity = "0"; }, 250);
+      setTimeout(()=>{ loader.style.width = "0"; loader.style.opacity = "1"; }, 400);
+    }
+
+    // -------------------- select2 init --------------------
+    $("#mySelect2").select2({
+      placeholder:"Filter components…",
+      ajax:{
+        url:`${URL_API_ENDPOINT}/c/names`,
+        delay:150,
+        processResults: data => {
+          const list = Array.isArray(data) ? data : [];
+          return { results: list.filter(isAlphaStart).map(x=>({id:x, text:x})) };
+        }
+      },
+      multiple:true
+    });
+
+    // Build URL with comma-separated values (commas unencoded)
+    $("#mySelect2").on("change", function(){
+      const selected = $(this).find(":selected").map(function(){ return $(this).text(); }).get();
+      const qStr = selected.map(v => encodeURIComponent(v)).join(","); // encode parts, keep commas
+      window.location.href = `${URL_HOMEPAGE}/graph?q=${qStr}`;
+    });
+
+    // -------------------- boot --------------------
+    document.getElementById("ecoTitleTableId").textContent = qParam ? decodeURIComponent(qParam) : `Updates from ${todayStr}`;
     extractData();
 
-    function extractData() {
-        console.log("extract");
+    // -------------------- data fetch --------------------
+    function extractData(){
+      loaderStart();
+      $.ajax({
+        url: `${URL_API_ENDPOINT}/v?q=${qParam}`,
+        method: "GET",
+        dataType: "json",
+        success: (payload)=>{
+          let items = [];
+          if (payload && Array.isArray(payload.versions)) items = payload.versions;
+          else if (Array.isArray(payload)) items = payload;
 
-        $.ajax({
-            url: URL_API_ENDPOINT + "/v?q=" + encodeURIComponent(q), // Ensure query is URL encoded
-            type: 'GET',
-            dataType: 'json',
-            success: function(data) {
-                if (!Array.isArray(data)) {
-                    console.error("Data is not an array");
-                    return;
-                }
+          // Sort by ascending release date
+          items.sort((a,b)=> (Number(a.versionReleaseDate)||0) - (Number(b.versionReleaseDate)||0));
 
-                const sortedData = data.sort((a, b) => {
-                    return new Date(a.versionReleaseDate) - new Date(b.versionReleaseDate);
-                });
+          // Default to today's components when q missing
+          if (!qParam) {
+            const todays = items.filter(v => String(v.versionReleaseDate) === todayStr);
+            const todaysNames = uniq(todays.map(v => v.versionProductName).filter(Boolean));
 
-                transform(sortedData);
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                console.error("Error fetching data:", textStatus, errorThrown);
+            // Preselect in input
+            $("#mySelect2").val(null).trigger("change");
+            todaysNames.forEach(name=>{
+              const opt = new Option(name, name, true, true);
+              $("#mySelect2").append(opt).trigger("change.select2");
+            });
+
+            if (todays.length) transform(todays);
+            else {
+              const last50 = items.slice(-50);
+              document.getElementById("ecoTitleTableId").textContent = "Last 50 updates";
+              transform(last50);
             }
-        });
+          } else {
+            transform(items);
+          }
+        },
+        error: (xhr, status, err)=> console.error("API error /api/v", status, err),
+        complete: loaderFinish
+      });
     }
 
-    function transform(data) {
-        console.log("transform");
-
-        // transform data and ui
-        transformEcosystemInitialize(data);
-
-        // transform data
-        transformEcosystemUpdate();
-
-        // load data and ui
-        loadEcosystem();
-
+    // -------------------- transform + render --------------------
+    function transform(data){
+      transformEcosystemInitialize(data);
+      transformEcosystemUpdate();
+      loadEcosystem();
     }
 
-    function transformEcosystemUpdate() {
+    function transformEcosystemInitialize(data){
+      if (eco !== null) return;
 
-        eco.cost = 0;
+      eco = { components:{}, edges:{}, attributeArrayList:["component","link","version","major","minor","patch","cve","invalid","today"], tagStats:{}, popularTags:new Set() };
 
-        let versionRelevantAttributes = ['major', 'minor', 'patch', 'cve', 'today'];
+      // discover extra (unique) component types
+      data.forEach(v=>{
+        if (v.versionPredictedComponentType) {
+          const k = String(v.versionPredictedComponentType).toLowerCase();
+          if (!eco.attributeArrayList.includes(k)) eco.attributeArrayList.push(k);
+        }
+      });
 
-        for (component in eco.components) {
+      // attribute rows (sliders)
+      eco.attributeObjectList = {};
+      eco.attributeArrayList.forEach(attr=>{
+        eco.attributeObjectList[attr] = { factor: defaultFactor(attr), factorHtmlElementId: `factor${cap(attr)}Id`, count: 0 };
+        table.appendChild(createSliderRow(attr));
+      });
 
-            eco.components[component].cost = 0;
+      // seed components and counts; also accumulate tag stats
+      data.forEach(v=>{
+        if (!validVersion(v)) { eco.attributeObjectList.invalid.count++; return; }
 
-            eco.components[component].costLatestVersion = 0;
+        const ch = channelOf(v);
+        const name = v.versionProductName;
 
+        if (!eco.components[name]) {
+          eco.components[name] = newComponent(v);
+          eco.components[name].attributeObjectList = {};
+          eco.attributeArrayList.forEach(a=> eco.components[name].attributeObjectList[a] = { count:0 });
         }
 
-        eco.attributeArrayList.forEach(attribute => {
+        eco.components[name].attributeObjectList[ch].count++;
+        eco.components[name].attributeObjectList.version.count++;
+        eco.components[name].attributeObjectList.component.count = 1;
 
-            eco.attributeObjectList[attribute].factor = Number(document.getElementById(eco.attributeObjectList[attribute].factorHtmlElementId).value);
-
-            eco.cost += eco.attributeObjectList[attribute].count * eco.attributeObjectList[attribute].factor;
-
-            for (component in eco.components) {
-
-                eco.components[component].cost += eco.components[component].attributeObjectList[attribute].count * eco.attributeObjectList[attribute].factor;
-
-                if (versionRelevantAttributes.includes(attribute)) {
-
-                    let versionCount = eco.components[component].attributeObjectList[attribute].count > 0 ? 1 : 0;
-
-                    eco.components[component].costLatestVersion += versionCount * eco.attributeObjectList[attribute].factor;
-
-                }
-            }
-
+        if (!eco.components[name].tags) eco.components[name].tags = new Set();
+        (v.versionSearchTags || []).forEach(t => {
+          const tag = String(t).trim().toLowerCase();
+          eco.components[name].tags.add(tag);
         });
-    }
 
-    function loadEcosystem() {
-
-        loadGraphData();
-
-        loadTableEcosystemData();
-
-        loadTableComponentData();
-
-    }
-
-    function getIntersection(componentA, componentB) {
-        return Array.from(eco.components[componentA].tags)
-            .filter(tag => isTagValidForIntersection(tag, componentB));
-    }
-
-    function isTagValidForIntersection(tag, componentB) {
-        const invalidTags = ["cve", "production", "beta"];
-        return eco.components[componentB].tags.has(tag) &&
-            !q.includes(tag) &&
-            !invalidTags.includes(tag) &&
-            isNaN(tag);
-    }
-
-    function createAndProcessEdge(componentA, componentB, intersection) {
-
-        let edgeId = componentA + componentB;
-
-        if (eco.edges.hasOwnProperty(edgeId) === false) {
-
-            eco.edges[edgeId] = createEdge(componentA, componentB, intersection);
-            eco.attributeObjectList['link'].count++;
-            eco.components[componentA].attributeObjectList['link'].count++;
-
+        if (v.versionPredictedComponentType){
+          const key = String(v.versionPredictedComponentType).toLowerCase();
+          eco.components[name].versionPredictedComponentType = key;
+          eco.components[name].attributeObjectList[key].count = 1;
         }
+
+        eco.attributeObjectList[ch].count += 1;
+        eco.attributeObjectList.version.count += 1;
+        eco.attributeObjectList.component.count = Object.keys(eco.components).length;
+
+        if (String(v.versionReleaseDate) === todayStr) {
+          eco.attributeObjectList.today.count += 1;
+          eco.components[name].attributeObjectList.today.count += 1;
+        }
+      });
+
+      // build global tag frequency map (by component presence, not by total appearances)
+      const compNames = Object.keys(eco.components);
+      compNames.forEach(name=>{
+        eco.components[name].tags.forEach(tag=>{
+          eco.tagStats[tag] = (eco.tagStats[tag] || 0) + 1;
+        });
+      });
+
+      // compute popularity threshold: ≥ 12% of components or at least 3 components
+      const minPopularCount = Math.max(3, Math.round(0.12 * compNames.length));
+      Object.entries(eco.tagStats).forEach(([tag,count])=>{
+        if (count >= minPopularCount) eco.popularTags.add(tag);
+      });
+
+      // edges by tag overlap (thickness scales with number of shared *useful* tags)
+      for (const A of compNames) {
+        for (const B of compNames) {
+          if (A===B) continue;
+          const inter = intersectUsefulTags(A,B);
+          if (inter.length) addEdge(A,B,inter.length);
+        }
+      }
     }
 
-    function createEdge(componentA, componentB, intersection) {
-        return {
-            "id": componentA + componentB,
-            "source": componentA,
-            "target": componentB,
-            "label": intersection.join(",")
+    function transformEcosystemUpdate(){
+      eco.cost = 0;
+      const relevant = ["major","minor","patch","cve","today"];
+
+      for (const c in eco.components){
+        eco.components[c].cost = 0;
+        eco.components[c].costLatestVersion = 0;
+      }
+
+      eco.attributeArrayList.forEach(attr=>{
+        const factor = Number(document.getElementById(eco.attributeObjectList[attr].factorHtmlElementId).value);
+        eco.attributeObjectList[attr].factor = factor;
+
+        eco.cost += eco.attributeObjectList[attr].count * factor;
+
+        for (const c in eco.components){
+          const cnt = eco.components[c].attributeObjectList[attr].count;
+          eco.components[c].cost += cnt * factor;
+          if (relevant.includes(attr)){ eco.components[c].costLatestVersion += (cnt>0 ? 1 : 0) * factor; }
+        }
+      });
+    }
+
+    function loadEcosystem(){
+      renderGraph();
+      renderEcoTable();
+      renderComponentTable(); // default zeros
+    }
+
+    // -------------------- graph --------------------
+    function renderGraph(){
+      const graph = { nodes:[], edges:[] };
+      document.getElementById("container").innerHTML = "";
+
+      // compute max cost first
+      let i=0, maxVal=0;
+      for (const name in eco.components) {
+        if (eco.components[name].cost > maxVal) maxVal = eco.components[name].cost;
+      }
+
+      for (const name in eco.components){
+        const n = eco.components[name];
+        n.t = 3*Math.PI*i/100;
+        n.x = Math.round(30*Math.cos(n.t));
+        n.y = Math.round(30*Math.sin(n.t));
+        n.size = 1;
+        n.label = `${name} • cost ${n.cost}`;
+
+        // grayscale based on cost (0 -> #eee, max -> ~#3a3a3a)
+        n.color = nodeColorScaled(n.cost, maxVal);
+        graph.nodes.push(n);
+        i += 4;
+      }
+
+      for (const e in eco.edges) graph.edges.push(eco.edges[e]);
+
+      const s = new sigma({
+        graph,
+        renderer: { container: document.getElementById("container"), type: sigma.renderers.canvas },
+        settings: {
+          drawEdgeLabels: false,         // removed labels
+          drawLabels: true,
+          batchEdgesDrawing:true,
+          labelThreshold: 0,
+          defaultEdgeColor: "#c7cbd4",
+          edgeColor: "default"
+        }
+      });
+
+      // color the max as red
+      let winner = null, winnerCost = -1;
+      graph.nodes.forEach(n => { if (n.cost > winnerCost){ winnerCost = n.cost; winner = n; }});
+      if (winner) winner.color = "rgb(255, 80, 80)";
+
+      s.refresh();
+
+      s.bind("clickNode", (e)=>{
+        const comp = e.data.node.label.split(" • ")[0];
+        renderComponentTable(comp);
+      });
+    }
+
+    function nodeColorScaled(cost, maxCost){
+      if (!maxCost || cost <= 0) return "rgb(238,238,238)";           // very light gray when 0
+      const v = Math.round(230 - (170 * (cost / maxCost)));           // 230 → 60
+      return `rgb(${v},${v},${v})`;
+    }
+
+    // -------------------- tables --------------------
+    function renderEcoTable(){
+      // unique component types (discovered attributes minus base)
+      const base = new Set(["component","link","version","major","minor","patch","cve","invalid","today"]);
+      const types = eco.attributeArrayList.filter(a => !base.has(a));
+      const typesHtml = types.length ? types.map(t=>`<span class="chip">${t}</span>`).join("") : '<span class="chip">none</span>';
+      document.getElementById("typesListId").innerHTML = typesHtml;
+
+      eco.attributeArrayList.forEach(attr=>{
+        const el = document.getElementById(`${attr}AllId`);
+        if (el) el.innerHTML = ecoCountPretty(attr);
+      });
+      document.getElementById("maintenanceCostId").textContent = eco.cost;
+    }
+
+    function renderComponentTable(component){
+      const t = document.getElementById("ecoComponentTableId");
+      const keep = 4;
+      while (t.rows.length > keep) t.deleteRow(keep);
+
+      document.getElementById("costComponentId").textContent = "0";
+      document.getElementById("costComponentVersionId").textContent = "0";
+
+      if (!component || !eco.components[component]){
+        document.getElementById("componentTitleTableId").textContent = "Click a node";
+        return;
+      }
+
+      document.getElementById("componentTitleTableId").innerHTML =
+        `<a href="${URL_HOMEPAGE}?q=${encodeURIComponent(component)}" target="_blank">${component}</a>`;
+
+      eco.attributeArrayList.forEach(attr=>{
+        const cnt = eco.components[component].attributeObjectList[attr].count;
+        if (cnt>0){
+          const row = t.insertRow();
+          row.insertCell(0).innerText = attr;
+          const cell = row.insertCell(1);
+          const factor = eco.attributeObjectList[attr].factor;
+          const total  = cnt * factor;
+          cell.innerHTML = `<span class="badge">${cnt} × ${factor} = ${total}</span>`;
+        }
+      });
+
+      document.getElementById("costComponentId").textContent = eco.components[component].cost;
+      document.getElementById("costComponentVersionId").textContent = eco.components[component].costLatestVersion;
+    }
+
+    // -------------------- eco build helpers --------------------
+    function ecoCountPretty(attr){
+      const { count, factor } = eco.attributeObjectList[attr];
+      return `<span class="badge">${count} × ${factor} = ${count*factor}</span>`;
+    }
+    function validVersion(v){
+      if (!v || !v.versionNumber) return false;
+      const p = String(v.versionNumber).split(".");
+      if (isNaN(Number(p[0])) && v.versionReleaseChannel !== "patch") return false;
+      return true;
+    }
+    function channelOf(v){
+      const p = String(v.versionNumber||"").split(".").map(n=>Number(n)||0);
+      if (v.versionReleaseChannel==="cve") return "cve";
+      if (v.versionReleaseChannel==="patch" || p[2]>0) return "patch";
+      if (p[1]>0 && p[2]===0) return "minor";
+      if (p[1]===0 && p[2]===0) return "major";
+      return "invalid";
+    }
+    function newComponent(v){
+      return { id:v.versionProductName, label:v.versionProductName, color:"black", x:0,y:0,size:1, cost:0, costLatestVersion:0, tags:new Set() };
+    }
+
+    // tag utility checks
+    function isUsefulTag(tag){
+      if (!tag || typeof tag !== "string") return false;
+      if (STATIC_TAG_BLOCKLIST.has(tag)) return false;      // remove known generic tags
+      if (eco.popularTags.has(tag)) return false;           // remove globally common tags
+      if (tag.length < 3) return false;                     // ignore very short tokens
+      return true;
+    }
+
+    // intersect by *useful* tags only (no date influence)
+    function intersectUsefulTags(a,b){
+      return Array.from(eco.components[a].tags).filter(t => {
+        return isUsefulTag(t) && eco.components[b].tags.has(t);
+      });
+    }
+
+    // Edge creation with thickness = f(sharedTags)
+    function edgeSizeFor(count){
+      // map 1..N to ~0.8..6 (cap)
+      return Math.min(6, 0.8 + count * 1.2);
+    }
+    function addEdge(a,b,sharedCount){
+      const id = a+b;
+      if (!eco.edges[id]){
+        eco.edges[id] = {
+          id,
+          source:a,
+          target:b,
+          size: edgeSizeFor(sharedCount),   // thickness
+          color: "#c7cbd4"                  // subtle gray
         };
+        eco.attributeObjectList.link.count++;
+        eco.components[a].attributeObjectList.link.count++;
+      }
     }
 
-    function calculateRGB(eco, component) {
-        var cost = eco.components[component].cost;
-        var r, g, b;
-
-        if (cost === 0) {
-            // If cost is 0, set RGB to almost white (250, 250, 250)
-            r = g = b = 250;
-        } else {
-            // The higher the cost, the closer to black (0, 0, 0)
-            var value = Math.max(0, 255 - (cost * 30)); // Ensure value doesn't go below 0
-            r = g = b = value;
-        }
-
-        if (eco.attributeObjectList['today'].factor === 2 && eco.components[component].attributeObjectList['today'].count > 0) {
-            r = 0;
-            g = 0;
-            b = 0;
-        }
-
-        return `rgb(${r}, ${g}, ${b})`;
+    function createSliderRow(attr){
+      const row = document.createElement('tr');
+      row.id = `${attr}RowId`;
+      row.innerHTML = `
+        <td>${cap(attr)}</td>
+        <td><input id="factor${cap(attr)}Id" type="range" min="0" max="2" value="${defaultFactor(attr)}" oninput="onImpactChange()"></td>
+        <td><span id="${attr}AllId"><span class="badge">0 × ${defaultFactor(attr)} = 0</span></span></td>`;
+      return row;
     }
-
-
-    function loadGraphData() {
-        console.log("loadData");
-
-        let target = { "nodes": [], "edges": [] }
-        let counter = 0;
-
-        document.getElementById('container').innerHTML = "";
-
-        let maxValue = 0;
-        let maxNode = null;
-        let node = null
-        var lightRed = 'rgb(255, 102, 102)';
-
-        for (let component in eco.components) {
-            eco.components[component].t = 3 * Math.PI * counter / 100;
-            eco.components[component].x = Math.round(30 * Math.cos(eco.components[component].t));
-            eco.components[component].y = Math.round(30 * Math.sin(eco.components[component].t));
-            eco.components[component].label = component + " ( " + eco.components[component].cost + " ) ";
-
-            eco.components[component].color = calculateRGB(eco, component);
-
-            node = eco.components[component];
-
-            node.size = 1;
-
-            target.nodes.push(node);
-
-
-            if (node.cost > maxValue) {
-                maxValue = node.cost;
-                maxNode = node;
-            }
-
-            counter = counter + 4;
-        }
-
-        target.nodes.forEach(node => {
-            if (node.cost === maxValue) {
-                node.color = lightRed; // Set the color to light red if the node cost equals maxValue
-            }
-        });
-        
-        for (let edge in eco.edges) {
-
-            target.edges.push(eco.edges[edge]);
-
-        }
-
-        s = new sigma({
-            graph: target,
-            renderer: {
-                container: document.getElementById('container'),
-                type: sigma.renderers.canvas,
-            },
-            settings: {
-                drawEdgeLabels: true,
-                drawLabels: true,
-                batchEdgesDrawing: true
-            }
-        });
-
-
-
-        s.bind('clickNode', function(e) {
-            let component = e.data.node.label.split(" ( ")[0];
-            loadTableComponentData(component);
-        });
+    function defaultFactor(attr){
+      if (["link","major","minor","patch","cve","invalid","version"].includes(attr)) return 0;
+      if (attr==="today") return 2;
+      return 1;
     }
-
-    function loadTableEcosystemData() {
-
-        eco.attributeArrayList.forEach(attribute => {
-
-            document.getElementById(attribute + "AllId").innerHTML = prettyEcoCountOutputHTML(attribute);
-
-        })
-
-        document.getElementById("maintenanceCostId").innerHTML = eco.cost;
-    }
-
-    function prettyEcoCountOutputHTML(attribute) {
-
-        const count = eco.attributeObjectList[attribute].count;
-        const factor = eco.attributeObjectList[attribute].factor;
-
-        const result = count * factor;
-
-        if (result === 0) {
-
-            document.getElementById(attribute + "RowId").style.backgroundColor = "#e5e5e5";
-            document.getElementById(attribute + "RowId").style.color = "#9e9e9e";
-
-        } else {
-
-            document.getElementById(attribute + "RowId").style.backgroundColor = "#ffffff";
-            document.getElementById(attribute + "RowId").style.color = "#000000";
-
-        }
-
-        return '<div>' + count + ' x ' + factor + ' = ' + result + '</div>';
-    }
-
-    function prettyCompCountOutputHTML(attribute, component) {
-
-        const count = eco.components[component].attributeObjectList[attribute].count;
-        const factor = eco.attributeObjectList[attribute].factor;
-
-        const result = count * factor;
-
-        if (result === 0) {
-
-            document.getElementById(attribute + "RowId").style.backgroundColor = "#e5e5e5";
-            document.getElementById(attribute + "RowId").style.color = "#9e9e9e";
-
-        } else {
-
-            document.getElementById(attribute + "RowId").style.backgroundColor = "#ffffff";
-            document.getElementById(attribute + "RowId").style.color = "#000000";
-
-        }
-
-        return '<div>' + count + ' x ' + factor + ' = ' + result + '</div>';
-    }
-
-
-    function loadTableComponentData(component) {
-
-        if ((component !== undefined) && (eco.components[component] !== undefined)) {
-
-            var table = document.getElementById('ecoComponentTableId');
-
-            var startIndex = 4;
-
-            var componentTitleElement = document.getElementById("componentTitleTableId");
-
-            componentTitleElement.innerHTML = '<a href="' + URL_HOMEPAGE + "?q=" + component + '" target="_blank" style="font-size: 10pt">' + component + '</a>';
-
-            // Clear dynamic rows, if any
-            while (table.rows.length > startIndex) {
-
-                table.deleteRow(startIndex);
-
-            }
-
-            eco.attributeArrayList.forEach(attribute => {
-
-                let count = eco.components[component].attributeObjectList[attribute].count;
-
-                if (count > 0) {
-                    let row = table.insertRow();
-                    row.insertCell(0).innerText = attribute;
-                    row.insertCell(1).innerHTML = prettyCompCountOutputHTML(attribute, component);
-                }
-            })
-
-            document.getElementById("costComponentVersionId").innerHTML = eco.components[component].costLatestVersion;
-            document.getElementById("costComponentId").innerHTML = eco.components[component].cost;
-        }
-    }
-
-    function transformEcosystemInitialize(data) {
-
-        if (eco === null) {
-
-            eco = {
-                components: {},
-                edges: {}
-            }
-
-            eco['attributeArrayList'] = ['component', 'link', 'version', 'major', 'minor', 'patch', 'cve', 'invalid', 'today'];
-
-            // Initialize all attribute candidates
-            data.forEach(version => {
-
-                if (version.hasOwnProperty('versionPredictedComponentType')) {
-
-                    let categoryKey = version['versionPredictedComponentType'].toLowerCase();
-
-                    if (eco['attributeArrayList'].includes(categoryKey) === false) {
-
-                        eco['attributeArrayList'].push(categoryKey);
-
-                    }
-                }
-            });
-
-            // Initialize ecosystem attributes
-            if (eco.hasOwnProperty('attributeObjectList') === false) {
-
-                eco.attributeObjectList = {};
-
-                eco.attributeArrayList.forEach(attribute => {
-
-                    // Create ( on create )
-                    if (eco.attributeObjectList.hasOwnProperty(attribute) === false) {
-
-                        // Data 
-                        eco.attributeObjectList[attribute] = {};
-
-                        eco.attributeObjectList[attribute]['factor'] = 1;
-                        eco.attributeObjectList[attribute]['factorHtmlElementId'] = 'factor' + capitalizeFirstLetter(attribute) + 'Id';
-                        eco.attributeObjectList[attribute]['count'] = 0;
-
-                        // UI
-                        const sliderRow = createSliderRow(attribute);
-                        table.appendChild(sliderRow);
-                    }
-                });
-            }
-
-            // Initialize component attributes by versions
-            data.forEach(version => {
-
-                if (!isValidVersion(version)) {
-
-                    eco.attributeObjectList['invalid'].count++;
-                    return;
-                }
-
-                let releaseChannel = getChannelByVersion(version);
-
-                let component = version.versionProductName; // string name, not object
-
-                if (eco.components.hasOwnProperty(component) === false) {
-
-                    eco.components[component] = createComponentModel(version);
-                    eco.components[component].attributeObjectList = {};
-
-                    eco.attributeArrayList.forEach(attribute => {
-                        eco.components[component].attributeObjectList[attribute] = {};
-                        eco.components[component].attributeObjectList[attribute]['count'] = 0;
-                    })
-                }
-
-                eco.components[component].attributeObjectList[releaseChannel]['count']++;
-                eco.components[component].attributeObjectList['version']['count']++;
-                eco.components[component].attributeObjectList['component']['count'] = 1;
-
-                if (version.hasOwnProperty('versionPredictedComponentType')) {
-
-                    eco.components[component].versionPredictedComponentType = version['versionPredictedComponentType'].toLowerCase();
-
-                    eco.components[component].attributeObjectList[eco.components[component].versionPredictedComponentType]['count'] = 1;
-                }
-
-                if (eco.components[component].hasOwnProperty('tags') === false) {
-
-                    eco.components[component].tags = new Set();
-
-                }
-
-                version.versionSearchTags.forEach(tag => eco.components[component].tags.add(tag.trim().toLowerCase()));
-
-                eco.attributeObjectList[releaseChannel]['count'] += 1;
-                eco.attributeObjectList['version']['count'] += 1;
-                eco.attributeObjectList['component']['count'] = Object.keys(eco.components).length;
-
-                if (isToday(version) === true) {
-                    eco.attributeObjectList['today']['count'] += 1;
-                    eco.components[component].attributeObjectList['today']['count'] += 1;
-                }
-
-                if (version.hasOwnProperty('versionPredictedComponentType')) {
-
-                    let categoryKey = version['versionPredictedComponentType'].toLowerCase();
-
-                    eco.attributeObjectList[categoryKey]['count'] += 1;
-                }
-            });
-        }
-
-        for (let componentA in eco.components) {
-            for (let componentB in eco.components) {
-
-                if (componentA === componentB) {
-                    continue;
-                }
-
-                let intersection = getIntersection(componentA, componentB);
-
-                if (intersection.length > 0) {
-                    createAndProcessEdge(componentA, componentB, intersection);
-                }
-            }
-        }
-    }
-
-    // Utility functions
-
-    function isToday(version) {
-
-        var versionReleaseDate = version.versionReleaseDate;
-
-        // Parsing versionReleaseDate
-        var year = parseInt(versionReleaseDate.substring(0, 4));
-        var month = parseInt(versionReleaseDate.substring(4, 6)) - 1; // Month is 0-indexed in JavaScript
-        var day = parseInt(versionReleaseDate.substring(6, 8));
-        var releaseDate = new Date(year, month, day);
-
-        // Getting today's date
-        var today = new Date();
-        today.setHours(0, 0, 0, 0); // Reset time to midnight for accurate comparison
-
-        // Using ternary operator to check if the dates are the same
-        var isToday = releaseDate.getTime() === today.getTime() ? true : false;
-
-        return isToday;
-    }
-
-    function isValidVersion(version) {
-        versionNumber = version.versionNumber.split(".");
-        if (isNaN(versionNumber[0]) === true && version.versionReleaseChannel !== "patch") {
-            return false;
-        }
-        return true;
-    }
-
-    function getChannelByVersion(version) {
-        let versionNumber = version.versionNumber.split(".");
-        version.versionChannel = versionChannel.error;
-        version.versionChannel = versionNumber[1] != 0 && versionNumber[2] == 0 ? versionChannel.minor : version.versionChannel;
-        version.versionChannel = version.versionReleaseChannel === versionChannel.patch || versionNumber[2] != 0 ? versionChannel.patch : version.versionChannel;
-        version.versionChannel = versionNumber[1] == 0 && versionNumber[2] == 0 ? versionChannel.major : version.versionChannel;
-        version.versionChannel = version.versionReleaseChannel == versionChannel.cve ? versionChannel.cve : version.versionChannel;
-
-        return version.versionChannel;
-    }
-
-    function createComponentModel(version) {
-        let component = {
-            id: version.versionProductName,
-            label: version.versionProductName,
-            color: "black",
-            count: 1,
-            x: 0,
-            y: 0,
-            size: 1,
-            cost: 0,
-            tags: new Set()
-        }
-        return component;
-    }
-
-    function createSliderRow(categoryKey) {
-        const row = document.createElement('tr');
-
-        let value = 1;
-
-        if (categoryKey === 'link' || categoryKey === 'major' || categoryKey === 'minor' || categoryKey === 'patch' || categoryKey === 'cve' || categoryKey === 'invalid' || categoryKey === 'version') {
-
-            value = 0;
-
-        }
-
-        if (categoryKey === 'today') {
-
-            value = 2;
-
-        }
-
-
-        row.id = categoryKey + "RowId";
-        row.innerHTML = `
-        <td>${capitalizeFirstLetter(categoryKey)}</td>
-        <td><input id="factor${capitalizeFirstLetter(categoryKey)}Id" type="range" value="${value}" onchange="extractData()" min="0" max="2"></td>
-        <td><span id="${categoryKey}AllId"></span></td>`;
-        return row;
-    }
-
-    function capitalizeFirstLetter(string) {
-        return string.charAt(0).toUpperCase() + string.slice(1);
-    }
-    </script>
-    <!-- absolute position -->
-    <a target="_blank" href="https://github.com/antrunner/releasetrain-client" class="github-corner" aria-label="View source on GitHub">
-        <svg width="80" height="80" viewBox="0 0 250 250" style="fill:#64CEAA; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true">
-            <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>s
-            <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path>
-            <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path>
-        </svg></a>
+    window.onImpactChange = function(){ transformEcosystemUpdate(); renderEcoTable(); renderGraph(); };
+  </script>
 </body>
-
 </html>
