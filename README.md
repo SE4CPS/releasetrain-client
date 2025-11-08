@@ -1,6 +1,7 @@
 # Releasetrain Client
 
-Releasetrain Client is an open source front end and REST API for tracking software version updates, component activity, Reddit discussions, and CVE-related entries.
+Releasetrain Client is an open source front end and REST API for tracking 
+software version updates, component activity, Reddit discussions, and CVE-related entries.
 
 ## Prerequisites
 
