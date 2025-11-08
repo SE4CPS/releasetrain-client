@@ -1,12 +1,11 @@
-````markdown
 # Releasetrain Client
 
 Releasetrain Client is an open source front end and REST API for tracking software version updates, component activity, Reddit discussions, and CVE-related entries.
 
 ## Prerequisites
 
-- Node.js (LTS recommended)
-- MongoDB database (Atlas or self-hosted)
+* Node.js (LTS recommended)
+* MongoDB database (Atlas or self-hosted)
 
 ## Installation
 
@@ -14,7 +13,7 @@ Releasetrain Client is an open source front end and REST API for tracking softwa
 git clone https://github.com/antrunner/releasetrain-client.git
 cd releasetrain-client
 npm install
-````
+```
 
 ## Running the App
 
@@ -22,115 +21,104 @@ npm install
 npm run dev
 ```
 
-App UI:
+**Front End:**
+[http://127.0.0.1:8080](http://127.0.0.1:8080)
 
-* [http://127.0.0.1:8080](http://127.0.0.1:8080)
-
-Backend API (Express):
-
-* [http://localhost:3000](http://localhost:3000)
+**API Backend:**
+[http://localhost:3000](http://localhost:3000)
 
 ## Configuration
 
-Set environment variables as needed (or edit the constants in the server file):
+Set environment variables or edit constants in the server file.
 
-* `MONGODB_URI` (or inline `uri` constant)
-* `DB_NAME` (or inline `dbName` constant)
-* Default port for API is `3000`
+| Variable      | Description                             |
+| ------------- | --------------------------------------- |
+| `MONGODB_URI` | MongoDB connection string               |
+| `DB_NAME`     | Database name (default: `releasetrain`) |
+| `PORT`        | Server port (default: `3000`)           |
 
 ## API Overview
 
-All responses are JSON.
-API groups:
+All endpoints return JSON.
 
-* Versions `/api/v`
-* Components `/api/c`
-* Reddit `/api/reddit`
-* Aggregates `/api/aggregate`
-* Test utilities `/api/test`
+Groups:
 
-Base URL examples:
+* Versions — `/api/v`
+* Components — `/api/c`
+* Reddit — `/api/reddit`
+* Aggregates — `/api/aggregate`
+* Test Utilities — `/api/test`
+
+Base URLs:
 
 * Local: `http://localhost:3000`
-* Hosted: `https://releasetrain.io/api`
+* Prod: `https://releasetrain.io/api`
 
----
+## Versions (GET)
 
-## GET Endpoints
+| Endpoint                                 | Example                                                                  | Description                                          |
+| ---------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------- |
+| `/api/v`                                 | `/api/v?q=chrome,firefox`                                                | Recent versions for given components (last 2 years). |
+| `/api/v/count`                           | `/api/v/count`                                                           | Total versions in last 2 years.                      |
+| `/api/v/fc`                              | `/api/v/fc?q=mongodb`                                                    | Forecast next release date for a component.          |
+| `/api/v/fcc`                             | `/api/v/fcc?q=chrome,firefox`                                            | Predict coincide release dates.                      |
+| `/api/v/:id`                             | `/api/v/66fd52eaf1f36a17ad1e59c9`                                        | Version by MongoDB `_id`.                            |
+| `/api/v/versionId/:versionId`            | `/api/v/versionId/20250217lobe-chat1.60.2`                               | Version by `versionId`.                              |
+| `/api/v/aggregate/byDate`                | `/api/v/aggregate/byDate?date=20250715`                                  | Count releases on a specific date.                   |
+| `/api/aggregate/v/updateTypeCount`       | `/api/aggregate/v/updateTypeCount?timestamp=20250715`                    | Count by update type (major/minor/patch).            |
+| `/api/aggregate/v/componentTypeCount`    | `/api/aggregate/v/componentTypeCount?timestamp=20250715`                 | Count by classification type.                        |
+| `/api/aggregate/v/versionCountByDay`     | `/api/aggregate/v/versionCountByDay?start=20250701&end=20250730`         | Total releases per day in a range.                   |
+| `/api/aggregate/v/missingFields`         | `/api/aggregate/v/missingFields?field=versionNumber`                     | Docs missing a field (sample).                       |
+| `/api/aggregate/v/sourceCountByType`     | `/api/aggregate/v/sourceCountByType?sourceType=patch&timestamp=20250715` | Count by source type (e.g., CVE, patch).             |
+| `/api/aggregate/v/classificationSummary` | `/api/aggregate/v/classificationSummary?timestamp=20250715`              | Summary of security/breaking tags.                   |
+| `/api/aggregate/v/oldestTimestamp`       | `/api/aggregate/v/oldestTimestamp?count=1000`                            | Oldest release date among last N.                    |
 
-### Versions
+## Components (GET)
 
-| Path                                     | Example                                                                  | Description                                                                                  |
-| ---------------------------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
-| `/api/v`                                 | `/api/v?q=chrome,firefox`                                                | Recent versions. Optional query `q` supports one or more component names separated by comma. |
-| `/api/v/count`                           | `/api/v/count`                                                           | Count of versions in the last two years.                                                     |
-| `/api/v/fc`                              | `/api/v/fc?q=mongodb`                                                    | Forecast next release date for a component (from `releasetrain-forecast`).                   |
-| `/api/v/fcc`                             | `/api/v/fcc?q=chrome,firefox`                                            | Forecast coincide release dates for multiple components.                                     |
-| `/api/v/:id`                             | `/api/v/66fd52eaf1f36a17ad1e59c9`                                        | Fetch a version by MongoDB `_id`.                                                            |
-| `/api/v/versionId/:versionId`            | `/api/v/versionId/20250217lobe-chat1.60.2`                               | Fetch a version by `versionId`.                                                              |
-| `/api/v/aggregate/byDate`                | `/api/v/aggregate/byDate?date=20250715`                                  | Count releases on a given date `YYYYMMDD`.                                                   |
-| `/api/aggregate/v/updateTypeCount`       | `/api/aggregate/v/updateTypeCount?timestamp=20250715`                    | Count major, minor, patch for a date.                                                        |
-| `/api/aggregate/v/componentTypeCount`    | `/api/aggregate/v/componentTypeCount?timestamp=20250715`                 | Count releases by classification types for a date.                                           |
-| `/api/aggregate/v/versionCountByDay`     | `/api/aggregate/v/versionCountByDay?start=20250701&end=20250730`         | Aggregate total releases per day for a range.                                                |
-| `/api/aggregate/v/missingFields`         | `/api/aggregate/v/missingFields?field=versionNumber&limit=50`            | Sample documents missing a specific field.                                                   |
-| `/api/aggregate/v/sourceCountByType`     | `/api/aggregate/v/sourceCountByType?sourceType=patch&timestamp=20250715` | Count releases by source type for a date.                                                    |
-| `/api/aggregate/v/classificationSummary` | `/api/aggregate/v/classificationSummary?timestamp=20250715`              | Summarize classification tags for a date.                                                    |
-| `/api/aggregate/v/oldestTimestamp`       | `/api/aggregate/v/oldestTimestamp?count=1000`                            | Oldest `versionReleaseDate` among the latest N updates.                                      |
+| Endpoint                                     | Example                    | Description                                          |
+| -------------------------------------------- | -------------------------- | ---------------------------------------------------- |
+| `/api/component/`                            | `/api/component/?q=linux`  | Components with optional text filter (last 2 years). |
+| `/api/c/name/:componentName/:versionNumber?` | `/api/c/name/linux/6.10.5` | Versions for a component (optional exact version).   |
+| `/api/c/os`                                  | `/api/c/os`                | OS components in last 2 years.                       |
+| `/api/c/count`                               | `/api/c/count`             | Distinct component count (last 2 years).             |
+| `/api/c/names`                               | `/api/c/names`             | Distinct component names (last 2 years).             |
+| `/api/c/frequency`                           | `/api/c/frequency`         | High-frequency components and those updated today.   |
 
-### Components
+## Reddit (GET)
 
-| Path                                         | Example                    | Description                                                                  |
-| -------------------------------------------- | -------------------------- | ---------------------------------------------------------------------------- |
-| `/api/component/`                            | `/api/component/?q=linux`  | Components within last two years, optional filter on name or predicted type. |
-| `/api/c/name/:componentName/:versionNumber?` | `/api/c/name/linux/6.10.5` | Versions for a component, optional exact version.                            |
-| `/api/c/os`                                  | `/api/c/os`                | Operating system components in last two years.                               |
-| `/api/c/count`                               | `/api/c/count`             | Count of distinct components released in last two years.                     |
-| `/api/c/names`                               | `/api/c/names`             | Distinct component names in last two years.                                  |
-| `/api/c/frequency`                           | `/api/c/frequency`         | High-frequency components and those updated today.                           |
+| Endpoint                     | Example                                          | Description                                              |
+| ---------------------------- | ------------------------------------------------ | -------------------------------------------------------- |
+| `/api/reddit`                | `/api/reddit?limit=100&page=1`                   | Reddit posts with pagination and filters.                |
+| `/api/reddit/:redditId`      | `/api/reddit/1nq0h33`                            | Single post by `redditId` or `_id`.                      |
+| `/api/reddit/by-subreddit`   | `/api/reddit/by-subreddit?q=firefox&minScore=50` | Posts for subreddit(s), optional score/comments filters. |
+| `/api/reddit/query/positive` | `/api/reddit/query/positive`                     | Posts with positive predicted score > 0.5.               |
+| `/api/reddit/count`          | `/api/reddit/count`                              | Total posts in last 2 years.                             |
 
-### Reddit
+## Test & Discovery (GET)
 
-| Path                         | Example                              | Description                                                                                     |
-| ---------------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| `/api/reddit`                | `/api/reddit?limit=100&page=1`       | Reddit posts. Supports pagination and filter flags (`isUpdateRelated`, `isUpdateRelatedValue`). |
-| `/api/reddit/:redditId`      | `/api/reddit/1nq0h33`                | Single post by `redditId` or Mongo `_id`.                                                       |
-| `/api/reddit/by-subreddit`   | `/api/reddit/by-subreddit?q=firefox` | Posts by subreddit. Supports `minScore`, `minComments`, `limit`, `page`, `fields`.              |
-| `/api/reddit/query/positive` | `/api/reddit/query/positive`         | Posts with `metadata.predicted.positiveScore > 0.5`.                                            |
-| `/api/reddit/count`          | `/api/reddit/count`                  | Count of Reddit posts in last two years.                                                        |
+| Endpoint                   | Example                    | Description                         |
+| -------------------------- | -------------------------- | ----------------------------------- |
+| `/api/test/endpoints`      | `/api/test/endpoints`      | List all routes.                    |
+| `/api/test/endpoints/html` | `/api/test/endpoints/html` | HTML table of routes with examples. |
+| `/api/test/all`            | `/api/test/all`            | Run GET checks across endpoints.    |
 
-### Test and Discovery
+## Common Query Parameters
 
-| Path                       | Example                    | Description                                                 |
-| -------------------------- | -------------------------- | ----------------------------------------------------------- |
-| `/api/test/endpoints`      | `/api/test/endpoints`      | Enumerate registered API routes.                            |
-| `/api/test/endpoints/html` | `/api/test/endpoints/html` | HTML view with example queries and example outputs.         |
-| `/api/test/all`            | `/api/test/all`            | Invoke a curated set of GET endpoints and report responses. |
-
----
-
-## Query Parameters
-
-* `q` component list `chrome,firefox`
-* `limit` integer for pagination
-* `page` integer for pagination
-* `cursor` base64 cursor for Reddit paging
-* `start` and `end` date `YYYYMMDD`
-* `timestamp` date `YYYYMMDD`
-* `date` date `YYYYMMDD`
-* `fields` CSV projection list in Reddit by-subreddit endpoint
-* `minScore` and `minComments` numeric filters for Reddit
-
----
+| Param                     | Description                                          |
+| ------------------------- | ---------------------------------------------------- |
+| `q`                       | Comma-separated components (e.g., `chrome,firefox`). |
+| `limit`, `page`           | Pagination controls.                                 |
+| `cursor`                  | Base64 cursor for Reddit pagination.                 |
+| `start`, `end`            | Date range `YYYYMMDD`.                               |
+| `timestamp`, `date`       | Single date `YYYYMMDD`.                              |
+| `fields`                  | CSV of fields to include (Reddit endpoints).         |
+| `minScore`, `minComments` | Numeric Reddit filters.                              |
 
 ## Example
-
-Recent versions for Chrome and Firefox:
 
 ```bash
 curl "http://localhost:3000/api/v?q=chrome,firefox"
 ```
-
-Example response:
 
 ```json
 {
@@ -149,16 +137,11 @@ Example response:
 }
 ```
 
----
-
 ## Contributing
 
-Open issues and pull requests in the repository.
-Focus changes on a single feature or fix, include tests or reproducible steps, and provide clear commit messages.
+Pull requests are welcome. Keep PRs focused, include tests or reproducible steps, and follow project conventions.
 
-* Issues: [https://github.com/antrunner/releasetrain-client/issues](https://github.com/antrunner/releasetrain-client/issues)
-* Code style: follow existing project conventions
-* Tests: validate queries and endpoint behavior locally
+Issues: [https://github.com/antrunner/releasetrain-client/issues](https://github.com/antrunner/releasetrain-client/issues)
 
 ## License
 
@@ -168,6 +151,6 @@ See `LICENSE` in the repository.
 
 [sei40e@gmail.com](mailto:sei40e@gmail.com)
 
-```
-::contentReference[oaicite:0]{index=0}
-```
+---
+
+If you paste this directly into `README.md`, GitHub will render it correctly.
