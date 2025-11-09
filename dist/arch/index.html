@@ -1,626 +1,296 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ecosystem Architecture Monitoring</title>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  />
+  <title>Ecosystem Architecture Monitoring</title>
 
-    <!-- Favicon -->
-    <link href="img/favicon.ico" rel="icon" type="image/x-icon" />
+  <link rel="icon" href="img/favicon.ico" type="image/x-icon" />
 
-    <!-- Stylesheets -->
-    <link rel="stylesheet" type="text/css" href="./app.css">
+  <!-- libs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js" defer></script>
+  <script type="module" src="./app.js" defer></script>
 
-    <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" defer></script>
-    <script type="module" src="./app.js" defer></script>
-    <script src="https://cjrtnc.leaningtech.com/2.3/loader.js" defer></script>
+  <style>
+    :root{
+      --bg:#0b0f17; --panel:#121826; --text:#eef2ff; --muted:#94a3b8;
+      --brand:#60a5fa; --line:#1f2937; --good:#34d399; --code-bg:#0a1220;
 
-    <style>
-        /* Set a base font size based on the screen size */
-        html {
-            font-size: 14px;
-        }
+      /* light fills used inside PlantUML image */
+      --cve-light:#fecaca;     /* light red */
+      --major-light:#fed7aa;   /* light orange */
+      --minor-light:#bbf7d0;   /* light green */
+      --patch-light:#ffe8cc;   /* pale amber */
+      --ok-light:#ffffff;      /* white */
+    }
 
-        @media (max-width: 1280px) {
-            html {
-                font-size: 12px;
-            }
-        }
+    html,body{ height:100%; margin:0; background:var(--bg); color:var(--text); overflow:hidden; }
+    body{
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif;
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    }
+    .page{
+      height:100vh; display:flex; flex-direction:column; gap:8px; padding:8px; box-sizing:border-box;
+    }
 
-        @media (max-width: 1024px) {
-            html {
-                font-size: 10px;
-            }
-        }
+    /* Top controller bar */
+    .topbar{
+      flex:0 0 auto;
+      display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+      background:#0e1626; border:1px solid var(--line); border-radius:12px; padding:8px 10px;
+    }
+    .top-title{ font-weight:800; letter-spacing:.2px; }
 
-        body,
-        html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            font-family: 'Roboto', sans-serif;
-            font-size: 1rem;
-        }
+    .tool-link, .btn{
+      padding:6px 10px; border-radius:8px; font-size:.85rem; cursor:pointer;
+      text-decoration:none; display:inline-flex; align-items:center; gap:6px;
+    }
+    .tool-link{ border:1px solid var(--line); background:#101a2a; color:var(--text); }
+    .tool-link:hover{ background:#142036; }
+    .btn{ border:none; background:var(--brand); color:#0b1020; font-weight:700; }
+    .btn.secondary{ background:#0f172a; color:#e5e7eb; border:1px solid var(--line); }
+    .btn:hover{ filter:brightness(.95); }
 
-        /* Basic reset for textarea */
-        textarea {
-            width: 100%;
-            padding: 12px;
-            font-size: 10px;
-            line-height: 1.6;
-            border: 2px solid #4CAF50;
-            /* Green border */
-            border-radius: 8px;
-            background-color: #f1f9f4;
-            /* Light green background */
-            color: #333;
-            font-family: 'Roboto', sans-serif;
-            box-sizing: border-box;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-            min-height: 100px;
-            max-height: 400px;
-            /* Limit the maximum height */
-            overflow-y: auto;
-            /* Allow scroll if content exceeds max-height */
-            resize: none;
-            /* Prevent manual resizing to avoid conflicts */
-        }
+    .chipbar{
+      flex:1 1 auto; display:flex; flex-wrap:wrap; gap:6px;
+      padding:6px; background:#0b1220; border:1px solid #263043; border-radius:10px;
+      min-width:220px;
+    }
+    .chip{
+      display:inline-flex; align-items:center; gap:6px; padding:4px 10px;
+      background:#15223a; border:1px solid var(--line); border-radius:999px; color:#e5e7eb;
+    }
+    .chip .x{ cursor:pointer; opacity:.75; }
+    .chip .x:hover{ opacity:1; }
+    .chip-input{
+      min-width:140px; border:none; outline:none; color:#fff; background:transparent; padding:4px 6px;
+      font-size:.9rem;
+    }
 
-        textarea::placeholder {
-            color: #8e8e8e;
-            /* Slightly lighter gray */
-            font-style: italic;
-        }
+    .stack-wrap{
+      display:flex; align-items:center; gap:6px;
+      background:#0b1220; border:1px solid #263043; border-radius:10px; padding:4px 6px;
+    }
+    .stack-select{
+      background:#0b1220; color:#e5e7eb; border:1px solid var(--line); border-radius:8px;
+      padding:6px 8px; font-size:.85rem;
+    }
 
-        /* Focus state with Material Design accent */
-        textarea:focus {
-            border-color: #388E3C;
-            /* Darker green on focus */
-            box-shadow: 0 0 10px rgba(56, 142, 60, 0.2);
-            outline: none;
-        }
+    /* Diagram area (fills remaining height; no page scroll) */
+    .diagram-wrap{
+      flex:1 1 auto;
+      display:flex; flex-direction:column; gap:0;
+      background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:0;
+      min-height:0; /* allow flexbox to control height */
+    }
+    .diagram-head{
+      flex:0 0 auto;
+      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+      padding:8px 10px; border-bottom:1px solid var(--line); background:#0e1626;
+    }
+    .diagram-title{ font-weight:700; margin-right:auto; letter-spacing:.2px; }
+    .canvas{
+      flex:1 1 auto; min-height:0;
+      display:flex; align-items:center; justify-content:center;
+      background:#ffffff; border-radius:0 0 12px 12px; padding:0;
+    }
+    .diagram-image{
+      width:100%; height:100%; max-height:100%; object-fit:contain; display:block;
+      margin:0; border-radius:0 0 12px 12px; background:#fff;
+    }
 
-        /* Styling for labels */
-        label {
-            font-weight: 500;
-            color: #333;
-            font-size: 16px;
-            margin-bottom: 8px;
-            display: inline-block;
-        }
+    .loader{ width:30px; height:30px; border-radius:50%; margin:0 auto; display:none;
+      border:3px solid #2b3445; border-top-color:var(--brand); animation:spin 1s linear infinite; }
+    @keyframes spin{ to{ transform:rotate(360deg); } }
+    #timer{ text-align:center; color:var(--muted); font-size:.85rem; }
 
-        /* Additional styling for the container */
-        section {
-            margin-bottom: 20px;
-        }
+    /* Modals */
+    .modal{
+      position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:50;
+      background:rgba(2,6,23,.65);
+    }
+    .modal-inner{
+      width:min(900px, 92vw); background:#0e1626; color:#e5e7eb;
+      border:1px solid var(--line); border-radius:12px; padding:12px; max-height:85vh; overflow:auto;
+    }
+    .modal h3{ margin:0 0 6px; }
+    .modal .close{ margin-left:auto; }
+    .panel{ background:#0b1220; border:1px solid var(--line); border-radius:10px; padding:10px; }
 
-        button:hover {
-            background-color: #45A049;
-        }
+    .metric-grid{ display:flex; flex-wrap:wrap; gap:8px; }
+    .metric-item{
+      display:flex; align-items:center; gap:6px; background:#101a2a;
+      border:1px solid var(--line); padding:6px 10px; border-radius:10px; font-size:.9rem;
+    }
+    .highlight{ color:var(--good); font-weight:700; }
 
-        .container {
-            display: flex;
-            flex-wrap: wrap;
-            /* Enables wrapping */
-            gap: 1rem;
-            /* Adds spacing between elements */
-            padding: 0.5rem;
-            box-sizing: border-box;
-        }
+    /* Code modal formatting (smaller font, higher contrast) */
+    #plantuml-code{
+      background:var(--code-bg); color:#f8fafc; border:1px solid var(--line); border-radius:10px;
+      padding:12px 14px; white-space:pre-wrap;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size:.74rem; line-height:1.55; letter-spacing:.1px;
+      max-height:65vh; overflow:auto;
+    }
+    .kw{ color:#93c5fd; font-weight:700; }
+    .pkg{ color:#c084fc; }
+    .cmp{ color:#fca5a5; }
+    .str{ color:#fcd34d; }
 
-        .container>div {
-            flex: 1 1 300px;
-            /* Each item has a minimum width of 300px */
-            box-sizing: border-box;
-        }
-
-
-        /* Architecture section (60%) */
-        .architecture-section {
-            width: 60%;
-            padding: 0.5rem;
-            border-right: 1px solid #ddd;
-            box-sizing: border-box;
-            overflow-y: auto;
-            min-height: 80vh;
-        }
-
-        /* Metrics section (40%) */
-        .metrics-section {
-            width: 40%;
-            padding: 0.5rem;
-            background-color: #f9f9f9;
-            box-sizing: border-box;
-            min-height: 80vh;
-            overflow-y: auto;
-        }
-
-        /* Footer styling */
-        footer {
-            text-align: center;
-            padding: 0.5rem;
-            background-color: #f4f4f4;
-            position: relative;
-            font-size: 0.75rem;
-        }
-
-        /* PlantUML Code Display Section */
-        #plantuml-code-container {
-            margin-top: 0.5rem;
-            font-size: 0.75rem;
-        }
-
-        /* Copy Button */
-        .copy-btn,
-        .open-editor-btn {
-            margin-top: 0.5rem;
-            background-color: #4CAF50;
-            /* Green background */
-            color: white;
-            border: none;
-            padding: 0.5rem;
-            cursor: pointer;
-            font-size: 0.75rem;
-            border-radius: 4px;
-            transition: background-color 0.3s ease;
-        }
-
-        .copy-btn:hover,
-        .open-editor-btn:hover {
-            /* background-color: #388E3C; */
-            background-color: #45A049;
-            /* Darker green on hover */
-        }
-
-        /* Diagram Image */
-        .diagram-image {
-            margin: 0px;
-            padding: 0px 5%;
-            width: 90%;
-        }
-
-        /* Main Metrics Container */
-        #metrics-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            font-size: 0.85rem;
-            margin-top: 1rem;
-            text-align: left;
-        }
-
-        /* Flex Container for Each Metric */
-        .metric-item {
-            display: flex;
-            justify-content: flex-start;
-            align-items: center;
-            background: #e8f5e9;
-            /* Light green background */
-            padding: 10px 12px;
-            border: 1px solid #4CAF50;
-            /* Green border */
-            border-radius: 6px;
-            box-sizing: border-box;
-            min-width: 140px;
-            flex: 1 1 30%;
-            max-width: 250px;
-            text-align: left;
-            gap: 1px;
-            word-wrap: break-word;
-            white-space: nowrap;
-        }
-
-        /* Aggregated CVEs Section */
-        .aggregated-list {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: flex-start;
-            gap: 1rem;
-            font-size: 0.75rem;
-            width: 100%;
-            text-align: left;
-        }
-
-        .aggregated-item {
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            gap: 0.5rem;
-            min-width: 120px;
-            max-width: 150px;
-            text-align: left;
-        }
-
-        .aggregated-item strong {
-            font-weight: normal;
-            color: #333;
-        }
-
-        /* Highlight style for values */
-        .highlight {
-            font-weight: bold;
-            color: #4CAF50;
-            /* Green */
-            display: inline;
-        }
-
-        /* Placeholder for Chart */
-        #chart-placeholder {
-            border: 1px dashed #ccc;
-            padding: 10px;
-            text-align: center;
-            margin-top: 1rem;
-        }
-
-        /* Styling for Generation Time */
-        #generationTime {
-            white-space: nowrap;
-            margin-left: 0.25rem;
-        }
-
-        /* Styling for Loading Timer */
-        #timer {
-            font-size: 0.75rem;
-        }
-
-        #seconds {
-            font-weight: bold;
-            color: #4CAF50;
-            /* Green */
-        }
-
-        /* GitHub link positioning */
-        .github-link {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* Style for GitHub Icon */
-        .github-icon {
-            width: 30px;
-            height: auto;
-        }
-    </style>
+    /* How-to bar (compact, links clickable) */
+    .howto{
+      flex:0 0 auto; color:#cbd5e1; font-size:.9rem; line-height:1.5;
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+    }
+    .howto a{ color:#93c5fd; text-decoration:none; }
+    .howto a:hover{ text-decoration:underline; }
+  </style>
 </head>
-
 <body>
-    <!-- Main Split Container -->
-    <div class="container">
+  <div class="page">
+    <!-- Controller bar -->
+    <div class="topbar">
+      <div class="top-title">Ecosystem</div>
 
-        <!-- 60% Architecture Monitoring Section -->
-        <div class="architecture-section">
+      <!-- current components (editable chips) -->
+      <div class="chipbar" id="chipbar">
+        <input id="chipInput" class="chip-input" placeholder="Add component (press Enter)" />
+      </div>
 
-            <section>
-                <h2>Please Specify Your Software Ecosystem Components</h2>
-                <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-start;">
-                    <!-- Stacks including operating systems -->
-                    <a href="https://releasetrain.io/arch/?component=name:apache&component=name:linux&component=name:mysql&component=name:php"
-                        style="text-decoration: none;" title="Linux, Apache, MySQL, PHP">
-                        <button
-                            style="padding: 5px 10px; font-size: 12px; border: 1px solid #4CAF50; border-radius: 4px; background-color: #4CAF50; color: white; cursor: pointer;">LAMP</button>
-                    </a>
+      <!-- Stacks dropdown (+ adds to existing) -->
+      <div class="stack-wrap">
+        <select id="stackSelect" class="stack-select" title="Choose a predefined stack">
+          <option value="">+ Add stack…</option>
+          <option value="apache,linux,mysql,php">LAMP</option>
+          <option value="nginx,linux,mysql,php">LEMP</option>
+          <option value="ubuntu,nginx,nodejs">UNN</option>
+          <option value="macos,rails,postgresql">Rails</option>
+          <option value="django,windows,sqlite">DWS</option>
+          <option value="flask,arch,postgresql">Flask</option>
+          <option value="redhat,spring,java">Spring</option>
+          <option value="centos,rails,postgresql">CRP</option>
+          <option value="debian,django,sqlite">DDS</option>
+          <option value="ubuntu,prisma,svelte">USP</option>
+        </select>
+        <button id="addStackBtn" class="btn">Add Stack</button>
+      </div>
 
-                    <a href="https://releasetrain.io/arch/?component=name:nginx&component=name:linux&component=name:mysql&component=name:php"
-                        style="text-decoration: none;" title="Linux, Nginx, MySQL, PHP">
-                        <button
-                            style="padding: 5px 10px; font-size: 12px; border: 1px solid #4CAF50; border-radius: 4px; background-color: #4CAF50; color: white; cursor: pointer;">LEMP</button>
-                    </a>
-
-                    <a href="https://releasetrain.io/arch/?component=name:nginx&component=name:ubuntu&component=name:nodejs"
-                        style="text-decoration: none;" title="Ubuntu, Nginx, Node.js">
-                        <button
-                            style="padding: 5px 10px; font-size: 12px; border: 1px solid #4CAF50; border-radius: 4px; background-color: #4CAF50; color: white; cursor: pointer;">UNN</button>
-                    </a>
-
-                    <a href="https://releasetrain.io/arch/?component=name:rails&component=name:macos&component=name:postgresql"
-                        style="text-decoration: none;" title="MacOS, Rails, PostgreSQL">
-                        <button
-                            style="padding: 5px 10px; font-size: 12px; border: 1px solid #4CAF50; border-radius: 4px; background-color: #4CAF50; color: white; cursor: pointer;">Rails</button>
-                    </a>
-
-                    <a href="https://releasetrain.io/arch/?component=name:django&component=name:windows&component=name:sqlite"
-                        style="text-decoration: none;" title="Windows, Django, SQLite">
-                        <button
-                            style="padding: 5px 10px; font-size: 12px; border: 1px solid #4CAF50; border-radius: 4px; background-color: #4CAF50; color: white; cursor: pointer;">DWS</button>
-                    </a>
-
-                    <a href="https://releasetrain.io/arch/?component=name:flask&component=name:arch&component=name:postgresql"
-                        style="text-decoration: none;" title="Arch, Flask, PostgreSQL">
-                        <button
-                            style="padding: 5px 10px; font-size: 12px; border: 1px solid #4CAF50; border-radius: 4px; background-color: #4CAF50; color: white; cursor: pointer;">Flask</button>
-                    </a>
-
-                    <a href="https://releasetrain.io/arch/?component=name:spring&component=name:redhat&component=name:java"
-                        style="text-decoration: none;" title="RedHat, Spring, Java">
-                        <button
-                            style="padding: 5px 10px; font-size: 12px; border: 1px solid #4CAF50; border-radius: 4px; background-color: #4CAF50; color: white; cursor: pointer;">Spring</button>
-                    </a>
-
-                    <a href="https://releasetrain.io/arch/?component=name:rails&component=name:centos&component=name:postgresql"
-                        style="text-decoration: none;" title="CentOS, Rails, PostgreSQL">
-                        <button
-                            style="padding: 5px 10px; font-size: 12px; border: 1px solid #4CAF50; border-radius: 4px; background-color: #4CAF50; color: white; cursor: pointer;">CRP</button>
-                    </a>
-
-                    <a href="https://releasetrain.io/arch/?component=name:django&component=name:debian&component=name:sqlite"
-                        style="text-decoration: none;" title="Debian, Django, SQLite">
-                        <button
-                            style="padding: 5px 10px; font-size: 12px; border: 1px solid #4CAF50; border-radius: 4px; background-color: #4CAF50; color: white; cursor: pointer;">DDS</button>
-                    </a>
-
-                    <a href="https://releasetrain.io/arch/?component=name:svelte&component=name:ubuntu&component=name:prisma"
-                        style="text-decoration: none;" title="Ubuntu, Svelte, Prisma">
-                        <button
-                            style="padding: 5px 10px; font-size: 12px; border: 1px solid #4CAF50; border-radius: 4px; background-color: #4CAF50; color: white; cursor: pointer;">USP</button>
-                    </a>
-                </div>
-            </section>
-
-
-            <!-- Current Ecosystem Components Section -->
-            <section style="display: flex; align-items: stretch; gap: 10px; margin-top: 20px;">
-                <textarea id="componentListId" name="componentListId" multiple="multiple"
-                    placeholder="Enter components in format: name:linux,version:6.11"
-                    style="flex-grow: 1; min-height: 100px; resize: none;"></textarea>
-                <button id="generateButton" onclick="reloadPage()"
-                    style="padding: 0 20px; font-size: 14px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s; display: flex; align-items: center; justify-content: center;">
-                    Generate Architecture
-                </button>
-            </section>
-
-            <!-- Loader Section -->
-            <section>
-                <div style="text-align: center; position: relative;">
-                    <div class="loader" id="loader" style="display: none;"></div>
-                    <div id="timer" style="margin-top: 10px; font-size: 0.75rem; display: none;">
-                        Loading... <span id="seconds">0</span>s
-                    </div>
-                </div>
-            </section>
-
-            <!-- Diagram Display Section -->
-            <section id="diagram-container">
-                <div id="plantuml-diagrams"></div>
-            </section>
-        </div>
-
-        <!-- 40% Metrics Section -->
-        <div class="metrics-section">
-            <header>
-                <h3>Metrics Overview</h3>
-            </header>
-            <!-- Metrics Display -->
-            <section id="metrics-container">
-                <div class="metric-item">
-                    <strong>Total:</strong>
-                    <span id="totalComponents" class="highlight">0</span>
-                </div>
-
-                <div class="metric-item">
-                    <strong>Gen Time:</strong><span id="generationTime" class="highlight">0.00</span>s
-                </div>
-
-            </section>
-
-            <!-- PlantUML Code Display Section -->
-            <section id="plantuml-code-container">
-                <h3>PlantUML Code</h3>
-                <code id="plantuml-code"></code>
-
-                <!-- Copy Code Button -->
-                <button class="copy-btn" id="copy-btn">Copy Code</button>
-
-                <!-- Open in PlantUML Editor Button -->
-                <button class="open-editor-btn" id="open-editor-btn" onclick="openPlantUMLEditor()">Open in PlantUML
-                    Editor</button>
-            </section>
-
-        </div>
+      <!-- actions -->
+      <a id="toGraph" class="tool-link" href="#">Graph</a>
+      <a id="toFeed"  class="tool-link" href="#">Feed</a>
+      <button id="copyLink" class="btn" title="Copies the PlantUML image URL">Copy Ecosystem Link</button>
+      <button id="openMetrics" class="btn secondary">Metrics</button>
+      <button id="openCode" class="btn secondary">PlantUML Code</button>
+      <button id="openDetails" class="btn secondary">Details</button>
+      <button id="openConfig"  class="btn secondary">Config</button>
     </div>
 
-    <!-- GitHub Link -->
-    <a href="https://github.com/antrunner/releasetrain-client" target="_blank" class="github-link">
-        <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub Logo"
-            class="github-icon">
-    </a>
+    <!-- Full-viewport diagram (no vertical scroll) -->
+    <section class="diagram-wrap">
+      <div class="diagram-head">
+        <div class="diagram-title" id="diagramTitle">Ecosystem Diagram</div>
+        <div style="color:var(--muted); font-size:.85rem">Rendered via <code>www.plantuml.com</code></div>
+      </div>
+      <div class="canvas">
+        <div style="text-align:center; width:100%; position:absolute; top:54%; transform:translateY(-50%); pointer-events:none">
+          <div id="loader" class="loader"></div>
+          <div id="timer" style="display:none">Loading… <span id="seconds">0</span>s</div>
+        </div>
+        <img id="ecosysImage" class="diagram-image" alt="Ecosystem diagram image" />
+      </div>
+    </section>
 
-    <script>
-        // Show loader immediately when the page loads
-        window.onload = function () {
-            showLoader();
-        };
+    <!-- Compact How-to (clickable examples) -->
+    <div class="howto">
+      <span><strong>How to:</strong></span>
+      <span>Open <a href="/arch">/arch</a> with no params to load today’s updates.</span>
+      <span>Use <a href="/arch?q=linux,nginx,postgresql">/arch?q=linux,nginx,postgresql</a> for a custom set.</span>
+      <span>Add/remove chips to update the diagram; URL always uses <code>?q=</code> with commas.</span>
+      <span>“Graph” → <code>/graph?q=…</code>, “Feed” → <code>/?q=…</code>.</span>
+    </div>
+  </div>
 
-        // Show loader and start timer
-        let timerInterval;
-        let seconds = 0;
-        function showLoader() {
-            const loader = document.getElementById('loader');
-            const timer = document.getElementById('timer');
-            const secondsElement = document.getElementById('seconds');
-            loader.style.display = 'block';
-            timer.style.display = 'block';
-            timerInterval = setInterval(() => {
-                seconds++;
-                secondsElement.textContent = seconds;
-            }, 1000);
-        }
+  <!-- Metrics modal -->
+  <div id="metricsModal" class="modal" aria-hidden="true">
+    <div class="modal-inner">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px">
+        <h3 style="margin:0">Metrics</h3>
+        <button class="btn close secondary" data-close="#metricsModal">Close</button>
+      </div>
+      <div class="metric-grid">
+        <div class="metric-item"><strong>Total:</strong><span id="totalComponents" class="highlight">0</span></div>
+        <div class="metric-item"><strong>Stacks:</strong><span id="stackCount" class="highlight">0</span></div>
+        <div class="metric-item"><strong>CVE:</strong><span id="cveCount" class="highlight">0</span></div>
+        <div class="metric-item"><strong>Major:</strong><span id="majorCount" class="highlight">0</span></div>
+        <div class="metric-item"><strong>Minor:</strong><span id="minorCount" class="highlight">0</span></div>
+        <div class="metric-item"><strong>Patch:</strong><span id="patchCount" class="highlight">0</span></div>
+        <div class="metric-item"><strong>Up-to-date:</strong><span id="okCount" class="highlight">0</span></div>
+        <div class="metric-item"><strong>Gen Time:</strong><span id="generationTime" class="highlight">0.00</span>s</div>
+      </div>
+    </div>
+  </div>
 
-        // Hide loader and stop timer
-        function hideLoader() {
-            const loader = document.getElementById('loader');
-            const timer = document.getElementById('timer');
-            loader.style.display = 'none';
-            timer.style.display = 'none';
-            clearInterval(timerInterval);
-        }
+  <!-- Code modal -->
+  <div id="codeModal" class="modal" aria-hidden="true">
+    <div class="modal-inner">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px">
+        <h3 style="margin:0">PlantUML Code (ecosystem)</h3>
+        <button class="btn close secondary" data-close="#codeModal">Close</button>
+      </div>
+      <code id="plantuml-code"></code>
+      <div style="display:flex; gap:8px; margin-top:8px">
+        <button class="btn" id="copy-btn">Copy Code</button>
+        <button class="btn" id="open-editor-btn" onclick="window.open('https://plantuml-editor.kkeisuke.com/','_blank')">Open in PlantUML Editor</button>
+      </div>
+    </div>
+  </div>
 
-        // Copy PlantUML code to clipboard
-        document.getElementById("copy-btn").addEventListener("click", function () {
-            const umlCode = this.getAttribute("data-code"); // Get original code
-            navigator.clipboard.writeText(umlCode).then(() => alert("PlantUML code copied!"));
-        });
+  <!-- Details modal -->
+  <div id="detailsModal" class="modal" aria-hidden="true">
+    <div class="modal-inner">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px">
+        <h3 style="margin:0">Details</h3>
+        <button class="btn close secondary" data-close="#detailsModal">Close</button>
+      </div>
+      <div id="detailsBody" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
+        <div class="panel">
+          <h4 style="margin:0 0 6px 0">Components</h4>
+          <div id="detComponents" style="font-size:.92rem; line-height:1.5"></div>
+        </div>
+        <div class="panel">
+          <h4 style="margin:0 0 6px 0">Stacks Detected</h4>
+          <div id="detStacks" style="font-size:.92rem; line-height:1.5"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-        // Open PlantUML editor in new tab
-        function openPlantUMLEditor() {
-            const plantUMLCode = document.getElementById('plantuml-code').innerText;
-            const encodedCode = encodeURIComponent(plantUMLCode);
-            const url = `https://plantuml-editor.kkeisuke.com/`;
-            window.open(url, '_blank');
-        }
+  <!-- Config modal -->
+  <div id="configModal" class="modal" aria-hidden="true">
+    <div class="modal-inner">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px">
+        <h3 style="margin:0">Config</h3>
+        <button class="btn close secondary" data-close="#configModal">Close</button>
+      </div>
+      <div style="display:grid; grid-template-columns: 180px 1fr auto; gap:8px; align-items:center">
+        <label for="cfgApi">API Endpoint</label>
+        <input id="cfgApi" class="panel" style="padding:8px" type="text"
+               placeholder="e.g. https://releasetrain.io/api" readonly />
+        <button class="btn secondary" id="cfgCopyApi">Copy</button>
 
-        function getComponentByUrlParam() {
-            // Get URL parameters
-            const urlParams = new URLSearchParams(window.location.search);
-
-            // Initialize an array to store the components and their info
-            let componentsInfo = [];
-
-            // Get all `component` parameters (could be multiple)
-            const components = urlParams.getAll('component');
-
-            if (components.length === 0) {
-                // If no components are found in the URL, initialize with default values
-                const defaultComponent = { name: 'Linux', version: '6.8', os: null };
-                componentsInfo.push(defaultComponent);
-
-                // Update the URL with default values
-                const defaultUrlParam = `component=name:${defaultComponent.name},version:${defaultComponent.version}`;
-                let currentUrl = window.location.href.split('?')[0]; // Remove existing query params
-                const newUrl = `${currentUrl}?${unescape(defaultUrlParam)}`;
-
-                // Reload the page with the updated URL
-                window.location.href = newUrl;
-            } else {
-                components.forEach((component) => {
-                    // Split the component string by commas
-                    const parts = component.split(',');
-
-                    // Initialize values for name, version, and os
-                    let name = null;
-                    let version = null;
-                    let os = null;
-
-                    // Iterate through the parts and split each part by ':' to extract key-value pairs
-                    parts.forEach((part) => {
-                        const [key, value] = part.split(':');
-                        if (key && value) {
-                            // Match keys and assign values to name, version, and os
-                            switch (key.trim()) {
-                                case 'name':
-                                    name = value.trim();  // Extract the component name
-                                    break;
-                                case 'version':
-                                    version = value.trim();  // Extract the version
-                                    break;
-                                case 'os':
-                                    os = value.trim();  // Extract the OS
-                                    break;
-                                default:
-                                    // Optionally, handle unknown keys here
-                                    break;
-                            }
-                        }
-                    });
-
-                    // Only push the component to componentsInfo if the name is defined
-                    if (name) {
-                        componentsInfo.push({ name, version: version || null, os: os || null });
-                    }
-                });
-            }
-
-            return componentsInfo;
-        }
-
-        // Function to update the textarea with components info
-        function updateComponents() {
-            // Get the component information by parsing the URL parameters
-            const componentsInfo = getComponentByUrlParam();
-
-            // Create an array to store the formatted component strings
-            let componentsText = '';
-
-            // Format each component as 'name, version, os'
-            componentsInfo.forEach(component => {
-                componentsText += `${component.name}, ${component.version}, ${component.os}\n`;
-            });
-
-            // Populate the textarea with the component list (each component on a new line)
-            document.getElementById('componentListId').value = componentsText;
-        }
-
-        function reloadPage() {
-            const textarea = document.getElementById("componentListId");
-            if (!textarea) {
-                console.error("Textarea not found.");
-                return;
-            }
-
-            const lines = textarea.value.split("\n").map(line => line.trim()).filter(line => line.length > 0);
-            console.log("Lines:", lines);
-
-            const components = [];
-
-            lines.forEach(line => {
-                const parts = line.split(",").map(part => part.trim());
-                if (parts[0]) { // Ensure the component name exists
-                    let component = `name:${parts[0]}`;
-                    if (parts[1] && parts[1] !== 'null') {
-                        component += `,version:${parts[1]}`;
-                    }
-                    if (parts[2] && parts[2] !== 'null') {
-                        component += `,os:${parts[2]}`;
-                    }
-                    components.push(component);
-                }
-            });
-
-            if (components.length === 0) {
-                console.warn("No valid components found to update the URL.");
-                return;
-            }
-
-            const queryString = components.map(component => `component=${component}`).join("&");
-            const newUrl = `${window.location.origin}${window.location.pathname}?${queryString}`;
-
-            console.log("Updated URL:", newUrl);
-            window.location.href = newUrl;
-        }
-
-        // Call the updateComponents function when the page loads
-        document.addEventListener('DOMContentLoaded', function () {
-            updateComponents();
-
-            // Adjust the height of the button to match the textarea
-            const textarea = document.getElementById("componentListId");
-            const button = document.getElementById("generateButton");
-
-            const matchButtonHeight = () => {
-                button.style.height = `${textarea.offsetHeight}px`;
-            };
-
-            // Adjust button height on input and initial load
-            textarea.addEventListener("input", () => {
-                textarea.style.height = "auto"; // Reset height to calculate new height
-                textarea.style.height = `${Math.min(textarea.scrollHeight, 400)}px`; // Set height dynamically with a max of 400px
-                matchButtonHeight();
-            });
-
-            // Initial height adjustment
-            matchButtonHeight();
-        });
-
-    </script>
-
+        <label for="cfgPlant">PlantUML Server</label>
+        <input id="cfgPlant" class="panel" style="padding:8px" type="text"
+               placeholder="e.g. https://www.plantuml.com/plantuml/png/" />
+        <button class="btn" id="cfgApplyPlant">Apply</button>
+      </div>
+      <div style="color:#cbd5e1; font-size:.9rem; margin-top:8px">
+        Changing the PlantUML Server updates where images are fetched from for this session.
+      </div>
+    </div>
+  </div>
 </body>
-
 </html>

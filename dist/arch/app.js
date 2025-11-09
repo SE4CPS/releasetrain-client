@@ -1,520 +1,548 @@
-//import { get } from 'grunt';
-import plantuml from './plantuml.js';
-import util from './util.js';
+// app.js
+// Ecosystem Architecture Monitoring
+// - Uses ?q= (raw commas, no %2C) for internal links (/ /graph /arch)
+// - Falls back to today's updated components when q is missing or empty
+// - No vertical page scrolling (diagram scales to viewport)
+// - PlantUML legend on right, single row
+// - Code dialog: high-contrast, smaller monospace font
 
-// Set environment flag
-const IS_PRODUCTION = false;  // Change to `true` for production
+import {} from "https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js";
 
-// Define URLs and paths for both environments
+/* ---------- Config ---------- */
+const IS_PRODUCTION = false;
 const config = {
-    production: {
-        API_ENDPOINT: "https://releasetrain.io/api",
-        HOMEPAGE: "https://releasetrain.io",
-        PLANTUML_PATH: "./arch"  // Path in production
-    },
-    development: {
-        API_ENDPOINT: "https://releasetrain.io/api",
-        //API_ENDPOINT: "http://localhost:3000/api",
-        SELECT_OS: "https://releasetrain.io/api/c/os",
-        HOMEPAGE: "http://localhost:8080/",
-        PLANTUML_PATH: "./src/arch"  // Pat
-        // 
-        // h in development
-    }
+  production: {
+    API_ENDPOINT: "https://releasetrain.io/api",
+    PLANTUML_SERVER: "https://www.plantuml.com/plantuml/png/"
+  },
+  development: {
+    API_ENDPOINT: "https://releasetrain.io/api",
+    // API_ENDPOINT: "http://localhost:3000/api",
+    UPDATED_TODAY: "https://releasetrain.io/api/v/d/updatedToday",
+    PLANTUML_SERVER: "https://www.plantuml.com/plantuml/png/"
+  }
 };
+const URL_API_ENDPOINT  = IS_PRODUCTION ? config.production.API_ENDPOINT  : config.development.API_ENDPOINT;
+let   PLANTUML_SERVER   = IS_PRODUCTION ? config.production.PLANTUML_SERVER: config.development.PLANTUML_SERVER;
+const URL_UPDATED_TODAY = IS_PRODUCTION
+  ? (config.production.API_ENDPOINT + "/v/d/updatedToday")
+  : config.development.UPDATED_TODAY;
 
-// Set the URLs and paths based on the environment flag
-const URL_API_ENDPOINT = IS_PRODUCTION ? config.production.API_ENDPOINT : config.development.API_ENDPOINT;
-const urlSelectOS = IS_PRODUCTION ? "" : config.development.SELECT_OS;  // For development only
-const URL_HOMEPAGE = IS_PRODUCTION ? config.production.HOMEPAGE : config.development.HOMEPAGE;
-const plantumlPath = IS_PRODUCTION ? config.production.PLANTUML_PATH : config.development.PLANTUML_PATH;
+/* ---------- State ---------- */
+let versions = [];
+let startTime = Date.now();
+let plantumlUrl = "";
+let currentComponents = []; // names only
 
-// Example usage
-console.log("Environment:", IS_PRODUCTION ? "PRODUCTION" : "DEVELOPMENT");
-console.log("API Endpoint:", URL_API_ENDPOINT);
-console.log("Select OS URL:", urlSelectOS);
-console.log("Homepage URL:", URL_HOMEPAGE);
-console.log("PlantUML Path:", plantumlPath);
-
-// Define the top 30 operating systems
 const allowedOperatingSystems = [
-    "linux", "windows", "macos", "ubuntu", "centos", "debian", "redhat", "fedora", "arch", "suse",
-    "mint", "mac", "solaris", "freebsd", "opensuse", "gentoo", "slackware", "manjaro", "android", "ios",
-    "fedora", "android-x86", "raspbian", "kali-linux", "opensolaris", "zorin", "popos", "puppylinux", "steamos", "beaglebone"
+  "linux","windows","macos","ubuntu","centos","debian","redhat","fedora","arch","suse",
+  "mint","mac","solaris","freebsd","opensuse","gentoo","slackware","manjaro","android","ios",
+  "fedora","android-x86","raspbian","kali-linux","opensolaris","zorin","popos","puppylinux","steamos","beaglebone"
 ];
 
-let versions = [];
-let osList = [];
-let tree = {};
-let counterId = 0;
+/* ---------- DOM helpers ---------- */
+const $id = id => document.getElementById(id);
+const setText = (id,v) => { const el=$id(id); if(el) el.textContent=v; };
+const qs = () => new URLSearchParams(window.location.search);
+const uniq = arr => Array.from(new Set(arr));
 
-let startTime = Date.now();  // Start time to calculate the generation time
-let endTime;
+/* ---------- Fetch ---------- */
+function fetchJSON(url){
+  return new Promise((resolve,reject)=>{
+    $.ajax({ url, type:'GET', dataType:'json', success:resolve, error:(_,s,e)=>reject(new Error(s||e||'error')) });
+  });
+}
 
-const fullQueryString = window.location.search.substring(1);
+/* ---------- URL parsing/building ---------- */
+// read components from ?q= (comma separated) OR legacy ?component=
+function parseComponentsFromUrl(){
+  const params = qs();
 
-// Log the full query string
-console.log("Full query string:", `${URL_API_ENDPOINT}/v/d/versionsByComponent?${fullQueryString}`);
-// Use the full query string in your AJAX request
-$.ajax({
-    url: `${URL_API_ENDPOINT}/v/d/versionsByComponent?${fullQueryString}`, // Pass the full query string directly
-    type: 'GET',
-    dataType: 'json',
-    success: handleData,
-    error: function (jqXHR, textStatus, errorThrown) {
-        console.error("Error fetching data:", textStatus, errorThrown);
+  // Prefer ?q= (raw commas)
+  if (params.has('q')) {
+    const raw = params.get('q') || '';
+    // keep commas literal; do a light decode to strip accidental %2C if present
+    const qstring = raw.replace(/%2C/gi, ',');
+    const list = qstring.split(',').map(s=>s.trim()).filter(Boolean);
+    return uniq(list);
+  }
+
+  // legacy support ?component=name:linux&component=name:nginx...
+  const comps = params.getAll('component');
+  const out = [];
+  comps.forEach(c=>{
+    const parts = c.split(',');
+    let name=null;
+    parts.forEach(p=>{
+      const [k,v]=p.split(':'); if(!k||!v) return;
+      if(k.trim()==='name') name=v.trim();
+    });
+    if(name) out.push(name);
+  });
+  return uniq(out);
+}
+
+// when user edits chips/stacks, keep URL using ?q= (visible commas)
+function setUrlFromComponents(names){
+  const base = `${window.location.origin}${window.location.pathname}`;
+  // raw commas, no encoding of commas
+  const q = names.join(',');
+  window.location.href = `${base}?q=${q}`;
+}
+
+// Build API query for versionsByComponent from a list of names (component=name:x)
+// (encode here for safety on backend)
+function buildApiQueryFromComponents(names){
+  return names.map(n => `component=name:${encodeURIComponent(n)}`).join('&');
+}
+
+/* ---------- Chips UI ---------- */
+function refreshChips(){
+  const bar = $id('chipbar'); if(!bar) return;
+  const input = $id('chipInput');
+  Array.from(bar.querySelectorAll('.chip')).forEach(n => n.remove());
+  currentComponents.forEach(name=>{
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    chip.innerHTML = `<span>${name}</span><span class="x" title="Remove">×</span>`;
+    chip.querySelector('.x').addEventListener('click', ()=>{
+      currentComponents = currentComponents.filter(nm => nm!==name);
+      setUrlFromComponents(currentComponents);
+    });
+    bar.insertBefore(chip, input);
+  });
+}
+
+function wireChipInput(){
+  const input = $id('chipInput');
+  input.addEventListener('keydown', e=>{
+    if(e.key === 'Enter'){
+      const v = input.value.trim().replace(/%2C/gi, ',');
+      if(!v) return;
+      if(!currentComponents.includes(v)) currentComponents.push(v);
+      setUrlFromComponents(currentComponents);
     }
+  });
+}
+
+/* ---------- Stacks dropdown (+ adds; does not replace) ---------- */
+function wireStackAdder(){
+  const sel = $id('stackSelect');
+  const btn = $id('addStackBtn');
+  btn.addEventListener('click', ()=>{
+    const val = sel.value;
+    if(!val) return;
+    const namesToAdd = val.split(',').map(s=>s.trim()).filter(Boolean);
+    const merged = uniq(currentComponents.concat(namesToAdd));
+    setUrlFromComponents(merged);
+  });
+}
+
+/* ---------- Metrics / Details ---------- */
+function getStack(list){
+  const stacks = [
+    { name:"LAMP",   components:["apache","mysql","php","linux"] },
+    { name:"LEMP",   components:["nginx","mysql","php","linux"] },
+    { name:"UNN",    components:["ubuntu","nginx","nodejs"] },
+    { name:"RAILS",  components:["macos","rails","postgresql"] },
+    { name:"DWS",    components:["django","windows","sqlite"] },
+    { name:"FLASK",  components:["flask","arch","postgresql"] },
+    { name:"SPRING", components:["redhat","spring","java"] },
+    { name:"CRP",    components:["centos","rails","postgresql"] },
+    { name:"DDS",    components:["debian","django","sqlite"] },
+    { name:"USP",    components:["ubuntu","prisma","svelte"] },
+  ];
+  const out = []; const used = new Set();
+  for (const s of stacks){
+    const strict = s.components.every(c=> list.includes(c.toLowerCase()));
+    if(strict){ out.push({ stackName:s.name, matchedComponents:s.components }); s.components.forEach(c=>used.add(c.toLowerCase())); }
+  }
+  const extraComponents = list.filter(c=>!used.has(c.toLowerCase())).map(c=>({component:c,belongsToStack:false}));
+  return { groupedStacks: out, extraComponents };
+}
+
+function versionDelta(cur, latest){
+  const toN = v => (String(v||'').split(/[^\d]+/).map(x=>parseInt(x||'0',10))).slice(0,3);
+  const [cM,cm,cp] = toN(cur);
+  const [lM,lm,lp] = toN(latest);
+  if (lM>cM) return "major";
+  if (lM===cM && lm>cm) return "minor";
+  if (lM===cM && lm===cm && lp>cp) return "patch";
+  return "none";
+}
+function summarize(arr){
+  const out = { cve:0, major:0, minor:0, patch:0, ok:0 };
+  arr.forEach(v=>{
+    const cur = v.currentVersion || v.latestVersion;
+    const lat = v.latestVersion;
+    if(!cur || !lat) return;
+    if (v.latestCveVersion) out.cve++;
+    const d = versionDelta(cur.versionNumber, lat.versionNumber);
+    if (d==="major") out.major++;
+    else if (d==="minor") out.minor++;
+    else if (d==="patch") out.patch++;
+    else out.ok++;
+  });
+  return out;
+}
+
+/* ---------- PlantUML (light scheme in image) ---------- */
+function sanitize(s){ return String(s||'').replace(/[":]/g, '-'); }
+function extractCveCode(url){
+  if(!url) return "Unknown CVE";
+  const m = url.match(/CVE-\d{4}-\d+/);
+  return m ? m[0] : "Generic Security Issue";
+}
+function formatDateWithRelativeTime(yyyymmdd){
+  if(!yyyymmdd || String(yyyymmdd).length<8) return "Unknown";
+  const y=yyyymmdd.slice(0,4), m=yyyymmdd.slice(4,6), d=yyyymmdd.slice(6,8);
+  const dt = new Date(y, m-1, d);
+  const today = new Date();
+  const diff = Math.floor((today - dt)/(1000*3600*24));
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const base = `${months[dt.getMonth()]}/${String(dt.getDate()).padStart(2,'0')}/${dt.getFullYear()}`;
+  let rel = "";
+  if (diff===0) rel="(Today)";
+  else if (diff===1) rel="(Yesterday)";
+  else if (diff<7) rel="(This week)";
+  else if (diff<30) rel="(This month)";
+  return `${base} ${rel}`.trim();
+}
+function sortVersionsByOperatingSystem(arr){
+  if(!Array.isArray(arr) || !arr.length) return arr;
+  return arr.sort((a,b)=>{
+    const A = allowedOperatingSystems.includes((a.name||'').toLowerCase());
+    const B = allowedOperatingSystems.includes((b.name||'').toLowerCase());
+    return (B?1:0) - (A?1:0);
+  });
+}
+
+function buildEcosystemUml(vers){
+  const sorted = sortVersionsByOperatingSystem(vers.slice());
+  const names  = sorted.map(v=> v.name);
+  const { groupedStacks, extraComponents } = getStack(names);
+
+  const timestamp = new Date().toLocaleString('en-US',{
+    weekday:'short', year:'numeric', month:'short', day:'numeric',
+    hour:'numeric', minute:'numeric', second:'numeric', hour12:false, timeZoneName:'short'
+  });
+
+  // Light UI in image
+  const bg          = "#ffffff";
+  const fontColor   = "#111827";
+  const borderColor = "#cbd5e1";
+  const pkgBg       = "#ffffff";
+  const nodeLine    = "#94a3b8";
+  const nodeBg      = "#ffffff";
+
+  const css = getComputedStyle(document.documentElement);
+  const cveFill   = (css.getPropertyValue('--cve-light')   || "#fecaca").trim();
+  const majorFill = (css.getPropertyValue('--major-light') || "#fed7aa").trim();
+  const minorFill = (css.getPropertyValue('--minor-light') || "#bbf7d0").trim();
+  const patchFill = (css.getPropertyValue('--patch-light') || "#ffe8cc").trim();
+  const okFill    = (css.getPropertyValue('--ok-light')    || "#ffffff").trim();
+
+  let uml = `@startuml
+skinparam BackgroundColor ${bg}
+skinparam DefaultTextAlignment left
+skinparam Shadowing false
+skinparam PackageBorderColor ${borderColor}
+skinparam PackageBackgroundColor ${pkgBg}
+skinparam ComponentBorderColor ${nodeLine}
+skinparam ComponentBackgroundColor ${nodeBg}
+skinparam ArrowColor ${fontColor}
+skinparam FontColor ${fontColor}
+title "Software Ecosystem: ${timestamp}"
+legend right
+  |= Legend |= <${cveFill}> CVE | <${majorFill}> Major | <${minorFill}> Minor | <${patchFill}> Patch | <${okFill}> OK |
+endlegend
+`;
+
+  uml += `package "Ecosystem" #transparent {\n`;
+
+  if (groupedStacks.length){
+    groupedStacks.forEach(s=>{
+      uml += `  package "${s.stackName} stack" #transparent {\n`;
+      const subset = sorted.filter(v=> s.matchedComponents.includes(v.name));
+      subset.forEach(v=> uml += `    ${componentLine(v, {cveFill, majorFill, minorFill, patchFill, okFill})}\n`);
+      uml += `  }\n`;
+    });
+  }
+  const extraSubset = sorted.filter(v=> extraComponents.some(e=> e.component===v.name));
+  if (extraSubset.length){
+    uml += `  package "Extra components" #transparent {\n`;
+    extraSubset.forEach(v=> uml += `    ${componentLine(v, {cveFill, majorFill, minorFill, patchFill, okFill})}\n`);
+    uml += `  }\n`;
+  }
+
+  uml += `}\n@enduml\n`;
+  return uml;
+}
+
+function componentLine(version, fills){
+  const cur = version.currentVersion || version.latestVersion;
+  const lat = version.latestVersion;
+  if (!cur || !lat) return `component "${sanitize(version.name)}"`;
+
+  const diff = versionDelta(cur.versionNumber, lat.versionNumber);
+  const hasCve = !!version.latestCveVersion;
+  const fill = hasCve ? fills.cveFill
+        : diff==="major" ? fills.majorFill
+        : diff==="minor" ? fills.minorFill
+        : diff==="patch" ? fills.patchFill
+        : fills.okFill;
+
+  const name  = sanitize(cur.versionProductName || version.name);
+  const ver   = sanitize(cur.versionNumber);
+  const rdate = formatDateWithRelativeTime(cur.versionReleaseDate);
+  const lver  = sanitize(lat.versionNumber);
+  const lr    = formatDateWithRelativeTime(lat.versionReleaseDate);
+  const updateText = diff==="none" ? "Up-to-date" : `Needs ${diff.toUpperCase()} update`;
+  const cveText    = hasCve ? `\\nCVE: ${extractCveCode(version.latestCveVersion.versionUrl)}` : "";
+
+  const label = `"${name}@${ver} \\nVersion: ${ver} \\nRelease: ${rdate} \\nLatest: ${name}@${lver} \\nLatest Release: ${lr} \\nUpdate: ${updateText}${cveText}"`;
+  return `component ${label} #${fill.replace('#','')}`;
+}
+
+/* ---------- PlantUML transport ---------- */
+function encodePlantUML(text) {
+  const deflated = window.pako.deflateRaw(unescape(encodeURIComponent(text)), { level: 9 });
+  return encode64(deflated);
+}
+function encode64(data) {
+  let res = "";
+  for (let i = 0; i < data.length; i += 3) {
+    if (i+2 == data.length) res += append3bytes(data[i], data[i+1], 0);
+    else if (i+1 == data.length) res += append3bytes(data[i], 0, 0);
+    else res += append3bytes(data[i], data[i+1], data[i+2]);
+  }
+  return res;
+}
+function append3bytes(b1, b2, b3) {
+  const c1 = b1 >> 2;
+  const c2 = ((b1 & 0x3) << 4) | (b2 >> 4);
+  const c3 = ((b2 & 0xF) << 2) | (b3 >> 6);
+  const c4 = b3 & 0x3F;
+  return encode6bit(c1 & 0x3F) + encode6bit(c2 & 0x3F) + encode6bit(c3 & 0x3F) + encode6bit(c4 & 0x3F);
+}
+function encode6bit(b) {
+  if (b < 10) return String.fromCharCode(48 + b);
+  b -= 10;
+  if (b < 26) return String.fromCharCode(65 + b);
+  b -= 26;
+  if (b < 26) return String.fromCharCode(97 + b);
+  b -= 26;
+  if (b === 0) return '-';
+  if (b === 1) return '_';
+  return '?';
+}
+
+/* ---------- Render ---------- */
+function renderDiagram(uml){
+  const img = $id('ecosysImage');
+  plantumlUrl = PLANTUML_SERVER + encodePlantUML(uml);
+  img.src = plantumlUrl;
+  img.onload = finishLoading;
+  img.onerror = finishLoading;
+
+  // pretty-code in modal
+  $id("plantuml-code").innerHTML = formatPlantUML(uml);
+  $id("copy-btn").setAttribute("data-code", uml);
+}
+function finishLoading(){
+  const end = Date.now();
+  const secs = ((end - startTime)/1000).toFixed(2);
+  setText("generationTime", secs);
+  const loader = $id('loader'); if (loader) loader.style.display = 'none';
+  const timer  = $id('timer');  if (timer)  timer.style.display  = 'none';
+  clearInterval(window.__timer);
+}
+function formatPlantUML(code){
+  return code
+    .replace(/(@startuml|@enduml|title|legend|endlegend|skinparam|package|component)/g, '<span class="kw">$1</span>')
+    .replace(/package\s+"([^"]+)"/g, '<span class="kw">package</span> "<span class="pkg">$1</span>"')
+    .replace(/component/g, '<span class="cmp">component</span>')
+    .replace(/"([^"]*)"/g, '<span class="str">"$1"</span>')
+    .replace(/\n/g,'<br/>');
+}
+
+/* ---------- Data load paths ---------- */
+async function loadFromParamsAndRender(){
+  // build internal links with RAW commas (no %2C)
+  const q = currentComponents.join(',');
+  const g = $id('toGraph'); if(g) g.href = '/graph?q=' + q;
+  const f = $id('toFeed');  if(f) f.href = '/?q=' + q;
+
+  // loader
+  startTime = Date.now();
+  const loader = $id('loader'); const timer = $id('timer'); const secsEl = $id('seconds');
+  if (loader && timer){ let t=0; loader.style.display='block'; timer.style.display='block'; window.__timer = setInterval(()=>{ t++; secsEl.textContent=t; }, 1000); }
+
+  try{
+    const apiQuery = buildApiQueryFromComponents(currentComponents);
+    const data = await fetchJSON(`${URL_API_ENDPOINT}/v/d/versionsByComponent?${apiQuery}`);
+    renderFromVersions(data);
+    $id('diagramTitle').textContent = 'Ecosystem Diagram';
+  }catch(e){
+    console.error(e);
+    finishLoading();
+  }
+}
+
+async function loadTodayAndRender(){
+  // loader
+  startTime = Date.now();
+  const loader = $id('loader'); const timer = $id('timer'); const secsEl = $id('seconds');
+  if (loader && timer){ let t=0; loader.style.display='block'; timer.style.display='block'; window.__timer = setInterval(()=>{ t++; secsEl.textContent=t; }, 1000); }
+
+  try{
+    const data = await fetchJSON(URL_UPDATED_TODAY);
+    if(Array.isArray(data) && data.length){
+      versions = data.map(c=>{
+        const { name, latestVersion, currentVersion, latestCveVersion } = c;
+        return { name, latestVersion, currentVersion: currentVersion || latestVersion, latestCveVersion };
+      });
+      currentComponents = uniq(versions.map(v=>v.name));
+      refreshChips();
+
+      const q = currentComponents.join(','); // raw commas
+      const g = $id('toGraph'); if(g) g.href = '/graph?q=' + q;
+      const f = $id('toFeed');  if(f) f.href = '/?q=' + q;
+
+      const uml = buildEcosystemUml(versions);
+      renderDiagram(uml);
+
+      const { groupedStacks } = getStack(versions.map(v=>v.name));
+      const sum = summarize(versions);
+      setText("totalComponents", versions.length);
+      setText("stackCount", groupedStacks.length);
+      setText("cveCount", sum.cve);
+      setText("majorCount", sum.major);
+      setText("minorCount", sum.minor);
+      setText("patchCount", sum.patch);
+      setText("okCount", sum.ok);
+
+      $id('detComponents').innerHTML = versions.map(v=>`• ${v.name}`).join('<br/>');
+      $id('detStacks').innerHTML = groupedStacks.length
+        ? groupedStacks.map(s=>`• ${s.stackName}: ${s.matchedComponents.join(', ')}`).join('<br/>')
+        : 'None';
+
+      $id('diagramTitle').textContent = "Today's Updated Components";
+    }else{
+      $id('diagramTitle').textContent = "No components updated today";
+      finishLoading();
+    }
+  }catch(e){
+    console.error('updatedToday fetch failed', e);
+    $id('diagramTitle').textContent = "No components updated today";
+    finishLoading();
+  }
+}
+
+function renderFromVersions(data){
+  if(!Array.isArray(data)){ finishLoading(); return; }
+  versions = data.map(c=>{
+    const { name, latestVersion, currentVersion, latestCveVersion } = c;
+    return { name, latestVersion, currentVersion: currentVersion || latestVersion, latestCveVersion };
+  });
+
+  const uml = buildEcosystemUml(versions);
+  renderDiagram(uml);
+
+  const { groupedStacks } = getStack(versions.map(v=>v.name));
+  const sum = summarize(versions);
+  setText("totalComponents", versions.length);
+  setText("stackCount", groupedStacks.length);
+  setText("cveCount", sum.cve);
+  setText("majorCount", sum.major);
+  setText("minorCount", sum.minor);
+  setText("patchCount", sum.patch);
+  setText("okCount", sum.ok);
+
+  $id('detComponents').innerHTML = versions.map(v=>`• ${v.name}`).join('<br/>');
+  $id('detStacks').innerHTML = groupedStacks.length
+    ? groupedStacks.map(s=>`• ${s.stackName}: ${s.matchedComponents.join(', ')}`).join('<br/>')
+    : 'None';
+}
+
+/* ---------- Events / Modals / Copy / Config ---------- */
+document.addEventListener('DOMContentLoaded', async ()=>{
+  // init chips from URL (?q= or legacy ?component=)
+  currentComponents = parseComponentsFromUrl();
+  // If q is present but empty -> treat as no params
+  const qParamPresentButEmpty = qs().has('q') && (qs().get('q')||'').trim() === '';
+  if (qParamPresentButEmpty) currentComponents = [];
+
+  refreshChips();
+  wireChipInput();
+  wireStackAdder();
+
+  // dialogs
+  $id('openMetrics').addEventListener('click', ()=> $id('metricsModal').style.display='flex');
+  $id('openCode').addEventListener('click',    ()=> $id('codeModal').style.display='flex');
+  $id('openDetails').addEventListener('click', ()=> $id('detailsModal').style.display='flex');
+  $id('openConfig').addEventListener('click',  ()=>{
+    $id('cfgApi').value = URL_API_ENDPOINT;
+    $id('cfgPlant').value = PLANTUML_SERVER;
+    $id('configModal').style.display='flex';
+  });
+
+  // modal close
+  document.querySelectorAll('.modal').forEach(m=>{
+    m.addEventListener('click',(e)=>{ if(e.target===m) m.style.display='none'; });
+  });
+  document.addEventListener('click', (e)=>{
+    const btn = e.target.closest('[data-close]');
+    if(!btn) return;
+    const sel = btn.getAttribute('data-close');
+    const m = document.querySelector(sel);
+    if (m) m.style.display = 'none';
+  });
+
+  // copy ecosystem image URL
+  $id('copyLink').addEventListener('click', ()=>{
+    if(!plantumlUrl){ return; }
+    navigator.clipboard.writeText(plantumlUrl).then(()=> alert('Ecosystem image URL copied!'));
+  });
+
+  // copy code
+  $id('copy-btn').addEventListener('click', ()=>{
+    const uml = $id('copy-btn').getAttribute('data-code') || '';
+    navigator.clipboard.writeText(uml).then(()=> alert('PlantUML code copied!'));
+  });
+
+  // config actions
+  $id('cfgCopyApi').addEventListener('click', ()=>{
+    navigator.clipboard.writeText(URL_API_ENDPOINT).then(()=> alert('API endpoint copied!'));
+  });
+  $id('cfgApplyPlant').addEventListener('click', ()=>{
+    const v = $id('cfgPlant').value.trim();
+    if(!v) return alert('Enter a PlantUML server URL (e.g. https://www.plantuml.com/plantuml/png/ )');
+    PLANTUML_SERVER = v.endsWith('/') ? v : v + '/';
+    // re-render using last code (strip formatting)
+    const codeHtml = $id('plantuml-code').innerHTML;
+    if(codeHtml){
+      const codeText = codeHtml.replace(/<br\/?>/g,'\n').replace(/<[^>]+>/g,'');
+      plantumlUrl = PLANTUML_SERVER + encodePlantUML(codeText);
+      $id('ecosysImage').src = plantumlUrl;
+    }
+    alert('PlantUML server updated for this session.');
+  });
+
+  // decide source: ?q= / legacy ?component= OR updatedToday fallback
+  if(currentComponents.length){
+    // preload links with RAW commas
+    const q = currentComponents.join(',');
+    const g = $id('toGraph'); if(g) g.href = '/graph?q=' + q;
+    const f = $id('toFeed');  if(f) f.href = '/?q=' + q;
+
+    // show loader
+    const loader = $id('loader'); const timer = $id('timer'); const secsEl = $id('seconds');
+    if (loader && timer){ let t=0; loader.style.display='block'; timer.style.display='block'; window.__timer = setInterval(()=>{ t++; secsEl.textContent=t; }, 1000); }
+
+    await loadFromParamsAndRender();
+  }else{
+    // /arch with no q or empty q -> today's components
+    await loadTodayAndRender();
+  }
 });
-
-$.ajax({
-    url: `${urlSelectOS}`,
-    type: 'GET',
-    dataType: 'json',
-    success: handleOsData,
-    error: function (jqXHR, textStatus, errorThrown) {
-        console.error("Error fetching data:", textStatus, errorThrown);
-    }
-});
-
-function handleData(data) {
-    console.log("Component count", data.length, data);
-
-    // Ensure `data` is an array
-    if (!Array.isArray(data)) {
-        console.error("Data is not an array");
-        return;
-    }
-
-    // Iterate over each component object in the array
-    data.forEach(component => {
-        const { name, latestVersion, currentVersion, latestCveVersion } = component;
-        //console.log(latestVersion);
-        console.log(currentVersion);
-        //console.log(latestCveVersion);
-
-
-        if (latestVersion)
-            latestVersion.versionNumber = latestVersion.versionNumber.replace(/\./g, ':');
-        if (currentVersion)
-            currentVersion.versionNumber = currentVersion.versionNumber.replace(/\./g, ':');
-        if (latestCveVersion)
-            latestCveVersion.versionNumber = latestCveVersion.versionNumber.replace(/\./g, ':');
-        // Log component details (adjust as needed)
-        console.log(`Component: ${name}`);
-        console.log(`Latest Version: `, latestVersion);
-        console.log(`Current Version: `, currentVersion);
-        console.log(`Latest CVE Version: `, latestCveVersion);
-
-        // Here, you can process each version or add it to the global `versions` array
-        versions.push({
-            name,
-            latestVersion,
-            currentVersion,
-            latestCveVersion
-        });
-    });
-
-    // Initialize PlantUML for diagram generation
-    plantuml.initialize(plantumlPath)
-        .then(() => {
-            // Generate PlantUML diagrams
-            renderDiagrams(getPlantuml());
-        })
-        .catch((error) => {
-            console.error('Error initializing PlantUML:', error);
-            // Hide the loader in case of error
-            hideLoader();
-        });
-}
-
-function handleOsData(data) {
-    if (!Array.isArray(data)) {
-        console.error("Data is not an array");
-    }
-    // osList = data;
-    osList = allowedOperatingSystems;
-}
-
-function getPlantuml() {
-    // Aggregated metrics variables
-    let totalComponents = 0;
-
-    const timestamp = new Date().toLocaleString('en-US', {
-        weekday: 'short',
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric',
-        second: 'numeric',
-        hour12: false,
-        timeZoneName: 'short'
-    });
-
-    let plantUMLCode = `@startuml\ntitle "${timestamp}"\n`;
-
-    // Fetch and sort version details
-    versions = sortVersionsByOperatingSystem(versions);
-
-    plantUMLCode += `package "${sanitize(versions[0].name)} OS" {\n`;
-
-    // Extract component names from versions
-    const getComponent = versions.map(version => version.name);
-
-    // Group components by stack
-    const { groupedStacks, extraComponents } = getStack(getComponent);
-    //console.log("Grouped Stacks (Strict Matching):", groupedStacks);
-    console.log("Extra Components:", extraComponents);
-    totalComponents = versions.length;
-    //console.log("Total Components:", totalComponents);
-
-    // Function to generate component details
-    function generateComponentDetails(version) {
-        //console.log('Version:', version);   
-        version.currentVersion = version.currentVersion || version.latestVersion;
-        if (!version || !version.currentVersion || !version.latestVersion) {
-            //console.warn(`Skipping invalid version data: Missing currentVersion or latestVersion`);
-            return null; // Skip this iteration if the version data is incomplete
-        }
-        let name = sanitize(version.currentVersion.versionProductName);
-        let versionNumber = sanitize(version.currentVersion.versionNumber);
-        let releaseDate = sanitize(formatDateWithRelativeTime(version.currentVersion.versionReleaseDate));
-        let cveInfo = version.latestCveVersion ? sanitize(extractCveCode(version.latestCveVersion.versionUrl)) : '';
-        let latestVersionNumber = version.latestVersion ? sanitize(version.latestVersion.versionNumber) : null;
-        let latestReleaseDate = version.latestVersion ? sanitize(formatDateWithRelativeTime(version.latestVersion.versionReleaseDate)) : null;
-
-        let componentDetails = `"${name}@${versionNumber} \\nVersion: ${versionNumber} \\nRelease Date: ${releaseDate}`;
-
-        if (latestVersionNumber && latestReleaseDate) {
-            componentDetails += ` \\nLatest: ${name}@${latestVersionNumber} \\nVersion: ${latestVersionNumber} \\nRelease date: ${latestReleaseDate}`;
-        }
-
-        if (cveInfo) {
-            componentDetails += ` \\nCVE Info: ${cveInfo}`;
-        }
-
-        componentDetails += `"`; // End of component details string
-
-        return componentDetails;
-    }
-
-    // Function to add OS package
-    function addOSPackage(osName, components) {
-
-        components.forEach(component => {
-            plantUMLCode += `package "${component.name}" {\n`;
-            plantUMLCode += `    component ${generateComponentDetails(component)}\n`;
-            plantUMLCode += `}\n`;
-        });
-
-    }
-
-    // Function to add stack package
-    function addStackPackage(stackName, components) {
-        plantUMLCode += `package "${stackName} stack" {\n`;
-        const osComponents = {};
-
-        components.forEach(component => {
-            const osName = component.name; // Assuming the OS name is the same as the component name
-            if (!osComponents[osName]) {
-                osComponents[osName] = [];
-            }
-            osComponents[osName].push(component);
-        });
-
-        for (const osName in osComponents) {
-            addOSPackage(osName, osComponents[osName]);
-        }
-    }
-
-    // if there are no grouped stacks just push the extra components
-    if (groupedStacks.length === 0) {
-        addOSPackage("Extra Components", versions);
-    }
-    else {
-        // Process grouped stacks
-        groupedStacks.forEach(stack => {
-            const stackComponents = versions.filter(version => stack.matchedComponents.includes(version.name));
-            //console.log("Stack Components:", stackComponents);
-            addStackPackage(stack.stackName, stackComponents);
-        });
-        // end the stack
-        plantUMLCode += `}\n`;
-        // Process extra components
-        const extraComponentVersions = versions.filter(version => extraComponents.some(extra => extra.component === version.name));
-
-        addOSPackage("Extra Components", extraComponentVersions);
-    }
-
-
-
-    plantUMLCode += `}\n@enduml\n`;
-
-    // Insert the PlantUML code into the HTML element with the id "plantuml-code"
-    document.getElementById("plantuml-code").innerHTML = formatPlantUML(plantUMLCode);
-
-    // Update the metrics section on the page
-    document.getElementById("totalComponents").textContent = totalComponents;
-
-    // Optionally return the generated PlantUML code
-    return [{ name: "unique-os-packages", code: plantUMLCode }];
-}
-
-function formatPlantUML(umlCode) {
-    // Store the original for copying
-    document.getElementById("copy-btn").setAttribute("data-code", umlCode);
-
-    return umlCode
-        .replace(/@startuml/g, '<span style="color: green;">@startuml</span>')
-        .replace(/@enduml/g, '<span style="color: green;">@enduml</span>')
-        .replace(/title\s+"([^"]+)"/g, '<span style="color: blue;">title "$1"</span>')
-        .replace(/package\s+"([^"]+)"/g, '<span style="color: purple;">package "$1"</span>')
-        .replace(/component\s+"([^"]+)"/g, (match, p1) =>
-            `<span style="color: brown;">component</span> "<span>${p1
-                .replace(/\\n/g, '<br>&nbsp;&nbsp;&nbsp;&nbsp;') // Add line breaks and indentation
-                .replace(/(Version:|Release Date:|Latest:|CVE Info:)/g, '<strong>$1</strong>')}</span>"`
-        )
-        .replace(/\n/g, '<br>'); // General line breaks
-}
-
-function renderDiagrams(diagrams) {
-    console.log(diagrams);
-    let container = document.getElementById('plantuml-diagrams');
-    let loader = document.getElementById('loader');
-    loader.style.display = 'block';
-    if (diagrams.length === 0) {
-        let message = document.createElement('p');
-        message.textContent = 'No OS components found.';
-        message.classList.add('message');
-        container.appendChild(message);
-        loader.style.display = 'none';
-    } else {
-        diagrams.forEach((diagramData, index) => {
-            setTimeout(() => myRender(container, diagramData), 2000 * (index + 1));
-        });
-    }
-}
-
-function sortVersionsByOperatingSystem(versions) {
-    if (!Array.isArray(versions) || versions.length === 0) {
-        console.warn("Invalid or empty versions array.");
-        return versions;
-    }
-
-    return versions.sort((a, b) => {
-        const isAOS = allowedOperatingSystems.includes(a.name?.toLowerCase());
-        const isBOS = allowedOperatingSystems.includes(b.name?.toLowerCase());
-        return isBOS - isAOS; // Move OS objects to the top
-    });
-}
-
-function myRender(container, diagramData) {
-    let { name, code } = diagramData;
-    let diagramContainer = document.createElement('div');
-    diagramContainer.id = name;
-    container.appendChild(diagramContainer);
-    plantuml.renderPng(code)
-        .then((blob) => {
-            let image = document.createElement('img');
-            let imageUrl = URL.createObjectURL(blob);
-            image.src = imageUrl;
-            image.alt = name;
-            diagramContainer.appendChild(image);
-            image.classList.add('diagram-image');
-            loader.style.display = 'none';
-
-            endTime = Date.now();  // Set the end time after rendering diagrams
-            const generationTime = ((endTime - startTime) / 1000).toFixed(2).trim();  // Calculate the generation time in seconds
-
-            // Update the metrics section on the page with the generation time
-            document.getElementById("generationTime").textContent = generationTime;
-
-            // Hide the loader and stop the timer after the image is generated
-            hideLoader();
-        }).catch((error) => {
-            console.error('Error rendering PlantUML diagram:', error);
-        });
-}
-
-function formatDate(inputDate) {
-    // Convert inputDate from yyyymmdd to a Date object
-    const year = inputDate.slice(0, 4);
-    const month = inputDate.slice(4, 6) - 1; // Months are zero-based in Date objects
-    const day = inputDate.slice(6, 8);
-    const dateObj = new Date(year, month, day);
-
-    // Get current date
-    const currentDate = new Date();
-
-    // Calculate the difference in milliseconds between currentDate and inputDate
-    const timeDiff = currentDate.getTime() - dateObj.getTime();
-    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
-
-    // If the difference is less than 7 days, return "Less than 7 days"
-    if (daysDiff < 7) {
-        return "Less than 7 days";
-    }
-
-    // Get year, month name, and day
-    const yearStr = dateObj.getFullYear();
-    const monthStr = new Intl.DateTimeFormat('en', { month: 'long' }).format(dateObj);
-    const dayStr = dateObj.getDate();
-
-    // Return the formatted date string
-    return `${monthStr} ${dayStr}, ${yearStr}`;
-}
-
-function isRecent(inputDate) {
-    // Convert inputDate from yyyymmdd to a Date object
-    const year = inputDate.slice(0, 4);
-    const month = inputDate.slice(4, 6) - 1; // Months are zero-based in Date objects
-    const day = inputDate.slice(6, 8);
-    const dateObj = new Date(year, month, day);
-
-    // Get current date
-    const currentDate = new Date();
-
-    // Calculate the difference in milliseconds between currentDate and inputDate
-    const timeDiff = currentDate.getTime() - dateObj.getTime();
-    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
-
-    // If the difference is less than 7 days, return "Less than 7 days"
-    if (daysDiff < 7) {
-        return true;
-    }
-    else {
-        return false;
-    }
-}
-
-function addMajorTag(version) {
-    const parts = version.split('.');
-    if (parts.length === 1 || (parts.length === 2 && parts[1] === '0')) {
-        return version + ' <b>(major)</b>'; // It's a major version
-    }
-    if (parts.length === 3 && parseInt(parts[0]) > 0 && parseInt(parts[1]) === 0 && parseInt(parts[2]) === 0) {
-        return version + ' <b>(major)</b>'; // It's a major version
-    }
-    return version;
-}
-
-function sortByDate(data) {
-    function compareDates(a, b) {
-        const getDateValue = (dateString) => {
-            if (!dateString) return Number.MAX_SAFE_INTEGER;
-            const [year, month, day] = [
-                dateString.substr(0, 4),
-                dateString.substr(4, 2),
-                dateString.substr(6, 2)
-            ];
-            return new Date(year, month - 1, day).getTime();
-        };
-        const dateA = getDateValue(a.versionReleaseDate);
-        const dateB = getDateValue(b.versionReleaseDate);
-        return dateB - dateA;
-    }
-
-    return data.sort((a, b) => compareDates(a, b));
-}
-
-// Function to replace special characters (including colon) with '-'
-function sanitize(name) {
-    return name.replace(/[:]/g, '-')   // Replace non-alphanumeric characters (except dot and dash) with '-'
-        .replace(/\./g, '-');          // Replace periods with hyphens
-}
-
-// Extract CVE code from the full URL (e.g., CVE-2024-9194 from "https://nvd.nist.gov/vuln/detail/CVE-2024-9194")
-function extractCveCode(url) {
-    if (!url) {
-        return "Unknown CVE"; // Return a generic placeholder if the URL is undefined or null
-    }
-
-    const regex = /CVE-\d{4}-\d+/; // Match patterns like "CVE-2024-9194"
-    const match = url.match(regex);
-
-    return match ? match[0] : "Generic Security Issue"; // Return matched CVE code or a generic fallback
-}
-
-function formatDateWithRelativeTime(dateStr) {
-    // Parse the input date string (e.g., "20200816") into a Date object
-    const date = new Date(dateStr.slice(0, 4), dateStr.slice(4, 6) - 1, dateStr.slice(6, 8));
-
-    // Get today's date and time for comparison
-    const today = new Date();
-
-    // Calculate the difference in time
-    const timeDiff = today - date;
-    const dayDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
-
-    // Function to format the date as "Jan/30/2024"
-    const formatDate = (date) => {
-        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        const month = months[date.getMonth()];
-        const day = date.getDate();
-        const year = date.getFullYear();
-        return `${month}/${day < 10 ? '0' + day : day}/${year}`;
-    };
-
-    // Determine the relative time to today
-    let relativeTime = '';
-
-    if (dayDiff === 0) {
-        relativeTime = '(Today)';
-    } else if (dayDiff === 1) {
-        relativeTime = '(Yesterday)';
-    } else if (dayDiff < 7) {
-        relativeTime = '(This week)';
-    } else if (dayDiff < 30) {
-        relativeTime = '(This month)';
-    }
-
-    return `${formatDate(date)} ${relativeTime}`;
-}
-
-// Function to group components by stack
-function getStack(getComponent) {
-    // console.log("Components received:", getComponent);
-
-    // Ensure `getComponent` is an array
-    if (!Array.isArray(getComponent) || getComponent.length === 0) {
-        // console.warn("getComponent is empty or not an array.");
-        return { groupedStacks: [], extraComponents: [] };
-    }
-
-    const stacks = [
-        { name: "LAMP", components: ["apache", "mysql", "php", "linux"] },
-        { name: "LEMP", components: ["nginx", "mysql", "php", "linux"] },
-        { name: "UNN", components: ["ubuntu", "nginx", "nodejs"] },
-        { name: "RAILS", components: ["macos", "rails", "postgresql"] },
-        { name: "DWS", components: ["django", "windows", "sqlite"] },
-        { name: "FLASK", components: ["flask", "arch", "postgresql"] },
-        { name: "SPRING", components: ["redhat", "spring", "java"] },
-        { name: "CRP", components: ["centos", "rails", "postgresql"] },
-        { name: "DDS", components: ["debian", "django", "sqlite"] },
-        { name: "USP", components: ["ubuntu", "prisma", "svelte"] }
-    ];
-
-    const groupedStacks = [];
-    const usedComponents = new Set();
-
-    for (const stack of stacks) {
-        // Strict match: All stack components must be in getComponent
-        const isStrictMatch = stack.components.every(component => getComponent.includes(component.toLowerCase()));
-
-        if (isStrictMatch) {
-            groupedStacks.push({ stackName: stack.name, matchedComponents: stack.components });
-            stack.components.forEach(component => usedComponents.add(component.toLowerCase())); // Mark components as used
-        }
-    }
-
-    // Identify extra or unmatched components
-    const extraComponents = getComponent
-        .filter(component => !usedComponents.has(component.toLowerCase()))
-        .map(component => ({ component, belongsToStack: false }));
-
-    //console.log("Grouped stacks (Strict Matching):", groupedStacks);
-    //console.log("Extra components:", extraComponents);
-    //console.log("Used components:", Array.from(usedComponents));
-
-    return { groupedStacks, extraComponents };
-}
