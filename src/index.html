@@ -192,6 +192,7 @@
     const safe=(v,d="")=>v==null?d:v, uniq=a=>Array.from(new Set(a));
     const truncate=(str,n=MAX_VER_DESC)=> (str && str.length>n)?(str.slice(0,n-1)+"…"):(str||"");
 
+    // canonical helpers (single source of truth)
     const norm = s => String(s || "").toLowerCase().trim();
     const normKey = s => norm(s).replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
     const normFlat = s => norm(s).replace(/[^a-z0-9]+/g, "");
@@ -223,7 +224,7 @@
       return "./img/default.png";
     };
     function showLoader(){ $("#navLoader").classList.add("active"); updateOffsets(); }
-    function hideLoader(){ $("#navLoader").classList.removeClass?.("active"); document.getElementById("navLoader").classList.remove("active"); updateOffsets(); }
+    function hideLoader(){ $("#navLoader").classList.remove("active"); updateOffsets(); }
     function updateOffsets(){ const tb=document.querySelector('.topbar'), nl=$("#navLoader");
       document.documentElement.style.setProperty('--topbar-h',(tb?tb.offsetHeight:0)+"px");
       document.documentElement.style.setProperty('--navloader-h',(nl&&nl.classList.contains('active')?nl.offsetHeight:0)+"px");
@@ -232,7 +233,6 @@
 
     /* ----- CSV encoder that keeps commas as commas ----- */
     const encodeCsvKeepCommas = (csv) => {
-      // normalize weird spaces (e.g., NBSP %C2%A0), trim, collapse spaces around commas
       const cleaned = String(csv||"").replace(/\u00A0/g," ").replace(/\s*,\s*/g,",").trim();
       if(!cleaned) return "";
       return cleaned.split(",").map(t => encodeURIComponent(t)).join(","); // commas remain literal
@@ -242,7 +242,6 @@
     function buildHrefWithQ(path, csv){
       const q = String(csv||"").trim();
       const qs = q ? `?q=${encodeCsvKeepCommas(q)}` : "";
-      // ensure leading slash on path
       const base = path.startsWith("/") ? path : `/${path}`;
       return `${location.origin}${base}${qs}`;
     }
@@ -250,7 +249,6 @@
     /* ---------- keep /graph and /arch links synced with ?q=... ---------- */
     function setLinksHref(){
       const u=new URL(location.href);
-      // Use raw value; URLSearchParams already decodes %2C into comma if present
       const q=u.searchParams.get("q") || "";
       $("#graphLink").href = buildHrefWithQ("/graph/", q);
       $("#archLink").href  = buildHrefWithQ("/arch/",  q);
@@ -274,11 +272,6 @@
     };
 
     /* =================== Canonicalization (NAME ONLY) =================== */
-    const norm2 = s => String(s||"").toLowerCase().trim();
-    const normFlat = s => norm2(s).replace(/[^a-z0-9]+/g, "");
-    const normKey = s => norm2(s).replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
-    const titleCase = s => s ? s.replace(/\w\S*/g, w => w[0].toUpperCase() + w.slice(1)) : s;
-
     function canonicalNameFromSubstrings(nameRaw){
       const display = titleCase(nameRaw||"");
       const key = normKey(display);
@@ -297,7 +290,7 @@
     function buildRedditIndex(list){
       STATE.redditBySub=new Map();
       for(const p of list){
-        const k=norm2(p.subreddit);
+        const k=norm(p.subreddit);
         if(!k) continue;
         if(!STATE.redditBySub.has(k)) STATE.redditBySub.set(k,[]);
         STATE.redditBySub.get(k).push(p);
@@ -308,7 +301,7 @@
     }
     function redditMatchesForVersionBase(v, limit = 6, onlyRisks = false) {
       const c = canonComponentName(v);
-      const name = norm2(c.nameOut);
+      const name = norm(c.nameOut);
       if (!name) return [];
       const arr = STATE.redditBySub.get(name) || [];
       const out = [];
@@ -339,7 +332,7 @@
     function computeAggregates(list){
       let major=0,minor=0,patch=0,cve=0,reddit=0,redditRisk=0,uniqComps=new Set(),typeCounts=new Map();
       for(const it of list){
-        const ch=norm2(it.versionReleaseChannel);
+        const ch=norm(it.versionReleaseChannel);
         if(ch==="major") major++; else if(ch==="minor") minor++; else if(ch==="patch") patch++;
         if(it.isCve) cve++;
         const allR=redditMatchesForVersionBase(it,6,false), riskR=redditMatchesForVersionBase(it,6,true);
@@ -365,8 +358,8 @@
       }
     }
     function matchesToggles(v,rc,rrc){
-      const set=STATE.filters.toggles, channel=norm2(v.versionReleaseChannel);
-      const compTypes=(v.classification?.componentType||[]).map(norm2), isCve=!!v.isCve, hasReddit=rc>0, hasRisk=rrc>0;
+      const set=STATE.filters.toggles, channel=norm(v.versionReleaseChannel);
+      const compTypes=(v.classification?.componentType||[]).map(norm), isCve=!!v.isCve, hasReddit=rc>0, hasRisk=rrc>0;
       const truth={major:channel==="major",minor:channel==="minor",patch:channel==="patch",cve:isCve,reddit:hasReddit,'reddit-risk':hasRisk};
       for(const k of set){
         if(k.startsWith("type:")){ if(!compTypes.includes(k.slice(5))) return false; }
@@ -379,9 +372,9 @@
       const comps=STATE.filters.components;
       const candidates=STATE.rawVersions.filter(v=>{
         const ts = +new Date(v.versionTimestampLastUpdate || v.versionTimestamp || 0);
-        if (!isFinite(ts) || ts < SIX_MONTHS_AGO) return false; // last 6 months
+        if (!isFinite(ts) || ts < SIX_MONTHS_AGO) return false;
         if(!comps.length) return true;
-        const name=norm2(v.versionProductName);
+        const name=norm(v.versionProductName);
         const tags=(Array.isArray(v.versionSearchTags)?v.versionSearchTags.join(","):"").toLowerCase();
         return comps.some(t=>name.includes(t)||tags.includes(t));
       });
