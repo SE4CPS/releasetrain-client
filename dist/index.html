@@ -26,7 +26,6 @@
     .gh-link{display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px solid var(--line);color:var(--text);padding:8px 10px;border-radius:10px;text-decoration:none;font-weight:700}
     .gh-link:hover{background:var(--chip)}
 
-    /* subtle link pills */
     .linkchip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--text);text-decoration:none;font-weight:700;font-size:13px;opacity:.85}
     .linkchip:hover{background:var(--chip);opacity:1}
     .linkchip small{color:var(--muted);font-weight:600}
@@ -127,9 +126,9 @@
     <div class="brand">Releasetrain <b>v3.13.3</b></div>
     <div class="spacer"></div>
 
-    <!-- Link pills kept in sync with ?q=... -->
-    <a id="graphLink" class="linkchip" href="/graph" title="Open graph view with the same query">Graph ↗ <small>/graph</small></a>
-    <a id="archLink"  class="linkchip" href="/arch"  title="Open architecture view with the same query">Arch ↗ <small>/arch</small></a>
+    <!-- Link pills kept in sync with ?q=... ; commas never encoded -->
+    <a id="graphLink" class="linkchip" href="/graph/" title="Open graph view with the same query">Graph ↗ <small>/graph</small></a>
+    <a id="archLink"  class="linkchip" href="/arch/"  title="Open architecture view with the same query">Arch ↗ <small>/arch</small></a>
 
     <a class="gh-link" href="https://github.com/SE4CPS/releasetrain-client" target="_blank" rel="noopener">GitHub ↗</a>
 
@@ -224,24 +223,37 @@
       return "./img/default.png";
     };
     function showLoader(){ $("#navLoader").classList.add("active"); updateOffsets(); }
-    function hideLoader(){ $("#navLoader").classList.remove("active"); updateOffsets(); }
+    function hideLoader(){ $("#navLoader").classList.removeClass?.("active"); document.getElementById("navLoader").classList.remove("active"); updateOffsets(); }
     function updateOffsets(){ const tb=document.querySelector('.topbar'), nl=$("#navLoader");
       document.documentElement.style.setProperty('--topbar-h',(tb?tb.offsetHeight:0)+"px");
       document.documentElement.style.setProperty('--navloader-h',(nl&&nl.classList.contains('active')?nl.offsetHeight:0)+"px");
     }
     window.addEventListener('load',updateOffsets);window.addEventListener('resize',updateOffsets);new ResizeObserver(updateOffsets).observe(document.querySelector('.topbar'));
 
+    /* ----- CSV encoder that keeps commas as commas ----- */
+    const encodeCsvKeepCommas = (csv) => {
+      // normalize weird spaces (e.g., NBSP %C2%A0), trim, collapse spaces around commas
+      const cleaned = String(csv||"").replace(/\u00A0/g," ").replace(/\s*,\s*/g,",").trim();
+      if(!cleaned) return "";
+      return cleaned.split(",").map(t => encodeURIComponent(t)).join(","); // commas remain literal
+    };
+
+    /* Build href for a given path with ?q= (commas unencoded) */
+    function buildHrefWithQ(path, csv){
+      const q = String(csv||"").trim();
+      const qs = q ? `?q=${encodeCsvKeepCommas(q)}` : "";
+      // ensure leading slash on path
+      const base = path.startsWith("/") ? path : `/${path}`;
+      return `${location.origin}${base}${qs}`;
+    }
+
     /* ---------- keep /graph and /arch links synced with ?q=... ---------- */
     function setLinksHref(){
       const u=new URL(location.href);
-      const q=u.searchParams.get("q");
-      const graphBase = `${location.origin}/graph/`;
-      const archBase  = `${location.origin}/arch/`;
-      const graphHref = q ? `${graphBase}?q=${encodeURIComponent(q)}` : graphBase;
-      const archHref  = q ? `${archBase}?q=${encodeURIComponent(q)}`  : archBase;
-      const g=$("#graphLink"), a=$("#archLink");
-      if(g) g.href = graphHref;
-      if(a) a.href = archHref;
+      // Use raw value; URLSearchParams already decodes %2C into comma if present
+      const q=u.searchParams.get("q") || "";
+      $("#graphLink").href = buildHrefWithQ("/graph/", q);
+      $("#archLink").href  = buildHrefWithQ("/arch/",  q);
     }
 
     /* =================== Reddit helpers =================== */
@@ -251,40 +263,41 @@
 
     /* =================== API =================== */
     const Api={
-      async versions(qCsv){ const q=qCsv?`?q=${encodeURIComponent(qCsv)}`:""; const url=`${API_BASE}v/${q}`;
+      async versions(qCsv){ const q=qCsv?`?q=${encodeCsvKeepCommas(qCsv)}`:""; const url=`${API_BASE}v/${q}`;
         const res=await fetch(url,{headers:{Accept:"application/json"}}); if(!res.ok) throw new Error(`${res.status} ${res.statusText} @ ${url}`);
         const json=await res.json(); return json.versions||[]; },
       async reddit(){ const url=`${API_BASE}reddit/query/positive`;
         const res=await fetch(url,{headers:{Accept:"application/json"}}); if(!res.ok) throw new Error(`${res.status} ${res.statusText} @ ${url}`);
-        const json=await res.json(); const list=Array.isArray(json)?json:(json.data||json.posts||json.results||[]);
-        return list.map(p=>({ redditId:p.redditId||p._id||p.id, title:p.title, subreddit:p.subreddit, url:p.url,
+        const list=(await res.json()); const arr=Array.isArray(list)?list:(list.data||list.posts||list.results||[]);
+        return arr.map(p=>({ redditId:p.redditId||p._id||p.id, title:p.title, subreddit:p.subreddit, url:p.url,
                               created_utc:p.created_utc||p.createdAt||p.updatedAt, num_comments:p.num_comments, score:p.score, metadata:p.metadata })); }
     };
 
     /* =================== Canonicalization (NAME ONLY) =================== */
+    const norm2 = s => String(s||"").toLowerCase().trim();
+    const normFlat = s => norm2(s).replace(/[^a-z0-9]+/g, "");
+    const normKey = s => norm2(s).replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
+    const titleCase = s => s ? s.replace(/\w\S*/g, w => w[0].toUpperCase() + w.slice(1)) : s;
+
     function canonicalNameFromSubstrings(nameRaw){
-      const nFlat = normFlat(stripGenericWords(nameRaw));
-      let base = stripGenericWords(nameRaw);
-      const lt = longestToken(nameRaw);
-      if (!base || lt.length > base.length) base = lt;
-      const display = titleCase(base);
+      const display = titleCase(nameRaw||"");
       const key = normKey(display);
       return { key, nameOut: display };
     }
     function canonComponentName(v){
-      const nameRaw  = safe(v.versionProductName, "");
+      const nameRaw  = (v && v.versionProductName) || "";
       return canonicalNameFromSubstrings(nameRaw);
     }
 
     /* =================== State =================== */
-    const STATE={mode:"component",rawVersions:[],redditAll:[],redditBySub:new Map(),groupsFiltered:[],groupIndex:0,observer:null,loading:false,
-      filters:{components:[],toggles:new Set()}}; // only filter toggles
+    const STATE={rawVersions:[],redditAll:[],redditBySub:new Map(),groupsFiltered:[],groupIndex:0,observer:null,loading:false,
+      filters:{components:[],toggles:new Set()}};
 
-    /* =================== Reddit index & strict matching =================== */
+    /* =================== Reddit index =================== */
     function buildRedditIndex(list){
       STATE.redditBySub=new Map();
       for(const p of list){
-        const k=norm(p.subreddit);
+        const k=norm2(p.subreddit);
         if(!k) continue;
         if(!STATE.redditBySub.has(k)) STATE.redditBySub.set(k,[]);
         STATE.redditBySub.get(k).push(p);
@@ -295,7 +308,7 @@
     }
     function redditMatchesForVersionBase(v, limit = 6, onlyRisks = false) {
       const c = canonComponentName(v);
-      const name = norm(c.nameOut);
+      const name = norm2(c.nameOut);
       if (!name) return [];
       const arr = STATE.redditBySub.get(name) || [];
       const out = [];
@@ -326,7 +339,7 @@
     function computeAggregates(list){
       let major=0,minor=0,patch=0,cve=0,reddit=0,redditRisk=0,uniqComps=new Set(),typeCounts=new Map();
       for(const it of list){
-        const ch=norm(it.versionReleaseChannel);
+        const ch=norm2(it.versionReleaseChannel);
         if(ch==="major") major++; else if(ch==="minor") minor++; else if(ch==="patch") patch++;
         if(it.isCve) cve++;
         const allR=redditMatchesForVersionBase(it,6,false), riskR=redditMatchesForVersionBase(it,6,true);
@@ -352,8 +365,8 @@
       }
     }
     function matchesToggles(v,rc,rrc){
-      const set=STATE.filters.toggles, channel=norm(v.versionReleaseChannel);
-      const compTypes=(v.classification?.componentType||[]).map(norm), isCve=!!v.isCve, hasReddit=rc>0, hasRisk=rrc>0;
+      const set=STATE.filters.toggles, channel=norm2(v.versionReleaseChannel);
+      const compTypes=(v.classification?.componentType||[]).map(norm2), isCve=!!v.isCve, hasReddit=rc>0, hasRisk=rrc>0;
       const truth={major:channel==="major",minor:channel==="minor",patch:channel==="patch",cve:isCve,reddit:hasReddit,'reddit-risk':hasRisk};
       for(const k of set){
         if(k.startsWith("type:")){ if(!compTypes.includes(k.slice(5))) return false; }
@@ -368,7 +381,7 @@
         const ts = +new Date(v.versionTimestampLastUpdate || v.versionTimestamp || 0);
         if (!isFinite(ts) || ts < SIX_MONTHS_AGO) return false; // last 6 months
         if(!comps.length) return true;
-        const name=norm(v.versionProductName);
+        const name=norm2(v.versionProductName);
         const tags=(Array.isArray(v.versionSearchTags)?v.versionSearchTags.join(","):"").toLowerCase();
         return comps.some(t=>name.includes(t)||tags.includes(t));
       });
@@ -431,7 +444,7 @@
         <span class="summaryRight">
           ${chip(cveCount + " CVE","bad")}
           ${chip(redditCount + " Reddit","reddit")}
-          ${chip(majorCount + " major," ,"ok".trim())}
+          ${chip(majorCount + " major","ok")}
           ${chip(minorCount + " minor","soft")}
           ${chip(patchCount + " patch","warn")}
         </span>`;
@@ -444,12 +457,10 @@
       for(const it of timeline){
         const li=document.createElement("div"); li.className="li"+(it.kind==="cve"?" cve":"");
 
-        // date
         const dcol=document.createElement("div"); dcol.className="datecol";
         dcol.innerHTML = `<div class="day">${dayLabelFromMillis(it.t)}</div><div class="time">${shortTime(it.t)}</div>`;
         li.appendChild(dcol);
 
-        // icon column (image avatar or reddit image)
         if(it.kind==="reddit"){
           const av=document.createElement("img");
           av.className="avatar redditIcon"+(isRisk(it.raw)?" risky":"");
@@ -464,11 +475,10 @@
         const body=document.createElement("div");
         const title=document.createElement("div"); title.className="titleRow";
 
-        // chips FIRST
         const chips=document.createElement("div"); chips.className="chips";
         if(it.kind==="reddit"){
           chips.insertAdjacentHTML("beforeend", chip("REDDIT","reddit"));
-          const scorePred = getUpdateScore(it.raw);
+          const scorePred = (it.raw?.metadata?.predicted?.positiveScore);
           const scoreField = (typeof it.raw?.score === "number") ? it.raw.score : null;
           const scoreVal = (typeof scorePred === "number") ? scorePred : scoreField;
           if(isRisk(it.raw)){
@@ -483,15 +493,14 @@
             chips.insertAdjacentHTML("beforeend", `<span class="chip link"><a href="https://releasetrain.io/api/v/${it.raw._id}" target="_blank" rel="noopener">api</a></span>`);
           }
         }else{
-          const ch=it.channel||"other"; const color=ch==="major"?"ok":ch==="patch"?"warn":ch==="minor"?"soft":"";
+          const ch=(it.channel||"other"); const color=ch==="major"?"ok":ch==="patch"?"warn":ch==="minor"?"soft":"";
           chips.insertAdjacentHTML("beforeend", chip(ch, color));
         }
 
-        // extra info tags
         if(it.kind!=="reddit" && it.raw){
           const r = it.raw;
-          if(r.versionProductBrand) chips.insertAdjacentHTML("beforeend", chip(String(r.versionProductBrand).toLowerCase(),"soft"));
-          if(r.versionProductType)  chips.insertAdjacentHTML("beforeend", chip(String(r.versionProductType).toLowerCase(),"soft"));
+          if(r.versionProductBrand)   chips.insertAdjacentHTML("beforeend", chip(String(r.versionProductBrand).toLowerCase(),"soft"));
+          if(r.versionProductType)    chips.insertAdjacentHTML("beforeend", chip(String(r.versionProductType).toLowerCase(),"soft"));
           if(r.versionProductLicense) chips.insertAdjacentHTML("beforeend", chip(String(r.versionProductLicense).toLowerCase(),"soft"));
 
           const compTypes = (r.classification?.componentType||[]).filter(x=>x && x!=="UNKNOWN");
@@ -507,16 +516,12 @@
         }
 
         title.appendChild(chips);
-
         const a=document.createElement("a"); a.href=it.url||"#"; a.target="_blank"; a.rel="noopener"; a.textContent=it.label; title.appendChild(a);
 
-        // compact blurb
-        if(it.kind!=="reddit"){
-          const descTxt = truncate(safe(it.raw.versionReleaseNotes,"")) || safe(it.raw.versionReleaseComments,"");
-          if(descTxt){
-            const d=document.createElement("div"); d.className="meta"; d.style.opacity=".9"; d.innerHTML=descTxt;
-            body.appendChild(d);
-          }
+        const descTxt = truncate(safe(it.raw?.versionReleaseNotes,"")) || safe(it.raw?.versionReleaseComments,"");
+        if(descTxt){
+          const d=document.createElement("div"); d.className="meta"; d.style.opacity=".9"; d.innerHTML=descTxt;
+          body.appendChild(d);
         }
 
         body.appendChild(title);
@@ -545,47 +550,54 @@
 
     /* =================== Boot & events =================== */
     async function boot(){
-      $("#status").textContent="Loading…"; showLoader(); $("#feed").innerHTML=""; STATE.groupIndex=0;
+      $("#status").textContent="Loading…"; document.getElementById("navLoader").classList.add("active"); $("#feed").innerHTML=""; STATE.groupIndex=0;
       try{
-        const u=new URL(location.href); const compCsv=u.searchParams.get("q")||"";
-        $("#components").value=compCsv; STATE.filters.components=tokens(compCsv);
+        const u=new URL(location.href);
+        const rawQ = u.searchParams.get("q") || "";
+        $("#components").value = rawQ;
+        STATE.filters.components = tokens(rawQ);
         setLinksHref();
 
-        const [vers, reddit]=await Promise.all([Api.versions(compCsv), Api.reddit().catch(()=>[])]);
+        const [vers, reddit]=await Promise.all([Api.versions(rawQ), Api.reddit().catch(()=>[])]);
         STATE.redditAll=reddit; buildRedditIndex(reddit); $("#kpi-reddit").textContent=reddit.length;
 
         if(!(vers||[]).length){
           $("#status").textContent=`No versions found — try another query`;
-          $("#feed").innerHTML=""; $("#sentinel").textContent="No results"; hideLoader(); return;
+          $("#feed").innerHTML=""; $("#sentinel").textContent="No results"; document.getElementById("navLoader").classList.remove("active"); return;
         }
 
         vers.sort((a,b)=>(+new Date(b.versionTimestampLastUpdate||b.versionTimestamp||0))-(+new Date(a.versionTimestampLastUpdate||a.versionTimestamp||0)));
         STATE.rawVersions=vers;
         applyFilters();
       }catch(e){ console.error(e); $("#feed").innerHTML=`<div class="meta">Error: ${e.message}</div>`; $("#status").textContent="Failed to load"; }
-      finally{ hideLoader(); }
+      finally{ document.getElementById("navLoader").classList.remove("active"); }
     }
 
+    // Search submit: keep commas unencoded in URL
     $("#filterForm").addEventListener("submit", async (e)=>{
       e.preventDefault();
-      const compCsv=$("#components").value.trim().replace(/\s+/g,''); const u=new URL(location.href);
-      if(compCsv) u.searchParams.set("q",compCsv); else u.searchParams.delete("q"); history.replaceState({}, "", u.toString());
+      const input = $("#components").value.replace(/\u00A0/g," ").replace(/\s*,\s*/g,",").trim();
+      const href = buildHrefWithQ(location.pathname, input);
+      history.replaceState({}, "", href);
       setLinksHref();
 
-      $("#status").textContent="Filtering…"; showLoader();
+      $("#status").textContent="Filtering…"; document.getElementById("navLoader").classList.add("active");
       try{
-        STATE.filters.components=tokens(compCsv);
-        const vers=await Api.versions(compCsv);
+        STATE.filters.components=tokens(input);
+        const vers=await Api.versions(input);
         if(!(vers||[]).length){ $("#feed").innerHTML=""; $("#sentinel").textContent="No results"; $("#status").textContent="No versions"; return; }
         vers.sort((a,b)=>(+new Date(b.versionTimestampLastUpdate||b.versionTimestamp||0))-(+new Date(a.versionTimestampLastUpdate||a.versionTimestamp||0)));
         STATE.rawVersions=vers; applyFilters(); $("#status").textContent=`Filtered (${vers.length})`;
       }catch(e){ console.error(e); $("#status").textContent="Filter failed"; }
-      finally{ hideLoader(); }
+      finally{ document.getElementById("navLoader").classList.remove("active"); }
     });
 
+    // Clear: also removes ?q= entirely
     $("#clearBtn").addEventListener("click", ()=>{
-      $("#components").value=""; STATE.filters.components=[];
-      const u=new URL(location.href); u.searchParams.delete("q"); history.replaceState({}, "", u.toString());
+      $("#components").value="";
+      STATE.filters.components=[];
+      const href = buildHrefWithQ(location.pathname, "");
+      history.replaceState({}, "", href);
       setLinksHref();
       STATE.filters.toggles.clear();
       $$('#fixedToggles .toggle, #typeToggles .toggle').forEach(b=>b.setAttribute('aria-pressed','false'));
