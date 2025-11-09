@@ -14,131 +14,89 @@
     :root{
       --bg:#0f1115; --panel:#171a21; --text:#ffffff; --muted:#c7cbd3;
       --brand:#60a5fa; --line:#202532; --chip:#1a1f2b; --chipText:#ffffff;
-      --focus:#a5b4fc; --bad:#ef4444; --warn:#f59e0b; --ok:#22c55e;
+      --focus:#a5b4fc; --bad:#ef4444; --ok:#22c55e;
     }
     *{ box-sizing:border-box }
-    html,body{ height:100%; width:100% }
+    html,body{height:100%;width:100%}
+    html,body{overflow-x:hidden}
     body{
-      margin:0; background:var(--bg); color:var(--text);
-      font:11px system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
-      overflow:hidden;
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif;
+      color:var(--text); background:var(--bg); font-size:11px; overflow-y:hidden;
     }
-
-    #loadingBar{
-      position:fixed; left:0; top:0; height:3px; width:0%; background:var(--brand);
-      z-index:2000; transition:width .25s ease-out, opacity .25s ease-out; opacity:0;
-    }
-
-    /* center a bit wider so labels fit */
-    .grid{
+    #loadingBar{position:fixed;left:0;top:0;height:3px;width:0%;background:var(--brand);z-index:2000;transition:width .25s,opacity .25s;opacity:0}
+    .grid3x3{
       display:grid;
-      grid-template-columns: 0.9fr 1.85fr 1fr; /* left / center / right */
-      grid-template-rows: auto minmax(70vh,1fr) auto;
-      grid-template-areas:
-        "top top top"
-        "left center right"
-        "foot foot foot";
-      height:100vh; width:100vw;
+      grid-template-columns:1.08fr 2.34fr 1fr;
+      grid-template-rows:auto 1fr auto;
+      grid-template-areas:"top top top" "left center right" "footer footer footer";
+      height:100vh;width:100vw;overflow:hidden;
     }
+    .top{grid-area:top;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;border-bottom:1px solid var(--line);background:var(--panel);min-height:46px}
+    .top-left{display:flex;align-items:center;gap:8px;min-width:0}
+    .chips{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow:hidden;max-width:48vw}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border:1px solid var(--line);border-radius:12px;background:var(--chip);color:var(--chipText);font-size:11px;white-space:nowrap;user-select:none}
+    .chip .x{font-weight:bold;opacity:.85;cursor:pointer}.chip .x:hover{opacity:1}
+    .top-mid{display:flex;align-items:center;gap:6px;flex:1 1 auto;min-width:0}
+    .add-wrap{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:10px;padding:2px 6px;background:var(--bg);max-width:100%;overflow:hidden}
+    #addInput{border:none;outline:none;background:transparent;width:180px;min-width:0;font-size:11px;color:var(--text)}
+    #addInput:focus{outline:2px solid var(--focus);outline-offset:2px;border-radius:6px}
+    #addBtn{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:8px;padding:2px 8px;font-size:11px;cursor:pointer;flex:0 0 auto}
+    #addBtn:hover{background:var(--chip)}
+    .top-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:var(--text)}
+    .switch{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text)}
+    .switch input{accent-color:var(--brand)}
+    .linkchip,.actionchip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--text);text-decoration:none;font-weight:700;font-size:12px;opacity:.9;cursor:pointer;white-space:nowrap}
+    .linkchip:hover,.actionchip:hover{background:var(--chip);opacity:1}
 
-    .top{
-      grid-area:top; display:flex; align-items:center; justify-content:space-between; gap:8px;
-      padding:6px 10px; border-bottom:1px solid var(--line); background:var(--panel);
-    }
-    .top-left{ display:flex; align-items:center; gap:8px; min-width:0; }
-    .chips{ display:flex; align-items:center; gap:6px; overflow:hidden; max-width:48vw; }
-    .chip{ display:inline-flex; align-items:center; gap:6px; padding:3px 8px; border:1px solid var(--line);
-      border-radius:12px; background:var(--chip); color:var(--chipText); white-space:nowrap }
-    .chip .x{ font-weight:700; opacity:.9; cursor:pointer }
+    .left{grid-area:left;border-right:1px solid var(--line);background:var(--panel);padding:8px;overflow:auto;display:flex;flex-direction:column;gap:6px;color:var(--text);overflow-x:hidden;word-break:break-word}
+    h4{margin:2px 0 6px;font-size:12px}
+    .hint{color:var(--muted);font-size:10px;margin:0 0 6px}
+    table{width:100%;border-collapse:collapse;background:var(--panel);table-layout:fixed;color:var(--text)}
+    th,td{border:1px solid var(--line);padding:4px;text-align:left;font-size:11px}
+    th{background:var(--chip);color:var(--chipText)}
+    .row-compact td,.row-compact th{padding:3px}
+    input[type=range]{width:100%;height:16px}
+    input[type=range]::-webkit-slider-thumb{accent-color:var(--brand)}
+    .type-filters{display:flex;flex-wrap:wrap;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px;max-height:140px;overflow:auto;overflow-x:hidden}
+    .type-filters label{display:inline-flex;align-items:center;gap:4px;padding:2px 6px;border:1px solid var(--line);border-radius:10px;background:var(--chip);color:var(--chipText);font-size:11px;white-space:nowrap;cursor:pointer}
+    .type-filters input{margin:0;accent-color:var(--brand)}
 
-    .top-mid{ display:flex; align-items:center; gap:6px; min-width:260px; flex:1 1 auto }
-    .add-wrap{ display:flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:10px; padding:2px 6px; background:var(--bg) }
-    #addInput{ border:none; outline:none; background:transparent; color:var(--text); width:180px }
-    #addInput:focus{ outline:2px solid var(--focus); outline-offset:2px; border-radius:6px }
-    #addBtn{ border:1px solid var(--line); background:var(--panel); color:var(--text);
-      border-radius:8px; padding:2px 8px; cursor:pointer }
-    #addBtn:hover{ background:var(--chip) }
+    .center{grid-area:center;background:var(--panel);padding:0;overflow:hidden;position:relative;height:100%}
+    #graphContainer{position:absolute;inset:0;height:100%;width:100%;overflow:hidden}
+    #graphCostBadge{position:absolute;left:10px;top:10px;z-index:5;padding:4px 8px;border-radius:8px;border:1px solid var(--line);background:rgba(26,31,43,.85);color:#fff;font-weight:700;pointer-events:none;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis}
 
-    .top-right{ display:flex; align-items:center; gap:8px; flex-wrap:wrap }
-    .switch{ display:flex; align-items:center; gap:4px }
-    .switch input{ accent-color:var(--brand) }
-    .pill{
-      display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px;
-      border:1px solid var(--line); background:transparent; color:var(--text); text-decoration:none; font-weight:700;
-      cursor:pointer;
-    }
-    .pill:hover{ background:var(--chip) }
+    .right{grid-area:right;border-left:1px solid var(--line);background:var(--panel);padding:8px;overflow:auto;display:flex;flex-direction:column;gap:6px;color:var(--text)}
+    .footer{grid-area:footer;background:var(--panel);border-top:1px solid var(--line);color:var(--muted);padding:8px 10px;text-align:center;white-space:normal;overflow-x:hidden}
 
-    .left{
-      grid-area:left; border-right:1px solid var(--line); background:var(--panel);
-      padding:6px; overflow:auto; display:flex; flex-direction:column; gap:8px;
-    }
-    h4{ margin:2px 0 6px; font-size:12px }
-    .hint{ color:var(--muted); font-size:10px }
-    table{ width:100%; border-collapse:collapse; background:var(--panel); table-layout:fixed; color:var(--text) }
-    th,td{ border:1px solid var(--line); padding:4px; text-align:left; font-size:11px }
-    th{ background:var(--chip); color:var(--chipText) }
-    .row-compact td,.row-compact th{ padding:3px }
-    input[type=range]{ width:100%; height:16px }
-    input[type=range]::-webkit-slider-thumb{ accent-color:var(--brand) }
-
-    .type-filters{ display:flex; flex-wrap:wrap; gap:6px; background:var(--panel); border:1px solid var(--line);
-      border-radius:8px; padding:6px; max-height:120px; overflow:auto }
-    .type-filters label{ display:inline-flex; align-items:center; gap:4px; padding:2px 6px; border:1px solid var(--line);
-      border-radius:10px; background:var(--chip); color:var(--chipText); cursor:pointer }
-    .type-filters input{ margin:0; accent-color:var(--brand) }
-
-    .center{ grid-area:center; background:var(--panel); position:relative; overflow:hidden }
-    #graphContainer{ position:absolute; inset:0 }
-
-    .right{
-      grid-area:right; border-left:1px solid var(--line); background:var(--panel);
-      padding:6px; overflow:auto; display:flex; flex-direction:column; gap:6px;
-    }
-
-    .foot{ grid-area:foot; border-top:1px solid var(--line); background:var(--panel); padding:6px 10px; color:var(--muted) }
-    .nowrap{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
-
-    dialog{
-      border:none; border-radius:12px; background:var(--panel); color:var(--text);
-      box-shadow:0 20px 80px rgba(0,0,0,.5); width:min(900px, calc(100vw - 24px));
-      padding:14px; max-height:80vh;
-    }
-    dialog::backdrop{ background:rgba(0,0,0,.55) }
-    .dlg-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px }
-    .dlg-title{ font-weight:800 }
-    .dlg-actions{ display:flex; gap:8px }
-    .btn{ border:1px solid var(--line); background:transparent; color:var(--text); border-radius:8px; padding:6px 10px; cursor:pointer }
-    .btn:hover{ background:var(--chip) }
-    .grid-2{ display:grid; grid-template-columns: 260px 1fr; gap:12px }
-    .listbox{ border:1px solid var(--line); border-radius:8px; padding:8px; background:var(--bg); max-height:260px; overflow:auto }
-    .checkrow{ display:flex; align-items:center; gap:6px; margin:3px 0 }
-    .small{ font-size:10px; color:var(--muted) }
-    .tchips{ display:flex; flex-wrap:wrap; gap:6px; }
-    .tchip{ padding:3px 6px; border-radius:999px; border:1px solid var(--line); font-size:11px }
-    .tchip.used{ background:rgba(34,197,94,.15); color:var(--ok); border-color:rgba(34,197,94,.45) }
-    .tchip.unused{ background:#141824; color:#c5c8cf; border-color:#1f2432; opacity:.85 }
+    dialog{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--panel);color:var(--text);max-width:920px;width:min(96vw,920px)}
+    dialog::backdrop{background:rgba(0,0,0,.55)}
+    .dialog-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+    .closeBtn{cursor:pointer;border:1px solid var(--line);background:transparent;border-radius:8px;padding:4px 8px;color:var(--text)}
+    .closeBtn:hover{background:var(--chip)}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0}
+    .grow{flex:1 1 auto}
+    .tagList{display:flex;flex-wrap:wrap;gap:6px;align-items:center;max-height:240px;overflow:auto}
+    .tagPill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--chip);padding:4px 8px;border-radius:999px}
+    .tagPill input{accent-color:var(--brand)}
 
     @media (max-width:900px){
-      body{ overflow:auto; font-size:12px }
-      .grid{
-        grid-template-columns:1fr;
-        grid-template-rows:auto minmax(360px,1fr) auto auto;
-        grid-template-areas:"top" "center" "left" "right" "foot";
-        height:100vh;
-      }
-      .top{ flex-wrap:wrap; gap:6px }
-      .chips{ max-width:100%; flex-wrap:wrap }
-      .top-mid{ order:3; width:100% }
-      .top-right{ order:2; width:100%; justify-content:flex-start }
+      body{overflow-y:auto;font-size:12px}
+      .grid3x3{grid-template-columns:1fr;grid-template-rows:auto minmax(360px,1fr) auto auto auto;grid-template-areas:"top" "center" "left" "right" "footer";height:100vh}
+      .top{flex-wrap:wrap;gap:6px}
+      .chips{max-width:100%;flex-wrap:wrap}
+      .top-mid{order:3;width:100%}
+      .top-right{order:2;width:100%;justify-content:flex-start}
+      .type-filters{max-height:none}
+    }
+    @media (max-width:420px){
+      .add-wrap{flex:1} #addInput{width:100%} .top-left strong{display:none}
     }
   </style>
 </head>
 <body>
   <div id="loadingBar"></div>
 
-  <div class="grid">
-    <!-- top -->
+  <div class="grid3x3">
     <div class="top">
       <div class="top-left">
         <strong style="font-size:12px;">Components:</strong>
@@ -146,7 +104,7 @@
       </div>
 
       <div class="top-mid">
-        <div class="add-wrap">
+        <div class="add-wrap" title="Type a component and press Enter or +">
           <input id="addInput" list="nameList" placeholder="Add component…" autocomplete="off" />
           <button id="addBtn">+</button>
         </div>
@@ -167,20 +125,18 @@
           <label for="toggleRealOnly">Real only</label>
         </div>
 
-        <!-- dialogs -->
-        <button id="openEdgeDlg" class="pill" title="Configure edge similarity">Edges ⚙</button>
-        <button id="openLegendDlg" class="pill" title="Show legend">Legend</button>
-        <button id="openTagsDlg" class="pill" title="Show similarity tags for visible components">Tags</button>
+        <button id="edgesBtn" class="actionchip" title="Configure edge logic">Edges</button>
+        <button id="legendBtn" class="actionchip" title="What things mean">Legend</button>
+        <button id="tagsBtn" class="actionchip" title="Show tag similarity">Tags</button>
 
-        <a id="homeBtn" class="pill" href="#" title="Back to releasetrain.io with the same query">Main ↗</a>
+        <a id="homeBtn" class="linkchip" href="#" title="Back to releasetrain.io with the same query">Main ↗</a>
       </div>
     </div>
 
-    <!-- left -->
     <aside class="left">
       <h4>Component Types</h4>
-      <div id="typeFilters" class="type-filters"></div>
-      <div class="hint">Toggle which types appear in the graph.</div>
+      <div id="typeFilters" class="type-filters" title="Toggle which types appear in the graph"></div>
+      <div class="hint">Toggle to show or hide types in the graph.</div>
 
       <h4>Node Cost Regulators</h4>
       <div class="hint">These sliders affect node cost (color intensity).</div>
@@ -191,37 +147,33 @@
         </tr>
       </table>
 
-      <h4 style="margin-top:10px">View</h4>
+      <h4 style="margin-top:10px;">View</h4>
       <div class="hint">Zoom level (affects label readability).</div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <input id="zoomSlider" type="range" min="50" max="200" value="100" />
-        <span id="zoomLabel" class="small" style="width:40px;text-align:right">100%</span>
-      </div>
+      <input id="zoomRange" type="range" min="60" max="220" value="140" style="width:100%;">
+      <div class="muted" id="zoomLabel">140%</div>
     </aside>
 
-    <!-- center -->
     <main class="center">
+      <div id="graphCostBadge">Graph cost: 0</div>
       <div id="graphContainer"></div>
     </main>
 
-    <!-- right -->
     <aside class="right">
       <h4>Ecosystem</h4>
       <table id="ecoTable">
         <tr class="row-compact">
           <th class="nowrap">Scope</th>
-          <th class="nowrap" colspan="3" id="ecoTitle"></th>
+          <th class="nowrap" colspan="2" id="ecoTitle"></th>
         </tr>
         <tr class="row-compact">
           <td class="nowrap">Maintenance Cost</td>
-          <td class="nowrap" colspan="2"><span id="maintenanceEquation"><b>Total</b> = Σ (Impact × Count)</span></td>
-          <td class="nowrap"><span id="maintenanceCost" style="font-weight:800;font-size:13px"></span></td>
+          <td class="nowrap"><span id="maintenanceEquation">&sum;(attribute)</span></td>
+          <td class="nowrap"><span id="maintenanceCost">0</span></td>
         </tr>
         <tr class="row-compact">
           <th class="nowrap">Attribute</th>
           <th class="nowrap">Impact</th>
           <th class="nowrap">Count</th>
-          <th class="nowrap">Subtotal</th>
         </tr>
       </table>
 
@@ -229,624 +181,421 @@
       <table id="componentTable">
         <tr class="row-compact">
           <th class="nowrap">Component</th>
-          <th class="nowrap" colspan="3" id="componentTitle">Click a node</th>
+          <th class="nowrap" id="componentTitle">Click a node</th>
         </tr>
-        <tr class="row-compact"><th class="nowrap">Attribute</th><th class="nowrap">Impact</th><th class="nowrap">Count</th><th class="nowrap">Subtotal</th></tr>
-        <tr class="row-compact"><td class="nowrap">Total</td><td></td><td></td><td class="nowrap"><span id="compTotal">0</span></td></tr>
+        <tr class="row-compact"><th class="nowrap">Attribute</th><th class="nowrap">Count</th></tr>
+        <tr class="row-compact"><td class="nowrap">Cost Component</td><td class="nowrap"><span id="costComponent">0</span></td></tr>
+        <tr class="row-compact"><td class="nowrap">Cost Latest Version</td><td class="nowrap"><span id="costComponentVersion">0</span></td></tr>
       </table>
     </aside>
 
-    <!-- foot -->
-    <div class="foot nowrap">Tip: “Edges ⚙” tunes similarity; “Legend” explains the page; “Tags” shows which tags formed edges.</div>
+    <div class="footer" id="bottomTip">
+      Tip: “Edges ⚙” tunes similarity; “Legend” explains the page; “Tags” shows which tags formed edges.
+    </div>
   </div>
 
-  <!-- Edge Config dialog -->
-  <dialog id="edgeDlg">
-    <div class="dlg-head">
-      <div class="dlg-title">Edge similarity configuration</div>
-      <div class="dlg-actions"><button class="btn" id="edgeDlgClose">Close</button></div>
+  <!-- ======= Dialogs ======= -->
+  <dialog id="edgesDialog">
+    <div class="dialog-head">
+      <strong>Edges</strong>
+      <button class="closeBtn" data-close="edgesDialog">Close</button>
     </div>
 
-    <div class="grid-2">
-      <div>
-        <h4 style="margin:6px 0">Strength Threshold</h4>
-        <div class="small">Percentile cut; higher keeps fewer, stronger edges.</div>
-        <div style="display:flex;align-items:center;gap:8px;margin:8px 0">
-          <input id="edgeDensitySlider" type="range" min="70" max="95" value="75" style="flex:1" />
-          <span id="edgeDensityLabel" style="width:36px;text-align:right">75</span>
-        </div>
+    <div class="row">
+      <label class="grow"><input type="checkbox" id="edgeUseTags" checked> Use shared tags</label>
+      <label class="grow"><input type="checkbox" id="edgeUseType" checked> Use component type overlap</label>
+    </div>
 
-        <h4 style="margin:8px 0">Type Match</h4>
-        <label class="checkrow" style="margin:6px 0">
-          <input type="checkbox" id="useTypeMatch" checked />
-          <span>Add score when classification type overlaps</span>
-        </label>
-        <div style="display:flex;align-items:center;gap:8px">
-          <input id="typeWeightSlider" type="range" min="0" max="5" step="0.5" value="1" style="flex:1" />
-          <span id="typeWeightLabel" style="width:36px;text-align:right">1</span>
-        </div>
-
-        <h4 style="margin:10px 0 6px">Allowed types</h4>
-        <div style="display:flex;gap:6px;margin:6px 0">
-          <button id="edgeTypeAll" class="btn">All</button>
-          <button id="edgeTypeNone" class="btn">None</button>
-        </div>
-        <div id="edgeTypeList" class="listbox" style="min-height:120px"></div>
-      </div>
-
-      <div>
-        <h4 style="margin:6px 0">Tags used for edges</h4>
-        <div class="small">Only checked tags can form edges (after uncommonness check).</div>
-        <div style="display:flex;gap:6px;margin:8px 0">
-          <input id="tagSearch" type="text" placeholder="Search tags…" class="btn" style="flex:1;padding:6px" />
-          <button id="edgeTagAll" class="btn">All</button>
-          <button id="edgeTagNone" class="btn">None</button>
-        </div>
-        <div id="edgeTagList" class="listbox" style="min-height:260px"></div>
+    <div class="row">
+      <div class="grow">
+        <div class="muted" style="margin-bottom:4px">Exclude “common” tags above this global frequency</div>
+        <input id="edgeCommonPct" type="range" min="5" max="95" value="12" />
+        <div class="muted">Threshold: <b id="edgeCommonPctLabel">12%</b></div>
       </div>
     </div>
+
+    <!-- Tag universe + manual excludes (NO LIMIT; show all) -->
+    <div id="edgeTagsSummary" class="row" style="align-items:flex-start">
+      <div class="grow">
+        <div style="font-weight:700;margin-bottom:6px">Matching tag universe</div>
+        <div class="muted" id="edgeTagsMeta">Calculating…</div>
+        <div id="edgeTagsChecklist" class="tagList" style="margin-top:6px"></div>
+      </div>
+    </div>
+
+    <ul id="edgesQuickStats" style="margin:8px 0 6px 16px"></ul>
+    <div class="muted">Note: Edges are added/removed based on this rule; edge weight does not scale with commonness.</div>
   </dialog>
 
-  <!-- Legend dialog -->
-  <dialog id="legendDlg">
-    <div class="dlg-head">
-      <div class="dlg-title">Legend</div>
-      <div class="dlg-actions"><button class="btn" id="legendDlgClose">Close</button></div>
+  <dialog id="legendDialog">
+    <div class="dialog-head">
+      <strong>Legend</strong>
+      <button class="closeBtn" data-close="legendDialog">Close</button>
     </div>
-    <div style="display:grid;grid-template-columns:180px 1fr;gap:6px 12px">
-      <div style="font-weight:700">Graph purpose</div><div>Show relationships among components by shared uncommon tags and (optionally) classification type.</div>
-      <div style="font-weight:700">Nodes</div><div>Darker color → higher maintenance cost (controlled by node cost regulators).</div>
-      <div style="font-weight:700">Edges</div><div>Appear when two components share uncommon tags and pass the strength threshold. Each node also keeps a few strongest matches.</div>
-      <div style="font-weight:700">Only today</div><div>Limits data to the last twenty-four hours (auto-on when no query on first load).</div>
-      <div style="font-weight:700">Unique type</div><div>When ON, each component keeps only its first detected classification type; when OFF (default), multiple types per component can show and be used.</div>
-      <div style="font-weight:700">Real only</div><div>When ON, filters out low-quality names (very short, numeric, stop words, or tag-sparse). OFF (default) shows everything.</div>
-      <div style="font-weight:700">Node Cost Regulators</div><div>Impact × Count by attribute. The Ecosystem table shows each subtotal and the sum.</div>
-      <div style="font-weight:700">Edge similarity</div><div>Percentile threshold + optional type-match weight, with per-tag and per-type allow lists.</div>
-      <div style="font-weight:700">Return to main</div><div>“Main” opens the primary page with the same <code>q</code> query.</div>
-    </div>
+    <ul style="margin:0 0 6px 16px;line-height:1.5">
+      <li><b>Node color</b>: gray scale by cost; <span style="color:var(--ok)">green</span> = lowest (and any zero), <span style="color:var(--bad)">red</span> = highest.</li>
+      <li><b>Node label</b>: <i>Name (cost)</i>.</li>
+      <li><b>Edges</b>: drawn when components share non-common tags or matching type (see Edges dialog).</li>
+      <li><b>Only today</b>: releases in last 24h.</li>
+      <li><b>Unique type</b>: keep first-seen type per component.</li>
+      <li><b>Real only</b>: hides noisy/short names & tiny tagsets.</li>
+    </ul>
   </dialog>
 
-  <!-- Similarity tags dialog -->
-  <dialog id="tagsDlg">
-    <div class="dlg-head">
-      <div class="dlg-title">Similarity tags for visible components</div>
-      <div class="dlg-actions"><button class="btn" id="tagsDlgClose">Close</button></div>
+  <dialog id="tagsDialog">
+    <div class="dialog-head">
+      <strong>Tags</strong>
+      <button class="closeBtn" data-close="tagsDialog">Close</button>
     </div>
-    <div id="tagsDlgBody" style="max-height:60vh; overflow:auto"></div>
+    <div id="tagsContent" class="muted">Click nodes to see their tags and overlaps here.</div>
   </dialog>
 
   <script>
-    /* ===================== Utilities ===================== */
-    const URL_API="https://releasetrain.io/api";
-    const STOPWORDS=new Set(["github","gitlab","bitbucket","access","can","core","enterprise","management","downloads","users","union","man","tc","oss","beta","production","link","version","component"]);
-    const versionChannel={major:"major",minor:"minor",patch:"patch",cve:"cve",invalid:"invalid"};
+    const URL_API = "https://releasetrain.io/api";
+    const STOPWORDS = new Set(["github","gitlab","bitbucket","access","can","core","enterprise","management","downloads","users","union","man","tc","oss","beta","production","link","version","component"]);
+    const versionChannel = { major:"major", minor:"minor", patch:"patch", cve:"cve", invalid:"invalid" };
 
-    function nowMs(){return Date.now()}
-    function ms(d){return d*24*60*60*1000}
-    function yyyymmddFromDate(x){return x.getFullYear()+String(x.getMonth()+1).padStart(2,"0")+String(x.getDate()).padStart(2,"0")}
-    function yyyymmddOffset(days){const d=new Date(nowMs()+ms(days));return yyyymmddFromDate(d)}
+    const EDGE_PARAMS = {
+      useTags: true,
+      useType: true,
+      commonThreshold: 0.12,
+      excludedTags: new Set(),
+    };
+
+    function nowMs(){ return Date.now(); }
+    function ms(days){ return days*24*60*60*1000; }
+    function yyyymmddFromDate(d){ return d.getFullYear()+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0"); }
+    function yyyymmddOffset(days){ const d=new Date(nowMs()+ms(days)); return yyyymmddFromDate(d); }
     function isInLast24Hours(v){
-      const now=nowMs(); let t=null;
-      if(v.versionReleaseEpochMs!=null) t=Number(v.versionReleaseEpochMs);
-      else if(v.versionReleaseEpoch!=null) t=Number(v.versionReleaseEpoch)*1000;
-      else if(v.versionReleaseDateISO) t=Date.parse(v.versionReleaseDateISO);
-      else if(v.versionReleaseDateTime) t=Date.parse(v.versionReleaseDateTime);
-      if(Number.isFinite(t)) return (now-t)>=0 && (now-t)<=ms(1);
-      const d=String(v.versionReleaseDate||"").trim(); if(!d) return false;
-      const today=yyyymmddFromDate(new Date(now)); const y=yyyymmddOffset(-1);
-      return d===today||d===y;
+      const now = nowMs();
+      let t = null;
+      if (v.versionReleaseEpochMs != null) t = Number(v.versionReleaseEpochMs);
+      else if (v.versionReleaseEpoch != null) t = Number(v.versionReleaseEpoch)*1000;
+      else if (v.versionReleaseDateISO) t = Date.parse(v.versionReleaseDateISO);
+      else if (v.versionReleaseDateTime) t = Date.parse(v.versionReleaseDateTime);
+      if (Number.isFinite(t)) return (now - t) >= 0 && (now - t) <= ms(1);
+      const d = String(v.versionReleaseDate||"").trim();
+      if (!d) return false;
+      const today = yyyymmddFromDate(new Date(now));
+      const yesterday = yyyymmddOffset(-1);
+      return d===today || d===yesterday;
     }
-    function loadingStart(){const b=document.getElementById("loadingBar");b.style.opacity="1";b.style.width="15%";let p=15;b._tick=setInterval(()=>{p=Math.min(90,p+Math.random()*7);b.style.width=p+"%"},160)}
-    function loadingDone(){const b=document.getElementById("loadingBar");clearInterval(b._tick);b.style.width="100%";setTimeout(()=>{b.style.opacity="0";b.style.width="0"},260)}
-    function getParam(n){return new URLSearchParams(location.search).get(n)}
-    function normalizeKey(s){return String(s||"").trim().toLowerCase()}
+
+    function loadingStart(){const bar=document.getElementById("loadingBar");bar.style.opacity="1";bar.style.width="15%";let pct=15;bar._tick=setInterval(()=>{pct=Math.min(90,pct+Math.random()*7);bar.style.width=pct+"%"},160)}
+    function loadingDone(){const bar=document.getElementById("loadingBar");clearInterval(bar._tick);bar.style.width="100%";setTimeout(()=>{bar.style.opacity="0";bar.style.width="0"},260)}
+    function getParam(name){ return new URLSearchParams(window.location.search).get(name); }
+    function normalizeKey(name){ return String(name||"").trim().toLowerCase(); }
+
     function setParamComma(list){
-      const seen=new Set(), out=[]; for(const n of list){const k=normalizeKey(n); if(!seen.has(k)){seen.add(k); out.push(n)}}
-      const params=new URLSearchParams(location.search); if(out.length) params.set("q", out.join(",")); else params.delete("q");
-      const qs=params.toString().replace(/%2C/g,",").replace(/\+/g," "); history.replaceState({}, "", location.pathname+(qs?("?"+qs):"")); setMainHref();
+      const seen=new Set(),dedup=[];for(const n of list){const k=normalizeKey(n);if(seen.has(k))continue;seen.add(k);dedup.push(n)}
+      const params=new URLSearchParams(window.location.search);
+      if(dedup.length)params.set("q",dedup.join(","));else params.delete("q");
+      const qs=params.toString().replace(/%2C/g,",").replace(/\+/g," ");
+      history.replaceState({}, "", window.location.pathname+(qs?("?"+qs):""));
+      setMainHref();
     }
-    function readQList(){const raw=(getParam("q")||"").split(",").map(s=>s.trim()).filter(Boolean); const seen=new Set(), out=[]; for(const n of raw){const k=normalizeKey(n); if(!seen.has(k)){seen.add(k); out.push(n)}} return out}
-    function buildMainUrl(){const q=new URLSearchParams(location.search).get("q")||""; if(!q) return "https://releasetrain.io/"; return `https://releasetrain.io/?q=${encodeURIComponent(q).replace(/%2C/gi,",")}`}
-    function setMainHref(){const a=document.getElementById("homeBtn"); if(a) a.href=buildMainUrl()}
+    function readQList(){
+      const raw=(getParam("q")||"").split(",").map(s=>s.trim()).filter(Boolean);
+      const seen=new Set(),out=[];for(const n of raw){const k=normalizeKey(n);if(seen.has(k))continue;seen.add(k);out.push(n)}return out;
+    }
+    function buildMainUrl(){
+      const params=new URLSearchParams(window.location.search);const q=params.get("q")||"";if(!q)return "https://releasetrain.io/";const qParam=encodeURIComponent(q).replace(/%2C/gi,",");return `https://releasetrain.io/?q=${qParam}`;
+    }
+    function setMainHref(){const a=document.getElementById("homeBtn");if(a)a.href=buildMainUrl();}
     function isRealComponent(nameLower,tagsSet){
-      const n=(nameLower||"").toLowerCase(); if(!n) return false;
-      if(STOPWORDS.has(n) || n.length<=2 || /^[0-9]+$/.test(n) || /^[a-z]{1,4}$/.test(n) || n.includes("sourcecodester")) return false;
-      if(tagsSet && tagsSet.size && tagsSet.size<2) return false; return true;
+      const n=(nameLower||"").trim().toLowerCase();if(!n)return false;if(STOPWORDS.has(n))return false;if(n.length<=2)return false;if(/^[0-9]+$/.test(n))return false;if(/^[a-z]{1,4}$/.test(n))return false;if(n.includes("sourcecodester"))return false;if(tagsSet&&tagsSet.size&&tagsSet.size<2)return false;return true;
     }
-    function cap(s){return s.charAt(0).toUpperCase()+s.slice(1)}
-    function percentile(arr,p){ if(!arr.length) return 0; const a=[...arr].sort((x,y)=>x-y); const idx=(a.length-1)*p; const lo=Math.floor(idx), hi=Math.ceil(idx); if(lo===hi) return a[lo]; return a[lo]+(a[hi]-a[lo])*(idx-lo) }
-    function fmt(n){ try{ return Number(n||0).toLocaleString(); } catch { return String(n); } }
+    function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
 
-    /* ===================== Chips & inputs ===================== */
     function renderChips(names){
-      const wrap=document.getElementById("chipContainer"); wrap.innerHTML="";
-      names.forEach(n=>{
-        const d=document.createElement("div"); d.className="chip"; d.dataset.name=n;
-        d.innerHTML=`<span>${n}</span><span class="x" title="Remove">×</span>`;
-        d.querySelector(".x").onclick=(ev)=>{ev.stopPropagation(); removeChip(n)};
-        wrap.appendChild(d);
+      const wrap=document.getElementById("chipContainer");wrap.innerHTML="";
+      names.forEach(n=>{const div=document.createElement("div");div.className="chip";div.dataset.name=n;div.innerHTML=`<span>${n}</span><span class="x" title="Remove">×</span>`;div.querySelector(".x").onclick=(ev)=>{ev.stopPropagation();removeChip(n)};wrap.appendChild(div)});
+    }
+    function addChip(name){if(!name)return;const cur=readQList();const clean=name.trim();if(!clean)return;const present=new Set(cur.map(x=>normalizeKey(x)));if(present.has(normalizeKey(clean)))return;cur.push(clean);const next=cur.slice(0,10);setParamComma(next);renderChips(next);fetchAndRender();}
+    function removeChip(name){const cur=readQList();const idx=cur.findIndex(x=>normalizeKey(x)===normalizeKey(name));if(idx>=0)cur.splice(idx,1);setParamComma(cur);renderChips(cur);fetchAndRender();}
+
+    async function loadNameSuggestions(){try{const res=await fetch(`${URL_API}/c/names`);const names=await res.json();const dl=document.getElementById("nameList");dl.innerHTML="";names.slice(0,1500).forEach(n=>{const opt=document.createElement("option");opt.value=n;dl.appendChild(opt)})}catch(e){}}
+    function bindAddBox(){const input=document.getElementById("addInput");const btn=document.getElementById("addBtn");btn.addEventListener("click",()=>{addChip(input.value);input.value="";input.focus()});input.addEventListener("keydown",(e)=>{if(e.key==="Enter"){addChip(input.value);input.value=""}})}
+
+    let eco=null;
+
+    function initEcoAttributesIfNeeded(){
+      if(eco&&eco.attributeArrayList)return;
+      eco={components:{},edges:{},attributeArrayList:["component","link","version","major","minor","patch","cve","today"],attributeObjectList:{},typeSet:new Set(),selectedTypes:null,cost:0,tagCounts:new Map()};
+      const reg=document.getElementById("regTable");
+      eco.attributeArrayList.forEach(attr=>{
+        const tr=document.createElement("tr");tr.className="row-compact";tr.id=attr+"RowId";
+        const initVal=(["today"].includes(attr))?2:(["link","major","minor","patch","cve","invalid","version"].includes(attr)?0:1);
+        tr.innerHTML=`<td class="nowrap">${cap(attr)}</td><td class="nowrap"><input id="factor${cap(attr)}Id" type="range" min="0" max="2" value="${initVal}" /></td>`;
+        reg.appendChild(tr);
+        eco.attributeObjectList[attr]={factor:initVal,factorHtmlElementId:`factor${cap(attr)}Id`,count:0};
       });
+      eco.attributeArrayList.forEach(attr=>{
+        const el=document.getElementById(eco.attributeObjectList[attr].factorHtmlElementId);
+        el.addEventListener("input",()=>{recalcEcosystem();renderGraph();renderRightTables();});
+      });
+      const zr=document.getElementById('zoomRange');const zl=document.getElementById('zoomLabel');
+      zr.addEventListener('input',()=>{zl.textContent=zr.value+'%';renderGraph();});
     }
-    function addChip(name){
-      if(!name) return; const cur=readQList(); const clean=name.trim(); if(!clean) return;
-      const present=new Set(cur.map(x=>normalizeKey(x))); if(present.has(normalizeKey(clean))) return;
-      cur.push(clean); const next=cur.slice(0,10); setParamComma(next); renderChips(next); fetchAndRender();
-    }
-    function removeChip(name){ const cur=readQList(); const i=cur.findIndex(x=>normalizeKey(x)===normalizeKey(name)); if(i>=0) cur.splice(i,1); setParamComma(cur); renderChips(cur); fetchAndRender() }
-    async function loadNameSuggestions(){ try{ const res=await fetch(`${URL_API}/c/names`); const names=await res.json(); const dl=document.getElementById("nameList"); dl.innerHTML=""; names.slice(0,1500).forEach(n=>{const o=document.createElement("option"); o.value=n; dl.appendChild(o)}) }catch{} }
-    function bindAddBox(){ const input=document.getElementById("addInput"); const btn=document.getElementById("addBtn"); btn.addEventListener("click",()=>{addChip(input.value); input.value=""; input.focus()}); input.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ addChip(input.value); input.value="" } }) }
 
-    /* ===================== Edge state & dialogs ===================== */
-    let EDGE_PERCENTILE=0.75, TYPE_MATCH_WEIGHT=1, USE_TYPE_MATCH=true;
-    let eco=null, S=null;
-
-    const edgeDlg=document.getElementById("edgeDlg");
-    document.getElementById("openEdgeDlg").onclick=()=>edgeDlg.showModal();
-    document.getElementById("edgeDlgClose").onclick=()=>edgeDlg.close();
-
-    const legendDlg=document.getElementById("legendDlg");
-    document.getElementById("openLegendDlg").onclick=()=>legendDlg.showModal();
-    document.getElementById("legendDlgClose").onclick=()=>legendDlg.close();
-
-    const tagsDlg=document.getElementById("tagsDlg");
-    document.getElementById("openTagsDlg").onclick=()=>{ renderTagsDialog(); tagsDlg.showModal(); };
-    document.getElementById("tagsDlgClose").onclick=()=>tagsDlg.close();
-
-    const edgeSlider=document.getElementById("edgeDensitySlider");
-    const edgeLabel=document.getElementById("edgeDensityLabel");
-    edgeSlider.addEventListener("input",e=>{
-      EDGE_PERCENTILE=Number(e.target.value)/100; edgeLabel.textContent=e.target.value;
-      if(eco&&eco._lastRaw){ transform(eco._lastRaw, eco._lastTypeByKey||new Map()); renderGraph(); }
-    });
-
-    const typeSlider=document.getElementById("typeWeightSlider");
-    const typeLabel=document.getElementById("typeWeightLabel");
-    typeSlider.addEventListener("input",e=>{
-      TYPE_MATCH_WEIGHT=Number(e.target.value); typeLabel.textContent=e.target.value;
-      if(eco&&eco._lastRaw){ transform(eco._lastRaw, eco._lastTypeByKey||new Map()); renderGraph(); }
-    });
-
-    document.getElementById("useTypeMatch").addEventListener("change",(e)=>{
-      USE_TYPE_MATCH=e.target.checked; if(eco&&eco._lastRaw){ transform(eco._lastRaw, eco._lastTypeByKey||new Map()); renderGraph(); }
-    });
-
-    document.getElementById("edgeTagAll").addEventListener("click",()=>{
-      if(!eco) return; eco.edgeTagFilter=null; renderEdgeTagFilterUI(); if(eco._lastRaw){ transform(eco._lastRaw, eco._lastTypeByKey||new Map()); renderGraph(); }
-    });
-    document.getElementById("edgeTagNone").addEventListener("click",()=>{
-      if(!eco) return; eco.edgeTagFilter=new Set(); renderEdgeTagFilterUI(); if(eco._lastRaw){ transform(eco._lastRaw, eco._lastTypeByKey||new Map()); renderGraph(); }
-    });
-    document.getElementById("edgeTypeAll").addEventListener("click",()=>{
-      if(!eco) return; eco.edgeTypeFilter=null; renderEdgeTypeFilterUI(); if(eco._lastRaw){ transform(eco._lastRaw, eco._lastTypeByKey||new Map()); renderGraph(); }
-    });
-    document.getElementById("edgeTypeNone").addEventListener("click",()=>{
-      if(!eco) return; eco.edgeTypeFilter=new Set(); renderEdgeTypeFilterUI(); if(eco._lastRaw){ transform(eco._lastRaw, eco._lastTypeByKey||new Map()); renderGraph(); }
-    });
-    document.getElementById("tagSearch").addEventListener("input",()=>{ if(!eco) return; renderEdgeTagFilterUI(); });
-
-    /* Zoom */
-    const zoomSlider=document.getElementById("zoomSlider");
-    const zoomLabel=document.getElementById("zoomLabel");
-    function applyZoomFromSlider(){
-      const pct=Number(zoomSlider.value); zoomLabel.textContent=pct+"%";
-      const ratio=pct/100;
-      if(S && S.camera) S.camera.goTo({ ratio });
-    }
-    zoomSlider.addEventListener("input", applyZoomFromSlider);
-
-    /* ===================== Model & transforms ===================== */
     function channelByVersion(v){
-      const nums=String(v.versionNumber||"0").split(".");
-      let ch=versionChannel.invalid;
+      const nums=String(v.versionNumber||"0").split(".");let ch=versionChannel.invalid;
       ch=(nums[1]!=0&&nums[2]==0)?versionChannel.minor:ch;
       ch=(v.versionReleaseChannel===versionChannel.patch||nums[2]!=0)?versionChannel.patch:ch;
       ch=(nums[1]==0&&nums[2]==0)?versionChannel.major:ch;
       ch=(v.versionReleaseChannel===versionChannel.cve)?versionChannel.cve:ch;
       return ch;
     }
-    function setDisplayName(c,n){ if(!c.display) c.display=n }
-    function extractTypesArray(v){
-      const arr=Array.isArray(v?.classification?.componentType)?v.classification.componentType:[];
-      const a1=arr.map(x=>normalizeKey(x)).filter(x=>x&&x!=="unknown");
-      if(a1.length) return a1;
-      const cand=[v.versionPredictedComponentType,v.predictedComponentType,v.componentType,v.versionComponentType,v.versionType,v.productType];
-      const a2=cand.map(c=>normalizeKey(String(c||""))).filter(x=>x&&x!=="unknown");
-      return a2.length?[a2[0]]:[];
-    }
+    function setDisplayName(comp,candidate){if(!comp.display)comp.display=candidate;}
 
-    function initEcoAttributesIfNeeded(){
-      if(eco && eco.attributeArrayList) return;
-      eco={
-        components:{}, edges:{},
-        attributeArrayList:["component","link","version","major","minor","patch","cve","today"],
-        attributeObjectList:{}, typeSet:new Set(), selectedTypes:null, cost:0,
-        tagCounts:new Map(), effectiveTagsByComp:{}, allTags:[],
-        edgeTagFilter:null, edgeTypeFilter:null, _lastRaw:null, _lastTypeByKey:null
-      };
-      const reg=document.getElementById("regTable");
-      eco.attributeArrayList.forEach(attr=>{
-        const tr=document.createElement("tr"); tr.className="row-compact"; tr.id=attr+"RowId";
-        const initVal=(["today"].includes(attr))?2:(["link","major","minor","patch","cve","invalid","version"].includes(attr)?0:1);
-        tr.innerHTML=`<td class="nowrap">${cap(attr)}</td><td class="nowrap"><input id="factor${cap(attr)}Id" type="range" min="0" max="2" value="${initVal}" /></td>`;
-        reg.appendChild(tr);
-        eco.attributeObjectList[attr]={factor:initVal, factorHtmlElementId:`factor${cap(attr)}Id`, count:0};
-      });
-      eco.attributeArrayList.forEach(attr=>{
-        const el=document.getElementById(eco.attributeObjectList[attr].factorHtmlElementId);
-        el.addEventListener("input",()=>{recalcEcosystem(); renderGraph(); renderRightTables();});
-      });
-    }
-
-    function renderEdgeTagFilterUI(){
-      if(!eco) return; const host=document.getElementById("edgeTagList"); host.innerHTML="";
-      const search=document.getElementById("tagSearch").value.trim().toLowerCase();
-      const tags=[...(eco.allTags||[])].sort((a,b)=> b[1]-a[1] || (a[0]<b[0]?-1:1));
-      const filtered=tags.filter(([t])=>!search || t.includes(search));
-      const frag=document.createDocumentFragment();
-      filtered.slice(0,500).forEach(([t,c])=>{
-        const id="tag_"+t.replace(/[^a-z0-9]+/g,'_');
-        const row=document.createElement("label"); row.className="checkrow";
-        const checked=!eco.edgeTagFilter || eco.edgeTagFilter.has(t);
-        row.innerHTML=`<input type="checkbox" id="${id}" ${checked?"checked":""}/> <span>${t}</span> <span class="small">(${c})</span>`;
-        row.querySelector("input").addEventListener("change",(e)=>{
-          if(!eco.edgeTagFilter) eco.edgeTagFilter=new Set(tags.map(([x])=>x));
-          if(e.target.checked) eco.edgeTagFilter.add(t); else eco.edgeTagFilter.delete(t);
-          if(eco._lastRaw){ transform(eco._lastRaw, eco._lastTypeByKey||new Map()); renderGraph(); }
-        });
-        frag.appendChild(row);
-      });
-      host.appendChild(frag);
-    }
-    function renderEdgeTypeFilterUI(){
-      if(!eco) return; const host=document.getElementById("edgeTypeList"); host.innerHTML="";
-      const types=[...(eco.typeSet||[])].sort(); const frag=document.createDocumentFragment();
-      types.forEach(t=>{
-        const id="etype_"+t.replace(/[^a-z0-9]+/g,'_'); const checked=!eco.edgeTypeFilter || eco.edgeTypeFilter.has(t);
-        const row=document.createElement("label"); row.className="checkrow";
-        row.innerHTML=`<input type="checkbox" id="${id}" ${checked?"checked":""}/> <span>${t}</span>`;
-        row.querySelector("input").addEventListener("change",(e)=>{
-          if(!eco.edgeTypeFilter) eco.edgeTypeFilter=new Set(types);
-          if(e.target.checked) eco.edgeTypeFilter.add(t); else eco.edgeTypeFilter.delete(t);
-          if(eco._lastRaw){ transform(eco._lastRaw, eco._lastTypeByKey||new Map()); renderGraph(); }
-        });
-        frag.appendChild(row);
-      });
-      host.appendChild(frag);
+    function extractTypes(v){
+      const set=new Set();
+      if(v?.classification?.componentType&&Array.isArray(v.classification.componentType)){v.classification.componentType.forEach(t=>{if(t)set.add(String(t).trim())});}
+      const fallbacks=[v.versionPredictedComponentType,v.predictedComponentType,v.componentType,v.versionComponentType,v.versionType,v.productType];
+      fallbacks.forEach(c=>{if(c){set.add(String(c).trim())}});
+      return [...set].map(s=>normalizeKey(s)).filter(Boolean);
     }
 
     function transform(raw,typeByKey){
       initEcoAttributesIfNeeded();
-      eco._lastRaw=raw; eco._lastTypeByKey=typeByKey;
-
-      eco.components={}; eco.edges={}; eco.typeSet=new Set();
-      eco.tagCounts=new Map(); eco.effectiveTagsByComp={}; eco.allTags=[];
-      eco.attributeArrayList.forEach(a=>eco.attributeObjectList[a].count=0);
-
+      eco.components={};eco.edges={};eco.typeSet=new Set();eco.tagCounts=new Map();
+      eco.attributeArrayList.forEach(a=>{eco.attributeObjectList[a].count=0;});
       const uniqType=document.getElementById("toggleUniqueType").checked;
       const realOnly=document.getElementById("toggleRealOnly").checked;
 
       for(const v of raw){
-        const nameRaw=(v.versionProductName||"").trim(); if(!nameRaw) continue;
+        const nameRaw=(v.versionProductName||"").trim();if(!nameRaw)continue;
         const key=normalizeKey(nameRaw);
         const tags=new Set((v.versionSearchTags||[]).map(t=>normalizeKey(t)));
-        if(realOnly && !isRealComponent(key,tags)) continue;
+        if(realOnly&&!isRealComponent(key,tags))continue;
 
         if(!eco.components[key]){
-          eco.components[key]={id:key,label:key,display:nameRaw,x:0,y:0,size:1,cost:0,costLatestVersion:0,types:new Set(),tags:new Set(),attributeObjectList:{}};
-          eco.attributeArrayList.forEach(a=>{eco.components[key].attributeObjectList[a]={count:0}});
+          eco.components[key]={id:key,label:key,display:nameRaw,color:"#bbb",x:0,y:0,size:1,cost:0,costLatestVersion:0,type:null,typeSet:new Set(),tags:new Set(),attributeObjectList:{}};
+          eco.attributeArrayList.forEach(a=>{eco.components[key].attributeObjectList[a]={count:0};});
         }
-        setDisplayName(eco.components[key], nameRaw);
+        setDisplayName(eco.components[key],nameRaw);
 
-        const types=extractTypesArray(v);
-        for(const t of types){ if(uniqType && eco.components[key].types.size) break; eco.components[key].types.add(t); eco.typeSet.add(t); }
+        const types=extractTypes(v);types.forEach(t=>eco.components[key].typeSet.add(t));
+        if(types.length){const primary=types[0];if(!eco.components[key].type||uniqType){eco.components[key].type=primary;}types.forEach(t=>eco.typeSet.add(t));}
 
         const ch=channelByVersion(v);
         eco.components[key].attributeObjectList[ch].count++;
         eco.components[key].attributeObjectList["version"].count++;
         eco.components[key].attributeObjectList["component"].count=1;
 
-        (v.versionSearchTags||[]).forEach(t=>eco.components[key].tags.add(normalizeKey(t)));
+        (v.versionSearchTags||[]).forEach(t=>{const nt=normalizeKey(t);eco.components[key].tags.add(nt);});
 
         eco.attributeObjectList[ch].count++;
         eco.attributeObjectList["version"].count++;
         eco.attributeObjectList["component"].count=Object.keys(eco.components).length;
 
-        if(isInLast24Hours(v)){
-          eco.attributeObjectList["today"].count++;
-          eco.components[key].attributeObjectList["today"].count++;
-        }
+        if(isInLast24Hours(v)){eco.attributeObjectList["today"].count++;eco.components[key].attributeObjectList["today"].count++;}
       }
 
       if(typeByKey){
-        Object.keys(eco.components).forEach(k=>{
-          const comp=eco.components[k]; const set=typeByKey.get(k);
-          if(set && (!comp.types.size || !uniqType)){ for(const t of set){ if(uniqType && comp.types.size) break; comp.types.add(t); eco.typeSet.add(t); } }
-        });
+        Object.keys(eco.components).forEach(k=>{if(!eco.components[k].type&&typeByKey.has(k)){const t=typeByKey.get(k);if(t){eco.components[k].type=t;eco.typeSet.add(t);}}});
       }
 
-      const keys=Object.keys(eco.components);
-      for(const k of keys){
-        for(const t of eco.components[k].tags){
-          if(STOPWORDS.has(t)||t==="production"||t==="beta"||!isNaN(t)) continue;
-          eco.tagCounts.set(t,(eco.tagCounts.get(t)||0)+1);
-        }
-        eco.effectiveTagsByComp[k]=new Set();
-      }
-      eco.allTags=Array.from(eco.tagCounts.entries());
-      renderEdgeTypeFilterUI(); renderEdgeTagFilterUI();
-
-      const N=Math.max(1, keys.length);
-      const candidates=[];
-      for(let i=0;i<keys.length;i++){
-        for(let j=i+1;j<keys.length;j++){
-          const A=eco.components[keys[i]], B=eco.components[keys[j]];
-          const rawShared=[...A.tags].filter(t=>B.tags.has(t) && !STOPWORDS.has(t) && t!=="production" && t!=="beta" && isNaN(t));
-          const allowed=(!eco.edgeTagFilter)?rawShared:rawShared.filter(t=>eco.edgeTagFilter.has(t));
-          let score=0; const used=[];
-          for(const t of allowed){
-            const df=eco.tagCounts.get(t)||1; const idf=Math.log(N/df);
-            if(idf>0){score+=idf; used.push(t);}
-          }
-          let typeOverlap=false;
-          if(USE_TYPE_MATCH && TYPE_MATCH_WEIGHT>0){
-            const ov=[...A.types].filter(t=>B.types.has(t));
-            if(ov.length) typeOverlap=(!eco.edgeTypeFilter) ? true : ov.some(t=>eco.edgeTypeFilter.has(t));
-          }
-          if(typeOverlap) score+=TYPE_MATCH_WEIGHT;
-          if(score>0) candidates.push({id:`${A.id}-${B.id}`, source:A.id, target:B.id, score, tags:used});
-        }
-      }
-
-      const scores=candidates.map(c=>c.score);
-      const cut=percentile(scores, EDGE_PERCENTILE);
-      const topByNode=new Map();
-      for(const c of candidates){
-        if(!topByNode.has(c.source)) topByNode.set(c.source,[]);
-        if(!topByNode.has(c.target)) topByNode.set(c.target,[]);
-        topByNode.get(c.source).push(c); topByNode.get(c.target).push(c);
-      }
-      for(const arr of topByNode.values()) arr.sort((a,b)=>b.score-a.score);
-
-      const keep=new Set();
-      for(const c of candidates){
-        const leftTop=(topByNode.get(c.source)||[]).slice(0,3).includes(c);
-        const rightTop=(topByNode.get(c.target)||[]).slice(0,3).includes(c);
-        if(c.score>=cut || leftTop || rightTop) keep.add(c.id);
-      }
-
-      eco.edges={}; eco.attributeObjectList["link"].count=0;
-      for(const c of candidates){
-        if(!keep.has(c.id)) continue;
-        eco.edges[c.id]=c; eco.attributeObjectList["link"].count++;
-        if(eco.components[c.source]){ eco.components[c.source].attributeObjectList["link"].count++; c.tags.forEach(t=>eco.effectiveTagsByComp[c.source].add(t)); }
-        if(eco.components[c.target]){ eco.components[c.target].attributeObjectList["link"].count++; c.tags.forEach(t=>eco.effectiveTagsByComp[c.target].add(t)); }
-      }
-
+      recomputeGlobalTagCounts();
+      buildEdges();
       renderTypeFilters();
       recalcEcosystem();
     }
 
-    function readFactor(attr){
-      const el=document.getElementById(eco.attributeObjectList[attr].factorHtmlElementId);
-      const v=parseFloat(el && el.value); return Number.isFinite(v)?v:0;
+    function recomputeGlobalTagCounts(){
+      eco.tagCounts=new Map();
+      const keys=Object.keys(eco.components);
+      for(const k of keys){for(const t of eco.components[k].tags){eco.tagCounts.set(t,(eco.tagCounts.get(t)||0)+1);}}
+    }
+
+    function buildEdges(){
+      eco.edges={};
+      eco.attributeObjectList["link"].count=0;
+      Object.keys(eco.components).forEach(k=>{if(eco.components[k]?.attributeObjectList?.link){eco.components[k].attributeObjectList.link.count=0;}});
+
+      recomputeGlobalTagCounts();
+
+      const keys=Object.keys(eco.components);const nComps=Math.max(1,keys.length);
+      for(let i=0;i<keys.length;i++){
+        for(let j=i+1;j<keys.length;j++){
+          const A=eco.components[keys[i]],B=eco.components[keys[j]];
+          let includeEdge=false; let reasons=[];
+          if(EDGE_PARAMS.useTags){
+            const sharedTags=[...A.tags].filter(t=>B.tags.has(t)).filter(t=>{
+              const freq=(eco.tagCounts.get(t)||0)/nComps;
+              return freq<=EDGE_PARAMS.commonThreshold && !EDGE_PARAMS.excludedTags.has(t) && !STOPWORDS.has(t) && t!=="production" && t!=="beta" && isNaN(t);
+            });
+            if(sharedTags.length){includeEdge=true;reasons=reasons.concat(sharedTags);}
+          }
+          if(EDGE_PARAMS.useType){
+            const sharedTypes=[...A.typeSet].filter(t=>B.typeSet.has(t));
+            if(sharedTypes.length){includeEdge=true;reasons.push(`type:${sharedTypes[0]}`);}
+          }
+          if(includeEdge){
+            const id=`${A.id}-${B.id}`;
+            eco.edges[id]={id,source:A.id,target:B.id,weight:1,tags:reasons.slice(0,50)};
+            eco.attributeObjectList["link"].count++;
+            A.attributeObjectList["link"].count++;
+          }
+        }
+      }
+      refreshEdgeDialogStatsAndChecklist();
     }
 
     function recalcEcosystem(){
       eco.cost=0;
+      eco.attributeArrayList.forEach(a=>{const obj=eco.attributeObjectList[a];obj.factor=Number(document.getElementById(obj.factorHtmlElementId).value);});
+      Object.keys(eco.components).forEach(k=>{eco.components[k].cost=0;eco.components[k].costLatestVersion=0;});
+      const versionRelevant=new Set(["major","minor","patch","cve","today"]);
       eco.attributeArrayList.forEach(a=>{
-        const obj=eco.attributeObjectList[a];
-        obj.factor = readFactor(a);
-      });
-      Object.keys(eco.components).forEach(k=>{ eco.components[k].cost=0; eco.components[k].costLatestVersion=0; });
-
-      const verRel=new Set(["major","minor","patch","cve","today"]);
-      eco.attributeArrayList.forEach(a=>{
-        const f=eco.attributeObjectList[a].factor||0;
-        const cnt=eco.attributeObjectList[a].count||0;
-        eco.cost += f * cnt;
+        eco.cost+=eco.attributeObjectList[a].count*eco.attributeObjectList[a].factor;
         Object.keys(eco.components).forEach(k=>{
-          const comp=eco.components[k];
-          const cCnt=comp.attributeObjectList[a].count||0;
-          comp.cost += cCnt * f;
-          if(verRel.has(a)){ comp.costLatestVersion += (cCnt>0?1:0) * f; }
+          const comp=eco.components[k];const cnt=comp.attributeObjectList[a].count;
+          comp.cost+=cnt*eco.attributeObjectList[a].factor;
+          if(versionRelevant.has(a)){comp.costLatestVersion+=(cnt>0?1:0)*eco.attributeObjectList[a].factor;}
         });
       });
+      const badge=document.getElementById('graphCostBadge');if(badge)badge.textContent=`Graph cost: ${eco.cost}`;
     }
 
     function renderTypeFilters(){
-      const wrap=document.getElementById("typeFilters"); wrap.innerHTML="";
+      const wrap=document.getElementById("typeFilters");wrap.innerHTML="";
       const types=Array.from(eco.typeSet).sort();
-      if(types.length===0){ eco.selectedTypes=null; return; }
-      if(!eco.selectedTypes) eco.selectedTypes=new Set(types); else types.forEach(t=>eco.selectedTypes.add(t));
+      if(types.length===0){eco.selectedTypes=null;return;}
+      if(!eco.selectedTypes){eco.selectedTypes=new Set(types);}else{types.forEach(t=>eco.selectedTypes.add(t));}
       types.forEach(t=>{
-        const id=`type-${t.replace(/[^a-z0-9]+/g,'-')}`; const label=document.createElement("label");
+        const id=`type-${t.replace(/[^a-z0-9]+/g,'-')}`;const label=document.createElement("label");
         label.innerHTML=`<input type="checkbox" id="${id}" ${eco.selectedTypes.has(t)?"checked":""}/> ${t||"unknown"}`;
-        label.querySelector("input").addEventListener("change",(e)=>{ if(e.target.checked) eco.selectedTypes.add(t); else eco.selectedTypes.delete(t); renderGraph(); });
         wrap.appendChild(label);
+        label.querySelector("input").addEventListener("change",(e)=>{if(e.target.checked)eco.selectedTypes.add(t);else eco.selectedTypes.delete(t);renderGraph();});
       });
     }
 
     function renderRightTables(){
-      const q=getParam("q")||""; document.getElementById("ecoTitle").textContent=q?q:"Today’s top 10";
-
-      // Rebuild Ecosystem rows (keep the first 3 rows)
-      const ecoTbl=document.getElementById("ecoTable");
-      while(ecoTbl.rows.length>3) ecoTbl.deleteRow(ecoTbl.rows.length-1);
-
-      let sum=0;
+      const q=getParam("q")||"";document.getElementById("ecoTitle").textContent=q?q:"Today’s top 10";
+      const ecoTbl=document.getElementById("ecoTable");while(ecoTbl.rows.length>3)ecoTbl.deleteRow(ecoTbl.rows.length-1);
       eco.attributeArrayList.forEach(a=>{
-        const f=readFactor(a);
-        const cnt=eco.attributeObjectList[a].count||0;
-        const sub=f*cnt; sum+=sub;
-        const tr=ecoTbl.insertRow(-1); tr.className="row-compact";
-        tr.innerHTML=`<td class="nowrap">${cap(a)}</td><td class="nowrap">${f}</td><td class="nowrap">${fmt(cnt)}</td><td class="nowrap">${fmt(sub)}</td>`;
+        const tr=ecoTbl.insertRow(-1);tr.className="row-compact";
+        const factor=eco.attributeObjectList[a].factor;const count=eco.attributeObjectList[a].count;
+        tr.innerHTML=`<td class="nowrap">${cap(a)}</td><td class="nowrap">${factor}</td><td class="nowrap">${count}</td>`;
       });
-
-      document.getElementById("maintenanceCost").textContent = fmt(sum);
-
-      // Rebuild Component breakdown (header + columns already exist)
-      const compTbl=document.getElementById("componentTable");
-      // remove all rows after header titles (keep first 2 rows: title row + headings row + trailing total row)
-      while(compTbl.rows.length>3) compTbl.deleteRow(2); // keep title row (0), header row (1), total row (last)
-
-      // set totals placeholders to 0 until a node is clicked
-      document.getElementById("compTotal").textContent = "0";
-    }
-
-    function currentVisibleKeys(){
-      const keysAll=Object.keys(eco.components);
-      if(!eco.selectedTypes || eco.selectedTypes.size===0) return new Set(keysAll);
-      return new Set(keysAll.filter(k=>{
-        const comp=eco.components[k]; if(!comp.types || comp.types.size===0) return true;
-        for(const t of comp.types) if(eco.selectedTypes.has(t)) return true; return false;
-      }));
-    }
-
-    function renderTagsDialog(){
-      const host=document.getElementById("tagsDlgBody"); host.innerHTML="";
-      const visible=currentVisibleKeys(); const keys=[...visible].sort();
-      if(keys.length===0){ host.innerHTML=`<div class="small">No components in view.</div>`; return; }
-      const tbl=document.createElement("table"); tbl.style.width="100%"; tbl.style.borderCollapse="collapse";
-      tbl.innerHTML=`<thead><tr><th style="text-align:left;border:1px solid var(--line);padding:6px;background:var(--chip)">Component</th><th style="text-align:left;border:1px solid var(--line);padding:6px;background:var(--chip)">Tags</th></tr></thead>`;
-      const tb=document.createElement("tbody");
-      for(const k of keys){
-        const comp=eco.components[k]; const used=eco.effectiveTagsByComp[k]||new Set(); const all=[...comp.tags].sort();
-        const tr=document.createElement("tr");
-        tr.innerHTML=`<td style="border:1px solid var(--line);padding:6px">${comp.display||comp.label||k}</td><td style="border:1px solid var(--line);padding:6px"></td>`;
-        const wrap=document.createElement("div"); wrap.className="tchips";
-        all.forEach(t=>{
-          const span=document.createElement("span"); span.className="tchip "+(used.has(t)?"used":"unused"); span.textContent=t; wrap.appendChild(span);
-        });
-        tr.children[1].appendChild(wrap); tb.appendChild(tr);
-      }
-      tbl.appendChild(tb); host.appendChild(tbl);
+      document.getElementById("maintenanceCost").textContent=eco.cost;
+      const badge=document.getElementById('graphCostBadge');if(badge)badge.textContent=`Graph cost: ${eco.cost}`;
     }
 
     function renderGraph(){
-      const nodes=[], edges=[];
-      const visible=currentVisibleKeys(); const keys=[...visible];
-
-      let maxCost=-Infinity, maxKey=null;
-      keys.forEach((k,i)=>{
-        const comp=eco.components[k]; const t=2*Math.PI*i/Math.max(1,keys.length);
-        const x=Math.round(30*Math.cos(t)), y=Math.round(30*Math.sin(t));
-        if(comp.cost>maxCost){maxCost=comp.cost; maxKey=k}
-        nodes.push({id:k,label:comp.display||comp.label||k,x,y,size:1,color:"#9aa3af"});
-      });
-
-      const kept=Object.values(eco.edges).filter(e=>visible.has(e.source)&&visible.has(e.target));
-      const ss=kept.map(e=>e.score); const sMin=ss.length?Math.min(...ss):0; const sMax=ss.length?Math.max(...ss):1;
-      function sizeFor(s){ if(sMax===sMin) return 2; const t=(s-sMin)/(sMax-sMin); return 1+5*t }
-      kept.forEach(e=>{
-        edges.push({id:e.id, source:e.source, target:e.target, size:sizeFor(e.score), color:"#6b7280"});
-      });
-
-      const costs=keys.map(k=>eco.components[k].cost); const minC=costs.length?Math.min(...costs):0; const maxC=costs.length?Math.max(...costs):0;
-      function grayFor(c){ if(maxC===minC) return `rgb(180,180,180)`; const t=(c-minC)/(maxC-minC); const v=Math.round(210 - t*140); return `rgb(${v},${v},${v})` }
-      nodes.forEach(n=>{ n.color=grayFor(eco.components[n.id].cost) });
-      if(maxKey){ const w=nodes.find(n=>n.id===maxKey); if(w) w.color="#ff5050" }
+      const nodes=[],edges=[];const keysAll=Object.keys(eco.components);
+      let keys; if(!eco.selectedTypes||eco.selectedTypes.size===0){keys=keysAll.slice();}else{keys=keysAll.filter(k=>{const comp=eco.components[k];return !comp.type||eco.selectedTypes.has(comp.type);});}
+      const zoomPct=Number(document.getElementById('zoomRange').value||140);const R=Math.round((40*zoomPct)/100);
+      let minC=Infinity,maxC=-Infinity;keys.forEach(k=>{const c=eco.components[k].cost;if(c<minC)minC=c;if(c>maxC)maxC=c;});
+      keys.forEach((k,i)=>{const comp=eco.components[k];const t=2*Math.PI*i/Math.max(1,keys.length);const x=Math.round(R*Math.cos(t));const y=Math.round(R*Math.sin(t));const label=`${comp.display||comp.label||k} (${comp.cost})`;nodes.push({id:k,label,x,y,size:1,color:"#9aa3af"})});
+      const visibleSet=new Set(keys);
+      Object.values(eco.edges).forEach(e=>{if(visibleSet.has(e.source)&&visibleSet.has(e.target)){edges.push({id:`${e.source}-${e.target}`,source:e.source,target:e.target,size:1,color:"#6b7280"});}});
+      function grayFor(cost){if(!isFinite(minC)||!isFinite(maxC)||maxC===minC)return `rgb(180,180,180)`;const t=(cost-minC)/(maxC-minC);const v=Math.round(210-t*140);return `rgb(${v},${v},${v})`;}
+      const css=getComputedStyle(document.documentElement);const green=css.getPropertyValue('--ok').trim()||'#22c55e';const red=css.getPropertyValue('--bad').trim()||'#ef4444';
+      nodes.forEach(n=>{n.color=grayFor(eco.components[n.id].cost)});
+      nodes.forEach(n=>{const cost=eco.components[n.id].cost;if(cost===0||cost===minC)n.color=green;});
+      if(maxC>minC){nodes.forEach(n=>{if(eco.components[n.id].cost===maxC)n.color=red;});}
 
       document.getElementById("graphContainer").innerHTML="";
-      S=new sigma({
-        graph:{nodes, edges},
-        renderer:{container:document.getElementById("graphContainer"), type:'canvas'},
+      const s=new sigma({
+        graph:{nodes,edges},
+        renderer:{container:document.getElementById("graphContainer"),type:'canvas'},
         settings:{
-          drawLabels:true,
-          labelThreshold:0,
-          labelSize:14, defaultLabelSize:14,
-          defaultLabelColor:"#ffffff", labelColor:"default",
-          drawEdgeLabels:false,
-          font:"system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif",
-          batchEdgesDrawing:true,
-          defaultNodeColor:"#9aa3af", defaultEdgeColor:"#6b7280"
+          drawLabels:true,labelSize:13,defaultLabelSize:13,defaultLabelColor:"#ffffff",labelColor:"default",
+          font:"system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Arial, sans-serif",
+          drawEdgeLabels:false, /* FIX: avoid plugin-related errors */
+          batchEdgesDrawing:true,defaultNodeColor:"#9aa3af",defaultEdgeColor:"#6b7280"
         }
       });
 
-      applyZoomFromSlider();
+      s.bind("clickNode",(e)=>{
+        const key=e.data.node.id;const comp=eco.components[key];const disp=comp.display||comp.label||key;
+        document.getElementById("componentTitle").textContent=`${disp} • cost ${comp.cost}`;
+        document.getElementById("costComponent").textContent=comp.cost;
+        document.getElementById("costComponentVersion").textContent=comp.costLatestVersion;
 
-      S.bind("clickNode",(e)=>{
-        const key=e.data.node.id; const comp=eco.components[key];
-        const disp=comp.display||comp.label||key;
-        document.getElementById("componentTitle").textContent=`${disp} • cost ${fmt(comp.cost)}`;
-
-        // rebuild component table body rows (insert before trailing total row)
-        const compTbl=document.getElementById("componentTable");
-        while(compTbl.rows.length>3) compTbl.deleteRow(2);
-
-        let sum=0;
-        eco.attributeArrayList.forEach(a=>{
-          const f=readFactor(a);
-          const cnt=comp.attributeObjectList[a].count||0;
-          const sub=f*cnt; sum+=sub;
-          const r=compTbl.insertRow(2); r.className="row-compact";
-          r.innerHTML=`<td class="nowrap">${cap(a)}</td><td class="nowrap">${f}</td><td class="nowrap">${fmt(cnt)}</td><td class="nowrap">${fmt(sub)}</td>`;
-        });
-        document.getElementById("compTotal").textContent = fmt(sum);
+        const usedTagSet=new Set();
+        Object.values(eco.edges).forEach(edge=>{if(edge.source===key||edge.target===key){edge.tags.forEach(t=>{if(!t.startsWith('type:'))usedTagSet.add(t);});}});
+        const tags=[...(comp.tags||[])].sort();
+        const html=tags.map(t=>{const used=usedTagSet.has(t);const bg=used?'#183029':'#222733';const col=used?'#22c55e':'#c7cbd3';return `<span style="padding:2px 6px;border:1px solid var(--line);border-radius:999px;margin:2px;display:inline-block;background:${bg};color:${col}">${t}</span>`}).join("");
+        document.getElementById("tagsContent").innerHTML=`<div style="margin-bottom:6px"><b>${disp}</b> tags (${tags.length}):</div><div>${html||'<span class="muted">No tags</span>'}</div>`;
       });
 
+      const edgesList=document.getElementById('edgesQuickStats');
+      if(edgesList){edgesList.innerHTML=`<li>Visible nodes: <b>${keys.length}</b></li><li>Edges drawn: <b>${edges.length}</b></li><li>Common tag threshold: <b>${Math.round(EDGE_PARAMS.commonThreshold*100)}%</b></li><li>Using tags: <b>${EDGE_PARAMS.useTags?'yes':'no'}</b>, type: <b>${EDGE_PARAMS.useType?'yes':'no'}</b></li>`;}
       renderRightTables();
+    }
+
+    function refreshEdgeDialogStatsAndChecklist(){
+      const tagEdgeCount=new Map();
+      Object.values(eco.edges).forEach(e=>{(e.tags||[]).forEach(t=>{if(String(t).startsWith('type:'))return;tagEdgeCount.set(t,(tagEdgeCount.get(t)||0)+1);});});
+      const uniqueTags=Array.from(tagEdgeCount.keys());
+      const meta=document.getElementById('edgeTagsMeta');const list=document.getElementById('edgeTagsChecklist');
+      meta.textContent=`Matching tag count (post-filter): ${uniqueTags.length}`;
+      list.innerHTML="";
+      if(uniqueTags.length===0){list.innerHTML=`<span class="muted">No tag-based edges with current settings.</span>`;return;}
+      uniqueTags.sort((a,b)=>(tagEdgeCount.get(b)||0)-(tagEdgeCount.get(a)||0)).forEach(tag=>{
+        const cnt=tagEdgeCount.get(tag)||0;const id=`edgeTag-${tag.replace(/[^a-z0-9]+/g,'-')}`;const checked=!EDGE_PARAMS.excludedTags.has(tag);
+        const pill=document.createElement('label');pill.className='tagPill';
+        pill.innerHTML=`<input type="checkbox" id="${id}" ${checked?'checked':''}/><span>${tag}</span><span class="muted">(${cnt})</span>`;
+        pill.querySelector('input').addEventListener('change',(e)=>{if(e.target.checked)EDGE_PARAMS.excludedTags.delete(tag);else EDGE_PARAMS.excludedTags.add(tag);buildEdges();recalcEcosystem();renderGraph();});
+        list.appendChild(pill);
+      });
     }
 
     function top10TodayNames(versions){
       const map=new Map();
-      versions.forEach(v=>{
-        if(!isInLast24Hours(v)) return;
-        const raw=(v.versionProductName||"").trim(); if(!raw) return;
-        const k=normalizeKey(raw); if(!map.has(k)) map.set(k,{count:0, display:raw}); map.get(k).count+=1;
-      });
-      const sorted=[...map.entries()].sort((a,b)=>b[1].count-a[1].count).map(([k,v])=>v.display).slice(0,10);
-      if(sorted.length) return sorted;
-      const seen=new Set(), out=[];
-      for(const v of versions){ const raw=(v.versionProductName||"").trim(); const k=normalizeKey(raw); if(!raw||seen.has(k)) continue; seen.add(k); out.push(raw); if(out.length>=10) break; }
+      versions.forEach(v=>{if(!isInLast24Hours(v))return;const raw=(v.versionProductName||"").trim();if(!raw)return;const k=normalizeKey(raw);if(!map.has(k))map.set(k,{count:0,display:raw});map.get(k).count+=1;});
+      const sorted=[...map.entries()].sort((a,b)=>b[1].count-a[1].count).map(([k,v])=>v.display);
+      const pick=sorted.slice(0,10);if(pick.length)return pick;
+      const seen=new Set(),out=[];for(const v of versions){const raw=(v.versionProductName||"").trim();const k=normalizeKey(raw);if(!raw||seen.has(k))continue;seen.add(k);out.push(raw);if(out.length>=10)break;}
       return out;
     }
 
     async function fetchAndRender(){
       loadingStart();
-      const components=readQList(); const onlyToday=document.getElementById("toggleOnlyToday").checked;
-      let url=`${URL_API}/v`; if(components.length) url+=`?q=${components.join(",")}`;
-      const res=await fetch(url); const payload=await res.json(); const versions=Array.isArray(payload)?payload:(payload.versions||[]);
-
-      const typeByKey=new Map();
-      versions.forEach(v=>{
-        const nameRaw=(v.versionProductName||"").trim(); if(!nameRaw) return;
-        const k=normalizeKey(nameRaw); const types=extractTypesArray(v);
-        if(!typeByKey.has(k)) typeByKey.set(k,new Set()); const set=typeByKey.get(k); types.forEach(t=>set.add(t));
-      });
-
+      const components=readQList();const onlyToday=document.getElementById("toggleOnlyToday").checked;
+      let url=`${URL_API}/v`;if(components.length)url+=`?q=${components.join(",")}`;
+      const res=await fetch(url);const payload=await res.json();const versions=Array.isArray(payload)?payload:(payload.versions||[]);
+      const typeByKey=new Map();versions.forEach(v=>{const nameRaw=(v.versionProductName||"").trim();if(!nameRaw)return;const k=normalizeKey(nameRaw);const tList=extractTypes(v);const t=tList[0]||"";if(t&&!typeByKey.has(k))typeByKey.set(k,t);});
       const filtered=onlyToday?versions.filter(isInLast24Hours):versions;
-
-      transform(filtered, typeByKey);
-      renderGraph();
-      loadingDone();
+      transform(filtered,typeByKey);renderGraph();loadingDone();
     }
 
     async function initialLoad(){
-      bindAddBox(); await loadNameSuggestions(); setMainHref();
-      document.getElementById("homeBtn").addEventListener("click",()=>{ setMainHref(); });
+      bindAddBox();loadNameSuggestions();
+      const hasParams=!!(getParam("q")||"");document.getElementById("toggleOnlyToday").checked=hasParams?false:true;
+      document.getElementById("toggleUniqueType").checked=false;document.getElementById("toggleRealOnly").checked=false;
+      setMainHref();document.getElementById("homeBtn").addEventListener("click",()=>{setMainHref();});
+      const open=id=>document.getElementById(id).showModal();const close=id=>document.getElementById(id).close();
+      document.getElementById('edgesBtn').addEventListener('click',()=>open('edgesDialog'));
+      document.getElementById('legendBtn').addEventListener('click',()=>open('legendDialog'));
+      document.getElementById('tagsBtn').addEventListener('click',()=>open('tagsDialog'));
+      document.querySelectorAll('.closeBtn').forEach(b=>b.addEventListener('click',()=>close(b.dataset.close)));
+
+      const edgeUseTagsEl=document.getElementById('edgeUseTags');
+      const edgeUseTypeEl=document.getElementById('edgeUseType');
+      const edgePctEl=document.getElementById('edgeCommonPct');
+      const edgePctLabel=document.getElementById('edgeCommonPctLabel');
+      function applyEdgeParams(){
+        EDGE_PARAMS.useTags=edgeUseTagsEl.checked;EDGE_PARAMS.useType=edgeUseTypeEl.checked;
+        EDGE_PARAMS.commonThreshold=Math.max(0.05,Math.min(0.95,Number(edgePctEl.value)/100));
+        edgePctLabel.textContent=`${Math.round(EDGE_PARAMS.commonThreshold*100)}%`;
+        buildEdges();recalcEcosystem();renderGraph();
+      }
+      edgeUseTagsEl.addEventListener('change',applyEdgeParams);
+      edgeUseTypeEl.addEventListener('change',applyEdgeParams);
+      edgePctEl.addEventListener('input',applyEdgeParams);
 
       const q=getParam("q")||"";
-      const onlyTodayBox=document.getElementById("toggleOnlyToday");
-
-      if(q){
-        onlyTodayBox.checked = false;
-        const names=readQList().slice(0,10);
-        renderChips(names); setParamComma(names);
-        await fetchAndRender();
-        return;
-      }
-
-      onlyTodayBox.checked = true;
-
-      loadingStart();
-      const res=await fetch(`${URL_API}/v`); const payload=await res.json(); const all=Array.isArray(payload)?payload:(payload.versions||[]);
-      const names=top10TodayNames(all); renderChips(names); setParamComma(names);
-      loadingDone(); await fetchAndRender();
+      if(q){const names=readQList().slice(0,10);renderChips(names);setParamComma(names);await fetchAndRender();return;}
+      loadingStart();const res=await fetch(`${URL_API}/v`);const payload=await res.json();const all=Array.isArray(payload)?payload:(payload.versions||[]);const names=top10TodayNames(all);renderChips(names);setParamComma(names);loadingDone();await fetchAndRender();
     }
 
-    document.getElementById("toggleOnlyToday").addEventListener("change", fetchAndRender);
-    document.getElementById("toggleUniqueType").addEventListener("change", fetchAndRender);
-    document.getElementById("toggleRealOnly").addEventListener("change", fetchAndRender);
+    document.getElementById("toggleOnlyToday").addEventListener("change",fetchAndRender);
+    document.getElementById("toggleUniqueType").addEventListener("change",fetchAndRender);
+    document.getElementById("toggleRealOnly").addEventListener("change",fetchAndRender);
 
     (async function boot(){ await initialLoad(); })();
   </script>
