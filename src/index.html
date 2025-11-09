@@ -26,7 +26,7 @@
     .gh-link{display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px solid var(--line);color:var(--text);padding:8px 10px;border-radius:10px;text-decoration:none;font-weight:700}
     .gh-link:hover{background:var(--chip)}
 
-    /* subtle "Graph" pill */
+    /* subtle link pills */
     .linkchip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--text);text-decoration:none;font-weight:700;font-size:13px;opacity:.85}
     .linkchip:hover{background:var(--chip);opacity:1}
     .linkchip small{color:var(--muted);font-weight:600}
@@ -127,8 +127,9 @@
     <div class="brand">Releasetrain <b>v3.13.3</b></div>
     <div class="spacer"></div>
 
-    <!-- Subtle link to /graph keeping ?q=... -->
+    <!-- Link pills kept in sync with ?q=... -->
     <a id="graphLink" class="linkchip" href="/graph" title="Open graph view with the same query">Graph ↗ <small>/graph</small></a>
+    <a id="archLink"  class="linkchip" href="/arch"  title="Open architecture view with the same query">Arch ↗ <small>/arch</small></a>
 
     <a class="gh-link" href="https://github.com/SE4CPS/releasetrain-client" target="_blank" rel="noopener">GitHub ↗</a>
 
@@ -230,14 +231,17 @@
     }
     window.addEventListener('load',updateOffsets);window.addEventListener('resize',updateOffsets);new ResizeObserver(updateOffsets).observe(document.querySelector('.topbar'));
 
-    /* ---------- keep /graph link synced with ?q=... ---------- */
-    function setGraphHref(){
+    /* ---------- keep /graph and /arch links synced with ?q=... ---------- */
+    function setLinksHref(){
       const u=new URL(location.href);
       const q=u.searchParams.get("q");
-      const base = `${location.origin}/graph/`;
-      const href = q ? `${base}?q=${encodeURIComponent(q)}` : base;
-      const a=$("#graphLink");
-      if(a) a.href = href;
+      const graphBase = `${location.origin}/graph/`;
+      const archBase  = `${location.origin}/arch/`;
+      const graphHref = q ? `${graphBase}?q=${encodeURIComponent(q)}` : graphBase;
+      const archHref  = q ? `${archBase}?q=${encodeURIComponent(q)}`  : archBase;
+      const g=$("#graphLink"), a=$("#archLink");
+      if(g) g.href = graphHref;
+      if(a) a.href = archHref;
     }
 
     /* =================== Reddit helpers =================== */
@@ -427,7 +431,7 @@
         <span class="summaryRight">
           ${chip(cveCount + " CVE","bad")}
           ${chip(redditCount + " Reddit","reddit")}
-          ${chip(majorCount + " major","ok")}
+          ${chip(majorCount + " major," ,"ok".trim())}
           ${chip(minorCount + " minor","soft")}
           ${chip(patchCount + " patch","warn")}
         </span>`;
@@ -545,10 +549,9 @@
       try{
         const u=new URL(location.href); const compCsv=u.searchParams.get("q")||"";
         $("#components").value=compCsv; STATE.filters.components=tokens(compCsv);
-        setGraphHref();
+        setLinksHref();
 
         const [vers, reddit]=await Promise.all([Api.versions(compCsv), Api.reddit().catch(()=>[])]);
-
         STATE.redditAll=reddit; buildRedditIndex(reddit); $("#kpi-reddit").textContent=reddit.length;
 
         if(!(vers||[]).length){
@@ -567,7 +570,7 @@
       e.preventDefault();
       const compCsv=$("#components").value.trim().replace(/\s+/g,''); const u=new URL(location.href);
       if(compCsv) u.searchParams.set("q",compCsv); else u.searchParams.delete("q"); history.replaceState({}, "", u.toString());
-      setGraphHref();
+      setLinksHref();
 
       $("#status").textContent="Filtering…"; showLoader();
       try{
@@ -583,7 +586,7 @@
     $("#clearBtn").addEventListener("click", ()=>{
       $("#components").value=""; STATE.filters.components=[];
       const u=new URL(location.href); u.searchParams.delete("q"); history.replaceState({}, "", u.toString());
-      setGraphHref();
+      setLinksHref();
       STATE.filters.toggles.clear();
       $$('#fixedToggles .toggle, #typeToggles .toggle').forEach(b=>b.setAttribute('aria-pressed','false'));
       boot();
