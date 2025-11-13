@@ -269,6 +269,19 @@
       $("#archLink").href  = buildHrefWithQ("/arch/",  q);
     }
 
+    /* ========= Post source + id helpers ========= */
+    function getPostSource(p){
+      const srcNorm = norm(p?.source || "");
+      if (srcNorm) return srcNorm;
+      const url = String(p?.url || "");
+      if (url.includes("stackoverflow.com")) return "stackoverflow";
+      if (url.includes("reddit.com")) return "reddit";
+      return "reddit";
+    }
+    function getPostId(p){
+      return p?.redditId || p?._id || p?.id || "";
+    }
+
     /* =================== Reddit helpers =================== */
     const isUpdateRelatedBoolean = p => !!(p?.metadata?.labeled?.isUpdateRelated || p?.metadata?.predicted?.isUpdateRelated);
     const getUpdateScore = p => (typeof p?.metadata?.predicted?.positiveScore==="number")?p.metadata.predicted.positiveScore:null;
@@ -310,8 +323,14 @@
     const STATE={rawVersions:[],redditAll:[],redditBySub:new Map(),groupsFiltered:[],groupIndex:0,observer:null,loading:false,
       filters:{components:[],toggles:new Set()}};
 
-    function getRedditOnlyCount(){
-      return STATE.redditAll.filter(p => (p.source || "reddit").toLowerCase() !== "stackoverflow").length;
+    function getSourceCounts(){
+      let reddit=0, stackoverflow=0;
+      for(const p of STATE.redditAll){
+        const src = norm(p.source || "");
+        if(src === "stackoverflow") stackoverflow++;
+        else reddit++;
+      }
+      return {reddit, stackoverflow};
     }
 
     /* =================== Reddit index =================== */
@@ -335,8 +354,7 @@
       const arr = STATE.redditBySub.get(name) || [];
       const out = [];
       for (const p of arr){
-        const src = (p.source || "reddit").toLowerCase();
-        if (src === "stackoverflow") continue; // keep only real reddit
+        if (getPostSource(p) !== "reddit") continue;
         const t = +new Date(p.created_utc || 0);
         if (t < SIX_MONTHS_AGO) continue;
         if (onlyRisks && !isRisk(p)) continue;
@@ -353,8 +371,7 @@
       const arr = STATE.redditBySub.get(name) || [];
       const out = [];
       for (const p of arr){
-        const src = (p.source || "reddit").toLowerCase();
-        if (src !== "stackoverflow") continue; // filter by source="stackoverflow"
+        if (getPostSource(p) !== "stackoverflow") continue;
         const t = +new Date(p.created_utc || 0);
         if (t < SIX_MONTHS_AGO) continue;
         if (onlyRisks && !isRisk(p)) continue;
@@ -379,21 +396,49 @@
     }
 
     function computeAggregates(list){
-      let major=0,minor=0,patch=0,cve=0,reddit=0,redditRisk=0,soRisk=0,uniqComps=new Set(),typeCounts=new Map();
+      let major=0,minor=0,patch=0,cve=0,uniqComps=new Set(),typeCounts=new Map();
+      const redditAllIds=new Set(), soAllIds=new Set(), redditRiskIds=new Set(), soRiskIds=new Set();
+
       for(const it of list){
         const ch=norm(it.versionReleaseChannel);
         if(ch==="major") major++; else if(ch==="minor") minor++; else if(ch==="patch") patch++;
         if(it.isCve) cve++;
-        const allR=redditMatchesForVersionBase(it,6,false), riskR=redditMatchesForVersionBase(it,6,true);
-        const soRiskArr=stackoverflowMatchesForVersionBase(it,6,true);
-        if(allR.length) reddit++;
-        if(riskR.length) redditRisk++;
-        if(soRiskArr.length) soRisk++;
+
+        const allR = redditMatchesForVersionBase(it, REDDIT_LIMIT, false);
+        for(const p of allR){
+          if(getPostSource(p)==="reddit") redditAllIds.add(getPostId(p));
+        }
+
+        const soAll = stackoverflowMatchesForVersionBase(it, REDDIT_LIMIT, false);
+        for(const p of soAll){
+          if(getPostSource(p)==="stackoverflow") soAllIds.add(getPostId(p));
+        }
+
+        const riskR = redditMatchesForVersionBase(it, REDDIT_LIMIT, true);
+        for(const p of riskR){
+          if(getPostSource(p)==="reddit") redditRiskIds.add(getPostId(p));
+        }
+
+        const soRiskArr = stackoverflowMatchesForVersionBase(it, REDDIT_LIMIT, true);
+        for(const p of soRiskArr){
+          if(getPostSource(p)==="stackoverflow") soRiskIds.add(getPostId(p));
+        }
+
         const c=canonComponentName(it); uniqComps.add(c.key);
-        for(const t of (it.classification?.componentType||[])){ if(!t||t==="UNKNOWN") continue; const k=String(t).toLowerCase(); typeCounts.set(k,(typeCounts.get(k)||0)+1); }
+        for(const t of (it.classification?.componentType||[])){
+          if(!t||t==="UNKNOWN") continue;
+          const k=String(t).toLowerCase();
+          typeCounts.set(k,(typeCounts.get(k)||0)+1);
+        }
       }
+
+      const reddit = redditAllIds.size;
+      const redditRisk = redditRiskIds.size;
+      const soRisk = soRiskIds.size;
+
       return {major,minor,patch,cve,reddit,redditRisk,soRisk,uniq:uniqComps.size,typeCounts};
     }
+
     function paintFixedCounts(a){
       $("#btn-major").textContent=`(${a.major})`;
       $("#btn-minor").textContent=`(${a.minor})`;
@@ -404,6 +449,7 @@
       $("#btn-so-risk").textContent=`(${a.soRisk})`;
       $("#kpi-uniq").textContent=a.uniq;
     }
+
     function buildTypeButtons(typeCounts){
       const host=$("#typeToggles"); host.innerHTML="";
       const entries=Array.from(typeCounts.entries()).sort((a,b)=>b[1]-a[1]).slice(0,TOP_TYPES);
@@ -417,13 +463,21 @@
         host.appendChild(btn);
       }
     }
+
     function matchesToggles(v,rc,rrc,soCount,soRiskCount){
       const set=STATE.filters.toggles, channel=norm(v.versionReleaseChannel);
-      const compTypes=(v.classification?.componentType||[]).map(norm), isCve=!!v.isCve, hasReddit=rc>0, hasRisk=rrc>0, hasSoRisk=soRiskCount>0;
+      const compTypes=(v.classification?.componentType||[]).map(norm),
+            isCve=!!v.isCve,
+            hasReddit=rc>0,
+            hasRisk=rrc>0,
+            hasSoRisk=soRiskCount>0;
       const truth={major:channel==="major",minor:channel==="minor",patch:channel==="patch",cve:isCve,reddit:hasReddit,'reddit-risk':hasRisk,'so-risk':hasSoRisk};
       for(const k of set){
-        if(k.startsWith("type:")){ if(!compTypes.includes(k.slice(5))) return false; }
-        else if(!truth[k]) return false;
+        if(k.startsWith("type:")){
+          if(!compTypes.includes(k.slice(5))) return false;
+        }else if(!truth[k]){
+          return false;
+        }
       }
       return true;
     }
@@ -449,12 +503,16 @@
         return matchesToggles(v,r.length, rr.length, soAll.length, soRiskArr.length);
       });
 
-      $("#kpi-reddit").textContent=getRedditOnlyCount();
+      const srcCounts = getSourceCounts();
+      $("#kpi-reddit").textContent = srcCounts.reddit;
+
       if(filtered.length){
         const getMs=v=>+new Date(v.versionTimestampLastUpdate||v.versionTimestamp||0);
         const min=new Date(Math.min(...filtered.map(getMs))), max=new Date(Math.max(...filtered.map(getMs)));
         $("#kpi-range").innerHTML=`Date Range: <em>${min.toLocaleDateString()} – ${max.toLocaleDateString()}</em>`;
-      } else { $("#kpi-range").innerHTML=`Date Range: <em>—</em>`; }
+      } else {
+        $("#kpi-range").innerHTML=`Date Range: <em>—</em>`;
+      }
 
       STATE.groupsFiltered=groupByComponentName(filtered);
       $("#feed").innerHTML=""; STATE.groupIndex=0; $("#kpi-page").textContent=STATE.groupsFiltered.length;
@@ -473,10 +531,10 @@
 
       for(const v of group.items){
         for(const p of redditMatchesForVersionBase(v,REDDIT_LIMIT,onlyRedditRisks)){
-          const id=p.redditId||p._id||p.id; if(seen.has(id)) continue; seen.add(id); rUnion.push(p);
+          const id=getPostId(p); if(seen.has(id)) continue; seen.add(id); rUnion.push(p);
         }
         for(const p of stackoverflowMatchesForVersionBase(v,REDDIT_LIMIT,onlySoRisks)){
-          const id=p.redditId||p._id||p.id; if(seen.has(id)) continue; seen.add(id); rUnion.push(p);
+          const id=getPostId(p); if(seen.has(id)) continue; seen.add(id); rUnion.push(p);
         }
       }
 
@@ -492,7 +550,7 @@
         });
       }
       for(const p of rUnion){
-        const src=(p.source||"reddit").toLowerCase();
+        const src=getPostSource(p);
         timeline.push({
           t:+new Date(p.created_utc||0),
           kind: src==="stackoverflow" ? "stackoverflow" : "reddit",
@@ -652,7 +710,9 @@
         setLinksHref();
 
         const [vers, reddit]=await Promise.all([Api.versions(rawQ), Api.reddit().catch(()=>[])]);
-        STATE.redditAll=reddit; buildRedditIndex(reddit); $("#kpi-reddit").textContent=getRedditOnlyCount();
+        STATE.redditAll=reddit; buildRedditIndex(reddit);
+        const srcCounts = getSourceCounts();
+        $("#kpi-reddit").textContent = srcCounts.reddit;
 
         if(!(vers||[]).length){
           $("#status").textContent=`No versions found — try another query`;
