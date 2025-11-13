@@ -51,6 +51,8 @@
     .toggle.disabled{opacity:.55;cursor:not-allowed}
     .toggle.redditRisk{border-color:var(--warn);color:var(--warn);background:rgba(245,158,11,.12);box-shadow:inset 0 0 0 1px var(--warn)}
     .toggle.redditRisk[aria-pressed="true"]{background:var(--warn);border-color:var(--warn);color:#111}
+    .toggle.soRisk{border-color:var(--warn);color:var(--warn);background:rgba(245,158,11,.12);box-shadow:inset 0 0 0 1px var(--warn)}
+    .toggle.soRisk[aria-pressed="true"]{background:var(--warn);border-color:var(--warn);color:#111}
 
     .kpis{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
     .kpi{background:var(--chip);color:var(--chipText);border:1px solid var(--line);padding:6px 10px;border-radius:999px;font-size:12px}
@@ -105,6 +107,16 @@
       box-shadow: 0 0 0 3px rgba(255,122,69,.22) inset;
     }
 
+    .soIcon{
+      border-color: rgba(244,128,36,.45);
+      box-shadow: 0 0 0 3px rgba(244,128,36,.14) inset;
+      background: transparent;
+    }
+    .soIcon.risky{
+      border-color: rgba(244,128,36,.8);
+      box-shadow: 0 0 0 3px rgba(244,128,36,.26) inset;
+    }
+
     .titleRow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
     .titleRow a{color:var(--link);text-decoration:none;font-weight:800}
     .titleRow a:hover{text-decoration:underline}
@@ -150,6 +162,9 @@
         <button class="toggle" data-key="reddit" aria-pressed="false" type="button">Reddit <span class="count" id="btn-reddit">(0)</span></button>
         <button class="toggle redditRisk" data-key="reddit-risk" aria-pressed="false" type="button" title="AI-detected isUpdateRelated or score>0.5">
           ⚠️ Reddit Risks <span class="count" id="btn-reddit-risk">(0)</span>
+        </button>
+        <button class="toggle soRisk" data-key="so-risk" aria-pressed="false" type="button" title="AI-detected isUpdateRelated or score>0.5 (StackOverflow)">
+          ⚠️ StackOverflow Risks <span class="count" id="btn-so-risk">(0)</span>
         </button>
       </div>
       <div class="toggles" id="typeToggles"></div>
@@ -267,8 +282,17 @@
       async reddit(){ const url=`${API_BASE}reddit/query/positive`;
         const res=await fetch(url,{headers:{Accept:"application/json"}}); if(!res.ok) throw new Error(`${res.status} ${res.statusText} @ ${url}`);
         const list=(await res.json()); const arr=Array.isArray(list)?list:(list.data||list.posts||list.results||[]);
-        return arr.map(p=>({ redditId:p.redditId||p._id||p.id, title:p.title, subreddit:p.subreddit, url:p.url,
-                              created_utc:p.created_utc||p.createdAt||p.updatedAt, num_comments:p.num_comments, score:p.score, metadata:p.metadata })); }
+        return arr.map(p=>({
+          redditId:p.redditId||p._id||p.id,
+          title:p.title,
+          subreddit:p.subreddit,
+          url:p.url,
+          created_utc:p.created_utc||p.createdAt||p.updatedAt,
+          num_comments:p.num_comments,
+          score:p.score,
+          metadata:p.metadata,
+          source:p.source
+        })); }
     };
 
     /* =================== Canonicalization (NAME ONLY) =================== */
@@ -286,6 +310,10 @@
     const STATE={rawVersions:[],redditAll:[],redditBySub:new Map(),groupsFiltered:[],groupIndex:0,observer:null,loading:false,
       filters:{components:[],toggles:new Set()}};
 
+    function getRedditOnlyCount(){
+      return STATE.redditAll.filter(p => (p.source || "reddit").toLowerCase() !== "stackoverflow").length;
+    }
+
     /* =================== Reddit index =================== */
     function buildRedditIndex(list){
       STATE.redditBySub=new Map();
@@ -299,6 +327,7 @@
         arr.sort((a,b)=> (+new Date(b.created_utc||0))-(+new Date(a.created_utc||0)) || (b.score||0)-(a.score||0) );
       }
     }
+
     function redditMatchesForVersionBase(v, limit = 6, onlyRisks = false) {
       const c = canonComponentName(v);
       const name = norm(c.nameOut);
@@ -306,6 +335,26 @@
       const arr = STATE.redditBySub.get(name) || [];
       const out = [];
       for (const p of arr){
+        const src = (p.source || "reddit").toLowerCase();
+        if (src === "stackoverflow") continue; // keep only real reddit
+        const t = +new Date(p.created_utc || 0);
+        if (t < SIX_MONTHS_AGO) continue;
+        if (onlyRisks && !isRisk(p)) continue;
+        out.push(p);
+        if (out.length >= limit) break;
+      }
+      return out;
+    }
+
+    function stackoverflowMatchesForVersionBase(v, limit = 6, onlyRisks = false) {
+      const c = canonComponentName(v);
+      const name = norm(c.nameOut);
+      if (!name) return [];
+      const arr = STATE.redditBySub.get(name) || [];
+      const out = [];
+      for (const p of arr){
+        const src = (p.source || "reddit").toLowerCase();
+        if (src !== "stackoverflow") continue; // filter by source="stackoverflow"
         const t = +new Date(p.created_utc || 0);
         if (t < SIX_MONTHS_AGO) continue;
         if (onlyRisks && !isRisk(p)) continue;
@@ -330,20 +379,31 @@
     }
 
     function computeAggregates(list){
-      let major=0,minor=0,patch=0,cve=0,reddit=0,redditRisk=0,uniqComps=new Set(),typeCounts=new Map();
+      let major=0,minor=0,patch=0,cve=0,reddit=0,redditRisk=0,soRisk=0,uniqComps=new Set(),typeCounts=new Map();
       for(const it of list){
         const ch=norm(it.versionReleaseChannel);
         if(ch==="major") major++; else if(ch==="minor") minor++; else if(ch==="patch") patch++;
         if(it.isCve) cve++;
         const allR=redditMatchesForVersionBase(it,6,false), riskR=redditMatchesForVersionBase(it,6,true);
-        if(allR.length) reddit++; if(riskR.length) redditRisk++;
+        const soRiskArr=stackoverflowMatchesForVersionBase(it,6,true);
+        if(allR.length) reddit++;
+        if(riskR.length) redditRisk++;
+        if(soRiskArr.length) soRisk++;
         const c=canonComponentName(it); uniqComps.add(c.key);
         for(const t of (it.classification?.componentType||[])){ if(!t||t==="UNKNOWN") continue; const k=String(t).toLowerCase(); typeCounts.set(k,(typeCounts.get(k)||0)+1); }
       }
-      return {major,minor,patch,cve,reddit,redditRisk,uniq:uniqComps.size,typeCounts};
+      return {major,minor,patch,cve,reddit,redditRisk,soRisk,uniq:uniqComps.size,typeCounts};
     }
-    function paintFixedCounts(a){ $("#btn-major").textContent=`(${a.major})`; $("#btn-minor").textContent=`(${a.minor})`; $("#btn-patch").textContent=`(${a.patch})`;
-      $("#btn-cve").textContent=`(${a.cve})`; $("#btn-reddit").textContent=`(${a.reddit})`; $("#btn-reddit-risk").textContent=`(${a.redditRisk})`; $("#kpi-uniq").textContent=a.uniq; }
+    function paintFixedCounts(a){
+      $("#btn-major").textContent=`(${a.major})`;
+      $("#btn-minor").textContent=`(${a.minor})`;
+      $("#btn-patch").textContent=`(${a.patch})`;
+      $("#btn-cve").textContent=`(${a.cve})`;
+      $("#btn-reddit").textContent=`(${a.reddit})`;
+      $("#btn-reddit-risk").textContent=`(${a.redditRisk})`;
+      $("#btn-so-risk").textContent=`(${a.soRisk})`;
+      $("#kpi-uniq").textContent=a.uniq;
+    }
     function buildTypeButtons(typeCounts){
       const host=$("#typeToggles"); host.innerHTML="";
       const entries=Array.from(typeCounts.entries()).sort((a,b)=>b[1]-a[1]).slice(0,TOP_TYPES);
@@ -357,10 +417,10 @@
         host.appendChild(btn);
       }
     }
-    function matchesToggles(v,rc,rrc){
+    function matchesToggles(v,rc,rrc,soCount,soRiskCount){
       const set=STATE.filters.toggles, channel=norm(v.versionReleaseChannel);
-      const compTypes=(v.classification?.componentType||[]).map(norm), isCve=!!v.isCve, hasReddit=rc>0, hasRisk=rrc>0;
-      const truth={major:channel==="major",minor:channel==="minor",patch:channel==="patch",cve:isCve,reddit:hasReddit,'reddit-risk':hasRisk};
+      const compTypes=(v.classification?.componentType||[]).map(norm), isCve=!!v.isCve, hasReddit=rc>0, hasRisk=rrc>0, hasSoRisk=soRiskCount>0;
+      const truth={major:channel==="major",minor:channel==="minor",patch:channel==="patch",cve:isCve,reddit:hasReddit,'reddit-risk':hasRisk,'so-risk':hasSoRisk};
       for(const k of set){
         if(k.startsWith("type:")){ if(!compTypes.includes(k.slice(5))) return false; }
         else if(!truth[k]) return false;
@@ -381,9 +441,15 @@
 
       const ag=computeAggregates(candidates); paintFixedCounts(ag); buildTypeButtons(ag.typeCounts);
 
-      const filtered=candidates.filter(v=>{ const r=redditMatchesForVersionBase(v,6,false); const rr=redditMatchesForVersionBase(v,6,true); return matchesToggles(v,r.length,rr.length); });
+      const filtered=candidates.filter(v=>{
+        const r=redditMatchesForVersionBase(v,6,false);
+        const rr=redditMatchesForVersionBase(v,6,true);
+        const soAll=stackoverflowMatchesForVersionBase(v,6,false);
+        const soRiskArr=stackoverflowMatchesForVersionBase(v,6,true);
+        return matchesToggles(v,r.length, rr.length, soAll.length, soRiskArr.length);
+      });
 
-      $("#kpi-reddit").textContent=STATE.redditAll.length;
+      $("#kpi-reddit").textContent=getRedditOnlyCount();
       if(filtered.length){
         const getMs=v=>+new Date(v.versionTimestampLastUpdate||v.versionTimestamp||0);
         const min=new Date(Math.min(...filtered.map(getMs))), max=new Date(Math.max(...filtered.map(getMs)));
@@ -400,10 +466,16 @@
     const chip=(t,k)=>`<span class="chip ${k||""}">${t}</span>`;
 
     function renderComponentNode(group){
-      const onlyRisks=STATE.filters.toggles.has("reddit-risk");
+      const onlyRedditRisks=STATE.filters.toggles.has("reddit-risk");
+      const onlySoRisks=STATE.filters.toggles.has("so-risk");
+
       const seen=new Set(); let rUnion=[];
+
       for(const v of group.items){
-        for(const p of redditMatchesForVersionBase(v,REDDIT_LIMIT,onlyRisks)){
+        for(const p of redditMatchesForVersionBase(v,REDDIT_LIMIT,onlyRedditRisks)){
+          const id=p.redditId||p._id||p.id; if(seen.has(id)) continue; seen.add(id); rUnion.push(p);
+        }
+        for(const p of stackoverflowMatchesForVersionBase(v,REDDIT_LIMIT,onlySoRisks)){
           const id=p.redditId||p._id||p.id; if(seen.has(id)) continue; seen.add(id); rUnion.push(p);
         }
       }
@@ -420,12 +492,21 @@
         });
       }
       for(const p of rUnion){
-        timeline.push({ t:+new Date(p.created_utc||0), kind:"reddit", channel:null, label:p.title, url:p.url, raw:p });
+        const src=(p.source||"reddit").toLowerCase();
+        timeline.push({
+          t:+new Date(p.created_utc||0),
+          kind: src==="stackoverflow" ? "stackoverflow" : "reddit",
+          channel:null,
+          label:p.title,
+          url:p.url,
+          raw:p
+        });
       }
       timeline.sort((a,b)=>b.t - a.t);
 
       const cveCount = timeline.filter(x=>x.kind==="cve").length;
       const redditCount = timeline.filter(x=>x.kind==="reddit").length;
+      const soCount = timeline.filter(x=>x.kind==="stackoverflow").length;
       const majorCount = timeline.filter(x=>x.channel==="major").length;
       const minorCount = timeline.filter(x=>x.channel==="minor").length;
       const patchCount = timeline.filter(x=>x.channel==="patch").length;
@@ -437,6 +518,7 @@
         <span class="summaryRight">
           ${chip(cveCount + " CVE","bad")}
           ${chip(redditCount + " Reddit","reddit")}
+          ${chip(soCount + " StackOverflow","reddit")}
           ${chip(majorCount + " major","ok")}
           ${chip(minorCount + " minor","soft")}
           ${chip(patchCount + " patch","warn")}
@@ -461,6 +543,13 @@
           av.alt="reddit";
           av.title = isRisk(it.raw) ? "Reddit (risk)" : "Reddit";
           li.appendChild(av);
+        }else if(it.kind==="stackoverflow"){
+          const av=document.createElement("img");
+          av.className="avatar soIcon"+(isRisk(it.raw)?" risky":"");
+          av.src="./img/stackoverflow.png";
+          av.alt="StackOverflow";
+          av.title = isRisk(it.raw) ? "StackOverflow (risk)" : "StackOverflow";
+          li.appendChild(av);
         }else{
           const av=document.createElement("img"); av.className="avatar"; av.alt=group.name; av.src=avatarFor(it.raw); li.appendChild(av);
         }
@@ -480,6 +569,17 @@
           }else if(scoreVal!=null){
             chips.insertAdjacentHTML("beforeend", chip(`score: ${Number(scoreVal).toFixed(4)}`,"soft"));
           }
+        }else if(it.kind==="stackoverflow"){
+          chips.insertAdjacentHTML("beforeend", chip("STACKOVERFLOW","reddit"));
+          const scorePred = (it.raw?.metadata?.predicted?.positiveScore);
+          const scoreField = (typeof it.raw?.score === "number") ? it.raw.score : null;
+          const scoreVal = (typeof scorePred === "number") ? scorePred : scoreField;
+          if(isRisk(it.raw)){
+            const label = scoreVal!=null ? `risk score: ${Number(scoreVal).toFixed(4)}` : "risk score: —";
+            chips.insertAdjacentHTML("beforeend", chip(label,"warn"));
+          }else if(scoreVal!=null){
+            chips.insertAdjacentHTML("beforeend", chip(`score: ${Number(scoreVal).toFixed(4)}`,"soft"));
+          }
         }else if(it.kind==="cve"){
           chips.insertAdjacentHTML("beforeend", chip("CVE","bad"));
           if(it.raw && it.raw._id){
@@ -490,7 +590,7 @@
           chips.insertAdjacentHTML("beforeend", chip(ch, color));
         }
 
-        if(it.kind!=="reddit" && it.raw){
+        if(it.kind!=="reddit" && it.kind!=="stackoverflow" && it.raw){
           const r = it.raw;
           if(r.versionProductBrand)   chips.insertAdjacentHTML("beforeend", chip(String(r.versionProductBrand).toLowerCase(),"soft"));
           if(r.versionProductType)    chips.insertAdjacentHTML("beforeend", chip(String(r.versionProductType).toLowerCase(),"soft"));
@@ -552,7 +652,7 @@
         setLinksHref();
 
         const [vers, reddit]=await Promise.all([Api.versions(rawQ), Api.reddit().catch(()=>[])]);
-        STATE.redditAll=reddit; buildRedditIndex(reddit); $("#kpi-reddit").textContent=reddit.length;
+        STATE.redditAll=reddit; buildRedditIndex(reddit); $("#kpi-reddit").textContent=getRedditOnlyCount();
 
         if(!(vers||[]).length){
           $("#status").textContent=`No versions found — try another query`;
