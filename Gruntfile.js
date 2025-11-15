@@ -20,6 +20,7 @@ module.exports = function (grunt) {
                     'dist/edi40-2023/index.html': 'src/edi40-2023/index.html',
                     'dist/graph/index.html': 'src/graph/index.html',
                     'dist/reddit/index.html': 'src/reddit/index.html',
+                    'dist/dashboard/index.html': 'src/dashboard/index.html',
                     'dist/index.html': 'src/index.html',
                     'dist/doc/index.html': 'src/doc/index.html',
                     'dist/research/index.html': 'src/research/index.html',
