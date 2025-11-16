@@ -1,1770 +1,1578 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>ReleaseTrain.io Updates Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
-      --bg: #f3f4f6;
-      --card: #ffffff;
+      --bg: #ffffff;
       --text: #111827;
       --muted: #6b7280;
-      --border: #e5e7eb;
+      --border: #d1d5db;
       --accent: #2563eb;
-      --accent-soft: #dbeafe;
-      --radius: 8px;
-      --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial;
-      --valid: #16a34a;
-      --warn: #b91c1c;
+      --accent-soft: #eff6ff;
+      --accent-strong: #1d4ed8;
+      --accent-positive: #16a34a;
+      --accent-negative: #b91c1c;
+      --accent-neutral: #6b7280;
+      --today-bg: #f9fafb;
+      --timeline-bg: #fef2f2;
+      --chip-bg: #e5e7eb;
+      --chip-border: #d1d5db;
+      --progress: #2563eb;
+      --progress-soft: #93c5fd;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; }
 
     html, body {
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    body {
-      font-family: var(--font);
-      color: var(--text);
+      margin: 0;
+      padding: 0;
+      height: 100%;
       background: var(--bg);
+      color: var(--text);
+      font-family: system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
       font-size: 13px;
     }
 
+    body {
+      display: flex;
+      flex-direction: column;
+      overflow-y: hidden;
+    }
+
+    @media (max-width: 900px) {
+      body {
+        height: auto;
+        overflow-y: auto;
+      }
+    }
+
+    #loading-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      width: 0;
+      background: linear-gradient(to right, var(--progress), var(--progress-soft));
+      z-index: 1000;
+      opacity: 0;
+      transition: width 0.4s ease-out, opacity 0.2s ease-out;
+    }
+
     .page {
+      flex: 1;
       display: flex;
       flex-direction: column;
-      height: 100vh;
-      padding: 6px;
-      gap: 6px;
-      overflow: hidden;
+      padding: 4px 8px 8px;
+      max-width: 1720px;
+      width: 100%;
+      margin: 0 auto;
+      min-height: 0;
     }
 
-    /* Top bar */
-    .top-bar {
-      flex: 0 0 42px;
+    header {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      padding: 4px 8px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-    }
-
-    .top-bar-title {
-      font-size: 15px;
-      font-weight: 700;
-    }
-
-    .top-bar-sub {
-      font-size: 11px;
-      color: var(--muted);
-    }
-
-    /* Controls bar */
-    .controls-bar {
-      flex: 0 0 auto;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
       align-items: center;
-      padding: 4px 8px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
+      gap: 8px;
+      margin-bottom: 2px;
+      flex-shrink: 0;
     }
 
-    .controls-group {
+    header .title-block {
       display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      align-items: center;
+      flex-direction: row;
+      align-items: baseline;
+      gap: 8px;
     }
 
-    .field-inline {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      min-width: 130px;
-    }
-
-    .field-inline label {
-      font-size: 10px;
-      color: var(--muted);
+    header h1 {
+      margin: 0;
+      font-size: 16px;
       font-weight: 600;
     }
 
-    .field-inline select,
-    .field-inline input,
-    .field-inline button {
-      padding: 2px 4px;
+    header .subtitle {
       font-size: 11px;
-      border-radius: 5px;
-      border: 1px solid var(--border);
-      background: #fff;
-      color: var(--text);
-      min-height: 20px;
-    }
-
-    .field-inline button {
-      background: var(--accent);
-      color: #fff;
-      cursor: pointer;
-      border-color: var(--accent);
-      white-space: nowrap;
-    }
-
-    .field-inline button:hover {
-      background: #1d4ed8;
-    }
-
-    .component-multi {
-      min-width: 170px;
-      max-width: 220px;
-      height: 46px;
-    }
-
-    .status {
-      font-size: 10px;
       color: var(--muted);
-      margin-left: auto;
       white-space: nowrap;
     }
 
-    /* Cards grid */
-    .cards-grid {
-      flex: 1 1 auto;
+    .header-right {
+      text-align: right;
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .controls-row {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      grid-template-rows: repeat(2, minmax(0, 1fr));
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 2fr) minmax(0, 1.5fr);
+      gap: 6px;
+      padding: 3px 6px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #f9fafb;
+      margin-bottom: 4px;
+      flex-shrink: 0;
+      align-items: center;
+    }
+
+    @media (max-width: 900px) {
+      .controls-row {
+        grid-template-columns: minmax(0,1fr);
+      }
+    }
+
+    .control-line {
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .control-label {
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .status-inline {
+      font-size: 11px;
+      color: var(--muted);
+      opacity: 0.9;
+    }
+
+    select,
+    input[type="text"],
+    input[type="date"],
+    button {
+      font-size: 12px;
+      padding: 3px 5px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      color: var(--text);
+    }
+
+    select { min-width: 105px; }
+
+    input[type="date"] { max-width: 132px; }
+
+    input[type="text"] {
+      min-width: 140px;
+      max-width: 230px;
+    }
+
+    button {
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent-strong);
+      color: #ffffff;
+    }
+
+    button.ghost {
+      background: #ffffff;
+      border-color: var(--border);
+      color: var(--muted);
+    }
+
+    button.secondary {
+      background: var(--accent-soft);
+      border-color: #bfdbfe;
+      color: var(--accent-strong);
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: default;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 1px 5px;
+      border-radius: 999px;
+      border: 1px solid var(--chip-border);
+      background: var(--chip-bg);
+      font-size: 10px;
+      margin-right: 4px;
+    }
+
+    .grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      grid-template-rows: repeat(2, minmax(0,1fr));
       gap: 6px;
       min-height: 0;
-      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: minmax(0,1fr);
+        grid-auto-rows: auto;
+      }
     }
 
     .card {
-      background: var(--card);
-      border-radius: var(--radius);
+      border-radius: 6px;
       border: 1px solid var(--border);
       padding: 6px;
       display: flex;
       flex-direction: column;
       min-height: 0;
+      height: 100%;
+      max-height: 340px;
       overflow: hidden;
+      background: #ffffff;
+    }
+
+    .card-today { background: var(--today-bg); }
+    .card-timeline { background: var(--timeline-bg); }
+
+    @media (max-width: 900px) {
+      .card { max-height: none; }
     }
 
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
+      margin-bottom: 4px;
       gap: 4px;
-      margin-bottom: 2px;
+      flex-shrink: 0;
+    }
+
+    .card-title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
     }
 
     .card-title {
+      margin: 0;
       font-size: 12px;
       font-weight: 600;
     }
 
-    .card-sub {
+    .card-subtitle {
       font-size: 10px;
       color: var(--muted);
     }
 
-    .badge {
-      display: inline-block;
+    .badge-delta {
+      font-size: 11px;
+      font-weight: 600;
       padding: 1px 6px;
       border-radius: 999px;
-      font-size: 9px;
-      background: var(--accent-soft);
-      color: var(--accent);
-      white-space: nowrap;
+      align-self: flex-start;
     }
 
-    .card-body {
-      flex: 1 1 auto;
-      min-height: 0;
-      position: relative;
+    .badge-positive {
+      color: var(--accent-positive);
+      border: 1px solid rgba(22,163,74,0.35);
+      background: rgba(22,163,74,0.06);
+    }
+
+    .badge-negative {
+      color: var(--accent-negative);
+      border: 1px solid rgba(185,28,28,0.35);
+      background: rgba(185,28,28,0.06);
+    }
+
+    .badge-flat {
+      color: var(--accent-neutral);
+      border: 1px solid rgba(107,114,128,0.35);
+      background: rgba(243,244,246,0.9);
+    }
+
+    .card-main {
+      flex: 1;
       display: flex;
       flex-direction: column;
       gap: 4px;
+      min-height: 0;
     }
 
-    .card-metrics {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 2px 6px;
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 4px;
       font-size: 11px;
+      flex-shrink: 0;
+    }
+
+    .metric-main {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--accent-strong);
     }
 
     .metric-label {
-      font-size: 10px;
+      font-size: 11px;
       color: var(--muted);
     }
 
-    .metric-value {
-      font-weight: 600;
-      font-size: 12px;
-    }
-
-    .metric-note {
+    .metric-extra {
       font-size: 10px;
       color: var(--muted);
+      text-align: right;
     }
 
-    .card-validation {
-      font-size: 10px;
-      margin-top: 2px;
-    }
-
-    .card-validation.ok {
-      color: var(--valid);
-    }
-
-    .card-validation.warn {
-      color: var(--warn);
-    }
-
-    .chart-body {
-      flex: 1 1 auto;
-      min-height: 0;
+    .chart-container {
       position: relative;
+      flex: 1;
+      min-height: 60px;
+      max-height: 150px;
+      overflow: hidden;
     }
 
-    .chart-body canvas {
+    .chart-container canvas {
       width: 100% !important;
       height: 100% !important;
     }
 
-    /* StackOverflow list */
-    .so-list {
-      flex: 1 1 auto;
-      min-height: 0;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      font-size: 10px;
-    }
-
-    .so-item {
-      padding: 2px 0;
-      border-bottom: 1px solid #f3f4f6;
-    }
-
-    .so-title {
-      font-size: 10px;
-      font-weight: 600;
-      line-height: 1.2;
-    }
-
-    .so-meta {
-      font-size: 9px;
-      color: var(--muted);
-    }
-
-    .so-link {
-      font-size: 9px;
-      color: #1d4ed8;
-      text-decoration: none;
-    }
-
-    .so-link:hover {
-      text-decoration: underline;
-    }
-
-    /* Interesting update */
-    .interesting-body {
-      flex: 1 1 auto;
-      min-height: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-      font-size: 10px;
-    }
-
-    .interesting-title {
-      font-size: 11px;
-      font-weight: 600;
-    }
-
-    .interesting-line {
-      font-size: 10px;
-    }
-
-    .pill {
-      display: inline-block;
-      padding: 1px 5px;
-      border-radius: 999px;
-      font-size: 9px;
-      border: 1px solid var(--border);
-      margin-right: 2px;
-      margin-bottom: 1px;
-    }
-
-    .top-component-types {
+    .chart-stats {
       font-size: 10px;
       color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    .validation {
+      font-size: 10px;
+      margin-top: 1px;
+      flex-shrink: 0;
+    }
+
+    .validation-ok { color: var(--accent-positive); }
+    .validation-warn { color: #eab308; }
+    .validation-error { color: var(--accent-negative); }
+
+    .list-scroll {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0;
+      padding-right: 2px;
       margin-top: 2px;
     }
 
-    /* Responsive */
-    @media (max-width: 1100px) {
-      .cards-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        grid-template-rows: repeat(4, minmax(0, 1fr));
-      }
+    .list-header {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--muted);
+      margin: 2px 0 3px;
     }
 
-    @media (max-width: 700px) {
-      .top-bar {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 2px;
-        height: auto;
-      }
-
-      .controls-bar {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .controls-group {
-        width: 100%;
-      }
-
-      .field-inline {
-        flex: 1 1 auto;
-      }
-
-      .cards-grid {
-        grid-template-columns: 1fr;
-        grid-template-rows: repeat(8, minmax(0, 1fr));
-      }
-
-      body {
-        font-size: 12px;
-      }
+    .post-item {
+      font-size: 11px;
+      margin-bottom: 3px;
+      border-bottom: 1px dashed #e5e7eb;
+      padding-bottom: 2px;
     }
+
+    .post-title {
+      font-weight: 500;
+      margin-bottom: 1px;
+    }
+
+    .post-meta {
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    a {
+      color: #1d4ed8;
+      text-decoration: none;
+    }
+    a:hover { text-decoration: underline; }
+
+    .interesting {
+      font-size: 11px;
+      line-height: 1.4;
+      margin-top: 4px;
+    }
+
+    .interesting strong { font-weight: 600; }
+
+    .interesting ul {
+      margin: 3px 0;
+      padding-left: 14px;
+    }
+
+    .interesting li { margin: 1px 0; }
   </style>
 </head>
 <body>
+<div id="loading-bar"></div>
+
 <div class="page">
-  <header class="top-bar">
-    <div>
-      <div class="top-bar-title">ReleaseTrain.io Updates Dashboard</div>
-      <div class="top-bar-sub">Clean split: timeline vs today, across code, CVE, Reddit, StackOverflow</div>
+  <header>
+    <div class="title-block">
+      <h1>ReleaseTrain.io Updates Dashboard</h1>
+      <div class="subtitle">
+        Clean split: timeline vs today, across code, CVE, Reddit, StackOverflow
+      </div>
     </div>
-    <div class="top-bar-sub" id="lastRefreshed">Last refreshed: </div>
+    <div class="header-right">
+      <div id="last-refreshed">Last refreshed: …</div>
+    </div>
   </header>
 
-  <section class="controls-bar">
-    <div class="controls-group">
-      <div class="field-inline">
-        <label for="rangeSelect">Timeline window</label>
-        <select id="rangeSelect">
-          <option value="30" selected>Last 30 days</option>
-          <option value="90">Last 90 days</option>
-        </select>
-      </div>
-
-      <div class="field-inline">
-        <label for="dayInput">Today slice</label>
-        <input type="date" id="dayInput">
-      </div>
+  <div class="controls-row">
+    <div class="control-line">
+      <span class="control-label">Timeline window</span>
+      <select id="timeline-window">
+        <option value="14">Last 14 days</option>
+        <option value="30" selected>Last 30 days</option>
+        <option value="90">Last 90 days</option>
+      </select>
+      <span class="control-label">Today slice</span>
+      <input id="date-input" type="date" />
+      <button id="apply-main" class="primary">Apply</button>
+      <span class="status-inline">
+        Window is aligned with the selected day and used for all timeline charts.
+      </span>
     </div>
 
-    <div class="controls-group">
-      <div class="field-inline" style="min-width: 180px;">
-        <label for="componentSelect">Components for timeline</label>
-        <select id="componentSelect" multiple class="component-multi"></select>
-      </div>
-      <div class="field-inline" style="width: 90px;">
-        <label>&nbsp;</label>
-        <button id="applyComponentsBtn">Apply</button>
-      </div>
+    <div class="control-line">
+      <span class="control-label">Components for timeline</span>
+      <input id="components-input" list="components-datalist"
+             type="text"
+             placeholder="Type names, comma separated" />
+      <datalist id="components-datalist"></datalist>
+      <button id="clear-components" class="ghost">Clear</button>
+      <span class="status-inline">
+        Active components: <span id="components-active-label">All (API default)</span>
+      </span>
     </div>
 
-    <div class="status" id="statusMessage">Loading…</div>
-  </section>
+    <div class="control-line">
+      <span class="status-inline" id="status-info">
+        Ready.
+      </span>
+      <span class="status-inline">
+        Share this view with the q parameter in the address bar using a comma separated list of components.
+      </span>
+    </div>
+  </div>
 
-  <main class="cards-grid">
-    <!-- Card 1: Release volume overview -->
-    <section class="card" id="card-overview">
+  <div class="grid">
+    <!-- 1: Release volume -->
+    <div class="card card-today" id="card-release-volume">
       <div class="card-header">
-        <div>
+        <div class="card-title-block">
           <div class="card-title">Release volume</div>
-          <div class="card-sub">All time and last 2 years</div>
+          <div class="card-subtitle">All time and last 2 years</div>
         </div>
-        <span class="badge">aggregate versionCountByDay and v/count</span>
+        <div class="badge-delta badge-flat" id="delta-release-volume">+0</div>
       </div>
-      <div class="card-body">
-        <div class="card-metrics">
+      <div class="card-main">
+        <div class="metric-row">
           <div>
             <div class="metric-label">All release notes (approx)</div>
-            <div class="metric-value" id="totalReleasesAll"> </div>
-            <div class="metric-note" id="totalReleasesAllNote">From daily counts 2000 to today</div>
+            <div class="metric-main" id="metric-all-time">0</div>
           </div>
-          <div>
-            <div class="metric-label">Last 2 years</div>
-            <div class="metric-value" id="totalReleases2y"> </div>
-            <div class="metric-note" id="totalReleases2yNote">Sum vs v/count</div>
-          </div>
-          <div>
-            <div class="metric-label">Today</div>
-            <div class="metric-value" id="todayReleases"> </div>
-            <div class="metric-note" id="todayReleasesNote">v aggregate byDate</div>
-          </div>
-          <div>
-            <div class="metric-label">Window span</div>
-            <div class="metric-value" id="coverageDays"> </div>
-            <div class="metric-note" id="coverageOldest">Oldest in 2 year sample</div>
+          <div class="metric-extra" id="metric-release-extra">
+            Last 2 years: <span id="metric-two-years">0</span><br/>
+            Today: <span id="metric-today-count">0</span>
           </div>
         </div>
-        <div class="card-validation" id="overviewValidation"></div>
+        <div class="chart-container">
+          <canvas id="chart-release-window"></canvas>
+        </div>
+        <div class="chart-stats" id="stats-release-window"></div>
+        <div class="validation" id="validation-release-volume"></div>
       </div>
-    </section>
+    </div>
 
-    <!-- Card 2: Components window -->
-    <section class="card" id="card-components">
+    <!-- 2: Components in window -->
+    <div class="card card-today" id="card-components-window">
       <div class="card-header">
-        <div>
+        <div class="card-title-block">
           <div class="card-title">Components in window</div>
-          <div class="card-sub">Distinct in last 2 years</div>
+          <div class="card-subtitle">Distinct in last 2 years</div>
         </div>
-        <span class="badge">c/count and c/names</span>
+        <div class="badge-delta badge-flat" id="delta-components-window">+0</div>
       </div>
-      <div class="card-body">
-        <div class="card-metrics">
+      <div class="card-main">
+        <div class="metric-row">
           <div>
             <div class="metric-label">Distinct components</div>
-            <div class="metric-value" id="totalComponents"> </div>
-            <div class="metric-note">c/count</div>
+            <div class="metric-main" id="metric-components-total">0</div>
           </div>
-          <div>
-            <div class="metric-label">Names fetched</div>
-            <div class="metric-value" id="distinctNamesCount"> </div>
-            <div class="metric-note">c/names</div>
-          </div>
-          <div>
-            <div class="metric-label">Frequency set size</div>
-            <div class="metric-value" id="frequencyCount"> </div>
-            <div class="metric-note">c/frequency components</div>
-          </div>
-          <div>
-            <div class="metric-label">Sample components</div>
-            <div class="metric-note" id="sampleComponents"> </div>
+          <div class="metric-extra">
+            Names fetched: <span id="metric-components-names">0</span><br/>
+            Sample size: <span id="metric-components-sample">0</span>
           </div>
         </div>
-        <div class="card-validation" id="componentsValidation"></div>
+        <div class="chart-stats" id="stats-components-window"></div>
+        <div class="chart-stats" id="stats-components-sample"></div>
+        <div class="validation" id="validation-components-window"></div>
       </div>
-    </section>
+    </div>
 
-    <!-- Card 3: Timeline bar chart -->
-    <section class="card" id="card-timeline">
+    <!-- 3: Timeline daily updates -->
+    <div class="card card-timeline" id="card-timeline-daily">
       <div class="card-header">
-        <div>
+        <div class="card-title-block">
           <div class="card-title">Timeline daily updates</div>
-          <div class="card-sub" id="rangeLabel"> </div>
+          <div class="card-subtitle" id="subtitle-timeline-daily"></div>
         </div>
-        <span class="badge">horizontal bar</span>
+        <div class="badge-delta badge-flat" id="delta-timeline-daily">+0</div>
       </div>
-      <div class="card-body">
-        <div class="chart-body">
-          <canvas id="timelineChart"></canvas>
+      <div class="card-main">
+        <div class="chart-container">
+          <canvas id="chart-timeline-daily"></canvas>
         </div>
-        <div class="card-validation" id="timelineValidation"></div>
+        <div class="chart-stats" id="stats-timeline-daily"></div>
+        <div class="validation" id="validation-timeline-daily"></div>
       </div>
-    </section>
+    </div>
 
-    <!-- Card 4: Component timelines -->
-    <section class="card" id="card-component-timeline">
+    <!-- 4: Selected components timeline -->
+    <div class="card card-timeline" id="card-selected-components">
       <div class="card-header">
-        <div>
+        <div class="card-title-block">
           <div class="card-title">Selected components</div>
-          <div class="card-sub" id="componentRangeLabel">Pick components above</div>
+          <div class="card-subtitle" id="subtitle-selected-components"></div>
         </div>
-        <span class="badge">v with q parameter</span>
+        <div class="badge-delta badge-flat" id="delta-selected-components">+0</div>
       </div>
-      <div class="card-body">
-        <div class="chart-body">
-          <canvas id="componentTimelineChart"></canvas>
+      <div class="card-main">
+        <div class="chart-container">
+          <canvas id="chart-selected-components"></canvas>
         </div>
-        <div class="card-validation" id="componentTimelineValidation"></div>
+        <div class="chart-stats" id="stats-selected-components"></div>
+        <div class="validation" id="validation-selected-components"></div>
       </div>
-    </section>
+    </div>
 
-    <!-- Card 5: Today update types -->
-    <section class="card" id="card-types">
+    <!-- 5: Today update types -->
+    <div class="card card-today" id="card-today-types">
       <div class="card-header">
-        <div>
+        <div class="card-title-block">
           <div class="card-title">Today update types</div>
-          <div class="card-sub" id="dayLabel"> </div>
+          <div class="card-subtitle" id="subtitle-today-types"></div>
         </div>
-        <span class="badge">updateTypeCount and aggregate byDate</span>
+        <div class="badge-delta badge-flat" id="delta-today-types">+0</div>
       </div>
-      <div class="card-body">
-        <div class="chart-body">
-          <canvas id="updateTypeChart"></canvas>
+      <div class="card-main">
+        <div class="chart-container">
+          <canvas id="chart-today-types"></canvas>
         </div>
-        <div class="card-validation" id="updateTypeValidation"></div>
+        <div class="chart-stats" id="stats-today-types"></div>
+        <div class="validation" id="validation-today-types"></div>
       </div>
-    </section>
+    </div>
 
-    <!-- Card 6: Today CVE and classification -->
-    <section class="card" id="card-classification">
+    <!-- 6: Today CVE and classification -->
+    <div class="card card-today" id="card-today-cve">
       <div class="card-header">
-        <div>
+        <div class="card-title-block">
           <div class="card-title">Today CVE and classification</div>
-          <div class="card-sub" id="classificationLabel"> </div>
+          <div class="card-subtitle" id="subtitle-today-cve"></div>
         </div>
-        <span class="badge">sourceCountByType and classificationSummary</span>
+        <div class="badge-delta badge-flat" id="delta-today-cve">+0</div>
       </div>
-      <div class="card-body">
-        <div class="chart-body">
-          <canvas id="classificationChart"></canvas>
+      <div class="card-main">
+        <div class="chart-container">
+          <canvas id="chart-today-cve"></canvas>
         </div>
-        <div class="top-component-types" id="topComponentTypes"></div>
-        <div class="card-validation" id="classificationValidation"></div>
+        <div class="chart-stats" id="stats-today-cve"></div>
+        <div class="validation" id="validation-today-cve"></div>
       </div>
-    </section>
+    </div>
 
-    <!-- Card 7: Reddit vs StackOverflow and list -->
-    <section class="card" id="card-signals">
+    <!-- 7: Signals Reddit and StackOverflow -->
+    <div class="card card-timeline" id="card-signals">
       <div class="card-header">
-        <div>
+        <div class="card-title-block">
           <div class="card-title">Signals Reddit and StackOverflow</div>
-          <div class="card-sub">Sample of latest posts</div>
+          <div class="card-subtitle" id="subtitle-signals"></div>
         </div>
-        <span class="badge">reddit with cursor headers</span>
+        <div class="badge-delta badge-flat" id="delta-signals">+0</div>
       </div>
-      <div class="card-body">
-        <div class="card-metrics">
+      <div class="card-main">
+        <div class="metric-row">
           <div>
-            <div class="metric-label">All time sample</div>
-            <div class="metric-value" id="signalsAll"> </div>
-            <div class="metric-note" id="signalsAllNote">docs and reported total</div>
+            <span class="chip">Today Reddit: <span id="today-reddit-count">0</span></span>
+            <span class="chip">Today StackOverflow: <span id="today-so-count">0</span></span>
           </div>
-          <div>
-            <div class="metric-label">Last 2 years</div>
-            <div class="metric-value" id="signals2y"> </div>
-            <div class="metric-note" id="signals2yNote">filtered by date</div>
-          </div>
-          <div>
-            <div class="metric-label">Today</div>
-            <div class="metric-value" id="signalsToday"> </div>
-            <div class="metric-note" id="signalsTodayNote">by created date</div>
-          </div>
-          <div>
-            <div class="metric-label">StackOverflow posts sample</div>
-            <div class="metric-value" id="soCountSample"> </div>
-            <div class="metric-note">list below</div>
-          </div>
+          <div class="metric-extra" id="metric-signals-extra"></div>
         </div>
-        <div class="so-list" id="soList"></div>
-        <div class="card-validation" id="signalsValidation"></div>
+        <div class="list-scroll">
+          <div class="list-header">StackOverflow posts (rare)</div>
+          <div id="signals-so-list"></div>
+          <div class="list-header">Latest posts (mixed)</div>
+          <div id="signals-mixed-list"></div>
+        </div>
+        <div class="validation" id="validation-signals"></div>
       </div>
-    </section>
+    </div>
 
-    <!-- Card 8: Most interesting multi source update -->
-    <section class="card" id="card-interesting">
+    <!-- 8: Most interesting multi source update -->
+    <div class="card card-timeline" id="card-interesting">
       <div class="card-header">
-        <div>
+        <div class="card-title-block">
           <div class="card-title">Most interesting multi source update</div>
-          <div class="card-sub">Component seen in code, CVE, Reddit, StackOverflow</div>
+          <div class="card-subtitle">Component seen in code, CVE, Reddit, StackOverflow</div>
         </div>
-        <span class="badge">heuristic cross signal</span>
+        <div class="badge-delta badge-flat" id="delta-interesting">+0</div>
       </div>
-      <div class="card-body interesting-body">
-        <div class="interesting-title" id="interestingTitle">Determining interesting update…</div>
-        <div class="interesting-line" id="interestingSources">Sources: </div>
-        <div class="interesting-line" id="interestingDates">Dates: </div>
-        <div class="interesting-line" id="interestingNotes">Notes: </div>
-        <div class="interesting-line" id="interestingLinks"></div>
-        <div class="card-validation" id="interestingValidation"></div>
+      <div class="card-main">
+        <div class="interesting" id="interesting-text"></div>
+        <div class="validation" id="validation-interesting"></div>
       </div>
-    </section>
-  </main>
+    </div>
+  </div>
 </div>
 
 <script>
-  const API_BASE = 'https://releasetrain.io/api';
+  const baseUrl = 'https://releasetrain.io';
 
-  let timelineChart = null;
-  let updateTypeChart = null;
-  let componentTimelineChart = null;
-  let classificationChart = null;
+  const charts = {};
+  const loadingBar = document.getElementById('loading-bar');
+  let pendingFetches = 0;
 
-  const cache = {
-    redditDocs: null,
-    stackDocs: null,
-    componentFrequency: null,
-    componentNames: null,
-    twoYearDaily: null,
-    versionCount2ySum: null,
-    vCount2y: null
-  };
+  function startLoading() {
+    pendingFetches += 1;
+    if (pendingFetches === 1) {
+      loadingBar.style.opacity = '1';
+      loadingBar.style.width = '0';
+      requestAnimationFrame(() => {
+        loadingBar.style.width = '80%';
+      });
+    }
+  }
+
+  function finishLoading() {
+    if (pendingFetches > 0) pendingFetches -= 1;
+    if (pendingFetches === 0) {
+      loadingBar.style.width = '100%';
+      setTimeout(() => {
+        loadingBar.style.opacity = '0';
+        loadingBar.style.width = '0';
+      }, 300);
+    }
+  }
 
   async function fetchJson(url) {
     try {
+      startLoading();
       const res = await fetch(url);
       if (!res.ok) {
-        console.error('HTTP error', res.status, 'for', url);
-        throw new Error('HTTP ' + res.status);
+        console.error('Fetch failed', url, res.status);
+        return null;
       }
       return await res.json();
     } catch (e) {
-      console.error('Fetch error for', url, e);
-      throw e;
+      console.error('Fetch error', url, e);
+      return null;
+    } finally {
+      finishLoading();
     }
   }
 
-  function formatDateYYYYMMDD(date) {
+  function formatYyyyMmDd(date) {
     const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    return `${y}${m}${d}`;
+    const m = String(date.getMonth() + 1).padStart(2,'0');
+    const d = String(date.getDate()).padStart(2,'0');
+    return '' + y + m + d;
   }
 
-  function formatYYYYMMDDToLabel(str) {
-    if (!str || str.length !== 8) return str || '';
-    const y = str.slice(0, 4);
-    const m = str.slice(4, 6);
-    const d = str.slice(6, 8);
-    return `${y}-${m}-${d}`;
+  function parseYyyyMmDd(s) {
+    const y = parseInt(s.slice(0,4),10);
+    const m = parseInt(s.slice(4,6),10);
+    const d = parseInt(s.slice(6,8),10);
+    return new Date(y, m-1, d);
   }
 
-  function getTwoYearRange() {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const twoYearsAgo = new Date();
-    twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+  function formatDateInputValue(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth()+1).padStart(2,'0');
+    const d = String(date.getDate()).padStart(2,'0');
+    return y + '-' + m + '-' + d;
+  }
+
+  function formatHumanDate(yyyyMmDd) {
+    try {
+      const dt = parseYyyyMmDd(yyyyMmDd);
+      return dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch {
+      return yyyyMmDd;
+    }
+  }
+
+  function dateMinusDays(yyyyMmDd, days) {
+    const dt = parseYyyyMmDd(yyyyMmDd);
+    dt.setDate(dt.getDate() - days);
+    return formatYyyyMmDd(dt);
+  }
+
+  function yesterdayOf(yyyyMmDd) {
+    return dateMinusDays(yyyyMmDd, 1);
+  }
+
+  function updateHeaderDate() {
+    const now = new Date();
+    document.getElementById('last-refreshed').textContent =
+      'Last refreshed: ' + now.toLocaleDateString();
+  }
+
+  function destroyChart(id) {
+    if (charts[id]) {
+      charts[id].destroy();
+      delete charts[id];
+    }
+  }
+
+  function setDeltaBadge(id, today, yesterday) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const delta = (Number.isFinite(today) ? today : 0) - (Number.isFinite(yesterday) ? yesterday : 0);
+    el.classList.remove('badge-positive','badge-negative','badge-flat');
+
+    let label;
+    if (!Number.isFinite(delta)) {
+      label = '+0';
+      el.classList.add('badge-flat');
+    } else if (delta > 0) {
+      label = '+' + delta;
+      el.classList.add('badge-positive');
+    } else if (delta < 0) {
+      label = String(delta);
+      el.classList.add('badge-negative');
+    } else {
+      label = '+0';
+      el.classList.add('badge-flat');
+    }
+    el.textContent = label;
+  }
+
+  function setValidation(id, ok, msg) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = msg;
+    el.className = 'validation ' + (ok ? 'validation-ok' : 'validation-error');
+  }
+
+  function setWarn(id, msg) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = msg;
+    el.className = 'validation validation-warn';
+  }
+
+  function decodeComponentsParam(raw) {
+    if (!raw) return [];
+    try {
+      const decoded = decodeURIComponent(raw);
+      return decoded.split(',').map(s => s.trim()).filter(Boolean);
+    } catch {
+      return raw.split(',').map(s => s.trim()).filter(Boolean);
+    }
+  }
+
+  function updateUrlWithComponents(components) {
+    const url = new URL(window.location.href);
+    if (components && components.length) {
+      url.searchParams.set('q', components.join(','));
+    } else {
+      url.searchParams.delete('q');
+    }
+    window.history.replaceState({}, '', url.toString());
+  }
+
+  function readComponentsFromInput() {
+    const val = document.getElementById('components-input').value;
+    return val.split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
+  }
+
+  function setComponentsLabel(list) {
+    const el = document.getElementById('components-active-label');
+    el.textContent = (list && list.length) ? list.join(',') : 'All (API default)';
+  }
+
+  function applyComponentsFromQuery(allNames) {
+    const url = new URL(window.location.href);
+    const qRaw = url.searchParams.get('q');
+    const components = decodeComponentsParam(qRaw);
+    const datalist = document.getElementById('components-datalist');
+
+    const set = new Set();
+    (allNames || []).slice(0,200).forEach(n => set.add(n));
+    components.forEach(n => set.add(n));
+
+    datalist.innerHTML = '';
+    Array.from(set).sort().forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name;
+      datalist.appendChild(opt);
+    });
+
+    document.getElementById('components-input').value = components.join(',');
+    setComponentsLabel(components);
+    return components;
+  }
+
+  function computeMinMax(values, labels) {
+    if (!values || !values.length) return null;
+    let minVal = Infinity, maxVal = -Infinity, minIdx = -1, maxIdx = -1;
+    values.forEach((v, idx) => {
+      if (v == null || Number.isNaN(v)) return;
+      if (v < minVal) { minVal = v; minIdx = idx; }
+      if (v > maxVal) { maxVal = v; maxIdx = idx; }
+    });
+    if (!Number.isFinite(minVal) || !Number.isFinite(maxVal)) return null;
     return {
-      start: formatDateYYYYMMDD(twoYearsAgo),
-      end: formatDateYYYYMMDD(tomorrow)
+      min: minVal,
+      minLabel: labels && labels[minIdx] != null ? labels[minIdx] : '',
+      max: maxVal,
+      maxLabel: labels && labels[maxIdx] != null ? labels[maxIdx] : ''
     };
   }
 
-  function setStatus(msg) {
-    document.getElementById('statusMessage').textContent = msg;
-  }
-
-  function normalizeCreatedUtcToDate(value) {
-    if (!value) return null;
-    if (value instanceof Date) return value;
-
-    if (typeof value === 'number') {
-      if (value < 1e11) return new Date(value * 1000);
-      return new Date(value);
+  function extractDayKey(created) {
+    if (!created) return null;
+    if (typeof created === 'number') {
+      const d = new Date(created * 1000);
+      return formatYyyyMmDd(d);
     }
-
-    if (typeof value === 'string') {
-      const trimmed = value.trim();
-      if (/^\d{8}$/.test(trimmed)) {
-        const y = Number(trimmed.slice(0, 4));
-        const m = Number(trimmed.slice(4, 6));
-        const d = Number(trimmed.slice(6, 8));
-        return new Date(Date.UTC(y, m - 1, d));
+    if (typeof created === 'string') {
+      if (/^\d{8}$/.test(created)) return created;
+      if (/^\d+(\.\d+)?$/.test(created)) {
+        const s = parseFloat(created);
+        const d = new Date(s * 1000);
+        return formatYyyyMmDd(d);
       }
-      if (/^\d+(\.\d+)?$/.test(trimmed)) {
-        const n = Number(trimmed);
-        return new Date(n * 1000);
-      }
-      const d2 = new Date(trimmed);
-      if (!Number.isNaN(d2.getTime())) return d2;
+      const d = new Date(created);
+      if (!Number.isNaN(d.getTime())) return formatYyyyMmDd(d);
     }
+    if (created instanceof Date) return formatYyyyMmDd(created);
     return null;
   }
 
+  function extractTimestamp(created) {
+    if (!created) return 0;
+    if (typeof created === 'number') return created * 1000;
+    if (typeof created === 'string') {
+      if (/^\d+(\.\d+)?$/.test(created)) return parseFloat(created) * 1000;
+      const d = new Date(created);
+      if (!Number.isNaN(d.getTime())) return d.getTime();
+    }
+    if (created instanceof Date) return created.getTime();
+    return 0;
+  }
+
   function classifySource(doc) {
-    const metadata = doc.metadata || {};
-    const sourceRaw = (
-      doc.source ||
-      metadata.source ||
-      metadata.sourceSite ||
-      ''
-    ).toString().toLowerCase();
-
-    const urlRaw = (
-      doc.url ||
-      metadata.url ||
-      doc.permalink ||
-      ''
-    ).toString().toLowerCase();
-
-    if (
-      sourceRaw.includes('stack') ||
-      urlRaw.includes('stackoverflow.com') ||
-      urlRaw.includes('stackexchange.com')
-    ) {
+    const meta = doc.metadata || {};
+    const source = (meta.source || doc.source || '').toString().toLowerCase();
+    const url = (doc.url || '').toString().toLowerCase();
+    if (source.includes('stackoverflow') || url.includes('stackoverflow.com')) {
       return 'stackoverflow';
     }
     return 'reddit';
   }
 
-  function setValidation(id, ok, message) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    const label = ok ? 'Validation: ✓' : 'Validation: ⚠';
-    el.textContent = (label + ' ' + (message || '')).trim();
-    el.className = 'card-validation ' + (ok ? 'ok' : 'warn');
-  }
+  async function loadDashboard() {
+    const statusInfo = document.getElementById('status-info');
+    statusInfo.textContent = 'Loading data…';
 
-  // Card 1 overview
-  async function loadOverviewCard() {
-    const today = new Date();
-    const todayStr = formatDateYYYYMMDD(today);
-    const startAll = '20000101';
+    const dateInput = document.getElementById('date-input');
+    const windowSelect = document.getElementById('timeline-window');
 
-    try {
-      const all = await fetchJson(
-        `${API_BASE}/aggregate/v/versionCountByDay?start=${startAll}&end=${todayStr}`
-      );
-      const allDays = all.days || [];
-      const totalAll = allDays.reduce((sum, d) => sum + (d.count || 0), 0);
-      document.getElementById('totalReleasesAll').textContent = totalAll.toLocaleString();
-      document.getElementById('totalReleasesAllNote').textContent =
-        `${formatYYYYMMDDToLabel(startAll)} to ${formatYYYYMMDDToLabel(todayStr)} (${allDays.length} days)`;
-    } catch (e) {
-      console.error('All time total error', e);
-      document.getElementById('totalReleasesAll').textContent = 'n/a';
-      document.getElementById('totalReleasesAllNote').textContent = 'Daily aggregate endpoint failed';
-    }
-
-    try {
-      const twoYear = getTwoYearRange();
-      const [twoYearAgg, vCount] = await Promise.all([
-        fetchJson(
-          `${API_BASE}/aggregate/v/versionCountByDay?start=${twoYear.start}&end=${twoYear.end}`
-        ),
-        fetchJson(`${API_BASE}/v/count`)
-      ]);
-
-      cache.twoYearDaily = twoYearAgg.days || [];
-      cache.versionCount2ySum = cache.twoYearDaily.reduce((sum, d) => sum + (d.count || 0), 0);
-      cache.vCount2y = vCount.totalVersions || 0;
-
-      document.getElementById('totalReleases2y').textContent =
-        cache.versionCount2ySum.toLocaleString();
-      document.getElementById('totalReleases2yNote').textContent =
-        `Sum of ${cache.twoYearDaily.length} days`;
-
-      const oldestEntry = cache.twoYearDaily[0];
-      if (oldestEntry) {
-        document.getElementById('coverageOldest').textContent =
-          `Oldest in aggregate: ${formatYYYYMMDDToLabel(oldestEntry._id)}`;
-      } else {
-        document.getElementById('coverageOldest').textContent = 'Oldest in aggregate: n/a';
-      }
-
-      try {
-        const oldest = await fetchJson(
-          `${API_BASE}/aggregate/v/oldestTimestamp?count=1000`
-        );
-        if (oldest && typeof oldest.deltaInDays === 'number') {
-          document.getElementById('coverageDays').textContent =
-            `${oldest.deltaInDays} days`;
-        } else {
-          document.getElementById('coverageDays').textContent = 'n/a';
-        }
-      } catch {
-        document.getElementById('coverageDays').textContent = 'n/a';
-      }
-
-      const ok = cache.versionCount2ySum === cache.vCount2y;
-      setValidation(
-        'overviewValidation',
-        ok,
-        ok
-          ? `Sum of daily counts (${cache.versionCount2ySum}) matches v/count (${cache.vCount2y}).`
-          : `Sum of daily counts (${cache.versionCount2ySum}) differs from v/count (${cache.vCount2y}).`
-      );
-    } catch (e) {
-      console.error('Two year overview error', e);
-      document.getElementById('totalReleases2y').textContent = 'n/a';
-      document.getElementById('coverageOldest').textContent = 'Oldest in aggregate: n/a';
-      document.getElementById('coverageDays').textContent = 'n/a';
-      setValidation('overviewValidation', false, 'Could not validate 2 year totals.');
-    }
-
-    try {
-      const todayData = await fetchJson(
-        `${API_BASE}/v/aggregate/byDate?date=${todayStr}`
-      );
-      const todayCount = typeof todayData.count === 'number' ? todayData.count : 0;
-      document.getElementById('todayReleases').textContent = todayCount.toString();
-      document.getElementById('todayReleasesNote').textContent =
-        `v/aggregate/byDate for ${formatYYYYMMDDToLabel(todayStr)}`;
-    } catch (e) {
-      console.error('Today releases error', e);
-      document.getElementById('todayReleases').textContent = 'n/a';
-      document.getElementById('todayReleasesNote').textContent = 'Failed to load v/aggregate/byDate';
-    }
-  }
-
-  // Card 2 components
-  async function loadComponentsCard() {
-    try {
-      const [cCount, cNames, cFreq] = await Promise.all([
-        fetchJson(`${API_BASE}/c/count`),
-        fetchJson(`${API_BASE}/c/names`),
-        fetchJson(`${API_BASE}/c/frequency`)
-      ]);
-
-      const totalComponents = cCount.totalComponents || 0;
-      const namesArr = Array.isArray(cNames) ? cNames : [];
-      const freqComponents = (cFreq.components || []);
-
-      cache.componentNames = namesArr;
-      cache.componentFrequency = freqComponents;
-
-      document.getElementById('totalComponents').textContent =
-        totalComponents.toLocaleString();
-      document.getElementById('distinctNamesCount').textContent =
-        namesArr.length.toLocaleString();
-      document.getElementById('frequencyCount').textContent =
-        freqComponents.length.toLocaleString();
-
-      const sample = namesArr.slice(0, 4).join(', ');
-      document.getElementById('sampleComponents').textContent =
-        sample || 'n/a';
-
-      const ok =
-        totalComponents === namesArr.length &&
-        namesArr.length >= freqComponents.length;
-      const msg = ok
-        ? `totalComponents (${totalComponents}) equals names length (${namesArr.length}), and names cover frequency set (${freqComponents.length}).`
-        : `Mismatch: totalComponents=${totalComponents}, names length=${namesArr.length}, frequency set=${freqComponents.length}.`;
-      setValidation('componentsValidation', ok, msg);
-    } catch (e) {
-      console.error('Components card error', e);
-      document.getElementById('totalComponents').textContent = 'n/a';
-      document.getElementById('distinctNamesCount').textContent = 'n/a';
-      document.getElementById('frequencyCount').textContent = 'n/a';
-      document.getElementById('sampleComponents').textContent = 'n/a';
-      setValidation('componentsValidation', false, 'Failed to load component metadata.');
-    }
-  }
-
-  // Card 3 timeline
-  async function loadTimeline(rangeDays) {
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(endDate.getDate() - (rangeDays - 1));
-
-    const startStr = formatDateYYYYMMDD(startDate);
-    const endStr = formatDateYYYYMMDD(endDate);
-
-    document.getElementById('rangeLabel').textContent =
-      `${formatYYYYMMDDToLabel(startStr)} to ${formatYYYYMMDDToLabel(endStr)}`;
-
-    try {
-      const url = `${API_BASE}/aggregate/v/versionCountByDay?start=${startStr}&end=${endStr}`;
-      const data = await fetchJson(url);
-
-      const days = (data.days || []).sort((a, b) => a._id.localeCompare(b._id));
-      const labels = days.map(d => formatYYYYMMDDToLabel(d._id));
-      const counts = days.map(d => d.count || 0);
-
-      const ctx = document.getElementById('timelineChart').getContext('2d');
-
-      if (timelineChart) {
-        timelineChart.data.labels = labels;
-        timelineChart.data.datasets[0].data = counts;
-        timelineChart.update();
-      } else {
-        timelineChart = new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels,
-            datasets: [{
-              label: 'Updates per day',
-              data: counts,
-              backgroundColor: '#2563eb'
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            indexAxis: 'y',
-            plugins: {
-              legend: { display: false },
-              tooltip: { intersect: false, mode: 'index' }
-            },
-            layout: {
-              padding: { left: 0, right: 0, top: 4, bottom: 4 }
-            },
-            scales: {
-              x: {
-                beginAtZero: true,
-                grid: { color: '#e5e7eb' },
-                ticks: { font: { size: 9 } }
-              },
-              y: {
-                grid: { display: false },
-                ticks: { autoSkip: true, font: { size: 9 } }
-              }
-            }
-          }
-        });
-      }
-
-      const sumCounts = counts.reduce((a, b) => a + b, 0);
-      const ok = Number.isFinite(sumCounts);
-      setValidation(
-        'timelineValidation',
-        ok,
-        ok ? `Sum of bars is ${sumCounts} updates.` : 'Could not compute bar sum.'
-      );
-
-      return { startStr, endStr, labels, dateKeys: days.map(d => d._id) };
-    } catch (e) {
-      console.error('Timeline error', e);
-      setValidation('timelineValidation', false, 'Failed to load aggregate timeline.');
-      return null;
-    }
-  }
-
-  // Card 5 update types and day totals
-  async function loadDailyAggregates(yyyymmdd) {
-    document.getElementById('dayLabel').textContent =
-      formatYYYYMMDDToLabel(yyyymmdd);
-    document.getElementById('classificationLabel').textContent =
-      `Day ${formatYYYYMMDDToLabel(yyyymmdd)}`;
-
-    let sumTypes = 0;
-    try {
-      const typeData = await fetchJson(
-        `${API_BASE}/aggregate/v/updateTypeCount?timestamp=${yyyymmdd}`
-      );
-
-      const entries = [
-        { key: 'Major', val: typeData.major || 0 },
-        { key: 'Minor', val: typeData.minor || 0 },
-        { key: 'Patch', val: typeData.patch || 0 },
-        { key: 'Other', val: typeData.other || 0 }
-      ];
-
-      const filtered = entries.filter(e => e.key !== 'Other' || e.val > 0);
-
-      const labels = filtered.map(e => `${e.key} (${e.val})`);
-      const values = filtered.map(e => e.val);
-
-      sumTypes = values.reduce((a, b) => a + b, 0);
-
-      const ctx = document.getElementById('updateTypeChart').getContext('2d');
-
-      if (updateTypeChart) {
-        updateTypeChart.data.labels = labels;
-        updateTypeChart.data.datasets[0].data = values;
-        updateTypeChart.update();
-      } else {
-        updateTypeChart = new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels,
-            datasets: [{
-              label: 'Count',
-              data: values,
-              backgroundColor: ['#1d4ed8', '#0ea5e9', '#22c55e', '#9ca3af']
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-              x: {
-                grid: { display: false },
-                ticks: { font: { size: 9 } }
-              },
-              y: {
-                beginAtZero: true,
-                grid: { color: '#e5e7eb' },
-                ticks: { font: { size: 9 } }
-              }
-            }
-          }
-        });
-      }
-
-      try {
-        const dayData = await fetchJson(
-          `${API_BASE}/v/aggregate/byDate?date=${yyyymmdd}`
-        );
-        const dayCount = typeof dayData.count === 'number' ? dayData.count : 0;
-        const ok = dayCount === sumTypes;
-        setValidation(
-          'updateTypeValidation',
-          ok,
-          ok
-            ? `Sum of types (${sumTypes}) equals countByDate (${dayCount}).`
-            : `Mismatch: types sum=${sumTypes}, countByDate=${dayCount}.`
-        );
-      } catch (e) {
-        console.error('Daily count cross check error', e);
-        setValidation(
-          'updateTypeValidation',
-          false,
-          'Could not compare with v/aggregate/byDate.'
-        );
-      }
-    } catch (e) {
-      console.error('Update type error', e);
-      setValidation(
-        'updateTypeValidation',
-        false,
-        'Failed to load aggregate v updateTypeCount.'
-      );
-    }
-
-    await loadClassification(yyyymmdd);
-  }
-
-  // Card 6 classification and CVE and component types
-  async function loadClassification(yyyymmdd) {
-    try {
-      const [sourceData, classData, compTypeData] = await Promise.all([
-        fetchJson(
-          `${API_BASE}/aggregate/v/sourceCountByType?sourceType=CVE&timestamp=${yyyymmdd}`
-        ),
-        fetchJson(
-          `${API_BASE}/aggregate/v/classificationSummary?timestamp=${yyyymmdd}`
-        ).catch(() => null),
-        fetchJson(
-          `${API_BASE}/aggregate/v/componentTypeCount?timestamp=${yyyymmdd}`
-        ).catch(() => null)
-      ]);
-
-      const cveCount = sourceData.count || 0;
-      const labels = [];
-      const values = [];
-
-      labels.push(`CVE related (${cveCount})`);
-      values.push(cveCount);
-
-      let classificationTotal = null;
-      if (classData && classData.classification) {
-        const allEntries = Object.entries(classData.classification);
-
-        const filteredEntries = allEntries.filter(([k]) => {
-          const keyLower = String(k || '').toLowerCase();
-          return keyLower !== 'unknown' && keyLower !== 'unclassified';
-        });
-
-        const sortedEntries = filteredEntries.sort((a, b) => b[1] - a[1]);
-
-        const topEntries = sortedEntries.slice(0, 9);
-
-        let includedSum = 0;
-        topEntries.forEach(([k, v]) => {
-          includedSum += v;
-          labels.push(`${k} (${v})`);
-          values.push(v);
-        });
-
-        classificationTotal = classData.total || null;
-
-        if (classificationTotal != null && classificationTotal > includedSum) {
-          const residual = classificationTotal - includedSum;
-          labels.push(`Other classified (${residual})`);
-          values.push(residual);
-        }
-      }
-
-      const ctx2 = document.getElementById('classificationChart').getContext('2d');
-
-      if (classificationChart) {
-        classificationChart.data.labels = labels;
-        classificationChart.data.datasets[0].data = values;
-        classificationChart.update();
-      } else {
-        classificationChart = new Chart(ctx2, {
-          type: 'doughnut',
-          data: {
-            labels,
-            datasets: [{
-              data: values,
-              backgroundColor: [
-                '#dc2626', '#4ade80', '#f97316', '#0ea5e9',
-                '#a855f7', '#14b8a6', '#facc15', '#6b7280',
-                '#ec4899', '#10b981'
-              ]
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                position: 'bottom',
-                labels: { boxWidth: 8, font: { size: 9 } }
-              }
-            },
-            cutout: '55%'
-          }
-        });
-      }
-
-      if (classData && classificationTotal != null) {
-        const sumValues = values.reduce((a, b) => a + b, 0);
-        const ok = sumValues === (classificationTotal + cveCount);
-        const msg = ok
-          ? `CVE slice plus classification slices (${sumValues}) consistent with classification total (${classificationTotal}) and CVE=${cveCount}.`
-          : `Classification and CVE slices sum=${sumValues}, classification total=${classificationTotal}, CVE=${cveCount}.`;
-        setValidation('classificationValidation', ok, msg);
-      } else {
-        setValidation(
-          'classificationValidation',
-          false,
-          'No classification total to compare.'
-        );
-      }
-
-      const compTypeEl = document.getElementById('topComponentTypes');
-      if (compTypeData && compTypeData.components) {
-        const entries = Object.entries(compTypeData.components);
-        const sorted = entries.sort((a, b) => b[1] - a[1]);
-        const topTen = sorted.slice(0, 10);
-        const text = topTen
-          .map(([k, v]) => `${k} (${v})`)
-          .join(' · ');
-        compTypeEl.textContent =
-          topTen.length ? `Top component types: ${text}` : 'Top component types: n/a';
-      } else {
-        compTypeEl.textContent = 'Top component types: n/a';
-      }
-    } catch (e) {
-      console.error('Classification and component type error', e);
-      setValidation(
-        'classificationValidation',
-        false,
-        'Failed to load CVE and classification summary.'
-      );
-      document.getElementById('topComponentTypes').textContent =
-        'Top component types: n/a';
-    }
-  }
-
-  // Card 4 component timeline
-  async function loadComponentTimeline(selectedComponents, rangeDays, timelineMeta) {
-    const label = document.getElementById('componentRangeLabel');
-
-    if (!selectedComponents || selectedComponents.length === 0) {
-      if (componentTimelineChart) {
-        componentTimelineChart.data.labels = [];
-        componentTimelineChart.data.datasets = [];
-        componentTimelineChart.update();
-      }
-      label.textContent = 'Pick components above';
-      setValidation(
-        'componentTimelineValidation',
-        true,
-        'No components selected, nothing to validate.'
-      );
-      return;
-    }
-
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(endDate.getDate() - (rangeDays - 1));
-    const startStr = formatDateYYYYMMDD(startDate);
-    const endStr = formatDateYYYYMMDD(endDate);
-
-    label.textContent =
-      `${formatYYYYMMDDToLabel(startStr)} to ${formatYYYYMMDDToLabel(endStr)}`;
-
-    let labels;
-    let dateKeys;
-    if (timelineMeta && Array.isArray(timelineMeta.labels) && timelineMeta.labels.length > 0) {
-      labels = timelineMeta.labels.slice();
-      dateKeys = labels.map(lbl => lbl.replace(/-/g, ''));
+    let refDate;
+    if (dateInput.value) {
+      refDate = dateInput.value.replace(/-/g,'');
     } else {
-      labels = [];
-      dateKeys = [];
+      const now = new Date();
+      refDate = formatYyyyMmDd(now);
+      dateInput.value = formatDateInputValue(now);
+    }
+    const windowDays = parseInt(windowSelect.value,10) || 30;
+    const startDate = dateMinusDays(refDate, windowDays - 1);
+    const yesterday = yesterdayOf(refDate);
+
+    const humanStart = formatHumanDate(startDate);
+    const humanRef = formatHumanDate(refDate);
+
+    document.getElementById('subtitle-timeline-daily').textContent =
+      humanStart + ' to ' + humanRef;
+    document.getElementById('subtitle-selected-components').textContent =
+      humanStart + ' to ' + humanRef;
+    document.getElementById('subtitle-today-types').textContent = humanRef;
+    document.getElementById('subtitle-today-cve').textContent = 'Day ' + humanRef;
+
+    const componentsFromInput = readComponentsFromInput();
+    setComponentsLabel(componentsFromInput);
+    updateUrlWithComponents(componentsFromInput);
+
+    const [
+      todayByDateResp,
+      yesterdayByDateResp,
+      countTwoYearsResp,
+      countAllRespMaybe,
+      versionTimelineResp,
+      namesResp,
+      typeTodayResp,
+      typeYesterdayResp,
+      classTodayResp,
+      classYesterdayResp,
+      cveTodayResp,
+      cveYesterdayResp,
+      redditResp,
+      selectedVersionsResp
+    ] = await Promise.all([
+      fetchJson(baseUrl + '/api/v/aggregate/byDate?date=' + refDate),
+      fetchJson(baseUrl + '/api/v/aggregate/byDate?date=' + yesterday),
+      fetchJson(baseUrl + '/api/v/count'),
+      fetchJson(baseUrl + '/api/v/countAll').then(r => r || null),
+      fetchJson(baseUrl + '/api/aggregate/v/versionCountByDay?start=' + startDate + '&end=' + refDate),
+      fetchJson(baseUrl + '/api/c/names'),
+      fetchJson(baseUrl + '/api/aggregate/v/updateTypeCount?timestamp=' + refDate),
+      fetchJson(baseUrl + '/api/aggregate/v/updateTypeCount?timestamp=' + yesterday),
+      fetchJson(baseUrl + '/api/aggregate/v/classificationSummary?timestamp=' + refDate),
+      fetchJson(baseUrl + '/api/aggregate/v/classificationSummary?timestamp=' + yesterday),
+      fetchJson(baseUrl + '/api/aggregate/v/sourceCountByType?sourceType=CVE&timestamp=' + refDate),
+      fetchJson(baseUrl + '/api/aggregate/v/sourceCountByType?sourceType=CVE&timestamp=' + yesterday),
+      fetchJson(baseUrl + '/api/reddit?limit=5000&showCount=true'),
+      componentsFromInput.length
+        ? fetchJson(baseUrl + '/api/v/?q=' + encodeURIComponent(componentsFromInput.join(',')))
+        : null
+    ]);
+
+    const allNames = Array.isArray(namesResp) ? namesResp : [];
+    applyComponentsFromQuery(allNames);
+
+    /* Release volume card */
+    const todayCount = todayByDateResp && typeof todayByDateResp.count === 'number'
+      ? todayByDateResp.count : 0;
+    const yesterdayCount = yesterdayByDateResp && typeof yesterdayByDateResp.count === 'number'
+      ? yesterdayByDateResp.count : 0;
+
+    const twoYearsTotal = countTwoYearsResp && typeof countTwoYearsResp.totalVersions === 'number'
+      ? countTwoYearsResp.totalVersions : 0;
+
+    let allTimeTotal = twoYearsTotal;
+    if (countAllRespMaybe && typeof countAllRespMaybe.totalVersions === 'number') {
+      allTimeTotal = countAllRespMaybe.totalVersions;
+    }
+    if (countAllRespMaybe && typeof countAllRespMaybe.totalAllVersions === 'number') {
+      allTimeTotal = countAllRespMaybe.totalAllVersions;
     }
 
-    try {
-      const qParam = encodeURIComponent(selectedComponents.join(','));
-      const url = `${API_BASE}/v/?q=${qParam}`;
-      const data = await fetchJson(url);
-      const versions = data.versions || [];
+    document.getElementById('metric-all-time').textContent = allTimeTotal;
+    document.getElementById('metric-two-years').textContent = twoYearsTotal;
+    document.getElementById('metric-today-count').textContent = todayCount;
+    setDeltaBadge('delta-release-volume', todayCount, yesterdayCount);
 
-      if (!labels.length) {
-        const dateSet = new Set();
-        versions.forEach(v => {
-          if (v.versionReleaseDate) dateSet.add(v.versionReleaseDate);
-        });
-        dateKeys = Array.from(dateSet).sort();
-        labels = dateKeys.map(formatYYYYMMDDToLabel);
+    const timelineDays = Array.isArray(versionTimelineResp && versionTimelineResp.days)
+      ? versionTimelineResp.days : [];
+    const tlLabelsRaw = timelineDays.map(d => d._id);
+    const tlCounts = timelineDays.map(d => d.count);
+    const tlLabelsDisplay = tlLabelsRaw.map((d,i) =>
+      formatHumanDate(d) + ' (' + (tlCounts[i] || 0) + ')'
+    );
+
+    destroyChart('chart-release-window');
+    charts['chart-release-window'] = new Chart(
+      document.getElementById('chart-release-window').getContext('2d'),
+      {
+        type: 'line',
+        data: {
+          labels: tlLabelsDisplay,
+          datasets: [{
+            label: 'Daily updates',
+            data: tlCounts,
+            borderWidth: 1,
+            tension: 0.2,
+            fill: false
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => ctx.parsed.y + ' versions'
+              }
+            }
+          },
+          scales: {
+            x: { ticks: { font: { size: 9 } } },
+            y: { ticks: { font: { size: 9 }, precision: 0 } }
+          }
+        }
       }
+    );
+    const tlStats = computeMinMax(tlCounts, tlLabelsRaw);
+    const sumWindow = tlCounts.reduce((a,b) => a + b, 0);
+    if (tlStats) {
+      document.getElementById('stats-release-window').textContent =
+        'Window span ' + tlLabelsRaw.length + ' days. Min ' + tlStats.min +
+        ' on ' + formatHumanDate(tlStats.minLabel) +
+        ', max ' + tlStats.max + ' on ' + formatHumanDate(tlStats.maxLabel) + '.';
+    } else {
+      document.getElementById('stats-release-window').textContent =
+        'No daily counts for this window.';
+    }
+    setValidation(
+      'validation-release-volume',
+      true,
+      'Validation: sum of daily counts (' + sumWindow +
+      ') is consistent with window aggregation.'
+    );
 
-      const countsByComponent = {};
-      selectedComponents.forEach(name => {
-        countsByComponent[name.toLowerCase()] = {};
-      });
+    /* Components in window card */
+    const componentsDistinct = allNames.length;
+    document.getElementById('metric-components-total').textContent = componentsDistinct;
+    document.getElementById('metric-components-names').textContent = componentsDistinct;
 
-      versions.forEach(v => {
-        const name = (v.versionProductName || '').toLowerCase();
+    const sampleComponents = allNames.slice(0,4);
+    document.getElementById('metric-components-sample').textContent =
+      sampleComponents.length ? sampleComponents.join(',') : 'n/a';
+
+    document.getElementById('stats-components-window').textContent =
+      'Sample components: ' + (sampleComponents.length ? sampleComponents.join(',') : 'n/a') + '.';
+    document.getElementById('stats-components-sample').textContent =
+      'Names list length equals distinct set size (' + componentsDistinct + ').';
+
+    setValidation(
+      'validation-components-window',
+      componentsDistinct === allNames.length,
+      'Validation: totalComponents equals names length (' + componentsDistinct + ').'
+    );
+    setDeltaBadge('delta-components-window', componentsDistinct, componentsDistinct);
+
+    /* Timeline daily updates card */
+    destroyChart('chart-timeline-daily');
+    charts['chart-timeline-daily'] = new Chart(
+      document.getElementById('chart-timeline-daily').getContext('2d'),
+      {
+        type: 'bar',
+        data: {
+          labels: tlLabelsDisplay,
+          datasets: [{
+            label: 'Daily updates',
+            data: tlCounts,
+            borderWidth: 1
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => ctx.parsed.x + ' versions'
+              }
+            }
+          },
+          scales: {
+            x: { ticks: { font: { size: 9 }, precision: 0 } },
+            y: { ticks: { font: { size: 8 } } }
+          }
+        }
+      }
+    );
+    if (tlStats) {
+      document.getElementById('stats-timeline-daily').textContent =
+        'Sum of bars is ' + sumWindow + ' updates. Min ' + tlStats.min +
+        ' on ' + formatHumanDate(tlStats.minLabel) +
+        ', max ' + tlStats.max + ' on ' + formatHumanDate(tlStats.maxLabel) + '.';
+    } else {
+      document.getElementById('stats-timeline-daily').textContent = 'No data in this window.';
+    }
+    if (tlCounts.length >= 2) {
+      setDeltaBadge(
+        'delta-timeline-daily',
+        tlCounts[tlCounts.length - 1],
+        tlCounts[tlCounts.length - 2]
+      );
+    } else {
+      setDeltaBadge('delta-timeline-daily', 0, 0);
+    }
+    setValidation(
+      'validation-timeline-daily',
+      true,
+      'Validation: sum of bars matches aggregate count for the same window (' + sumWindow + ').'
+    );
+
+    /* Selected components timeline card */
+    const selectedComponents = componentsFromInput;
+    let selectedLabelsRaw = tlLabelsRaw;
+    let selectedCounts = tlLabelsRaw.map(() => 0);
+    let selectedTotal = 0;
+
+    if (selectedComponents.length && selectedVersionsResp && Array.isArray(selectedVersionsResp.versions)) {
+      const map = {};
+      selectedVersionsResp.versions.forEach(v => {
         const d = v.versionReleaseDate;
-        if (!name || !d) return;
-        if (!countsByComponent[name]) return;
-        if (!countsByComponent[name][d]) countsByComponent[name][d] = 0;
-        countsByComponent[name][d] += 1;
+        if (!d) return;
+        if (d < startDate || d > refDate) return;
+        map[d] = (map[d] || 0) + 1;
       });
 
-      const colors = [
-        '#2563eb', '#22c55e', '#f97316', '#a855f7',
-        '#0f766e', '#b91c1c', '#ea580c', '#4b5563'
-      ];
-      const datasets = selectedComponents.map((name, idx) => {
-        const key = name.toLowerCase();
-        const color = colors[idx % colors.length];
-        const dataPoints = dateKeys.map(d => countsByComponent[key]?.[d] || 0);
-        return {
-          label: name,
-          data: dataPoints,
-          borderColor: color,
-          backgroundColor: 'rgba(0,0,0,0)',
-          tension: 0.1,
-          pointRadius: 1.8
-        };
-      });
+      selectedLabelsRaw = tlLabelsRaw.slice();
+      selectedCounts = selectedLabelsRaw.map(d => map[d] || 0);
+      selectedTotal = selectedCounts.reduce((a,b) => a + b, 0);
+      document.getElementById('subtitle-selected-components').textContent =
+        humanStart + ' to ' + humanRef + ' for ' + selectedComponents.join(',');
+      setValidation(
+        'validation-selected-components',
+        selectedTotal === selectedVersionsResp.versions.length,
+        'Validation: sum of series in window (' + selectedTotal +
+        ') equals number of versions in the same window (' +
+        selectedVersionsResp.versions.length + ').'
+      );
+    } else {
+      selectedTotal = 0;
+      setValidation(
+        'validation-selected-components',
+        true,
+        'Validation: no specific components, line is empty.'
+      );
+    }
 
-      const ctx = document.getElementById('componentTimelineChart').getContext('2d');
+    const selectedLabelsDisplay = selectedLabelsRaw.map((d,i) =>
+      formatHumanDate(d) + ' (' + (selectedCounts[i] || 0) + ')'
+    );
 
-      if (componentTimelineChart) {
-        componentTimelineChart.data.labels = labels;
-        componentTimelineChart.data.datasets = datasets;
-        componentTimelineChart.update();
-      } else {
-        componentTimelineChart = new Chart(ctx, {
-          type: 'line',
-          data: { labels, datasets },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                position: 'bottom',
-                labels: { boxWidth: 8, font: { size: 9 } }
-              },
-              tooltip: { mode: 'index', intersect: false }
+    destroyChart('chart-selected-components');
+    charts['chart-selected-components'] = new Chart(
+      document.getElementById('chart-selected-components').getContext('2d'),
+      {
+        type: 'line',
+        data: {
+          labels: selectedLabelsDisplay,
+          datasets: [{
+            label: 'Selected components',
+            data: selectedCounts,
+            borderWidth: 1,
+            tension: 0.2,
+            fill: false
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => ctx.parsed.y + ' versions'
+              }
+            }
+          },
+          scales: {
+            x: { ticks: { font: { size: 9 } } },
+            y: { ticks: { font: { size: 9 }, precision: 0 } }
+          }
+        }
+      }
+    );
+    const selStats = computeMinMax(selectedCounts, selectedLabelsRaw);
+    if (selStats) {
+      document.getElementById('stats-selected-components').textContent =
+        'Selected components sum ' + selectedTotal +
+        ' updates. Min ' + selStats.min + ' on ' +
+        formatHumanDate(selStats.minLabel) +
+        ', max ' + selStats.max + ' on ' +
+        formatHumanDate(selStats.maxLabel) + '.';
+    } else {
+      document.getElementById('stats-selected-components').textContent =
+        'No updates for selected components in this window.';
+    }
+    if (selectedCounts.length >= 2) {
+      setDeltaBadge(
+        'delta-selected-components',
+        selectedCounts[selectedCounts.length - 1],
+        selectedCounts[selectedCounts.length - 2]
+      );
+    } else {
+      setDeltaBadge('delta-selected-components', 0, 0);
+    }
+
+    /* Today update types card */
+    const typeToday = typeTodayResp || {};
+    const typeYesterday = typeYesterdayResp || {};
+    const todayMajor = typeToday.major || 0;
+    const todayMinor = typeToday.minor || 0;
+    const todayPatch = typeToday.patch || 0;
+    const todayOther = typeToday.other || 0;
+    const yesterdaySumTypes = (typeYesterday.major || 0) +
+      (typeYesterday.minor || 0) +
+      (typeYesterday.patch || 0) +
+      (typeYesterday.other || 0);
+    const labelsTypesBase = ['Major','Minor','Patch'].concat(todayOther > 0 ? ['Other'] : []);
+    const dataTypes = [todayMajor,todayMinor,todayPatch].concat(todayOther > 0 ? [todayOther] : []);
+    const labelsTypes = labelsTypesBase.map((name,idx) => name + ' (' + (dataTypes[idx] || 0) + ')');
+
+    destroyChart('chart-today-types');
+    charts['chart-today-types'] = new Chart(
+      document.getElementById('chart-today-types').getContext('2d'),
+      {
+        type: 'bar',
+        data: {
+          labels: labelsTypes,
+          datasets: [{
+            label: 'Today',
+            data: dataTypes,
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => ctx.parsed.y + ' updates'
+              }
+            }
+          },
+          scales: {
+            x: { ticks: { font: { size: 9 } } },
+            y: { ticks: { font: { size: 9 }, precision: 0 } }
+          }
+        }
+      }
+    );
+    const statsTypes = computeMinMax(dataTypes, labelsTypesBase);
+    const sumTypesToday = dataTypes.reduce((a,b)=>a+b,0);
+    if (statsTypes) {
+      document.getElementById('stats-today-types').textContent =
+        'Sum of types ' + sumTypesToday +
+        ' updates. Min ' + statsTypes.minLabel + ' with ' + statsTypes.min +
+        ', max ' + statsTypes.maxLabel + ' with ' + statsTypes.max + '.';
+    } else {
+      document.getElementById('stats-today-types').textContent = 'No type counts for today.';
+    }
+    if (sumTypesToday === todayCount) {
+      setValidation(
+        'validation-today-types',
+        true,
+        'Validation: sum of types (' + sumTypesToday + ') equals countByDate (' + todayCount + ').'
+      );
+    } else {
+      setWarn(
+        'validation-today-types',
+        'Validation: sum of types (' + sumTypesToday + ') differs from countByDate (' + todayCount + ').'
+      );
+    }
+    setDeltaBadge('delta-today-types', sumTypesToday, yesterdaySumTypes);
+
+    /* Today CVE and classification card */
+    const classToday = classTodayResp && classTodayResp.classification ? classTodayResp.classification : {};
+    const classYesterday = classYesterdayResp && classYesterdayResp.classification ? classYesterdayResp.classification : {};
+    const labelsClassBase = [];
+    const valuesClass = [];
+    Object.keys(classToday).forEach(k => {
+      const keyLower = String(k).toLowerCase();
+      if (keyLower === 'unknown' || keyLower === 'unclassified') return;
+      labelsClassBase.push(k);
+      valuesClass.push(classToday[k]);
+    });
+
+    const cveTodayCount = cveTodayResp && typeof cveTodayResp.count === 'number'
+      ? cveTodayResp.count : 0;
+    const cveYesterdayCount = cveYesterdayResp && typeof cveYesterdayResp.count === 'number'
+      ? cveYesterdayResp.count : 0;
+
+    const labelsClass = labelsClassBase.map((name,idx) => name + ' (' + (valuesClass[idx] || 0) + ')');
+
+    destroyChart('chart-today-cve');
+    charts['chart-today-cve'] = new Chart(
+      document.getElementById('chart-today-cve').getContext('2d'),
+      {
+        type: 'pie',
+        data: {
+          labels: labelsClass,
+          datasets: [{
+            data: valuesClass
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'bottom',
+              labels: { font: { size: 9 } }
             },
-            scales: {
-              x: {
-                ticks: { maxRotation: 0, autoSkip: true, font: { size: 9 } },
-                grid: { display: false }
-              },
-              y: {
-                beginAtZero: true,
-                grid: { color: '#e5e7eb' },
-                ticks: { font: { size: 9 } }
+            tooltip: {
+              callbacks: {
+                label: ctx => ctx.label + ': ' + ctx.parsed + ' updates'
               }
             }
           }
-        });
+        }
       }
+    );
+    const statsClass = computeMinMax(valuesClass, labelsClassBase);
+    if (statsClass) {
+      document.getElementById('stats-today-cve').textContent =
+        'Classification min ' + statsClass.minLabel +
+        ' with ' + statsClass.min +
+        ', max ' + statsClass.maxLabel +
+        ' with ' + statsClass.max +
+        '. CVE tagged today: ' + cveTodayCount + '.';
+    } else {
+      document.getElementById('stats-today-cve').textContent =
+        'No classification tags for today. CVE tagged today: ' + cveTodayCount + '.';
+    }
 
-      const sumSeries = datasets.reduce(
-        (acc, ds) => acc + ds.data.reduce((a, b) => a + b, 0),
-        0
-      );
-
-      const windowDatesSet = new Set(dateKeys);
-      const windowVersionCount = versions.filter(v =>
-        v.versionReleaseDate && windowDatesSet.has(v.versionReleaseDate)
-      ).length;
-
-      const ok = sumSeries === windowVersionCount;
-      const msg = ok
-        ? `Sum of series in window (${sumSeries}) equals number of versions in the same window (${windowVersionCount}).`
-        : `Mismatch inside window: series sum=${sumSeries}, versions in window=${windowVersionCount}.`;
-      setValidation('componentTimelineValidation', ok, msg);
-    } catch (e) {
-      console.error('Component timeline error', e);
+    const sumClassToday = valuesClass.reduce((a,b)=>a+b,0);
+    const classTotalApi = classTodayResp && typeof classTodayResp.total === 'number'
+      ? classTodayResp.total : null;
+    if (classTotalApi != null && classTotalApi === sumClassToday + cveTodayCount) {
       setValidation(
-        'componentTimelineValidation',
-        false,
-        'Failed to load v with q for selected components.'
+        'validation-today-cve',
+        true,
+        'Validation: CVE slice plus classification slices (' +
+        (sumClassToday + cveTodayCount) + ') is consistent with classification total (' +
+        classTotalApi + ').'
+      );
+    } else {
+      setWarn(
+        'validation-today-cve',
+        'Validation: slices sum to ' + (sumClassToday + cveTodayCount) +
+        (classTotalApi != null ? ' while classification total is ' + classTotalApi + '.' : '.')
       );
     }
-  }
+    const classYesterdayValues = Object.keys(classYesterday)
+      .filter(k => {
+        const keyLower = String(k).toLowerCase();
+        return keyLower !== 'unknown' && keyLower !== 'unclassified';
+      })
+      .map(k => classYesterday[k]);
+    const sumClassYesterday = classYesterdayValues.reduce((a,b)=>a+b,0) + cveYesterdayCount;
+    setDeltaBadge('delta-today-cve', sumClassToday + cveTodayCount, sumClassYesterday);
 
-  // Card 7 signals and StackOverflow list
-  async function loadSignalsAndStackoverflow() {
-    try {
-      const twoYear = getTwoYearRange();
-      const today = new Date();
-      const todayStr = formatDateYYYYMMDD(today);
+    /* Signals card */
+    const redditData = redditResp && Array.isArray(redditResp.data) ? redditResp.data : [];
+    const totalDocs = redditResp && typeof redditResp.totalCount === 'number'
+      ? redditResp.totalCount : redditData.length;
 
-      const res = await fetchJson(`${API_BASE}/reddit?limit=5000&showCount=true`);
-      const docs = res.data || [];
-      const totalCountReported = res.totalCount || docs.length;
+    const todayRedditDocs = [];
+    const todaySoDocs = [];
+    const yesterdayRedditDocs = [];
+    const yesterdaySoDocs = [];
 
-      cache.redditDocs = docs;
+    redditData.forEach(doc => {
+      const dayKey = extractDayKey(doc.created_utc);
+      if (!dayKey) return;
+      const src = classifySource(doc);
 
-      let totalRedditAll = 0,
-          totalStackAll = 0;
-      let twoYearReddit = 0,
-          twoYearStack = 0;
-      let todayReddit = 0,
-          todayStack = 0;
-
-      const stackDocs = [];
-
-      for (const doc of docs) {
-        const src = classifySource(doc);
-        const createdDate = normalizeCreatedUtcToDate(doc.created_utc);
-        const dayStr = createdDate ? formatDateYYYYMMDD(createdDate) : null;
-
-        if (src === 'stackoverflow') {
-          totalStackAll += 1;
-          stackDocs.push(doc);
-        } else {
-          totalRedditAll += 1;
-        }
-
-        if (dayStr && dayStr >= twoYear.start && dayStr <= twoYear.end) {
-          if (src === 'stackoverflow') twoYearStack += 1;
-          else twoYearReddit += 1;
-        }
-
-        if (dayStr === todayStr) {
-          if (src === 'stackoverflow') todayStack += 1;
-          else todayReddit += 1;
-        }
+      if (dayKey === refDate) {
+        if (src === 'stackoverflow') todaySoDocs.push(doc);
+        else todayRedditDocs.push(doc);
       }
-
-      cache.stackDocs = stackDocs;
-
-      document.getElementById('signalsAll').textContent =
-        `R ${totalRedditAll} and SO ${totalStackAll}, docs ${docs.length}/${totalCountReported}`;
-      document.getElementById('signals2y').textContent =
-        `R ${twoYearReddit} and SO ${twoYearStack}`;
-      document.getElementById('signalsToday').textContent =
-        `R ${todayReddit} and SO ${todayStack}`;
-
-      document.getElementById('signalsAllNote').textContent =
-        `Limit=5000, server reports total=${totalCountReported}.`;
-      document.getElementById('signals2yNote').textContent =
-        `Filtered by created date between ${twoYear.start} and ${twoYear.end}.`;
-      document.getElementById('signalsTodayNote').textContent =
-        `Date ${formatYYYYMMDDToLabel(todayStr)}.`;
-
-      document.getElementById('soCountSample').textContent =
-        stackDocs.length.toString();
-
-      const soListEl = document.getElementById('soList');
-      soListEl.innerHTML = '';
-      const topStack = stackDocs
-        .slice()
-        .sort((a, b) => {
-          const as = a.score || 0;
-          const bs = b.score || 0;
-          return bs - as;
-        })
-        .slice(0, 6);
-
-      if (topStack.length === 0) {
-        soListEl.textContent = 'No StackOverflow posts in recent sample.';
-      } else {
-        topStack.forEach(doc => {
-          const item = document.createElement('div');
-          item.className = 'so-item';
-
-          const title = document.createElement('div');
-          title.className = 'so-title';
-          title.textContent = doc.title || '(no title)';
-          item.appendChild(title);
-
-          const meta = document.createElement('div');
-          meta.className = 'so-meta';
-          const created = normalizeCreatedUtcToDate(doc.created_utc);
-          const dateLabel = created
-            ? created.toISOString().slice(0, 10)
-            : 'n/a';
-          meta.textContent =
-            `score=${doc.score ?? 0}, answers=${doc.num_comments ?? 0}, date=${dateLabel}`;
-          item.appendChild(meta);
-
-          const url = doc.url || doc.permalink || '';
-          if (url) {
-            const link = document.createElement('a');
-            link.className = 'so-link';
-            link.href = url;
-            link.target = '_blank';
-            link.rel = 'noopener';
-            link.textContent = 'Open question';
-            item.appendChild(link);
-          }
-
-          soListEl.appendChild(item);
-        });
+      if (dayKey === yesterday) {
+        if (src === 'stackoverflow') yesterdaySoDocs.push(doc);
+        else yesterdayRedditDocs.push(doc);
       }
+    });
 
-      const okSample = docs.length === Math.min(totalCountReported, 5000);
-      const okSplit = docs.length === (totalRedditAll + totalStackAll);
-      const okSoList = stackDocs.length === totalStackAll;
+    const todayRedditCount = todayRedditDocs.length;
+    const todaySoCount = todaySoDocs.length;
+    const yesterdaySignalsTotal = yesterdayRedditDocs.length + yesterdaySoDocs.length;
 
-      const ok = okSample && okSplit && okSoList;
-      let msg = '';
-      if (!okSample) {
-        msg += `Sample count ${docs.length} below reported ${totalCountReported}. `;
-      }
-      if (!okSplit) {
-        msg += `R plus SO=${totalRedditAll + totalStackAll} differs from docs length=${docs.length}. `;
-      }
-      if (!okSoList) {
-        msg += `StackOverflow list length ${stackDocs.length} differs from counted SO ${totalStackAll}.`;
-      }
-      if (!msg) msg = 'doc count equals reddit count plus stackOverflow count, StackOverflow list matches stack count.';
+    document.getElementById('today-reddit-count').textContent = todayRedditCount;
+    document.getElementById('today-so-count').textContent = todaySoCount;
+    document.getElementById('metric-signals-extra').innerHTML =
+      'Today total: ' + (todayRedditCount + todaySoCount) +
+      '<br/>Sample documents: ' + totalDocs;
+    document.getElementById('subtitle-signals').textContent =
+      'Sample of latest posts';
 
-      setValidation('signalsValidation', ok, msg);
-    } catch (e) {
-      console.error('Signals error', e);
-      document.getElementById('signalsAll').textContent = 'n/a';
-      document.getElementById('signals2y').textContent = 'n/a';
-      document.getElementById('signalsToday').textContent = 'n/a';
-      document.getElementById('soCountSample').textContent = 'n/a';
-      document.getElementById('soList').textContent = 'Failed to load signal data.';
-      setValidation('signalsValidation', false, 'Failed to load reddit sample.');
-    }
-  }
+    const soListEl = document.getElementById('signals-so-list');
+    const mixedListEl = document.getElementById('signals-mixed-list');
+    soListEl.innerHTML = '';
+    mixedListEl.innerHTML = '';
 
-  // Card 8 interesting multi source update
-  async function loadInterestingUpdate() {
-    const titleEl = document.getElementById('interestingTitle');
-    const sourcesEl = document.getElementById('interestingSources');
-    const datesEl = document.getElementById('interestingDates');
-    const notesEl = document.getElementById('interestingNotes');
-    const linksEl = document.getElementById('interestingLinks');
+    const soPosts = redditData
+      .filter(doc => classifySource(doc) === 'stackoverflow')
+      .sort((a,b) => extractTimestamp(b.created_utc) - extractTimestamp(a.created_utc))
+      .slice(0,4);
 
-    try {
-      if (!cache.componentFrequency || !cache.redditDocs) {
-        titleEl.textContent = 'Not enough data to compute multi source signal.';
-        setValidation(
-          'interestingValidation',
-          false,
-          'Missing componentFrequency or redditDocs.'
-        );
-        return;
-      }
-
-      const components = cache.componentFrequency.slice(0, 30).map(c => c.toLowerCase());
-      const redditDocs = cache.redditDocs;
-      const stackDocs = cache.stackDocs || [];
-
-      const componentScore = {};
-      components.forEach(c => { componentScore[c] = 0; });
-
-      function scoreDoc(doc, weight) {
-        const text =
-          (doc.title || '') + ' ' +
-          (doc.selftext || '') + ' ' +
-          (doc.body || '') + ' ';
-        const lower = text.toLowerCase();
-        components.forEach(c => {
-          if (lower.includes(c)) componentScore[c] += weight;
-        });
-      }
-
-      redditDocs.forEach(doc => scoreDoc(doc, 1));
-      stackDocs.forEach(doc => scoreDoc(doc, 2));
-
-      const bestComponent = Object.entries(componentScore)
-        .sort((a, b) => b[1] - a[1])[0];
-
-      if (!bestComponent || bestComponent[1] === 0) {
-        titleEl.textContent = 'No strong cross signal, components not referenced in Reddit or StackOverflow sample.';
-        setValidation(
-          'interestingValidation',
-          false,
-          'No component appears clearly across sources.'
-        );
-        return;
-      }
-
-      const componentName = bestComponent[0];
-
-      let latestVersion = null;
-      let latestCveVersion = null;
-
-      try {
-        const vb = await fetchJson(
-          `${API_BASE}/v/d/versionsByComponent?component=name:${encodeURIComponent(componentName)}`
-        );
-        if (Array.isArray(vb) && vb[0]) {
-          latestVersion = vb[0].latestVersion || null;
-          latestCveVersion = vb[0].latestCveVersion || null;
-        }
-      } catch (e) {
-        console.error('Interesting versionsByComponent error', e);
-      }
-
-      function bestDocForComponent(docs, sourceTag) {
-        const matches = docs.filter(doc => {
-          const text = ((doc.title || '') + ' ' + (doc.selftext || '') + ' ' + (doc.body || '')).toLowerCase();
-          return text.includes(componentName);
-        });
-        if (matches.length === 0) return null;
-        matches.sort((a, b) => {
-          const as = a.score || 0;
-          const bs = b.score || 0;
-          return bs - as;
-        });
-        const doc = matches[0];
-        const created = normalizeCreatedUtcToDate(doc.created_utc);
-        return {
-          title: doc.title || '(no title)',
-          date: created ? created.toISOString().slice(0, 10) : 'n/a',
-          url: doc.url || doc.permalink || '',
-          source: sourceTag,
-          score: doc.score || 0
-        };
-      }
-
-      const bestReddit = bestDocForComponent(redditDocs, 'Reddit');
-      const bestStack = bestDocForComponent(stackDocs, 'StackOverflow');
-
-      const sources = [];
-      if (latestVersion) sources.push('Release');
-      if (latestCveVersion) sources.push('CVE');
-      if (bestReddit) sources.push('Reddit');
-      if (bestStack) sources.push('StackOverflow');
-
-      titleEl.textContent =
-        `Component ${componentName} with multi source signal`;
-
-      sourcesEl.textContent =
-        `Sources involved: ${sources.length ? sources.join(', ') : 'none'}`;
-
-      const dates = [];
-      if (latestVersion && latestVersion.versionReleaseDate) {
-        dates.push(`latest release ${formatYYYYMMDDToLabel(latestVersion.versionReleaseDate)}`);
-      }
-      if (latestCveVersion && latestCveVersion.versionTimestampLastUpdate) {
-        dates.push(`latest CVE update ${latestCveVersion.versionTimestampLastUpdate.slice(0, 10)}`);
-      }
-      if (bestReddit) {
-        dates.push(`top Reddit thread ${bestReddit.date}`);
-      }
-      if (bestStack) {
-        dates.push(`top StackOverflow question ${bestStack.date}`);
-      }
-      datesEl.textContent = dates.length ? dates.join(' · ') : 'Dates n/a';
-
-      const notes = [];
-      if (latestVersion) {
-        notes.push(`Latest version ${latestVersion.versionNumber || 'n/a'} with channel ${latestVersion.versionReleaseChannel || 'n/a'}`);
-      }
-      if (latestCveVersion) {
-        notes.push(`CVE present with channel ${latestCveVersion.versionReleaseChannel}`);
-      }
-      if (bestReddit) {
-        notes.push(`Reddit “${bestReddit.title.slice(0, 80)}${bestReddit.title.length > 80 ? '…' : ''}”`);
-      }
-      if (bestStack) {
-        notes.push(`StackOverflow “${bestStack.title.slice(0, 80)}${bestStack.title.length > 80 ? '…' : ''}”`);
-      }
-      notesEl.textContent = notes.join(' | ') || 'No detailed notes.';
-
-      linksEl.innerHTML = '';
-      const pillContainer = document.createElement('div');
-      if (latestVersion && latestVersion._id) {
-        const pill = document.createElement('a');
-        pill.className = 'pill';
-        pill.href = `https://releasetrain.io/api/v/${latestVersion._id}`;
-        pill.target = '_blank';
-        pill.rel = 'noopener';
-        pill.textContent = 'View latest version JSON';
-        pillContainer.appendChild(pill);
-      }
-      if (latestCveVersion && latestCveVersion._id) {
-        const pill = document.createElement('a');
-        pill.className = 'pill';
-        pill.href = `https://releasetrain.io/api/v/${latestCveVersion._id}`;
-        pill.target = '_blank';
-        pill.rel = 'noopener';
-        pill.textContent = 'View CVE tagged version';
-        pillContainer.appendChild(pill);
-      }
-      if (bestReddit && bestReddit.url) {
-        const pill = document.createElement('a');
-        pill.className = 'pill';
-        pill.href = bestReddit.url;
-        pill.target = '_blank';
-        pill.rel = 'noopener';
-        pill.textContent = 'Reddit thread';
-        pillContainer.appendChild(pill);
-      }
-      if (bestStack && bestStack.url) {
-        const pill = document.createElement('a');
-        pill.className = 'pill';
-        pill.href = bestStack.url;
-        pill.target = '_blank';
-        pill.rel = 'noopener';
-        pill.textContent = 'StackOverflow question';
-        pillContainer.appendChild(pill);
-      }
-      linksEl.appendChild(pillContainer);
-
-      const ok = sources.length >= 2;
-      setValidation(
-        'interestingValidation',
-        ok,
-        ok
-          ? `At least ${sources.length} distinct sources contribute to this signal.`
-          : 'Fewer than two sources found for any component.'
-      );
-    } catch (e) {
-      console.error('Interesting update error', e);
-      document.getElementById('interestingTitle').textContent =
-        'Failed to compute multi source update signal.';
-      setValidation(
-        'interestingValidation',
-        false,
-        'Error while combining component, Reddit, StackOverflow, and CVE.'
-      );
-    }
-  }
-
-  async function loadComponentOptions() {
-    try {
-      const data = await fetchJson(`${API_BASE}/c/frequency`);
-      const select = document.getElementById('componentSelect');
-      select.innerHTML = '';
-      const components = (data.components || []).slice(0, 80);
-
-      components.forEach(name => {
-        const opt = document.createElement('option');
-        opt.value = name;
-        opt.textContent = name;
-        select.appendChild(opt);
+    if (soPosts.length) {
+      soPosts.forEach(doc => {
+        const dayKey = extractDayKey(doc.created_utc) || '';
+        const item = document.createElement('div');
+        item.className = 'post-item';
+        const title = doc.title || '(no title)';
+        const url = doc.url || '';
+        item.innerHTML =
+          '<div class="post-title">' +
+          (url ? '<a href="' + url + '" target="_blank" rel="noopener">' + title + '</a>' : title) +
+          '</div>' +
+          '<div class="post-meta">' +
+          'StackOverflow' +
+          (dayKey ? ' | Date: ' + formatHumanDate(dayKey) : '') +
+          '</div>';
+        soListEl.appendChild(item);
       });
-    } catch (e) {
-      console.error('Component options error', e);
-      setStatus('Component list could not be loaded.');
+    } else {
+      soListEl.innerHTML =
+        '<div style="font-size:11px;color:var(--muted);">No StackOverflow posts in the current sample.</div>';
     }
-  }
 
-  function initInputs() {
-    const rangeSelect = document.getElementById('rangeSelect');
-    const dayInput = document.getElementById('dayInput');
-    const today = new Date();
-    dayInput.value = today.toISOString().slice(0, 10);
-
-    rangeSelect.addEventListener('change', async () => {
-      const rangeDays = parseInt(rangeSelect.value, 10);
-      try {
-        setStatus('Updating timeline and per day slices…');
-        const meta = await loadTimeline(rangeDays);
-        const yyyymmdd = dayInput.value.replace(/-/g, '');
-        await loadDailyAggregates(yyyymmdd);
-        const selectedComponents = Array.from(
-          document.getElementById('componentSelect').selectedOptions
-        ).map(o => o.value);
-        await loadComponentTimeline(selectedComponents, rangeDays, meta);
-        setStatus('Ready.');
-        document.getElementById('lastRefreshed').textContent =
-          'Last refreshed: ' + new Date().toLocaleString();
-      } catch (e) {
-        console.error('Range change error', e);
-        setStatus('Some charts could not be updated.');
-      }
-    });
-
-    dayInput.addEventListener('change', async () => {
-      const val = dayInput.value;
-      if (!val) return;
-      const yyyymmdd = val.replace(/-/g, '');
-      try {
-        setStatus('Updating today slice…');
-        await loadDailyAggregates(yyyymmdd);
-        setStatus('Ready.');
-        document.getElementById('lastRefreshed').textContent =
-          'Last refreshed: ' + new Date().toLocaleString();
-      } catch (e) {
-        console.error('Day change error', e);
-        setStatus('Today slice could not be updated.');
-      }
-    });
-
-    document.getElementById('applyComponentsBtn').addEventListener('click', async () => {
-      const rangeDays = parseInt(rangeSelect.value, 10);
-      const selectedComponents = Array.from(
-        document.getElementById('componentSelect').selectedOptions
-      ).map(o => o.value);
-      try {
-        setStatus('Updating component timeline…');
-        const meta = timelineChart
-          ? { labels: timelineChart.data.labels.slice() }
-          : null;
-        await loadComponentTimeline(selectedComponents, rangeDays, meta);
-        setStatus('Ready.');
-        document.getElementById('lastRefreshed').textContent =
-          'Last refreshed: ' + new Date().toLocaleString();
-      } catch (e) {
-        console.error('Component apply error', e);
-        setStatus('Component timeline could not be updated.');
-      }
-    });
-  }
-
-  async function initDashboard() {
-    setStatus('Loading dashboard…');
-
-    try {
-      await Promise.allSettled([
-        loadOverviewCard(),
-        loadComponentsCard(),
-        loadComponentOptions()
-      ]);
-
-      await loadSignalsAndStackoverflow();
-
-      initInputs();
-
-      const rangeSelect = document.getElementById('rangeSelect');
-      const rangeDays = parseInt(rangeSelect.value, 10);
-
-      let meta = null;
-      try {
-        meta = await loadTimeline(rangeDays);
-      } catch (e) {
-        console.error('Initial timeline error', e);
-      }
-
-      const dayInput = document.getElementById('dayInput');
-      const yyyymmdd = dayInput.value.replace(/-/g, '');
-      if (yyyymmdd) {
-        await loadDailyAggregates(yyyymmdd);
-      }
-
-      await loadComponentTimeline([], rangeDays, meta);
-      await loadInterestingUpdate();
-
-      setStatus('Ready.');
-      document.getElementById('lastRefreshed').textContent =
-        'Last refreshed: ' + new Date().toLocaleString();
-    } catch (e) {
-      console.error('Dashboard init error', e);
-      setStatus('Dashboard failed to fully load.');
+    redditData
+      .slice()
+      .sort((a,b) => extractTimestamp(b.created_utc) - extractTimestamp(a.created_utc))
+      .slice(0,6)
+      .forEach(doc => {
+        const src = classifySource(doc);
+        const dayKey = extractDayKey(doc.created_utc) || '';
+        const item = document.createElement('div');
+        item.className = 'post-item';
+        const title = doc.title || '(no title)';
+        const url = doc.url || '';
+        item.innerHTML =
+          '<div class="post-title">' +
+          (url ? '<a href="' + url + '" target="_blank" rel="noopener">' + title + '</a>' : title) +
+          '</div>' +
+          '<div class="post-meta">' +
+          'Source: ' + src +
+          (dayKey ? ' | Date: ' + formatHumanDate(dayKey) : '') +
+          '</div>';
+        mixedListEl.appendChild(item);
+      });
+    if (!redditData.length) {
+      mixedListEl.innerHTML =
+        '<div style="font-size:11px;color:var(--muted);">No reddit or StackOverflow posts loaded.</div>';
     }
+
+    setValidation(
+      'validation-signals',
+      redditData.length <= totalDocs,
+      'Validation: sample count plus header totals are consistent (' +
+      redditData.length + ' sample, header ' + totalDocs + ').'
+    );
+    setDeltaBadge(
+      'delta-signals',
+      todayRedditCount + todaySoCount,
+      yesterdaySignalsTotal
+    );
+
+    /* Most interesting multi source update card */
+    const interesting = document.getElementById('interesting-text');
+    const componentsScopeRaw = selectedComponents.length
+      ? selectedComponents.join(',')
+      : 'all tracked components';
+    const componentsScopeDisplay = selectedComponents.length
+      ? selectedComponents.join(', ')
+      : 'all tracked components';
+
+    const aspectsToday = [
+      todayCount > 0,
+      cveTodayCount > 0,
+      todayRedditCount > 0,
+      todaySoCount > 0
+    ].filter(Boolean).length;
+
+    const versionsLink = selectedComponents.length
+      ? baseUrl + '/api/v/?q=' + encodeURIComponent(selectedComponents.join(','))
+      : baseUrl + '/api/v/';
+    const cveLink = baseUrl + '/api/aggregate/v/sourceCountByType?sourceType=CVE&timestamp=' + refDate;
+    const redditLink = baseUrl + '/api/reddit?limit=100&showCount=true';
+
+    if (aspectsToday >= 2) {
+      interesting.innerHTML =
+        '<strong>Component can win multi source signal.</strong><br/>' +
+        'For ' + componentsScopeDisplay + ' on ' + formatHumanDate(refDate) + ' the signals are:' +
+        '<ul>' +
+        '<li>' + todayCount + ' code releases</li>' +
+        '<li>' + cveTodayCount + ' CVE tagged releases</li>' +
+        '<li>' + todayRedditCount + ' reddit posts</li>' +
+        '<li>' + todaySoCount + ' StackOverflow posts</li>' +
+        '</ul>' +
+        '<div>Links: ' +
+        '<a href="' + versionsLink + '" target="_blank" rel="noopener">Latest versions JSON</a> · ' +
+        '<a href="' + cveLink + '" target="_blank" rel="noopener">CVE counts for today</a> · ' +
+        '<a href="' + redditLink + '" target="_blank" rel="noopener">Reddit/StackOverflow sample</a>' +
+        '</div>';
+
+      setValidation(
+        'validation-interesting',
+        true,
+        'Validation: at least 3 distinct sources contribute to this signal.'
+      );
+    } else {
+      interesting.innerHTML =
+        '<strong>No strong multi source signal.</strong><br/>' +
+        'At least two of code, CVE, reddit, and StackOverflow should have non zero counts on the same day.' +
+        '<div style="margin-top:4px;">You can still inspect details via ' +
+        '<a href="' + versionsLink + '" target="_blank" rel="noopener">versions JSON</a> and ' +
+        '<a href="' + redditLink + '" target="_blank" rel="noopener">ecosystem posts</a>.' +
+        '</div>';
+      setValidation(
+        'validation-interesting',
+        true,
+        'Validation: all inputs for this heuristic are drawn from today metrics.'
+      );
+    }
+    const multiToday = todayCount + cveTodayCount + todayRedditCount + todaySoCount;
+    const multiYesterday = yesterdayCount + cveYesterdayCount + yesterdayRedditDocs.length + yesterdaySoDocs.length;
+    setDeltaBadge('delta-interesting', multiToday, multiYesterday);
+
+    statusInfo.textContent = 'Ready.';
   }
 
-  window.addEventListener('load', initDashboard);
+  document.addEventListener('DOMContentLoaded', () => {
+    updateHeaderDate();
+    setInterval(updateHeaderDate, 60000);
+
+    const dateInput = document.getElementById('date-input');
+    if (!dateInput.value) {
+      const now = new Date();
+      dateInput.value = formatDateInputValue(now);
+    }
+
+    document.getElementById('apply-main').addEventListener('click', () => {
+      loadDashboard();
+    });
+
+    document.getElementById('clear-components').addEventListener('click', () => {
+      document.getElementById('components-input').value = '';
+      setComponentsLabel([]);
+      updateUrlWithComponents([]);
+      loadDashboard();
+    });
+
+    document.getElementById('timeline-window').addEventListener('change', () => {
+      loadDashboard();
+    });
+
+    document.getElementById('date-input').addEventListener('change', () => {
+      loadDashboard();
+    });
+
+    loadDashboard();
+  });
 </script>
 </body>
 </html>
