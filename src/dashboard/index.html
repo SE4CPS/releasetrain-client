@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>ReleaseTrain.io Updates Dashboard</title>
+  <title>releasetrain dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -74,38 +74,7 @@
     }
 
     header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 2px;
-      flex-shrink: 0;
-    }
-
-    header .title-block {
-      display: flex;
-      flex-direction: row;
-      align-items: baseline;
-      gap: 8px;
-    }
-
-    header h1 {
-      margin: 0;
-      font-size: 16px;
-      font-weight: 600;
-    }
-
-    header .subtitle {
-      font-size: 11px;
-      color: var(--muted);
-      white-space: nowrap;
-    }
-
-    .header-right {
-      text-align: right;
-      font-size: 11px;
-      color: var(--muted);
-      white-space: nowrap;
+      display: none;
     }
 
     .controls-row {
@@ -210,6 +179,16 @@
       margin-right: 4px;
     }
 
+    .chip-remove {
+      margin-left: 4px;
+      border: none;
+      background: transparent;
+      font-size: 10px;
+      cursor: pointer;
+      padding: 0 2px;
+      line-height: 1;
+    }
+
     .grid {
       flex: 1;
       display: grid;
@@ -218,6 +197,7 @@
       gap: 6px;
       min-height: 0;
       margin-top: 4px;
+      align-items: stretch;
     }
 
     @media (max-width: 900px) {
@@ -244,7 +224,9 @@
     .card-timeline { background: var(--timeline-bg); }
 
     @media (max-width: 900px) {
-      .card { max-height: none; }
+      .card {
+        max-height: none;
+      }
     }
 
     .card-header {
@@ -404,6 +386,8 @@
       font-size: 11px;
       line-height: 1.4;
       margin-top: 4px;
+      overflow-y: auto;
+      min-height: 0;
     }
 
     .interesting strong { font-weight: 600; }
@@ -414,23 +398,39 @@
     }
 
     .interesting li { margin: 1px 0; }
+
+    /* components table */
+    .components-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+    .components-table td {
+      padding: 2px 4px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .components-table td:first-child {
+      color: var(--muted);
+    }
+    .components-table td:last-child {
+      text-align: right;
+      font-weight: 500;
+    }
+
+    /* highlighted numbers for min/max etc. */
+    .highlight-number {
+      color: var(--accent-negative);
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
 <div id="loading-bar"></div>
 
 <div class="page">
-  <header>
-    <div class="title-block">
-      <h1>ReleaseTrain.io Updates Dashboard</h1>
-      <div class="subtitle">
-        Clean split: timeline vs today, across code, CVE, Reddit, StackOverflow
-      </div>
-    </div>
-    <div class="header-right">
-      <div id="last-refreshed">Last refreshed: …</div>
-    </div>
-  </header>
+  <header></header>
 
   <div class="controls-row">
     <div class="control-line">
@@ -442,21 +442,17 @@
       </select>
       <span class="control-label">Today slice</span>
       <input id="date-input" type="date" />
-      <button id="apply-main" class="primary">Apply</button>
-      <span class="status-inline">
-        Window is aligned with the selected day and used for all timeline charts.
-      </span>
     </div>
 
     <div class="control-line">
-      <span class="control-label">Components for timeline</span>
       <input id="components-input" list="components-datalist"
              type="text"
-             placeholder="Type names, comma separated" />
+             placeholder="component (comma separated)" />
       <datalist id="components-datalist"></datalist>
+      <button id="apply-main" class="primary">Add</button>
       <button id="clear-components" class="ghost">Clear</button>
       <span class="status-inline">
-        Active components: <span id="components-active-label">All (API default)</span>
+        <span id="components-active-label">All (API default)</span>
       </span>
     </div>
 
@@ -509,16 +505,30 @@
         <div class="badge-delta badge-flat" id="delta-components-window">+0</div>
       </div>
       <div class="card-main">
-        <div class="metric-row">
-          <div>
-            <div class="metric-label">Distinct components</div>
-            <div class="metric-main" id="metric-components-total">0</div>
-          </div>
-          <div class="metric-extra">
-            Names fetched: <span id="metric-components-names">0</span><br/>
-            Sample size: <span id="metric-components-sample">0</span>
-          </div>
-        </div>
+        <table class="components-table">
+          <tbody>
+            <tr>
+              <td>Distinct components</td>
+              <td><span id="metric-components-total">0</span></td>
+            </tr>
+            <tr>
+              <td>Names fetched</td>
+              <td><span id="metric-components-names">0</span></td>
+            </tr>
+            <tr>
+              <td>Sample components</td>
+              <td><span id="metric-components-sample">0</span></td>
+            </tr>
+            <tr>
+              <td>Reddit posts (sample)</td>
+              <td><span id="metric-components-reddit">0</span></td>
+            </tr>
+            <tr>
+              <td>StackOverflow posts (sample)</td>
+              <td><span id="metric-components-so">0</span></td>
+            </tr>
+          </tbody>
+        </table>
         <div class="chart-stats" id="stats-components-window"></div>
         <div class="chart-stats" id="stats-components-sample"></div>
         <div class="validation" id="validation-components-window"></div>
@@ -629,7 +639,7 @@
       <div class="card-header">
         <div class="card-title-block">
           <div class="card-title">Most interesting multi source update</div>
-          <div class="card-subtitle">Component seen in code, CVE, Reddit, StackOverflow</div>
+          <div class="card-subtitle">Components with code, CVE, Reddit/StackOverflow (last 7 days)</div>
         </div>
         <div class="badge-delta badge-flat" id="delta-interesting">+0</div>
       </div>
@@ -647,6 +657,19 @@
   const charts = {};
   const loadingBar = document.getElementById('loading-bar');
   let pendingFetches = 0;
+  let currentComponents = [];
+
+  // color palette for selected components chart
+  const componentColors = [
+    '#1d4ed8', // blue
+    '#16a34a', // green
+    '#b91c1c', // red
+    '#f59e0b', // amber
+    '#0d9488', // teal
+    '#7c3aed', // violet
+    '#db2777', // pink
+    '#6b7280'  // gray
+  ];
 
   function startLoading() {
     pendingFetches += 1;
@@ -708,7 +731,7 @@
     return y + '-' + m + '-' + d;
   }
 
-  function formatHumanDate(yyyyMmDd) {
+  function formatHumanDateAbsolute(yyyyMmDd) {
     try {
       const dt = parseYyyyMmDd(yyyyMmDd);
       return dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
@@ -727,10 +750,32 @@
     return dateMinusDays(yyyyMmDd, 1);
   }
 
-  function updateHeaderDate() {
-    const now = new Date();
-    document.getElementById('last-refreshed').textContent =
-      'Last refreshed: ' + now.toLocaleDateString();
+  function formatHumanDate(yyyyMmDd) {
+    try {
+      const todayKey = formatYyyyMmDd(new Date());
+      const yesterdayKey = dateMinusDays(todayKey, 1);
+      if (yyyyMmDd === todayKey) return 'Today';
+      if (yyyyMmDd === yesterdayKey) return 'Yesterday';
+      return formatHumanDateAbsolute(yyyyMmDd);
+    } catch {
+      return yyyyMmDd;
+    }
+  }
+
+  function formatLabelWithWeekday(yyyyMmDd, count) {
+    const dt = parseYyyyMmDd(yyyyMmDd);
+    const weekday = dt.toLocaleDateString(undefined, { weekday: 'short' });
+    const rel = formatHumanDate(yyyyMmDd);
+    let core;
+    if (rel === 'Today' || rel === 'Yesterday') {
+      core = rel + ' (' + weekday + ')';
+    } else {
+      core = weekday + ' ' + rel;
+    }
+    if (typeof count === 'number') {
+      return core + ' (' + count + ')';
+    }
+    return core;
   }
 
   function destroyChart(id) {
@@ -787,14 +832,18 @@
     }
   }
 
+  // UPDATED: keep commas literally in the URL, no %2C
   function updateUrlWithComponents(components) {
-    const url = new URL(window.location.href);
+    const base = window.location.origin + window.location.pathname;
+    const hash = window.location.hash || '';
     if (components && components.length) {
-      url.searchParams.set('q', components.join(','));
+      const q = components.join(',');
+      const newUrl = base + '?q=' + q + hash;
+      window.history.replaceState({}, '', newUrl);
     } else {
-      url.searchParams.delete('q');
+      const newUrl = base + hash;
+      window.history.replaceState({}, '', newUrl);
     }
-    window.history.replaceState({}, '', url.toString());
   }
 
   function readComponentsFromInput() {
@@ -806,7 +855,20 @@
 
   function setComponentsLabel(list) {
     const el = document.getElementById('components-active-label');
-    el.textContent = (list && list.length) ? list.join(',') : 'All (API default)';
+    if (!el) return;
+    currentComponents = Array.isArray(list) ? list.slice() : [];
+    if (currentComponents.length) {
+      el.innerHTML = currentComponents
+        .map(name =>
+          '<span class="chip">' +
+            '<span class="chip-label">' + name + '</span>' +
+            '<button class="chip-remove" type="button" data-remove-component="' + name + '">×</button>' +
+          '</span>'
+        )
+        .join(' ');
+    } else {
+      el.textContent = 'All (API default)';
+    }
   }
 
   function applyComponentsFromQuery(allNames) {
@@ -820,14 +882,14 @@
     components.forEach(n => set.add(n));
 
     datalist.innerHTML = '';
-    Array.from(set).sort().forEach(name => {
-      const opt = document.createElement('option');
-      opt.value = name;
-      datalist.appendChild(opt);
-    });
+    Array.from(set)
+      .sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()))
+      .forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        datalist.appendChild(opt);
+      });
 
-    document.getElementById('components-input').value = components.join(',');
-    setComponentsLabel(components);
     return components;
   }
 
@@ -897,6 +959,14 @@
     const dateInput = document.getElementById('date-input');
     const windowSelect = document.getElementById('timeline-window');
 
+    const url = new URL(window.location.href);
+    const qRaw = url.searchParams.get('q');
+    const componentsFromQuery = decodeComponentsParam(qRaw);
+    const componentsFromInput = readComponentsFromInput();
+    const selectedComponents = componentsFromInput.length ? componentsFromInput : componentsFromQuery;
+
+    setComponentsLabel(selectedComponents);
+
     let refDate;
     if (dateInput.value) {
       refDate = dateInput.value.replace(/-/g,'');
@@ -908,6 +978,7 @@
     const windowDays = parseInt(windowSelect.value,10) || 30;
     const startDate = dateMinusDays(refDate, windowDays - 1);
     const yesterday = yesterdayOf(refDate);
+    const weekStart = dateMinusDays(refDate, 6); // last 7 days for multi source
 
     const humanStart = formatHumanDate(startDate);
     const humanRef = formatHumanDate(refDate);
@@ -916,12 +987,20 @@
       humanStart + ' to ' + humanRef;
     document.getElementById('subtitle-selected-components').textContent =
       humanStart + ' to ' + humanRef;
-    document.getElementById('subtitle-today-types').textContent = humanRef;
-    document.getElementById('subtitle-today-cve').textContent = 'Day ' + humanRef;
 
-    const componentsFromInput = readComponentsFromInput();
-    setComponentsLabel(componentsFromInput);
-    updateUrlWithComponents(componentsFromInput);
+    const todayKey = formatYyyyMmDd(new Date());
+    const yesterdayKey = dateMinusDays(todayKey, 1);
+    let todayLabel;
+    if (refDate === todayKey) todayLabel = 'Today';
+    else if (refDate === yesterdayKey) todayLabel = 'Yesterday';
+    else todayLabel = formatHumanDate(refDate);
+
+    document.getElementById('subtitle-today-types').textContent = todayLabel;
+    document.getElementById('subtitle-today-cve').textContent = todayLabel;
+
+    const qParamForVersions = selectedComponents.length
+      ? selectedComponents.join(',')
+      : '';
 
     const [
       todayByDateResp,
@@ -952,8 +1031,8 @@
       fetchJson(baseUrl + '/api/aggregate/v/sourceCountByType?sourceType=CVE&timestamp=' + refDate),
       fetchJson(baseUrl + '/api/aggregate/v/sourceCountByType?sourceType=CVE&timestamp=' + yesterday),
       fetchJson(baseUrl + '/api/reddit?limit=5000&showCount=true'),
-      componentsFromInput.length
-        ? fetchJson(baseUrl + '/api/v/?q=' + encodeURIComponent(componentsFromInput.join(',')))
+      selectedComponents.length
+        ? fetchJson(baseUrl + '/api/v/?q=' + qParamForVersions)
         : null
     ]);
 
@@ -987,7 +1066,7 @@
     const tlLabelsRaw = timelineDays.map(d => d._id);
     const tlCounts = timelineDays.map(d => d.count);
     const tlLabelsDisplay = tlLabelsRaw.map((d,i) =>
-      formatHumanDate(d) + ' (' + (tlCounts[i] || 0) + ')'
+      formatLabelWithWeekday(d, tlCounts[i] || 0)
     );
 
     destroyChart('chart-release-window');
@@ -1026,10 +1105,13 @@
     const tlStats = computeMinMax(tlCounts, tlLabelsRaw);
     const sumWindow = tlCounts.reduce((a,b) => a + b, 0);
     if (tlStats) {
-      document.getElementById('stats-release-window').textContent =
-        'Window span ' + tlLabelsRaw.length + ' days. Min ' + tlStats.min +
+      document.getElementById('stats-release-window').innerHTML =
+        'Window span ' + tlLabelsRaw.length + ' days. Min ' +
+        '<span class="highlight-number">' + tlStats.min + '</span>' +
         ' on ' + formatHumanDate(tlStats.minLabel) +
-        ', max ' + tlStats.max + ' on ' + formatHumanDate(tlStats.maxLabel) + '.';
+        ', max ' +
+        '<span class="highlight-number">' + tlStats.max + '</span>' +
+        ' on ' + formatHumanDate(tlStats.maxLabel) + '.';
     } else {
       document.getElementById('stats-release-window').textContent =
         'No daily counts for this window.';
@@ -1041,17 +1123,17 @@
       ') is consistent with window aggregation.'
     );
 
-    /* Components in window card */
+    /* Components in window card (basic metrics) */
     const componentsDistinct = allNames.length;
     document.getElementById('metric-components-total').textContent = componentsDistinct;
     document.getElementById('metric-components-names').textContent = componentsDistinct;
 
     const sampleComponents = allNames.slice(0,4);
     document.getElementById('metric-components-sample').textContent =
-      sampleComponents.length ? sampleComponents.join(',') : 'n/a';
+      sampleComponents.length ? sampleComponents.join(', ') : 'n/a';
 
     document.getElementById('stats-components-window').textContent =
-      'Sample components: ' + (sampleComponents.length ? sampleComponents.join(',') : 'n/a') + '.';
+      'Sample components are drawn from the distinct set.';
     document.getElementById('stats-components-sample').textContent =
       'Names list length equals distinct set size (' + componentsDistinct + ').';
 
@@ -1061,157 +1143,6 @@
       'Validation: totalComponents equals names length (' + componentsDistinct + ').'
     );
     setDeltaBadge('delta-components-window', componentsDistinct, componentsDistinct);
-
-    /* Timeline daily updates card */
-    destroyChart('chart-timeline-daily');
-    charts['chart-timeline-daily'] = new Chart(
-      document.getElementById('chart-timeline-daily').getContext('2d'),
-      {
-        type: 'bar',
-        data: {
-          labels: tlLabelsDisplay,
-          datasets: [{
-            label: 'Daily updates',
-            data: tlCounts,
-            borderWidth: 1
-          }]
-        },
-        options: {
-          indexAxis: 'y',
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: ctx => ctx.parsed.x + ' versions'
-              }
-            }
-          },
-          scales: {
-            x: { ticks: { font: { size: 9 }, precision: 0 } },
-            y: { ticks: { font: { size: 8 } } }
-          }
-        }
-      }
-    );
-    if (tlStats) {
-      document.getElementById('stats-timeline-daily').textContent =
-        'Sum of bars is ' + sumWindow + ' updates. Min ' + tlStats.min +
-        ' on ' + formatHumanDate(tlStats.minLabel) +
-        ', max ' + tlStats.max + ' on ' + formatHumanDate(tlStats.maxLabel) + '.';
-    } else {
-      document.getElementById('stats-timeline-daily').textContent = 'No data in this window.';
-    }
-    if (tlCounts.length >= 2) {
-      setDeltaBadge(
-        'delta-timeline-daily',
-        tlCounts[tlCounts.length - 1],
-        tlCounts[tlCounts.length - 2]
-      );
-    } else {
-      setDeltaBadge('delta-timeline-daily', 0, 0);
-    }
-    setValidation(
-      'validation-timeline-daily',
-      true,
-      'Validation: sum of bars matches aggregate count for the same window (' + sumWindow + ').'
-    );
-
-    /* Selected components timeline card */
-    const selectedComponents = componentsFromInput;
-    let selectedLabelsRaw = tlLabelsRaw;
-    let selectedCounts = tlLabelsRaw.map(() => 0);
-    let selectedTotal = 0;
-
-    if (selectedComponents.length && selectedVersionsResp && Array.isArray(selectedVersionsResp.versions)) {
-      const map = {};
-      selectedVersionsResp.versions.forEach(v => {
-        const d = v.versionReleaseDate;
-        if (!d) return;
-        if (d < startDate || d > refDate) return;
-        map[d] = (map[d] || 0) + 1;
-      });
-
-      selectedLabelsRaw = tlLabelsRaw.slice();
-      selectedCounts = selectedLabelsRaw.map(d => map[d] || 0);
-      selectedTotal = selectedCounts.reduce((a,b) => a + b, 0);
-      document.getElementById('subtitle-selected-components').textContent =
-        humanStart + ' to ' + humanRef + ' for ' + selectedComponents.join(',');
-      setValidation(
-        'validation-selected-components',
-        selectedTotal === selectedVersionsResp.versions.length,
-        'Validation: sum of series in window (' + selectedTotal +
-        ') equals number of versions in the same window (' +
-        selectedVersionsResp.versions.length + ').'
-      );
-    } else {
-      selectedTotal = 0;
-      setValidation(
-        'validation-selected-components',
-        true,
-        'Validation: no specific components, line is empty.'
-      );
-    }
-
-    const selectedLabelsDisplay = selectedLabelsRaw.map((d,i) =>
-      formatHumanDate(d) + ' (' + (selectedCounts[i] || 0) + ')'
-    );
-
-    destroyChart('chart-selected-components');
-    charts['chart-selected-components'] = new Chart(
-      document.getElementById('chart-selected-components').getContext('2d'),
-      {
-        type: 'line',
-        data: {
-          labels: selectedLabelsDisplay,
-          datasets: [{
-            label: 'Selected components',
-            data: selectedCounts,
-            borderWidth: 1,
-            tension: 0.2,
-            fill: false
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: ctx => ctx.parsed.y + ' versions'
-              }
-            }
-          },
-          scales: {
-            x: { ticks: { font: { size: 9 } } },
-            y: { ticks: { font: { size: 9 }, precision: 0 } }
-          }
-        }
-      }
-    );
-    const selStats = computeMinMax(selectedCounts, selectedLabelsRaw);
-    if (selStats) {
-      document.getElementById('stats-selected-components').textContent =
-        'Selected components sum ' + selectedTotal +
-        ' updates. Min ' + selStats.min + ' on ' +
-        formatHumanDate(selStats.minLabel) +
-        ', max ' + selStats.max + ' on ' +
-        formatHumanDate(selStats.maxLabel) + '.';
-    } else {
-      document.getElementById('stats-selected-components').textContent =
-        'No updates for selected components in this window.';
-    }
-    if (selectedCounts.length >= 2) {
-      setDeltaBadge(
-        'delta-selected-components',
-        selectedCounts[selectedCounts.length - 1],
-        selectedCounts[selectedCounts.length - 2]
-      );
-    } else {
-      setDeltaBadge('delta-selected-components', 0, 0);
-    }
 
     /* Today update types card */
     const typeToday = typeTodayResp || {};
@@ -1262,10 +1193,15 @@
     const statsTypes = computeMinMax(dataTypes, labelsTypesBase);
     const sumTypesToday = dataTypes.reduce((a,b)=>a+b,0);
     if (statsTypes) {
-      document.getElementById('stats-today-types').textContent =
-        'Sum of types ' + sumTypesToday +
-        ' updates. Min ' + statsTypes.minLabel + ' with ' + statsTypes.min +
-        ', max ' + statsTypes.maxLabel + ' with ' + statsTypes.max + '.';
+      document.getElementById('stats-today-types').innerHTML =
+        'Sum of types ' +
+        '<span class="highlight-number">' + sumTypesToday + '</span>' +
+        ' updates. Min ' +
+        '<span class="highlight-number">' + statsTypes.min + '</span>' +
+        ' in ' + statsTypes.minLabel +
+        ', max ' +
+        '<span class="highlight-number">' + statsTypes.max + '</span>' +
+        ' in ' + statsTypes.maxLabel + '.';
     } else {
       document.getElementById('stats-today-types').textContent = 'No type counts for today.';
     }
@@ -1286,14 +1222,16 @@
     /* Today CVE and classification card */
     const classToday = classTodayResp && classTodayResp.classification ? classTodayResp.classification : {};
     const classYesterday = classYesterdayResp && classYesterdayResp.classification ? classYesterdayResp.classification : {};
-    const labelsClassBase = [];
-    const valuesClass = [];
-    Object.keys(classToday).forEach(k => {
-      const keyLower = String(k).toLowerCase();
-      if (keyLower === 'unknown' || keyLower === 'unclassified') return;
-      labelsClassBase.push(k);
-      valuesClass.push(classToday[k]);
-    });
+
+    const classEntriesToday = Object.entries(classToday)
+      .filter(([k]) => {
+        const keyLower = String(k).toLowerCase();
+        return keyLower !== 'unknown' && keyLower !== 'unclassified';
+      })
+      .sort((a,b) => (b[1] || 0) - (a[1] || 0));
+
+    const labelsClassBase = classEntriesToday.map(([k]) => k);
+    const valuesClass = classEntriesToday.map(([_,v]) => v);
 
     const cveTodayCount = cveTodayResp && typeof cveTodayResp.count === 'number'
       ? cveTodayResp.count : 0;
@@ -1333,35 +1271,47 @@
     );
     const statsClass = computeMinMax(valuesClass, labelsClassBase);
     if (statsClass) {
-      document.getElementById('stats-today-cve').textContent =
-        'Classification min ' + statsClass.minLabel +
-        ' with ' + statsClass.min +
-        ', max ' + statsClass.maxLabel +
-        ' with ' + statsClass.max +
-        '. CVE tagged today: ' + cveTodayCount + '.';
+      document.getElementById('stats-today-cve').innerHTML =
+        'Classification min ' +
+        '<span class="highlight-number">' + statsClass.min + '</span>' +
+        ' (' + statsClass.minLabel + ')' +
+        ', max ' +
+        '<span class="highlight-number">' + statsClass.max + '</span>' +
+        ' (' + statsClass.maxLabel + '). ' +
+        'CVE tagged today: ' +
+        '<span class="highlight-number">' + cveTodayCount + '</span>.';
     } else {
-      document.getElementById('stats-today-cve').textContent =
-        'No classification tags for today. CVE tagged today: ' + cveTodayCount + '.';
+      document.getElementById('stats-today-cve').innerHTML =
+        'No classification tags for today. CVE tagged today: ' +
+        '<span class="highlight-number">' + cveTodayCount + '</span>.';
     }
 
     const sumClassToday = valuesClass.reduce((a,b)=>a+b,0);
     const classTotalApi = classTodayResp && typeof classTodayResp.total === 'number'
       ? classTodayResp.total : null;
-    if (classTotalApi != null && classTotalApi === sumClassToday + cveTodayCount) {
+    if (classTotalApi != null && classTotalApi === sumClassToday) {
       setValidation(
         'validation-today-cve',
         true,
-        'Validation: CVE slice plus classification slices (' +
-        (sumClassToday + cveTodayCount) + ') is consistent with classification total (' +
-        classTotalApi + ').'
+        'Validation: classification slices (' +
+        sumClassToday + ') equal classification total (' +
+        classTotalApi + '). CVE tagged today: ' + cveTodayCount + '.'
+      );
+    } else if (classTotalApi != null) {
+      setWarn(
+        'validation-today-cve',
+        'Validation: classification slices sum to ' + sumClassToday +
+        ' while classification total is ' + classTotalApi +
+        '. CVE tagged today: ' + cveTodayCount + '.'
       );
     } else {
       setWarn(
         'validation-today-cve',
-        'Validation: slices sum to ' + (sumClassToday + cveTodayCount) +
-        (classTotalApi != null ? ' while classification total is ' + classTotalApi + '.' : '.')
+        'Validation: classification total not provided by API. Slices sum to ' +
+        sumClassToday + '. CVE tagged today: ' + cveTodayCount + '.'
       );
     }
+
     const classYesterdayValues = Object.keys(classYesterday)
       .filter(k => {
         const keyLower = String(k).toLowerCase();
@@ -1371,7 +1321,7 @@
     const sumClassYesterday = classYesterdayValues.reduce((a,b)=>a+b,0) + cveYesterdayCount;
     setDeltaBadge('delta-today-cve', sumClassToday + cveTodayCount, sumClassYesterday);
 
-    /* Signals card */
+    /* Signals + Reddit/StackOverflow counts */
     const redditData = redditResp && Array.isArray(redditResp.data) ? redditResp.data : [];
     const totalDocs = redditResp && typeof redditResp.totalCount === 'number'
       ? redditResp.totalCount : redditData.length;
@@ -1478,63 +1428,313 @@
       yesterdaySignalsTotal
     );
 
-    /* Most interesting multi source update card */
+    // extend Components in window with reddit / StackOverflow sample counts
+    const redditSampleCount = redditData.filter(doc => classifySource(doc) === 'reddit').length;
+    const soSampleCount = redditData.filter(doc => classifySource(doc) === 'stackoverflow').length;
+    const elRedditMetric = document.getElementById('metric-components-reddit');
+    const elSoMetric = document.getElementById('metric-components-so');
+    if (elRedditMetric) elRedditMetric.textContent = redditSampleCount;
+    if (elSoMetric) elSoMetric.textContent = soSampleCount;
+
+    /* Timeline daily updates card */
+    destroyChart('chart-timeline-daily');
+    charts['chart-timeline-daily'] = new Chart(
+      document.getElementById('chart-timeline-daily').getContext('2d'),
+      {
+        type: 'bar',
+        data: {
+          labels: tlLabelsDisplay,
+          datasets: [{
+            label: 'Daily updates',
+            data: tlCounts,
+            borderWidth: 1
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => ctx.parsed.x + ' versions'
+              }
+            }
+          },
+          scales: {
+            x: { ticks: { font: { size: 9 }, precision: 0 } },
+            y: { ticks: { font: { size: 8 } } }
+          }
+        }
+      }
+    );
+    if (tlStats) {
+      document.getElementById('stats-timeline-daily').innerHTML =
+        'Sum of bars is ' +
+        '<span class="highlight-number">' + sumWindow + '</span>' +
+        ' updates. Min ' +
+        '<span class="highlight-number">' + tlStats.min + '</span>' +
+        ' on ' + formatHumanDate(tlStats.minLabel) +
+        ', max ' +
+        '<span class="highlight-number">' + tlStats.max + '</span>' +
+        ' on ' + formatHumanDate(tlStats.maxLabel) + '.';
+    } else {
+      document.getElementById('stats-timeline-daily').textContent = 'No data in this window.';
+    }
+    if (tlCounts.length >= 2) {
+      setDeltaBadge(
+        'delta-timeline-daily',
+        tlCounts[tlCounts.length - 1],
+        tlCounts[tlCounts.length - 2]
+      );
+    } else {
+      setDeltaBadge('delta-timeline-daily', 0, 0);
+    }
+    setValidation(
+      'validation-timeline-daily',
+      true,
+      'Validation: sum of bars matches aggregate count for the same window (' + sumWindow + ').'
+    );
+
+    /* Selected components timeline card - per component series with colors */
+    let selectedLabelsRaw = tlLabelsRaw.slice();
+    const selectedLabelsDisplay = selectedLabelsRaw.map((d,i) =>
+      formatLabelWithWeekday(d, null)
+    );
+
+    destroyChart('chart-selected-components');
+
+    let datasets = [];
+    let selectedTotal = 0;
+
+    if (selectedComponents.length && selectedVersionsResp && Array.isArray(selectedVersionsResp.versions)) {
+      const dayIndexMap = {};
+      selectedLabelsRaw.forEach((d, idx) => { dayIndexMap[d] = idx; });
+
+      const lcSelected = selectedComponents.map(c => c.toLowerCase());
+      const seriesByComponent = {};
+      selectedComponents.forEach(c => {
+        seriesByComponent[c] = selectedLabelsRaw.map(() => 0);
+      });
+
+      selectedVersionsResp.versions.forEach(v => {
+        const nameRaw = v.versionProductName;
+        const dateKey = v.versionReleaseDate;
+        if (!nameRaw || !dateKey) return;
+        if (dateKey < startDate || dateKey > refDate) return;
+        const idxDay = dayIndexMap[dateKey];
+        if (idxDay == null) return;
+        const nameLc = String(nameRaw).toLowerCase();
+        lcSelected.forEach((lcName, i) => {
+          if (lcName === nameLc) {
+            const compName = selectedComponents[i];
+            seriesByComponent[compName][idxDay] =
+              (seriesByComponent[compName][idxDay] || 0) + 1;
+          }
+        });
+      });
+
+      datasets = selectedComponents.map((comp, idx) => {
+        const color = componentColors[idx % componentColors.length];
+        const dataArr = seriesByComponent[comp] || selectedLabelsRaw.map(() => 0);
+        selectedTotal += dataArr.reduce((a,b)=>a+b,0);
+        return {
+          label: comp,
+          data: dataArr,
+          borderWidth: 1,
+          tension: 0.2,
+          fill: false,
+          borderColor: color,
+          backgroundColor: color
+        };
+      });
+
+      const versionsInWindow = selectedVersionsResp.versions.filter(
+        v => v.versionReleaseDate >= startDate && v.versionReleaseDate <= refDate
+      ).length;
+
+      document.getElementById('subtitle-selected-components').textContent =
+        humanStart + ' to ' + humanRef + ' for ' + selectedComponents.join(', ');
+
+      setValidation(
+        'validation-selected-components',
+        selectedTotal === versionsInWindow,
+        'Validation: sum of per component series in window (' + selectedTotal +
+        ') equals number of versions in the same window (' + versionsInWindow + ').'
+      );
+    } else {
+      datasets = [{
+        label: 'Selected components',
+        data: selectedLabelsRaw.map(() => 0),
+        borderWidth: 1,
+        tension: 0.2,
+        fill: false
+      }];
+      setValidation(
+        'validation-selected-components',
+        true,
+        'Validation: no specific components, line is empty.'
+      );
+    }
+
+    charts['chart-selected-components'] = new Chart(
+      document.getElementById('chart-selected-components').getContext('2d'),
+      {
+        type: 'line',
+        data: {
+          labels: selectedLabelsDisplay,
+          datasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: true },
+            tooltip: {
+              callbacks: {
+                label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y + ' versions'
+              }
+            }
+          },
+          scales: {
+            x: { ticks: { font: { size: 9 } } },
+            y: { ticks: { font: { size: 9 }, precision: 0 } }
+          }
+        }
+      }
+    );
+
+    const totalByDay = selectedLabelsRaw.map((_, idx) =>
+      datasets.reduce((acc, ds) => acc + (ds.data[idx] || 0), 0)
+    );
+    const selStats = computeMinMax(totalByDay, selectedLabelsRaw);
+    const totalAll = totalByDay.reduce((a,b)=>a+b,0);
+    if (selStats) {
+      document.getElementById('stats-selected-components').innerHTML =
+        'Selected components sum ' +
+        '<span class="highlight-number">' + totalAll + '</span>' +
+        ' updates (all components). Min day ' +
+        '<span class="highlight-number">' + selStats.min + '</span>' +
+        ' on ' + formatHumanDate(selStats.minLabel) +
+        ', max day ' +
+        '<span class="highlight-number">' + selStats.max + '</span>' +
+        ' on ' + formatHumanDate(selStats.maxLabel) + '.';
+    } else {
+      document.getElementById('stats-selected-components').textContent =
+        'No updates for selected components in this window.';
+    }
+    if (totalByDay.length >= 2) {
+      setDeltaBadge(
+        'delta-selected-components',
+        totalByDay[totalByDay.length - 1],
+        totalByDay[totalByDay.length - 2]
+      );
+    } else {
+      setDeltaBadge('delta-selected-components', 0, 0);
+    }
+
+    /* Most interesting multi source update card (last 7 days, per component) */
     const interesting = document.getElementById('interesting-text');
-    const componentsScopeRaw = selectedComponents.length
-      ? selectedComponents.join(',')
-      : 'all tracked components';
     const componentsScopeDisplay = selectedComponents.length
       ? selectedComponents.join(', ')
-      : 'all tracked components';
+      : 'all tracked components (select components to scope this list)';
 
-    const aspectsToday = [
-      todayCount > 0,
-      cveTodayCount > 0,
-      todayRedditCount > 0,
-      todaySoCount > 0
-    ].filter(Boolean).length;
+    const versionsForScope = (selectedVersionsResp && Array.isArray(selectedVersionsResp.versions))
+      ? selectedVersionsResp.versions
+      : [];
 
-    const versionsLink = selectedComponents.length
-      ? baseUrl + '/api/v/?q=' + encodeURIComponent(selectedComponents.join(','))
-      : baseUrl + '/api/v/';
-    const cveLink = baseUrl + '/api/aggregate/v/sourceCountByType?sourceType=CVE&timestamp=' + refDate;
-    const redditLink = baseUrl + '/api/reddit?limit=100&showCount=true';
+    const multiSourceList = [];
 
-    if (aspectsToday >= 2) {
+    if (selectedComponents.length && versionsForScope.length && redditData.length) {
+      const weekStartKey = weekStart;
+
+      selectedComponents.forEach(nameRaw => {
+        const name = String(nameRaw || '').toLowerCase();
+        if (!name) return;
+
+        const releases7 = versionsForScope.filter(v =>
+          v.versionProductName &&
+          String(v.versionProductName).toLowerCase() === name &&
+          v.versionReleaseDate &&
+          v.versionReleaseDate >= weekStartKey &&
+          v.versionReleaseDate <= refDate &&
+          !v.isCve
+        ).length;
+
+        const cve7 = versionsForScope.filter(v =>
+          v.versionProductName &&
+          String(v.versionProductName).toLowerCase() === name &&
+          v.versionReleaseDate &&
+          v.versionReleaseDate >= weekStartKey &&
+          v.versionReleaseDate <= refDate &&
+          (v.isCve || (v.versionReleaseChannel && String(v.versionReleaseChannel).toLowerCase() === 'cve'))
+        ).length;
+
+        const posts7 = redditData.filter(doc => {
+          const dayKey = extractDayKey(doc.created_utc);
+          if (!dayKey || dayKey < weekStartKey || dayKey > refDate) return false;
+          const title = (doc.title || '').toLowerCase();
+          const selftext = (doc.selftext || '').toLowerCase();
+          return title.includes(name) || selftext.includes(name);
+        }).length;
+
+        if (releases7 > 0 && cve7 > 0 && posts7 > 0) {
+          multiSourceList.push({
+            name: nameRaw,
+            releases: releases7,
+            cve: cve7,
+            posts: posts7,
+            total: releases7 + cve7 + posts7
+          });
+        }
+      });
+
+      multiSourceList.sort((a,b) => b.total - a.total);
+    }
+
+    if (multiSourceList.length) {
+      const top = multiSourceList[0];
+      const versionsLinkTop = baseUrl + '/api/v/?q=' + top.name;
+      const cveLinkTop = baseUrl + '/api/aggregate/v/sourceCountByType?sourceType=CVE&timestamp=' +
+        refDate + '&q=' + top.name;
+      const redditLinkTop = baseUrl + '/api/reddit?limit=100&showCount=true&q=' +
+        top.name;
+
+      const itemsHtml = multiSourceList.map(entry => {
+        return '<li><strong>' + entry.name + '</strong> – ' +
+          entry.releases + ' releases, ' +
+          entry.cve + ' CVE, ' +
+          entry.posts + ' Reddit/StackOverflow (total ' +
+          '<span class="highlight-number">' + entry.total + '</span>)</li>';
+      }).join('');
+
       interesting.innerHTML =
-        '<strong>Component can win multi source signal.</strong><br/>' +
-        'For ' + componentsScopeDisplay + ' on ' + formatHumanDate(refDate) + ' the signals are:' +
-        '<ul>' +
-        '<li>' + todayCount + ' code releases</li>' +
-        '<li>' + cveTodayCount + ' CVE tagged releases</li>' +
-        '<li>' + todayRedditCount + ' reddit posts</li>' +
-        '<li>' + todaySoCount + ' StackOverflow posts</li>' +
-        '</ul>' +
-        '<div>Links: ' +
-        '<a href="' + versionsLink + '" target="_blank" rel="noopener">Latest versions JSON</a> · ' +
-        '<a href="' + cveLink + '" target="_blank" rel="noopener">CVE counts for today</a> · ' +
-        '<a href="' + redditLink + '" target="_blank" rel="noopener">Reddit/StackOverflow sample</a>' +
-        '</div>';
-
+        '<strong>Multi source components (last 7 days)</strong><br/>' +
+        '<div>Scope: ' + componentsScopeDisplay + '</div>' +
+        '<div style="margin-top:4px;">Most cross source component: <strong>' + top.name + '</strong><br/>' +
+        'Links: ' +
+        '<a href="' + versionsLinkTop + '" target="_blank" rel="noopener">versions JSON</a> · ' +
+        '<a href="' + cveLinkTop + '" target="_blank" rel="noopener">CVE counts</a> · ' +
+        '<a href="' + redditLinkTop + '" target="_blank" rel="noopener">reddit / StackOverflow posts</a>' +
+        '</div>' +
+        '<ul style="margin-top:4px;">' + itemsHtml + '</ul>';
       setValidation(
         'validation-interesting',
         true,
-        'Validation: at least 3 distinct sources contribute to this signal.'
+        'Validation: each listed component has releases, CVE, and Reddit/StackOverflow posts in the last 7 days.'
       );
     } else {
       interesting.innerHTML =
-        '<strong>No strong multi source signal.</strong><br/>' +
-        'At least two of code, CVE, reddit, and StackOverflow should have non zero counts on the same day.' +
-        '<div style="margin-top:4px;">You can still inspect details via ' +
-        '<a href="' + versionsLink + '" target="_blank" rel="noopener">versions JSON</a> and ' +
-        '<a href="' + redditLink + '" target="_blank" rel="noopener">ecosystem posts</a>.' +
-        '</div>';
+        '<strong>No strong multi source components in the last 7 days.</strong><br/>' +
+        'Pick one or more components above to see which ones have code, CVE, and Reddit/StackOverflow activity together.';
       setValidation(
         'validation-interesting',
         true,
-        'Validation: all inputs for this heuristic are drawn from today metrics.'
+        'Validation: multi source list is based on last 7 days for selected components.'
       );
     }
+
     const multiToday = todayCount + cveTodayCount + todayRedditCount + todaySoCount;
     const multiYesterday = yesterdayCount + cveYesterdayCount + yesterdayRedditDocs.length + yesterdaySoDocs.length;
     setDeltaBadge('delta-interesting', multiToday, multiYesterday);
@@ -1542,10 +1742,23 @@
     statusInfo.textContent = 'Ready.';
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
-    updateHeaderDate();
-    setInterval(updateHeaderDate, 60000);
+  function handleApply() {
+    const newOnes = readComponentsFromInput();
+    if (!newOnes.length) {
+      loadDashboard();
+      return;
+    }
+    const merged = Array.from(new Set([
+      ...currentComponents,
+      ...newOnes
+    ]));
+    document.getElementById('components-input').value = '';
+    setComponentsLabel(merged);
+    updateUrlWithComponents(merged);
+    loadDashboard();
+  }
 
+  document.addEventListener('DOMContentLoaded', () => {
     const dateInput = document.getElementById('date-input');
     if (!dateInput.value) {
       const now = new Date();
@@ -1553,7 +1766,7 @@
     }
 
     document.getElementById('apply-main').addEventListener('click', () => {
-      loadDashboard();
+      handleApply();
     });
 
     document.getElementById('clear-components').addEventListener('click', () => {
@@ -1563,12 +1776,37 @@
       loadDashboard();
     });
 
+    const activeLabel = document.getElementById('components-active-label');
+    activeLabel.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-remove-component]');
+      if (!btn) return;
+      const name = btn.getAttribute('data-remove-component');
+      const updated = currentComponents.filter(c => c !== name);
+      setComponentsLabel(updated);
+      updateUrlWithComponents(updated);
+      loadDashboard();
+    });
+
     document.getElementById('timeline-window').addEventListener('change', () => {
       loadDashboard();
     });
 
     document.getElementById('date-input').addEventListener('change', () => {
       loadDashboard();
+    });
+
+    document.getElementById('components-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleApply();
+      }
+    });
+
+    document.getElementById('date-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleApply();
+      }
     });
 
     loadDashboard();
