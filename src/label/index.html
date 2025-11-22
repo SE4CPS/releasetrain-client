@@ -269,7 +269,6 @@
       const API_BASE = 'https://releasetrain.io';
       const LIST_ENDPOINT = `${API_BASE}/api/reddit`;
       const UPDATE_ENDPOINT = (redditId) => `${API_BASE}/api/reddit/${encodeURIComponent(redditId)}`;
-      const STATS_ENDPOINT = `${API_BASE}/api/reddit/stats/labeled-by-month`;
 
       const state = { page: 1, limit: 500, raw: [], total: 0, month: null };
 
@@ -373,7 +372,7 @@
         params.set('page', Math.max(1, state.page));
         params.set('limit', Math.max(1, Math.min(500, state.limit)));
         if (state.month) params.set('month', state.month);
-        params.set('showCount', 'true'); // so X / total reflects server-side count
+        params.set('showCount', 'true');
         return `${LIST_ENDPOINT}?${params.toString()}`;
       }
 
@@ -405,27 +404,64 @@
         fetchList();
       }
 
+      // Compute stats client-side in ONE API call: /api/reddit?limit=all
       async function fetchStats() {
         try {
-          const res = await fetchWithLoader(STATS_ENDPOINT);
+          const url = `${LIST_ENDPOINT}?limit=all`;
+          const res = await fetchWithLoader(url);
           if (!res.ok) throw new Error(res.statusText);
           const body = await res.json();
-          const rows = Array.isArray(body.data) ? body.data : [];
+          const rows = Array.isArray(body)
+            ? body
+            : (body && Array.isArray(body.data) ? body.data : []);
 
           if (!rows.length) {
             statsRow.textContent = 'No labeled data yet.';
             return;
           }
 
-          statsRow.textContent = '';
-          rows.sort((a, b) => a.month.localeCompare(b.month)); // left to right by month
+          const counts = {};
 
-          for (const row of rows) {
+          rows.forEach(doc => {
+            if (docLabel(doc) === 'unlabeled') return;
+
+            const raw = doc.created_utc;
+            const str = s(raw);
+
+            let monthKey = 'unknown';
+
+            if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+              // ISO like 2025-10-28T...
+              monthKey = str.slice(0, 7); // YYYY-MM
+            } else if (/^\d{8}$/.test(str)) {
+              // compact yyyymmdd
+              monthKey = str.slice(0,4) + '-' + str.slice(4,6);
+            } else {
+              const d = new Date(str);
+              if (!isNaN(d.getTime())) {
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2,'0');
+                monthKey = `${y}-${m}`;
+              }
+            }
+
+            counts[monthKey] = (counts[monthKey] || 0) + 1;
+          });
+
+          const months = Object.keys(counts).sort(); // left to right
+          if (!months.length) {
+            statsRow.textContent = 'No labeled data yet.';
+            return;
+          }
+
+          statsRow.textContent = '';
+          months.forEach(monthKey => {
             const chip = document.createElement('span');
             chip.className = 'stats-chip';
-            chip.textContent = `${row.month}: ${row.count}`;
+            chip.textContent = `${monthKey}: ${counts[monthKey]}`;
             statsRow.appendChild(chip);
-          }
+          });
+          statsRow.classList.remove('muted');
         } catch (e) {
           console.error(e);
           statsRow.textContent = 'Error loading stats.';
@@ -550,7 +586,6 @@
         sel.value = labelToDisplay(docLabel(doc));
         sel.addEventListener('change', async () => {
           const label = displayToLabel(sel.value);
-          // Update only metadata.labeled.isUpdateRelated
           const value =
             label === 'positive' ? true :
             label === 'negative' ? false :
