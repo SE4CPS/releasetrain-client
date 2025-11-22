@@ -64,6 +64,8 @@
       gap: 6px;
       margin: 0 auto;
       font-size: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
     }
     .pager button {
       border: 1px solid var(--line);
@@ -138,9 +140,16 @@
   <header>
     <div style="width: 20%;"></div>
     <div class="pager">
+      <!-- Month pager -->
+      <button id="prevMonthBtn" aria-label="Previous month">&laquo;</button>
+      <span class="badge"><span id="monthText"></span></span>
+      <button id="nextMonthBtn" aria-label="Next month">&raquo;</button>
+
+      <!-- Page pager -->
       <button id="prevBtn" aria-label="Previous page">&larr;</button>
       <span class="badge">Page <span id="pageText">1</span></span>
       <button id="nextBtn" aria-label="Next page">&rarr;</button>
+
       <input id="limitInput" type="number" min="1" max="500" step="10" value="500" aria-label="Items per page" />
       <button id="reloadBtn" aria-label="Reload">&#x21bb;</button>
     </div>
@@ -204,7 +213,7 @@
       const LIST_ENDPOINT = `${API_BASE}/api/reddit`;
       const UPDATE_ENDPOINT = (redditId) => `${API_BASE}/api/reddit/${encodeURIComponent(redditId)}`;
 
-      const state = { page: 1, limit: 500, raw: [], total: 0 };
+      const state = { page: 1, limit: 500, raw: [], total: 0, month: null };
 
       const loader = document.getElementById('loader');
       const loaderBar = loader.querySelector('.bar');
@@ -218,7 +227,6 @@
         loaderBar.style.transform = 'scaleX(0)';
         // Progress to ~85% while in-flight
         loaderTimer = setInterval(() => {
-          // ease toward 0.85
           loaderProg += (0.85 - loaderProg) * 0.2;
           loaderBar.style.transform = `scaleX(${loaderProg})`;
         }, 120);
@@ -226,14 +234,11 @@
 
       function finishLoader() {
         clearInterval(loaderTimer);
-        // snap to 100%, then fade out
         loaderBar.style.transform = 'scaleX(1)';
         setTimeout(() => { loader.style.opacity = '0'; }, 150);
-        // reset transform after fade (for next cycle)
         setTimeout(() => { loaderBar.style.transform = 'scaleX(0)'; }, 400);
       }
 
-      // Wrap fetch with loader
       async function fetchWithLoader(url, options) {
         startLoader();
         try {
@@ -250,10 +255,16 @@
       const countBadge = document.getElementById('countBadge');
       const pageInfo = document.getElementById('pageInfo');
       const pageText = document.getElementById('pageText');
+
       const prevBtn = document.getElementById('prevBtn');
       const nextBtn = document.getElementById('nextBtn');
       const reloadBtn = document.getElementById('reloadBtn');
       const limitInput = document.getElementById('limitInput');
+
+      const prevMonthBtn = document.getElementById('prevMonthBtn');
+      const nextMonthBtn = document.getElementById('nextMonthBtn');
+      const monthText = document.getElementById('monthText');
+
       const labelFilter = document.getElementById('labelFilter');
       const withDescription = document.getElementById('withDescription');
       const withTitle = document.getElementById('withTitle');
@@ -263,7 +274,6 @@
       const nonEmpty = v => !!s(v).trim();
       const setStatus = msg => statusEl.textContent = msg;
 
-      // XSS-safe escape
       function escapeHTML(str){
         return s(str)
           .replace(/&/g, '&amp;')
@@ -272,7 +282,7 @@
           .replace(/"/g, '&quot;')
           .replace(/'/g, '&#39;');
       }
-      // Highlight query (>=3 chars) with <mark class="hl">
+
       function highlightHTML(text, query){
         const safe = escapeHTML(text);
         const q = s(query).trim();
@@ -291,8 +301,41 @@
       const labelToDisplay = l => l === 'positive' ? 'Positive' : l === 'negative' ? 'Negative' : 'Not Labeled';
       const displayToLabel = d => d.toLowerCase().includes('pos') ? 'positive' : d.toLowerCase().includes('neg') ? 'negative' : 'unlabeled';
 
-      const buildQuery = () =>
-        `${LIST_ENDPOINT}?page=${Math.max(1,state.page)}&limit=${Math.max(1,Math.min(500,state.limit))}`;
+      function buildQuery() {
+        const params = new URLSearchParams();
+        params.set('page', Math.max(1, state.page));
+        params.set('limit', Math.max(1, Math.min(500, state.limit)));
+        if (state.month) params.set('month', state.month);
+        return `${LIST_ENDPOINT}?${params.toString()}`;
+      }
+
+      function syncMonthLabel() {
+        if (!state.month) {
+          monthText.textContent = 'All time';
+          return;
+        }
+        const y = state.month.slice(0, 4);
+        const m = state.month.slice(4, 6);
+        monthText.textContent = `${y}-${m}`;
+      }
+
+      function shiftMonth(delta) {
+        let d;
+        if (state.month && /^\d{6}$/.test(state.month)) {
+          const y = Number(state.month.slice(0, 4));
+          const m = Number(state.month.slice(4, 6)); // 1–12
+          d = new Date(y, m - 1 + delta, 1);
+        } else {
+          d = new Date();
+          d.setMonth(d.getMonth() + delta);
+        }
+        const ny = d.getFullYear();
+        const nm = String(d.getMonth() + 1).padStart(2, '0');
+        state.month = `${ny}${nm}`;
+        state.page = 1;
+        syncMonthLabel();
+        fetchList();
+      }
 
       async function fetchList() {
         setStatus('Loading…');
@@ -305,13 +348,11 @@
 
           const body = await res.json();
 
-          // Accept both legacy array and new object shape
           const rows = Array.isArray(body) ? body
                     : (body && Array.isArray(body.data) ? body.data : []);
 
           state.raw = rows;
 
-          // Prefer server totalCount if present; otherwise fallback to rows length
           state.total = (body && typeof body.totalCount === 'number')
             ? body.totalCount
             : rows.length;
@@ -416,19 +457,38 @@
         return tr;
       }
 
-      prevBtn.onclick=()=>{state.page=Math.max(1,state.page-1);fetchList();};
-      nextBtn.onclick=()=>{state.page=Math.max(1,state.page+1);fetchList();};
-      reloadBtn.onclick=fetchList;
-      limitInput.onchange=()=>{const v=parseInt(limitInput.value,10);state.limit=Math.max(1,Math.min(500,v||500));fetchList();};
+      prevBtn.onclick = () => { state.page = Math.max(1, state.page-1); fetchList(); };
+      nextBtn.onclick = () => { state.page = Math.max(1, state.page+1); fetchList(); };
+      reloadBtn.onclick = fetchList;
+
+      prevMonthBtn.onclick = () => shiftMonth(-1);
+      nextMonthBtn.onclick = () => shiftMonth(1);
+
+      limitInput.onchange = () => {
+        const v=parseInt(limitInput.value,10);
+        state.limit=Math.max(1,Math.min(500,v||500));
+        fetchList();
+      };
+
       [labelFilter,withDescription,withTitle].forEach(el=>el.onchange=render);
       searchText.oninput=render;
 
       const params=new URLSearchParams(location.search);
       const p=parseInt(params.get('page'),10);
       const l=parseInt(params.get('limit'),10);
-      if(Number.isFinite(p))state.page=Math.max(1,p);
-      if(Number.isFinite(l))state.limit=Math.max(1,Math.min(500,l));
+      const mParam = params.get('month');
+      if(Number.isFinite(p)) state.page=Math.max(1,p);
+      if(Number.isFinite(l)) state.limit=Math.max(1,Math.min(500,l));
+      if(mParam && /^\d{6}$/.test(mParam)) {
+        state.month = mParam;
+      } else {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth()+1).padStart(2,'0');
+        state.month = `${y}${m}`;
+      }
       limitInput.value=state.limit;
+      syncMonthLabel();
       fetchList();
     })();
   </script>
