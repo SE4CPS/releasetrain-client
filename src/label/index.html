@@ -145,6 +145,14 @@
       color: var(--fg);
     }
 
+    /* Stats row: left-to-right chips */
+    .stats-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
     table { width: 100%; border-collapse: collapse; }
     thead th {
       text-align: left;
@@ -163,21 +171,6 @@
 
     /* highlight style */
     .hl { background: var(--hl); }
-
-    /* stats row (horizontal) */
-    .stats-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      font-size: 12px;
-      margin-top: 4px;
-    }
-    .stats-chip {
-      padding: 2px 8px;
-      border-radius: 999px;
-      border: 1px solid var(--line);
-      background: #fff;
-    }
   </style>
 </head>
 <body>
@@ -209,13 +202,11 @@
   </div>
 
   <main>
-    <!-- Stats (horizontal) -->
-    <section class="toolbar" style="margin-bottom: 4px;">
-      <div class="card">
-        <strong>Training data (labeled) by month</strong>
-        <div id="statsRow" class="stats-row muted">
-          Loading stats…
-        </div>
+    <!-- Stats: training data by month -->
+    <section class="card" aria-label="Training data stats">
+      <strong>Training data (labeled) by month</strong>
+      <div id="statsRow" class="stats-row">
+        <span class="muted" id="statsStatus">Loading stats…</span>
       </div>
     </section>
 
@@ -267,8 +258,9 @@
   <script>
     (function(){
       const API_BASE = 'https://releasetrain.io';
-      const LIST_ENDPOINT = `${API_BASE}/api/reddit`;
+      const LIST_ENDPOINT  = `${API_BASE}/api/reddit`;
       const UPDATE_ENDPOINT = (redditId) => `${API_BASE}/api/reddit/${encodeURIComponent(redditId)}`;
+      const STATS_ENDPOINT = `${API_BASE}/api/reddit/stats/by-month`;
 
       const state = { page: 1, limit: 500, raw: [], total: 0, month: null };
 
@@ -325,7 +317,10 @@
       const withDescription = document.getElementById('withDescription');
       const withTitle = document.getElementById('withTitle');
       const searchText = document.getElementById('searchText');
+
+      // Stats elements
       const statsRow = document.getElementById('statsRow');
+      const statsStatus = document.getElementById('statsStatus');
 
       const s = v => (v === null || v === undefined) ? '' : String(v);
       const nonEmpty = v => !!s(v).trim();
@@ -348,31 +343,40 @@
         return safe.replace(rx, m => `<mark class="hl">${m}</mark>`);
       }
 
-      // Use ONLY metadata.labeled.isUpdateRelated for labeling.
-      // null or missing => unlabeled.
+      // Decide label from metadata.labeled.isUpdateRelated (preferred)
+      // fallback to metadata.isUpdateRelated for older docs
       const docLabel = doc => {
         const meta = doc.metadata || {};
         const labeled = meta.labeled || {};
-        const val = labeled.isUpdateRelated;
+        let val = labeled.isUpdateRelated;
+
+        if (val === null || typeof val === 'undefined') {
+          if (typeof meta.isUpdateRelated !== 'undefined' && meta.isUpdateRelated !== null) {
+            val = meta.isUpdateRelated;
+          } else {
+            return 'unlabeled';
+          }
+        }
         if (val === true) return 'positive';
         if (val === false) return 'negative';
         return 'unlabeled';
       };
+
       const labelToDisplay = l =>
-        l === 'positive' ? 'Positive' :
-        l === 'negative' ? 'Negative' :
-        'Not Labeled';
+        l === 'positive' ? 'Positive'
+        : l === 'negative' ? 'Negative'
+        : 'Not Labeled';
+
       const displayToLabel = d =>
-        d.toLowerCase().includes('pos') ? 'positive' :
-        d.toLowerCase().includes('neg') ? 'negative' :
-        'unlabeled';
+        d.toLowerCase().includes('pos') ? 'positive'
+        : d.toLowerCase().includes('neg') ? 'negative'
+        : 'unlabeled';
 
       function buildQuery() {
         const params = new URLSearchParams();
         params.set('page', Math.max(1, state.page));
         params.set('limit', Math.max(1, Math.min(500, state.limit)));
         if (state.month) params.set('month', state.month);
-        params.set('showCount', 'true');
         return `${LIST_ENDPOINT}?${params.toString()}`;
       }
 
@@ -390,7 +394,7 @@
         let d;
         if (state.month && /^\d{6}$/.test(state.month)) {
           const y = Number(state.month.slice(0, 4));
-          const m = Number(state.month.slice(4, 6)); // 1–12
+          const m = Number(state.month.slice(4, 6));
           d = new Date(y, m - 1 + delta, 1);
         } else {
           d = new Date();
@@ -404,67 +408,31 @@
         fetchList();
       }
 
-      // Compute stats client-side in ONE API call: /api/reddit?limit=all
       async function fetchStats() {
+        if (!statsRow || !statsStatus) return;
+        statsStatus.textContent = 'Loading stats…';
         try {
-          const url = `${LIST_ENDPOINT}?limit=all`;
-          const res = await fetchWithLoader(url);
+          const res = await fetchWithLoader(STATS_ENDPOINT);
           if (!res.ok) throw new Error(res.statusText);
           const body = await res.json();
-          const rows = Array.isArray(body)
-            ? body
-            : (body && Array.isArray(body.data) ? body.data : []);
-
-          if (!rows.length) {
-            statsRow.textContent = 'No labeled data yet.';
+          const items = Array.isArray(body.data) ? body.data : [];
+          if (!items.length) {
+            statsRow.innerHTML = '<span class="muted">No stats yet.</span>';
             return;
           }
-
-          const counts = {};
-
-          rows.forEach(doc => {
-            if (docLabel(doc) === 'unlabeled') return;
-
-            const raw = doc.created_utc;
-            const str = s(raw);
-
-            let monthKey = 'unknown';
-
-            if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
-              // ISO like 2025-10-28T...
-              monthKey = str.slice(0, 7); // YYYY-MM
-            } else if (/^\d{8}$/.test(str)) {
-              // compact yyyymmdd
-              monthKey = str.slice(0,4) + '-' + str.slice(4,6);
-            } else {
-              const d = new Date(str);
-              if (!isNaN(d.getTime())) {
-                const y = d.getFullYear();
-                const m = String(d.getMonth() + 1).padStart(2,'0');
-                monthKey = `${y}-${m}`;
-              }
-            }
-
-            counts[monthKey] = (counts[monthKey] || 0) + 1;
-          });
-
-          const months = Object.keys(counts).sort(); // left to right
-          if (!months.length) {
-            statsRow.textContent = 'No labeled data yet.';
-            return;
-          }
-
-          statsRow.textContent = '';
-          months.forEach(monthKey => {
-            const chip = document.createElement('span');
-            chip.className = 'stats-chip';
-            chip.textContent = `${monthKey}: ${counts[monthKey]}`;
-            statsRow.appendChild(chip);
-          });
-          statsRow.classList.remove('muted');
+          statsRow.innerHTML = '';
+          items
+            .slice()
+            .sort((a, b) => s(a.month).localeCompare(s(b.month)))
+            .forEach(item => {
+              const chip = document.createElement('span');
+              chip.className = 'badge';
+              chip.textContent = `${item.month} ${item.count}`;
+              statsRow.appendChild(chip);
+            });
         } catch (e) {
           console.error(e);
-          statsRow.textContent = 'Error loading stats.';
+          statsRow.innerHTML = '<span class="muted">Error loading stats.</span>';
         }
       }
 
@@ -478,10 +446,12 @@
           if (!res.ok) throw new Error(res.statusText);
 
           const body = await res.json();
+
           const rows = Array.isArray(body) ? body
                     : (body && Array.isArray(body.data) ? body.data : []);
 
           state.raw = rows;
+
           state.total = (body && typeof body.totalCount === 'number')
             ? body.totalCount
             : rows.length;
@@ -507,7 +477,6 @@
 
         return rows.filter(doc => {
           const lab = docLabel(doc);
-
           if (lf === 'unlabeled' && lab !== 'unlabeled') return false;
           if (lf === 'labeled' && lab === 'unlabeled') return false;
           if (lf === 'positive' && lab !== 'positive') return false;
@@ -517,7 +486,7 @@
           if (needTitle && !nonEmpty(doc.title)) return false;
 
           if (q) {
-            const hay = (s(doc.title) + s(doc.author_description)).toLowerCase();
+            const hay = (s(doc.title).toLowerCase() + s(doc.author_description).toLowerCase());
             if (!hay.includes(q)) return false;
           }
           return true;
@@ -531,7 +500,7 @@
       function render(){
         const rows = applyFilters(state.raw);
         tbody.innerHTML = '';
-        if(!rows.length){
+        if (!rows.length) {
           empty.hidden = false;
           updateCounts(0);
           return;
@@ -578,38 +547,38 @@
 
         const selTd = document.createElement('td');
         const sel = document.createElement('select');
-        ['Not Labeled','Positive','Negative'].forEach(t => {
+        ['Not Labeled', 'Positive', 'Negative'].forEach(t => {
           const o = document.createElement('option');
           o.textContent = t;
           sel.appendChild(o);
         });
         sel.value = labelToDisplay(docLabel(doc));
+
         sel.addEventListener('change', async () => {
           const label = displayToLabel(sel.value);
-          const value =
-            label === 'positive' ? true :
-            label === 'negative' ? false :
-            null;
+          const val = label === 'positive' ? true : label === 'negative' ? false : null;
 
+          // Update nested labeled flag without overwriting entire metadata
           const payload = {
-            $set: { 'metadata.labeled.isUpdateRelated': value }
+            $set: {
+              'metadata.labeled.isUpdateRelated': val
+            }
           };
 
-          try{
+          try {
             const res = await fetchWithLoader(UPDATE_ENDPOINT(rid), {
-              method:'PUT',
-              headers:{'Content-Type':'application/json'},
-              body:JSON.stringify(payload)
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
             });
-            if (!res.ok) throw new Error(await res.text().catch(()=>res.statusText));
+            if (!res.ok) throw new Error(await res.text().catch(() => res.statusText));
 
-            const meta = doc.metadata || {};
-            const labeled = meta.labeled || {};
-            labeled.isUpdateRelated = value;
-            doc.metadata = { ...meta, labeled };
+            doc.metadata = doc.metadata || {};
+            doc.metadata.labeled = doc.metadata.labeled || {};
+            doc.metadata.labeled.isUpdateRelated = val;
 
             setStatus(`Saved ${sel.value}`);
-          } catch(e) {
+          } catch (e) {
             console.error(e);
             setStatus('Save failed');
             sel.value = labelToDisplay(docLabel(doc));
@@ -618,43 +587,45 @@
         });
         selTd.appendChild(sel);
 
-        [idTd,titleTd,descTd,linkTd,selTd].forEach(td => tr.appendChild(td));
+        [idTd, titleTd, descTd, linkTd, selTd].forEach(td => tr.appendChild(td));
         return tr;
       }
 
-      prevBtn.onclick = () => { state.page = Math.max(1, state.page-1); fetchList(); };
-      nextBtn.onclick = () => { state.page = Math.max(1, state.page+1); fetchList(); };
+      prevBtn.onclick  = () => { state.page = Math.max(1, state.page - 1); fetchList(); };
+      nextBtn.onclick  = () => { state.page = Math.max(1, state.page + 1); fetchList(); };
       reloadBtn.onclick = fetchList;
 
       prevMonthBtn.onclick = () => shiftMonth(-1);
       nextMonthBtn.onclick = () => shiftMonth(1);
 
       limitInput.onchange = () => {
-        const v = parseInt(limitInput.value,10);
+        const v = parseInt(limitInput.value, 10);
         state.limit = Math.max(1, Math.min(500, v || 500));
         fetchList();
       };
 
-      [labelFilter,withDescription,withTitle].forEach(el => el.onchange = render);
+      [labelFilter, withDescription, withTitle].forEach(el => el.onchange = render);
       searchText.oninput = render;
 
+      // Init from URL params
       const params = new URLSearchParams(location.search);
-      const p = parseInt(params.get('page'),10);
-      const l = parseInt(params.get('limit'),10);
+      const p = parseInt(params.get('page'), 10);
+      const l = parseInt(params.get('limit'), 10);
       const mParam = params.get('month');
-      if (Number.isFinite(p)) state.page = Math.max(1,p);
-      if (Number.isFinite(l)) state.limit = Math.max(1,Math.min(500,l));
+      if (Number.isFinite(p)) state.page = Math.max(1, p);
+      if (Number.isFinite(l)) state.limit = Math.max(1, Math.min(500, l));
       if (mParam && /^\d{6}$/.test(mParam)) {
         state.month = mParam;
       } else {
         const now = new Date();
         const y = now.getFullYear();
-        const m = String(now.getMonth()+1).padStart(2,'0');
+        const m = String(now.getMonth() + 1).padStart(2, '0');
         state.month = `${y}${m}`;
       }
       limitInput.value = state.limit;
       syncMonthLabel();
 
+      // Kick off
       fetchStats();
       fetchList();
     })();
