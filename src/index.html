@@ -7,14 +7,14 @@
   <meta name="description" content="Merged list per component (name-only canonical), subtle highlights, extra info chips, and left-side dates (last 6 months)" />
   <style>
     :root{
-      --bg:#0f1115;--panel:#171a21;--muted:#9aa3af;--text:#e5e7eb;--brand:#60a5fa;--line:#202532;--chip:#1a1f2b;--chipText:#e5e7eb;--focus:#a5b4fc;
-      --bad:#ef4444;--warn:#f59e0b;--ok:#22c55e;--reddit:#ff7a45;--link:#93c5fd;--shadow:0 6px 20px rgba(0,0,0,.2);
+      --bg:#0f1115;--panel:#171a21;--muted:#9aa3af;--text:#e5e7eb;--brand:#60a5fa;--line:#202532;--chip:#161b22;--chipText:#c9d1d9;--focus:#a5b4fc;
+      --bad:#f85149;--warn:#bb8009;--ok:#238636;--reddit:#ff7a45;--link:#93c5fd;--shadow:0 6px 20px rgba(0,0,0,.2);
       --topbar-h:0px;--navloader-h:0px;--risk-bg:rgba(239,68,68,.08);--risk-border:rgba(239,68,68,.28)
     }
     @media (prefers-color-scheme: light){
       :root{
-        --bg:#f7f8fb;--panel:#ffffff;--muted:#6b7280;--text:#0f172a;--brand:#2563eb;--line:#e6e9ef;--chip:#eef2ff;--chipText:#1f2937;--focus:#4f46e5;
-        --bad:#dc2626;--warn:#d97706;--ok:#16a34a;--reddit:#ff6a33;--link:#1d4ed8;--shadow:0 6px 18px rgba(0,0,0,.07);
+        --bg:#f7f8fb;--panel:#ffffff;--muted:#6b7280;--text:#0f172a;--brand:#2563eb;--line:#e6e9ef;--chip:#f3f4f6;--chipText:#111827;--focus:#4f46e5;
+        --bad:#b91c1c;--warn:#b45309;--ok:#15803d;--reddit:#ea580c;--link:#1d4ed8;--shadow:0 6px 18px rgba(0,0,0,.07);
         --risk-bg:rgba(220,38,38,.06);--risk-border:rgba(220,38,38,.22)
       }
     }
@@ -72,7 +72,7 @@
 
     .li{
       display:grid;
-      grid-template-columns: 128px 30px 1fr; /* date | icon | content */
+      grid-template-columns:128px 30px 1fr;
       column-gap:14px;
       row-gap:0;
       padding:8px 0;
@@ -123,14 +123,51 @@
 
     .meta{color:var(--muted);font-size:12px}
 
-    .chips{display:inline-flex;gap:6px;flex-wrap:wrap}
-    .chip{background:var(--chip);color:var(--chipText);border:1px solid var(--line);font-size:11px;padding:2px 6px;border-radius:999px;white-space:nowrap}
-    .chip.bad{background:rgba(239,68,68,.12);color:var(--bad);border-color:rgba(239,68,68,.32)}
-    .chip.warn{background:rgba(245,158,11,.12);color:var(--warn);border-color:rgba(245,158,11,.38)}
-    .chip.ok{background:rgba(34,197,94,.12);color:var(--ok);border-color:rgba(34,197,94,.35)}
-    .chip.reddit{background:rgba(255,122,69,.15);color:var(--reddit);border-color:rgba(255,122,69,.45)}
-    .chip.soft{opacity:.85}
-    .chip.link a{color:inherit;text-decoration:none}
+    .chips{
+      display:flex;
+      flex-wrap:wrap;
+      gap:4px;
+      align-items:center;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      padding:3px 8px;
+      font-size:11px;
+      line-height:1;
+      border-radius:4px;
+      border:1px solid #30363d;
+      background:var(--chip);
+      color:var(--chipText);
+      white-space:nowrap;
+    }
+    .chip.bad{
+      background:#2f1517;
+      border-color:var(--bad);
+      color:#ff7b72;
+    }
+    .chip.warn{
+      background:#2b2113;
+      border-color:var(--warn);
+      color:#f2cc60;
+    }
+    .chip.ok{
+      background:#102820;
+      border-color:var(--ok);
+      color:#3fb950;
+    }
+    .chip.reddit{
+      background:#241b14;
+      border-color:var(--reddit);
+      color:#ffac7d;
+    }
+    .chip.soft{
+      opacity:.9;
+    }
+    .chip.link a{
+      color:inherit;
+      text-decoration:none;
+    }
   </style>
 </head>
 <body>
@@ -162,6 +199,12 @@
         <button class="toggle" data-key="reddit" aria-pressed="false" type="button">Reddit <span class="count" id="btn-reddit">(0)</span></button>
         <button class="toggle redditRisk" data-key="reddit-risk" aria-pressed="false" type="button" title="AI-detected isUpdateRelated or score>0.5">
           ⚠️ Reddit Risks <span class="count" id="btn-reddit-risk">(0)</span>
+        </button>
+        <button class="toggle redditRisk" data-key="reddit-risk-latest" aria-pressed="false" type="button" title="Risky Reddit posts about latest updates">
+          ⚠️ Reddit Risk Latest <span class="count" id="btn-reddit-risk-latest">(0)</span>
+        </button>
+        <button class="toggle redditRisk" data-key="reddit-risk-cve" aria-pressed="false" type="button" title="Risky Reddit posts about security/CVE">
+          ⚠️ Reddit Risk Security <span class="count" id="btn-reddit-risk-cve">(0)</span>
         </button>
         <button class="toggle soRisk" data-key="so-risk" aria-pressed="false" type="button" title="AI-detected isUpdateRelated or score>0.5 (StackOverflow)">
           ⚠️ StackOverflow Risks <span class="count" id="btn-so-risk">(0)</span>
@@ -304,7 +347,9 @@
           num_comments:p.num_comments,
           score:p.score,
           metadata:p.metadata,
-          source:p.source
+          source:p.source,
+          isAboutLatestUpdate:p.isAboutLatestUpdate,
+          isAboutCve:p.isAboutCve
         })); }
     };
 
@@ -370,7 +415,7 @@
       if (!name) return [];
       const arr = STATE.redditBySub.get(name) || [];
       const out = [];
-      for (const p of arr){
+      for(const p of arr){
         if (getPostSource(p) !== "stackoverflow") continue;
         const t = +new Date(p.created_utc || 0);
         if (t < SIX_MONTHS_AGO) continue;
@@ -398,6 +443,7 @@
     function computeAggregates(list){
       let major=0,minor=0,patch=0,cve=0,uniqComps=new Set(),typeCounts=new Map();
       const redditAllIds=new Set(), soAllIds=new Set(), redditRiskIds=new Set(), soRiskIds=new Set();
+      const redditRiskLatestIds=new Set(), redditRiskCveIds=new Set();
 
       for(const it of list){
         const ch=norm(it.versionReleaseChannel);
@@ -416,7 +462,12 @@
 
         const riskR = redditMatchesForVersionBase(it, REDDIT_LIMIT, true);
         for(const p of riskR){
-          if(getPostSource(p)==="reddit") redditRiskIds.add(getPostId(p));
+          if(getPostSource(p)==="reddit"){
+            const id=getPostId(p);
+            redditRiskIds.add(id);
+            if (p.isAboutLatestUpdate) redditRiskLatestIds.add(id);
+            if (p.isAboutCve) redditRiskCveIds.add(id);
+          }
         }
 
         const soRiskArr = stackoverflowMatchesForVersionBase(it, REDDIT_LIMIT, true);
@@ -434,9 +485,23 @@
 
       const reddit = redditAllIds.size;
       const redditRisk = redditRiskIds.size;
+      const redditRiskLatest = redditRiskLatestIds.size;
+      const redditRiskCve = redditRiskCveIds.size;
       const soRisk = soRiskIds.size;
 
-      return {major,minor,patch,cve,reddit,redditRisk,soRisk,uniq:uniqComps.size,typeCounts};
+      return {
+        major,
+        minor,
+        patch,
+        cve,
+        reddit,
+        redditRisk,
+        redditRiskLatest,
+        redditRiskCve,
+        soRisk,
+        uniq:uniqComps.size,
+        typeCounts
+      };
     }
 
     function paintFixedCounts(a){
@@ -446,6 +511,8 @@
       $("#btn-cve").textContent=`(${a.cve})`;
       $("#btn-reddit").textContent=`(${a.reddit})`;
       $("#btn-reddit-risk").textContent=`(${a.redditRisk})`;
+      $("#btn-reddit-risk-latest").textContent=`(${a.redditRiskLatest})`;
+      $("#btn-reddit-risk-cve").textContent=`(${a.redditRiskCve})`;
       $("#btn-so-risk").textContent=`(${a.soRisk})`;
       $("#kpi-uniq").textContent=a.uniq;
     }
@@ -464,14 +531,26 @@
       }
     }
 
-    function matchesToggles(v,rc,rrc,soCount,soRiskCount){
+    function matchesToggles(v, rc, rRiskCount, soCount, soRiskCount, rRiskLatestCount, rRiskCveCount){
       const set=STATE.filters.toggles, channel=norm(v.versionReleaseChannel);
       const compTypes=(v.classification?.componentType||[]).map(norm),
             isCve=!!v.isCve,
             hasReddit=rc>0,
-            hasRisk=rrc>0,
-            hasSoRisk=soRiskCount>0;
-      const truth={major:channel==="major",minor:channel==="minor",patch:channel==="patch",cve:isCve,reddit:hasReddit,'reddit-risk':hasRisk,'so-risk':hasSoRisk};
+            hasRisk=rRiskCount>0,
+            hasSoRisk=soRiskCount>0,
+            hasRiskLatest=rRiskLatestCount>0,
+            hasRiskCve=rRiskCveCount>0;
+      const truth={
+        major:channel==="major",
+        minor:channel==="minor",
+        patch:channel==="patch",
+        cve:isCve,
+        reddit:hasReddit,
+        'reddit-risk':hasRisk,
+        'reddit-risk-latest':hasRiskLatest,
+        'reddit-risk-cve':hasRiskCve,
+        'so-risk':hasSoRisk
+      };
       for(const k of set){
         if(k.startsWith("type:")){
           if(!compTypes.includes(k.slice(5))) return false;
@@ -500,7 +579,9 @@
         const rr=redditMatchesForVersionBase(v,6,true);
         const soAll=stackoverflowMatchesForVersionBase(v,6,false);
         const soRiskArr=stackoverflowMatchesForVersionBase(v,6,true);
-        return matchesToggles(v,r.length, rr.length, soAll.length, soRiskArr.length);
+        const riskLatestCount = rr.filter(p=>p.isAboutLatestUpdate).length;
+        const riskCveCount = rr.filter(p=>p.isAboutCve).length;
+        return matchesToggles(v,r.length, rr.length, soAll.length, soRiskArr.length, riskLatestCount, riskCveCount);
       });
 
       const srcCounts = getSourceCounts();
@@ -524,7 +605,9 @@
     const chip=(t,k)=>`<span class="chip ${k||""}">${t}</span>`;
 
     function renderComponentNode(group){
-      const onlyRedditRisks=STATE.filters.toggles.has("reddit-risk");
+      const onlyRedditRisks=STATE.filters.toggles.has("reddit-risk") ||
+                            STATE.filters.toggles.has("reddit-risk-latest") ||
+                            STATE.filters.toggles.has("reddit-risk-cve");
       const onlySoRisks=STATE.filters.toggles.has("so-risk");
 
       const seen=new Set(); let rUnion=[];
@@ -574,12 +657,12 @@
       const sum=document.createElement("summary");
       const summaryRight = `
         <span class="summaryRight">
-          ${chip(cveCount + " CVE","bad")}
-          ${chip(redditCount + " Reddit","reddit")}
-          ${chip(soCount + " StackOverflow","reddit")}
-          ${chip(majorCount + " major","ok")}
-          ${chip(minorCount + " minor","soft")}
-          ${chip(patchCount + " patch","warn")}
+          ${chip("CVE " + cveCount,"bad")}
+          ${chip("REDDIT " + redditCount,"reddit")}
+          ${chip("SO " + soCount,"soft")}
+          ${chip("MAJOR " + majorCount,"ok")}
+          ${chip("MINOR " + minorCount,"soft")}
+          ${chip("PATCH " + patchCount,"warn")}
         </span>`;
       sum.innerHTML = `${group.name} ${summaryRight}`;
       det.appendChild(sum);
@@ -617,53 +700,73 @@
 
         const chips=document.createElement("div"); chips.className="chips";
         if(it.kind==="reddit"){
-          chips.insertAdjacentHTML("beforeend", chip("REDDIT","reddit"));
+          chips.insertAdjacentHTML("beforeend", chip("SRC reddit","reddit"));
           const scorePred = (it.raw?.metadata?.predicted?.positiveScore);
           const scoreField = (typeof it.raw?.score === "number") ? it.raw.score : null;
           const scoreVal = (typeof scorePred === "number") ? scorePred : scoreField;
           if(isRisk(it.raw)){
-            const label = scoreVal!=null ? `risk score: ${Number(scoreVal).toFixed(4)}` : "risk score: —";
+            const label = scoreVal!=null ? `RISK ${Number(scoreVal).toFixed(4)}` : "RISK —";
             chips.insertAdjacentHTML("beforeend", chip(label,"warn"));
           }else if(scoreVal!=null){
-            chips.insertAdjacentHTML("beforeend", chip(`score: ${Number(scoreVal).toFixed(4)}`,"soft"));
+            chips.insertAdjacentHTML("beforeend", chip(`SCORE ${Number(scoreVal).toFixed(4)}`,"soft"));
+          }
+          const flags = it.raw || {};
+          if (flags.isAboutLatestUpdate) {
+            chips.insertAdjacentHTML("beforeend", chip("TOPIC latest","soft"));
+          }
+          if (flags.isAboutCve) {
+            chips.insertAdjacentHTML("beforeend", chip("SEC security","bad"));
+          }
+          const upvotes = (typeof flags.score === "number") ? flags.score : null;
+          const comments = (typeof flags.num_comments === "number") ? flags.num_comments : null;
+          if (upvotes != null) {
+            chips.insertAdjacentHTML("beforeend", chip(`UPVOTES ${upvotes}`,"soft"));
+          }
+          if (comments != null) {
+            chips.insertAdjacentHTML("beforeend", chip(`COMMENTS ${comments}`,"soft"));
           }
         }else if(it.kind==="stackoverflow"){
-          chips.insertAdjacentHTML("beforeend", chip("STACKOVERFLOW","reddit"));
+          chips.insertAdjacentHTML("beforeend", chip("SRC stackoverflow","soft"));
           const scorePred = (it.raw?.metadata?.predicted?.positiveScore);
           const scoreField = (typeof it.raw?.score === "number") ? it.raw.score : null;
           const scoreVal = (typeof scorePred === "number") ? scorePred : scoreField;
           if(isRisk(it.raw)){
-            const label = scoreVal!=null ? `risk score: ${Number(scoreVal).toFixed(4)}` : "risk score: —";
+            const label = scoreVal!=null ? `RISK ${Number(scoreVal).toFixed(4)}` : "RISK —";
             chips.insertAdjacentHTML("beforeend", chip(label,"warn"));
           }else if(scoreVal!=null){
-            chips.insertAdjacentHTML("beforeend", chip(`score: ${Number(scoreVal).toFixed(4)}`,"soft"));
+            chips.insertAdjacentHTML("beforeend", chip(`SCORE ${Number(scoreVal).toFixed(4)}`,"soft"));
           }
         }else if(it.kind==="cve"){
-          chips.insertAdjacentHTML("beforeend", chip("CVE","bad"));
+          chips.insertAdjacentHTML("beforeend", chip("TYPE cve","bad"));
           if(it.raw && it.raw._id){
-            chips.insertAdjacentHTML("beforeend", `<span class="chip link"><a href="https://releasetrain.io/api/v/${it.raw._id}" target="_blank" rel="noopener">api</a></span>`);
+            chips.insertAdjacentHTML("beforeend", `<span class="chip link">ID <a href="https://releasetrain.io/api/v/${it.raw._id}" target="_blank" rel="noopener">open</a></span>`);
           }
         }else{
-          const ch=(it.channel||"other"); const color=ch==="major"?"ok":ch==="patch"?"warn":ch==="minor"?"soft":"";
-          chips.insertAdjacentHTML("beforeend", chip(ch, color));
+          const ch=(it.channel||"other");
+          const color=ch==="major"?"ok":ch==="patch"?"warn":ch==="minor"?"soft":"soft";
+          chips.insertAdjacentHTML("beforeend", chip("CHANNEL "+ch,color));
         }
 
         if(it.kind!=="reddit" && it.kind!=="stackoverflow" && it.raw){
           const r = it.raw;
-          if(r.versionProductBrand)   chips.insertAdjacentHTML("beforeend", chip(String(r.versionProductBrand).toLowerCase(),"soft"));
-          if(r.versionProductType)    chips.insertAdjacentHTML("beforeend", chip(String(r.versionProductType).toLowerCase(),"soft"));
-          if(r.versionProductLicense) chips.insertAdjacentHTML("beforeend", chip(String(r.versionProductLicense).toLowerCase(),"soft"));
+          if(r.versionProductBrand)
+            chips.insertAdjacentHTML("beforeend", chip("BRAND "+String(r.versionProductBrand).toLowerCase(),"soft"));
+          if(r.versionProductType)
+            chips.insertAdjacentHTML("beforeend", chip("TYPE "+String(r.versionProductType).toLowerCase(),"soft"));
+          if(r.versionProductLicense)
+            chips.insertAdjacentHTML("beforeend", chip("LICENSE "+String(r.versionProductLicense).toLowerCase(),"soft"));
 
           const compTypes = (r.classification?.componentType||[]).filter(x=>x && x!=="UNKNOWN");
-          compTypes.slice(0,3).forEach(t => chips.insertAdjacentHTML("beforeend", chip(String(t).toLowerCase(),"soft")));
+          compTypes.slice(0,1).forEach(t => chips.insertAdjacentHTML("beforeend", chip("COMP "+String(t).toLowerCase(),"soft")));
 
           const secTypes  = (r.classification?.securityType||[]).filter(x=>x && x!=="UNKNOWN");
-          secTypes.slice(0,2).forEach(t => chips.insertAdjacentHTML("beforeend", chip(String(t).toLowerCase(),"bad")));
+          secTypes.slice(0,1).forEach(t => chips.insertAdjacentHTML("beforeend", chip("SEC "+String(t).toLowerCase(),"bad")));
 
           const brkTypes  = (r.classification?.breakingType||[]).filter(x=>x && x!=="UNKNOWN");
-          brkTypes.slice(0,2).forEach(t => chips.insertAdjacentHTML("beforeend", chip(String(t).toLowerCase(),"warn")));
+          brkTypes.slice(0,1).forEach(t => chips.insertAdjacentHTML("beforeend", chip("BRK "+String(t).toLowerCase(),"warn")));
 
-          if(r._id) chips.insertAdjacentHTML("beforeend", `<span class="chip link"><a href="https://releasetrain.io/api/v/${r._id}" target="_blank" rel="noopener">id</a></span>`);
+          if(r._id)
+            chips.insertAdjacentHTML("beforeend", `<span class="chip link">ID <a href="https://releasetrain.io/api/v/${r._id}" target="_blank" rel="noopener">open</a></span>`);
         }
 
         title.appendChild(chips);
