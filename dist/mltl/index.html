@@ -1,442 +1,521 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <title>Releasetrain – MLTL Risk Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Dashboard of versions with MLTL risk classification and aggregate breakdowns." />
   <style>
-    :root{
-      --bg:#f5f5f5;
-      --panel:#ffffff;
-      --muted:#757575;
-      --text:#212121;
-      --brand:#1976d2;
-      --brand-light:#e3f2fd;
-      --brand-border:#90caf9;
-      --line:#e0e0e0;
-      --chip:#fafafa;
-      --chipText:#424242;
-      --focus:#64b5f6;
-      --risk-bg:#ffebee;
-      --risk-border:#ef5350;
-      --risk-text:#b71c1c;
-      --good-bg:#e8f5e9;
-      --good-border:#81c784;
-      --shadow:0 4px 14px rgba(0,0,0,.06);
+    :root {
+      --bg: #f5f5f5;
+      --panel: #ffffff;
+      --muted: #757575;
+      --text: #212121;
+      --brand: #1976d2;
+      --brand-light: #e3f2fd;
+      --brand-border: #90caf9;
+      --line: #e0e0e0;
+      --chip: #fafafa;
+      --chipText: #424242;
+      --focus: #64b5f6;
+      --risk-bg: #ffebee;
+      --risk-border: #ef5350;
+      --risk-text: #b71c1c;
+      --good-bg: #e8f5e9;
+      --good-border: #81c784;
+      --shadow: 0 4px 14px rgba(0, 0, 0, .06);
     }
 
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      background:var(--bg);
-      color:var(--text);
-      font:14px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
+    * {
+      box-sizing: border-box
     }
 
-    .topbar{
-      position:sticky;
-      top:0;
-      z-index:10;
-      background:var(--panel);
-      border-bottom:1px solid var(--line);
-      padding:12px 16px;
-      display:flex;
-      flex-wrap:wrap;
-      align-items:center;
-      gap:10px;
-      box-shadow:0 2px 6px rgba(0,0,0,.05);
-    }
-    .brand{
-      font-weight:800;
-      letter-spacing:.2px;
-      font-size:16px;
-    }
-    .brand span{
-      color:var(--brand);
-    }
-    .spacer{flex:1 1 auto;}
-
-    .controls{
-      display:flex;
-      flex-wrap:wrap;
-      align-items:center;
-      gap:8px;
-    }
-    .field{
-      display:flex;
-      align-items:center;
-      gap:6px;
-    }
-    .field label{
-      font-size:12px;
-      color:var(--muted);
-    }
-    input[type="text"],button{
-      background:#ffffff;
-      color:var(--text);
-      border:1px solid var(--line);
-      border-radius:999px;
-      padding:8px 12px;
-      font:inherit;
-      box-shadow:0 1px 2px rgba(0,0,0,.04);
-    }
-    input[type="text"]{
-      min-width:230px;
-    }
-    input[type="text"]:focus,button:focus{
-      outline:2px solid var(--focus);
-      outline-offset:2px;
-    }
-    button{
-      background:var(--brand);
-      color:#fff;
-      border-color:transparent;
-      cursor:pointer;
-      font-weight:600;
-      text-transform:uppercase;
-      letter-spacing:.03em;
-      box-shadow:0 2px 4px rgba(0,0,0,.12);
-    }
-    button:hover{filter:brightness(1.05)}
-    button.secondary{
-      background:#ffffff;
-      color:var(--text);
-      border:1px solid var(--line);
-      box-shadow:none;
-      text-transform:none;
-      letter-spacing:normal;
+    html,
+    body {
+      height: 100%
     }
 
-    main{
-      max-width:1200px;
-      margin:0 auto;
-      padding:16px;
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 14px/1.55 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, "Helvetica Neue", Arial;
     }
 
-    .layout{
-      display:grid;
-      grid-template-columns: minmax(0,2.1fr) minmax(0,1.4fr);
-      gap:16px;
-    }
-    @media (max-width:960px){
-      .layout{grid-template-columns:minmax(0,1fr);}
-    }
-
-    .panel{
-      background:var(--panel);
-      border-radius:16px;
-      border:1px solid var(--line);
-      box-shadow:var(--shadow);
-      padding:12px 14px;
-    }
-    .panel header{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:8px;
-      margin-bottom:6px;
-    }
-    .panel h2{
-      margin:0;
-      font-size:15px;
-    }
-    .status{
-      font-size:12px;
-      color:var(--muted);
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+      padding: 12px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, .05);
     }
 
-    .kpis{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      margin-bottom:8px;
+    .brand {
+      font-weight: 800;
+      letter-spacing: .2px;
+      font-size: 16px;
     }
-    .kpi{
-      background:var(--panel);
-      border-radius:999px;
-      border:1px solid var(--line);
-      padding:4px 10px;
-      font-size:12px;
-      color:var(--chipText);
-      box-shadow:0 1px 3px rgba(0,0,0,.04);
+
+    .brand span {
+      color: var(--brand);
     }
-    .kpi em{
-      font-style:normal;
-      color:var(--brand);
-      font-weight:700;
-      margin-left:3px;
+
+    .spacer {
+      flex: 1 1 auto;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .field {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .field label {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    input[type="text"],
+    button {
+      background: #ffffff;
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font: inherit;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+    }
+
+    input[type="text"] {
+      min-width: 230px;
+    }
+
+    input[type="text"]:focus,
+    button:focus {
+      outline: 2px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    button {
+      background: var(--brand);
+      color: #fff;
+      border-color: transparent;
+      cursor: pointer;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, .12);
+    }
+
+    button:hover {
+      filter: brightness(1.05)
+    }
+
+    button.secondary {
+      background: #ffffff;
+      color: var(--text);
+      border: 1px solid var(--line);
+      box-shadow: none;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 2.1fr) minmax(0, 1.4fr);
+      gap: 16px;
+    }
+
+    @media (max-width:960px) {
+      .layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .panel {
+      background: var(--panel);
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      padding: 12px 14px;
+    }
+
+    .panel header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .panel h2 {
+      margin: 0;
+      font-size: 15px;
+    }
+
+    .status {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .kpis {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .kpi {
+      background: var(--panel);
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      padding: 4px 10px;
+      font-size: 12px;
+      color: var(--chipText);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    }
+
+    .kpi em {
+      font-style: normal;
+      color: var(--brand);
+      font-weight: 700;
+      margin-left: 3px;
     }
 
     /* Collapsible groups */
-    details.timeline-group{
-      margin-bottom:18px;
-      border-radius:14px;
-      border:1px solid var(--line);
-      overflow:hidden;
-      background:#ffffff;
-    }
-    summary.timeline-summary{
-      list-style:none;
-      cursor:pointer;
-      padding:0;
-      margin:0;
-    }
-    summary.timeline-summary::-webkit-details-marker{
-      display:none;
-    }
-    .timeline-group-header{
-      background:var(--brand-light);
-      border-bottom:1px solid var(--brand-border);
-      padding:8px 10px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:6px;
-    }
-    .timeline-title{
-      font-weight:700;
-      font-size:14px;
-    }
-    .timeline-badges{
-      display:flex;
-      gap:4px;
-      flex-wrap:wrap;
+    details.timeline-group {
+      margin-bottom: 18px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      overflow: hidden;
+      background: #ffffff;
     }
 
-    .chip{
-      display:inline-flex;
-      align-items:center;
-      padding:2px 8px;
-      border-radius:999px;
-      font-size:11px;
-      border:1px solid var(--line);
-      background:var(--chip);
-      color:var(--chipText);
-      white-space:nowrap;
-    }
-    .chip.bad{
-      background:var(--risk-bg);
-      border-color:var(--risk-border);
-      color:var(--risk-text);
-    }
-    .chip.good{
-      background:var(--good-bg);
-      border-color:var(--good-border);
-      color:#1b5e20;
-    }
-    .chip.soft{
-      background:#fafafa;
-      border-color:var(--line);
-      color:var(--muted);
-    }
-    .chip a{
-      color:inherit;
-      text-decoration:none;
-    }
-    .chip a:hover{text-decoration:underline;}
-
-    .timeline-body{
-      padding:8px 10px;
-      background:#ffffff;
+    summary.timeline-summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 0;
+      margin: 0;
     }
 
-    .timeline-list{
-      list-style:none;
-      margin:0;
-      padding:0;
-    }
-    .timeline-item{
-      display:grid;
-      grid-template-columns:110px 1fr;
-      gap:8px;
-      padding:6px 0;
-      border-bottom:1px dashed var(--line);
-    }
-    .timeline-item:last-child{
-      border-bottom:none;
+    summary.timeline-summary::-webkit-details-marker {
+      display: none;
     }
 
-    .timeline-date{
-      font-size:12px;
-      color:var(--muted);
-      text-align:right;
-      padding-right:4px;
-    }
-    .timeline-date .day{
-      font-weight:700;
-      color:var(--text);
-    }
-    .timeline-date .time{
-      display:block;
+    .timeline-group-header {
+      background: var(--brand-light);
+      border-bottom: 1px solid var(--brand-border);
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
     }
 
-    .timeline-content{
-      display:flex;
-      flex-direction:column;
-      gap:3px;
-      padding:4px 6px;
-      border-radius:8px;
+    .timeline-title {
+      font-weight: 700;
+      font-size: 14px;
     }
 
-    .timeline-label{
-      font-weight:600;
-      font-size:13px;
-      color:var(--text);
-    }
-    .timeline-label a{
-      color:var(--brand);
-      text-decoration:none;
-    }
-    .timeline-label a:hover{text-decoration:underline;}
-
-    .timeline-kind{
-      font-size:11px;
-      color:var(--muted);
+    .timeline-badges {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
     }
 
-    .chips-row{
-      display:flex;
-      flex-wrap:wrap;
-      gap:4px;
-      margin-top:2px;
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      border: 1px solid var(--line);
+      background: var(--chip);
+      color: var(--chipText);
+      white-space: nowrap;
     }
 
-    .risk-highlight{
-      border-left:4px solid var(--risk-border);
-      background:var(--risk-bg);
+    .chip.bad {
+      background: var(--risk-bg);
+      border-color: var(--risk-border);
+      color: var(--risk-text);
     }
 
-    .no-data{
-      font-size:13px;
-      color:var(--muted);
-      padding:4px 0;
+    .chip.good {
+      background: var(--good-bg);
+      border-color: var(--good-border);
+      color: #1b5e20;
     }
 
-    .chart-container{
-      margin-top:8px;
-    }
-    .chart-container canvas{
-      width:100%;
-      max-height:260px;
+    .chip.soft {
+      background: #fafafa;
+      border-color: var(--line);
+      color: var(--muted);
     }
 
-    .small-note{
-      font-size:11px;
-      color:var(--muted);
-      margin-top:4px;
+    .chip a {
+      color: inherit;
+      text-decoration: none;
     }
 
-    .pill-link{
-      display:inline-flex;
-      align-items:center;
-      gap:4px;
-      font-size:12px;
-      text-decoration:none;
-      color:var(--brand);
-      background:var(--brand-light);
-      padding:4px 8px;
-      border-radius:999px;
-      border:1px solid var(--brand-border);
-    }
-    .pill-link:hover{
-      background:#bbdefb;
+    .chip a:hover {
+      text-decoration: underline;
     }
 
-    .list-inline{
-      display:flex;
-      flex-wrap:wrap;
-      gap:4px;
-      margin:4px 0 0;
-      padding:0;
-      list-style:none;
-    }
-    .list-inline li{
-      font-size:11px;
-      color:var(--muted);
-      cursor:pointer;
-      padding:2px 6px;
-      border-radius:999px;
-      border:1px solid transparent;
-    }
-    .list-inline li:hover{
-      border-color:var(--line);
-      background:#f1f1f1;
+    .timeline-body {
+      padding: 8px 10px;
+      background: #ffffff;
     }
 
-    .legend{
-      margin-top:12px;
-      padding-top:8px;
-      border-top:1px solid var(--line);
-      font-size:12px;
-      color:var(--muted);
-    }
-    .legend h3{
-      margin:0 0 4px;
-      font-size:13px;
-      color:var(--text);
-    }
-    .legend ul{
-      margin:0;
-      padding-left:16px;
-    }
-    .legend li{
-      margin-bottom:3px;
-    }
-    .legend code{
-      background:#f0f0f0;
-      padding:1px 4px;
-      border-radius:3px;
-      font-size:11px;
+    .timeline-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
     }
 
-    .skeleton{
-      height:76px;
-      border-radius:10px;
-      margin-bottom:8px;
-      background:linear-gradient(90deg,#eeeeee,#f5f5f5,#eeeeee);
-      background-size:200% 100%;
-      animation:pulse 1.2s ease-in-out infinite;
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 110px 1fr;
+      gap: 8px;
+      padding: 6px 0;
+      border-bottom: 1px dashed var(--line);
     }
-    @keyframes pulse{0%{background-position:0 0}100%{background-position:200% 0}}
+
+    .timeline-item:last-child {
+      border-bottom: none;
+    }
+
+    .timeline-date {
+      font-size: 12px;
+      color: var(--muted);
+      text-align: right;
+      padding-right: 4px;
+    }
+
+    .timeline-date .day {
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .timeline-date .time {
+      display: block;
+    }
+
+    .timeline-content {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding: 4px 6px;
+      border-radius: 8px;
+    }
+
+    .timeline-label {
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .timeline-label a {
+      color: var(--brand);
+      text-decoration: none;
+    }
+
+    .timeline-label a:hover {
+      text-decoration: underline;
+    }
+
+    .timeline-kind {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .chips-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 2px;
+    }
+
+    .risk-highlight {
+      border-left: 4px solid var(--risk-border);
+      background: var(--risk-bg);
+    }
+
+    .no-data {
+      font-size: 13px;
+      color: var(--muted);
+      padding: 4px 0;
+    }
+
+    .chart-container {
+      margin-top: 8px;
+    }
+
+    .chart-container canvas {
+      width: 100%;
+      max-height: 260px;
+    }
+
+    .small-note {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .pill-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      text-decoration: none;
+      color: var(--brand);
+      background: var(--brand-light);
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--brand-border);
+    }
+
+    .pill-link:hover {
+      background: #bbdefb;
+    }
+
+    .list-inline {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin: 4px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .list-inline li {
+      font-size: 11px;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+    }
+
+    .list-inline li:hover {
+      border-color: var(--line);
+      background: #f1f1f1;
+    }
+
+    .legend {
+      margin-top: 12px;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .legend h3 {
+      margin: 0 0 4px;
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .legend ul {
+      margin: 0;
+      padding-left: 16px;
+    }
+
+    .legend li {
+      margin-bottom: 3px;
+    }
+
+    .legend code {
+      background: #f0f0f0;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-size: 11px;
+    }
+
+    .skeleton {
+      height: 76px;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      background: linear-gradient(90deg, #eeeeee, #f5f5f5, #eeeeee);
+      background-size: 200% 100%;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        background-position: 0 0
+      }
+
+      100% {
+        background-position: 200% 0
+      }
+    }
 
     /* Mobile tweaks */
-    @media (max-width:720px){
-      body{
-        font-size:13px;
+    @media (max-width:720px) {
+      body {
+        font-size: 13px;
       }
-      .topbar{
-        align-items:flex-start;
+
+      .topbar {
+        align-items: flex-start;
       }
-      .controls{
-        width:100%;
-        justify-content:flex-start;
+
+      .controls {
+        width: 100%;
+        justify-content: flex-start;
       }
-      .field{
-        flex:1 1 100%;
+
+      .field {
+        flex: 1 1 100%;
       }
-      #components{
-        width:100%;
-        min-width:0;
+
+      #components {
+        width: 100%;
+        min-width: 0;
       }
-      .panel{
-        padding:10px 10px;
-        border-radius:12px;
+
+      .panel {
+        padding: 10px 10px;
+        border-radius: 12px;
       }
-      .timeline-item{
-        grid-template-columns:1fr;
+
+      .timeline-item {
+        grid-template-columns: 1fr;
       }
-      .timeline-date{
-        text-align:left;
-        padding-right:0;
+
+      .timeline-date {
+        text-align: left;
+        padding-right: 0;
       }
-      .chart-container canvas{
-        max-height:220px;
+
+      .chart-container canvas {
+        max-height: 220px;
       }
     }
   </style>
 </head>
+
 <body>
   <div class="topbar">
     <div class="brand">Releasetrain <span>MLTL Risk</span></div>
@@ -488,7 +567,8 @@
         <div class="chart-container">
           <h3 style="margin:10px 0 2px;font-size:13px;">Channel distribution of risky versions</h3>
           <canvas id="aggregateChart" aria-label="Aggregate risk distribution" role="img"></canvas>
-          <p class="small-note">Breakdown of risky versions by release channel (major / minor / patch / CVE / other).</p>
+          <p class="small-note">Breakdown of risky versions by release channel (major / minor / patch / CVE / other).
+          </p>
         </div>
 
         <div class="chart-container">
@@ -518,14 +598,21 @@
         <div class="legend">
           <h3>MLTL risk legend</h3>
           <ul>
-            <li><strong>Version row</strong>: a version document that satisfies the MLTL risk condition in the backend query.</li>
-            <li><strong>Risk highlight</strong> (red background) marks versions where a risk flag is present (for example <code>mltl.hasDiscussionWithinDelta</code> or <code>mltlRisk</code>).</li>
+            <li><strong>Version row</strong>: a version document that satisfies the MLTL risk condition in the backend
+              query.</li>
+            <li><strong>Risk highlight</strong> (red background) marks versions where a risk flag is present (for
+              example <code>mltl.hasDiscussionWithinDelta</code> or <code>mltlRisk</code>).</li>
             <li><strong>Channel chips</strong> show the release channel (major / minor / patch / other).</li>
-            <li><strong>CVE chip</strong> appears only if at least one version in the component group has <code>isCve = true</code>. If you do not see a CVE chip, there is no CVE label in that group.</li>
-            <li><strong>Classification chips</strong> show <code>componentType</code>, <code>securityType</code> and <code>breakingType</code> values when available.</li>
-            <li><strong>Reddit sources</strong> under a version list the <code>mltl.src</code> URLs that contributed to the risk, each clickable.</li>
-            <li>The bar chart “Risky versions by component” uses the per component totals from the <code>components</code> array.</li>
-            <li>The remaining bar charts use <code>aggregate.byChannel</code>, <code>aggregate.byComponentType</code>, <code>aggregate.bySecurityType</code> and <code>aggregate.byBreakingType</code>.</li>
+            <li><strong>CVE chip</strong> appears only if at least one version in the component group has
+              <code>isCve = true</code>. If you do not see a CVE chip, there is no CVE label in that group.</li>
+            <li><strong>Classification chips</strong> show <code>componentType</code>, <code>securityType</code> and
+              <code>breakingType</code> values when available.</li>
+            <li><strong>Reddit sources</strong> under a version list the <code>mltl.src</code> URLs that contributed to
+              the risk, each clickable.</li>
+            <li>The bar chart “Risky versions by component” uses the per component totals from the
+              <code>components</code> array.</li>
+            <li>The remaining bar charts use <code>aggregate.byChannel</code>, <code>aggregate.byComponentType</code>,
+              <code>aggregate.bySecurityType</code> and <code>aggregate.byBreakingType</code>.</li>
           </ul>
         </div>
       </section>
@@ -535,42 +622,42 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     // ================== helpers ==================
-    const API_BASE = "http://releasetrain.io/api/";
+    const API_BASE = "https://releasetrain.io/api/";
     const $ = sel => document.querySelector(sel);
     const encodeCsvKeepCommas = (csv) => {
-      const cleaned = String(csv||"").replace(/\u00A0/g," ").replace(/\s*,\s*/g,",").trim();
-      if(!cleaned) return "";
+      const cleaned = String(csv || "").replace(/\u00A0/g, " ").replace(/\s*,\s*/g, ",").trim();
+      if (!cleaned) return "";
       return cleaned.split(",").map(t => encodeURIComponent(t)).join(",");
     };
 
     const parseReleaseDate = ymd => {
       if (!ymd) return null;
-      const year = Number(ymd.slice(0,4));
-      const month = Number(ymd.slice(4,6)) - 1;
-      const day = Number(ymd.slice(6,8));
+      const year = Number(ymd.slice(0, 4));
+      const month = Number(ymd.slice(4, 6)) - 1;
+      const day = Number(ymd.slice(6, 8));
       const d = new Date(Date.UTC(year, month, day, 0, 0, 0));
       return isNaN(d.getTime()) ? null : d;
     };
     const dateLabel = d => {
       if (!d) return "";
       const today = new Date();
-      today.setHours(0,0,0,0);
+      today.setHours(0, 0, 0, 0);
       const dd = new Date(d);
-      dd.setHours(0,0,0,0);
+      dd.setHours(0, 0, 0, 0);
       const diff = (dd.getTime() - today.getTime()) / 86400000;
       if (diff === 0) return "Today";
       if (diff === -1) return "Yesterday";
-      return dd.toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric",year:"numeric"});
+      return dd.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" });
     };
     const timeLabel = dt => {
       if (!dt) return "";
       const d = (dt instanceof Date) ? dt : new Date(dt);
       if (isNaN(d.getTime())) return "";
-      return d.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
+      return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     };
 
     const isRiskVersion = (v) => {
-      if(!v || typeof v !== "object") return false;
+      if (!v || typeof v !== "object") return false;
       if (v.mltlRisk) return true;
       if (v.mltl && (v.mltl.risk || v.mltl.hasDiscussionWithinDelta)) return true;
       if (v.risk && (v.risk.mltl || (v.risk.mltl && v.risk.mltl.hasRisk))) return true;
@@ -578,25 +665,25 @@
     };
 
     const shortenUrl = (url) => {
-      try{
+      try {
         const u = new URL(url);
-        const base = u.hostname.replace(/^www\./,"");
-        const path = (u.pathname || "/").replace(/\/$/,"");
+        const base = u.hostname.replace(/^www\./, "");
+        const path = (u.pathname || "/").replace(/\/$/, "");
         const joined = base + (path ? path : "");
-        if(joined.length > 40) return joined.slice(0,37) + "…";
+        if (joined.length > 40) return joined.slice(0, 37) + "…";
         return joined || url;
-      }catch(e){
-        if(url.length > 40) return url.slice(0,37) + "…";
+      } catch (e) {
+        if (url.length > 40) return url.slice(0, 37) + "…";
         return url;
       }
     };
 
     // ================== api ==================
-    async function fetchDashboard(componentsCsv){
+    async function fetchDashboard(componentsCsv) {
       const q = componentsCsv ? `?q=${encodeCsvKeepCommas(componentsCsv)}` : "";
       const url = `${API_BASE}dashboard/mltl-risk${q}`;
-      const res = await fetch(url,{headers:{Accept:"application/json"}});
-      if(!res.ok) throw new Error(`Dashboard: ${res.status} ${res.statusText}`);
+      const res = await fetch(url, { headers: { Accept: "application/json" } });
+      if (!res.ok) throw new Error(`Dashboard: ${res.status} ${res.statusText}`);
       const json = await res.json();
       return json;
     }
@@ -612,10 +699,10 @@
     };
 
     // ================== charts ==================
-    function buildRiskChart(){
+    function buildRiskChart() {
       const canvas = document.getElementById("riskChart");
       const ctx = canvas.getContext("2d");
-      if(STATE.riskChart){
+      if (STATE.riskChart) {
         STATE.riskChart.destroy();
       }
 
@@ -623,39 +710,39 @@
         ? STATE.dashboard.components
         : [];
 
-      const sorted = [...components].sort((a,b)=> (b.total || 0) - (a.total || 0)).slice(0,12);
+      const sorted = [...components].sort((a, b) => (b.total || 0) - (a.total || 0)).slice(0, 12);
 
       const labels = sorted.map(c => c.name || c.key || "unknown");
       const dataVals = sorted.map(c => c.total || 0);
 
-      STATE.riskChart = new Chart(ctx,{
-        type:"bar",
-        data:{
+      STATE.riskChart = new Chart(ctx, {
+        type: "bar",
+        data: {
           labels,
-          datasets:[{
-            label:"Risky versions",
-            data:dataVals,
-            backgroundColor:"#ef5350",
-            borderColor:"#c62828",
-            borderWidth:1
+          datasets: [{
+            label: "Risky versions",
+            data: dataVals,
+            backgroundColor: "#ef5350",
+            borderColor: "#c62828",
+            borderWidth: 1
           }]
         },
-        options:{
-          responsive:true,
-          plugins:{
-            legend:{display:false},
-            tooltip:{
-              callbacks:{
-                label:(ctx)=>`Risky versions: ${ctx.parsed.y}`
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => `Risky versions: ${ctx.parsed.y}`
               }
             }
           },
-          scales:{
-            x:{ticks:{color:"#424242"}},
-            y:{ticks:{precision:0, beginAtZero:true, color:"#424242"}}
+          scales: {
+            x: { ticks: { color: "#424242" } },
+            y: { ticks: { precision: 0, beginAtZero: true, color: "#424242" } }
           },
-          onClick:(evt, elements)=>{
-            if(!elements.length) return;
+          onClick: (evt, elements) => {
+            if (!elements.length) return;
             const index = elements[0].index;
             const label = labels[index];
             $("#components").value = label;
@@ -665,17 +752,17 @@
       });
     }
 
-    function buildAggregateChart(){
+    function buildAggregateChart() {
       const canvas = document.getElementById("aggregateChart");
       const ctx = canvas.getContext("2d");
-      if(STATE.aggregateChart){
+      if (STATE.aggregateChart) {
         STATE.aggregateChart.destroy();
       }
 
       const agg = STATE.dashboard && STATE.dashboard.aggregate ? STATE.dashboard.aggregate : {};
-      const ch = agg.byChannel || {major:0,minor:0,patch:0,cve:0,other:0};
+      const ch = agg.byChannel || { major: 0, minor: 0, patch: 0, cve: 0, other: 0 };
 
-      const labels = ["Major","Minor","Patch","CVE","Other"];
+      const labels = ["Major", "Minor", "Patch", "CVE", "Other"];
       const dataVals = [
         ch.major || 0,
         ch.minor || 0,
@@ -684,98 +771,98 @@
         ch.other || 0
       ];
 
-      STATE.aggregateChart = new Chart(ctx,{
-        type:"bar",
-        data:{
+      STATE.aggregateChart = new Chart(ctx, {
+        type: "bar",
+        data: {
           labels,
-          datasets:[{
-            label:"Risky versions",
-            data:dataVals,
-            backgroundColor:"#90caf9",
-            borderColor:"#1976d2",
-            borderWidth:1
+          datasets: [{
+            label: "Risky versions",
+            data: dataVals,
+            backgroundColor: "#90caf9",
+            borderColor: "#1976d2",
+            borderWidth: 1
           }]
         },
-        options:{
-          responsive:true,
-          plugins:{
-            legend:{display:false},
-            tooltip:{
-              callbacks:{
-                label:(ctx)=>`Count: ${ctx.parsed.y}`
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => `Count: ${ctx.parsed.y}`
               }
             }
           },
-          scales:{
-            x:{ticks:{color:"#424242"}},
-            y:{ticks:{precision:0, beginAtZero:true, color:"#424242"}}
+          scales: {
+            x: { ticks: { color: "#424242" } },
+            y: { ticks: { precision: 0, beginAtZero: true, color: "#424242" } }
           }
         }
       });
     }
 
-    function buildCategoryChart(kind, dataObj){
+    function buildCategoryChart(kind, dataObj) {
       const canvasId = kind + "Chart";
       const chartKey = kind + "Chart";
       const canvas = document.getElementById(canvasId);
-      if(!canvas) return;
+      if (!canvas) return;
       const ctx = canvas.getContext("2d");
 
-      if(STATE[chartKey]){
+      if (STATE[chartKey]) {
         STATE[chartKey].destroy();
       }
 
-      if(!dataObj || typeof dataObj !== "object"){
+      if (!dataObj || typeof dataObj !== "object") {
         STATE[chartKey] = null;
         return;
       }
 
       const entries = Object.entries(dataObj);
-      if(!entries.length){
+      if (!entries.length) {
         STATE[chartKey] = null;
         return;
       }
 
       const sorted = entries
-        .sort((a,b)=> (b[1]||0) - (a[1]||0))
-        .slice(0,12);
+        .sort((a, b) => (b[1] || 0) - (a[1] || 0))
+        .slice(0, 12);
 
       const labels = sorted.map(([k]) => k);
-      const dataVals = sorted.map(([,v]) => v || 0);
+      const dataVals = sorted.map(([, v]) => v || 0);
 
-      STATE[chartKey] = new Chart(ctx,{
-        type:"bar",
-        data:{
+      STATE[chartKey] = new Chart(ctx, {
+        type: "bar",
+        data: {
           labels,
-          datasets:[{
-            label:"Count",
-            data:dataVals,
-            backgroundColor:"#90caf9",
-            borderColor:"#1976d2",
-            borderWidth:1
+          datasets: [{
+            label: "Count",
+            data: dataVals,
+            backgroundColor: "#90caf9",
+            borderColor: "#1976d2",
+            borderWidth: 1
           }]
         },
-        options:{
-          indexAxis:"y",
-          responsive:true,
-          plugins:{
-            legend:{display:false},
-            tooltip:{
-              callbacks:{
-                label:(ctx)=>`Count: ${ctx.parsed.x}`
+        options: {
+          indexAxis: "y",
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => `Count: ${ctx.parsed.x}`
               }
             }
           },
-          scales:{
-            x:{ticks:{precision:0, beginAtZero:true, color:"#424242"}},
-            y:{ticks:{color:"#424242"}}
+          scales: {
+            x: { ticks: { precision: 0, beginAtZero: true, color: "#424242" } },
+            y: { ticks: { color: "#424242" } }
           }
         }
       });
     }
 
     // ================== timelines ==================
-    function buildVersionTimelineItem(version){
+    function buildVersionTimelineItem(version) {
       const li = document.createElement("li");
       li.className = "timeline-item";
 
@@ -790,22 +877,22 @@
       content.className = "timeline-content";
 
       const risk = isRiskVersion(version);
-      if(risk){
+      if (risk) {
         content.classList.add("risk-highlight");
       }
 
       const labelDiv = document.createElement("div");
       labelDiv.className = "timeline-label";
-      const href = version._id ? `${API_BASE.replace(/\/$/,"")}/v/${version._id}` : (version.versionReleaseNotes || null);
+      const href = version._id ? `${API_BASE.replace(/\/$/, "")}/v/${version._id}` : (version.versionReleaseNotes || null);
       const labelText = `${version.versionProductName || ""} ${version.versionNumber || ""}`.trim() || "Version";
-      if(href){
+      if (href) {
         const a = document.createElement("a");
         a.href = href;
         a.target = "_blank";
         a.rel = "noopener";
         a.textContent = labelText;
         labelDiv.appendChild(a);
-      }else{
+      } else {
         labelDiv.textContent = labelText;
       }
       content.appendChild(labelDiv);
@@ -819,14 +906,14 @@
       chipsRow.className = "chips-row";
 
       const channel = (version.versionReleaseChannel || "").toLowerCase();
-      if(channel){
+      if (channel) {
         const ch = document.createElement("span");
         ch.className = "chip soft";
         ch.textContent = `Channel ${channel}`;
         chipsRow.appendChild(ch);
       }
 
-      if(version.isCve){
+      if (version.isCve) {
         const cveChip = document.createElement("span");
         cveChip.className = "chip bad";
         cveChip.textContent = "CVE fix";
@@ -835,43 +922,43 @@
 
       const cls = version.classification || {};
       const compTypes = Array.isArray(cls.componentType) ? cls.componentType : [];
-      const secTypes  = Array.isArray(cls.securityType) ? cls.securityType : [];
-      const brkTypes  = Array.isArray(cls.breakingType) ? cls.breakingType : [];
+      const secTypes = Array.isArray(cls.securityType) ? cls.securityType : [];
+      const brkTypes = Array.isArray(cls.breakingType) ? cls.breakingType : [];
 
-      if(compTypes.length){
+      if (compTypes.length) {
         const t = document.createElement("span");
         t.className = "chip soft";
         t.textContent = `Component: ${compTypes.join(", ")}`;
         chipsRow.appendChild(t);
       }
-      if(secTypes.length){
+      if (secTypes.length) {
         const t = document.createElement("span");
         t.className = "chip soft";
         t.textContent = `Security: ${secTypes.join(", ")}`;
         chipsRow.appendChild(t);
       }
-      if(brkTypes.length){
+      if (brkTypes.length) {
         const t = document.createElement("span");
         t.className = "chip soft";
         t.textContent = `Breaking: ${brkTypes.join(", ")}`;
         chipsRow.appendChild(t);
       }
 
-      if(version.mltl && typeof version.mltl.deltaDays === "number"){
+      if (version.mltl && typeof version.mltl.deltaDays === "number") {
         const d = document.createElement("span");
         d.className = "chip soft";
         d.textContent = `Δ ${version.mltl.deltaDays} days`;
         chipsRow.appendChild(d);
       }
 
-      if(chipsRow.children.length){
+      if (chipsRow.children.length) {
         content.appendChild(chipsRow);
       }
 
       // Reddit src list from version.mltl.src
       const mltl = version.mltl || {};
       const srcArr = Array.isArray(mltl.src) ? mltl.src.filter(u => !!u) : [];
-      if(srcArr.length){
+      if (srcArr.length) {
         const srcRow = document.createElement("div");
         srcRow.className = "chips-row";
         srcArr.forEach((u, idx) => {
@@ -881,7 +968,7 @@
           a.href = u;
           a.target = "_blank";
           a.rel = "noopener";
-          a.textContent = shortenUrl(u) || `src ${idx+1}`;
+          a.textContent = shortenUrl(u) || `src ${idx + 1}`;
           chip.appendChild(a);
           srcRow.appendChild(chip);
         });
@@ -892,7 +979,7 @@
       return li;
     }
 
-    function renderTimelineGroups(){
+    function renderTimelineGroups() {
       const root = $("#timelineRoot");
       root.innerHTML = "";
 
@@ -900,18 +987,18 @@
         ? STATE.dashboard.components
         : [];
 
-      if(!components.length){
+      if (!components.length) {
         root.innerHTML = '<p class="no-data">No data returned from /api/dashboard/mltl-risk. Try another component filter.</p>';
         return;
       }
 
       const hasFilter = !!$("#components").value.trim();
       let toShow = components;
-      if(!hasFilter){
-        toShow = [...components].slice(0,10);
+      if (!hasFilter) {
+        toShow = [...components].slice(0, 10);
       }
 
-      for(const group of toShow){
+      for (const group of toShow) {
         const detailsEl = document.createElement("details");
         detailsEl.className = "timeline-group";
 
@@ -935,7 +1022,7 @@
         badges.appendChild(verChip);
 
         const cveCount = group.cve || 0;
-        if(cveCount > 0){
+        if (cveCount > 0) {
           const riskChip = document.createElement("span");
           riskChip.className = "chip bad";
           riskChip.textContent = `CVE ${cveCount}`;
@@ -958,11 +1045,11 @@
         list.className = "timeline-list";
 
         const items = Array.isArray(group.items) ? group.items : [];
-        if(items.length){
-          for(const v of items){
+        if (items.length) {
+          for (const v of items) {
             list.appendChild(buildVersionTimelineItem(v));
           }
-        }else{
+        } else {
           const msg = document.createElement("div");
           msg.className = "no-data";
           msg.textContent = "No version documents stored for this component.";
@@ -974,15 +1061,15 @@
         root.appendChild(detailsEl);
       }
 
-      if(!$("#components").value.trim()){
+      if (!$("#components").value.trim()) {
         const ul = document.createElement("ul");
         ul.className = "list-inline";
         ul.innerHTML = "<li style='font-weight:600;border-color:var(--line);'>Quick components:</li>";
-        const top = [...components].slice(0,10);
-        for(const g of top){
+        const top = [...components].slice(0, 10);
+        for (const g of top) {
           const li = document.createElement("li");
           li.textContent = g.name || g.key || "unknown";
-          li.addEventListener("click", ()=>{
+          li.addEventListener("click", () => {
             $("#components").value = li.textContent;
             boot();
           });
@@ -993,7 +1080,7 @@
     }
 
     // ================== rendering entry ==================
-    function updateKpis(){
+    function updateKpis() {
       const dash = STATE.dashboard || {};
       const components = Array.isArray(dash.components) ? dash.components : [];
       const aggregate = dash.aggregate || {};
@@ -1003,11 +1090,11 @@
       let cveCount = 0;
       const securityCounts = aggregate.bySecurityType || {};
 
-      for(const comp of components){
+      for (const comp of components) {
         const items = Array.isArray(comp.items) ? comp.items : [];
-        for(const v of items){
-          if(isRiskVersion(v)) riskCount += 1;
-          if(v.isCve) cveCount += 1;
+        for (const v of items) {
+          if (isRiskVersion(v)) riskCount += 1;
+          if (v.isCve) cveCount += 1;
         }
       }
 
@@ -1017,8 +1104,8 @@
       $("#kpi-posts").textContent = Object.keys(securityCounts).length || 0;
     }
 
-    function renderAll(){
-      if(!STATE.dashboard){
+    function renderAll() {
+      if (!STATE.dashboard) {
         $("#timelineRoot").innerHTML = '<p class="no-data">No data loaded.</p>';
         $("#statusText").textContent = "Idle";
         return;
@@ -1039,15 +1126,15 @@
     }
 
     // ================== boot ==================
-    async function boot(){
+    async function boot() {
       $("#statusText").textContent = "Loading…";
       $("#timelineRoot").innerHTML = '<div class="skeleton"></div><div class="skeleton"></div>';
-      try{
+      try {
         const rawComponents = $("#components").value.trim();
         const dashboard = await fetchDashboard(rawComponents);
         STATE.dashboard = dashboard || null;
         renderAll();
-      }catch(err){
+      } catch (err) {
         console.error(err);
         $("#timelineRoot").innerHTML = `<p class="no-data">Error loading data: ${err.message}</p>`;
         $("#statusText").textContent = "Error";
@@ -1055,24 +1142,24 @@
     }
 
     // read ?q=fastapi,node from current URL (for /src/mltl/?q=fastapi,node)
-    (function initFromLocation(){
-      try{
+    (function initFromLocation() {
+      try {
         const params = new URLSearchParams(window.location.search || "");
         const q = params.get("q");
-        if(q){
+        if (q) {
           document.getElementById("components").value = q;
         }
-      }catch(e){
+      } catch (e) {
         // ignore
       }
     })();
 
-    document.getElementById("filterForm").addEventListener("submit", (e)=>{
+    document.getElementById("filterForm").addEventListener("submit", (e) => {
       e.preventDefault();
       boot();
     });
 
-    document.getElementById("clearBtn").addEventListener("click", ()=>{
+    document.getElementById("clearBtn").addEventListener("click", () => {
       $("#components").value = "";
       boot();
     });
@@ -1081,4 +1168,5 @@
     boot();
   </script>
 </body>
+
 </html>
