@@ -7,63 +7,200 @@
   <meta name="description" content="Merged list per component (name-only canonical), subtle highlights, extra info chips, and left-side dates (last 6 months)" />
   <style>
     :root{
-      --bg:#0f1115;--panel:#171a21;--muted:#9aa3af;--text:#e5e7eb;--brand:#60a5fa;--line:#202532;--chip:#161b22;--chipText:#c9d1d9;--focus:#a5b4fc;
-      --bad:#f85149;--warn:#bb8009;--ok:#238636;--reddit:#ff7a45;--link:#93c5fd;--shadow:0 6px 20px rgba(0,0,0,.2);
-      --topbar-h:0px;--navloader-h:0px;--risk-bg:rgba(239,68,68,.08);--risk-border:rgba(239,68,68,.28)
+      /* Light, neutral, material-style palette */
+      --bg:#f5f5f5;
+      --panel:#ffffff;
+      --muted:#757575;
+      --text:#212121;
+      --brand:#1976d2;
+      --line:#e0e0e0;
+      --chip:#fafafa;
+      --chipText:#424242;
+      --focus:#64b5f6;
+      --bad:#c62828;
+      --warn:#ef6c00;
+      --ok:#2e7d32;
+      --reddit:#ef6c00;
+      --link:#1565c0;
+      --shadow:0 4px 14px rgba(0,0,0,.06);
+      --topbar-h:0px;
+      --navloader-h:0px;
+      --risk-bg:rgba(198,40,40,.06);
+      --risk-border:rgba(198,40,40,.4);
     }
-    @media (prefers-color-scheme: light){
+    @media (prefers-color-scheme: dark){
       :root{
-        --bg:#f7f8fb;--panel:#ffffff;--muted:#6b7280;--text:#0f172a;--brand:#2563eb;--line:#e6e9ef;--chip:#f3f4f6;--chipText:#111827;--focus:#4f46e5;
-        --bad:#b91c1c;--warn:#b45309;--ok:#15803d;--reddit:#ea580c;--link:#1d4ed8;--shadow:0 6px 18px rgba(0,0,0,.07);
-        --risk-bg:rgba(220,38,38,.06);--risk-border:rgba(220,38,38,.22)
+        --bg:#121212;--panel:#1e1e1e;--muted:#9e9e9e;--text:#fafafa;--brand:#90caf9;--line:#333;--chip:#1f1f1f;--chipText:#e0e0e0;--focus:#64b5f6;
+        --bad:#ef9a9a;--warn:#ffb74d;--ok:#81c784;--reddit:#ffb74d;--link:#90caf9;--shadow:0 6px 18px rgba(0,0,0,.6);
+        --risk-bg:rgba(244,67,54,.2);--risk-border:rgba(244,67,54,.55);
       }
     }
+
     *{box-sizing:border-box}html,body{height:100%}
-    body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font:14px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
+    }
 
-    .topbar{position:fixed;top:0;left:0;right:0;z-index:1000;background:var(--panel);border-bottom:1px solid var(--line);padding:10px 12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .brand{font-weight:800;letter-spacing:.2px}.brand b{color:var(--brand)}.spacer{flex:1 1 auto}
-    .gh-link{display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px solid var(--line);color:var(--text);padding:8px 10px;border-radius:10px;text-decoration:none;font-weight:700}
-    .gh-link:hover{background:var(--chip)}
+    .topbar{
+      position:fixed;top:0;left:0;right:0;z-index:1000;
+      background:var(--panel);
+      border-bottom:1px solid var(--line);
+      padding:10px 12px;
+      display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+      box-shadow:0 2px 6px rgba(0,0,0,.05);
+    }
+    .brand{font-weight:800;letter-spacing:.2px;font-size:15px}
+    .brand b{color:var(--brand)}
+    .spacer{flex:1 1 auto}
+    .gh-link{
+      display:inline-flex;align-items:center;gap:6px;
+      background:var(--chip);
+      border:1px solid var(--line);
+      color:var(--text);
+      padding:8px 10px;
+      border-radius:999px;
+      text-decoration:none;
+      font-weight:700;
+      box-shadow:0 1px 3px rgba(0,0,0,.04);
+    }
+    .gh-link:hover{background:#eeeeee}
 
-    .linkchip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--text);text-decoration:none;font-weight:700;font-size:13px;opacity:.85}
-    .linkchip:hover{background:var(--chip);opacity:1}
+    .linkchip{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:var(--chip);
+      color:var(--chipText);
+      text-decoration:none;
+      font-weight:700;
+      font-size:13px;
+      opacity:.9;
+    }
+    .linkchip:hover{opacity:1;box-shadow:0 1px 3px rgba(0,0,0,.06)}
     .linkchip small{color:var(--muted);font-weight:600}
 
-    .navloader{position:fixed;top:var(--topbar-h);left:0;right:0;height:3px;background:transparent;overflow:hidden;z-index:999;display:none}
+    .navloader{
+      position:fixed;top:var(--topbar-h);left:0;right:0;
+      height:3px;background:transparent;overflow:hidden;z-index:999;display:none;
+    }
     .navloader.active{display:block}
-    .navloader::after{content:"";display:block;width:40%;height:100%;background:linear-gradient(90deg,var(--brand),#9bbcfb,var(--brand));animation:slide 1s infinite}
+    .navloader::after{
+      content:"";display:block;width:40%;height:100%;
+      background:linear-gradient(90deg,var(--brand),#bbdefb,var(--brand));
+      animation:slide 1s infinite;
+    }
     @keyframes slide{0%{margin-left:-40%}100%{margin-left:100%}}
 
     main{max-width:1100px;margin:0 auto;padding:calc(var(--topbar-h) + var(--navloader-h) + 12px) 12px 18px}
 
     .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .field{display:flex;align-items:center;gap:6px}.field label{font-size:12px;color:var(--muted)}
-    input[type="text"],button{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font:inherit}
-    input[type="text"]{min-width:260px}input[type="text"]:focus,button:focus{outline:2px solid var(--focus);outline-offset:2px}
-    button{background:var(--brand);color:#fff;border-color:transparent;cursor:pointer;font-weight:700}
-    button.secondary{background:transparent;color:var(--text);border:1px solid var(--line)}
+    .field{display:flex;align-items:center;gap:6px}
+    .field label{font-size:12px;color:var(--muted)}
+    input[type="text"],button{
+      background:#ffffff;
+      color:var(--text);
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:8px 12px;
+      font:inherit;
+      box-shadow:0 1px 2px rgba(0,0,0,.04);
+    }
+    input[type="text"]{min-width:260px}
+    input[type="text"]:focus,button:focus{outline:2px solid var(--focus);outline-offset:2px}
+    button{
+      background:var(--brand);
+      color:#fff;
+      border-color:transparent;
+      cursor:pointer;
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:.02em;
+      box-shadow:0 2px 4px rgba(0,0,0,.12);
+    }
+    button:hover{filter:brightness(1.05)}
+    button.secondary{
+      background:#ffffff;
+      color:var(--text);
+      border:1px solid var(--line);
+      box-shadow:none;
+      text-transform:none;
+    }
 
     .togglesWrap{width:100%;display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;margin-top:6px}
     .toggles{display:flex;gap:6px;flex-wrap:wrap}
-    .toggle{background:var(--chip);border:1px solid var(--line);color:var(--chipText);padding:6px 10px;border-radius:999px;cursor:pointer;font-weight:700;font-size:12px}
-    .toggle[aria-pressed="true"]{background:var(--brand);border-color:transparent;color:#fff}
-    .toggle.disabled{opacity:.55;cursor:not-allowed}
-    .toggle.redditRisk{border-color:var(--warn);color:var(--warn);background:rgba(245,158,11,.12);box-shadow:inset 0 0 0 1px var(--warn)}
-    .toggle.redditRisk[aria-pressed="true"]{background:var(--warn);border-color:var(--warn);color:#111}
-    .toggle.soRisk{border-color:var(--warn);color:var(--warn);background:rgba(245,158,11,.12);box-shadow:inset 0 0 0 1px var(--warn)}
-    .toggle.soRisk[aria-pressed="true"]{background:var(--warn);border-color:var(--warn);color:#111}
+    .toggle{
+      background:var(--chip);
+      border:1px solid var(--line);
+      color:var(--chipText);
+      padding:6px 10px;
+      border-radius:999px;
+      cursor:pointer;
+      font-weight:700;
+      font-size:12px;
+      box-shadow:0 1px 2px rgba(0,0,0,.04);
+    }
+    .toggle[aria-pressed="true"]{
+      background:var(--brand);
+      border-color:transparent;
+      color:#ffffff;
+      box-shadow:0 2px 4px rgba(0,0,0,.15);
+    }
+    .toggle.disabled{opacity:.55;cursor:not-allowed;box-shadow:none}
+    .toggle.redditRisk,
+    .toggle.soRisk,
+    .toggle.potentialCve{
+      border-color:var(--warn);
+      color:var(--warn);
+      background:#fff8e1;
+      box-shadow:none;
+    }
+    .toggle.redditRisk[aria-pressed="true"],
+    .toggle.soRisk[aria-pressed="true"],
+    .toggle.potentialCve[aria-pressed="true"]{
+      background:var(--warn);
+      border-color:var(--warn);
+      color:#fff;
+      box-shadow:0 2px 4px rgba(0,0,0,.16);
+    }
 
     .kpis{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
-    .kpi{background:var(--chip);color:var(--chipText);border:1px solid var(--line);padding:6px 10px;border-radius:999px;font-size:12px}
+    .kpi{
+      background:var(--panel);
+      color:var(--chipText);
+      border:1px solid var(--line);
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      box-shadow:0 1px 3px rgba(0,0,0,.04);
+    }
     .kpi em{font-style:normal;color:var(--brand);font-weight:800}
 
-    .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;box-shadow:var(--shadow)}
+    .panel{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px;
+      box-shadow:var(--shadow);
+    }
     .panel header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px}
     .status{color:var(--muted);font-size:12px}
 
-    .feedGroup{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:12px}
-    summary{cursor:pointer;padding:10px 12px;list-style:none;user-select:none;font-weight:800;background:var(--chip);display:flex;align-items:center;gap:10px}
+    .feedGroup{
+      border:1px solid var(--line);
+      border-radius:12px;
+      overflow:hidden;
+      margin-bottom:12px;
+      background:#ffffff;
+    }
+    summary{
+      cursor:pointer;padding:10px 12px;list-style:none;user-select:none;font-weight:800;
+      background:#f5f5f5;
+      display:flex;align-items:center;gap:10px;
+    }
     summary::-webkit-details-marker{display:none}
     .summaryRight{display:flex;gap:6px;margin-left:auto}
 
@@ -76,10 +213,16 @@
       column-gap:14px;
       row-gap:0;
       padding:8px 0;
-      border-bottom:1px dashed var(--line)
+      border-bottom:1px dashed var(--line);
+      background:#ffffff;
     }
     .li:last-child{border-bottom:none}
-    .li.cve{background:var(--risk-bg);border:1px solid var(--risk-border);border-radius:10px;padding:8px}
+    .li.cve{
+      background:var(--risk-bg);
+      border:1px solid var(--risk-border);
+      border-radius:10px;
+      padding:8px;
+    }
 
     .datecol{
       color:var(--muted);
@@ -95,39 +238,46 @@
     .datecol .day{font-weight:800;color:var(--text)}
     .datecol .time{opacity:.9}
 
-    .avatar{width:22px;height:22px;border-radius:50%;border:1px solid var(--line);object-fit:cover;align-self:center}
+    .avatar{
+      width:22px;height:22px;border-radius:50%;
+      border:1px solid var(--line);
+      object-fit:cover;
+      align-self:center;
+      background:#ffffff;
+    }
 
     .redditIcon{
-      border-color: rgba(255,122,69,.45);
-      box-shadow: 0 0 0 3px rgba(255,122,69,.14) inset;
-      background: transparent;
+      border-color: rgba(239,108,0,.7);
+      box-shadow: 0 0 0 2px rgba(255,224,178,.7) inset;
+      background:#fff;
     }
     .redditIcon.risky{
-      border-color: rgba(255,122,69,.7);
-      box-shadow: 0 0 0 3px rgba(255,122,69,.22) inset;
+      border-color: rgba(239,108,0,1);
+      box-shadow: 0 0 0 2px rgba(255,204,128,.9) inset;
     }
 
     .soIcon{
-      border-color: rgba(244,128,36,.45);
-      box-shadow: 0 0 0 3px rgba(244,128,36,.14) inset;
-      background: transparent;
+      border-color: rgba(255,160,0,.6);
+      box-shadow: 0 0 0 2px rgba(255,224,178,.7) inset;
+      background:#fff;
     }
     .soIcon.risky{
-      border-color: rgba(244,128,36,.8);
-      box-shadow: 0 0 0 3px rgba(244,128,36,.26) inset;
+      border-color: rgba(255,160,0,1);
+      box-shadow: 0 0 0 2px rgba(255,224,178,1) inset;
     }
 
-    .titleRow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .titleRow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:2px}
     .titleRow a{color:var(--link);text-decoration:none;font-weight:800}
     .titleRow a:hover{text-decoration:underline}
 
-    .meta{color:var(--muted);font-size:12px}
+    .meta{color:var(--muted);font-size:12px;margin-top:2px}
 
     .chips{
       display:flex;
       flex-wrap:wrap;
       gap:4px;
       align-items:center;
+      margin-bottom:2px;
     }
     .chip{
       display:inline-flex;
@@ -135,31 +285,31 @@
       padding:3px 8px;
       font-size:11px;
       line-height:1;
-      border-radius:4px;
-      border:1px solid #30363d;
+      border-radius:999px;
+      border:1px solid var(--line);
       background:var(--chip);
       color:var(--chipText);
       white-space:nowrap;
     }
     .chip.bad{
-      background:#2f1517;
+      background:#ffebee;
       border-color:var(--bad);
-      color:#ff7b72;
+      color:#b71c1c;
     }
     .chip.warn{
-      background:#2b2113;
+      background:#fff8e1;
       border-color:var(--warn);
-      color:#f2cc60;
+      color:#e65100;
     }
     .chip.ok{
-      background:#102820;
+      background:#e8f5e9;
       border-color:var(--ok);
-      color:#3fb950;
+      color:#1b5e20;
     }
     .chip.reddit{
-      background:#241b14;
+      background:#fff8e1;
       border-color:var(--reddit);
-      color:#ffac7d;
+      color:#e65100;
     }
     .chip.soft{
       opacity:.9;
@@ -168,6 +318,34 @@
       color:inherit;
       text-decoration:none;
     }
+    .chip.link a:hover{text-decoration:underline}
+
+    .chip.potentialCveBadge{
+      margin-right:4px;
+    }
+    .potentialCveChips{
+      margin-top:4px;
+      gap:4px;
+    }
+    .chip.potentialCveChip{
+      background:#fff;
+      border-color:var(--warn);
+      color:#e65100;
+    }
+    .chip.potentialCveChip:hover{
+      background:#fff3e0;
+    }
+
+    .skeleton{
+      border-radius:10px;
+      background:linear-gradient(90deg,#eeeeee,#f5f5f5,#eeeeee);
+      background-size:200% 100%;
+      animation:pulse 1.2s ease-in-out infinite;
+      margin-bottom:8px;
+    }
+    @keyframes pulse{0%{background-position:0 0}100%{background-position:200% 0}}
+
+    .sentinel{font-size:12px;text-align:center;color:var(--muted)}
   </style>
 </head>
 <body>
@@ -175,7 +353,6 @@
     <div class="brand">Releasetrain <b>v3.13.3</b></div>
     <div class="spacer"></div>
 
-    <!-- Link pills kept in sync with ?q=... ; commas never encoded -->
     <a id="graphLink" class="linkchip" href="/graph/" title="Open graph view with the same query">Graph ↗ <small>/graph</small></a>
     <a id="archLink"  class="linkchip" href="/arch/"  title="Open architecture view with the same query">Arch ↗ <small>/arch</small></a>
 
@@ -184,7 +361,7 @@
     <form id="filterForm" class="controls" aria-label="Filters">
       <div class="field">
         <label for="components">Components</label>
-        <input id="components" name="components" type="text" placeholder="aws, chrome, linux" />
+        <input id="components" name="components" type="text" placeholder="aws, chrome, firefox, linux" />
       </div>
       <button type="submit">Search</button>
       <button type="button" id="clearBtn" class="secondary">Clear</button>
@@ -196,6 +373,9 @@
         <button class="toggle" data-key="minor" aria-pressed="false" type="button">Minor <span class="count" id="btn-minor">(0)</span></button>
         <button class="toggle" data-key="patch" aria-pressed="false" type="button">Patch <span class="count" id="btn-patch">(0)</span></button>
         <button class="toggle" data-key="cve" aria-pressed="false" type="button">CVE <span class="count" id="btn-cve">(0)</span></button>
+        <button class="toggle potentialCve" data-key="potential-cve" aria-pressed="false" type="button" title="Versions with Reddit discussions that mention both latest update and CVE">
+          Potential CVE <span class="count" id="btn-potential-cve">(0)</span>
+        </button>
         <button class="toggle" data-key="reddit" aria-pressed="false" type="button">Reddit <span class="count" id="btn-reddit">(0)</span></button>
         <button class="toggle redditRisk" data-key="reddit-risk" aria-pressed="false" type="button" title="AI-detected isUpdateRelated or score>0.5">
           ⚠️ Reddit Risks <span class="count" id="btn-reddit-risk">(0)</span>
@@ -236,7 +416,7 @@
         <div class="skeleton" aria-hidden="true" style="height:80px"></div>
       </div>
 
-      <div id="sentinel" class="sentinel" role="status" aria-live="polite" style="color:var(--muted);padding:10px 0">Loading more…</div>
+      <div id="sentinel" class="sentinel" role="status" aria-live="polite">Loading more…</div>
     </section>
   </main>
 
@@ -250,10 +430,8 @@
     const safe=(v,d="")=>v==null?d:v, uniq=a=>Array.from(new Set(a));
     const truncate=(str,n=MAX_VER_DESC)=> (str && str.length>n)?(str.slice(0,n-1)+"…"):(str||"");
 
-    // canonical helpers (single source of truth)
     const norm = s => String(s || "").toLowerCase().trim();
     const normKey = s => norm(s).replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
-    const normFlat = s => norm(s).replace(/[^a-z0-9]+/g, "");
     const titleCase = s => s ? s.replace(/\w\S*/g, w => w[0].toUpperCase() + w.slice(1)) : s;
     const tokens=s=>uniq(String(s||"").split(",").map(t=>norm(t)).filter(Boolean));
 
@@ -281,22 +459,18 @@
       if(url.startsWith("https://nvd.nist.gov/")) return "./img/cve.png";
       return "./img/default.png";
     };
-    function showLoader(){ $("#navLoader").classList.add("active"); updateOffsets(); }
-    function hideLoader(){ $("#navLoader").classList.remove("active"); updateOffsets(); }
     function updateOffsets(){ const tb=document.querySelector('.topbar'), nl=$("#navLoader");
       document.documentElement.style.setProperty('--topbar-h',(tb?tb.offsetHeight:0)+"px");
       document.documentElement.style.setProperty('--navloader-h',(nl&&nl.classList.contains('active')?nl.offsetHeight:0)+"px");
     }
     window.addEventListener('load',updateOffsets);window.addEventListener('resize',updateOffsets);new ResizeObserver(updateOffsets).observe(document.querySelector('.topbar'));
 
-    /* ----- CSV encoder that keeps commas as commas ----- */
     const encodeCsvKeepCommas = (csv) => {
       const cleaned = String(csv||"").replace(/\u00A0/g," ").replace(/\s*,\s*/g,",").trim();
       if(!cleaned) return "";
-      return cleaned.split(",").map(t => encodeURIComponent(t)).join(","); // commas remain literal
+      return cleaned.split(",").map(t => encodeURIComponent(t)).join(",");
     };
 
-    /* Build href for a given path with ?q= (commas unencoded) */
     function buildHrefWithQ(path, csv){
       const q = String(csv||"").trim();
       const qs = q ? `?q=${encodeCsvKeepCommas(q)}` : "";
@@ -304,7 +478,6 @@
       return `${location.origin}${base}${qs}`;
     }
 
-    /* ---------- keep /graph and /arch links synced with ?q=... ---------- */
     function setLinksHref(){
       const u=new URL(location.href);
       const q=u.searchParams.get("q") || "";
@@ -312,7 +485,6 @@
       $("#archLink").href  = buildHrefWithQ("/arch/",  q);
     }
 
-    /* ========= Post source + id helpers ========= */
     function getPostSource(p){
       const srcNorm = norm(p?.source || "");
       if (srcNorm) return srcNorm;
@@ -325,12 +497,10 @@
       return p?.redditId || p?._id || p?.id || "";
     }
 
-    /* =================== Reddit helpers =================== */
     const isUpdateRelatedBoolean = p => !!(p?.metadata?.labeled?.isUpdateRelated || p?.metadata?.predicted?.isUpdateRelated);
     const getUpdateScore = p => (typeof p?.metadata?.predicted?.positiveScore==="number")?p.metadata.predicted.positiveScore:null;
     const isRisk = p => isUpdateRelatedBoolean(p) || ((getUpdateScore(p)??-1) > 0.5);
 
-    /* =================== API =================== */
     const Api={
       async versions(qCsv){ const q=qCsv?`?q=${encodeCsvKeepCommas(qCsv)}`:""; const url=`${API_BASE}v/${q}`;
         const res=await fetch(url,{headers:{Accept:"application/json"}}); if(!res.ok) throw new Error(`${res.status} ${res.statusText} @ ${url}`);
@@ -353,7 +523,6 @@
         })); }
     };
 
-    /* =================== Canonicalization (NAME ONLY) =================== */
     function canonicalNameFromSubstrings(nameRaw){
       const display = titleCase(nameRaw||"");
       const key = normKey(display);
@@ -364,9 +533,17 @@
       return canonicalNameFromSubstrings(nameRaw);
     }
 
-    /* =================== State =================== */
-    const STATE={rawVersions:[],redditAll:[],redditBySub:new Map(),groupsFiltered:[],groupIndex:0,observer:null,loading:false,
-      filters:{components:[],toggles:new Set()}};
+    const STATE={
+      rawVersions:[],
+      redditAll:[],
+      redditBySub:new Map(),
+      redditByUrl:new Map(),   // NEW: map url -> reddit post for MLTL window
+      groupsFiltered:[],
+      groupIndex:0,
+      observer:null,
+      loading:false,
+      filters:{components:[],toggles:new Set()}
+    };
 
     function getSourceCounts(){
       let reddit=0, stackoverflow=0;
@@ -378,14 +555,17 @@
       return {reddit, stackoverflow};
     }
 
-    /* =================== Reddit index =================== */
     function buildRedditIndex(list){
       STATE.redditBySub=new Map();
+      STATE.redditByUrl=new Map(); // reset url map
       for(const p of list){
         const k=norm(p.subreddit);
         if(!k) continue;
         if(!STATE.redditBySub.has(k)) STATE.redditBySub.set(k,[]);
         STATE.redditBySub.get(k).push(p);
+        if (p.url) {
+          STATE.redditByUrl.set(String(p.url), p);
+        }
       }
       for(const arr of STATE.redditBySub.values()){
         arr.sort((a,b)=> (+new Date(b.created_utc||0))-(+new Date(a.created_utc||0)) || (b.score||0)-(a.score||0) );
@@ -426,7 +606,6 @@
       return out;
     }
 
-    /* =================== Grouping & aggregates =================== */
     function groupByComponentName(list){
       const map=new Map();
       for(const v of list){
@@ -444,6 +623,7 @@
       let major=0,minor=0,patch=0,cve=0,uniqComps=new Set(),typeCounts=new Map();
       const redditAllIds=new Set(), soAllIds=new Set(), redditRiskIds=new Set(), soRiskIds=new Set();
       const redditRiskLatestIds=new Set(), redditRiskCveIds=new Set();
+      let potentialCveVersions = 0;
 
       for(const it of list){
         const ch=norm(it.versionReleaseChannel);
@@ -470,12 +650,22 @@
           }
         }
 
+        // NEW: potential CVE only from MLTL window (mltl.src)
+        let postsInWindow = [];
+        const mltlSrc = it.mltl && Array.isArray(it.mltl.src) ? it.mltl.src : [];
+        for (const u of mltlSrc){
+          const p = STATE.redditByUrl.get(String(u));
+          if (p) postsInWindow.push(p);
+        }
+        const potentialPosts = postsInWindow.filter(p => p.isAboutLatestUpdate && p.isAboutCve);
+        if (potentialPosts.length > 0) potentialCveVersions++;
+
         const soRiskArr = stackoverflowMatchesForVersionBase(it, REDDIT_LIMIT, true);
         for(const p of soRiskArr){
           if(getPostSource(p)==="stackoverflow") soRiskIds.add(getPostId(p));
         }
 
-        const c=canonComponentName(it); uniqComps.add(c.key);
+        const cName=canonComponentName(it); uniqComps.add(cName.key);
         for(const t of (it.classification?.componentType||[])){
           if(!t||t==="UNKNOWN") continue;
           const k=String(t).toLowerCase();
@@ -499,6 +689,7 @@
         redditRiskLatest,
         redditRiskCve,
         soRisk,
+        potentialCve: potentialCveVersions,
         uniq:uniqComps.size,
         typeCounts
       };
@@ -509,6 +700,7 @@
       $("#btn-minor").textContent=`(${a.minor})`;
       $("#btn-patch").textContent=`(${a.patch})`;
       $("#btn-cve").textContent=`(${a.cve})`;
+      $("#btn-potential-cve").textContent=`(${a.potentialCve})`;
       $("#btn-reddit").textContent=`(${a.reddit})`;
       $("#btn-reddit-risk").textContent=`(${a.redditRisk})`;
       $("#btn-reddit-risk-latest").textContent=`(${a.redditRiskLatest})`;
@@ -531,7 +723,7 @@
       }
     }
 
-    function matchesToggles(v, rc, rRiskCount, soCount, soRiskCount, rRiskLatestCount, rRiskCveCount){
+    function matchesToggles(v, rc, rRiskCount, soCount, soRiskCount, rRiskLatestCount, rRiskCveCount, hasPotentialCve){
       const set=STATE.filters.toggles, channel=norm(v.versionReleaseChannel);
       const compTypes=(v.classification?.componentType||[]).map(norm),
             isCve=!!v.isCve,
@@ -549,7 +741,8 @@
         'reddit-risk':hasRisk,
         'reddit-risk-latest':hasRiskLatest,
         'reddit-risk-cve':hasRiskCve,
-        'so-risk':hasSoRisk
+        'so-risk':hasSoRisk,
+        'potential-cve':hasPotentialCve
       };
       for(const k of set){
         if(k.startsWith("type:")){
@@ -581,7 +774,17 @@
         const soRiskArr=stackoverflowMatchesForVersionBase(v,6,true);
         const riskLatestCount = rr.filter(p=>p.isAboutLatestUpdate).length;
         const riskCveCount = rr.filter(p=>p.isAboutCve).length;
-        return matchesToggles(v,r.length, rr.length, soAll.length, soRiskArr.length, riskLatestCount, riskCveCount);
+
+        // potential posts ONLY from MLTL window
+        let postsInWindow = [];
+        const mltlSrc = v.mltl && Array.isArray(v.mltl.src) ? v.mltl.src : [];
+        for (const u of mltlSrc){
+          const p = STATE.redditByUrl.get(String(u));
+          if (p) postsInWindow.push(p);
+        }
+        const potentialPosts = postsInWindow.filter(p => p.isAboutLatestUpdate && p.isAboutCve);
+
+        return matchesToggles(v,r.length, rr.length, soAll.length, soRiskArr.length, riskLatestCount, riskCveCount, potentialPosts.length>0);
       });
 
       const srcCounts = getSourceCounts();
@@ -601,7 +804,6 @@
       $("#status").textContent=`Grouped by component (${STATE.groupsFiltered.length})`;
     }
 
-    /* =================== Rendering =================== */
     const chip=(t,k)=>`<span class="chip ${k||""}">${t}</span>`;
 
     function renderComponentNode(group){
@@ -662,7 +864,7 @@
           ${chip("SO " + soCount,"soft")}
           ${chip("MAJOR " + majorCount,"ok")}
           ${chip("MINOR " + minorCount,"soft")}
-          ${chip("PATCH " + patchCount,"warn")}
+          ${chip("PATCH " + patchCount,"soft")}
         </span>`;
       sum.innerHTML = `${group.name} ${summaryRight}`;
       det.appendChild(sum);
@@ -698,83 +900,109 @@
         const body=document.createElement("div");
         const title=document.createElement("div"); title.className="titleRow";
 
-        const chips=document.createElement("div"); chips.className="chips";
+        const chipsEl=document.createElement("div"); chipsEl.className="chips";
         if(it.kind==="reddit"){
-          chips.insertAdjacentHTML("beforeend", chip("SRC reddit","reddit"));
+          chipsEl.insertAdjacentHTML("beforeend", chip("SRC reddit","reddit"));
           const scorePred = (it.raw?.metadata?.predicted?.positiveScore);
           const scoreField = (typeof it.raw?.score === "number") ? it.raw.score : null;
           const scoreVal = (typeof scorePred === "number") ? scorePred : scoreField;
           if(isRisk(it.raw)){
             const label = scoreVal!=null ? `RISK ${Number(scoreVal).toFixed(4)}` : "RISK —";
-            chips.insertAdjacentHTML("beforeend", chip(label,"warn"));
+            chipsEl.insertAdjacentHTML("beforeend", chip(label,"warn"));
           }else if(scoreVal!=null){
-            chips.insertAdjacentHTML("beforeend", chip(`SCORE ${Number(scoreVal).toFixed(4)}`,"soft"));
+            chipsEl.insertAdjacentHTML("beforeend", chip(`SCORE ${Number(scoreVal).toFixed(4)}`,"soft"));
           }
           const flags = it.raw || {};
           if (flags.isAboutLatestUpdate) {
-            chips.insertAdjacentHTML("beforeend", chip("TOPIC latest","soft"));
+            chipsEl.insertAdjacentHTML("beforeend", chip("TOPIC latest","soft"));
           }
           if (flags.isAboutCve) {
-            chips.insertAdjacentHTML("beforeend", chip("SEC security","bad"));
+            chipsEl.insertAdjacentHTML("beforeend", chip("SEC security","bad"));
           }
           const upvotes = (typeof flags.score === "number") ? flags.score : null;
           const comments = (typeof flags.num_comments === "number") ? flags.num_comments : null;
           if (upvotes != null) {
-            chips.insertAdjacentHTML("beforeend", chip(`UPVOTES ${upvotes}`,"soft"));
+            chipsEl.insertAdjacentHTML("beforeend", chip(`UPVOTES ${upvotes}`,"soft"));
           }
           if (comments != null) {
-            chips.insertAdjacentHTML("beforeend", chip(`COMMENTS ${comments}`,"soft"));
+            chipsEl.insertAdjacentHTML("beforeend", chip(`COMMENTS ${comments}`,"soft"));
           }
         }else if(it.kind==="stackoverflow"){
-          chips.insertAdjacentHTML("beforeend", chip("SRC stackoverflow","soft"));
+          chipsEl.insertAdjacentHTML("beforeend", chip("SRC stackoverflow","soft"));
           const scorePred = (it.raw?.metadata?.predicted?.positiveScore);
           const scoreField = (typeof it.raw?.score === "number") ? it.raw.score : null;
           const scoreVal = (typeof scorePred === "number") ? scorePred : scoreField;
           if(isRisk(it.raw)){
             const label = scoreVal!=null ? `RISK ${Number(scoreVal).toFixed(4)}` : "RISK —";
-            chips.insertAdjacentHTML("beforeend", chip(label,"warn"));
+            chipsEl.insertAdjacentHTML("beforeend", chip(label,"warn"));
           }else if(scoreVal!=null){
-            chips.insertAdjacentHTML("beforeend", chip(`SCORE ${Number(scoreVal).toFixed(4)}`,"soft"));
+            chipsEl.insertAdjacentHTML("beforeend", chip(`SCORE ${Number(scoreVal).toFixed(4)}`,"soft"));
           }
         }else if(it.kind==="cve"){
-          chips.insertAdjacentHTML("beforeend", chip("TYPE cve","bad"));
+          chipsEl.insertAdjacentHTML("beforeend", chip("TYPE cve","bad"));
           if(it.raw && it.raw._id){
-            chips.insertAdjacentHTML("beforeend", `<span class="chip link">ID <a href="https://releasetrain.io/api/v/${it.raw._id}" target="_blank" rel="noopener">open</a></span>`);
+            chipsEl.insertAdjacentHTML("beforeend", `<span class="chip link">ID <a href="https://releasetrain.io/api/v/${it.raw._id}" target="_blank" rel="noopener">open</a></span>`);
           }
         }else{
           const ch=(it.channel||"other");
-          const color=ch==="major"?"ok":ch==="patch"?"warn":ch==="minor"?"soft":"soft";
-          chips.insertAdjacentHTML("beforeend", chip("CHANNEL "+ch,color));
+          const color=ch==="major"?"ok":"soft";
+          chipsEl.insertAdjacentHTML("beforeend", chip("CHANNEL "+ch,color));
         }
 
         if(it.kind!=="reddit" && it.kind!=="stackoverflow" && it.raw){
           const r = it.raw;
           if(r.versionProductBrand)
-            chips.insertAdjacentHTML("beforeend", chip("BRAND "+String(r.versionProductBrand).toLowerCase(),"soft"));
+            chipsEl.insertAdjacentHTML("beforeend", chip("BRAND "+String(r.versionProductBrand).toLowerCase(),"soft"));
           if(r.versionProductType)
-            chips.insertAdjacentHTML("beforeend", chip("TYPE "+String(r.versionProductType).toLowerCase(),"soft"));
+            chipsEl.insertAdjacentHTML("beforeend", chip("TYPE "+String(r.versionProductType).toLowerCase(),"soft"));
           if(r.versionProductLicense)
-            chips.insertAdjacentHTML("beforeend", chip("LICENSE "+String(r.versionProductLicense).toLowerCase(),"soft"));
+            chipsEl.insertAdjacentHTML("beforeend", chip("LICENSE "+String(r.versionProductLicense).toLowerCase(),"soft"));
 
           const compTypes = (r.classification?.componentType||[]).filter(x=>x && x!=="UNKNOWN");
-          compTypes.slice(0,1).forEach(t => chips.insertAdjacentHTML("beforeend", chip("COMP "+String(t).toLowerCase(),"soft")));
+          compTypes.slice(0,1).forEach(t => chipsEl.insertAdjacentHTML("beforeend", chip("COMP "+String(t).toLowerCase(),"soft")));
 
           const secTypes  = (r.classification?.securityType||[]).filter(x=>x && x!=="UNKNOWN");
-          secTypes.slice(0,1).forEach(t => chips.insertAdjacentHTML("beforeend", chip("SEC "+String(t).toLowerCase(),"bad")));
+          secTypes.slice(0,1).forEach(t => chipsEl.insertAdjacentHTML("beforeend", chip("SEC "+String(t).toLowerCase(),"bad")));
 
           const brkTypes  = (r.classification?.breakingType||[]).filter(x=>x && x!=="UNKNOWN");
-          brkTypes.slice(0,1).forEach(t => chips.insertAdjacentHTML("beforeend", chip("BRK "+String(t).toLowerCase(),"warn")));
+          brkTypes.slice(0,1).forEach(t => chipsEl.insertAdjacentHTML("beforeend", chip("BRK "+String(t).toLowerCase(),"warn")));
 
           if(r._id)
-            chips.insertAdjacentHTML("beforeend", `<span class="chip link">ID <a href="https://releasetrain.io/api/v/${r._id}" target="_blank" rel="noopener">open</a></span>`);
+            chipsEl.insertAdjacentHTML("beforeend", `<span class="chip link">ID <a href="https://releasetrain.io/api/v/${r._id}" target="_blank" rel="noopener">open</a></span>`);
         }
 
-        title.appendChild(chips);
+        title.appendChild(chipsEl);
         const a=document.createElement("a"); a.href=it.url||"#"; a.target="_blank"; a.rel="noopener"; a.textContent=it.label; title.appendChild(a);
 
         const descTxt = truncate(safe(it.raw?.versionReleaseNotes,"")) || safe(it.raw?.versionReleaseComments,"");
         if(descTxt){
-          const d=document.createElement("div"); d.className="meta"; d.style.opacity=".9"; d.innerHTML=descTxt;
+          const d=document.createElement("div"); d.className="meta"; d.style.opacity=".95";
+          let inner = "";
+
+          if(it.kind!=="reddit" && it.kind!=="stackoverflow" && it.raw){
+            // Only MLTL-window posts: mltl.src URLs
+            let postsInWindow = [];
+            const mltlSrc = it.raw.mltl && Array.isArray(it.raw.mltl.src) ? it.raw.mltl.src : [];
+            for(const u of mltlSrc){
+              const p = STATE.redditByUrl.get(String(u));
+              if(p) postsInWindow.push(p);
+            }
+            const potentialPosts = postsInWindow.filter(p => p.isAboutLatestUpdate && p.isAboutCve);
+
+            if(potentialPosts.length > 0){
+              inner += `<span class="chip warn potentialCveBadge">⚠ Potential CVE discussion (${potentialPosts.length})</span>`;
+              inner += `<div class="chips potentialCveChips">`;
+              for(const p of potentialPosts){
+                const id = getPostId(p) || "post";
+                const href = p.url || `https://reddit.com/comments/${id}`;
+                inner += `<a class="chip potentialCveChip" href="${href}" target="_blank" rel="noopener">${id}</a>`;
+              }
+              inner += `</div>`;
+            }
+          }
+
+          inner += descTxt;
+          d.innerHTML = inner;
           body.appendChild(d);
         }
 
@@ -788,7 +1016,6 @@
       return det;
     }
 
-    /* =================== Infinite scroll =================== */
     function appendNextGroups(){
       if(STATE.loading) return;
       if(STATE.groupIndex>=STATE.groupsFiltered.length){ $("#sentinel").textContent="End of results"; return; }
@@ -802,9 +1029,8 @@
       STATE.observer.observe($("#sentinel"));
     }
 
-    /* =================== Boot & events =================== */
     async function boot(){
-      $("#status").textContent="Loading…"; document.getElementById("navLoader").classList.add("active"); $("#feed").innerHTML=""; STATE.groupIndex=0;
+      $("#status").textContent="Loading…"; $("#navLoader").classList.add("active"); $("#feed").innerHTML=""; STATE.groupIndex=0;
       try{
         const u=new URL(location.href);
         const rawQ = u.searchParams.get("q") || "";
@@ -819,17 +1045,16 @@
 
         if(!(vers||[]).length){
           $("#status").textContent=`No versions found — try another query`;
-          $("#feed").innerHTML=""; $("#sentinel").textContent="No results"; document.getElementById("navLoader").classList.remove("active"); return;
+          $("#feed").innerHTML=""; $("#sentinel").textContent="No results"; $("#navLoader").classList.remove("active"); return;
         }
 
         vers.sort((a,b)=>(+new Date(b.versionTimestampLastUpdate||b.versionTimestamp||0))-(+new Date(a.versionTimestampLastUpdate||a.versionTimestamp||0)));
         STATE.rawVersions=vers;
         applyFilters();
       }catch(e){ console.error(e); $("#feed").innerHTML=`<div class="meta">Error: ${e.message}</div>`; $("#status").textContent="Failed to load"; }
-      finally{ document.getElementById("navLoader").classList.remove("active"); }
+      finally{ $("#navLoader").classList.remove("active"); }
     }
 
-    // Search submit: keep commas unencoded in URL
     $("#filterForm").addEventListener("submit", async (e)=>{
       e.preventDefault();
       const input = $("#components").value.replace(/\u00A0/g," ").replace(/\s*,\s*/g,",").trim();
@@ -837,7 +1062,7 @@
       history.replaceState({}, "", href);
       setLinksHref();
 
-      $("#status").textContent="Filtering…"; document.getElementById("navLoader").classList.add("active");
+      $("#status").textContent="Filtering…"; $("#navLoader").classList.add("active");
       try{
         STATE.filters.components=tokens(input);
         const vers=await Api.versions(input);
@@ -845,10 +1070,9 @@
         vers.sort((a,b)=>(+new Date(b.versionTimestampLastUpdate||b.versionTimestamp||0))-(+new Date(a.versionTimestampLastUpdate||a.versionTimestamp||0)));
         STATE.rawVersions=vers; applyFilters(); $("#status").textContent=`Filtered (${vers.length})`;
       }catch(e){ console.error(e); $("#status").textContent="Filter failed"; }
-      finally{ document.getElementById("navLoader").classList.remove("active"); }
+      finally{ $("#navLoader").classList.remove("active"); }
     });
 
-    // Clear: also removes ?q= entirely
     $("#clearBtn").addEventListener("click", ()=>{
       $("#components").value="";
       STATE.filters.components=[];
