@@ -994,9 +994,7 @@
 
       const hasFilter = !!$("#components").value.trim();
       let toShow = components;
-      if (!hasFilter) {
-        toShow = [...components].slice(0, 10);
-      }
+      // show all components, even when no filter is set
 
       for (const group of toShow) {
         const detailsEl = document.createElement("details");
@@ -1065,8 +1063,8 @@
         const ul = document.createElement("ul");
         ul.className = "list-inline";
         ul.innerHTML = "<li style='font-weight:600;border-color:var(--line);'>Quick components:</li>";
-        const top = [...components].slice(0, 10);
-        for (const g of top) {
+        const all = [...components]; // use all components here
+        for (const g of all) {
           const li = document.createElement("li");
           li.textContent = g.name || g.key || "unknown";
           li.addEventListener("click", () => {
@@ -1121,7 +1119,7 @@
       buildCategoryChart("securityType", agg.bySecurityType || {});
       buildCategoryChart("breakingType", agg.byBreakingType || {});
 
-      const hasFilter = !!$("#components").value.trim();
+      const hasFilter = !!($("#components").value.trim());
       $("#statusText").textContent = hasFilter ? "Filtered view (server side)" : "Sampled view (latest components)";
     }
 
