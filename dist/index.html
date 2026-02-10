@@ -7,32 +7,51 @@
   <meta name="description" content="Merged list per component (name-only canonical), subtle highlights, extra info chips, and left-side dates (last 6 months)" />
   <style>
     :root{
-      /* Light, neutral, material-style palette */
-      --bg:#f5f5f5;
+      /* Simplified, mostly-neutral palette (one accent, one warning) */
+      --bg:#f6f7f8;
       --panel:#ffffff;
-      --muted:#757575;
-      --text:#212121;
-      --brand:#1976d2;
-      --line:#e0e0e0;
-      --chip:#fafafa;
-      --chipText:#424242;
-      --focus:#64b5f6;
-      --bad:#c62828;
-      --warn:#ef6c00;
-      --ok:#2e7d32;
-      --reddit:#ef6c00;
-      --link:#1565c0;
+      --muted:#6b7280;
+      --text:#111827;
+      --brand:#1f2937;      /* single accent for primary actions/selected toggles */
+      --line:#e5e7eb;
+      --chip:#f3f4f6;
+      --chipText:#374151;
+      --focus:#9ca3af;
+
+      --bad:#4b5563;        /* keep semantics, but neutralized */
+      --warn:#b45309;       /* single warm warning */
+      --ok:#374151;
+      --reddit:#b45309;
+      --link:#1f2937;
+
       --shadow:0 4px 14px rgba(0,0,0,.06);
       --topbar-h:0px;
       --navloader-h:0px;
-      --risk-bg:rgba(198,40,40,.06);
-      --risk-border:rgba(198,40,40,.4);
+
+      --risk-bg:rgba(17,24,39,.04);
+      --risk-border:rgba(17,24,39,.18);
     }
     @media (prefers-color-scheme: dark){
       :root{
-        --bg:#121212;--panel:#1e1e1e;--muted:#9e9e9e;--text:#fafafa;--brand:#90caf9;--line:#333;--chip:#1f1f1f;--chipText:#e0e0e0;--focus:#64b5f6;
-        --bad:#ef9a9a;--warn:#ffb74d;--ok:#81c784;--reddit:#ffb74d;--link:#90caf9;--shadow:0 6px 18px rgba(0,0,0,.6);
-        --risk-bg:rgba(244,67,54,.2);--risk-border:rgba(244,67,54,.55);
+        --bg:#0b0f14;
+        --panel:#111827;
+        --muted:#9ca3af;
+        --text:#f9fafb;
+        --brand:#e5e7eb;
+        --line:#243041;
+        --chip:#0f172a;
+        --chipText:#e5e7eb;
+        --focus:#9ca3af;
+
+        --bad:#e5e7eb;
+        --warn:#f59e0b;
+        --ok:#e5e7eb;
+        --reddit:#f59e0b;
+        --link:#e5e7eb;
+
+        --shadow:0 6px 18px rgba(0,0,0,.6);
+        --risk-bg:rgba(229,231,235,.06);
+        --risk-border:rgba(229,231,235,.22);
       }
     }
 
@@ -66,7 +85,7 @@
       font-weight:700;
       box-shadow:0 1px 3px rgba(0,0,0,.04);
     }
-    .gh-link:hover{background:#eeeeee}
+    .gh-link:hover{filter:brightness(.98)}
 
     .linkchip{
       display:inline-flex;align-items:center;gap:6px;
@@ -78,7 +97,7 @@
       text-decoration:none;
       font-weight:700;
       font-size:13px;
-      opacity:.9;
+      opacity:.95;
     }
     .linkchip:hover{opacity:1;box-shadow:0 1px 3px rgba(0,0,0,.06)}
     .linkchip small{color:var(--muted);font-weight:600}
@@ -90,7 +109,7 @@
     .navloader.active{display:block}
     .navloader::after{
       content:"";display:block;width:40%;height:100%;
-      background:linear-gradient(90deg,var(--brand),#bbdefb,var(--brand));
+      background:linear-gradient(90deg,var(--brand),var(--chip),var(--brand));
       animation:slide 1s infinite;
     }
     @keyframes slide{0%{margin-left:-40%}100%{margin-left:100%}}
@@ -101,7 +120,7 @@
     .field{display:flex;align-items:center;gap:6px}
     .field label{font-size:12px;color:var(--muted)}
     input[type="text"],button{
-      background:#ffffff;
+      background:var(--panel);
       color:var(--text);
       border:1px solid var(--line);
       border-radius:999px;
@@ -113,7 +132,7 @@
     input[type="text"]:focus,button:focus{outline:2px solid var(--focus);outline-offset:2px}
     button{
       background:var(--brand);
-      color:#fff;
+      color:var(--panel);
       border-color:transparent;
       cursor:pointer;
       font-weight:700;
@@ -121,9 +140,9 @@
       letter-spacing:.02em;
       box-shadow:0 2px 4px rgba(0,0,0,.12);
     }
-    button:hover{filter:brightness(1.05)}
+    button:hover{filter:brightness(1.03)}
     button.secondary{
-      background:#ffffff;
+      background:var(--panel);
       color:var(--text);
       border:1px solid var(--line);
       box-shadow:none;
@@ -146,16 +165,18 @@
     .toggle[aria-pressed="true"]{
       background:var(--brand);
       border-color:transparent;
-      color:#ffffff;
+      color:var(--panel);
       box-shadow:0 2px 4px rgba(0,0,0,.15);
     }
     .toggle.disabled{opacity:.55;cursor:not-allowed;box-shadow:none}
+
+    /* Risk toggles: keep distinct but restrained */
     .toggle.redditRisk,
     .toggle.soRisk,
     .toggle.potentialCve{
-      border-color:var(--warn);
+      border-color:rgba(180,83,9,.55);
       color:var(--warn);
-      background:#fff8e1;
+      background:var(--panel);
       box-shadow:none;
     }
     .toggle.redditRisk[aria-pressed="true"],
@@ -194,11 +215,11 @@
       border-radius:12px;
       overflow:hidden;
       margin-bottom:12px;
-      background:#ffffff;
+      background:var(--panel);
     }
     summary{
       cursor:pointer;padding:10px 12px;list-style:none;user-select:none;font-weight:800;
-      background:#f5f5f5;
+      background:var(--chip);
       display:flex;align-items:center;gap:10px;
     }
     summary::-webkit-details-marker{display:none}
@@ -214,7 +235,7 @@
       row-gap:0;
       padding:8px 0;
       border-bottom:1px dashed var(--line);
-      background:#ffffff;
+      background:var(--panel);
     }
     .li:last-child{border-bottom:none}
     .li.cve{
@@ -243,27 +264,28 @@
       border:1px solid var(--line);
       object-fit:cover;
       align-self:center;
-      background:#ffffff;
+      background:var(--panel);
     }
 
+    /* Icons: subtle, mostly border-only */
     .redditIcon{
-      border-color: rgba(239,108,0,.7);
-      box-shadow: 0 0 0 2px rgba(255,224,178,.7) inset;
-      background:#fff;
+      border-color: rgba(180,83,9,.5);
+      box-shadow: 0 0 0 2px rgba(180,83,9,.10) inset;
+      background:var(--panel);
     }
     .redditIcon.risky{
-      border-color: rgba(239,108,0,1);
-      box-shadow: 0 0 0 2px rgba(255,204,128,.9) inset;
+      border-color: rgba(180,83,9,.9);
+      box-shadow: 0 0 0 2px rgba(180,83,9,.18) inset;
     }
 
     .soIcon{
-      border-color: rgba(255,160,0,.6);
-      box-shadow: 0 0 0 2px rgba(255,224,178,.7) inset;
-      background:#fff;
+      border-color: rgba(180,83,9,.35);
+      box-shadow: 0 0 0 2px rgba(180,83,9,.10) inset;
+      background:var(--panel);
     }
     .soIcon.risky{
-      border-color: rgba(255,160,0,1);
-      box-shadow: 0 0 0 2px rgba(255,224,178,1) inset;
+      border-color: rgba(180,83,9,.9);
+      box-shadow: 0 0 0 2px rgba(180,83,9,.18) inset;
     }
 
     .titleRow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:2px}
@@ -291,25 +313,27 @@
       color:var(--chipText);
       white-space:nowrap;
     }
+
+    /* Chip semantics kept, but simplified (mostly neutral + one warn) */
     .chip.bad{
-      background:#ffebee;
-      border-color:var(--bad);
-      color:#b71c1c;
+      background:var(--chip);
+      border-color:rgba(17,24,39,.25);
+      color:var(--chipText);
     }
     .chip.warn{
-      background:#fff8e1;
-      border-color:var(--warn);
-      color:#e65100;
+      background:rgba(180,83,9,.08);
+      border-color:rgba(180,83,9,.45);
+      color:var(--warn);
     }
     .chip.ok{
-      background:#e8f5e9;
-      border-color:var(--ok);
-      color:#1b5e20;
+      background:var(--chip);
+      border-color:rgba(17,24,39,.18);
+      color:var(--chipText);
     }
     .chip.reddit{
-      background:#fff8e1;
-      border-color:var(--reddit);
-      color:#e65100;
+      background:rgba(180,83,9,.08);
+      border-color:rgba(180,83,9,.45);
+      color:var(--warn);
     }
     .chip.soft{
       opacity:.9;
@@ -328,20 +352,25 @@
       gap:4px;
     }
     .chip.potentialCveChip{
-      background:#fff;
-      border-color:var(--warn);
-      color:#e65100;
+      background:var(--panel);
+      border-color:rgba(180,83,9,.45);
+      color:var(--warn);
     }
     .chip.potentialCveChip:hover{
-      background:#fff3e0;
+      background:rgba(180,83,9,.10);
     }
 
     .skeleton{
       border-radius:10px;
-      background:linear-gradient(90deg,#eeeeee,#f5f5f5,#eeeeee);
+      background:linear-gradient(90deg,#e5e7eb,#f3f4f6,#e5e7eb);
       background-size:200% 100%;
       animation:pulse 1.2s ease-in-out infinite;
       margin-bottom:8px;
+    }
+    @media (prefers-color-scheme: dark){
+      .skeleton{
+        background:linear-gradient(90deg,#0f172a,#111827,#0f172a);
+      }
     }
     @keyframes pulse{0%{background-position:0 0}100%{background-position:200% 0}}
 
