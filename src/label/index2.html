@@ -307,7 +307,6 @@
             <th>Author Description</th>
             <th style="width: 100px;">Reddit</th>
             <th style="width: 160px;">Subreddit</th>
-            <th style="width: 160px;">Subreddit</th>
             <th style="width: 180px;">Is Update Related</th>
           </tr>
         </thead>
@@ -336,7 +335,6 @@
         const subredditLink = document.createElement('a');
         subredditLink.href = `https://www.reddit.com/r/${encodeURIComponent(String(doc.subreddit).replace(/^r\//i, '').trim())}/`;
         subredditLink.target = '_blank';
-          a.rel = 'noopener noreferrer';
         subredditLink.rel = 'noopener noreferrer';
         subredditLink.textContent = s(doc.subreddit);
         subredditTd.appendChild(subredditLink);
@@ -597,7 +595,6 @@
         const idA = document.createElement('a');
         idA.href = `${API_BASE}/api/reddit/${encodeURIComponent(rid)}`;
         idA.target = '_blank';
-          a.rel = 'noopener noreferrer';
         idA.textContent = rid || '(no id)';
         idTd.appendChild(idA);
 
@@ -615,25 +612,10 @@
           const a = document.createElement('a');
           a.href = doc.url;
           a.target = '_blank';
-          a.rel = 'noopener noreferrer';
           a.textContent = 'Open';
           linkTd.appendChild(a);
         } else {
           linkTd.innerHTML = '<span class="muted">n/a</span>';
-        }
-
-        
-        const subredditTd = document.createElement('td');
-        if (nonEmpty(doc.subreddit)) {
-          const subredditLink = document.createElement('a');
-          const name = String(doc.subreddit).replace(/^r\//i, '').trim();
-          subredditLink.href = `https://www.reddit.com/r/${encodeURIComponent(name)}/`;
-          subredditLink.target = '_blank';
-          subredditLink.rel = 'noopener noreferrer';
-          subredditLink.textContent = 'r/' + name;
-          subredditTd.appendChild(subredditLink);
-        } else {
-          subredditTd.innerHTML = '<span class="muted">n/a</span>';
         }
 
         const selTd = document.createElement('td');
@@ -678,7 +660,7 @@
         });
         selTd.appendChild(sel);
 
-        [idTd, titleTd, descTd, linkTd, subredditTd, selTd].forEach(td => tr.appendChild(td));
+        [idTd, titleTd, descTd, linkTd, selTd].forEach(td => tr.appendChild(td));
         return tr;
       }
 

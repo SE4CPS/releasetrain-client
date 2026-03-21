@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <title>ReleaseTrain Reddit Browser</title>
@@ -12,17 +13,33 @@
       --line: #dcdcdc;
       --focus: #000000;
       --accent: #111111;
-      --hl: #fff59d; /* highlight color */
+      --hl: #fff59d;
+      /* highlight color */
     }
-    * { box-sizing: border-box; }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       background: var(--bg);
       color: var(--fg);
     }
-    a { color: inherit; text-decoration: underline; }
-    a:focus, button:focus, select:focus, input:focus { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+    a {
+      color: inherit;
+      text-decoration: underline;
+    }
+
+    a:focus,
+    button:focus,
+    select:focus,
+    input:focus {
+      outline: 2px solid var(--focus);
+      outline-offset: 2px;
+    }
 
     /* ===== Loader line (top of page) ===== */
     #loader {
@@ -37,6 +54,7 @@
       opacity: 0;
       transition: opacity 200ms ease;
     }
+
     #loader .bar {
       height: 100%;
       width: 100%;
@@ -55,8 +73,18 @@
       justify-content: space-between;
       gap: 8px;
     }
-    header h1 { margin: 0; font-size: 14px; font-weight: 600; }
-    .status { font-size: 11px; color: var(--muted); white-space: nowrap; }
+
+    header h1 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .status {
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
 
     .pager {
       display: flex;
@@ -67,6 +95,7 @@
       flex-wrap: wrap;
       justify-content: center;
     }
+
     .pager button {
       border: 1px solid var(--line);
       background: var(--bg);
@@ -74,6 +103,7 @@
       border-radius: 4px;
       cursor: pointer;
     }
+
     .pager input {
       width: 60px;
       padding: 2px 4px;
@@ -82,6 +112,7 @@
       border-radius: 4px;
       text-align: center;
     }
+
     .badge {
       border: 1px solid var(--line);
       border-radius: 999px;
@@ -100,6 +131,7 @@
       gap: 12px;
       padding: 4px 8px;
     }
+
     .count-badge {
       font-weight: 700;
       font-size: 15px;
@@ -109,34 +141,45 @@
       border-radius: 999px;
       background: var(--bg);
     }
-    .muted { color: var(--muted); }
-    main { padding: 8px; }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    main {
+      padding: 8px;
+    }
 
     .toolbar {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 8px;
       margin-bottom: 10px;
     }
+
     .card {
       background: #f7f7f7;
       border: 1px solid var(--line);
       border-radius: 6px;
       padding: 6px;
     }
+
     label {
       display: block;
       font-size: 12px;
       color: var(--muted);
       margin-bottom: 4px;
     }
+
     .row {
       display: flex;
       gap: 8px;
       align-items: center;
       flex-wrap: wrap;
     }
-    select, input[type="text"] {
+
+    select,
+    input[type="text"] {
       width: 100%;
       padding: 6px 8px;
       border-radius: 6px;
@@ -153,7 +196,11 @@
       margin-top: 4px;
     }
 
-    table { width: 100%; border-collapse: collapse; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
     thead th {
       text-align: left;
       font-size: 12px;
@@ -161,21 +208,34 @@
       border-bottom: 2px solid var(--line);
       padding: 6px 8px;
     }
+
     tbody td {
       border-bottom: 1px solid var(--line);
       padding: 6px 8px;
       vertical-align: top;
     }
-    .desc { white-space: pre-wrap; word-break: break-word; }
-    .center { text-align: center; }
+
+    .desc {
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .center {
+      text-align: center;
+    }
 
     /* highlight style */
-    .hl { background: var(--hl); }
+    .hl {
+      background: var(--hl);
+    }
   </style>
 </head>
+
 <body>
   <!-- Loader line -->
-  <div id="loader" aria-hidden="true"><div class="bar"></div></div>
+  <div id="loader" aria-hidden="true">
+    <div class="bar"></div>
+  </div>
 
   <header>
     <div style="width: 20%;"></div>
@@ -246,6 +306,8 @@
             <th>Title</th>
             <th>Author Description</th>
             <th style="width: 100px;">Reddit</th>
+            <th style="width: 160px;">Subreddit</th>
+            <th style="width: 160px;">Subreddit</th>
             <th style="width: 180px;">Is Update Related</th>
           </tr>
         </thead>
@@ -256,9 +318,9 @@
   </main>
 
   <script>
-    (function(){
+    (function () {
       const API_BASE = 'https://releasetrain.io';
-      const LIST_ENDPOINT  = `${API_BASE}/api/reddit`;
+      const LIST_ENDPOINT = `${API_BASE}/api/reddit`;
       const UPDATE_ENDPOINT = (redditId) => `${API_BASE}/api/reddit/${encodeURIComponent(redditId)}`;
       const STATS_ENDPOINT = `${API_BASE}/api/reddit/stats/by-month`;
 
@@ -268,6 +330,19 @@
       const loaderBar = loader.querySelector('.bar');
       let loaderTimer = null;
       let loaderProg = 0;
+
+      const subredditTd = document.createElement('td');
+      if (nonEmpty(doc.subreddit)) {
+        const subredditLink = document.createElement('a');
+        subredditLink.href = `https://www.reddit.com/r/${encodeURIComponent(String(doc.subreddit).replace(/^r\//i, '').trim())}/`;
+        subredditLink.target = '_blank';
+          a.rel = 'noopener noreferrer';
+        subredditLink.rel = 'noopener noreferrer';
+        subredditLink.textContent = s(doc.subreddit);
+        subredditTd.appendChild(subredditLink);
+      } else {
+        subredditTd.innerHTML = '<span class="muted">n/a</span>';
+      }
 
       function startLoader() {
         clearInterval(loaderTimer);
@@ -326,7 +401,7 @@
       const nonEmpty = v => !!s(v).trim();
       const setStatus = msg => statusEl.textContent = msg;
 
-      function escapeHTML(str){
+      function escapeHTML(str) {
         return s(str)
           .replace(/&/g, '&amp;')
           .replace(/</g, '&lt;')
@@ -335,7 +410,7 @@
           .replace(/'/g, '&#39;');
       }
 
-      function highlightHTML(text, query){
+      function highlightHTML(text, query) {
         const safe = escapeHTML(text);
         const q = s(query).trim();
         if (q.length < 3) return safe;
@@ -364,13 +439,13 @@
 
       const labelToDisplay = l =>
         l === 'positive' ? 'Positive'
-        : l === 'negative' ? 'Negative'
-        : 'Not Labeled';
+          : l === 'negative' ? 'Negative'
+            : 'Not Labeled';
 
       const displayToLabel = d =>
         d.toLowerCase().includes('pos') ? 'positive'
-        : d.toLowerCase().includes('neg') ? 'negative'
-        : 'unlabeled';
+          : d.toLowerCase().includes('neg') ? 'negative'
+            : 'unlabeled';
 
       function buildQuery() {
         const params = new URLSearchParams();
@@ -442,13 +517,13 @@
         empty.hidden = true;
         pageText.textContent = state.page;
         try {
-          const res  = await fetchWithLoader(buildQuery());
+          const res = await fetchWithLoader(buildQuery());
           if (!res.ok) throw new Error(res.statusText);
 
           const body = await res.json();
 
           const rows = Array.isArray(body) ? body
-                    : (body && Array.isArray(body.data) ? body.data : []);
+            : (body && Array.isArray(body.data) ? body.data : []);
 
           state.raw = rows;
 
@@ -469,7 +544,7 @@
         }
       }
 
-      function applyFilters(rows){
+      function applyFilters(rows) {
         const lf = labelFilter.value;
         const q = searchText.value.trim().toLowerCase();
         const needDesc = withDescription.checked;
@@ -493,11 +568,11 @@
         });
       }
 
-      function updateCounts(filtered){
+      function updateCounts(filtered) {
         countBadge.textContent = `Showing ${filtered} / ${state.total}`;
       }
 
-      function render(){
+      function render() {
         const rows = applyFilters(state.raw);
         tbody.innerHTML = '';
         if (!rows.length) {
@@ -513,7 +588,7 @@
         tbody.appendChild(frag);
       }
 
-      function renderRow(doc){
+      function renderRow(doc) {
         const tr = document.createElement('tr');
         const rid = s(doc.redditId || doc._id || '');
         const q = searchText.value.trim();
@@ -522,6 +597,7 @@
         const idA = document.createElement('a');
         idA.href = `${API_BASE}/api/reddit/${encodeURIComponent(rid)}`;
         idA.target = '_blank';
+          a.rel = 'noopener noreferrer';
         idA.textContent = rid || '(no id)';
         idTd.appendChild(idA);
 
@@ -539,10 +615,25 @@
           const a = document.createElement('a');
           a.href = doc.url;
           a.target = '_blank';
+          a.rel = 'noopener noreferrer';
           a.textContent = 'Open';
           linkTd.appendChild(a);
         } else {
           linkTd.innerHTML = '<span class="muted">n/a</span>';
+        }
+
+        
+        const subredditTd = document.createElement('td');
+        if (nonEmpty(doc.subreddit)) {
+          const subredditLink = document.createElement('a');
+          const name = String(doc.subreddit).replace(/^r\//i, '').trim();
+          subredditLink.href = `https://www.reddit.com/r/${encodeURIComponent(name)}/`;
+          subredditLink.target = '_blank';
+          subredditLink.rel = 'noopener noreferrer';
+          subredditLink.textContent = 'r/' + name;
+          subredditTd.appendChild(subredditLink);
+        } else {
+          subredditTd.innerHTML = '<span class="muted">n/a</span>';
         }
 
         const selTd = document.createElement('td');
@@ -587,12 +678,12 @@
         });
         selTd.appendChild(sel);
 
-        [idTd, titleTd, descTd, linkTd, selTd].forEach(td => tr.appendChild(td));
+        [idTd, titleTd, descTd, linkTd, subredditTd, selTd].forEach(td => tr.appendChild(td));
         return tr;
       }
 
-      prevBtn.onclick  = () => { state.page = Math.max(1, state.page - 1); fetchList(); };
-      nextBtn.onclick  = () => { state.page = Math.max(1, state.page + 1); fetchList(); };
+      prevBtn.onclick = () => { state.page = Math.max(1, state.page - 1); fetchList(); };
+      nextBtn.onclick = () => { state.page = Math.max(1, state.page + 1); fetchList(); };
       reloadBtn.onclick = fetchList;
 
       prevMonthBtn.onclick = () => shiftMonth(-1);
@@ -631,4 +722,5 @@
     })();
   </script>
 </body>
+
 </html>
