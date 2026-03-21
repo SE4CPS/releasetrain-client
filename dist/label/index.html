@@ -539,7 +539,7 @@
           const a = document.createElement('a');
           a.href = doc.url;
           a.target = '_blank';
-          a.textContent = 'Open';
+          a.textContent = s(doc.subreddit) ? `r/${doc.subreddit}` : 'open';
           linkTd.appendChild(a);
         } else {
           linkTd.innerHTML = '<span class="muted">n/a</span>';
