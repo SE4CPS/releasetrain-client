@@ -1,0 +1,2011 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>releasetrain dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #d1d5db;
+      --accent: #2563eb;
+      --accent-soft: #eff6ff;
+      --accent-strong: #1d4ed8;
+      --accent-positive: #16a34a;
+      --accent-negative: #b91c1c;
+      --accent-neutral: #6b7280;
+      --today-bg: #f9fafb;
+      --timeline-bg: #fef2f2;
+      --chip-bg: #e5e7eb;
+      --chip-border: #d1d5db;
+      --progress: #2563eb;
+      --progress-soft: #93c5fd;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: 13px;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      overflow-y: hidden;
+    }
+
+    @media (max-width: 900px) {
+      body {
+        height: auto;
+        overflow-y: auto;
+      }
+    }
+
+    #loading-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      width: 0;
+      background: linear-gradient(to right, var(--progress), var(--progress-soft));
+      z-index: 1000;
+      opacity: 0;
+      transition: width 0.4s ease-out, opacity 0.2s ease-out;
+    }
+
+    .page {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 4px 8px 8px;
+      max-width: 1720px;
+      width: 100%;
+      margin: 0 auto;
+      min-height: 0;
+    }
+
+    header {
+      display: none;
+    }
+
+    .controls-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 2fr) minmax(0, 1.5fr);
+      gap: 6px;
+      padding: 3px 6px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #f9fafb;
+      margin-bottom: 4px;
+      flex-shrink: 0;
+      align-items: center;
+    }
+
+    @media (max-width: 900px) {
+      .controls-row {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .control-line {
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .control-label {
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .status-inline {
+      font-size: 11px;
+      color: var(--muted);
+      opacity: 0.9;
+    }
+
+    select,
+    input[type="text"],
+    input[type="date"],
+    button {
+      font-size: 12px;
+      padding: 3px 5px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      color: var(--text);
+    }
+
+    select {
+      min-width: 105px;
+    }
+
+    input[type="date"] {
+      max-width: 132px;
+    }
+
+    input[type="text"] {
+      min-width: 140px;
+      max-width: 230px;
+    }
+
+    button {
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent-strong);
+      color: #ffffff;
+    }
+
+    button.ghost {
+      background: #ffffff;
+      border-color: var(--border);
+      color: var(--muted);
+    }
+
+    button.secondary {
+      background: var(--accent-soft);
+      border-color: #bfdbfe;
+      color: var(--accent-strong);
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: default;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 1px 5px;
+      border-radius: 999px;
+      border: 1px solid var(--chip-border);
+      background: var(--chip-bg);
+      font-size: 10px;
+      margin-right: 4px;
+    }
+
+    .chip-remove {
+      margin-left: 4px;
+      border: none;
+      background: transparent;
+      font-size: 10px;
+      cursor: pointer;
+      padding: 0 2px;
+      line-height: 1;
+    }
+
+    .grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-rows: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+      min-height: 0;
+      margin-top: 4px;
+      align-items: stretch;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: minmax(0, 1fr);
+        grid-auto-rows: auto;
+      }
+    }
+
+    .card {
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      height: 100%;
+      max-height: 340px;
+      overflow: hidden;
+      background: #ffffff;
+    }
+
+    .card-today {
+      background: var(--today-bg);
+    }
+
+    .card-timeline {
+      background: var(--timeline-bg);
+    }
+
+    @media (max-width: 900px) {
+      .card {
+        max-height: none;
+      }
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 4px;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .card-title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .card-title {
+      margin: 0;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .card-subtitle {
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .badge-delta {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 999px;
+      align-self: flex-start;
+    }
+
+    .badge-positive {
+      color: var(--accent-positive);
+      border: 1px solid rgba(22, 163, 74, 0.35);
+      background: rgba(22, 163, 74, 0.06);
+    }
+
+    .badge-negative {
+      color: var(--accent-negative);
+      border: 1px solid rgba(185, 28, 28, 0.35);
+      background: rgba(185, 28, 28, 0.06);
+    }
+
+    .badge-flat {
+      color: var(--accent-neutral);
+      border: 1px solid rgba(107, 114, 128, 0.35);
+      background: rgba(243, 244, 246, 0.9);
+    }
+
+    .card-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-height: 0;
+    }
+
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+
+    .metric-main {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--accent-strong);
+    }
+
+    .metric-label {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .metric-extra {
+      font-size: 10px;
+      color: var(--muted);
+      text-align: right;
+    }
+
+    .chart-container {
+      position: relative;
+      flex: 1;
+      min-height: 120px;
+      /* more vertical space */
+      max-height: 220px;
+      overflow: hidden;
+    }
+
+    .chart-container canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .chart-stats {
+      font-size: 10px;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    .validation {
+      font-size: 10px;
+      margin-top: 1px;
+      flex-shrink: 0;
+    }
+
+    .validation-ok {
+      color: var(--accent-positive);
+    }
+
+    .validation-warn {
+      color: #eab308;
+    }
+
+    .validation-error {
+      color: var(--accent-negative);
+    }
+
+    .list-scroll {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0;
+      padding-right: 2px;
+      margin-top: 2px;
+    }
+
+    .list-header {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--muted);
+      margin: 2px 0 3px;
+    }
+
+    .post-item {
+      font-size: 11px;
+      margin-bottom: 3px;
+      border-bottom: 1px dashed #e5e7eb;
+      padding-bottom: 2px;
+    }
+
+    .post-title {
+      font-weight: 500;
+      margin-bottom: 1px;
+    }
+
+    .post-meta {
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    a {
+      color: #1d4ed8;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .interesting {
+      font-size: 11px;
+      line-height: 1.4;
+      margin-top: 4px;
+      overflow-y: auto;
+      min-height: 0;
+    }
+
+    .interesting strong {
+      font-weight: 600;
+    }
+
+    .interesting ul {
+      margin: 3px 0;
+      padding-left: 14px;
+    }
+
+    .interesting li {
+      margin: 1px 0;
+    }
+
+    .components-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    .components-table td {
+      padding: 2px 4px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .components-table td:first-child {
+      color: var(--muted);
+    }
+
+    .components-table td:last-child {
+      text-align: right;
+      font-weight: 500;
+    }
+
+    .highlight-number {
+      color: var(--accent-negative);
+      font-weight: 600;
+    }
+
+    .cve-table-wrapper {
+      display: flex;
+      gap: 6px;
+      align-items: flex-start;
+    }
+
+    .cve-table-half {
+      flex: 1;
+      min-width: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="loading-bar"></div>
+
+  <div class="page">
+    <header></header>
+
+    <div class="controls-row">
+      <div class="control-line">
+        <span class="control-label">Timeline window</span>
+        <select id="timeline-window">
+          <option value="14">Last 14 days</option>
+          <option value="30" selected>Last 30 days</option>
+          <option value="90">Last 90 days</option>
+        </select>
+        <span class="control-label">Today slice</span>
+        <input id="date-input" type="date" />
+      </div>
+
+      <div class="control-line">
+        <input id="components-input" list="components-datalist" type="text" placeholder="component (comma separated)" />
+        <datalist id="components-datalist"></datalist>
+        <button id="apply-main" class="primary">Add</button>
+        <button id="clear-components" class="ghost">Clear</button>
+        <span class="status-inline">
+          <span id="components-active-label">All (API default)</span>
+        </span>
+      </div>
+
+      <div class="control-line">
+        <span class="status-inline" id="status-info">
+          Ready.
+        </span>
+        <span class="status-inline">
+          Share this view with the q parameter in the address bar using a comma separated list of components.
+        </span>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- 1: Release volume -->
+      <div class="card card-today" id="card-release-volume">
+        <div class="card-header">
+          <div class="card-title-block">
+            <div class="card-title">Release volume</div>
+            <div class="card-subtitle">All time and last 2 years</div>
+          </div>
+          <div class="badge-delta badge-flat" id="delta-release-volume">+0</div>
+        </div>
+        <div class="card-main">
+          <div class="metric-row">
+            <div>
+              <div class="metric-label">All release notes (approx)</div>
+              <div class="metric-main" id="metric-all-time">0</div>
+            </div>
+            <div class="metric-extra" id="metric-release-extra">
+              Last 2 years: <span id="metric-two-years">0</span><br />
+              Today: <span id="metric-today-count">0</span><br />
+              Positive risk posts (reddit / StackOverflow): <span id="metric-risk-positive">0</span>
+            </div>
+          </div>
+          <div class="chart-container">
+            <canvas id="chart-release-window"></canvas>
+          </div>
+          <div class="chart-stats" id="stats-release-window"></div>
+          <div class="validation" id="validation-release-volume"></div>
+        </div>
+      </div>
+
+      <!-- 2: Components in window -->
+      <div class="card card-today" id="card-components-window">
+        <div class="card-header">
+          <div class="card-title-block">
+            <div class="card-title">Components in window</div>
+            <div class="card-subtitle">Distinct in last 2 years</div>
+          </div>
+          <div class="badge-delta badge-flat" id="delta-components-window">+0</div>
+        </div>
+        <div class="card-main">
+          <table class="components-table">
+            <tbody>
+              <tr>
+                <td>Distinct components</td>
+                <td><span id="metric-components-total">0</span></td>
+              </tr>
+              <tr>
+                <td>Names fetched</td>
+                <td><span id="metric-components-names">0</span></td>
+              </tr>
+              <tr>
+                <td>Sample components</td>
+                <td><span id="metric-components-sample">0</span></td>
+              </tr>
+              <tr>
+                <td>Reddit posts (sample)</td>
+                <td><span id="metric-components-reddit">0</span></td>
+              </tr>
+              <tr>
+                <td>StackOverflow posts (sample)</td>
+                <td><span id="metric-components-so">0</span></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="chart-stats" id="stats-components-window"></div>
+          <div class="chart-stats" id="stats-components-sample"></div>
+          <div class="validation" id="validation-components-window"></div>
+        </div>
+      </div>
+
+      <!-- 3: Timeline daily updates -->
+      <div class="card card-timeline" id="card-timeline-daily">
+        <div class="card-header">
+          <div class="card-title-block">
+            <div class="card-title">Timeline daily updates</div>
+            <div class="card-subtitle" id="subtitle-timeline-daily"></div>
+          </div>
+          <div class="badge-delta badge-flat" id="delta-timeline-daily">+0</div>
+        </div>
+        <div class="card-main">
+          <div class="chart-container">
+            <canvas id="chart-timeline-daily"></canvas>
+          </div>
+          <div class="chart-stats" id="stats-timeline-daily"></div>
+          <div class="validation" id="validation-timeline-daily"></div>
+        </div>
+      </div>
+
+      <!-- 4: Selected components timeline -->
+      <div class="card card-timeline" id="card-selected-components">
+        <div class="card-header">
+          <div class="card-title-block">
+            <div class="card-title">Selected components</div>
+            <div class="card-subtitle" id="subtitle-selected-components"></div>
+          </div>
+          <div class="badge-delta badge-flat" id="delta-selected-components">+0</div>
+        </div>
+        <div class="card-main">
+          <div class="chart-container">
+            <canvas id="chart-selected-components"></canvas>
+          </div>
+          <div class="chart-stats" id="stats-selected-components"></div>
+          <div class="validation" id="validation-selected-components"></div>
+        </div>
+      </div>
+
+      <!-- 5: Today update types -->
+      <div class="card card-today" id="card-today-types">
+        <div class="card-header">
+          <div class="card-title-block">
+            <div class="card-title">Today update types</div>
+            <div class="card-subtitle" id="subtitle-today-types"></div>
+          </div>
+          <div class="badge-delta badge-flat" id="delta-today-types">+0</div>
+        </div>
+        <div class="card-main">
+          <div class="chart-container">
+            <canvas id="chart-today-types"></canvas>
+          </div>
+          <div class="chart-stats" id="stats-today-types"></div>
+          <div class="validation" id="validation-today-types"></div>
+        </div>
+      </div>
+
+      <!-- 6: Today CVE and classification (split table) -->
+      <div class="card card-today" id="card-today-cve">
+        <div class="card-header">
+          <div class="card-title-block">
+            <div class="card-title">Today CVE and classification</div>
+            <div class="card-subtitle" id="subtitle-today-cve"></div>
+          </div>
+          <div class="badge-delta badge-flat" id="delta-today-cve">+0</div>
+        </div>
+        <div class="card-main">
+          <div class="chart-stats cve-table-wrapper">
+            <div class="cve-table-half">
+              <table class="components-table" id="table-today-cve-main">
+                <tbody id="table-today-cve-main-body"></tbody>
+              </table>
+            </div>
+            <div class="cve-table-half">
+              <table class="components-table" id="table-today-cve-types">
+                <tbody id="table-today-cve-types-body"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="validation" id="validation-today-cve"></div>
+        </div>
+      </div>
+
+      <!-- 7: Signals Reddit and StackOverflow -->
+      <div class="card card-timeline" id="card-signals">
+        <div class="card-header">
+          <div class="card-title-block">
+            <div class="card-title">Signals Reddit and StackOverflow</div>
+            <div class="card-subtitle" id="subtitle-signals"></div>
+          </div>
+          <div class="badge-delta badge-flat" id="delta-signals">+0</div>
+        </div>
+        <div class="card-main">
+          <div class="metric-row">
+            <div>
+              <span class="chip">Today Reddit: <span id="today-reddit-count">0</span></span>
+              <span class="chip">Today StackOverflow: <span id="today-so-count">0</span></span>
+            </div>
+            <div class="metric-extra" id="metric-signals-extra"></div>
+          </div>
+          <div class="list-scroll">
+            <div class="list-header">StackOverflow posts (rare)</div>
+            <div id="signals-so-list"></div>
+            <div class="list-header">Latest posts (mixed)</div>
+            <div id="signals-mixed-list"></div>
+          </div>
+          <div class="validation" id="validation-signals"></div>
+        </div>
+      </div>
+
+      <!-- 8: Most interesting multi source update -->
+      <div class="card card-timeline" id="card-interesting">
+        <div class="card-header">
+          <div class="card-title-block">
+            <div class="card-title">Most interesting multi source update</div>
+            <div class="card-subtitle">Components with code, CVE, Reddit/StackOverflow (last 7 days)</div>
+          </div>
+          <div class="badge-delta badge-flat" id="delta-interesting">+0</div>
+        </div>
+        <div class="card-main">
+          <div class="interesting" id="interesting-text"></div>
+          <div class="validation" id="validation-interesting"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const baseUrl = 'https://releasetrain.io';
+
+    const charts = {};
+    const loadingBar = document.getElementById('loading-bar');
+    let pendingFetches = 0;
+    let currentComponents = [];
+
+    const componentColors = [
+      '#1d4ed8',
+      '#16a34a',
+      '#b91c1c',
+      '#f59e0b',
+      '#0d9488',
+      '#7c3aed',
+      '#db2777',
+      '#6b7280'
+    ];
+
+    function startLoading() {
+      pendingFetches += 1;
+      if (pendingFetches === 1) {
+        loadingBar.style.opacity = '1';
+        loadingBar.style.width = '0';
+        requestAnimationFrame(() => {
+          loadingBar.style.width = '80%';
+        });
+      }
+    }
+
+    function finishLoading() {
+      if (pendingFetches > 0) pendingFetches -= 1;
+      if (pendingFetches === 0) {
+        loadingBar.style.width = '100%';
+        setTimeout(() => {
+          loadingBar.style.opacity = '0';
+          loadingBar.style.width = '0';
+        }, 300);
+      }
+    }
+
+    async function fetchJson(url) {
+      try {
+        startLoading();
+        const res = await fetch(url);
+        if (!res.ok) {
+          console.error('Fetch failed', url, res.status);
+          return null;
+        }
+        return await res.json();
+      } catch (e) {
+        console.error('Fetch error', url, e);
+        return null;
+      } finally {
+        finishLoading();
+      }
+    }
+
+    function formatYyyyMmDd(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return '' + y + m + d;
+    }
+
+    function parseYyyyMmDd(s) {
+      const y = parseInt(s.slice(0, 4), 10);
+      const m = parseInt(s.slice(4, 6), 10);
+      const d = parseInt(s.slice(6, 8), 10);
+      return new Date(y, m - 1, d);
+    }
+
+    function formatDateInputValue(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return y + '-' + m + '-' + d;
+    }
+
+    // year removed to keep labels compact
+    function formatHumanDateAbsolute(yyyyMmDd) {
+      try {
+        const dt = parseYyyyMmDd(yyyyMmDd);
+        return dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      } catch {
+        return yyyyMmDd;
+      }
+    }
+
+    function dateMinusDays(yyyyMmDd, days) {
+      const dt = parseYyyyMmDd(yyyyMmDd);
+      dt.setDate(dt.getDate() - days);
+      return formatYyyyMmDd(dt);
+    }
+
+    function yesterdayOf(yyyyMmDd) {
+      return dateMinusDays(yyyyMmDd, 1);
+    }
+
+    function formatHumanDate(yyyyMmDd) {
+      try {
+        const todayKey = formatYyyyMmDd(new Date());
+        const yesterdayKey = dateMinusDays(todayKey, 1);
+        if (yyyyMmDd === todayKey) return 'Today';
+        if (yyyyMmDd === yesterdayKey) return 'Yesterday';
+        return formatHumanDateAbsolute(yyyyMmDd);
+      } catch {
+        return yyyyMmDd;
+      }
+    }
+
+    function formatLabelWithWeekday(yyyyMmDd, count) {
+      const dt = parseYyyyMmDd(yyyyMmDd);
+      const weekday = dt.toLocaleDateString(undefined, { weekday: 'short' });
+      const rel = formatHumanDate(yyyyMmDd);
+      let core;
+      if (rel === 'Today' || rel === 'Yesterday') {
+        core = rel + ' (' + weekday + ')';
+      } else {
+        core = weekday + ' ' + rel;
+      }
+      if (typeof count === 'number') {
+        return core + ' (' + count + ')';
+      }
+      return core;
+    }
+
+    function destroyChart(id) {
+      if (charts[id]) {
+        charts[id].destroy();
+        delete charts[id];
+      }
+    }
+
+    function setDeltaBadge(id, today, yesterday) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const delta = (Number.isFinite(today) ? today : 0) - (Number.isFinite(yesterday) ? yesterday : 0);
+      el.classList.remove('badge-positive', 'badge-negative', 'badge-flat');
+
+      let label;
+      if (!Number.isFinite(delta)) {
+        label = '+0';
+        el.classList.add('badge-flat');
+      } else if (delta > 0) {
+        label = '+' + delta;
+        el.classList.add('badge-positive');
+      } else if (delta < 0) {
+        label = String(delta);
+        el.classList.add('badge-negative');
+      } else {
+        label = '+0';
+        el.classList.add('badge-flat');
+      }
+      el.textContent = label;
+    }
+
+    function setValidation(id, ok, msg) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = msg;
+      el.className = 'validation ' + (ok ? 'validation-ok' : 'validation-error');
+    }
+
+    function setWarn(id, msg) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = msg;
+      el.className = 'validation validation-warn';
+    }
+
+    function decodeComponentsParam(raw) {
+      if (!raw) return [];
+      try {
+        const decoded = decodeURIComponent(raw);
+        return decoded.split(',').map(s => s.trim()).filter(Boolean);
+      } catch {
+        return raw.split(',').map(s => s.trim()).filter(Boolean);
+      }
+    }
+
+    function updateUrlWithComponents(components) {
+      const base = window.location.origin + window.location.pathname;
+      const hash = window.location.hash || '';
+      if (components && components.length) {
+        const q = components.join(',');
+        const newUrl = base + '?q=' + q + hash;
+        window.history.replaceState({}, '', newUrl);
+      } else {
+        const newUrl = base + hash;
+        window.history.replaceState({}, '', newUrl);
+      }
+    }
+
+    function readComponentsFromInput() {
+      const val = document.getElementById('components-input').value;
+      return val.split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+    }
+
+    function setComponentsLabel(list) {
+      const el = document.getElementById('components-active-label');
+      if (!el) return;
+      currentComponents = Array.isArray(list) ? list.slice() : [];
+      if (currentComponents.length) {
+        el.innerHTML = currentComponents
+          .map(name =>
+            '<span class="chip">' +
+            '<span class="chip-label">' + name + '</span>' +
+            '<button class="chip-remove" type="button" data-remove-component="' + name + '">×</button>' +
+            '</span>'
+          )
+          .join(' ');
+      } else {
+        el.textContent = 'All (API default)';
+      }
+    }
+
+    function applyComponentsFromQuery(allNames) {
+      const url = new URL(window.location.href);
+      const qRaw = url.searchParams.get('q');
+      const components = decodeComponentsParam(qRaw);
+      const datalist = document.getElementById('components-datalist');
+
+      const set = new Set();
+      (allNames || []).slice(0, 200).forEach(n => set.add(n));
+      components.forEach(n => set.add(n));
+
+      datalist.innerHTML = '';
+      Array.from(set)
+        .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
+        .forEach(name => {
+          const opt = document.createElement('option');
+          opt.value = name;
+          datalist.appendChild(opt);
+        });
+
+      return components;
+    }
+
+    function computeMinMax(values, labels) {
+      if (!values || !values.length) return null;
+      let minVal = Infinity, maxVal = -Infinity, minIdx = -1, maxIdx = -1;
+      values.forEach((v, idx) => {
+        if (v == null || Number.isNaN(v)) return;
+        if (v < minVal) { minVal = v; minIdx = idx; }
+        if (v > maxVal) { maxVal = v; maxIdx = idx; }
+      });
+      if (!Number.isFinite(minVal) || !Number.isFinite(maxVal)) return null;
+      return {
+        min: minVal,
+        minLabel: labels && labels[minIdx] != null ? labels[minIdx] : '',
+        max: maxVal,
+        maxLabel: labels && labels[maxIdx] != null ? labels[maxIdx] : ''
+      };
+    }
+
+    function extractDayKey(created) {
+      if (!created) return null;
+      if (typeof created === 'number') {
+        const d = new Date(created * 1000);
+        return formatYyyyMmDd(d);
+      }
+      if (typeof created === 'string') {
+        if (/^\d{8}$/.test(created)) return created;
+        if (/^\d+(\.\d+)?$/.test(created)) {
+          const s = parseFloat(created);
+          const d = new Date(s * 1000);
+          return formatYyyyMmDd(d);
+        }
+        const d = new Date(created);
+        if (!Number.isNaN(d.getTime())) return formatYyyyMmDd(d);
+      }
+      if (created instanceof Date) return formatYyyyMmDd(created);
+      return null;
+    }
+
+    function extractTimestamp(created) {
+      if (!created) return 0;
+      if (typeof created === 'number') return created * 1000;
+      if (typeof created === 'string') {
+        if (/^\d+(\.\d+)?$/.test(created)) return parseFloat(created) * 1000;
+        const d = new Date(created);
+        if (!Number.isNaN(d.getTime())) return d.getTime();
+      }
+      if (created instanceof Date) return created.getTime();
+      return 0;
+    }
+
+    function classifySource(doc) {
+      const meta = doc.metadata || {};
+      const source = (meta.source || doc.source || '').toString().toLowerCase();
+      const url = (doc.url || '').toString().toLowerCase();
+      if (source.includes('stackoverflow') || url.includes('stackoverflow.com')) {
+        return 'stackoverflow';
+      }
+      return 'reddit';
+    }
+
+    function getRiskScore(doc) {
+      const meta = doc.metadata || {};
+      let rs = doc.riskScore;
+      if (rs == null) rs = meta.riskScore;
+      if (rs == null) rs = meta.risk;
+      if (typeof rs === 'number') return rs;
+      if (typeof rs === 'string' && rs.trim() !== '') {
+        const num = parseFloat(rs);
+        if (!Number.isNaN(num)) return num;
+      }
+      return 0;
+    }
+
+    // predicted isUpdateRelated flag
+    function getIsUpdateRelated(doc) {
+      const meta = doc.metadata || {};
+      const pred = meta.predicted || {};
+      if (typeof pred.isUpdateRelated === 'boolean') {
+        return pred.isUpdateRelated;
+      }
+      return false;
+    }
+
+    function flattenClassificationCounts(root) {
+      const out = {};
+      if (!root || typeof root !== 'object') return out;
+
+      Object.entries(root).forEach(([key, val]) => {
+        if (val && typeof val === 'object' && !Array.isArray(val)) {
+          Object.entries(val).forEach(([subKey, subVal]) => {
+            const name = subKey;
+            const lower = String(name).toLowerCase();
+            if (lower === 'unknown' || lower === 'unclassified') return;
+            const num = typeof subVal === 'number' ? subVal : 0;
+            out[name] = (out[name] || 0) + num;
+          });
+        } else if (typeof val === 'number') {
+          const lower = String(key).toLowerCase();
+          if (lower === 'unknown' || lower === 'unclassified') return;
+          out[key] = (out[key] || 0) + val;
+        }
+      });
+
+      return out;
+    }
+
+    async function loadDashboard() {
+      const statusInfo = document.getElementById('status-info');
+      statusInfo.textContent = 'Loading data…';
+
+      const dateInput = document.getElementById('date-input');
+      const windowSelect = document.getElementById('timeline-window');
+
+      const url = new URL(window.location.href);
+      const qRaw = url.searchParams.get('q');
+      const componentsFromQuery = decodeComponentsParam(qRaw);
+      const componentsFromInput = readComponentsFromInput();
+      const selectedComponents = componentsFromInput.length ? componentsFromInput : componentsFromQuery;
+
+      setComponentsLabel(selectedComponents);
+
+      let refDate;
+      if (dateInput.value) {
+        refDate = dateInput.value.replace(/-/g, '');
+      } else {
+        const now = new Date();
+        refDate = formatYyyyMmDd(now);
+        dateInput.value = formatDateInputValue(now);
+      }
+      const windowDays = parseInt(windowSelect.value, 10) || 30;
+      const startDate = dateMinusDays(refDate, windowDays - 1);
+      const yesterday = yesterdayOf(refDate);
+      const weekStart = dateMinusDays(refDate, 6);
+
+      const humanStart = formatHumanDate(startDate);
+      const humanRef = formatHumanDate(refDate);
+
+      document.getElementById('subtitle-timeline-daily').textContent =
+        humanStart + ' to ' + humanRef;
+      document.getElementById('subtitle-selected-components').textContent =
+        humanStart + ' to ' + humanRef;
+
+      const todayKey = formatYyyyMmDd(new Date());
+      const yesterdayKey = dateMinusDays(todayKey, 1);
+      let todayLabel;
+      if (refDate === todayKey) todayLabel = 'Today';
+      else if (refDate === yesterdayKey) todayLabel = 'Yesterday';
+      else todayLabel = formatHumanDate(refDate);
+
+      document.getElementById('subtitle-today-types').textContent = todayLabel;
+      document.getElementById('subtitle-today-cve').textContent = todayLabel;
+
+      const qParamForVersions = selectedComponents.length
+        ? selectedComponents.join(',')
+        : '';
+
+      const [
+        todayByDateResp,
+        yesterdayByDateResp,
+        countTwoYearsResp,
+        countAllRespMaybe,
+        versionTimelineResp,
+        namesResp,
+        typeTodayResp,
+        typeYesterdayResp,
+        classTodayResp,
+        classYesterdayResp,
+        cveTodayResp,
+        cveYesterdayResp,
+        redditResp,
+        selectedVersionsResp
+      ] = await Promise.all([
+        fetchJson(baseUrl + '/api/v/aggregate/byDate?date=' + refDate),
+        fetchJson(baseUrl + '/api/v/aggregate/byDate?date=' + yesterday),
+        fetchJson(baseUrl + '/api/v/count'),
+        fetchJson(baseUrl + '/api/v/countAll').then(r => r || null),
+        fetchJson(baseUrl + '/api/aggregate/v/versionCountByDay?start=' + startDate + '&end=' + refDate),
+        fetchJson(baseUrl + '/api/c/names'),
+        fetchJson(baseUrl + '/api/aggregate/v/updateTypeCount?timestamp=' + refDate),
+        fetchJson(baseUrl + '/api/aggregate/v/updateTypeCount?timestamp=' + yesterday),
+        fetchJson(baseUrl + '/api/aggregate/v/classificationSummary?timestamp=' + refDate),
+        fetchJson(baseUrl + '/api/aggregate/v/classificationSummary?timestamp=' + yesterday),
+        fetchJson(baseUrl + '/api/aggregate/v/sourceCountByType?sourceType=CVE&timestamp=' + refDate),
+        fetchJson(baseUrl + '/api/aggregate/v/sourceCountByType?sourceType=CVE&timestamp=' + yesterday),
+        fetchJson(baseUrl + '/api/reddit?limit=5000&showCount=true'),
+        selectedComponents.length
+          ? fetchJson(baseUrl + '/api/v/?q=' + qParamForVersions)
+          : null
+      ]);
+
+      const redditData = redditResp && Array.isArray(redditResp.data) ? redditResp.data : [];
+
+      const allNames = Array.isArray(namesResp) ? namesResp : [];
+      applyComponentsFromQuery(allNames);
+
+      /* Release volume */
+      const todayCount = todayByDateResp && typeof todayByDateResp.count === 'number'
+        ? todayByDateResp.count : 0;
+      const yesterdayCount = yesterdayByDateResp && typeof yesterdayByDateResp.count === 'number'
+        ? yesterdayByDateResp.count : 0;
+
+      const twoYearsTotal = countTwoYearsResp && typeof countTwoYearsResp.totalVersions === 'number'
+        ? countTwoYearsResp.totalVersions : 0;
+
+      let allTimeTotal = twoYearsTotal;
+      if (countAllRespMaybe && typeof countAllRespMaybe.totalVersions === 'number') {
+        allTimeTotal = countAllRespMaybe.totalVersions;
+      }
+      if (countAllRespMaybe && typeof countAllRespMaybe.totalAllVersions === 'number') {
+        allTimeTotal = countAllRespMaybe.totalAllVersions;
+      }
+
+      document.getElementById('metric-all-time').textContent = allTimeTotal;
+      document.getElementById('metric-two-years').textContent = twoYearsTotal;
+      document.getElementById('metric-today-count').textContent = todayCount;
+      setDeltaBadge('delta-release-volume', todayCount, yesterdayCount);
+
+      const timelineDays = Array.isArray(versionTimelineResp && versionTimelineResp.days)
+        ? versionTimelineResp.days : [];
+      const tlLabelsRaw = timelineDays.map(d => d._id);
+      const tlCounts = timelineDays.map(d => d.count);
+      const tlLabelsDisplay = tlLabelsRaw.map((d, i) =>
+        formatLabelWithWeekday(d, tlCounts[i] || 0)
+      );
+
+      // reddit counts per day for isUpdateRelated true/false
+      const updateRelatedTrueByDayMap = {};
+      const updateRelatedFalseByDayMap = {};
+
+      redditData.forEach(doc => {
+        if (classifySource(doc) !== 'reddit') return;
+        const dayKey = extractDayKey(doc.created_utc);
+        if (!dayKey) return;
+        if (dayKey < startDate || dayKey > refDate) return;
+
+        const flag = getIsUpdateRelated(doc);
+        if (flag === true) {
+          updateRelatedTrueByDayMap[dayKey] =
+            (updateRelatedTrueByDayMap[dayKey] || 0) + 1;
+        } else {
+          updateRelatedFalseByDayMap[dayKey] =
+            (updateRelatedFalseByDayMap[dayKey] || 0) + 1;
+        }
+      });
+
+      const updateRelatedTrueSeries =
+        tlLabelsRaw.map(day => updateRelatedTrueByDayMap[day] || 0);
+      const updateRelatedFalseSeries =
+        tlLabelsRaw.map(day => updateRelatedFalseByDayMap[day] || 0);
+
+      destroyChart('chart-release-window');
+      charts['chart-release-window'] = new Chart(
+        document.getElementById('chart-release-window').getContext('2d'),
+        {
+          type: 'line',
+          data: {
+            labels: tlLabelsDisplay,
+            datasets: [
+              {
+                label: 'Daily updates',
+                data: tlCounts,
+                borderWidth: 2,
+                tension: 0.2,
+                fill: false,
+                borderColor: '#1d4ed8',
+                backgroundColor: '#1d4ed8',
+                pointRadius: 2,
+                pointHitRadius: 4
+              },
+              {
+                label: 'Reddit: update related (pred=true)',
+                data: updateRelatedTrueSeries,
+                borderWidth: 2,
+                tension: 0.2,
+                fill: false,
+                borderColor: '#f97373',
+                backgroundColor: '#f97373',
+                pointRadius: 2,
+                pointHitRadius: 4
+              },
+              {
+                label: 'Reddit: not update related (pred=false)',
+                data: updateRelatedFalseSeries,
+                borderWidth: 2,
+                tension: 0.2,
+                fill: false,
+                borderColor: '#fbbf24',
+                backgroundColor: '#fbbf24',
+                pointRadius: 2,
+                pointHitRadius: 4
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: true },
+              tooltip: {
+                callbacks: {
+                  label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y}`
+                }
+              }
+            },
+            scales: {
+              x: { ticks: { font: { size: 9 } } },
+              y: { ticks: { font: { size: 9 }, precision: 0 } }
+            }
+          }
+        }
+      );
+      const tlStats = computeMinMax(tlCounts, tlLabelsRaw);
+      const sumWindow = tlCounts.reduce((a, b) => a + b, 0);
+      if (tlStats) {
+        document.getElementById('stats-release-window').innerHTML =
+          'Window span ' + tlLabelsRaw.length + ' days. Min ' +
+          '<span class="highlight-number">' + tlStats.min + '</span>' +
+          ' on ' + formatHumanDate(tlStats.minLabel) +
+          ', max ' +
+          '<span class="highlight-number">' + tlStats.max + '</span>' +
+          ' on ' + formatHumanDate(tlStats.maxLabel) + '.';
+      } else {
+        document.getElementById('stats-release-window').textContent =
+          'No daily counts for this window.';
+      }
+      setValidation(
+        'validation-release-volume',
+        true,
+        'Validation: sum of daily counts (' + sumWindow +
+        ') is consistent with window aggregation.'
+      );
+
+      /* Components in window */
+      const componentsDistinct = allNames.length;
+      document.getElementById('metric-components-total').textContent = componentsDistinct;
+      document.getElementById('metric-components-names').textContent = componentsDistinct;
+
+      const sampleComponents = allNames.slice(0, 4);
+      document.getElementById('metric-components-sample').textContent =
+        sampleComponents.length ? sampleComponents.join(', ') : 'n/a';
+
+      document.getElementById('stats-components-window').textContent =
+        'Sample components are drawn from the distinct set.';
+      document.getElementById('stats-components-sample').textContent =
+        'Names list length equals distinct set size (' + componentsDistinct + ').';
+
+      setValidation(
+        'validation-components-window',
+        componentsDistinct === allNames.length,
+        'Validation: totalComponents equals names length (' + componentsDistinct + ').'
+      );
+      setDeltaBadge('delta-components-window', componentsDistinct, componentsDistinct);
+
+      /* Today update types */
+      const typeToday = typeTodayResp || {};
+      const typeYesterday = typeYesterdayResp || {};
+      const todayMajor = typeToday.major || 0;
+      const todayMinor = typeToday.minor || 0;
+      const todayPatch = typeToday.patch || 0;
+      const todayOther = typeToday.other || 0;
+      const yesterdaySumTypes = (typeYesterday.major || 0) +
+        (typeYesterday.minor || 0) +
+        (typeYesterday.patch || 0) +
+        (typeYesterday.other || 0);
+      const labelsTypesBase = ['Major', 'Minor', 'Patch'].concat(todayOther > 0 ? ['Other'] : []);
+      const dataTypes = [todayMajor, todayMinor, todayPatch].concat(todayOther > 0 ? [todayOther] : []);
+      const labelsTypes = labelsTypesBase.map((name, idx) => name + ' (' + (dataTypes[idx] || 0) + ')');
+
+      destroyChart('chart-today-types');
+      charts['chart-today-types'] = new Chart(
+        document.getElementById('chart-today-types').getContext('2d'),
+        {
+          type: 'bar',
+          data: {
+            labels: labelsTypes,
+            datasets: [{
+              label: 'Today',
+              data: dataTypes,
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: ctx => ctx.parsed.y + ' updates'
+                }
+              }
+            },
+            scales: {
+              x: { ticks: { font: { size: 9 } } },
+              y: { ticks: { font: { size: 9 }, precision: 0 } }
+            }
+          }
+        }
+      );
+      const statsTypes = computeMinMax(dataTypes, labelsTypesBase);
+      const sumTypesToday = dataTypes.reduce((a, b) => a + b, 0);
+      if (statsTypes) {
+        document.getElementById('stats-today-types').innerHTML =
+          'Sum of types ' +
+          '<span class="highlight-number">' + sumTypesToday + '</span>' +
+          ' updates. Min ' +
+          '<span class="highlight-number">' + statsTypes.min + '</span>' +
+          ' in ' + statsTypes.minLabel +
+          ', max ' +
+          '<span class="highlight-number">' + statsTypes.max + '</span>' +
+          ' in ' + statsTypes.maxLabel + '.';
+      } else {
+        document.getElementById('stats-today-types').textContent = 'No type counts for today.';
+      }
+      if (sumTypesToday === todayCount) {
+        setValidation(
+          'validation-today-types',
+          true,
+          'Validation: sum of types (' + sumTypesToday + ') equals countByDate (' + todayCount + ').'
+        );
+      } else {
+        setWarn(
+          'validation-today-types',
+          'Validation: sum of types (' + sumTypesToday + ') differs from countByDate (' + todayCount + ').'
+        );
+      }
+      setDeltaBadge('delta-today-types', sumTypesToday, yesterdaySumTypes);
+
+      /* CVE + classification split tables */
+      const classificationTodayRaw =
+        classTodayResp && classTodayResp.classification ? classTodayResp.classification : {};
+      const classificationYesterdayRaw =
+        classYesterdayResp && classYesterdayResp.classification ? classYesterdayResp.classification : {};
+
+      const flatToday = flattenClassificationCounts(classificationTodayRaw);
+      const classEntriesToday = Object.entries(flatToday)
+        .sort((a, b) => (b[1] || 0) - (a[1] || 0));
+
+      const labelsClassBase = classEntriesToday.map(([k]) => k);
+      const valuesClass = classEntriesToday.map(([_, v]) => v);
+
+      const cveTodayCount = cveTodayResp && typeof cveTodayResp.count === 'number'
+        ? cveTodayResp.count : 0;
+      const cveYesterdayCount = cveYesterdayResp && typeof cveYesterdayResp.count === 'number'
+        ? cveYesterdayResp.count : 0;
+
+      const statsClass = computeMinMax(valuesClass, labelsClassBase);
+      const sumClassToday = valuesClass.reduce((a, b) => a + b, 0);
+      const classTotalApi = classTodayResp && typeof classTodayResp.total === 'number'
+        ? classTodayResp.total : null;
+
+      let componentTypeEntries = [];
+      const compTypeRaw = classificationTodayRaw && classificationTodayRaw.componentType;
+      if (compTypeRaw) {
+        if (Array.isArray(compTypeRaw)) {
+          const tmp = {};
+          compTypeRaw.forEach(name => {
+            if (!name) return;
+            const label = String(name);
+            tmp[label] = (tmp[label] || 0) + 1;
+          });
+          componentTypeEntries = Object.entries(tmp);
+        } else if (typeof compTypeRaw === 'object') {
+          componentTypeEntries = Object.entries(compTypeRaw);
+        }
+        componentTypeEntries.sort((a, b) => (b[1] || 0) - (a[1] || 0));
+      }
+
+      const mainBody = document.getElementById('table-today-cve-main-body');
+      const typesBody = document.getElementById('table-today-cve-types-body');
+
+      if (mainBody && typesBody) {
+        mainBody.innerHTML = '';
+        typesBody.innerHTML = '';
+
+        const addRow = (body, label, value, highlight) => {
+          const tr = document.createElement('tr');
+          const tdLabel = document.createElement('td');
+          const tdValue = document.createElement('td');
+          tdLabel.textContent = label;
+          if (highlight) {
+            tdValue.innerHTML = '<span class="highlight-number">' + value + '</span>';
+          } else {
+            tdValue.textContent = value;
+          }
+          tr.appendChild(tdLabel);
+          tr.appendChild(tdValue);
+          body.appendChild(tr);
+        };
+
+        addRow(mainBody, 'CVE tagged today', cveTodayCount, false);
+        if (classTotalApi != null) {
+          addRow(mainBody, 'Classification total (API)', classTotalApi, false);
+        }
+        addRow(mainBody, 'Classification slices sum', sumClassToday, false);
+        if (statsClass) {
+          addRow(
+            mainBody,
+            'Min classification',
+            statsClass.min + ' (' + statsClass.minLabel + ')',
+            true
+          );
+          addRow(
+            mainBody,
+            'Max classification',
+            statsClass.max + ' (' + statsClass.maxLabel + ')',
+            true
+          );
+        }
+
+        const maxTypes = 3;
+        const topEntries = componentTypeEntries.length
+          ? componentTypeEntries.slice(0, maxTypes)
+          : classEntriesToday.slice(0, maxTypes);
+
+        if (topEntries.length) {
+          const summary = topEntries
+            .map(([name, val]) => name + ' (' + val + ')')
+            .join(', ');
+          addRow(mainBody, 'Top component types', summary, false);
+
+          topEntries.forEach(([name, val], idx) => {
+            const highlightTop = idx === 0;
+            addRow(typesBody, name, val, highlightTop);
+          });
+        } else {
+          addRow(typesBody, 'No component types', '-', false);
+        }
+      }
+
+      if (classTotalApi != null && classTotalApi === sumClassToday) {
+        setValidation(
+          'validation-today-cve',
+          true,
+          'Validation: classification slices (' +
+          sumClassToday + ') equal classification total (' +
+          classTotalApi + '). CVE tagged today: ' + cveTodayCount + '.'
+        );
+      } else if (classTotalApi != null) {
+        setWarn(
+          'validation-today-cve',
+          'Validation: classification slices sum to ' + sumClassToday +
+          ' while classification total is ' + classTotalApi +
+          '. CVE tagged today: ' + cveTodayCount + '.'
+        );
+      } else {
+        setWarn(
+          'validation-today-cve',
+          'Validation: classification total not provided by API. Slices sum to ' +
+          sumClassToday + '. CVE tagged today: ' + cveTodayCount + '.'
+        );
+      }
+
+      const flatYesterday = flattenClassificationCounts(classificationYesterdayRaw);
+      const classYesterdayValues = Object.values(flatYesterday);
+      const sumClassYesterday = classYesterdayValues.reduce((a, b) => a + b, 0) + cveYesterdayCount;
+      setDeltaBadge('delta-today-cve', sumClassToday + cveTodayCount, sumClassYesterday);
+
+      /* Signals / reddit data */
+      const totalDocs = redditResp && typeof redditResp.totalCount === 'number'
+        ? redditResp.totalCount : redditData.length;
+
+      const todayRedditDocs = [];
+      const todaySoDocs = [];
+      const yesterdayRedditDocs = [];
+      const yesterdaySoDocs = [];
+
+      redditData.forEach(doc => {
+        const dayKey = extractDayKey(doc.created_utc);
+        if (!dayKey) return;
+        const src = classifySource(doc);
+
+        if (dayKey === refDate) {
+          if (src === 'stackoverflow') todaySoDocs.push(doc);
+          else todayRedditDocs.push(doc);
+        }
+        if (dayKey === yesterday) {
+          if (src === 'stackoverflow') yesterdaySoDocs.push(doc);
+          else yesterdayRedditDocs.push(doc);
+        }
+      });
+
+      const todayRedditCount = todayRedditDocs.length;
+      const todaySoCount = todaySoDocs.length;
+      const yesterdaySignalsTotal = yesterdayRedditDocs.length + yesterdaySoDocs.length;
+
+      document.getElementById('today-reddit-count').textContent = todayRedditCount;
+      document.getElementById('today-so-count').textContent = todaySoCount;
+      document.getElementById('metric-signals-extra').innerHTML =
+        'Today total: ' + (todayRedditCount + todaySoCount) +
+        '<br/>Sample documents: ' + totalDocs;
+      document.getElementById('subtitle-signals').textContent =
+        'Sample of latest posts';
+
+      const soListEl = document.getElementById('signals-so-list');
+      const mixedListEl = document.getElementById('signals-mixed-list');
+      soListEl.innerHTML = '';
+      mixedListEl.innerHTML = '';
+
+      const soPosts = redditData
+        .filter(doc => classifySource(doc) === 'stackoverflow')
+        .sort((a, b) => extractTimestamp(b.created_utc) - extractTimestamp(a.created_utc))
+        .slice(0, 4);
+
+      if (soPosts.length) {
+        soPosts.forEach(doc => {
+          const dayKey = extractDayKey(doc.created_utc) || '';
+          const item = document.createElement('div');
+          item.className = 'post-item';
+          const title = doc.title || '(no title)';
+          const urlPost = doc.url || '';
+          item.innerHTML =
+            '<div class="post-title">' +
+            (urlPost ? '<a href="' + urlPost + '" target="_blank" rel="noopener">' + title + '</a>' : title) +
+            '</div>' +
+            '<div class="post-meta">' +
+            'StackOverflow' +
+            (dayKey ? ' | Date: ' + formatHumanDate(dayKey) : '') +
+            '</div>';
+          soListEl.appendChild(item);
+        });
+      } else {
+        soListEl.innerHTML =
+          '<div style="font-size:11px;color:var(--muted);">No StackOverflow posts in the current sample.</div>';
+      }
+
+      redditData
+        .slice()
+        .sort((a, b) => extractTimestamp(b.created_utc) - extractTimestamp(a.created_utc))
+        .slice(0, 6)
+        .forEach(doc => {
+          const src = classifySource(doc);
+          const dayKey = extractDayKey(doc.created_utc) || '';
+          const item = document.createElement('div');
+          item.className = 'post-item';
+          const title = doc.title || '(no title)';
+          const urlPost = doc.url || '';
+          item.innerHTML =
+            '<div class="post-title">' +
+            (urlPost ? '<a href="' + urlPost + '" target="_blank" rel="noopener">' + title + '</a>' : title) +
+            '</div>' +
+            '<div class="post-meta">' +
+            'Source: ' + src +
+            (dayKey ? ' | Date: ' + formatHumanDate(dayKey) : '') +
+            '</div>';
+          mixedListEl.appendChild(item);
+        });
+      if (!redditData.length) {
+        mixedListEl.innerHTML =
+          '<div style="font-size:11px;color:var(--muted);">No reddit or StackOverflow posts loaded.</div>';
+      }
+
+      setValidation(
+        'validation-signals',
+        redditData.length <= totalDocs,
+        'Validation: sample count plus header totals are consistent (' +
+        redditData.length + ' sample, header ' + totalDocs + ').'
+      );
+      setDeltaBadge(
+        'delta-signals',
+        todayRedditCount + todaySoCount,
+        yesterdaySignalsTotal
+      );
+
+      const redditSampleCount = redditData.filter(doc => classifySource(doc) === 'reddit').length;
+      const soSampleCount = redditData.filter(doc => classifySource(doc) === 'stackoverflow').length;
+      const elRedditMetric = document.getElementById('metric-components-reddit');
+      const elSoMetric = document.getElementById('metric-components-so');
+      if (elRedditMetric) elRedditMetric.textContent = redditSampleCount;
+      if (elSoMetric) elSoMetric.textContent = soSampleCount;
+
+      let positiveRiskFromApi = null;
+      if (redditResp) {
+        if (typeof redditResp.positiveRiskCount === 'number') {
+          positiveRiskFromApi = redditResp.positiveRiskCount;
+        } else if (typeof redditResp.riskPositiveCount === 'number') {
+          positiveRiskFromApi = redditResp.riskPositiveCount;
+        } else if (typeof redditResp.riskCount === 'number') {
+          positiveRiskFromApi = redditResp.riskCount;
+        }
+      }
+      let positiveRiskCount;
+      if (positiveRiskFromApi != null) {
+        positiveRiskCount = positiveRiskFromApi;
+      } else {
+        positiveRiskCount = redditData.filter(doc => getRiskScore(doc) > 0).length;
+      }
+      const riskMetricEl = document.getElementById('metric-risk-positive');
+      if (riskMetricEl) riskMetricEl.textContent = positiveRiskCount;
+
+      /* Timeline daily updates card */
+      destroyChart('chart-timeline-daily');
+      charts['chart-timeline-daily'] = new Chart(
+        document.getElementById('chart-timeline-daily').getContext('2d'),
+        {
+          type: 'bar',
+          data: {
+            labels: tlLabelsDisplay,
+            datasets: [{
+              label: 'Daily updates',
+              data: tlCounts,
+              borderWidth: 1
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: ctx => ctx.parsed.x + ' versions'
+                }
+              }
+            },
+            scales: {
+              x: { ticks: { font: { size: 9 }, precision: 0 } },
+              y: { ticks: { font: { size: 8 } } }
+            }
+          }
+        }
+      );
+      if (tlStats) {
+        document.getElementById('stats-timeline-daily').innerHTML =
+          'Sum of bars is ' +
+          '<span class="highlight-number">' + sumWindow + '</span>' +
+          ' updates. Min ' +
+          '<span class="highlight-number">' + tlStats.min + '</span>' +
+          ' on ' + formatHumanDate(tlStats.minLabel) +
+          ', max ' +
+          '<span class="highlight-number">' + tlStats.max + '</span>' +
+          ' on ' + formatHumanDate(tlStats.maxLabel) + '.';
+      } else {
+        document.getElementById('stats-timeline-daily').textContent = 'No data in this window.';
+      }
+      if (tlCounts.length >= 2) {
+        setDeltaBadge(
+          'delta-timeline-daily',
+          tlCounts[tlCounts.length - 1],
+          tlCounts[tlCounts.length - 2]
+        );
+      } else {
+        setDeltaBadge('delta-timeline-daily', 0, 0);
+      }
+      setValidation(
+        'validation-timeline-daily',
+        true,
+        'Validation: sum of bars matches aggregate count for the same window (' + sumWindow + ').'
+      );
+
+      /* Selected components timeline */
+      let selectedLabelsRaw = tlLabelsRaw.slice();
+      const selectedLabelsDisplay = selectedLabelsRaw.map((d, i) =>
+        formatLabelWithWeekday(d, null)
+      );
+
+      destroyChart('chart-selected-components');
+
+      let datasets = [];
+      let selectedTotal = 0;
+
+      if (selectedComponents.length && selectedVersionsResp && Array.isArray(selectedVersionsResp.versions)) {
+        const dayIndexMap = {};
+        selectedLabelsRaw.forEach((d, idx) => { dayIndexMap[d] = idx; });
+
+        const lcSelected = selectedComponents.map(c => c.toLowerCase());
+        const seriesByComponent = {};
+        selectedComponents.forEach(c => {
+          seriesByComponent[c] = selectedLabelsRaw.map(() => 0);
+        });
+
+        selectedVersionsResp.versions.forEach(v => {
+          const nameRaw = v.versionProductName;
+          const dateKey = v.versionReleaseDate;
+          if (!nameRaw || !dateKey) return;
+          if (dateKey < startDate || dateKey > refDate) return;
+          const idxDay = dayIndexMap[dateKey];
+          if (idxDay == null) return;
+          const nameLc = String(nameRaw).toLowerCase();
+          lcSelected.forEach((lcName, i) => {
+            if (lcName === nameLc) {
+              const compName = selectedComponents[i];
+              seriesByComponent[compName][idxDay] =
+                (seriesByComponent[compName][idxDay] || 0) + 1;
+            }
+          });
+        });
+
+        datasets = selectedComponents.map((comp, idx) => {
+          const color = componentColors[idx % componentColors.length];
+          const dataArr = seriesByComponent[comp] || selectedLabelsRaw.map(() => 0);
+          selectedTotal += dataArr.reduce((a, b) => a + b, 0);
+          return {
+            label: comp,
+            data: dataArr,
+            borderWidth: 1,
+            tension: 0.2,
+            fill: false,
+            borderColor: color,
+            backgroundColor: color
+          };
+        });
+
+        const versionsInWindow = selectedVersionsResp.versions.filter(
+          v => v.versionReleaseDate >= startDate && v.versionReleaseDate <= refDate
+        ).length;
+
+        document.getElementById('subtitle-selected-components').textContent =
+          humanStart + ' to ' + humanRef + ' for ' + selectedComponents.join(', ');
+
+        setValidation(
+          'validation-selected-components',
+          selectedTotal === versionsInWindow,
+          'Validation: sum of per component series in window (' + selectedTotal +
+          ') equals number of versions in the same window (' + versionsInWindow + ').'
+        );
+      } else {
+        datasets = [{
+          label: 'Selected components',
+          data: selectedLabelsRaw.map(() => 0),
+          borderWidth: 1,
+          tension: 0.2,
+          fill: false
+        }];
+        setValidation(
+          'validation-selected-components',
+          true,
+          'Validation: no specific components, line is empty.'
+        );
+      }
+
+      charts['chart-selected-components'] = new Chart(
+        document.getElementById('chart-selected-components').getContext('2d'),
+        {
+          type: 'line',
+          data: {
+            labels: selectedLabelsDisplay,
+            datasets
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: true },
+              tooltip: {
+                callbacks: {
+                  label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y + ' versions'
+                }
+              }
+            },
+            scales: {
+              x: { ticks: { font: { size: 9 } } },
+              y: { ticks: { font: { size: 9 }, precision: 0 } }
+            }
+          }
+        }
+      );
+
+      const totalByDay = selectedLabelsRaw.map((_, idx) =>
+        datasets.reduce((acc, ds) => acc + (ds.data[idx] || 0), 0)
+      );
+      const selStats = computeMinMax(totalByDay, selectedLabelsRaw);
+      const totalAll = totalByDay.reduce((a, b) => a + b, 0);
+      if (selStats) {
+        document.getElementById('stats-selected-components').innerHTML =
+          'Selected components sum ' +
+          '<span class="highlight-number">' + totalAll + '</span>' +
+          ' updates (all components). Min day ' +
+          '<span class="highlight-number">' + selStats.min + '</span>' +
+          ' on ' + formatHumanDate(selStats.minLabel) +
+          ', max day ' +
+          '<span class="highlight-number">' + selStats.max + '</span>' +
+          ' on ' + formatHumanDate(selStats.maxLabel) + '.';
+      } else {
+        document.getElementById('stats-selected-components').textContent =
+          'No updates for selected components in this window.';
+      }
+      if (totalByDay.length >= 2) {
+        setDeltaBadge(
+          'delta-selected-components',
+          totalByDay[totalByDay.length - 1],
+          totalByDay[totalByDay.length - 2]
+        );
+      } else {
+        setDeltaBadge('delta-selected-components', 0, 0);
+      }
+
+      /* Multi source components (last 7 days) */
+      const interesting = document.getElementById('interesting-text');
+      const componentsScopeDisplay = selectedComponents.length
+        ? selectedComponents.join(', ')
+        : 'all tracked components (select components to scope this list)';
+
+      const versionsForScope = (selectedVersionsResp && Array.isArray(selectedVersionsResp.versions))
+        ? selectedVersionsResp.versions
+        : [];
+
+      const multiSourceList = [];
+
+      if (selectedComponents.length && versionsForScope.length && redditData.length) {
+        const weekStartKey = weekStart;
+
+        selectedComponents.forEach(nameRaw => {
+          const name = String(nameRaw || '').toLowerCase();
+          if (!name) return;
+
+          const releases7 = versionsForScope.filter(v =>
+            v.versionProductName &&
+            String(v.versionProductName).toLowerCase() === name &&
+            v.versionReleaseDate &&
+            v.versionReleaseDate >= weekStartKey &&
+            v.versionReleaseDate <= refDate &&
+            !v.isCve
+          ).length;
+
+          const cve7 = versionsForScope.filter(v =>
+            v.versionProductName &&
+            String(v.versionProductName).toLowerCase() === name &&
+            v.versionReleaseDate &&
+            v.versionReleaseDate >= weekStartKey &&
+            v.versionReleaseDate <= refDate &&
+            (v.isCve || (v.versionReleaseChannel && String(v.versionReleaseChannel).toLowerCase() === 'cve'))
+          ).length;
+
+          const posts7 = redditData.filter(doc => {
+            const dayKey = extractDayKey(doc.created_utc);
+            if (!dayKey || dayKey < weekStartKey || dayKey > refDate) return false;
+            const title = (doc.title || '').toLowerCase();
+            const selftext = (doc.selftext || '').toLowerCase();
+            return title.includes(name) || selftext.includes(name);
+          }).length;
+
+          if (releases7 > 0 && cve7 > 0 && posts7 > 0) {
+            multiSourceList.push({
+              name: nameRaw,
+              releases: releases7,
+              cve: cve7,
+              posts: posts7,
+              total: releases7 + cve7 + posts7
+            });
+          }
+        });
+
+        multiSourceList.sort((a, b) => b.total - a.total);
+      }
+
+      if (multiSourceList.length) {
+        const top = multiSourceList[0];
+        const versionsLinkTop = baseUrl + '/api/v/?q=' + top.name;
+        const cveLinkTop = baseUrl + '/api/aggregate/v/sourceCountByType?sourceType=CVE&timestamp=' +
+          refDate + '&q=' + top.name;
+        const redditLinkTop = baseUrl + '/api/reddit?limit=100&showCount=true&q=' +
+          top.name;
+
+        const itemsHtml = multiSourceList.map(entry => {
+          return '<li><strong>' + entry.name + '</strong> – ' +
+            entry.releases + ' releases, ' +
+            entry.cve + ' CVE, ' +
+            entry.posts + ' Reddit/StackOverflow (total ' +
+            '<span class="highlight-number">' + entry.total + '</span>)</li>';
+        }).join('');
+
+        interesting.innerHTML =
+          '<strong>Multi source components (last 7 days)</strong><br/>' +
+          '<div>Scope: ' + componentsScopeDisplay + '</div>' +
+          '<div style="margin-top:4px;">Most cross source component: <strong>' + top.name + '</strong><br/>' +
+          'Links: ' +
+          '<a href="' + versionsLinkTop + '" target="_blank" rel="noopener">versions JSON</a> · ' +
+          '<a href="' + cveLinkTop + '" target="_blank" rel="noopener">CVE counts</a> · ' +
+          '<a href="' + redditLinkTop + '" target="_blank" rel="noopener">reddit / StackOverflow posts</a>' +
+          '</div>' +
+          '<ul style="margin-top:4px;">' + itemsHtml + '</ul>';
+        setValidation(
+          'validation-interesting',
+          true,
+          'Validation: each listed component has releases, CVE, and Reddit/StackOverflow posts in the last 7 days.'
+        );
+      } else {
+        interesting.innerHTML =
+          '<strong>No strong multi source components in the last 7 days.</strong><br/>' +
+          'Pick one or more components above to see which ones have code, CVE, and Reddit/StackOverflow activity together.';
+        setValidation(
+          'validation-interesting',
+          true,
+          'Validation: multi source list is based on last 7 days for selected components.'
+        );
+      }
+
+      const multiToday = todayCount + cveTodayCount + todayRedditCount + todaySoCount;
+      const multiYesterday = yesterdayCount + cveYesterdayCount + yesterdayRedditDocs.length + yesterdaySoDocs.length;
+      setDeltaBadge('delta-interesting', multiToday, multiYesterday);
+
+      statusInfo.textContent = 'Ready.';
+    }
+
+    function handleApply() {
+      const newOnes = readComponentsFromInput();
+      if (!newOnes.length) {
+        loadDashboard();
+        return;
+      }
+      const merged = Array.from(new Set([
+        ...currentComponents,
+        ...newOnes
+      ]));
+      document.getElementById('components-input').value = '';
+      setComponentsLabel(merged);
+      updateUrlWithComponents(merged);
+      loadDashboard();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const dateInput = document.getElementById('date-input');
+      if (!dateInput.value) {
+        const now = new Date();
+        dateInput.value = formatDateInputValue(now);
+      }
+
+      document.getElementById('apply-main').addEventListener('click', () => {
+        handleApply();
+      });
+
+      document.getElementById('clear-components').addEventListener('click', () => {
+        document.getElementById('components-input').value = '';
+        setComponentsLabel([]);
+        updateUrlWithComponents([]);
+        loadDashboard();
+      });
+
+      const activeLabel = document.getElementById('components-active-label');
+      activeLabel.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-remove-component]');
+        if (!btn) return;
+        const name = btn.getAttribute('data-remove-component');
+        const updated = currentComponents.filter(c => c !== name);
+        setComponentsLabel(updated);
+        updateUrlWithComponents(updated);
+        loadDashboard();
+      });
+
+      document.getElementById('timeline-window').addEventListener('change', () => {
+        loadDashboard();
+      });
+
+      document.getElementById('date-input').addEventListener('change', () => {
+        loadDashboard();
+      });
+
+      document.getElementById('components-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleApply();
+        }
+      });
+
+      document.getElementById('date-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleApply();
+        }
+      });
+
+      loadDashboard();
+    });
+  </script>
+</body>
+
+</html>

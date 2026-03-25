@@ -1,1666 +1,1126 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <title>releasetrain.io</title>
-    <link href="img/favicon.ico" rel="icon" type="image/x-icon" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Software Component Version Releases" />
-    <meta name="keywords" content="Version, Release, Agile" />
-    <meta name="author" content="Solomon Berhe" />
-    <meta name="google-site-verification" content="e_DoTsZw_SlkIWfECBN2q7FkJBvy8xOvlQZ-ZL38xTk" />
-    <meta http-equiv="refresh" content="3600" />
-    <link href="./reset.css" rel="stylesheet" />
-    <link href="./lib/select2.min.css" rel="stylesheet" />
-    <link href="./app.css" rel="stylesheet" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" rel="stylesheet" />
-    <script type="module" src="./app.js" defer></script>
-    <script src="https://cjrtnc.leaningtech.com/2.3/loader.js"></script>
+  <meta charset="utf-8" />
+  <title>releasetrain.io — Component List (merged by name, last 6 months)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Merged list per component (name-only canonical), subtle highlights, extra info chips, and left-side dates (last 6 months)" />
+  <style>
+    :root{
+      /* Simplified, mostly-neutral palette (one accent, one warning) */
+      --bg:#f6f7f8;
+      --panel:#ffffff;
+      --muted:#6b7280;
+      --text:#111827;
+      --brand:#1f2937;      /* single accent for primary actions/selected toggles */
+      --line:#e5e7eb;
+      --chip:#f3f4f6;
+      --chipText:#374151;
+      --focus:#9ca3af;
+
+      --bad:#4b5563;        /* keep semantics, but neutralized */
+      --warn:#b45309;       /* single warm warning */
+      --ok:#374151;
+      --reddit:#b45309;
+      --link:#1f2937;
+
+      --shadow:0 4px 14px rgba(0,0,0,.06);
+      --topbar-h:0px;
+      --navloader-h:0px;
+
+      --risk-bg:rgba(17,24,39,.04);
+      --risk-border:rgba(17,24,39,.18);
+    }
+    @media (prefers-color-scheme: dark){
+      :root{
+        --bg:#0b0f14;
+        --panel:#111827;
+        --muted:#9ca3af;
+        --text:#f9fafb;
+        --brand:#e5e7eb;
+        --line:#243041;
+        --chip:#0f172a;
+        --chipText:#e5e7eb;
+        --focus:#9ca3af;
+
+        --bad:#e5e7eb;
+        --warn:#f59e0b;
+        --ok:#e5e7eb;
+        --reddit:#f59e0b;
+        --link:#e5e7eb;
+
+        --shadow:0 6px 18px rgba(0,0,0,.6);
+        --risk-bg:rgba(229,231,235,.06);
+        --risk-border:rgba(229,231,235,.22);
+      }
+    }
+
+    *{box-sizing:border-box}html,body{height:100%}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font:14px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
+    }
+
+    .topbar{
+      position:fixed;top:0;left:0;right:0;z-index:1000;
+      background:var(--panel);
+      border-bottom:1px solid var(--line);
+      padding:10px 12px;
+      display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+      box-shadow:0 2px 6px rgba(0,0,0,.05);
+    }
+    .brand{font-weight:800;letter-spacing:.2px;font-size:15px}
+    .brand b{color:var(--brand)}
+    .spacer{flex:1 1 auto}
+    .gh-link{
+      display:inline-flex;align-items:center;gap:6px;
+      background:var(--chip);
+      border:1px solid var(--line);
+      color:var(--text);
+      padding:8px 10px;
+      border-radius:999px;
+      text-decoration:none;
+      font-weight:700;
+      box-shadow:0 1px 3px rgba(0,0,0,.04);
+    }
+    .gh-link:hover{filter:brightness(.98)}
+
+    .linkchip{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:var(--chip);
+      color:var(--chipText);
+      text-decoration:none;
+      font-weight:700;
+      font-size:13px;
+      opacity:.95;
+    }
+    .linkchip:hover{opacity:1;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+    .linkchip small{color:var(--muted);font-weight:600}
+
+    .navloader{
+      position:fixed;top:var(--topbar-h);left:0;right:0;
+      height:3px;background:transparent;overflow:hidden;z-index:999;display:none;
+    }
+    .navloader.active{display:block}
+    .navloader::after{
+      content:"";display:block;width:40%;height:100%;
+      background:linear-gradient(90deg,var(--brand),var(--chip),var(--brand));
+      animation:slide 1s infinite;
+    }
+    @keyframes slide{0%{margin-left:-40%}100%{margin-left:100%}}
+
+    main{max-width:1100px;margin:0 auto;padding:calc(var(--topbar-h) + var(--navloader-h) + 12px) 12px 18px}
+
+    .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .field{display:flex;align-items:center;gap:6px}
+    .field label{font-size:12px;color:var(--muted)}
+    input[type="text"],button{
+      background:var(--panel);
+      color:var(--text);
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:8px 12px;
+      font:inherit;
+      box-shadow:0 1px 2px rgba(0,0,0,.04);
+    }
+    input[type="text"]{min-width:260px}
+    input[type="text"]:focus,button:focus{outline:2px solid var(--focus);outline-offset:2px}
+    button{
+      background:var(--brand);
+      color:var(--panel);
+      border-color:transparent;
+      cursor:pointer;
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:.02em;
+      box-shadow:0 2px 4px rgba(0,0,0,.12);
+    }
+    button:hover{filter:brightness(1.03)}
+    button.secondary{
+      background:var(--panel);
+      color:var(--text);
+      border:1px solid var(--line);
+      box-shadow:none;
+      text-transform:none;
+    }
+
+    .togglesWrap{width:100%;display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;margin-top:6px}
+    .toggles{display:flex;gap:6px;flex-wrap:wrap}
+    .toggle{
+      background:var(--chip);
+      border:1px solid var(--line);
+      color:var(--chipText);
+      padding:6px 10px;
+      border-radius:999px;
+      cursor:pointer;
+      font-weight:700;
+      font-size:12px;
+      box-shadow:0 1px 2px rgba(0,0,0,.04);
+    }
+    .toggle[aria-pressed="true"]{
+      background:var(--brand);
+      border-color:transparent;
+      color:var(--panel);
+      box-shadow:0 2px 4px rgba(0,0,0,.15);
+    }
+    .toggle.disabled{opacity:.55;cursor:not-allowed;box-shadow:none}
+
+    /* Risk toggles: keep distinct but restrained */
+    .toggle.redditRisk,
+    .toggle.soRisk,
+    .toggle.potentialCve{
+      border-color:rgba(180,83,9,.55);
+      color:var(--warn);
+      background:var(--panel);
+      box-shadow:none;
+    }
+    .toggle.redditRisk[aria-pressed="true"],
+    .toggle.soRisk[aria-pressed="true"],
+    .toggle.potentialCve[aria-pressed="true"]{
+      background:var(--warn);
+      border-color:var(--warn);
+      color:#fff;
+      box-shadow:0 2px 4px rgba(0,0,0,.16);
+    }
+
+    .kpis{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+    .kpi{
+      background:var(--panel);
+      color:var(--chipText);
+      border:1px solid var(--line);
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      box-shadow:0 1px 3px rgba(0,0,0,.04);
+    }
+    .kpi em{font-style:normal;color:var(--brand);font-weight:800}
+
+    .panel{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px;
+      box-shadow:var(--shadow);
+    }
+    .panel header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px}
+    .status{color:var(--muted);font-size:12px}
+
+    .feedGroup{
+      border:1px solid var(--line);
+      border-radius:12px;
+      overflow:hidden;
+      margin-bottom:12px;
+      background:var(--panel);
+    }
+    summary{
+      cursor:pointer;padding:10px 12px;list-style:none;user-select:none;font-weight:800;
+      background:var(--chip);
+      display:flex;align-items:center;gap:10px;
+    }
+    summary::-webkit-details-marker{display:none}
+    .summaryRight{display:flex;gap:6px;margin-left:auto}
+
+    .updates{padding:6px 10px}
+    .list{display:flex;flex-direction:column;gap:8px;margin:6px 0 2px}
+
+    .li{
+      display:grid;
+      grid-template-columns:128px 30px 1fr;
+      column-gap:14px;
+      row-gap:0;
+      padding:8px 0;
+      border-bottom:1px dashed var(--line);
+      background:var(--panel);
+    }
+    .li:last-child{border-bottom:none}
+    .li.cve{
+      background:var(--risk-bg);
+      border:1px solid var(--risk-border);
+      border-radius:10px;
+      padding:8px;
+    }
+
+    .datecol{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.2;
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      justify-content:center;
+      white-space:nowrap;
+      padding-right:6px;
+    }
+    .datecol .day{font-weight:800;color:var(--text)}
+    .datecol .time{opacity:.9}
+
+    .avatar{
+      width:22px;height:22px;border-radius:50%;
+      border:1px solid var(--line);
+      object-fit:cover;
+      align-self:center;
+      background:var(--panel);
+    }
+
+    /* Icons: subtle, mostly border-only */
+    .redditIcon{
+      border-color: rgba(180,83,9,.5);
+      box-shadow: 0 0 0 2px rgba(180,83,9,.10) inset;
+      background:var(--panel);
+    }
+    .redditIcon.risky{
+      border-color: rgba(180,83,9,.9);
+      box-shadow: 0 0 0 2px rgba(180,83,9,.18) inset;
+    }
+
+    .soIcon{
+      border-color: rgba(180,83,9,.35);
+      box-shadow: 0 0 0 2px rgba(180,83,9,.10) inset;
+      background:var(--panel);
+    }
+    .soIcon.risky{
+      border-color: rgba(180,83,9,.9);
+      box-shadow: 0 0 0 2px rgba(180,83,9,.18) inset;
+    }
+
+    .titleRow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:2px}
+    .titleRow a{color:var(--link);text-decoration:none;font-weight:800}
+    .titleRow a:hover{text-decoration:underline}
+
+    .meta{color:var(--muted);font-size:12px;margin-top:2px}
+
+    .chips{
+      display:flex;
+      flex-wrap:wrap;
+      gap:4px;
+      align-items:center;
+      margin-bottom:2px;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      padding:3px 8px;
+      font-size:11px;
+      line-height:1;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:var(--chip);
+      color:var(--chipText);
+      white-space:nowrap;
+    }
+
+    /* Chip semantics kept, but simplified (mostly neutral + one warn) */
+    .chip.bad{
+      background:var(--chip);
+      border-color:rgba(17,24,39,.25);
+      color:var(--chipText);
+    }
+    .chip.warn{
+      background:rgba(180,83,9,.08);
+      border-color:rgba(180,83,9,.45);
+      color:var(--warn);
+    }
+    .chip.ok{
+      background:var(--chip);
+      border-color:rgba(17,24,39,.18);
+      color:var(--chipText);
+    }
+    .chip.reddit{
+      background:rgba(180,83,9,.08);
+      border-color:rgba(180,83,9,.45);
+      color:var(--warn);
+    }
+    .chip.soft{
+      opacity:.9;
+    }
+    .chip.link a{
+      color:inherit;
+      text-decoration:none;
+    }
+    .chip.link a:hover{text-decoration:underline}
+
+    .chip.potentialCveBadge{
+      margin-right:4px;
+    }
+    .potentialCveChips{
+      margin-top:4px;
+      gap:4px;
+    }
+    .chip.potentialCveChip{
+      background:var(--panel);
+      border-color:rgba(180,83,9,.45);
+      color:var(--warn);
+    }
+    .chip.potentialCveChip:hover{
+      background:rgba(180,83,9,.10);
+    }
+
+    .skeleton{
+      border-radius:10px;
+      background:linear-gradient(90deg,#e5e7eb,#f3f4f6,#e5e7eb);
+      background-size:200% 100%;
+      animation:pulse 1.2s ease-in-out infinite;
+      margin-bottom:8px;
+    }
+    @media (prefers-color-scheme: dark){
+      .skeleton{
+        background:linear-gradient(90deg,#0f172a,#111827,#0f172a);
+      }
+    }
+    @keyframes pulse{0%{background-position:0 0}100%{background-position:200% 0}}
+
+    .sentinel{font-size:12px;text-align:center;color:var(--muted)}
+  </style>
 </head>
-
 <body>
+  <div class="topbar">
+    <div class="brand">Releasetrain <b>v3.13.3</b></div>
+    <div class="spacer"></div>
 
-    <!-- Top Bar -->
-    <div class="top-bar">
+    <a id="graphLink" class="linkchip" href="/graph/" title="Open graph view with the same query">Graph ↗ <small>/graph</small></a>
+    <a id="archLink"  class="linkchip" href="/arch/"  title="Open architecture view with the same query">Arch ↗ <small>/arch</small></a>
 
-        <!-- Dropdown Select (styled for better alignment) -->
-        <select class="component-names" name="names[]" multiple="multiple"></select>
+    <a class="gh-link" href="https://github.com/SE4CPS/releasetrain-client" target="_blank" rel="noopener">GitHub ↗</a>
 
-        <!-- Info Bar (aligned horizontally) -->
-        <div class="info-bar">
+    <form id="filterForm" class="controls" aria-label="Filters">
+      <div class="field">
+        <label for="components">Components</label>
+        <input id="components" name="components" type="text" placeholder="aws, chrome, firefox, linux" />
+      </div>
+      <button type="submit">Search</button>
+      <button type="button" id="clearBtn" class="secondary">Clear</button>
+    </form>
 
-            <span style="color: #888;">Releasetrain <span style="color: #4da6ff;">v3.1.0</span></span>
+    <div class="togglesWrap" role="group" aria-label="Quick filters (AND)">
+      <div class="toggles" id="fixedToggles">
+        <button class="toggle" data-key="major" aria-pressed="false" type="button">Major <span class="count" id="btn-major">(0)</span></button>
+        <button class="toggle" data-key="minor" aria-pressed="false" type="button">Minor <span class="count" id="btn-minor">(0)</span></button>
+        <button class="toggle" data-key="patch" aria-pressed="false" type="button">Patch <span class="count" id="btn-patch">(0)</span></button>
+        <button class="toggle" data-key="cve" aria-pressed="false" type="button">CVE <span class="count" id="btn-cve">(0)</span></button>
+        <button class="toggle potentialCve" data-key="potential-cve" aria-pressed="false" type="button" title="Versions with Reddit discussions that mention both latest update and CVE">
+          Potential CVE <span class="count" id="btn-potential-cve">(0)</span>
+        </button>
+        <button class="toggle" data-key="reddit" aria-pressed="false" type="button">Reddit <span class="count" id="btn-reddit">(0)</span></button>
+        <button class="toggle redditRisk" data-key="reddit-risk" aria-pressed="false" type="button" title="AI-detected isUpdateRelated or score>0.5">
+          ⚠️ Reddit Risks <span class="count" id="btn-reddit-risk">(0)</span>
+        </button>
+        <button class="toggle redditRisk" data-key="reddit-risk-latest" aria-pressed="false" type="button" title="Risky Reddit posts about latest updates">
+          ⚠️ Reddit Risk Latest <span class="count" id="btn-reddit-risk-latest">(0)</span>
+        </button>
+        <button class="toggle redditRisk" data-key="reddit-risk-cve" aria-pressed="false" type="button" title="Risky Reddit posts about security/CVE">
+          ⚠️ Reddit Risk Security <span class="count" id="btn-reddit-risk-cve">(0)</span>
+        </button>
+        <button class="toggle soRisk" data-key="so-risk" aria-pressed="false" type="button" title="AI-detected isUpdateRelated or score>0.5 (StackOverflow)">
+          ⚠️ StackOverflow Risks <span class="count" id="btn-so-risk">(0)</span>
+        </button>
+      </div>
+      <div class="toggles" id="typeToggles"></div>
+    </div>
+  </div>
 
-            <span class="getComponentCount" style="color: #999;">Components:
-                <span style="color: #4da6ff;">Loading...</span>
-            </span>
+  <div id="navLoader" class="navloader" aria-hidden="true"></div>
 
-            <span class="getVersionCount" style="color: #999;">Versions:
-                <span style="color: #4da6ff;">Loading...</span>
-            </span>
-
-            <span class="getRedditCount" style="color: #999;">Reddit:
-                <span style="color: #4da6ff;">Loading...</span>
-            </span>
-
-            <span class="currentPageVersions" style="color: #999;">Page Versions:
-                <span style="color: #4da6ff;">0</span>
-            </span>
-
-            <span class="dateRangeLabel" style="color: #888;"></span>
-
-            <!-- Discord link with matching styling -->
-            <!-- <span>
-                <a href="https://discord.gg/mMruEzZe" target="_blank" style="
-            color: #4da6ff;
-            text-decoration: none;
-            font-weight: bold;
-        ">
-                    Discord ↗
-                </a>
-            </span> -->
-
-            <span>
-                <a href="https://github.com/antrunner/releasetrain-client" target="_blank" style="
-            color: #4da6ff;
-            text-decoration: none;
-            font-weight: bold;
-        ">
-                    GitHub ↗
-                </a>
-            </span>
-        </div>
+  <main>
+    <div class="kpis" role="status" aria-live="polite">
+      <div class="kpi">Cards: <em id="kpi-page">0</em></div>
+      <div class="kpi" id="kpi-range">Date Range: <em>—</em></div>
+      <div class="kpi">Unique Components: <em id="kpi-uniq">0</em></div>
+      <div class="kpi">Reddit Posts: <em id="kpi-reddit">0</em></div>
     </div>
 
-    <!-- Main Container -->
-    <div class="main-container">
+    <section class="panel" aria-label="Updates Feed">
+      <header>
+        <h2 style="margin:0;font-size:16px">Recent Updates (last 6 months)</h2>
+        <div id="status" class="status">Idle</div>
+      </header>
 
-        <!-- Left Column: Realtime Feed -->
-        <div class="left-column">
+      <div id="feed">
+        <div class="skeleton" aria-hidden="true" style="height:80px"></div>
+        <div class="skeleton" aria-hidden="true" style="height:80px"></div>
+        <div class="skeleton" aria-hidden="true" style="height:80px"></div>
+      </div>
 
-            <!-- Sorting Buttons -->
-            <div class="sort-buttons">
-                <button id="sortByTriageLastUpdate" class="btn-dark active">Recent Updates</button>
-                <button id="sortByTriageBreaking" class="btn-dark">Failure Impact</button>
-                <button id="sortByTriageSecurity" class="btn-dark">Security Impact</button>
-                <button id="sortByTriageLegal" class="btn-dark">Legal Impact</button>
-            </div>
+      <div id="sentinel" class="sentinel" role="status" aria-live="polite">Loading more…</div>
+    </section>
+  </main>
 
-            <hr noshade="no">
+  <script>
+    /* =================== Constants & helpers =================== */
+    const API_BASE="https://releasetrain.io/api/", GROUPS_BATCH=6, TOP_TYPES=10, REDDIT_LIMIT=400, MAX_VER_DESC=220;
+    const SIX_MONTHS_MS = 1000 * 60 * 60 * 24 * 180;
+    const SIX_MONTHS_AGO = Date.now() - SIX_MONTHS_MS;
 
-            <div class="content">
-                <div class="loadingClass">
-                    <img src="./img/spinner.gif" alt="Loading..." />
-                </div>
-                <ol class="versionListClassSection"></ol>
-                <div class="errorHandling"></div>
-            </div>
-        </div>
+    const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+    const safe=(v,d="")=>v==null?d:v, uniq=a=>Array.from(new Set(a));
+    const truncate=(str,n=MAX_VER_DESC)=> (str && str.length>n)?(str.slice(0,n-1)+"…"):(str||"");
 
-        <!-- Second Column: Graphs -->
-        <div class="graph-column">
-            <section id="graphSection1">
-                <canvas id="graphCanvas"></canvas>
-                <canvas id="componentTypeChart"></canvas>
-            </section>
-        </div>
-        <!-- Third Column: Graphs -->
-        <div class="graph-column">
-            <section id="graphSection2">
-                <canvas id="updateTypeChart"></canvas>
-                <canvas id="cveChart"></canvas>
-            </section>
-        </div>
-        <!-- Fourth Column: Chat -->
-        <div class="chat-column">
-            <section id="llmChatSection">
-                <div id="chatWindow">
-                    <!-- Chat messages appear here -->
-                    <div style="color: #888; text-align: center;">Ask about software updates...</div>
-                </div>
-                <div style="display: flex; align-items: center; padding-top: 4px;">
-                    <input type="text" id="chatInput" placeholder="Ask about updates...">
-                    <button id="sendChat">➤</button>
-                </div>
-            </section>
-        </div>
-    </div>
+    const norm = s => String(s || "").toLowerCase().trim();
+    const normKey = s => norm(s).replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
+    const titleCase = s => s ? s.replace(/\w\S*/g, w => w[0].toUpperCase() + w.slice(1)) : s;
+    const tokens=s=>uniq(String(s||"").split(",").map(t=>norm(t)).filter(Boolean));
 
+    const GENERIC_WORDS = new Set(["project","org","organization","team","labs","systems","software","tech","technologies","dev","development","opensource","open","source"]);
+    const stripGenericWords = s => normKey(s).split(" ").filter(Boolean).filter(t => !GENERIC_WORDS.has(t)).join(" ");
+    const longestToken = s => { const t = stripGenericWords(s).split(" ").filter(Boolean); return t.length ? t.sort((a,b)=>b.length-a.length)[0] : normKey(s); };
 
-    <div class="canvas-container">
-        <canvas id="plantuml-diagrams"></canvas>
-    </div>
+    const dayLabelFromMillis=(ms)=>{
+      try{
+        const dt=new Date(ms);
+        const today=new Date(); today.setHours(0,0,0,0);
+        const yest=new Date(today); yest.setDate(today.getDate()-1);
+        const dStart=new Date(dt); dStart.setHours(0,0,0,0);
+        if(dStart.getTime()===today.getTime()) return "Today";
+        if(dStart.getTime()===yest.getTime()) return "Yesterday";
+        return dt.toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric",year:"numeric"});
+      }catch{ return ""; }
+    };
+    const shortTime=iso=>{ try{ return new Date(iso).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}); }catch{ return ""; } };
 
-    <!-- Scripts -->
-    <script src="https://www.googletagmanager.com/gtag/js?id=UA-79349402-1" async></script>
-    <script src="./lib/googleanalytics.js"></script>
-    <script src="./lib/jquery-2.2.4.min.js"></script>
-    <script src="./lib/select2.min.js"></script>
-    <!-- Chart.js for Graphing -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.bundle.min.js"></script>
-    <!-- Mermaid.js for UML Diagrams (if needed elsewhere) -->
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-    <script type="text/javascript">
-        // Initialize Mermaid for UML rendering (if used)
-        mermaid.initialize({ startOnLoad: true });
+    const avatarFor=(it)=>{
+      const url=(it.versionUrl||"")+""; 
+      if(it.isCve) return "./img/cve.png";
+      if(url.includes("github.com/")){const u=url.split("/")[3]; if(u) return `https://github.com/${u}.png`;}
+      if(url.startsWith("https://nvd.nist.gov/")) return "./img/cve.png";
+      return "./img/default.png";
+    };
+    function updateOffsets(){ const tb=document.querySelector('.topbar'), nl=$("#navLoader");
+      document.documentElement.style.setProperty('--topbar-h',(tb?tb.offsetHeight:0)+"px");
+      document.documentElement.style.setProperty('--navloader-h',(nl&&nl.classList.contains('active')?nl.offsetHeight:0)+"px");
+    }
+    window.addEventListener('load',updateOffsets);window.addEventListener('resize',updateOffsets);new ResizeObserver(updateOffsets).observe(document.querySelector('.topbar'));
 
-        // 🔹 Global storage for Reddit posts
-        let globalRedditPosts = [];
-        let redditPostCounts = {};
-        let versionData = []; // Global variable to store version data
+    const encodeCsvKeepCommas = (csv) => {
+      const cleaned = String(csv||"").replace(/\u00A0/g," ").replace(/\s*,\s*/g,",").trim();
+      if(!cleaned) return "";
+      return cleaned.split(",").map(t => encodeURIComponent(t)).join(",");
+    };
 
-        let cachedTriageBreakingData = null; // Store sorted results specific to TriageBreaking
-        let cachedTriageSecurityData = null; // Store sorted results specific to TriageSecurity
-        let cachedTriageLastUpdateData = null; // Store sorted results specific to LastUpdate
-        let cachedTriageLegalData = null;
+    function buildHrefWithQ(path, csv){
+      const q = String(csv||"").trim();
+      const qs = q ? `?q=${encodeCsvKeepCommas(q)}` : "";
+      const base = path.startsWith("/") ? path : `/${path}`;
+      return `${location.origin}${base}${qs}`;
+    }
 
-        // Precompute Reddit post counts when the page loads
-        function computeRedditPostCounts() {
-            redditPostCounts = globalRedditPosts.reduce((acc, post) => {
-                let subreddit = post.subreddit || "";
-                acc[subreddit] = (acc[subreddit] || 0) + 1; // Count posts per subreddit
-                return acc;
-            }, {});
+    function setLinksHref(){
+      const u=new URL(location.href);
+      const q=u.searchParams.get("q") || "";
+      $("#graphLink").href = buildHrefWithQ("/graph/", q);
+      $("#archLink").href  = buildHrefWithQ("/arch/",  q);
+    }
+
+    function getPostSource(p){
+      const srcNorm = norm(p?.source || "");
+      if (srcNorm) return srcNorm;
+      const url = String(p?.url || "");
+      if (url.includes("stackoverflow.com")) return "stackoverflow";
+      if (url.includes("reddit.com")) return "reddit";
+      return "reddit";
+    }
+    function getPostId(p){
+      return p?.redditId || p?._id || p?.id || "";
+    }
+
+    const isUpdateRelatedBoolean = p => !!(p?.metadata?.labeled?.isUpdateRelated || p?.metadata?.predicted?.isUpdateRelated);
+    const getUpdateScore = p => (typeof p?.metadata?.predicted?.positiveScore==="number")?p.metadata.predicted.positiveScore:null;
+    const isRisk = p => isUpdateRelatedBoolean(p) || ((getUpdateScore(p)??-1) > 0.5);
+
+    const Api={
+      async versions(qCsv){ const q=qCsv?`?q=${encodeCsvKeepCommas(qCsv)}`:""; const url=`${API_BASE}v/${q}`;
+        const res=await fetch(url,{headers:{Accept:"application/json"}}); if(!res.ok) throw new Error(`${res.status} ${res.statusText} @ ${url}`);
+        const json=await res.json(); return json.versions||[]; },
+      async reddit(){ const url=`${API_BASE}reddit/query/positive`;
+        const res=await fetch(url,{headers:{Accept:"application/json"}}); if(!res.ok) throw new Error(`${res.status} ${res.statusText} @ ${url}`);
+        const list=(await res.json()); const arr=Array.isArray(list)?list:(list.data||list.posts||list.results||[]);
+        return arr.map(p=>({
+          redditId:p.redditId||p._id||p.id,
+          title:p.title,
+          subreddit:p.subreddit,
+          url:p.url,
+          created_utc:p.created_utc||p.createdAt||p.updatedAt,
+          num_comments:p.num_comments,
+          score:p.score,
+          metadata:p.metadata,
+          source:p.source,
+          isAboutLatestUpdate:p.isAboutLatestUpdate,
+          isAboutCve:p.isAboutCve
+        })); }
+    };
+
+    function canonicalNameFromSubstrings(nameRaw){
+      const display = titleCase(nameRaw||"");
+      const key = normKey(display);
+      return { key, nameOut: display };
+    }
+    function canonComponentName(v){
+      const nameRaw  = (v && v.versionProductName) || "";
+      return canonicalNameFromSubstrings(nameRaw);
+    }
+
+    const STATE={
+      rawVersions:[],
+      redditAll:[],
+      redditBySub:new Map(),
+      redditByUrl:new Map(),   // NEW: map url -> reddit post for MLTL window
+      groupsFiltered:[],
+      groupIndex:0,
+      observer:null,
+      loading:false,
+      filters:{components:[],toggles:new Set()}
+    };
+
+    function getSourceCounts(){
+      let reddit=0, stackoverflow=0;
+      for(const p of STATE.redditAll){
+        const src = norm(p.source || "");
+        if(src === "stackoverflow") stackoverflow++;
+        else reddit++;
+      }
+      return {reddit, stackoverflow};
+    }
+
+    function buildRedditIndex(list){
+      STATE.redditBySub=new Map();
+      STATE.redditByUrl=new Map(); // reset url map
+      for(const p of list){
+        const k=norm(p.subreddit);
+        if(!k) continue;
+        if(!STATE.redditBySub.has(k)) STATE.redditBySub.set(k,[]);
+        STATE.redditBySub.get(k).push(p);
+        if (p.url) {
+          STATE.redditByUrl.set(String(p.url), p);
+        }
+      }
+      for(const arr of STATE.redditBySub.values()){
+        arr.sort((a,b)=> (+new Date(b.created_utc||0))-(+new Date(a.created_utc||0)) || (b.score||0)-(a.score||0) );
+      }
+    }
+
+    function redditMatchesForVersionBase(v, limit = 6, onlyRisks = false) {
+      const c = canonComponentName(v);
+      const name = norm(c.nameOut);
+      if (!name) return [];
+      const arr = STATE.redditBySub.get(name) || [];
+      const out = [];
+      for (const p of arr){
+        if (getPostSource(p) !== "reddit") continue;
+        const t = +new Date(p.created_utc || 0);
+        if (t < SIX_MONTHS_AGO) continue;
+        if (onlyRisks && !isRisk(p)) continue;
+        out.push(p);
+        if (out.length >= limit) break;
+      }
+      return out;
+    }
+
+    function stackoverflowMatchesForVersionBase(v, limit = 6, onlyRisks = false) {
+      const c = canonComponentName(v);
+      const name = norm(c.nameOut);
+      if (!name) return [];
+      const arr = STATE.redditBySub.get(name) || [];
+      const out = [];
+      for(const p of arr){
+        if (getPostSource(p) !== "stackoverflow") continue;
+        const t = +new Date(p.created_utc || 0);
+        if (t < SIX_MONTHS_AGO) continue;
+        if (onlyRisks && !isRisk(p)) continue;
+        out.push(p);
+        if (out.length >= limit) break;
+      }
+      return out;
+    }
+
+    function groupByComponentName(list){
+      const map=new Map();
+      for(const v of list){
+        const c = canonComponentName(v);
+        if(!map.has(c.key)) map.set(c.key, { key: c.key, name: c.nameOut, items: [] });
+        map.get(c.key).items.push(v);
+      }
+      const arr=Array.from(map.values());
+      arr.forEach(g=>g.items.sort((a,b)=>(+new Date(b.versionTimestampLastUpdate||b.versionTimestamp||0))-(+new Date(a.versionTimestampLastUpdate||a.versionTimestamp||0))));
+      arr.sort((a,b)=> (+new Date(b.items[0]?.versionTimestampLastUpdate||b.items[0]?.versionTimestamp||0)) - (+new Date(a.items[0]?.versionTimestampLastUpdate||a.items[0]?.versionTimestamp||0)) );
+      return arr;
+    }
+
+    function computeAggregates(list){
+      let major=0,minor=0,patch=0,cve=0,uniqComps=new Set(),typeCounts=new Map();
+      const redditAllIds=new Set(), soAllIds=new Set(), redditRiskIds=new Set(), soRiskIds=new Set();
+      const redditRiskLatestIds=new Set(), redditRiskCveIds=new Set();
+      let potentialCveVersions = 0;
+
+      for(const it of list){
+        const ch=norm(it.versionReleaseChannel);
+        if(ch==="major") major++; else if(ch==="minor") minor++; else if(ch==="patch") patch++;
+        if(it.isCve) cve++;
+
+        const allR = redditMatchesForVersionBase(it, REDDIT_LIMIT, false);
+        for(const p of allR){
+          if(getPostSource(p)==="reddit") redditAllIds.add(getPostId(p));
         }
 
-        // Define helper functions first
-        function isSameDate(d1, d2) {
-            return d1.getFullYear() === d2.getFullYear() &&
-                d1.getMonth() === d2.getMonth() &&
-                d1.getDate() === d2.getDate();
+        const soAll = stackoverflowMatchesForVersionBase(it, REDDIT_LIMIT, false);
+        for(const p of soAll){
+          if(getPostSource(p)==="stackoverflow") soAllIds.add(getPostId(p));
         }
 
-        function formatDate(d) {
-            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            const today = new Date();
-            const yesterday = new Date();
-            yesterday.setDate(today.getDate() - 1);
-
-            const releaseDate = new Date(`${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`);
-
-            if (isNaN(releaseDate.getTime())) {
-                return null;
-            }
-
-            if (isSameDate(releaseDate, today)) {
-                return "Today";
-            } else if (isSameDate(releaseDate, yesterday)) {
-                return "Yesterday";
-            } else {
-                return `${months[releaseDate.getMonth()]} ${releaseDate.getDate()}, ${releaseDate.getFullYear()}`;
-            }
+        const riskR = redditMatchesForVersionBase(it, REDDIT_LIMIT, true);
+        for(const p of riskR){
+          if(getPostSource(p)==="reddit"){
+            const id=getPostId(p);
+            redditRiskIds.add(id);
+            if (p.isAboutLatestUpdate) redditRiskLatestIds.add(id);
+            if (p.isAboutCve) redditRiskCveIds.add(id);
+          }
         }
 
-        // ==========================
-        // Existing Feed Code (Endpoints preserved)
-        // ==========================
-        const apiBaseUrl = "https://releasetrain.io/api";
-        let componentNameParam = "";
-        let stack_name = "";
-        let currDate = null;
-        let countToday = 0;
-        let isDone = false;
+        // NEW: potential CVE only from MLTL window (mltl.src)
+        let postsInWindow = [];
+        const mltlSrc = it.mltl && Array.isArray(it.mltl.src) ? it.mltl.src : [];
+        for (const u of mltlSrc){
+          const p = STATE.redditByUrl.get(String(u));
+          if (p) postsInWindow.push(p);
+        }
+        const potentialPosts = postsInWindow.filter(p => p.isAboutLatestUpdate && p.isAboutCve);
+        if (potentialPosts.length > 0) potentialCveVersions++;
 
-        const loader = $('.loadingClass');
-        $.ajaxSetup({
-            beforeSend: () => loader.show(),
-            complete: () => loader.hide()
+        const soRiskArr = stackoverflowMatchesForVersionBase(it, REDDIT_LIMIT, true);
+        for(const p of soRiskArr){
+          if(getPostSource(p)==="stackoverflow") soRiskIds.add(getPostId(p));
+        }
+
+        const cName=canonComponentName(it); uniqComps.add(cName.key);
+        for(const t of (it.classification?.componentType||[])){
+          if(!t||t==="UNKNOWN") continue;
+          const k=String(t).toLowerCase();
+          typeCounts.set(k,(typeCounts.get(k)||0)+1);
+        }
+      }
+
+      const reddit = redditAllIds.size;
+      const redditRisk = redditRiskIds.size;
+      const redditRiskLatest = redditRiskLatestIds.size;
+      const redditRiskCve = redditRiskCveIds.size;
+      const soRisk = soRiskIds.size;
+
+      return {
+        major,
+        minor,
+        patch,
+        cve,
+        reddit,
+        redditRisk,
+        redditRiskLatest,
+        redditRiskCve,
+        soRisk,
+        potentialCve: potentialCveVersions,
+        uniq:uniqComps.size,
+        typeCounts
+      };
+    }
+
+    function paintFixedCounts(a){
+      $("#btn-major").textContent=`(${a.major})`;
+      $("#btn-minor").textContent=`(${a.minor})`;
+      $("#btn-patch").textContent=`(${a.patch})`;
+      $("#btn-cve").textContent=`(${a.cve})`;
+      $("#btn-potential-cve").textContent=`(${a.potentialCve})`;
+      $("#btn-reddit").textContent=`(${a.reddit})`;
+      $("#btn-reddit-risk").textContent=`(${a.redditRisk})`;
+      $("#btn-reddit-risk-latest").textContent=`(${a.redditRiskLatest})`;
+      $("#btn-reddit-risk-cve").textContent=`(${a.redditRiskCve})`;
+      $("#btn-so-risk").textContent=`(${a.soRisk})`;
+      $("#kpi-uniq").textContent=a.uniq;
+    }
+
+    function buildTypeButtons(typeCounts){
+      const host=$("#typeToggles"); host.innerHTML="";
+      const entries=Array.from(typeCounts.entries()).sort((a,b)=>b[1]-a[1]).slice(0,TOP_TYPES);
+      if(!entries.length){ host.innerHTML=`<button class="toggle disabled" type="button" aria-disabled="true">No types</button>`; return; }
+      for(const [type,count] of entries){
+        const btn=document.createElement("button"); btn.className="toggle"; btn.type="button"; btn.dataset.key=`type:${type}`;
+        btn.setAttribute("aria-pressed", STATE.filters.toggles.has(`type:${type}`) ? "true" : "false");
+        btn.innerHTML=`${type} <span class="count">(${count})</span>`;
+        btn.addEventListener("click",()=>{ const key=btn.dataset.key; const on=btn.getAttribute("aria-pressed")==="true";
+          btn.setAttribute("aria-pressed",on?"false":"true"); if(on) STATE.filters.toggles.delete(key); else STATE.filters.toggles.add(key); applyFilters(); });
+        host.appendChild(btn);
+      }
+    }
+
+    function matchesToggles(v, rc, rRiskCount, soCount, soRiskCount, rRiskLatestCount, rRiskCveCount, hasPotentialCve){
+      const set=STATE.filters.toggles, channel=norm(v.versionReleaseChannel);
+      const compTypes=(v.classification?.componentType||[]).map(norm),
+            isCve=!!v.isCve,
+            hasReddit=rc>0,
+            hasRisk=rRiskCount>0,
+            hasSoRisk=soRiskCount>0,
+            hasRiskLatest=rRiskLatestCount>0,
+            hasRiskCve=rRiskCveCount>0;
+      const truth={
+        major:channel==="major",
+        minor:channel==="minor",
+        patch:channel==="patch",
+        cve:isCve,
+        reddit:hasReddit,
+        'reddit-risk':hasRisk,
+        'reddit-risk-latest':hasRiskLatest,
+        'reddit-risk-cve':hasRiskCve,
+        'so-risk':hasSoRisk,
+        'potential-cve':hasPotentialCve
+      };
+      for(const k of set){
+        if(k.startsWith("type:")){
+          if(!compTypes.includes(k.slice(5))) return false;
+        }else if(!truth[k]){
+          return false;
+        }
+      }
+      return true;
+    }
+
+    function applyFilters(){
+      const comps=STATE.filters.components;
+      const candidates=STATE.rawVersions.filter(v=>{
+        const ts = +new Date(v.versionTimestampLastUpdate || v.versionTimestamp || 0);
+        if (!isFinite(ts) || ts < SIX_MONTHS_AGO) return false;
+        if(!comps.length) return true;
+        const name=norm(v.versionProductName);
+        const tags=(Array.isArray(v.versionSearchTags)?v.versionSearchTags.join(","):"").toLowerCase();
+        return comps.some(t=>name.includes(t)||tags.includes(t));
+      });
+
+      const ag=computeAggregates(candidates); paintFixedCounts(ag); buildTypeButtons(ag.typeCounts);
+
+      const filtered=candidates.filter(v=>{
+        const r=redditMatchesForVersionBase(v,6,false);
+        const rr=redditMatchesForVersionBase(v,6,true);
+        const soAll=stackoverflowMatchesForVersionBase(v,6,false);
+        const soRiskArr=stackoverflowMatchesForVersionBase(v,6,true);
+        const riskLatestCount = rr.filter(p=>p.isAboutLatestUpdate).length;
+        const riskCveCount = rr.filter(p=>p.isAboutCve).length;
+
+        // potential posts ONLY from MLTL window
+        let postsInWindow = [];
+        const mltlSrc = v.mltl && Array.isArray(v.mltl.src) ? v.mltl.src : [];
+        for (const u of mltlSrc){
+          const p = STATE.redditByUrl.get(String(u));
+          if (p) postsInWindow.push(p);
+        }
+        const potentialPosts = postsInWindow.filter(p => p.isAboutLatestUpdate && p.isAboutCve);
+
+        return matchesToggles(v,r.length, rr.length, soAll.length, soRiskArr.length, riskLatestCount, riskCveCount, potentialPosts.length>0);
+      });
+
+      const srcCounts = getSourceCounts();
+      $("#kpi-reddit").textContent = srcCounts.reddit;
+
+      if(filtered.length){
+        const getMs=v=>+new Date(v.versionTimestampLastUpdate||v.versionTimestamp||0);
+        const min=new Date(Math.min(...filtered.map(getMs))), max=new Date(Math.max(...filtered.map(getMs)));
+        $("#kpi-range").innerHTML=`Date Range: <em>${min.toLocaleDateString()} – ${max.toLocaleDateString()}</em>`;
+      } else {
+        $("#kpi-range").innerHTML=`Date Range: <em>—</em>`;
+      }
+
+      STATE.groupsFiltered=groupByComponentName(filtered);
+      $("#feed").innerHTML=""; STATE.groupIndex=0; $("#kpi-page").textContent=STATE.groupsFiltered.length;
+      $("#sentinel").textContent=STATE.groupsFiltered.length?"Loading more…":"No results"; appendNextGroups();
+      $("#status").textContent=`Grouped by component (${STATE.groupsFiltered.length})`;
+    }
+
+    const chip=(t,k)=>`<span class="chip ${k||""}">${t}</span>`;
+
+    function renderComponentNode(group){
+      const onlyRedditRisks=STATE.filters.toggles.has("reddit-risk") ||
+                            STATE.filters.toggles.has("reddit-risk-latest") ||
+                            STATE.filters.toggles.has("reddit-risk-cve");
+      const onlySoRisks=STATE.filters.toggles.has("so-risk");
+
+      const seen=new Set(); let rUnion=[];
+
+      for(const v of group.items){
+        for(const p of redditMatchesForVersionBase(v,REDDIT_LIMIT,onlyRedditRisks)){
+          const id=getPostId(p); if(seen.has(id)) continue; seen.add(id); rUnion.push(p);
+        }
+        for(const p of stackoverflowMatchesForVersionBase(v,REDDIT_LIMIT,onlySoRisks)){
+          const id=getPostId(p); if(seen.has(id)) continue; seen.add(id); rUnion.push(p);
+        }
+      }
+
+      const timeline=[];
+      for(const v of group.items){
+        timeline.push({
+          t:+new Date(v.versionTimestampLastUpdate||v.versionTimestamp||0),
+          kind:v.isCve?"cve":"update",
+          channel:(v.versionReleaseChannel||"other").toLowerCase(),
+          label:`${safe(v.versionProductName,"")} ${v.versionNumber||""}`,
+          url:(v.versionUrl?.startsWith("http"))?v.versionUrl:((v.versionReleaseNotes?.startsWith("http"))?v.versionReleaseNotes:"#"),
+          raw:v
         });
-
-        $('.component-names').on("change", function () {
-            componentNameParam = $(this).select2('data').map(item => item.text).join(',');
-            updateURLWithSelectedComponents();
-            if (isDone) {
-                if (componentNameParam === new URLSearchParams(window.location.search).get('q')) {
-                    getReleases();
-                } else {
-                    window.location.href = `https://releasetrain.io?q=${componentNameParam}`;
-                }
-            }
+      }
+      for(const p of rUnion){
+        const src=getPostSource(p);
+        timeline.push({
+          t:+new Date(p.created_utc||0),
+          kind: src==="stackoverflow" ? "stackoverflow" : "reddit",
+          channel:null,
+          label:p.title,
+          url:p.url,
+          raw:p
         });
+      }
+      timeline.sort((a,b)=>b.t - a.t);
 
-        function updateURLWithSelectedComponents() {
-            const selectedComponents = $('.component-names').select2('data').map(item => item.text).join(',');
-            window.history.replaceState({}, document.title, `?q=${selectedComponents}`);
+      const cveCount = timeline.filter(x=>x.kind==="cve").length;
+      const redditCount = timeline.filter(x=>x.kind==="reddit").length;
+      const soCount = timeline.filter(x=>x.kind==="stackoverflow").length;
+      const majorCount = timeline.filter(x=>x.channel==="major").length;
+      const minorCount = timeline.filter(x=>x.channel==="minor").length;
+      const patchCount = timeline.filter(x=>x.channel==="patch").length;
+
+      const det=document.createElement("details"); det.className="feedGroup"; det.open = document.querySelectorAll(".feedGroup").length===0;
+
+      const sum=document.createElement("summary");
+      const summaryRight = `
+        <span class="summaryRight">
+          ${chip("CVE " + cveCount,"bad")}
+          ${chip("REDDIT " + redditCount,"reddit")}
+          ${chip("SO " + soCount,"soft")}
+          ${chip("MAJOR " + majorCount,"ok")}
+          ${chip("MINOR " + minorCount,"soft")}
+          ${chip("PATCH " + patchCount,"soft")}
+        </span>`;
+      sum.innerHTML = `${group.name} ${summaryRight}`;
+      det.appendChild(sum);
+
+      const wrap=document.createElement("div"); wrap.className="updates";
+      const list=document.createElement("div"); list.className="list";
+
+      for(const it of timeline){
+        const li=document.createElement("div"); li.className="li"+(it.kind==="cve"?" cve":"");
+
+        const dcol=document.createElement("div"); dcol.className="datecol";
+        dcol.innerHTML = `<div class="day">${dayLabelFromMillis(it.t)}</div><div class="time">${shortTime(it.t)}</div>`;
+        li.appendChild(dcol);
+
+        if(it.kind==="reddit"){
+          const av=document.createElement("img");
+          av.className="avatar redditIcon"+(isRisk(it.raw)?" risky":"");
+          av.src="./img/reddit.png";
+          av.alt="reddit";
+          av.title = isRisk(it.raw) ? "Reddit (risk)" : "Reddit";
+          li.appendChild(av);
+        }else if(it.kind==="stackoverflow"){
+          const av=document.createElement("img");
+          av.className="avatar soIcon"+(isRisk(it.raw)?" risky":"");
+          av.src="./img/stackoverflow.png";
+          av.alt="StackOverflow";
+          av.title = isRisk(it.raw) ? "StackOverflow (risk)" : "StackOverflow";
+          li.appendChild(av);
+        }else{
+          const av=document.createElement("img"); av.className="avatar"; av.alt=group.name; av.src=avatarFor(it.raw); li.appendChild(av);
         }
 
+        const body=document.createElement("div");
+        const title=document.createElement("div"); title.className="titleRow";
 
-        function checkIfStackExists(stack_name) {
-            console.log(stack_name);
+        const chipsEl=document.createElement("div"); chipsEl.className="chips";
+        if(it.kind==="reddit"){
+          chipsEl.insertAdjacentHTML("beforeend", chip("SRC reddit","reddit"));
+          const scorePred = (it.raw?.metadata?.predicted?.positiveScore);
+          const scoreField = (typeof it.raw?.score === "number") ? it.raw.score : null;
+          const scoreVal = (typeof scorePred === "number") ? scorePred : scoreField;
+          if(isRisk(it.raw)){
+            const label = scoreVal!=null ? `RISK ${Number(scoreVal).toFixed(4)}` : "RISK —";
+            chipsEl.insertAdjacentHTML("beforeend", chip(label,"warn"));
+          }else if(scoreVal!=null){
+            chipsEl.insertAdjacentHTML("beforeend", chip(`SCORE ${Number(scoreVal).toFixed(4)}`,"soft"));
+          }
+          const flags = it.raw || {};
+          if (flags.isAboutLatestUpdate) {
+            chipsEl.insertAdjacentHTML("beforeend", chip("TOPIC latest","soft"));
+          }
+          if (flags.isAboutCve) {
+            chipsEl.insertAdjacentHTML("beforeend", chip("SEC security","bad"));
+          }
+          const upvotes = (typeof flags.score === "number") ? flags.score : null;
+          const comments = (typeof flags.num_comments === "number") ? flags.num_comments : null;
+          if (upvotes != null) {
+            chipsEl.insertAdjacentHTML("beforeend", chip(`UPVOTES ${upvotes}`,"soft"));
+          }
+          if (comments != null) {
+            chipsEl.insertAdjacentHTML("beforeend", chip(`COMMENTS ${comments}`,"soft"));
+          }
+        }else if(it.kind==="stackoverflow"){
+          chipsEl.insertAdjacentHTML("beforeend", chip("SRC stackoverflow","soft"));
+          const scorePred = (it.raw?.metadata?.predicted?.positiveScore);
+          const scoreField = (typeof it.raw?.score === "number") ? it.raw.score : null;
+          const scoreVal = (typeof scorePred === "number") ? scorePred : scoreField;
+          if(isRisk(it.raw)){
+            const label = scoreVal!=null ? `RISK ${Number(scoreVal).toFixed(4)}` : "RISK —";
+            chipsEl.insertAdjacentHTML("beforeend", chip(label,"warn"));
+          }else if(scoreVal!=null){
+            chipsEl.insertAdjacentHTML("beforeend", chip(`SCORE ${Number(scoreVal).toFixed(4)}`,"soft"));
+          }
+        }else if(it.kind==="cve"){
+          chipsEl.insertAdjacentHTML("beforeend", chip("TYPE cve","bad"));
+          if(it.raw && it.raw._id){
+            chipsEl.insertAdjacentHTML("beforeend", `<span class="chip link">ID <a href="https://releasetrain.io/api/v/${it.raw._id}" target="_blank" rel="noopener">open</a></span>`);
+          }
+        }else{
+          const ch=(it.channel||"other");
+          const color=ch==="major"?"ok":"soft";
+          chipsEl.insertAdjacentHTML("beforeend", chip("CHANNEL "+ch,color));
+        }
 
-            if (stack_name === "lamp") {
-                return "LAMP"
+        if(it.kind!=="reddit" && it.kind!=="stackoverflow" && it.raw){
+          const r = it.raw;
+          if(r.versionProductBrand)
+            chipsEl.insertAdjacentHTML("beforeend", chip("BRAND "+String(r.versionProductBrand).toLowerCase(),"soft"));
+          if(r.versionProductType)
+            chipsEl.insertAdjacentHTML("beforeend", chip("TYPE "+String(r.versionProductType).toLowerCase(),"soft"));
+          if(r.versionProductLicense)
+            chipsEl.insertAdjacentHTML("beforeend", chip("LICENSE "+String(r.versionProductLicense).toLowerCase(),"soft"));
 
+          const compTypes = (r.classification?.componentType||[]).filter(x=>x && x!=="UNKNOWN");
+          compTypes.slice(0,1).forEach(t => chipsEl.insertAdjacentHTML("beforeend", chip("COMP "+String(t).toLowerCase(),"soft")));
+
+          const secTypes  = (r.classification?.securityType||[]).filter(x=>x && x!=="UNKNOWN");
+          secTypes.slice(0,1).forEach(t => chipsEl.insertAdjacentHTML("beforeend", chip("SEC "+String(t).toLowerCase(),"bad")));
+
+          const brkTypes  = (r.classification?.breakingType||[]).filter(x=>x && x!=="UNKNOWN");
+          brkTypes.slice(0,1).forEach(t => chipsEl.insertAdjacentHTML("beforeend", chip("BRK "+String(t).toLowerCase(),"warn")));
+
+          if(r._id)
+            chipsEl.insertAdjacentHTML("beforeend", `<span class="chip link">ID <a href="https://releasetrain.io/api/v/${r._id}" target="_blank" rel="noopener">open</a></span>`);
+        }
+
+        title.appendChild(chipsEl);
+        const a=document.createElement("a"); a.href=it.url||"#"; a.target="_blank"; a.rel="noopener"; a.textContent=it.label; title.appendChild(a);
+
+        const descTxt = truncate(safe(it.raw?.versionReleaseNotes,"")) || safe(it.raw?.versionReleaseComments,"");
+        if(descTxt){
+          const d=document.createElement("div"); d.className="meta"; d.style.opacity=".95";
+          let inner = "";
+
+          if(it.kind!=="reddit" && it.kind!=="stackoverflow" && it.raw){
+            // Only MLTL-window posts: mltl.src URLs
+            let postsInWindow = [];
+            const mltlSrc = it.raw.mltl && Array.isArray(it.raw.mltl.src) ? it.raw.mltl.src : [];
+            for(const u of mltlSrc){
+              const p = STATE.redditByUrl.get(String(u));
+              if(p) postsInWindow.push(p);
             }
-            else {
-                return "Not Found"
+            const potentialPosts = postsInWindow.filter(p => p.isAboutLatestUpdate && p.isAboutCve);
+
+            if(potentialPosts.length > 0){
+              inner += `<span class="chip warn potentialCveBadge">⚠ Potential CVE discussion (${potentialPosts.length})</span>`;
+              inner += `<div class="chips potentialCveChips">`;
+              for(const p of potentialPosts){
+                const id = getPostId(p) || "post";
+                const href = p.url || `https://reddit.com/comments/${id}`;
+                inner += `<a class="chip potentialCveChip" href="${href}" target="_blank" rel="noopener">${id}</a>`;
+              }
+              inner += `</div>`;
             }
+          }
+
+          inner += descTxt;
+          d.innerHTML = inner;
+          body.appendChild(d);
         }
 
-        function getAndRenderComponentList() {
-            $('.component-names').select2({
-                tags: true,
-                multiple: true,
-                tokenSeparators: [',', ' '],
-                minimumInputLength: 0,  // Show results immediately
-                minimumResultsForSearch: 1, // Allow searching quickly
-                ajax: {
-                    url: `${apiBaseUrl}/c/names`,
-                    dataType: "json",
-                    type: "GET",
-                    delay: 100, // Reduce delay for faster response
-                    cache: true, // Cache results to avoid redundant queries
-                    data: params => ({ term: params.term }),
-                    processResults: data => ({
-                        results: data.map(item => ({
-                            text: item.versionProductName,
-                            id: item.versionProductName
-                        }))
-                    })
-                }
-            });
+        body.appendChild(title);
+        li.appendChild(body);
+        list.appendChild(li);
+      }
+
+      wrap.appendChild(list);
+      det.appendChild(wrap);
+      return det;
+    }
+
+    function appendNextGroups(){
+      if(STATE.loading) return;
+      if(STATE.groupIndex>=STATE.groupsFiltered.length){ $("#sentinel").textContent="End of results"; return; }
+      STATE.loading=true;
+      const feed=$("#feed"); const end=Math.min(STATE.groupIndex+GROUPS_BATCH, STATE.groupsFiltered.length);
+      for(let i=STATE.groupIndex;i<end;i++) feed.appendChild(renderComponentNode(STATE.groupsFiltered[i]));
+      STATE.groupIndex=end; STATE.loading=false;
+    }
+    function setupObserver(){ if(STATE.observer) STATE.observer.disconnect();
+      STATE.observer=new IntersectionObserver(es=>{const e=es[0]; if(e&&e.isIntersecting) appendNextGroups();},{rootMargin:"400px 0px"});
+      STATE.observer.observe($("#sentinel"));
+    }
+
+    async function boot(){
+      $("#status").textContent="Loading…"; $("#navLoader").classList.add("active"); $("#feed").innerHTML=""; STATE.groupIndex=0;
+      try{
+        const u=new URL(location.href);
+        const rawQ = u.searchParams.get("q") || "";
+        $("#components").value = rawQ;
+        STATE.filters.components = tokens(rawQ);
+        setLinksHref();
+
+        const [vers, reddit]=await Promise.all([Api.versions(rawQ), Api.reddit().catch(()=>[])]);
+        STATE.redditAll=reddit; buildRedditIndex(reddit);
+        const srcCounts = getSourceCounts();
+        $("#kpi-reddit").textContent = srcCounts.reddit;
+
+        if(!(vers||[]).length){
+          $("#status").textContent=`No versions found — try another query`;
+          $("#feed").innerHTML=""; $("#sentinel").textContent="No results"; $("#navLoader").classList.remove("active"); return;
         }
 
-        function getAvatarHtml(versionProductName, isCve, isSecurityPatch, versionUrl, initialAvatar) {
-            const productName = versionProductName.toLowerCase();
-            const productAvatars = {
-                "chrome": "./img/Google-Chrome-Chromium-icon.png",
-                "ledvance": "./img/ledvance.png",
-                "firefox": "./img/firefox.png",
-                "android studio": "./img/androidStudio.png",
-                "safari": "./img/safari.png",
-                "eclipse": "./img/eclipse.png",
-                "let's encrypt": "./img/letsencrypt.png",
-                "vmware": "./img/vmware.png",
-                "oracle": "./img/vboracle.png"
-            };
-
-            if (productAvatars[productName]) {
-                return `<img class="avatar" src="${productAvatars[productName]}" alt="${versionProductName}">`;
-            }
-
-            if (productName === "digitalocean") {
-                return '<i class="fas fa-exclamation-triangle"></i>';
-            }
-
-            // Show an exclamation mark if the URL is NVD
-            if (versionUrl && versionUrl.startsWith("https://nvd.nist.gov/")) {
-                return '<img class="avatar" src="./img/cve.png" alt="CVE">';
-            }
-
-            // GitHub avatar always wins
-            if (versionUrl && versionUrl.includes("github.com/")) {
-                return `<img class="avatar" src="https://github.com/${versionUrl.split('/')[3]}.png" alt="${versionProductName}">`;
-            }
-
-            // Handle generic git-based avatars
-            if (versionUrl && versionUrl.startsWith("https://git")) {
-                return `<img class="avatar" src="${versionUrl}.png" alt="${versionProductName}">`;
-            }
-
-            return `<img class="avatar" src="./img/default.png" alt="${versionProductName}">`;
-        }
-
-        function drawTimeSeriesChart(data) {
-            const canvas = document.getElementById('graphCanvas');
-            if (!canvas) {
-                console.error("Canvas element with id 'graphCanvas' not found.");
-                return;
-            }
-
-            // Ensure the canvas fills its container
-            canvas.height = 250;
-            const ctx = canvas.getContext('2d');
-
-            // ✅ Convert date labels to "Mon, Feb 25" format
-            const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-            const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-            // ✅ Ensure the labels are properly formatted
-            let formattedLabels = data.labels.map(label => {
-
-                if (label === "Today" || label === "Yesterday") return label;
-
-                // Convert from YYYY-MM-DD to Date object safely
-                let year = label.slice(0, 4);
-                let month = label.slice(4, 6) - 1; // Months are zero-based in JavaScript (0 = January)
-                let day = label.slice(6, 8);
-
-                // Ensure values are valid before creating the Date object
-                if (isNaN(year) || isNaN(month) || isNaN(day)) {
-                    console.warn(`Invalid date detected: ${label}`);
-                    return label; // Return raw label if invalid
-                }
-
-                let dateObj = new Date(year, month, day);
-
-                if (isNaN(dateObj.getTime())) {
-                    console.warn(`Invalid date detected: ${label}`);
-                    return label; // Return raw label if invalid
-                }
-
-                return `${dayNames[dateObj.getDay()]}, ${monthNames[dateObj.getMonth()]} ${dateObj.getDate()}`;
-            });
-
-            // ✅ Ensure at least 7 days of data (fill missing days with 0)
-            if (formattedLabels.length < 7) {
-                console.warn("Less than 7 days of data detected. Filling missing days...");
-
-                let today = new Date();
-                let last7Days = [];
-
-                for (let i = 6; i >= 0; i--) {
-                    let date = new Date();
-                    date.setDate(today.getDate() - i);
-                    let formattedDate = `${dayNames[date.getDay()]}, ${monthNames[date.getMonth()]} ${date.getDate()}`;
-
-                    last7Days.push(formattedDate);
-                }
-
-                formattedLabels = last7Days; // Replace with full 7 days
-            }
-
-            new Chart(ctx, {
-                type: 'bar', // Changed from 'line' to 'bar'
-                data: {
-                    labels: formattedLabels, // ✅ Use formatted labels
-                    datasets: [{
-                        label: 'Updates 7 Days',
-                        data: data.counts,
-                        backgroundColor: 'rgba(75, 192, 192, 0.4)',
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        borderWidth: 1,
-                        fill: true,
-                    }]
-                },
-                options: {
-                    responsive: false,
-                    maintainAspectRatio: false,
-                    scales: {
-                        xAxes: [{
-                            ticks: {
-                                autoSkip: true,
-                                maxTicksLimit: 10,
-                                fontColor: "#d1d5db",
-                                callback: function (value) {
-                                    return value; // Ensure proper date formatting
-                                }
-                            },
-                            gridLines: {
-                                color: "#444"
-                            }
-                        }],
-                        yAxes: [{
-                            ticks: {
-                                beginAtZero: true,
-                                fontColor: "#d1d5db"
-                            },
-                            gridLines: {
-                                color: "#444"
-                            }
-                        }]
-                    },
-                    legend: {
-                        labels: {
-                            fontColor: "#d1d5db"
-                        }
-                    }
-                }
-            });
-        }
-
-        function drawComponentTypeChart(data) {
-            const canvas = document.getElementById('componentTypeChart');
-            if (!canvas) {
-                console.error("Canvas element with id 'componentTypeChart' not found.");
-                return;
-            }
-
-            const ctx = canvas.getContext('2d');
-            canvas.height = 250;
-
-            const labels = Object.keys(data);
-            const counts = Object.values(data);
-
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Component Type Counts',
-                        data: counts,
-                        backgroundColor: 'rgba(153, 102, 255, 0.6)',
-                        borderColor: 'rgba(153, 102, 255, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: false,
-                    maintainAspectRatio: false,
-                    scales: {
-                        xAxes: [{
-                            ticks: {
-                                fontColor: "#d1d5db"
-                            },
-                            gridLines: {
-                                color: "#444"
-                            }
-                        }],
-                        yAxes: [{
-                            ticks: {
-                                beginAtZero: true,
-                                fontColor: "#d1d5db"
-                            },
-                            gridLines: {
-                                color: "#444"
-                            }
-                        }]
-                    },
-                    legend: {
-                        labels: {
-                            fontColor: "#d1d5db"
-                        }
-                    }
-                }
-            });
-        }
-
-        function getVersionForecast(component) {
-
-            console.warn("Disabled version forecast for component:", component);
-            return;
-
-            $.ajax({
-                url: `${apiBaseUrl}/v/fc?q=${component}`,
-                type: 'GET',
-                dataType: 'json',
-                success: res => {
-                    if (res && res.nextReleaseDate) {
-                        $(".rt-class-" + component).text(`Next ${component} update estimation on ${res.nextReleaseDate}`);
-                        if (componentNameParam.split(",").length > 1) {
-                            getCoincideForecast(component);
-                        }
-                    } else {
-                        $(".rt-class-" + component).text(""); // Set empty string if no data
-                    }
-                },
-                error: error => {
-                    console.error(`Error fetching version forecast for ${component}:`, error);
-                    $(".rt-class-" + component).text(""); // Set empty string on error
-                }
-            });
-        }
-
-        function getCoincideForecast(component) {
-
-            console.warn("Disabled version coincide for component:", component);
-            return;
-
-            $.ajax({
-                url: `${apiBaseUrl}/v/fcc?q=${componentNameParam}`,
-                type: 'GET',
-                dataType: 'json',
-                success: res => {
-                    if (res && res.isCoincideReleaseDate && Array.isArray(res.components) && res.components.includes(component)) {
-                        res.components = res.components.filter(item => item !== component);
-                        const msg = res.components.length > 0
-                            ? `may coincide with a ${res.components.join(" and ")} update.`
-                            : ""; // Set empty string if no other components
-
-                        if (!$(`.${component}`).text().includes(msg)) {
-                            $(`.${component}`).html(`<b>${msg}</b>`);
-                        }
-                    } else {
-                        $(`.${component}`).text(""); // Set empty string if no valid data
-                    }
-                },
-                error: error => {
-                    console.error(`Error fetching coincide forecast for ${component}:`, error);
-                    $(`.${component}`).text(""); // Set empty string on error
-                }
-            });
-        }
-
-        // ✅ Fetch version count
-        function getVersionCount() {
-            $.ajax({
-                url: `${apiBaseUrl}/v/count`,
-                type: 'GET',
-                dataType: 'json',
-                success: res => {
-                    if (res.totalVersions !== undefined) {
-                        $(".getVersionCount").text(`Versions: ${res.totalVersions}`);
-                    } else {
-                        console.warn('Unexpected response structure for version count:', res);
-                        $(".getVersionCount").text(`Versions: N/A`);
-                    }
-                },
-                error: error => {
-                    console.error('Error fetching version count:', error);
-                    $(".getVersionCount").text(`Versions: Error`);
-                }
-            });
-        }
-
-        // ✅ Fetch reddit count
-        function getRedditCount() {
-            $.ajax({
-                url: `${apiBaseUrl}/reddit/count`,
-                type: 'GET',
-                dataType: 'json',
-                success: res => {
-                    if (res.totalRedditPosts !== undefined) {
-                        $(".getRedditCount").text(`Reddit: ${res.totalRedditPosts}`);
-                    } else {
-                        console.warn('Unexpected response structure for version count:', res);
-                        $(".getRedditCount").text(`Reddit: N/A`);
-                    }
-                },
-                error: error => {
-                    console.error('Error fetching version count:', error);
-                    $(".getRedditCount").text(`Reddit: Error`);
-                }
-            });
-        }
-
-        // ✅ Fetch component count
-        function getComponentCount() {
-            $.ajax({
-                url: `${apiBaseUrl}/c/count`,
-                type: 'GET',
-                dataType: 'json',
-                success: res => {
-                    if (res.totalComponents !== undefined) {
-                        $(".getComponentCount").text(`Components: ${res.totalComponents}`);
-                    } else {
-                        console.warn('Unexpected response structure for component count:', res);
-                        $(".getComponentCount").text(`Components: N/A`);
-                    }
-                },
-                error: error => {
-                    console.error('Error fetching component count:', error);
-                    $(".getComponentCount").text(`Components: Error`);
-                }
-            });
-        }
-
-        function isNewerThanDayAfterTomorrow(dateString) {
-            const year = parseInt(dateString.substring(0, 4));
-            const month = parseInt(dateString.substring(4, 6)) - 1;
-            const day = parseInt(dateString.substring(6, 8));
-            const specificDate = new Date(year, month, day);
-            const today = new Date();
-            const dayAfterTomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2);
-            return specificDate > dayAfterTomorrow;
-        }
-
-        function isSameDate(d1, d2) {
-            return d1.getFullYear() === d2.getFullYear() &&
-                d1.getMonth() === d2.getMonth() &&
-                d1.getDate() === d2.getDate();
-        }
-
-        function drawUpdateTypeChart(data, dateRange) {
-            const canvasId = "updateTypeChart";
-
-            // Calculate total updates
-            const totalUpdates = data.major + data.other + data.minor + data.patch;
-
-            // Remove existing canvas if present (to allow re-rendering)
-            $("#" + canvasId).remove();
-            $("#graphSection2").append(`<canvas id="${canvasId}"></canvas>`);
-
-            const ctx = document.getElementById(canvasId).getContext("2d");
-
-            document.getElementById(canvasId).height = 250;
-
-            new Chart(ctx, {
-                type: "bar",
-                data: {
-                    labels: ["Major Updates", "Other Updates", "Minor Updates", "Patch Updates"],
-                    datasets: [{
-                        label: `Update Type Count`, // 🏷️ Added total updates & date range
-                        data: [data.major, data.other, data.minor, data.patch],
-                        backgroundColor: ["#4da6ff", "#ca4141", "#47863e", "#ffbd2e"],
-                        borderColor: ["#2b7cd3", "#8b2e2e", "#2b5d29", "#c98c1e"],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: false,
-                    maintainAspectRatio: false,
-                    scales: {
-                        yAxes: [{
-                            ticks: {
-                                beginAtZero: true,
-                                fontColor: "#d1d5db"
-                            },
-                            gridLines: {
-                                color: "#444"
-                            }
-                        }],
-                        xAxes: [{
-                            ticks: {
-                                fontColor: "#d1d5db"
-                            },
-                            gridLines: {
-                                color: "#444"
-                            }
-                        }]
-                    },
-                    legend: {
-                        labels: {
-                            fontColor: "#d1d5db"
-                        }
-                    }
-                }
-            });
-        }
-
-        function drawPlantuml() {
-            const canvasId = "plantuml";
-
-            // Remove existing canvas if present (to allow re-rendering)
-            $("#" + canvasId).remove();
-            $("#graphSection1").append(`<canvas id="${canvasId}"></canvas>`);
-
-            const ctx = document.getElementById(canvasId).getContext("2d");
-
-            document.getElementById(canvasId).height = 250;
-            const image = new Image();
-
-
-            image.addEventListener("load", (e) => {
-                ctx.drawImage(image, 10, 10);
-            });
-            image.src = "https://hatrabbits.com/wp-content/uploads/2017/01/random.jpg";
-        }
-        // Function to count different update types and render the bar chart
-        function processUpdateTypeCounts(res) {
-            let updateCounts = { major: 0, other: 0, minor: 0, patch: 0 };
-            let updateDates = []; // To store valid dates in sortable `YYYYMMDD` format
-            let componentTypeCounts = {}; // To store counts of each component type
-            let cveCounts = { cve: 0, other: 0 };
-
-            res.forEach(item => {
-                // Count update types
-                switch (item.versionReleaseChannel) {
-                    case "major":
-                        updateCounts.major++;
-                        break;
-                    case "minor":
-                        updateCounts.minor++;
-                        break;
-                    case "patch":
-                        updateCounts.patch++;
-                        break;
-                    default:
-                        updateCounts.other++;
-                        break;
-                }
-
-                // Count component types
-                if (item.versionPredictedComponentType) {
-                    componentTypeCounts[item.versionPredictedComponentType] = (componentTypeCounts[item.versionPredictedComponentType] || 0) + 1;
-                }
-
-                // Extract valid dates (YYYYMMDD format)
-                if (item.versionReleaseDate) {
-                    updateDates.push(item.versionReleaseDate); // Store directly as `YYYYMMDD` string
-                }
-
-                if (item.isCve) {
-                    cveCounts.cve++;
-                } else {
-                    cveCounts.other++;
-                }
-            });
-
-            // Sort dates in ascending order (YYYYMMDD is already sortable as a string)
-            updateDates.sort();
-
-            // Get today's and yesterday's dates in `YYYYMMDD` format
-            const today = new Date();
-            const todayStr = today.toISOString().split('T')[0].replace(/-/g, ""); // Format YYYYMMDD
-            const yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
-            const yesterdayStr = yesterday.toISOString().split('T')[0].replace(/-/g, "");
-
-            // Get the formatted date range
-            let dateRange = "N/A";
-            if (updateDates.length > 0) {
-                let startDate = formatDate(updateDates[0]); // Earliest date
-                let endDateRaw = updateDates[updateDates.length - 1]; // Latest date in `YYYYMMDD`
-                // Convert end date to "Today" or "Yesterday" if applicable
-                let endDate = formatDate(endDateRaw);
-                dateRange = `${startDate} - ${endDate}`;
-            }
-
-            // Update the date range label in the info-bar
-            $(".dateRangeLabel").text(`Date Range: ${dateRange}`);
-
-            // 🏷️ Pass `dateRange` to the update chart function
-            drawUpdateTypeChart(updateCounts, dateRange);
-
-            // 🏷️ Draw the component type chart
-            drawComponentTypeChart(componentTypeCounts);
-
-            // 🏷️ Draw the CVE chart
-            drawCveChart(cveCounts);
-        }
-
-        async function getReleases() {
-            $(".versionListClassSection").empty();
-
-            try {
-                versionData = await getVersionList(); // ✅ Fetch versions first
-
-                await getAllRedditPosts(); // ✅ Then fetch Reddit posts
-
-                renderVersionList(versionData); // ✅ Finally, render everything
-
-            } catch (error) {
-                console.error("[ERROR] Failed in getReleases():", error);
-            }
-        }
-
-        // ✅ Ensure getVersionList() returns a Promise
-        function getVersionList() {
-            const requestUrl = `${apiBaseUrl}/v?q=${componentNameParam}`;
-
-            return new Promise((resolve, reject) => {
-                $.ajax({
-                    url: requestUrl,
-                    type: 'GET',
-                    dataType: 'json',
-                    success: function (data) {
-                        const versionCount = data.versions ? data.versions.length : 0;
-
-                        // ✅ Update "Page Versions" count dynamically
-                        document.querySelector(".currentPageVersions span").textContent = versionCount;
-
-                        resolve(data.versions || []); // ✅ Always return an array (default empty)
-                    },
-                    error: (xhr, status, error) => {
-                        console.error(`[ERROR] Fetching version list: ${error}`);
-                        console.warn(`[Response] Status: ${status}, URL: ${requestUrl}, Response:`, xhr.responseText);
-                        reject(error); // ❌ Reject if AJAX fails
-                    }
-                });
-            });
-        }
-
-        /**
-         * 🔹 Fetch all Reddit posts from the last 10 days and store them globally.
-         */
-        function getAllRedditPosts() {
-            return new Promise((resolve, reject) => {
-                $.ajax({
-                    url: `${apiBaseUrl}/reddit`, // Fetch latest 10 days of Reddit posts
-                    type: 'GET',
-                    dataType: 'json',
-                    success: redditPosts => {
-                        if (!Array.isArray(redditPosts) || redditPosts.length === 0) {
-                            globalRedditPosts = [];
-                            return resolve();
-                        }
-
-                        globalRedditPosts = redditPosts; // ✅ Store fetched posts globally
-                        resolve();
-                    },
-                    error: error => {
-                        console.error("[REDDIT] Error fetching posts:", error);
-                        globalRedditPosts = [];
-                        reject(error);
-                    }
-                });
-            });
-        }
-
-        // Convert UTC timestamp to "X days ago" format
-        function timeAgo(utcTimestamp) {
-            const postDate = new Date(utcTimestamp); // Convert to milliseconds
-            const today = new Date();
-            const diffTime = Math.abs(today - postDate);
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-            return diffDays === 0 ? "Today" : diffDays === 1 ? "Yesterday" : `${diffDays} days ago`;
-        }
-
-        /**
-         * 🔹 Render version list and include Reddit posts if subreddit matches version name.
-         * 🔹 Updates four charts: Update Type, Component Type, Time Series, and CVE.
-         */
-        function renderVersionList(res) {
-            countToday = 0;
-            let dailyCounts = {};
-            let groupedVersions = {};
-            let updateCounts = { major: 0, other: 0, minor: 0, patch: 0 };
-            let componentTypeCounts = {};
-            let cveCounts = { cve: 0, other: 0 };
-
-            const today = new Date();
-            const currentYear = today.getFullYear();
-            const yesterday = new Date();
-            yesterday.setDate(today.getDate() - 1);
-            let oneWeekAgo = new Date();
-            oneWeekAgo.setDate(today.getDate() - 7);
-
-            if (res.length === 0) {
-                $(".errorHandling").html("No results found.");
-            } else {
-                $(".errorHandling").empty();
-            }
-
-            $(".versionListClassSection").empty();
-            let firstOpenFound = false;
-
-            res.forEach(item => {
-                try {
-                    let releaseDate = new Date(
-                        item.versionReleaseDate.slice(0, 4),
-                        parseInt(item.versionReleaseDate.slice(4, 6)) - 1,
-                        parseInt(item.versionReleaseDate.slice(6, 8))
-                    );
-
-                    if (isNaN(releaseDate.getTime()) || releaseDate > today) return;
-
-                    let formattedDate = releaseDate.toDateString() === today.toDateString() ? "Today" :
-                        releaseDate.toDateString() === yesterday.toDateString() ? "Yesterday" :
-                            `${releaseDate.toDateString()}`;
-
-                    if (!groupedVersions[formattedDate]) {
-                        groupedVersions[formattedDate] = [];
-                    }
-                    groupedVersions[formattedDate].push(item);
-
-                    // ✅ Collect data for charts
-                    if (releaseDate >= oneWeekAgo) {
-                        let yyyymmdd = releaseDate.toISOString().split("T")[0].replace(/-/g, "");
-                        dailyCounts[yyyymmdd] = (dailyCounts[yyyymmdd] || 0) + 1;
-                    }
-
-                    if (item.versionReleaseChannel) {
-                        updateCounts[item.versionReleaseChannel] = (updateCounts[item.versionReleaseChannel] || 0) + 1;
-                    }
-
-                    if (item.classification && Array.isArray(item.classification.componentType) && item.classification.componentType.length > 0) {
-                        item.classification.componentType.forEach(predictedType => {
-                            componentTypeCounts[predictedType] = (componentTypeCounts[predictedType] || 0) + 1;
-                        });
-                    } else {
-                        componentTypeCounts["Not Typed"] = (componentTypeCounts["Not Typed"] || 0) + 1;
-                    }
-
-
-                    if (item.isCve) {
-                        cveCounts.cve++;
-                    } else {
-                        cveCounts.other++;
-                    }
-
-                } catch (error) {
-                    console.error("[ERROR] Failed to process version:", item, error);
-                }
-            });
-
-            let sortedDates = Object.keys(groupedVersions).sort((a, b) => {
-                if (a === "Today") return -1;
-                if (b === "Today") return 1;
-                if (a === "Yesterday") return -1;
-                if (b === "Yesterday") return 1;
-                return new Date(b) - new Date(a);
-            });
-
-            let htmlBuffer = ""; // ✅ Efficient UI rendering with buffer
-
-            sortedDates.forEach((date) => {
-                let updatesCount = groupedVersions[date].length;
-                let isOpen = !firstOpenFound && updatesCount > 0 ? "open" : "";
-                if (updatesCount > 0) {
-                    firstOpenFound = true;
-                }
-
-                htmlBuffer += `
-        <details ${isOpen}>
-            <summary><b>${date}</b> (${updatesCount} updates)</summary>
-            <ul class="versionList">`;
-
-                groupedVersions[date].forEach(item => {
-                    const avatar = getAvatarHtml(item.versionProductName, false, item.versionReleaseChannel === "patch", item.versionUrl, item.versionProductType);
-                    const versionLabel = `${item.versionProductName.substring(0, 20)}`;
-
-
-                    let tags = "";
-
-                    // ✅ Wrap everything in a single row layout
-                    tags += `<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 4px;">`;
-
-                    // ✅ Highlight versionNumber if it exists
-                    if (item.versionNumber) {
-                        tags += `<span style="font-weight: bold; font-size: 8pt; color: #333; background-color: #f4f4f4; border-radius: 3px; padding: 1px 4px; display: inline-block;">
-                            ${item.versionNumber}
-                        </span>`;
-                    }
-
-                    // ✅ Add version release channel tag if available
-                    if (item.versionReleaseChannel) {
-                        const tagColors = { "major": "#4da6ff", "other": "#ca4141", "minor": "#47863e", "patch": "#ffbd2e" };
-                        tags += `
-                            <span style="color: #fff; font-size: 8pt; background-color: ${tagColors[item.versionReleaseChannel]}; border-radius: 3px; padding: 1px 4px; display: inline-block;">
-                                ${item.versionReleaseChannel.toLowerCase()}
-                            </span>`;
-                    }
-
-                    // ✅ Define colors for classification categories
-                    const categoryColors = {
-                        securityType: "#ca4141", // Red for security-related issues
-                        breakingType: "#ff9800", // Orange for breaking issues
-                        componentType: "#4da6ff" // Blue for component classification
-                    };
-
-                    // ✅ Function to format tag text (lowercase and remove underscores)
-                    const formatTagText = text => text.toLowerCase().replace(/_/g, "");
-
-                    // ✅ Iterate over classification attributes and apply colors accordingly
-                    if (item.classification) {
-                        Object.keys(item.classification).forEach(category => {
-                            const values = item.classification[category];
-
-                            if (Array.isArray(values)) {
-                                values.forEach(value => {
-                                    if (value !== "UNKNOWN") {
-                                        const tagColor = categoryColors[category] || "#6e5494"; // Default color if category not explicitly set
-                                        tags += `
-                                            <span style="color: #fff; font-size: 8pt; background-color: ${tagColor}; border-radius: 3px; padding: 1px 4px; display: inline-block;">
-                                                ${formatTagText(value)}
-                                            </span>
-                                        `;
-                                    }
-                                });
-                            }
-                        });
-                    }
-
-                    let releaseUrl = (item.versionUrl && item.versionUrl.trim().startsWith("https://"))
-                        ? item.versionUrl.trim()
-                        : (item.versionReleaseNotes && item.versionReleaseNotes.trim().startsWith("https://"))
-                            ? item.versionReleaseNotes.trim()
-                            : "#";
-
-                    let timeOnly = item.versionTimestampLastUpdate
-                        ? new Date(item.versionTimestampLastUpdate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                        : "";
-
-                    // Ensures everything stays in one row with proper spacing
-                    let releaseNotesHtml = `
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            ${avatar}
-                            <a target="_blank" href="${releaseUrl}" style="font-weight: bold; text-decoration: none; color: #007bff;">
-                                ${versionLabel}
-                            </a>
-                            ${timeOnly ? `<span style="font-size: 0.85em; color: #666;">(${timeOnly})</span>` : ""}
-                        </div>
-                    `;
-
-                    // ✅ Find matching Reddit posts
-                    const matchingRedditPosts = globalRedditPosts.filter(post =>
-                        post.subreddit.toLowerCase() === item.versionProductName.toLowerCase()
-                    );
-
-                    let redditHtml = "";
-                    if (matchingRedditPosts.length > 0) {
-                        redditHtml = `<ul class="reddit-summary" style="list-style: none; padding-left: 0; font-size: 10pt; color: #777;">`;
-
-                        matchingRedditPosts.forEach(post => {
-                            const postDate = timeAgo(post.created_utc);
-
-                            // Check if classification.componentType exists, is an array, and is not empty
-                            let predictedType = post.classification && Array.isArray(post.classification.componentType) && post.classification.componentType.length > 0
-                                ? post.classification.componentType.filter(type => type.toLowerCase() !== "unknown").map(type => `<span style="display: inline-block; background: #4da6ff; color: white; padding: 2px 6px; margin: 2px; border-radius: 4px; font-size: 8pt;">${type.toLowerCase()}</span>`).join(" ")
-                                : `<span style="color: #888; font-size: 8pt;">N/A</span>`; // Default value if no classification is available
-
-                            // Check if classification.securityType exists and add styling
-                            let securityType = post.classification && Array.isArray(post.classification.securityType) && post.classification.securityType.length > 0
-                                ? post.classification.securityType.filter(type => type.toLowerCase() !== "unknown").map(type => `<span style="display: inline-block; background: #ca4141; color: white; padding: 2px 6px; margin: 2px; border-radius: 4px; font-size: 8pt;">${type.toLowerCase()}</span>`).join(" ")
-                                : `<span style="color: #888; font-size: 8pt;">N/A</span>`;
-
-                            // Check if classification.breakingType exists and add styling
-                            let breakingType = post.classification && Array.isArray(post.classification.breakingType) && post.classification.breakingType.length > 0
-                                ? post.classification.breakingType.filter(type => type.toLowerCase() !== "unknown").map(type => `<span style="display: inline-block; background: #ff9800; color: white; padding: 2px 6px; margin: 2px; border-radius: 4px; font-size: 8pt;">${type.toLowerCase()}</span>`).join(" ")
-                                : `<span style="color: #888; font-size: 8pt;">N/A</span>`;
-
-                            redditHtml += `
-                                <div style="display: flex; align-items: flex-start; gap: 6px; margin-bottom: 8px; font-size: 9pt; color: #555;">
-                                    <img src="./img/reddit-icon.svg" alt="Reddit" style="width: 14px; height: 14px; margin-top: 3px; opacity: 0.7;">
-                                    <div>
-                                        <a href="${post.url}" target="_blank" style="color: #0079d3; text-decoration: none; font-size: 9pt;">
-                                            ${post.title}
-                                        </a>
-                                        <div style="color: #888; font-size: 8pt; margin-top: 2px;">
-                                            ${postDate} | ▲ ${post.score} | 💬 ${post.num_comments} | Posted by u/${post.author}
-                                        </div>
-                                        <div style="color: #888; font-size: 8pt; margin-top: 2px;">
-                                            🏷️ <strong>Predicted Type:</strong> ${predictedType}
-                                        </div>
-                                        <div style="color: #888; font-size: 8pt; margin-top: 2px;">
-                                            🔒 <strong>Security Type:</strong> ${securityType}
-                                        </div>
-                                        <div style="color: #888; font-size: 8pt; margin-top: 2px;">
-                                            ⚠️ <strong>Breaking Type:</strong> ${breakingType}
-                                        </div>
-                                    </div>
-                                </div>`;
-                        });
-                        redditHtml += `</ul>`;
-                    }
-
-                    let versionResource = item._id
-                        ? `
-                    <div style="width: 100%; margin: 4px 0px; font-size: 9pt; color: #555; display: block;">
-                        <div>
-                            <a href="https://releasetrain.io/api/v/${item._id}" target="_blank" style="color: #888; text-decoration: none; font-size: 9pt;">
-                                ID: ${item._id}
-                            </a>
-                        </div>
-                    </div>`
-                        : "";
-
-                    htmlBuffer += `
-                    <li class="versionListClassSection-item">
-                        ${releaseNotesHtml}
-                        ${tags} 
-                        ${versionResource}
-                        ${redditHtml}
-                    </li>`;
-                });
-
-                htmlBuffer += `</ul></details>`;
-            });
-
-            $(".versionListClassSection").html(htmlBuffer); // ✅ Efficient bulk UI update
-
-            // ✅ Update the charts
-            drawTimeSeriesChart({ labels: Object.keys(dailyCounts), counts: Object.values(dailyCounts) });
-            drawUpdateTypeChart(updateCounts);
-            drawComponentTypeChart(componentTypeCounts);
-            drawCveChart(cveCounts);
-        }
-
-        function getLast7Days(dailyCounts) {
-            const today = new Date();
-            let last7Days = [];
-
-            for (let i = 6; i >= 0; i--) {
-                let date = new Date(today);
-                date.setDate(today.getDate() - i);
-
-                // Convert date to YYYYMMDD format using local time
-                let yyyymmdd = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, "0")}${String(date.getDate()).padStart(2, "0")}`;
-
-                // Ensure the last 7 days are always populated, even if missing from `dailyCounts`
-                let count = dailyCounts.hasOwnProperty(yyyymmdd) ? dailyCounts[yyyymmdd] : 0;
-
-                last7Days.push({
-                    original: yyyymmdd, // Keep the original format for reference
-                    count: count // Use existing count or default to 0
-                });
-            }
-
-            return last7Days; // Always ensures exactly 7 elements with continuous dates
-        }
-
-        function formatDateForList(yyyymmdd) {
-            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-            const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-            let year = yyyymmdd.slice(0, 4);
-            let monthIndex = parseInt(yyyymmdd.slice(4, 6)) - 1;
-            let day = parseInt(yyyymmdd.slice(6, 8));
-
-            let dateObj = new Date(year, monthIndex, day);
-            if (isNaN(dateObj.getTime())) return "Invalid Date";
-
-            const today = new Date();
-            const yesterday = new Date();
-            yesterday.setDate(today.getDate() - 1);
-
-            if (dateObj.toDateString() === today.toDateString()) return "Today";
-            if (dateObj.toDateString() === yesterday.toDateString()) return "Yesterday";
-
-            return `${dayNames[dateObj.getDay()]}, ${months[monthIndex]} ${day}, ${year}`;
-        }
-
-        function formatDateForGraphs(yyyymmdd) {
-            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-            const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-            // Ensure input is valid and exactly 8 characters long
-            if (!yyyymmdd || yyyymmdd.length !== 8 || isNaN(yyyymmdd)) {
-                console.warn(`Invalid date input: ${yyyymmdd}`);
-                return "Invalid Date";
-            }
-
-            let year = parseInt(yyyymmdd.slice(0, 4), 10);
-            let monthIndex = parseInt(yyyymmdd.slice(4, 6), 10) - 1;
-            let day = parseInt(yyyymmdd.slice(6, 8), 10);
-
-            let dateObj = new Date(year, monthIndex, day);
-
-            // Check if date conversion is valid
-            if (isNaN(dateObj.getTime())) {
-                console.warn(`Date conversion failed for: ${yyyymmdd}`);
-                return "Invalid Date";
-            }
-
-            return `${dayNames[dateObj.getDay()]}, ${months[monthIndex]} ${day}, ${year}`;
-        }
-
-        function updateURLWithSelectedComponents() {
-            const selectedComponents = $('.component-names').select2('data')
-                .map(item => item.text)
-                .filter(text => text.trim() !== '') // Remove empty values
-                .join(',');
-
-            let newUrl = window.location.origin + window.location.pathname;
-
-            if (selectedComponents) {
-                newUrl += `?q=${selectedComponents}`;
-            }
-
-            // ✅ Remove `?q=` if empty
-            window.history.replaceState({}, document.title, newUrl);
-        }
-
-        // ✅ Function to update URL with selected components and refresh the page
-        function updateURLWithSelectedComponents() {
-            const selectedComponents = $('.component-names').select2('data')
-                .map(item => item.text)
-                .filter(text => text.trim() !== '') // Remove empty values
-                .join(',');
-
-            let newUrl = window.location.origin + window.location.pathname;
-
-            if (selectedComponents) {
-                newUrl += `?q=${selectedComponents}`;
-            }
-
-            // ✅ Prevent unnecessary reload if URL is already correct
-            if (window.location.href !== newUrl) {
-                window.history.replaceState({}, document.title, newUrl);
-                location.reload(); // ✅ Refresh the page after updating the URL
-            }
-        }
-
-        function getTodayDate() {
-            $(".getTodayDate").text(new Date().toLocaleDateString());
-        }
-
-        // Function to sort versions by last update timestamp (most recent first)
-        function sortByTriageLastUpdate() {
-            $(".loadingClass").show(); // Show loading animation
-
-            setTimeout(() => { // Ensure UI updates before sorting starts
-                if (!cachedTriageLastUpdateData) { // If not cached, sort and store
-                    let sortedData = [...versionData]; // Clone to avoid modifying original
-
-                    sortedData.sort((a, b) => {
-                        let timeA = new Date(a.versionTimestampLastUpdate).getTime();
-                        let timeB = new Date(b.versionTimestampLastUpdate).getTime();
-
-                        return timeB - timeA; // Sort most recent updates first
-                    });
-
-                    cachedTriageLastUpdateData = sortedData; // Store sorted results for Last Update
-                }
-
-                renderVersionList(cachedTriageLastUpdateData); // Use cached sorted results
-                highlightActiveButton("#sortByTriageLastUpdate"); // Highlight the active button
-
-                $(".loadingClass").fadeOut(); // Hide loading animation after sorting
-            }, 50);
-        }
-
-        // Function to sort versions by triage breaking (including breakingType priority)
-        function sortByTriageBreaking() {
-            $(".loadingClass").show(); // Show loading animation
-
-            setTimeout(() => { // Ensure UI updates before sorting starts
-                if (!cachedTriageBreakingData) { // If not cached, sort and store
-                    let sortedData = [...versionData]; // Clone to avoid modifying original
-
-                    sortedData.sort((a, b) => {
-
-                        // Priority: Prioritize isCve = false
-                        if (a.isCve && !b.isCve) return 1;
-                        if (b.isCve && !a.isCve) return -1;
-
-                        // Priority: Move "OS" classification items to the top (case insensitive)
-                        const componentPriority = ["os", "server", "language", "database", "browser"];
-                        const componentNonPriority = ["app", "ide", "github", "web", "repository", "design"];
-
-                        let priorityA = Infinity; // Default to neutral if no priority is found
-                        let priorityB = Infinity; // Default to neutral if no priority is found
-
-                        for (let i = 0; i < componentPriority.length; i++) {
-                            if (Array.isArray(a.classification?.componentType) && a.classification.componentType.some(type => type.toLowerCase() === componentPriority[i])) {
-                                priorityA = i; // Assign priority index if found
-                            }
-                            if (Array.isArray(b.classification?.componentType) && b.classification.componentType.some(type => type.toLowerCase() === componentPriority[i])) {
-                                priorityB = i; // Assign priority index if found
-                            }
-                        }
-
-                        let isEmptyA = !Array.isArray(a.classification?.componentType) || a.classification.componentType.length === 0; // Check if componentType is empty
-                        let isEmptyB = !Array.isArray(b.classification?.componentType) || b.classification.componentType.length === 0; // Check if componentType is empty
-
-                        if (isEmptyA && isEmptyB) {
-                            priorityA = priorityB = Infinity; // Treat both as neutral if empty
-                        }
-
-                        if (isEmptyA !== isEmptyB) {
-                            if (isEmptyA) priorityA = componentPriority.length; // Assign mid-priority to empty
-                            if (isEmptyB) priorityB = componentPriority.length; // Assign mid-priority to empty
-                        }
-
-                        if (priorityA !== priorityB) {
-                            return priorityA - priorityB; // Lower index means higher priority
-                        }
-
-                        let versionTagsA = a.versionSearchTags?.length || 0;
-                        let versionTagsB = b.versionSearchTags?.length || 0;
-
-                        if (versionTagsA !== versionTagsB && (versionTagsA < 5 || versionTagsB < 5)) {
-                            return versionTagsA - versionTagsB; // Prefer fewer version tags
-                        }
-
-                        let countA = a.classification?.componentType?.length || 0;
-                        let countB = b.classification?.componentType?.length || 0;
-                        if (priorityA !== -1 && priorityB !== -1 && countA !== countB) {
-                            return countA - countB; // Prefer fewer elements
-                        }
-
-                        let hasNonPriorityA = Array.isArray(a.classification?.componentType) && a.classification.componentType.some(type => componentNonPriority.includes(type.toLowerCase()));
-                        let hasNonPriorityB = Array.isArray(b.classification?.componentType) && b.classification.componentType.some(type => componentNonPriority.includes(type.toLowerCase()));
-
-                        if (hasNonPriorityA !== hasNonPriorityB) {
-                            return hasNonPriorityA - hasNonPriorityB; // Push non-priority components lower
-                        }
-
-                        // Priority: Move "Critical Failure" to the top, then "Limited Functionality", then "Breaking Update"
-                        let breakingPriority = { "Critical Failure": 3, "Limited Functionality": 2, "Breaking Update": 1 };
-                        let breakingA = a.classification?.breakingType?.[0] || "";
-                        let breakingB = b.classification?.breakingType?.[0] || "";
-                        priorityA = breakingPriority[breakingA] || 0;
-                        priorityB = breakingPriority[breakingB] || 0;
-                        if (priorityA !== priorityB) return priorityB - priorityA;
-
-                        // Priority: Move "major" release channels to the top
-                        let isMajorA = a.versionReleaseChannel === "major" ? 1 : 0;
-                        let isMajorB = b.versionReleaseChannel === "major" ? 1 : 0;
-                        if (isMajorA !== isMajorB) return isMajorB - isMajorA;
-
-                        // Priority: Sort by higher version number
-                        let versionPartsA = a.versionNumber ? a.versionNumber.split('.').map(num => parseInt(num, 10) || 0) : [];
-                        if (versionPartsA.length === 1) versionPartsA = [versionPartsA[0], 0, 0]; // Only master version exists
-                        else if (versionPartsA.length === 2) versionPartsA = [versionPartsA[0], versionPartsA[1], 0]; // Master and minor exist, patch defaults to 0
-
-                        let versionPartsB = b.versionNumber ? b.versionNumber.split('.').map(num => parseInt(num, 10) || 0) : [];
-                        if (versionPartsB.length === 1) versionPartsB = [versionPartsB[0], 0, 0]; // Only master version exists
-                        else if (versionPartsB.length === 2) versionPartsB = [versionPartsB[0], versionPartsB[1], 0]; // Master and minor exist, patch defaults to 0
-
-                        let [masterA, minorA, patchA] = versionPartsA;
-                        let [masterB, minorB, patchB] = versionPartsB;
-
-                        if (masterA !== masterB) {
-                            console.log(`Comparing Master: ${a.versionNumber} vs ${b.versionNumber} → Winner: ${masterB > masterA ? b.versionNumber : a.versionNumber}`);
-                            return masterB - masterA; // Higher master version wins
-                        }
-
-                        if (minorA !== minorB) {
-                            console.log(`Comparing Minor: ${a.versionNumber} vs ${b.versionNumber} → Winner: ${minorB > minorA ? b.versionNumber : a.versionNumber}`);
-                            return minorB - minorA; // Higher minor version wins
-                        }
-
-                        if (patchA !== patchB) {
-                            console.log(`Comparing Patch: ${a.versionNumber} vs ${b.versionNumber} → Winner: ${patchB > patchA ? b.versionNumber : a.versionNumber}`);
-                            return patchB - patchA; // Higher patch version wins
-                        }
-
-                        // Priority: Sort by most Reddit posts (subreddit matches versionProductName)
-                        let redditCountA = redditPostCounts[a.versionProductName] || 0;
-                        let redditCountB = redditPostCounts[b.versionProductName] || 0;
-                        if (redditCountA !== redditCountB) return redditCountB - redditCountA;
-
-                        // Priority: If both have breakingType, sort by the one with more values
-                        let breakingCountA = a.classification?.breakingType?.length || 0;
-                        let breakingCountB = b.classification?.breakingType?.length || 0;
-                        if (breakingCountA !== breakingCountB) return breakingCountB - breakingCountA;
-
-                        // Priority: Sort by triage (higher values first)
-                        let triageA = a.triage || 0;
-                        let triageB = b.triage || 0;
-                        return triageB - triageA;
-                    });
-
-                    cachedTriageBreakingData = sortedData; // Store sorted results for TriageBreaking
-                }
-
-                renderVersionList(cachedTriageBreakingData); // Use cached sorted results
-                highlightActiveButton("#sortByTriageBreaking"); // Highlight the active button
-
-                $(".loadingClass").fadeOut(); // Hide loading animation after sorting
-            }, 50);
-        }
-
-        // Function to sort versions by triage security (including securityType priority & version ranking)
-        function sortByTriageSecurity() {
-            $(".loadingClass").show(); // Show loading animation
-
-            setTimeout(() => { // Ensure UI updates before sorting starts
-                if (!cachedTriageSecurityData) { // If not cached, sort and store
-                    let sortedData = [...versionData]; // Clone to avoid modifying the original
-
-                    sortedData.sort((a, b) => {
-                        // Priority 1: Prioritize isCve = true
-                        if (a.isCve && !b.isCve) return -1;
-                        if (b.isCve && !a.isCve) return 1;
-
-                        // Priority 2: Sort by securityType count (more security elements = higher rank)
-                        let securityCountA = a.classification?.securityType?.length || 0;
-                        let securityCountB = b.classification?.securityType?.length || 0;
-                        if (securityCountA !== securityCountB) return securityCountB - securityCountA;
-
-                        // Priority 3: Sort by higher version number (only if the first part is less than 4 digits)
-                        let versionA = a.versionNumber ? a.versionNumber.split('.').map(num => parseInt(num, 10)) : [];
-                        let versionB = b.versionNumber ? b.versionNumber.split('.').map(num => parseInt(num, 10)) : [];
-
-                        // Check if the first part of the version is less than 4 digits (to avoid treating years as versions)
-                        if (versionA.length > 0 && versionB.length > 0 && versionA[0] < 1000 && versionB[0] < 1000) {
-                            for (let i = 0; i < Math.max(versionA.length, versionB.length); i++) {
-                                let numA = versionA[i] || 0;
-                                let numB = versionB[i] || 0;
-                                if (numA !== numB) return numB - numA; // Higher version first
-                            }
-                        }
-
-                        // Priority 4: Move "major" release channels to the top (but after security-based sorting)
-                        if (a.versionReleaseChannel === "major" && b.versionReleaseChannel !== "major") return -1;
-                        if (b.versionReleaseChannel === "major" && a.versionReleaseChannel !== "major") return 1;
-
-                        // Priority 5: Sort by most Reddit posts (subreddit matches versionProductName)
-                        let redditCountA = redditPostCounts[a.versionProductName] || 0;
-                        let redditCountB = redditPostCounts[b.versionProductName] || 0;
-                        if (redditCountA !== redditCountB) return redditCountB - redditCountA;
-
-                        // Priority 6: Move "OS" classification items to the top
-                        let isOS_A = a.classification?.componentType?.includes("OS") ? 1 : 0;
-                        let isOS_B = b.classification?.componentType?.includes("OS") ? 1 : 0;
-                        if (isOS_A !== isOS_B) return isOS_B - isOS_A;
-
-                        // Priority 7: Sort by triage (higher values first)
-                        let triageA = a.triage || 0;
-                        let triageB = b.triage || 0;
-                        return triageB - triageA;
-                    });
-
-                    cachedTriageSecurityData = sortedData; // Store sorted results for TriageSecurity
-                }
-
-                renderVersionList(cachedTriageSecurityData); // Use cached sorted results
-                highlightActiveButton("#sortByTriageSecurity"); // Highlight the active button
-
-                $(".loadingClass").fadeOut(); // Hide loading animation after sorting
-            }, 50);
-        }
-
-        // Function to sort versions by triage security (including securityType priority & version ranking)
-        // Function to sort versions by triage security (including legal safety and privacy emphasis)
-        function sortByTriageLegal() {
-            $(".loadingClass").show(); // Show loading animation
-
-            setTimeout(() => { // Ensure UI updates before sorting starts
-                if (!cachedTriageLegalData) { // If not cached, sort and store
-                    let sortedData = [...versionData]; // Clone to avoid modifying the original
-
-                    sortedData.sort((a, b) => {
-                        // Check for legal and privacy keywords
-                        const keywords = ['legal', 'privacy', 'safety'];
-                        const countKeywords = (types) => types.filter(type => keywords.some(keyword => type.includes(keyword))).length;
-
-                        let keywordCountA = countKeywords(a.classification?.securityType || []);
-                        let keywordCountB = countKeywords(b.classification?.securityType || []);
-
-                        if (keywordCountA !== keywordCountB) {
-                            return keywordCountB - keywordCountA; // Prioritize versions with more legal/privacy types
-                        }
-
-                        // Fallback to count of securityType
-                        let securityCountA = a.classification?.securityType?.length || 0;
-                        let securityCountB = b.classification?.securityType?.length || 0;
-                        if (securityCountA !== securityCountB) {
-                            return securityCountB - securityCountA; // More security elements = higher rank
-                        }
-
-                        // Further fallback, if needed (e.g., by version number or date)
-                        return 0;
-                    });
-
-                    cachedTriageLegalData = sortedData; // Store sorted results for TriageSecurity
-                }
-
-                renderVersionList(cachedTriageLegalData); // Use cached sorted results
-                highlightActiveButton("#sortByTriageLegal"); // Highlight the active button
-
-                $(".loadingClass").fadeOut(); // Hide loading animation after sorting
-            }, 50);
-        }
-
-        function highlightActiveButton(activeButtonId) {
-            $(".btn-dark").removeClass("btn-active"); // Remove highlight from all buttons
-            $(activeButtonId).addClass("btn-active"); // Highlight the clicked button
-        }
-
-        $(document).ready(function () {
-
-            // Add placeholder elements before fetching data
-            $(".versionListClassSection").html('<div class="skeleton-loader"></div><div class="skeleton-loader"></div>');
-
-            $('.component-names').select2({
-                placeholder: "Select software components", // ✅ Placeholder text
-                allowClear: true, // ✅ Enables '×' to clear selection
-                width: 'resolve', // ✅ Adjusts width dynamically
-                theme: "classic", // ✅ Optional: Choose a clean theme
-                minimumResultsForSearch: 1, // ✅ Enable search when >1 items
-            });
-
-            getAndRenderComponentList();
-            getVersionCount();
-            getComponentCount();
-            getRedditCount()
-            getTodayDate();
-
-            computeRedditPostCounts();
-
-            // ✅ Fetch query parameter `?q=linux,android`
-            const query = new URLSearchParams(window.location.search).get("q");
-
-            if (query) {
-                componentNameParam = query;
-                const queryArgs = componentNameParam.split(",");
-
-                // ✅ Clear and update dropdown with multiple components
-                $(".component-names").empty();
-                queryArgs.forEach((arg) => {
-                    const newOption = new Option(arg, arg, true, true);
-                    $(".component-names").append(newOption);
-                });
-
-                $(".component-names").trigger("change");
-                getReleases();
-            } else {
-                getReleases(); // Load default versions if no query provided
-            }
-
-            // ✅ Update URL when components change
-            $(".component-names").on("change", function () {
-                updateURLWithSelectedComponents();
-                getReleases();
-            });
-
-            function updateURLWithSelectedComponents() {
-                const selectedComponents = $(".component-names").select2("data").map(item => item.text);
-                const queryString = selectedComponents.length > 0 ? `?q=${selectedComponents.join(",")}` : "";
-                window.history.replaceState({}, document.title, queryString ? queryString : window.location.pathname);
-            }
-
-            // ✅ Handle adding new components
-            $(document).on("click", ".add-component", function () {
-                const component = $(this).data("component");
-                const select2Data = $(".component-names").select2("data");
-
-                if (!select2Data.some(item => item.text === component)) {
-                    const newOption = new Option(component, component, true, true);
-                    $(".component-names").append(newOption).trigger("change");
-                }
-            });
-
-            // ✅ Handle removing components
-            $(document).on("click", ".remove-component", function () {
-                const component = $(this).data("component");
-                const select2Data = $(".component-names").select2("data");
-                const newData = select2Data.filter(item => item.text !== component);
-
-                $(".component-names").val(newData.map(item => item.id)).trigger("change");
-            });
-
-            // ✅ Interactive LLM Chat Integration
-            $("#sendChat").click(function () {
-                const message = $("#chatInput").val().trim();
-                if (!message) return;
-                $("#chatWindow").append("<div><strong>You:</strong> " + message + "</div>");
-                $("#chatInput").val("");
-
-                $.ajax({
-                    url: "https://your-llm-api.example.com/chat",
-                    method: "POST",
-                    data: JSON.stringify({ prompt: message }),
-                    contentType: "application/json",
-                    success: function (response) {
-                        $("#chatWindow").append("<div><strong>LLM:</trong> " + response.answer + "</div>");
-                        $("#chatWindow").scrollTop($("#chatWindow")[0].scrollHeight);
-                    },
-                    error: function () {
-                        $("#chatWindow").append("<div><em>Error communicating with the chat service.</em></div>");
-                    }
-                });
-            });
-
-            // ✅ Handle pressing "Enter" to send chat
-            $("#chatInput").keypress(function (e) {
-                if (e.which === 13) {
-                    $("#sendChat").click();
-                }
-            });
-
-            const toggleButton = document.querySelector('.toggle-button');
-            if (toggleButton) {
-                toggleButton.addEventListener('click', function () {
-                    const leftColumn = document.querySelector('.left-column');
-                    leftColumn.classList.toggle('closed');
-                    this.textContent = leftColumn.classList.contains('closed') ? 'Open' : 'Close';
-                });
-            }
-        });
-
-        function drawCveChart(data) {
-            const canvasId = "cveChart";
-
-            // Remove existing canvas if present (to allow re-rendering)
-            $("#" + canvasId).remove();
-            $("#graphSection2").append(`<canvas id="${canvasId}" style="max-height: 250px;"></canvas>`);
-
-            const ctx = document.getElementById(canvasId).getContext("2d");
-
-            new Chart(ctx, {
-                type: "bar",
-                data: {
-                    labels: ["CVE", "Other"],
-                    datasets: [{
-                        label: "CVE vs Other",
-                        data: [data.cve, data.other],
-                        backgroundColor: ["#ff6384", "#36a2eb"],
-                        borderColor: ["#ff6384", "#36a2eb"],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        yAxes: [{
-                            ticks: {
-                                beginAtZero: true,
-                                fontColor: "#d1d5db"
-                            },
-                            gridLines: {
-                                color: "#444"
-                            }
-                        }],
-                        xAxes: [{
-                            ticks: {
-                                fontColor: "#d1d5db"
-                            },
-                            gridLines: {
-                                color: "#444"
-                            }
-                        }]
-                    },
-                    legend: {
-                        labels: {
-                            fontColor: "#d1d5db"
-                        }
-                    }
-                }
-            });
-        }
-
-        document.addEventListener("DOMContentLoaded", () => {
-            const buttons = document.querySelectorAll(".sort-buttons button");
-
-            function setActiveButton(selectedButton) {
-                buttons.forEach(button => button.classList.remove("active")); // Remove active from all
-                selectedButton.classList.add("active"); // Add active to selected button
-            }
-
-            document.getElementById("sortByTriageLastUpdate").addEventListener("click", function () {
-                setActiveButton(this);
-                sortByTriageLastUpdate();
-            });
-
-            document.getElementById("sortByTriageBreaking").addEventListener("click", function () {
-                setActiveButton(this);
-                sortByTriageBreaking();
-            });
-
-            document.getElementById("sortByTriageSecurity").addEventListener("click", function () {
-                setActiveButton(this);
-                sortByTriageSecurity();
-            });
-
-            document.getElementById("sortByTriageLegal").addEventListener("click", function () {
-                setActiveButton(this);
-                sortByTriageLegal();
-            });
-
-
-            // Ensure the default selected button (sortByTriageLastUpdate) is activated on load
-            setActiveButton(document.getElementById("sortByTriageLastUpdate"));
-        });
-
-    </script>
-    <script src="./lib/googleanalytics.js"></script>
+        vers.sort((a,b)=>(+new Date(b.versionTimestampLastUpdate||b.versionTimestamp||0))-(+new Date(a.versionTimestampLastUpdate||a.versionTimestamp||0)));
+        STATE.rawVersions=vers;
+        applyFilters();
+      }catch(e){ console.error(e); $("#feed").innerHTML=`<div class="meta">Error: ${e.message}</div>`; $("#status").textContent="Failed to load"; }
+      finally{ $("#navLoader").classList.remove("active"); }
+    }
+
+    $("#filterForm").addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      const input = $("#components").value.replace(/\u00A0/g," ").replace(/\s*,\s*/g,",").trim();
+      const href = buildHrefWithQ(location.pathname, input);
+      history.replaceState({}, "", href);
+      setLinksHref();
+
+      $("#status").textContent="Filtering…"; $("#navLoader").classList.add("active");
+      try{
+        STATE.filters.components=tokens(input);
+        const vers=await Api.versions(input);
+        if(!(vers||[]).length){ $("#feed").innerHTML=""; $("#sentinel").textContent="No results"; $("#status").textContent="No versions"; return; }
+        vers.sort((a,b)=>(+new Date(b.versionTimestampLastUpdate||b.versionTimestamp||0))-(+new Date(a.versionTimestampLastUpdate||a.versionTimestamp||0)));
+        STATE.rawVersions=vers; applyFilters(); $("#status").textContent=`Filtered (${vers.length})`;
+      }catch(e){ console.error(e); $("#status").textContent="Filter failed"; }
+      finally{ $("#navLoader").classList.remove("active"); }
+    });
+
+    $("#clearBtn").addEventListener("click", ()=>{
+      $("#components").value="";
+      STATE.filters.components=[];
+      const href = buildHrefWithQ(location.pathname, "");
+      history.replaceState({}, "", href);
+      setLinksHref();
+      STATE.filters.toggles.clear();
+      $$('#fixedToggles .toggle, #typeToggles .toggle').forEach(b=>b.setAttribute('aria-pressed','false'));
+      boot();
+    });
+
+    $("#fixedToggles").addEventListener("click",(e)=>{
+      const btn=e.target.closest(".toggle"); if(!btn||btn.classList.contains("disabled")) return;
+      const key=btn.dataset.key; const on=btn.getAttribute("aria-pressed")==="true";
+      btn.setAttribute("aria-pressed", on?"false":"true"); if(on) STATE.filters.toggles.delete(key); else STATE.filters.toggles.add(key);
+      applyFilters();
+    });
+
+    setupObserver(); boot();
+  </script>
 </body>
-
 </html>

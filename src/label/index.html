@@ -1,0 +1,634 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>ReleaseTrain Reddit Browser</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root {
+      --bg: #ffffff;
+      --fg: #111111;
+      --muted: #555555;
+      --line: #dcdcdc;
+      --focus: #000000;
+      --accent: #111111;
+      --hl: #fff59d; /* highlight color */
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+    }
+    a { color: inherit; text-decoration: underline; }
+    a:focus, button:focus, select:focus, input:focus { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+    /* ===== Loader line (top of page) ===== */
+    #loader {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 2px;
+      width: 100%;
+      pointer-events: none;
+      z-index: 9999;
+      background: transparent;
+      opacity: 0;
+      transition: opacity 200ms ease;
+    }
+    #loader .bar {
+      height: 100%;
+      width: 100%;
+      background: var(--fg);
+      transform-origin: left center;
+      transform: scaleX(0);
+      transition: transform 200ms linear;
+    }
+
+    /* Compact header with centered pager */
+    header {
+      padding: 4px 8px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    header h1 { margin: 0; font-size: 14px; font-weight: 600; }
+    .status { font-size: 11px; color: var(--muted); white-space: nowrap; }
+
+    .pager {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin: 0 auto;
+      font-size: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .pager button {
+      border: 1px solid var(--line);
+      background: var(--bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .pager input {
+      width: 60px;
+      padding: 2px 4px;
+      font-size: 12px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      text-align: center;
+    }
+    .badge {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .countbar {
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 4px 8px;
+    }
+    .count-badge {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--accent);
+      padding: 2px 10px;
+      border: 2px solid var(--fg);
+      border-radius: 999px;
+      background: var(--bg);
+    }
+    .muted { color: var(--muted); }
+    main { padding: 8px; }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .card {
+      background: #f7f7f7;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 6px;
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    select, input[type="text"] {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+      background: var(--bg);
+      color: var(--fg);
+    }
+
+    /* Stats row: left-to-right chips */
+    .stats-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      text-align: left;
+      font-size: 12px;
+      color: var(--muted);
+      border-bottom: 2px solid var(--line);
+      padding: 6px 8px;
+    }
+    tbody td {
+      border-bottom: 1px solid var(--line);
+      padding: 6px 8px;
+      vertical-align: top;
+    }
+    .desc { white-space: pre-wrap; word-break: break-word; }
+    .center { text-align: center; }
+
+    /* highlight style */
+    .hl { background: var(--hl); }
+  </style>
+</head>
+<body>
+  <!-- Loader line -->
+  <div id="loader" aria-hidden="true"><div class="bar"></div></div>
+
+  <header>
+    <div style="width: 20%;"></div>
+    <div class="pager">
+      <!-- Month pager -->
+      <button id="prevMonthBtn" aria-label="Previous month">&laquo;</button>
+      <span class="badge"><span id="monthText"></span></span>
+      <button id="nextMonthBtn" aria-label="Next month">&raquo;</button>
+
+      <!-- Page pager -->
+      <button id="prevBtn" aria-label="Previous page">&larr;</button>
+      <span class="badge">Page <span id="pageText">1</span></span>
+      <button id="nextBtn" aria-label="Next page">&rarr;</button>
+
+      <input id="limitInput" type="number" min="1" max="500" step="10" value="500" aria-label="Items per page" />
+      <button id="reloadBtn" aria-label="Reload">&#x21bb;</button>
+    </div>
+    <div class="status" id="status" aria-live="polite">idle</div>
+  </header>
+
+  <div class="countbar" role="status" aria-live="polite">
+    <div id="countBadge" class="count-badge">Showing 0 / 0</div>
+    <div class="muted" id="pageInfo">Last load: 0 items</div>
+  </div>
+
+  <main>
+    <!-- Stats: training data by month -->
+    <section class="card" aria-label="Training data stats">
+      <strong>Training data (labeled) by month</strong>
+      <div id="statsRow" class="stats-row">
+        <span class="muted" id="statsStatus">Loading stats…</span>
+      </div>
+    </section>
+
+    <!-- Filters -->
+    <section class="toolbar">
+      <div class="card">
+        <label for="labelFilter">Label status</label>
+        <select id="labelFilter">
+          <option value="all">All</option>
+          <option value="unlabeled">Unlabeled</option>
+          <option value="labeled">Labeled</option>
+          <option value="positive">Positive</option>
+          <option value="negative">Negative</option>
+        </select>
+      </div>
+
+      <div class="card">
+        <label>Field presence</label>
+        <div class="row">
+          <label class="badge"><input id="withDescription" type="checkbox" /> with author_description</label>
+          <label class="badge"><input id="withTitle" type="checkbox" /> with title</label>
+        </div>
+      </div>
+
+      <div class="card">
+        <label for="searchText">Search (title or description)</label>
+        <input id="searchText" type="text" placeholder="Type to filter…" />
+      </div>
+    </section>
+
+    <!-- Table -->
+    <section>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 180px;">ID</th>
+            <th>Title</th>
+            <th>Author Description</th>
+            <th style="width: 100px;">Reddit</th>
+            <th style="width: 180px;">Is Update Related</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div id="empty" class="center muted" style="padding:10px;" hidden>No posts match your filters.</div>
+    </section>
+  </main>
+
+  <script>
+    (function(){
+      const API_BASE = 'https://releasetrain.io';
+      const LIST_ENDPOINT  = `${API_BASE}/api/reddit`;
+      const UPDATE_ENDPOINT = (redditId) => `${API_BASE}/api/reddit/${encodeURIComponent(redditId)}`;
+      const STATS_ENDPOINT = `${API_BASE}/api/reddit/stats/by-month`;
+
+      const state = { page: 1, limit: 500, raw: [], total: 0, month: null };
+
+      const loader = document.getElementById('loader');
+      const loaderBar = loader.querySelector('.bar');
+      let loaderTimer = null;
+      let loaderProg = 0;
+
+      function startLoader() {
+        clearInterval(loaderTimer);
+        loaderProg = 0;
+        loader.style.opacity = '1';
+        loaderBar.style.transform = 'scaleX(0)';
+        loaderTimer = setInterval(() => {
+          loaderProg += (0.85 - loaderProg) * 0.2;
+          loaderBar.style.transform = `scaleX(${loaderProg})`;
+        }, 120);
+      }
+
+      function finishLoader() {
+        clearInterval(loaderTimer);
+        loaderBar.style.transform = 'scaleX(1)';
+        setTimeout(() => { loader.style.opacity = '0'; }, 150);
+        setTimeout(() => { loaderBar.style.transform = 'scaleX(0)'; }, 400);
+      }
+
+      async function fetchWithLoader(url, options) {
+        startLoader();
+        try {
+          const res = await fetch(url, options);
+          return res;
+        } finally {
+          finishLoader();
+        }
+      }
+
+      const statusEl = document.getElementById('status');
+      const tbody = document.getElementById('tbody');
+      const empty = document.getElementById('empty');
+      const countBadge = document.getElementById('countBadge');
+      const pageInfo = document.getElementById('pageInfo');
+      const pageText = document.getElementById('pageText');
+
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const reloadBtn = document.getElementById('reloadBtn');
+      const limitInput = document.getElementById('limitInput');
+
+      const prevMonthBtn = document.getElementById('prevMonthBtn');
+      const nextMonthBtn = document.getElementById('nextMonthBtn');
+      const monthText = document.getElementById('monthText');
+
+      const labelFilter = document.getElementById('labelFilter');
+      const withDescription = document.getElementById('withDescription');
+      const withTitle = document.getElementById('withTitle');
+      const searchText = document.getElementById('searchText');
+
+      // Stats elements
+      const statsRow = document.getElementById('statsRow');
+      const statsStatus = document.getElementById('statsStatus');
+
+      const s = v => (v === null || v === undefined) ? '' : String(v);
+      const nonEmpty = v => !!s(v).trim();
+      const setStatus = msg => statusEl.textContent = msg;
+
+      function escapeHTML(str){
+        return s(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function highlightHTML(text, query){
+        const safe = escapeHTML(text);
+        const q = s(query).trim();
+        if (q.length < 3) return safe;
+        const rx = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+        return safe.replace(rx, m => `<mark class="hl">${m}</mark>`);
+      }
+
+      // Decide label from metadata.labeled.isUpdateRelated (preferred)
+      // fallback to metadata.isUpdateRelated for older docs
+      const docLabel = doc => {
+        const meta = doc.metadata || {};
+        const labeled = meta.labeled || {};
+        let val = labeled.isUpdateRelated;
+
+        if (val === null || typeof val === 'undefined') {
+          if (typeof meta.isUpdateRelated !== 'undefined' && meta.isUpdateRelated !== null) {
+            val = meta.isUpdateRelated;
+          } else {
+            return 'unlabeled';
+          }
+        }
+        if (val === true) return 'positive';
+        if (val === false) return 'negative';
+        return 'unlabeled';
+      };
+
+      const labelToDisplay = l =>
+        l === 'positive' ? 'Positive'
+        : l === 'negative' ? 'Negative'
+        : 'Not Labeled';
+
+      const displayToLabel = d =>
+        d.toLowerCase().includes('pos') ? 'positive'
+        : d.toLowerCase().includes('neg') ? 'negative'
+        : 'unlabeled';
+
+      function buildQuery() {
+        const params = new URLSearchParams();
+        params.set('page', Math.max(1, state.page));
+        params.set('limit', Math.max(1, Math.min(500, state.limit)));
+        if (state.month) params.set('month', state.month);
+        return `${LIST_ENDPOINT}?${params.toString()}`;
+      }
+
+      function syncMonthLabel() {
+        if (!state.month) {
+          monthText.textContent = 'All time';
+          return;
+        }
+        const y = state.month.slice(0, 4);
+        const m = state.month.slice(4, 6);
+        monthText.textContent = `${y}-${m}`;
+      }
+
+      function shiftMonth(delta) {
+        let d;
+        if (state.month && /^\d{6}$/.test(state.month)) {
+          const y = Number(state.month.slice(0, 4));
+          const m = Number(state.month.slice(4, 6));
+          d = new Date(y, m - 1 + delta, 1);
+        } else {
+          d = new Date();
+          d.setMonth(d.getMonth() + delta);
+        }
+        const ny = d.getFullYear();
+        const nm = String(d.getMonth() + 1).padStart(2, '0');
+        state.month = `${ny}${nm}`;
+        state.page = 1;
+        syncMonthLabel();
+        fetchList();
+      }
+
+      async function fetchStats() {
+        if (!statsRow || !statsStatus) return;
+        statsStatus.textContent = 'Loading stats…';
+        try {
+          const res = await fetchWithLoader(STATS_ENDPOINT);
+          if (!res.ok) throw new Error(res.statusText);
+          const body = await res.json();
+          const items = Array.isArray(body.data) ? body.data : [];
+          if (!items.length) {
+            statsRow.innerHTML = '<span class="muted">No stats yet.</span>';
+            return;
+          }
+          statsRow.innerHTML = '';
+          items
+            .slice()
+            .sort((a, b) => s(a.month).localeCompare(s(b.month)))
+            .forEach(item => {
+              const chip = document.createElement('span');
+              chip.className = 'badge';
+              chip.textContent = `${item.month} ${item.count}`;
+              statsRow.appendChild(chip);
+            });
+        } catch (e) {
+          console.error(e);
+          statsRow.innerHTML = '<span class="muted">Error loading stats.</span>';
+        }
+      }
+
+      async function fetchList() {
+        setStatus('Loading…');
+        tbody.innerHTML = '';
+        empty.hidden = true;
+        pageText.textContent = state.page;
+        try {
+          const res  = await fetchWithLoader(buildQuery());
+          if (!res.ok) throw new Error(res.statusText);
+
+          const body = await res.json();
+
+          const rows = Array.isArray(body) ? body
+                    : (body && Array.isArray(body.data) ? body.data : []);
+
+          state.raw = rows;
+
+          state.total = (body && typeof body.totalCount === 'number')
+            ? body.totalCount
+            : rows.length;
+
+          pageInfo.textContent = `Last load: ${rows.length} items`;
+          setStatus('Loaded');
+          render();
+        } catch (e) {
+          console.error(e);
+          setStatus('Load error');
+          state.raw = [];
+          state.total = 0;
+          pageInfo.textContent = 'Last load: 0 items';
+          render();
+        }
+      }
+
+      function applyFilters(rows){
+        const lf = labelFilter.value;
+        const q = searchText.value.trim().toLowerCase();
+        const needDesc = withDescription.checked;
+        const needTitle = withTitle.checked;
+
+        return rows.filter(doc => {
+          const lab = docLabel(doc);
+          if (lf === 'unlabeled' && lab !== 'unlabeled') return false;
+          if (lf === 'labeled' && lab === 'unlabeled') return false;
+          if (lf === 'positive' && lab !== 'positive') return false;
+          if (lf === 'negative' && lab !== 'negative') return false;
+
+          if (needDesc && !nonEmpty(doc.author_description)) return false;
+          if (needTitle && !nonEmpty(doc.title)) return false;
+
+          if (q) {
+            const hay = (s(doc.title).toLowerCase() + s(doc.author_description).toLowerCase());
+            if (!hay.includes(q)) return false;
+          }
+          return true;
+        });
+      }
+
+      function updateCounts(filtered){
+        countBadge.textContent = `Showing ${filtered} / ${state.total}`;
+      }
+
+      function render(){
+        const rows = applyFilters(state.raw);
+        tbody.innerHTML = '';
+        if (!rows.length) {
+          empty.hidden = false;
+          updateCounts(0);
+          return;
+        }
+        empty.hidden = true;
+        updateCounts(rows.length);
+
+        const frag = document.createDocumentFragment();
+        rows.forEach(doc => frag.appendChild(renderRow(doc)));
+        tbody.appendChild(frag);
+      }
+
+      function renderRow(doc){
+        const tr = document.createElement('tr');
+        const rid = s(doc.redditId || doc._id || '');
+        const q = searchText.value.trim();
+
+        const idTd = document.createElement('td');
+        const idA = document.createElement('a');
+        idA.href = `${API_BASE}/api/reddit/${encodeURIComponent(rid)}`;
+        idA.target = '_blank';
+        idA.textContent = rid || '(no id)';
+        idTd.appendChild(idA);
+
+        const titleTd = document.createElement('td');
+        titleTd.innerHTML = highlightHTML(s(doc.title), q);
+
+        const descTd = document.createElement('td');
+        const d = document.createElement('div');
+        d.className = 'desc';
+        d.innerHTML = highlightHTML(s(doc.author_description), q);
+        descTd.appendChild(d);
+
+        const linkTd = document.createElement('td');
+        if (nonEmpty(doc.url)) {
+          const a = document.createElement('a');
+          a.href = doc.url;
+          a.target = '_blank';
+          a.textContent = s(doc.subreddit) ? `r/${doc.subreddit}` : 'open';
+          linkTd.appendChild(a);
+        } else {
+          linkTd.innerHTML = '<span class="muted">n/a</span>';
+        }
+
+        const selTd = document.createElement('td');
+        const sel = document.createElement('select');
+        ['Not Labeled', 'Positive', 'Negative'].forEach(t => {
+          const o = document.createElement('option');
+          o.textContent = t;
+          sel.appendChild(o);
+        });
+        sel.value = labelToDisplay(docLabel(doc));
+
+        sel.addEventListener('change', async () => {
+          const label = displayToLabel(sel.value);
+          const val = label === 'positive' ? true : label === 'negative' ? false : null;
+
+          // Update nested labeled flag without overwriting entire metadata
+          const payload = {
+            $set: {
+              'metadata.labeled.isUpdateRelated': val
+            }
+          };
+
+          try {
+            const res = await fetchWithLoader(UPDATE_ENDPOINT(rid), {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            if (!res.ok) throw new Error(await res.text().catch(() => res.statusText));
+
+            doc.metadata = doc.metadata || {};
+            doc.metadata.labeled = doc.metadata.labeled || {};
+            doc.metadata.labeled.isUpdateRelated = val;
+
+            setStatus(`Saved ${sel.value}`);
+          } catch (e) {
+            console.error(e);
+            setStatus('Save failed');
+            sel.value = labelToDisplay(docLabel(doc));
+          }
+          render();
+        });
+        selTd.appendChild(sel);
+
+        [idTd, titleTd, descTd, linkTd, selTd].forEach(td => tr.appendChild(td));
+        return tr;
+      }
+
+      prevBtn.onclick  = () => { state.page = Math.max(1, state.page - 1); fetchList(); };
+      nextBtn.onclick  = () => { state.page = Math.max(1, state.page + 1); fetchList(); };
+      reloadBtn.onclick = fetchList;
+
+      prevMonthBtn.onclick = () => shiftMonth(-1);
+      nextMonthBtn.onclick = () => shiftMonth(1);
+
+      limitInput.onchange = () => {
+        const v = parseInt(limitInput.value, 10);
+        state.limit = Math.max(1, Math.min(500, v || 500));
+        fetchList();
+      };
+
+      [labelFilter, withDescription, withTitle].forEach(el => el.onchange = render);
+      searchText.oninput = render;
+
+      // Init from URL params
+      const params = new URLSearchParams(location.search);
+      const p = parseInt(params.get('page'), 10);
+      const l = parseInt(params.get('limit'), 10);
+      const mParam = params.get('month');
+      if (Number.isFinite(p)) state.page = Math.max(1, p);
+      if (Number.isFinite(l)) state.limit = Math.max(1, Math.min(500, l));
+      if (mParam && /^\d{6}$/.test(mParam)) {
+        state.month = mParam;
+      } else {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        state.month = `${y}${m}`;
+      }
+      limitInput.value = state.limit;
+      syncMonthLabel();
+
+      // Kick off
+      fetchStats();
+      fetchList();
+    })();
+  </script>
+</body>
+</html>

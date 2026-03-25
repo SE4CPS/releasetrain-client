@@ -1,813 +1,603 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-    <title>releasetrain.io</title>
-    <link rel="icon" href="https://releasetrain.io/img/favicon.png" type="image/png">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta charset="UTF-8">
-    <meta name="description" content="Software Component Version Releases">
-    <meta name="keywords" content="Version, Release, Agile">
-    <meta name="author" content="Solomon Berhe">
-    <meta http-equiv="refresh" content="3600" />
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-79349402-1"></script>
-    <script src="./../lib/googleanalytics.js"></script>
-    <link href="./../reset.css" rel="stylesheet" />
-    <link href="./../graph/graph.css" rel="stylesheet" />
-    <script type="text/javascript" src="./../lib/sigma.min.js"></script>
-    <script type="text/javascript" src="./../lib/sigma.canvas.edges.labels.curve.js"></script>
-    <script type="text/javascript" src="./../lib/sigma.canvas.edges.labels.curvedArrow.js"></script>
-    <script type="text/javascript" src="./../lib/sigma.canvas.edges.labels.def.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
-    <style type="text/css">
-    body {
-        font-family: Arial, sans-serif;
-        color: #333;
-        background-color: #fff;
-        padding: 5px;
-        overflow: hidden;
-        font-size: 8pt;
+  <meta charset="UTF-8" />
+  <title>releasetrain.io — Graph</title>
+  <link rel="icon" href="https://releasetrain.io/img/favicon.png" type="image/png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- libs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="./../lib/sigma.min.js"></script>
+
+  <style>
+    :root{
+      --bg:#0f1115; --panel:#171a21; --text:#ffffff; --muted:#c7cbd3;
+      --brand:#60a5fa; --line:#202532; --chip:#1a1f2b; --chipText:#ffffff;
+      --focus:#a5b4fc; --bad:#ef4444; --ok:#22c55e;
     }
-
-    table {
-        width: 100%;
-        border-collapse: collapse;
+    *{ box-sizing:border-box }
+    html,body{height:100%;width:100%}
+    html,body{overflow-x:hidden}
+    body{
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif;
+      color:var(--text); background:var(--bg); font-size:11px; overflow-y:hidden;
     }
-
-    th,
-    td {
-        border: 1px solid #ddd;
-        padding: 4px;
-        text-align: left;
+    #loadingBar{position:fixed;left:0;top:0;height:3px;width:0%;background:var(--brand);z-index:2000;transition:width .25s,opacity .25s;opacity:0}
+    .grid3x3{
+      display:grid;
+      grid-template-columns:1.08fr 2.34fr 1fr;
+      grid-template-rows:auto 1fr auto;
+      grid-template-areas:"top top top" "left center right" "footer footer footer";
+      height:100vh;width:100vw;overflow:hidden;
     }
+    .top{grid-area:top;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;border-bottom:1px solid var(--line);background:var(--panel);min-height:46px}
+    .top-left{display:flex;align-items:center;gap:8px;min-width:0}
+    .chips{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow:hidden;max-width:48vw}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border:1px solid var(--line);border-radius:12px;background:var(--chip);color:var(--chipText);font-size:11px;white-space:nowrap;user-select:none}
+    .chip .x{font-weight:bold;opacity:.85;cursor:pointer}.chip .x:hover{opacity:1}
+    .top-mid{display:flex;align-items:center;gap:6px;flex:1 1 auto;min-width:0}
+    .add-wrap{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:10px;padding:2px 6px;background:var(--bg);max-width:100%;overflow:hidden}
+    #addInput{border:none;outline:none;background:transparent;width:180px;min-width:0;font-size:11px;color:var(--text)}
+    #addInput:focus{outline:2px solid var(--focus);outline-offset:2px;border-radius:6px}
+    #addBtn{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:8px;padding:2px 8px;font-size:11px;cursor:pointer;flex:0 0 auto}
+    #addBtn:hover{background:var(--chip)}
+    .top-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:var(--text)}
+    .switch{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text)}
+    .switch input{accent-color:var(--brand)}
+    .linkchip,.actionchip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--text);text-decoration:none;font-weight:700;font-size:12px;opacity:.9;cursor:pointer;white-space:nowrap}
+    .linkchip:hover,.actionchip:hover{background:var(--chip);opacity:1}
 
-    th {
-        background-color: #f2f2f2;
-        color: #333;
-        /* Improved contrast */
-        font-factor: bold;
-        /* Enhance visibility */
+    .left{grid-area:left;border-right:1px solid var(--line);background:var(--panel);padding:8px;overflow:auto;display:flex;flex-direction:column;gap:6px;color:var(--text);overflow-x:hidden;word-break:break-word}
+    h4{margin:2px 0 6px;font-size:12px}
+    .hint{color:var(--muted);font-size:10px;margin:0 0 6px}
+    table{width:100%;border-collapse:collapse;background:var(--panel);table-layout:fixed;color:var(--text)}
+    th,td{border:1px solid var(--line);padding:4px;text-align:left;font-size:11px}
+    th{background:var(--chip);color:var(--chipText)}
+    .row-compact td,.row-compact th{padding:3px}
+    input[type=range]{width:100%;height:16px}
+    input[type=range]::-webkit-slider-thumb{accent-color:var(--brand)}
+    .type-filters{display:flex;flex-wrap:wrap;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px;max-height:140px;overflow:auto;overflow-x:hidden}
+    .type-filters label{display:inline-flex;align-items:center;gap:4px;padding:2px 6px;border:1px solid var(--line);border-radius:10px;background:var(--chip);color:var(--chipText);font-size:11px;white-space:nowrap;cursor:pointer}
+    .type-filters input{margin:0;accent-color:var(--brand)}
+
+    .center{grid-area:center;background:var(--panel);padding:0;overflow:hidden;position:relative;height:100%}
+    #graphContainer{position:absolute;inset:0;height:100%;width:100%;overflow:hidden}
+    #graphCostBadge{position:absolute;left:10px;top:10px;z-index:5;padding:4px 8px;border-radius:8px;border:1px solid var(--line);background:rgba(26,31,43,.85);color:#fff;font-weight:700;pointer-events:none;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis}
+
+    .right{grid-area:right;border-left:1px solid var(--line);background:var(--panel);padding:8px;overflow:auto;display:flex;flex-direction:column;gap:6px;color:var(--text)}
+    .footer{grid-area:footer;background:var(--panel);border-top:1px solid var(--line);color:var(--muted);padding:8px 10px;text-align:center;white-space:normal;overflow-x:hidden}
+
+    dialog{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--panel);color:var(--text);max-width:920px;width:min(96vw,920px)}
+    dialog::backdrop{background:rgba(0,0,0,.55)}
+    .dialog-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+    .closeBtn{cursor:pointer;border:1px solid var(--line);background:transparent;border-radius:8px;padding:4px 8px;color:var(--text)}
+    .closeBtn:hover{background:var(--chip)}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0}
+    .grow{flex:1 1 auto}
+    .tagList{display:flex;flex-wrap:wrap;gap:6px;align-items:center;max-height:240px;overflow:auto}
+    .tagPill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--chip);padding:4px 8px;border-radius:999px}
+    .tagPill input{accent-color:var(--brand)}
+
+    @media (max-width:900px){
+      body{overflow-y:auto;font-size:12px}
+      .grid3x3{grid-template-columns:1fr;grid-template-rows:auto minmax(360px,1fr) auto auto auto;grid-template-areas:"top" "center" "left" "right" "footer";height:100vh}
+      .top{flex-wrap:wrap;gap:6px}
+      .chips{max-width:100%;flex-wrap:wrap}
+      .top-mid{order:3;width:100%}
+      .top-right{order:2;width:100%;justify-content:flex-start}
+      .type-filters{max-height:none}
     }
-
-    input[type=range] {
-        width: 100%;
+    @media (max-width:420px){
+      .add-wrap{flex:1} #addInput{width:100%} .top-left strong{display:none}
     }
-
-    section {
-        margin: 0px;
-        padding: 0px;
-    }
-
-    input[type=number] {
-        width: 30px;
-    }
-
-    .container {
-        max-width: 600px;
-        margin: auto;
-    }
-
-    .attribute {
-        border: 1px solid #333;
-        margin-bottom: 10px;
-        padding: 10px;
-    }
-
-    .attribute label {
-        display: block;
-        margin-bottom: 5px;
-        font-factor: bold;
-        /* Enhanced visibility */
-    }
-
-    .slider {
-        width: 100%;
-    }
-
-    .flex-container {
-        height: 95vh;
-        display: flex;
-    }
-
-    .flex-left {
-        width: 350px;
-        overflow-y: auto;
-    }
-
-    .flex-right {
-        width: calc(100% - 350px);
-        background-color: transparent;
-        max-height: 100vh;
-    }
-
-    .circle {
-        height: 10px;
-        width: 10px;
-        background-color: #bbb;
-        border-radius: 50%;
-        display: inline-block;
-        margin-right: 4px;
-    }
-
-    /* CSS for mobile devices */
-    @media only screen and (max-width: 767px) {
-        #container {
-            display: none;
-        }
-
-        .flex-left {
-            width: 100%;
-        }
-    }
-
-    /* CSS for tablet devices */
-    @media only screen and (min-width: 768px) and (max-width: 1024px) {
-        #container {
-            display: none;
-        }
-
-        .flex-left {
-            width: 100%;
-        }
-    }
-
-    .select2-container--default .select2-selection--multiple {
-        background-color: #f2f2f2;
-        border: 1px solid #d4d4d4;
-        border-radius: 4px;
-    }
-
-    .select2-dropdown {
-        background-color: #f9f9f9;
-        border: 1px solid #d4d4d4;
-    }
-
-    .select2-results__option {
-        color: #333;
-    }
-
-    .select2-results__option--highlighted[aria-selected] {
-        background-color: #e9e9e9;
-    }
-    </style>
+  </style>
 </head>
-
 <body>
-    <section class="flex-container">
-        <section id="containerLeftId" class="flex-left">
-            <select id="mySelect2" class="js-example-basic-multiple" name="states[]" multiple="multiple"></select>
-            <table id="ecoTableId" style="margin-top:5px">
-                <tr>
-                    <th>Ecosystem:</th>
-                    <th colspan="2" id="ecoTitleTableId"></th>
-                </tr>
-                <tr>
-                    <td>Maintenance Cost</td>
-                    <td><span id="maintenanceEquationId">&sum;(attribute) </span></td>
-                    <td><span id="maintenanceCostId"></span></td>
-                </tr>
-                <tr>
-                    <th style="width: 150px">Attribute</th>
-                    <th style="width: 20px">Impact</th>
-                    <th style="width: 100px;">Count</th>
-                </tr>
-            </table>
-            <br>
-            <table id="ecoComponentTableId" style="margin-top: 10px; width: 100%;">
-                <tr>
-                    <th>Component:</th>
-                    <th colspan="2" id="componentTitleTableId">Click graph node for details</th>
-                </tr>
-                <tr>
-                    <th style="width: 125px">Attribute</th>
-                    <th style="width: 125px;">Count</th>
-                </tr>
-                <tr>
-                    <td>Cost Component</td>
-                    <td><span id="costComponentId"></span></td>
-                </tr>
-                <tr>
-                    <td>Cost Latest Version</td>
-                    <td><span id="costComponentVersionId"></span></td>
-                </tr>
-            </table>
-        </section>
-        <section id="container" class="flex-right">
-        </section>
-    </section>
-    <script>
-    console.log("start");
+  <div id="loadingBar"></div>
 
-    const URL_API_ENDPOINT = "https://releasetrain.io/api";
-    // const URL_HOMEPAGE = "http://localhost:8080";
-    const URL_HOMEPAGE = "https://releasetrain.io";
-    const urlParams = new URLSearchParams(window.location.search);
-    const q = urlParams.get('q') === null ? "" : urlParams.get('q');
+  <div class="grid3x3">
+    <div class="top">
+      <div class="top-left">
+        <strong style="font-size:12px;">Components:</strong>
+        <div id="chipContainer" class="chips" title="Top 10 from today on load"></div>
+      </div>
 
-    let urlSelectOptions = URL_API_ENDPOINT + '/c/names';
+      <div class="top-mid">
+        <div class="add-wrap" title="Type a component and press Enter or +">
+          <input id="addInput" list="nameList" placeholder="Add component…" autocomplete="off" />
+          <button id="addBtn">+</button>
+        </div>
+        <datalist id="nameList"></datalist>
+      </div>
 
-    let counterId = 0;
+      <div class="top-right">
+        <div class="switch">
+          <input type="checkbox" id="toggleOnlyToday">
+          <label for="toggleOnlyToday">Only today</label>
+        </div>
+        <div class="switch">
+          <input type="checkbox" id="toggleUniqueType">
+          <label for="toggleUniqueType">Unique type</label>
+        </div>
+        <div class="switch">
+          <input type="checkbox" id="toggleRealOnly">
+          <label for="toggleRealOnly">Real only</label>
+        </div>
 
-    q.split(",").forEach(component => {
-        if (q === "") {
-            return;
+        <button id="edgesBtn" class="actionchip" title="Configure edge logic">Edges</button>
+        <button id="legendBtn" class="actionchip" title="What things mean">Legend</button>
+        <button id="tagsBtn" class="actionchip" title="Show tag similarity">Tags</button>
+
+        <a id="homeBtn" class="linkchip" href="#" title="Back to releasetrain.io with the same query">Main ↗</a>
+      </div>
+    </div>
+
+    <aside class="left">
+      <h4>Component Types</h4>
+      <div id="typeFilters" class="type-filters" title="Toggle which types appear in the graph"></div>
+      <div class="hint">Toggle to show or hide types in the graph.</div>
+
+      <h4>Node Cost Regulators</h4>
+      <div class="hint">These sliders affect node cost (color intensity).</div>
+      <table id="regTable">
+        <tr class="row-compact">
+          <th class="nowrap">Attribute</th>
+          <th class="nowrap">Impact</th>
+        </tr>
+      </table>
+
+      <h4 style="margin-top:10px;">View</h4>
+      <div class="hint">Zoom level (affects label readability).</div>
+      <input id="zoomRange" type="range" min="60" max="220" value="140" style="width:100%;">
+      <div class="muted" id="zoomLabel">140%</div>
+    </aside>
+
+    <main class="center">
+      <div id="graphCostBadge">Graph cost: 0</div>
+      <div id="graphContainer"></div>
+    </main>
+
+    <aside class="right">
+      <h4>Ecosystem</h4>
+      <table id="ecoTable">
+        <tr class="row-compact">
+          <th class="nowrap">Scope</th>
+          <th class="nowrap" colspan="2" id="ecoTitle"></th>
+        </tr>
+        <tr class="row-compact">
+          <td class="nowrap">Maintenance Cost</td>
+          <td class="nowrap"><span id="maintenanceEquation">&sum;(attribute)</span></td>
+          <td class="nowrap"><span id="maintenanceCost">0</span></td>
+        </tr>
+        <tr class="row-compact">
+          <th class="nowrap">Attribute</th>
+          <th class="nowrap">Impact</th>
+          <th class="nowrap">Count</th>
+        </tr>
+      </table>
+
+      <h4>Component</h4>
+      <table id="componentTable">
+        <tr class="row-compact">
+          <th class="nowrap">Component</th>
+          <th class="nowrap" id="componentTitle">Click a node</th>
+        </tr>
+        <tr class="row-compact"><th class="nowrap">Attribute</th><th class="nowrap">Count</th></tr>
+        <tr class="row-compact"><td class="nowrap">Cost Component</td><td class="nowrap"><span id="costComponent">0</span></td></tr>
+        <tr class="row-compact"><td class="nowrap">Cost Latest Version</td><td class="nowrap"><span id="costComponentVersion">0</span></td></tr>
+      </table>
+    </aside>
+
+    <div class="footer" id="bottomTip">
+      Tip: “Edges ⚙” tunes similarity; “Legend” explains the page; “Tags” shows which tags formed edges.
+    </div>
+  </div>
+
+  <!-- ======= Dialogs ======= -->
+  <dialog id="edgesDialog">
+    <div class="dialog-head">
+      <strong>Edges</strong>
+      <button class="closeBtn" data-close="edgesDialog">Close</button>
+    </div>
+
+    <div class="row">
+      <label class="grow"><input type="checkbox" id="edgeUseTags" checked> Use shared tags</label>
+      <label class="grow"><input type="checkbox" id="edgeUseType" checked> Use component type overlap</label>
+    </div>
+
+    <div class="row">
+      <div class="grow">
+        <div class="muted" style="margin-bottom:4px">Exclude “common” tags above this global frequency</div>
+        <input id="edgeCommonPct" type="range" min="5" max="95" value="12" />
+        <div class="muted">Threshold: <b id="edgeCommonPctLabel">12%</b></div>
+      </div>
+    </div>
+
+    <!-- Tag universe + manual excludes (NO LIMIT; show all) -->
+    <div id="edgeTagsSummary" class="row" style="align-items:flex-start">
+      <div class="grow">
+        <div style="font-weight:700;margin-bottom:6px">Matching tag universe</div>
+        <div class="muted" id="edgeTagsMeta">Calculating…</div>
+        <div id="edgeTagsChecklist" class="tagList" style="margin-top:6px"></div>
+      </div>
+    </div>
+
+    <ul id="edgesQuickStats" style="margin:8px 0 6px 16px"></ul>
+    <div class="muted">Note: Edges are added/removed based on this rule; edge weight does not scale with commonness.</div>
+  </dialog>
+
+  <dialog id="legendDialog">
+    <div class="dialog-head">
+      <strong>Legend</strong>
+      <button class="closeBtn" data-close="legendDialog">Close</button>
+    </div>
+    <ul style="margin:0 0 6px 16px;line-height:1.5">
+      <li><b>Node color</b>: gray scale by cost; <span style="color:var(--ok)">green</span> = lowest (and any zero), <span style="color:var(--bad)">red</span> = highest.</li>
+      <li><b>Node label</b>: <i>Name (cost)</i>.</li>
+      <li><b>Edges</b>: drawn when components share non-common tags or matching type (see Edges dialog).</li>
+      <li><b>Only today</b>: releases in last 24h.</li>
+      <li><b>Unique type</b>: keep first-seen type per component.</li>
+      <li><b>Real only</b>: hides noisy/short names & tiny tagsets.</li>
+    </ul>
+  </dialog>
+
+  <dialog id="tagsDialog">
+    <div class="dialog-head">
+      <strong>Tags</strong>
+      <button class="closeBtn" data-close="tagsDialog">Close</button>
+    </div>
+    <div id="tagsContent" class="muted">Click nodes to see their tags and overlaps here.</div>
+  </dialog>
+
+  <script>
+    const URL_API = "https://releasetrain.io/api";
+    const STOPWORDS = new Set(["github","gitlab","bitbucket","access","can","core","enterprise","management","downloads","users","union","man","tc","oss","beta","production","link","version","component"]);
+    const versionChannel = { major:"major", minor:"minor", patch:"patch", cve:"cve", invalid:"invalid" };
+
+    const EDGE_PARAMS = {
+      useTags: true,
+      useType: true,
+      commonThreshold: 0.12,
+      excludedTags: new Set(),
+    };
+
+    function nowMs(){ return Date.now(); }
+    function ms(days){ return days*24*60*60*1000; }
+    function yyyymmddFromDate(d){ return d.getFullYear()+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0"); }
+    function yyyymmddOffset(days){ const d=new Date(nowMs()+ms(days)); return yyyymmddFromDate(d); }
+    function isInLast24Hours(v){
+      const now = nowMs();
+      let t = null;
+      if (v.versionReleaseEpochMs != null) t = Number(v.versionReleaseEpochMs);
+      else if (v.versionReleaseEpoch != null) t = Number(v.versionReleaseEpoch)*1000;
+      else if (v.versionReleaseDateISO) t = Date.parse(v.versionReleaseDateISO);
+      else if (v.versionReleaseDateTime) t = Date.parse(v.versionReleaseDateTime);
+      if (Number.isFinite(t)) return (now - t) >= 0 && (now - t) <= ms(1);
+      const d = String(v.versionReleaseDate||"").trim();
+      if (!d) return false;
+      const today = yyyymmddFromDate(new Date(now));
+      const yesterday = yyyymmddOffset(-1);
+      return d===today || d===yesterday;
+    }
+
+    function loadingStart(){const bar=document.getElementById("loadingBar");bar.style.opacity="1";bar.style.width="15%";let pct=15;bar._tick=setInterval(()=>{pct=Math.min(90,pct+Math.random()*7);bar.style.width=pct+"%"},160)}
+    function loadingDone(){const bar=document.getElementById("loadingBar");clearInterval(bar._tick);bar.style.width="100%";setTimeout(()=>{bar.style.opacity="0";bar.style.width="0"},260)}
+    function getParam(name){ return new URLSearchParams(window.location.search).get(name); }
+    function normalizeKey(name){ return String(name||"").trim().toLowerCase(); }
+
+    function setParamComma(list){
+      const seen=new Set(),dedup=[];for(const n of list){const k=normalizeKey(n);if(seen.has(k))continue;seen.add(k);dedup.push(n)}
+      const params=new URLSearchParams(window.location.search);
+      if(dedup.length)params.set("q",dedup.join(","));else params.delete("q");
+      const qs=params.toString().replace(/%2C/g,",").replace(/\+/g," ");
+      history.replaceState({}, "", window.location.pathname+(qs?("?"+qs):""));
+      setMainHref();
+    }
+    function readQList(){
+      const raw=(getParam("q")||"").split(",").map(s=>s.trim()).filter(Boolean);
+      const seen=new Set(),out=[];for(const n of raw){const k=normalizeKey(n);if(seen.has(k))continue;seen.add(k);out.push(n)}return out;
+    }
+    function buildMainUrl(){
+      const params=new URLSearchParams(window.location.search);const q=params.get("q")||"";if(!q)return "https://releasetrain.io/";const qParam=encodeURIComponent(q).replace(/%2C/gi,",");return `https://releasetrain.io/?q=${qParam}`;
+    }
+    function setMainHref(){const a=document.getElementById("homeBtn");if(a)a.href=buildMainUrl();}
+    function isRealComponent(nameLower,tagsSet){
+      const n=(nameLower||"").trim().toLowerCase();if(!n)return false;if(STOPWORDS.has(n))return false;if(n.length<=2)return false;if(/^[0-9]+$/.test(n))return false;if(/^[a-z]{1,4}$/.test(n))return false;if(n.includes("sourcecodester"))return false;if(tagsSet&&tagsSet.size&&tagsSet.size<2)return false;return true;
+    }
+    function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+
+    function renderChips(names){
+      const wrap=document.getElementById("chipContainer");wrap.innerHTML="";
+      names.forEach(n=>{const div=document.createElement("div");div.className="chip";div.dataset.name=n;div.innerHTML=`<span>${n}</span><span class="x" title="Remove">×</span>`;div.querySelector(".x").onclick=(ev)=>{ev.stopPropagation();removeChip(n)};wrap.appendChild(div)});
+    }
+    function addChip(name){if(!name)return;const cur=readQList();const clean=name.trim();if(!clean)return;const present=new Set(cur.map(x=>normalizeKey(x)));if(present.has(normalizeKey(clean)))return;cur.push(clean);const next=cur.slice(0,10);setParamComma(next);renderChips(next);fetchAndRender();}
+    function removeChip(name){const cur=readQList();const idx=cur.findIndex(x=>normalizeKey(x)===normalizeKey(name));if(idx>=0)cur.splice(idx,1);setParamComma(cur);renderChips(cur);fetchAndRender();}
+
+    async function loadNameSuggestions(){try{const res=await fetch(`${URL_API}/c/names`);const names=await res.json();const dl=document.getElementById("nameList");dl.innerHTML="";names.slice(0,1500).forEach(n=>{const opt=document.createElement("option");opt.value=n;dl.appendChild(opt)})}catch(e){}}
+    function bindAddBox(){const input=document.getElementById("addInput");const btn=document.getElementById("addBtn");btn.addEventListener("click",()=>{addChip(input.value);input.value="";input.focus()});input.addEventListener("keydown",(e)=>{if(e.key==="Enter"){addChip(input.value);input.value=""}})}
+
+    let eco=null;
+
+    function initEcoAttributesIfNeeded(){
+      if(eco&&eco.attributeArrayList)return;
+      eco={components:{},edges:{},attributeArrayList:["component","link","version","major","minor","patch","cve","today"],attributeObjectList:{},typeSet:new Set(),selectedTypes:null,cost:0,tagCounts:new Map()};
+      const reg=document.getElementById("regTable");
+      eco.attributeArrayList.forEach(attr=>{
+        const tr=document.createElement("tr");tr.className="row-compact";tr.id=attr+"RowId";
+        const initVal=(["today"].includes(attr))?2:(["link","major","minor","patch","cve","invalid","version"].includes(attr)?0:1);
+        tr.innerHTML=`<td class="nowrap">${cap(attr)}</td><td class="nowrap"><input id="factor${cap(attr)}Id" type="range" min="0" max="2" value="${initVal}" /></td>`;
+        reg.appendChild(tr);
+        eco.attributeObjectList[attr]={factor:initVal,factorHtmlElementId:`factor${cap(attr)}Id`,count:0};
+      });
+      eco.attributeArrayList.forEach(attr=>{
+        const el=document.getElementById(eco.attributeObjectList[attr].factorHtmlElementId);
+        el.addEventListener("input",()=>{recalcEcosystem();renderGraph();renderRightTables();});
+      });
+      const zr=document.getElementById('zoomRange');const zl=document.getElementById('zoomLabel');
+      zr.addEventListener('input',()=>{zl.textContent=zr.value+'%';renderGraph();});
+    }
+
+    function channelByVersion(v){
+      const nums=String(v.versionNumber||"0").split(".");let ch=versionChannel.invalid;
+      ch=(nums[1]!=0&&nums[2]==0)?versionChannel.minor:ch;
+      ch=(v.versionReleaseChannel===versionChannel.patch||nums[2]!=0)?versionChannel.patch:ch;
+      ch=(nums[1]==0&&nums[2]==0)?versionChannel.major:ch;
+      ch=(v.versionReleaseChannel===versionChannel.cve)?versionChannel.cve:ch;
+      return ch;
+    }
+    function setDisplayName(comp,candidate){if(!comp.display)comp.display=candidate;}
+
+    function extractTypes(v){
+      const set=new Set();
+      if(v?.classification?.componentType&&Array.isArray(v.classification.componentType)){v.classification.componentType.forEach(t=>{if(t)set.add(String(t).trim())});}
+      const fallbacks=[v.versionPredictedComponentType,v.predictedComponentType,v.componentType,v.versionComponentType,v.versionType,v.productType];
+      fallbacks.forEach(c=>{if(c){set.add(String(c).trim())}});
+      return [...set].map(s=>normalizeKey(s)).filter(Boolean);
+    }
+
+    function transform(raw,typeByKey){
+      initEcoAttributesIfNeeded();
+      eco.components={};eco.edges={};eco.typeSet=new Set();eco.tagCounts=new Map();
+      eco.attributeArrayList.forEach(a=>{eco.attributeObjectList[a].count=0;});
+      const uniqType=document.getElementById("toggleUniqueType").checked;
+      const realOnly=document.getElementById("toggleRealOnly").checked;
+
+      for(const v of raw){
+        const nameRaw=(v.versionProductName||"").trim();if(!nameRaw)continue;
+        const key=normalizeKey(nameRaw);
+        const tags=new Set((v.versionSearchTags||[]).map(t=>normalizeKey(t)));
+        if(realOnly&&!isRealComponent(key,tags))continue;
+
+        if(!eco.components[key]){
+          eco.components[key]={id:key,label:key,display:nameRaw,color:"#bbb",x:0,y:0,size:1,cost:0,costLatestVersion:0,type:null,typeSet:new Set(),tags:new Set(),attributeObjectList:{}};
+          eco.attributeArrayList.forEach(a=>{eco.components[key].attributeObjectList[a]={count:0};});
         }
-        let initialValue = { id: counterId, text: component };
-        let newOption = new Option(initialValue.text, initialValue.id, true, true);
-        $('#mySelect2').append(newOption).trigger('change');
-        counterId = counterId + 1;
-    })
+        setDisplayName(eco.components[key],nameRaw);
 
-    $('#mySelect2').select2({
-        ajax: {
-            url: urlSelectOptions,
-            processResults: function(data) {
-                counterId = 1000;
-                let resultsArray = [];
-                data.forEach(version => {
+        const types=extractTypes(v);types.forEach(t=>eco.components[key].typeSet.add(t));
+        if(types.length){const primary=types[0];if(!eco.components[key].type||uniqType){eco.components[key].type=primary;}types.forEach(t=>eco.typeSet.add(t));}
 
-                    if (version.hasOwnProperty('versionProductName') === false) {
-                        return;
-                    }
+        const ch=channelByVersion(v);
+        eco.components[key].attributeObjectList[ch].count++;
+        eco.components[key].attributeObjectList["version"].count++;
+        eco.components[key].attributeObjectList["component"].count=1;
 
-                    if (isFirstLetterAlphabetic(version.versionProductName) === false) {
-                        return;
-                    }
+        (v.versionSearchTags||[]).forEach(t=>{const nt=normalizeKey(t);eco.components[key].tags.add(nt);});
 
-                    resultsArray.push({ "id": counterId, "text": version.versionProductName })
+        eco.attributeObjectList[ch].count++;
+        eco.attributeObjectList["version"].count++;
+        eco.attributeObjectList["component"].count=Object.keys(eco.components).length;
 
-                    counterId = counterId + 1;
-                })
+        if(isInLast24Hours(v)){eco.attributeObjectList["today"].count++;eco.components[key].attributeObjectList["today"].count++;}
+      }
 
-                return {
-                    results: resultsArray
-                };
-            }
-        }
-    });
+      if(typeByKey){
+        Object.keys(eco.components).forEach(k=>{if(!eco.components[k].type&&typeByKey.has(k)){const t=typeByKey.get(k);if(t){eco.components[k].type=t;eco.typeSet.add(t);}}});
+      }
 
-    $('#mySelect2').on('change', function() {
-        var selectedTexts = $(this).find(':selected').map(function() {
-            return $(this).text();
-        }).get();
-
-        console.log(selectedTexts);
-
-        // Convert array of values to a string if multiple selection is enabled
-        var valuesAsString = selectedTexts.join(',');
-
-        // Define the URL to call
-        var urlToCall = URL_HOMEPAGE + '/graph?q=' + valuesAsString;
-
-        window.location.href = urlToCall;
-    });
-
-    function isFirstLetterAlphabetic(str) {
-        if (str.length === 0) return false; // Check if the string is empty
-        return /^[A-Za-z]/.test(str.charAt(0));
+      recomputeGlobalTagCounts();
+      buildEdges();
+      renderTypeFilters();
+      recalcEcosystem();
     }
 
-    const versionChannel = {
-        major: "major",
-        minor: "minor",
-        patch: "patch",
-        cve: "cve",
-        invalid: "invalid"
+    function recomputeGlobalTagCounts(){
+      eco.tagCounts=new Map();
+      const keys=Object.keys(eco.components);
+      for(const k of keys){for(const t of eco.components[k].tags){eco.tagCounts.set(t,(eco.tagCounts.get(t)||0)+1);}}
     }
 
-    const table = document.getElementById('ecoTableId');
-
-    document.getElementById("ecoTitleTableId").innerHTML = q === "" ? "Last 50 updates" : q;
-
-    let eco = null;
-
-    extractData();
-
-    function extractData() {
-        console.log("extract");
-
-        $.ajax({
-            url: URL_API_ENDPOINT + "/v?q=" + encodeURIComponent(q), // Ensure query is URL encoded
-            type: 'GET',
-            dataType: 'json',
-            success: function(data) {
-                if (!Array.isArray(data)) {
-                    console.error("Data is not an array");
-                    return;
-                }
-
-                const sortedData = data.sort((a, b) => {
-                    return new Date(a.versionReleaseDate) - new Date(b.versionReleaseDate);
-                });
-
-                transform(sortedData);
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                console.error("Error fetching data:", textStatus, errorThrown);
-            }
-        });
-    }
-
-    function transform(data) {
-        console.log("transform");
-
-        // transform data and ui
-        transformEcosystemInitialize(data);
-
-        // transform data
-        transformEcosystemUpdate();
-
-        // load data and ui
-        loadEcosystem();
-
-    }
-
-    function transformEcosystemUpdate() {
-
-        eco.cost = 0;
-
-        let versionRelevantAttributes = ['major', 'minor', 'patch', 'cve', 'today'];
-
-        for (component in eco.components) {
-
-            eco.components[component].cost = 0;
-
-            eco.components[component].costLatestVersion = 0;
-
-        }
-
-        eco.attributeArrayList.forEach(attribute => {
-
-            eco.attributeObjectList[attribute].factor = Number(document.getElementById(eco.attributeObjectList[attribute].factorHtmlElementId).value);
-
-            eco.cost += eco.attributeObjectList[attribute].count * eco.attributeObjectList[attribute].factor;
-
-            for (component in eco.components) {
-
-                eco.components[component].cost += eco.components[component].attributeObjectList[attribute].count * eco.attributeObjectList[attribute].factor;
-
-                if (versionRelevantAttributes.includes(attribute)) {
-
-                    let versionCount = eco.components[component].attributeObjectList[attribute].count > 0 ? 1 : 0;
-
-                    eco.components[component].costLatestVersion += versionCount * eco.attributeObjectList[attribute].factor;
-
-                }
-            }
-
-        });
-    }
-
-    function loadEcosystem() {
-
-        loadGraphData();
-
-        loadTableEcosystemData();
-
-        loadTableComponentData();
-
-    }
-
-    function getIntersection(componentA, componentB) {
-        return Array.from(eco.components[componentA].tags)
-            .filter(tag => isTagValidForIntersection(tag, componentB));
-    }
-
-    function isTagValidForIntersection(tag, componentB) {
-        const invalidTags = ["cve", "production", "beta"];
-        return eco.components[componentB].tags.has(tag) &&
-            !q.includes(tag) &&
-            !invalidTags.includes(tag) &&
-            isNaN(tag);
-    }
-
-    function createAndProcessEdge(componentA, componentB, intersection) {
-
-        let edgeId = componentA + componentB;
-
-        if (eco.edges.hasOwnProperty(edgeId) === false) {
-
-            eco.edges[edgeId] = createEdge(componentA, componentB, intersection);
-            eco.attributeObjectList['link'].count++;
-            eco.components[componentA].attributeObjectList['link'].count++;
-
-        }
-    }
-
-    function createEdge(componentA, componentB, intersection) {
-        return {
-            "id": componentA + componentB,
-            "source": componentA,
-            "target": componentB,
-            "label": intersection.join(",")
-        };
-    }
-
-    function calculateRGB(eco, component) {
-        var cost = eco.components[component].cost;
-        var r, g, b;
-
-        if (cost === 0) {
-            // If cost is 0, set RGB to almost white (250, 250, 250)
-            r = g = b = 250;
-        } else {
-            // The higher the cost, the closer to black (0, 0, 0)
-            var value = Math.max(0, 255 - (cost * 30)); // Ensure value doesn't go below 0
-            r = g = b = value;
-        }
-
-        if (eco.attributeObjectList['today'].factor === 2 && eco.components[component].attributeObjectList['today'].count > 0) {
-            r = 0;
-            g = 0;
-            b = 0;
-        }
-
-        return `rgb(${r}, ${g}, ${b})`;
-    }
-
-
-    function loadGraphData() {
-        console.log("loadData");
-
-        let target = { "nodes": [], "edges": [] }
-        let counter = 0;
-
-        document.getElementById('container').innerHTML = "";
-
-        let maxValue = 0;
-        let maxNode = null;
-        let node = null
-        var lightRed = 'rgb(255, 102, 102)';
-
-        for (let component in eco.components) {
-            eco.components[component].t = 3 * Math.PI * counter / 100;
-            eco.components[component].x = Math.round(30 * Math.cos(eco.components[component].t));
-            eco.components[component].y = Math.round(30 * Math.sin(eco.components[component].t));
-            eco.components[component].label = component + " ( " + eco.components[component].cost + " ) ";
-
-            eco.components[component].color = calculateRGB(eco, component);
-
-            node = eco.components[component];
-
-            node.size = 1;
-
-            target.nodes.push(node);
-
-
-            if (node.cost > maxValue) {
-                maxValue = node.cost;
-                maxNode = node;
-            }
-
-            counter = counter + 4;
-        }
-
-        target.nodes.forEach(node => {
-            if (node.cost === maxValue) {
-                node.color = lightRed; // Set the color to light red if the node cost equals maxValue
-            }
-        });
-        
-        for (let edge in eco.edges) {
-
-            target.edges.push(eco.edges[edge]);
-
-        }
-
-        s = new sigma({
-            graph: target,
-            renderer: {
-                container: document.getElementById('container'),
-                type: sigma.renderers.canvas,
-            },
-            settings: {
-                drawEdgeLabels: true,
-                drawLabels: true,
-                batchEdgesDrawing: true
-            }
-        });
-
-
-
-        s.bind('clickNode', function(e) {
-            let component = e.data.node.label.split(" ( ")[0];
-            loadTableComponentData(component);
-        });
-    }
-
-    function loadTableEcosystemData() {
-
-        eco.attributeArrayList.forEach(attribute => {
-
-            document.getElementById(attribute + "AllId").innerHTML = prettyEcoCountOutputHTML(attribute);
-
-        })
-
-        document.getElementById("maintenanceCostId").innerHTML = eco.cost;
-    }
-
-    function prettyEcoCountOutputHTML(attribute) {
-
-        const count = eco.attributeObjectList[attribute].count;
-        const factor = eco.attributeObjectList[attribute].factor;
-
-        const result = count * factor;
-
-        if (result === 0) {
-
-            document.getElementById(attribute + "RowId").style.backgroundColor = "#e5e5e5";
-            document.getElementById(attribute + "RowId").style.color = "#9e9e9e";
-
-        } else {
-
-            document.getElementById(attribute + "RowId").style.backgroundColor = "#ffffff";
-            document.getElementById(attribute + "RowId").style.color = "#000000";
-
-        }
-
-        return '<div>' + count + ' x ' + factor + ' = ' + result + '</div>';
-    }
-
-    function prettyCompCountOutputHTML(attribute, component) {
-
-        const count = eco.components[component].attributeObjectList[attribute].count;
-        const factor = eco.attributeObjectList[attribute].factor;
-
-        const result = count * factor;
-
-        if (result === 0) {
-
-            document.getElementById(attribute + "RowId").style.backgroundColor = "#e5e5e5";
-            document.getElementById(attribute + "RowId").style.color = "#9e9e9e";
-
-        } else {
-
-            document.getElementById(attribute + "RowId").style.backgroundColor = "#ffffff";
-            document.getElementById(attribute + "RowId").style.color = "#000000";
-
-        }
-
-        return '<div>' + count + ' x ' + factor + ' = ' + result + '</div>';
-    }
-
-
-    function loadTableComponentData(component) {
-
-        if ((component !== undefined) && (eco.components[component] !== undefined)) {
-
-            var table = document.getElementById('ecoComponentTableId');
-
-            var startIndex = 4;
-
-            var componentTitleElement = document.getElementById("componentTitleTableId");
-
-            componentTitleElement.innerHTML = '<a href="' + URL_HOMEPAGE + "?q=" + component + '" target="_blank" style="font-size: 10pt">' + component + '</a>';
-
-            // Clear dynamic rows, if any
-            while (table.rows.length > startIndex) {
-
-                table.deleteRow(startIndex);
-
-            }
-
-            eco.attributeArrayList.forEach(attribute => {
-
-                let count = eco.components[component].attributeObjectList[attribute].count;
-
-                if (count > 0) {
-                    let row = table.insertRow();
-                    row.insertCell(0).innerText = attribute;
-                    row.insertCell(1).innerHTML = prettyCompCountOutputHTML(attribute, component);
-                }
-            })
-
-            document.getElementById("costComponentVersionId").innerHTML = eco.components[component].costLatestVersion;
-            document.getElementById("costComponentId").innerHTML = eco.components[component].cost;
-        }
-    }
-
-    function transformEcosystemInitialize(data) {
-
-        if (eco === null) {
-
-            eco = {
-                components: {},
-                edges: {}
-            }
-
-            eco['attributeArrayList'] = ['component', 'link', 'version', 'major', 'minor', 'patch', 'cve', 'invalid', 'today'];
-
-            // Initialize all attribute candidates
-            data.forEach(version => {
-
-                if (version.hasOwnProperty('versionPredictedComponentType')) {
-
-                    let categoryKey = version['versionPredictedComponentType'].toLowerCase();
-
-                    if (eco['attributeArrayList'].includes(categoryKey) === false) {
-
-                        eco['attributeArrayList'].push(categoryKey);
-
-                    }
-                }
+    function buildEdges(){
+      eco.edges={};
+      eco.attributeObjectList["link"].count=0;
+      Object.keys(eco.components).forEach(k=>{if(eco.components[k]?.attributeObjectList?.link){eco.components[k].attributeObjectList.link.count=0;}});
+
+      recomputeGlobalTagCounts();
+
+      const keys=Object.keys(eco.components);const nComps=Math.max(1,keys.length);
+      for(let i=0;i<keys.length;i++){
+        for(let j=i+1;j<keys.length;j++){
+          const A=eco.components[keys[i]],B=eco.components[keys[j]];
+          let includeEdge=false; let reasons=[];
+          if(EDGE_PARAMS.useTags){
+            const sharedTags=[...A.tags].filter(t=>B.tags.has(t)).filter(t=>{
+              const freq=(eco.tagCounts.get(t)||0)/nComps;
+              return freq<=EDGE_PARAMS.commonThreshold && !EDGE_PARAMS.excludedTags.has(t) && !STOPWORDS.has(t) && t!=="production" && t!=="beta" && isNaN(t);
             });
-
-            // Initialize ecosystem attributes
-            if (eco.hasOwnProperty('attributeObjectList') === false) {
-
-                eco.attributeObjectList = {};
-
-                eco.attributeArrayList.forEach(attribute => {
-
-                    // Create ( on create )
-                    if (eco.attributeObjectList.hasOwnProperty(attribute) === false) {
-
-                        // Data 
-                        eco.attributeObjectList[attribute] = {};
-
-                        eco.attributeObjectList[attribute]['factor'] = 1;
-                        eco.attributeObjectList[attribute]['factorHtmlElementId'] = 'factor' + capitalizeFirstLetter(attribute) + 'Id';
-                        eco.attributeObjectList[attribute]['count'] = 0;
-
-                        // UI
-                        const sliderRow = createSliderRow(attribute);
-                        table.appendChild(sliderRow);
-                    }
-                });
-            }
-
-            // Initialize component attributes by versions
-            data.forEach(version => {
-
-                if (!isValidVersion(version)) {
-
-                    eco.attributeObjectList['invalid'].count++;
-                    return;
-                }
-
-                let releaseChannel = getChannelByVersion(version);
-
-                let component = version.versionProductName; // string name, not object
-
-                if (eco.components.hasOwnProperty(component) === false) {
-
-                    eco.components[component] = createComponentModel(version);
-                    eco.components[component].attributeObjectList = {};
-
-                    eco.attributeArrayList.forEach(attribute => {
-                        eco.components[component].attributeObjectList[attribute] = {};
-                        eco.components[component].attributeObjectList[attribute]['count'] = 0;
-                    })
-                }
-
-                eco.components[component].attributeObjectList[releaseChannel]['count']++;
-                eco.components[component].attributeObjectList['version']['count']++;
-                eco.components[component].attributeObjectList['component']['count'] = 1;
-
-                if (version.hasOwnProperty('versionPredictedComponentType')) {
-
-                    eco.components[component].versionPredictedComponentType = version['versionPredictedComponentType'].toLowerCase();
-
-                    eco.components[component].attributeObjectList[eco.components[component].versionPredictedComponentType]['count'] = 1;
-                }
-
-                if (eco.components[component].hasOwnProperty('tags') === false) {
-
-                    eco.components[component].tags = new Set();
-
-                }
-
-                version.versionSearchTags.forEach(tag => eco.components[component].tags.add(tag.trim().toLowerCase()));
-
-                eco.attributeObjectList[releaseChannel]['count'] += 1;
-                eco.attributeObjectList['version']['count'] += 1;
-                eco.attributeObjectList['component']['count'] = Object.keys(eco.components).length;
-
-                if (isToday(version) === true) {
-                    eco.attributeObjectList['today']['count'] += 1;
-                    eco.components[component].attributeObjectList['today']['count'] += 1;
-                }
-
-                if (version.hasOwnProperty('versionPredictedComponentType')) {
-
-                    let categoryKey = version['versionPredictedComponentType'].toLowerCase();
-
-                    eco.attributeObjectList[categoryKey]['count'] += 1;
-                }
-            });
+            if(sharedTags.length){includeEdge=true;reasons=reasons.concat(sharedTags);}
+          }
+          if(EDGE_PARAMS.useType){
+            const sharedTypes=[...A.typeSet].filter(t=>B.typeSet.has(t));
+            if(sharedTypes.length){includeEdge=true;reasons.push(`type:${sharedTypes[0]}`);}
+          }
+          if(includeEdge){
+            const id=`${A.id}-${B.id}`;
+            eco.edges[id]={id,source:A.id,target:B.id,weight:1,tags:reasons.slice(0,50)};
+            eco.attributeObjectList["link"].count++;
+            A.attributeObjectList["link"].count++;
+          }
         }
+      }
+      refreshEdgeDialogStatsAndChecklist();
+    }
 
-        for (let componentA in eco.components) {
-            for (let componentB in eco.components) {
+    function recalcEcosystem(){
+      eco.cost=0;
+      eco.attributeArrayList.forEach(a=>{const obj=eco.attributeObjectList[a];obj.factor=Number(document.getElementById(obj.factorHtmlElementId).value);});
+      Object.keys(eco.components).forEach(k=>{eco.components[k].cost=0;eco.components[k].costLatestVersion=0;});
+      const versionRelevant=new Set(["major","minor","patch","cve","today"]);
+      eco.attributeArrayList.forEach(a=>{
+        eco.cost+=eco.attributeObjectList[a].count*eco.attributeObjectList[a].factor;
+        Object.keys(eco.components).forEach(k=>{
+          const comp=eco.components[k];const cnt=comp.attributeObjectList[a].count;
+          comp.cost+=cnt*eco.attributeObjectList[a].factor;
+          if(versionRelevant.has(a)){comp.costLatestVersion+=(cnt>0?1:0)*eco.attributeObjectList[a].factor;}
+        });
+      });
+      const badge=document.getElementById('graphCostBadge');if(badge)badge.textContent=`Graph cost: ${eco.cost}`;
+    }
 
-                if (componentA === componentB) {
-                    continue;
-                }
+    function renderTypeFilters(){
+      const wrap=document.getElementById("typeFilters");wrap.innerHTML="";
+      const types=Array.from(eco.typeSet).sort();
+      if(types.length===0){eco.selectedTypes=null;return;}
+      if(!eco.selectedTypes){eco.selectedTypes=new Set(types);}else{types.forEach(t=>eco.selectedTypes.add(t));}
+      types.forEach(t=>{
+        const id=`type-${t.replace(/[^a-z0-9]+/g,'-')}`;const label=document.createElement("label");
+        label.innerHTML=`<input type="checkbox" id="${id}" ${eco.selectedTypes.has(t)?"checked":""}/> ${t||"unknown"}`;
+        wrap.appendChild(label);
+        label.querySelector("input").addEventListener("change",(e)=>{if(e.target.checked)eco.selectedTypes.add(t);else eco.selectedTypes.delete(t);renderGraph();});
+      });
+    }
 
-                let intersection = getIntersection(componentA, componentB);
+    function renderRightTables(){
+      const q=getParam("q")||"";document.getElementById("ecoTitle").textContent=q?q:"Today’s top 10";
+      const ecoTbl=document.getElementById("ecoTable");while(ecoTbl.rows.length>3)ecoTbl.deleteRow(ecoTbl.rows.length-1);
+      eco.attributeArrayList.forEach(a=>{
+        const tr=ecoTbl.insertRow(-1);tr.className="row-compact";
+        const factor=eco.attributeObjectList[a].factor;const count=eco.attributeObjectList[a].count;
+        tr.innerHTML=`<td class="nowrap">${cap(a)}</td><td class="nowrap">${factor}</td><td class="nowrap">${count}</td>`;
+      });
+      document.getElementById("maintenanceCost").textContent=eco.cost;
+      const badge=document.getElementById('graphCostBadge');if(badge)badge.textContent=`Graph cost: ${eco.cost}`;
+    }
 
-                if (intersection.length > 0) {
-                    createAndProcessEdge(componentA, componentB, intersection);
-                }
-            }
+    function renderGraph(){
+      const nodes=[],edges=[];const keysAll=Object.keys(eco.components);
+      let keys; if(!eco.selectedTypes||eco.selectedTypes.size===0){keys=keysAll.slice();}else{keys=keysAll.filter(k=>{const comp=eco.components[k];return !comp.type||eco.selectedTypes.has(comp.type);});}
+      const zoomPct=Number(document.getElementById('zoomRange').value||140);const R=Math.round((40*zoomPct)/100);
+      let minC=Infinity,maxC=-Infinity;keys.forEach(k=>{const c=eco.components[k].cost;if(c<minC)minC=c;if(c>maxC)maxC=c;});
+      keys.forEach((k,i)=>{const comp=eco.components[k];const t=2*Math.PI*i/Math.max(1,keys.length);const x=Math.round(R*Math.cos(t));const y=Math.round(R*Math.sin(t));const label=`${comp.display||comp.label||k} (${comp.cost})`;nodes.push({id:k,label,x,y,size:1,color:"#9aa3af"})});
+      const visibleSet=new Set(keys);
+      Object.values(eco.edges).forEach(e=>{if(visibleSet.has(e.source)&&visibleSet.has(e.target)){edges.push({id:`${e.source}-${e.target}`,source:e.source,target:e.target,size:1,color:"#6b7280"});}});
+      function grayFor(cost){if(!isFinite(minC)||!isFinite(maxC)||maxC===minC)return `rgb(180,180,180)`;const t=(cost-minC)/(maxC-minC);const v=Math.round(210-t*140);return `rgb(${v},${v},${v})`;}
+      const css=getComputedStyle(document.documentElement);const green=css.getPropertyValue('--ok').trim()||'#22c55e';const red=css.getPropertyValue('--bad').trim()||'#ef4444';
+      nodes.forEach(n=>{n.color=grayFor(eco.components[n.id].cost)});
+      nodes.forEach(n=>{const cost=eco.components[n.id].cost;if(cost===0||cost===minC)n.color=green;});
+      if(maxC>minC){nodes.forEach(n=>{if(eco.components[n.id].cost===maxC)n.color=red;});}
+
+      document.getElementById("graphContainer").innerHTML="";
+      const s=new sigma({
+        graph:{nodes,edges},
+        renderer:{container:document.getElementById("graphContainer"),type:'canvas'},
+        settings:{
+          drawLabels:true,labelSize:13,defaultLabelSize:13,defaultLabelColor:"#ffffff",labelColor:"default",
+          font:"system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Arial, sans-serif",
+          drawEdgeLabels:false, /* FIX: avoid plugin-related errors */
+          batchEdgesDrawing:true,defaultNodeColor:"#9aa3af",defaultEdgeColor:"#6b7280"
         }
+      });
+
+      s.bind("clickNode",(e)=>{
+        const key=e.data.node.id;const comp=eco.components[key];const disp=comp.display||comp.label||key;
+        document.getElementById("componentTitle").textContent=`${disp} • cost ${comp.cost}`;
+        document.getElementById("costComponent").textContent=comp.cost;
+        document.getElementById("costComponentVersion").textContent=comp.costLatestVersion;
+
+        const usedTagSet=new Set();
+        Object.values(eco.edges).forEach(edge=>{if(edge.source===key||edge.target===key){edge.tags.forEach(t=>{if(!t.startsWith('type:'))usedTagSet.add(t);});}});
+        const tags=[...(comp.tags||[])].sort();
+        const html=tags.map(t=>{const used=usedTagSet.has(t);const bg=used?'#183029':'#222733';const col=used?'#22c55e':'#c7cbd3';return `<span style="padding:2px 6px;border:1px solid var(--line);border-radius:999px;margin:2px;display:inline-block;background:${bg};color:${col}">${t}</span>`}).join("");
+        document.getElementById("tagsContent").innerHTML=`<div style="margin-bottom:6px"><b>${disp}</b> tags (${tags.length}):</div><div>${html||'<span class="muted">No tags</span>'}</div>`;
+      });
+
+      const edgesList=document.getElementById('edgesQuickStats');
+      if(edgesList){edgesList.innerHTML=`<li>Visible nodes: <b>${keys.length}</b></li><li>Edges drawn: <b>${edges.length}</b></li><li>Common tag threshold: <b>${Math.round(EDGE_PARAMS.commonThreshold*100)}%</b></li><li>Using tags: <b>${EDGE_PARAMS.useTags?'yes':'no'}</b>, type: <b>${EDGE_PARAMS.useType?'yes':'no'}</b></li>`;}
+      renderRightTables();
     }
 
-    // Utility functions
-
-    function isToday(version) {
-
-        var versionReleaseDate = version.versionReleaseDate;
-
-        // Parsing versionReleaseDate
-        var year = parseInt(versionReleaseDate.substring(0, 4));
-        var month = parseInt(versionReleaseDate.substring(4, 6)) - 1; // Month is 0-indexed in JavaScript
-        var day = parseInt(versionReleaseDate.substring(6, 8));
-        var releaseDate = new Date(year, month, day);
-
-        // Getting today's date
-        var today = new Date();
-        today.setHours(0, 0, 0, 0); // Reset time to midnight for accurate comparison
-
-        // Using ternary operator to check if the dates are the same
-        var isToday = releaseDate.getTime() === today.getTime() ? true : false;
-
-        return isToday;
+    function refreshEdgeDialogStatsAndChecklist(){
+      const tagEdgeCount=new Map();
+      Object.values(eco.edges).forEach(e=>{(e.tags||[]).forEach(t=>{if(String(t).startsWith('type:'))return;tagEdgeCount.set(t,(tagEdgeCount.get(t)||0)+1);});});
+      const uniqueTags=Array.from(tagEdgeCount.keys());
+      const meta=document.getElementById('edgeTagsMeta');const list=document.getElementById('edgeTagsChecklist');
+      meta.textContent=`Matching tag count (post-filter): ${uniqueTags.length}`;
+      list.innerHTML="";
+      if(uniqueTags.length===0){list.innerHTML=`<span class="muted">No tag-based edges with current settings.</span>`;return;}
+      uniqueTags.sort((a,b)=>(tagEdgeCount.get(b)||0)-(tagEdgeCount.get(a)||0)).forEach(tag=>{
+        const cnt=tagEdgeCount.get(tag)||0;const id=`edgeTag-${tag.replace(/[^a-z0-9]+/g,'-')}`;const checked=!EDGE_PARAMS.excludedTags.has(tag);
+        const pill=document.createElement('label');pill.className='tagPill';
+        pill.innerHTML=`<input type="checkbox" id="${id}" ${checked?'checked':''}/><span>${tag}</span><span class="muted">(${cnt})</span>`;
+        pill.querySelector('input').addEventListener('change',(e)=>{if(e.target.checked)EDGE_PARAMS.excludedTags.delete(tag);else EDGE_PARAMS.excludedTags.add(tag);buildEdges();recalcEcosystem();renderGraph();});
+        list.appendChild(pill);
+      });
     }
 
-    function isValidVersion(version) {
-        versionNumber = version.versionNumber.split(".");
-        if (isNaN(versionNumber[0]) === true && version.versionReleaseChannel !== "patch") {
-            return false;
-        }
-        return true;
+    function top10TodayNames(versions){
+      const map=new Map();
+      versions.forEach(v=>{if(!isInLast24Hours(v))return;const raw=(v.versionProductName||"").trim();if(!raw)return;const k=normalizeKey(raw);if(!map.has(k))map.set(k,{count:0,display:raw});map.get(k).count+=1;});
+      const sorted=[...map.entries()].sort((a,b)=>b[1].count-a[1].count).map(([k,v])=>v.display);
+      const pick=sorted.slice(0,10);if(pick.length)return pick;
+      const seen=new Set(),out=[];for(const v of versions){const raw=(v.versionProductName||"").trim();const k=normalizeKey(raw);if(!raw||seen.has(k))continue;seen.add(k);out.push(raw);if(out.length>=10)break;}
+      return out;
     }
 
-    function getChannelByVersion(version) {
-        let versionNumber = version.versionNumber.split(".");
-        version.versionChannel = versionChannel.error;
-        version.versionChannel = versionNumber[1] != 0 && versionNumber[2] == 0 ? versionChannel.minor : version.versionChannel;
-        version.versionChannel = version.versionReleaseChannel === versionChannel.patch || versionNumber[2] != 0 ? versionChannel.patch : version.versionChannel;
-        version.versionChannel = versionNumber[1] == 0 && versionNumber[2] == 0 ? versionChannel.major : version.versionChannel;
-        version.versionChannel = version.versionReleaseChannel == versionChannel.cve ? versionChannel.cve : version.versionChannel;
-
-        return version.versionChannel;
+    async function fetchAndRender(){
+      loadingStart();
+      const components=readQList();const onlyToday=document.getElementById("toggleOnlyToday").checked;
+      let url=`${URL_API}/v`;if(components.length)url+=`?q=${components.join(",")}`;
+      const res=await fetch(url);const payload=await res.json();const versions=Array.isArray(payload)?payload:(payload.versions||[]);
+      const typeByKey=new Map();versions.forEach(v=>{const nameRaw=(v.versionProductName||"").trim();if(!nameRaw)return;const k=normalizeKey(nameRaw);const tList=extractTypes(v);const t=tList[0]||"";if(t&&!typeByKey.has(k))typeByKey.set(k,t);});
+      const filtered=onlyToday?versions.filter(isInLast24Hours):versions;
+      transform(filtered,typeByKey);renderGraph();loadingDone();
     }
 
-    function createComponentModel(version) {
-        let component = {
-            id: version.versionProductName,
-            label: version.versionProductName,
-            color: "black",
-            count: 1,
-            x: 0,
-            y: 0,
-            size: 1,
-            cost: 0,
-            tags: new Set()
-        }
-        return component;
+    async function initialLoad(){
+      bindAddBox();loadNameSuggestions();
+      const hasParams=!!(getParam("q")||"");document.getElementById("toggleOnlyToday").checked=hasParams?false:true;
+      document.getElementById("toggleUniqueType").checked=false;document.getElementById("toggleRealOnly").checked=false;
+      setMainHref();document.getElementById("homeBtn").addEventListener("click",()=>{setMainHref();});
+      const open=id=>document.getElementById(id).showModal();const close=id=>document.getElementById(id).close();
+      document.getElementById('edgesBtn').addEventListener('click',()=>open('edgesDialog'));
+      document.getElementById('legendBtn').addEventListener('click',()=>open('legendDialog'));
+      document.getElementById('tagsBtn').addEventListener('click',()=>open('tagsDialog'));
+      document.querySelectorAll('.closeBtn').forEach(b=>b.addEventListener('click',()=>close(b.dataset.close)));
+
+      const edgeUseTagsEl=document.getElementById('edgeUseTags');
+      const edgeUseTypeEl=document.getElementById('edgeUseType');
+      const edgePctEl=document.getElementById('edgeCommonPct');
+      const edgePctLabel=document.getElementById('edgeCommonPctLabel');
+      function applyEdgeParams(){
+        EDGE_PARAMS.useTags=edgeUseTagsEl.checked;EDGE_PARAMS.useType=edgeUseTypeEl.checked;
+        EDGE_PARAMS.commonThreshold=Math.max(0.05,Math.min(0.95,Number(edgePctEl.value)/100));
+        edgePctLabel.textContent=`${Math.round(EDGE_PARAMS.commonThreshold*100)}%`;
+        buildEdges();recalcEcosystem();renderGraph();
+      }
+      edgeUseTagsEl.addEventListener('change',applyEdgeParams);
+      edgeUseTypeEl.addEventListener('change',applyEdgeParams);
+      edgePctEl.addEventListener('input',applyEdgeParams);
+
+      const q=getParam("q")||"";
+      if(q){const names=readQList().slice(0,10);renderChips(names);setParamComma(names);await fetchAndRender();return;}
+      loadingStart();const res=await fetch(`${URL_API}/v`);const payload=await res.json();const all=Array.isArray(payload)?payload:(payload.versions||[]);const names=top10TodayNames(all);renderChips(names);setParamComma(names);loadingDone();await fetchAndRender();
     }
 
-    function createSliderRow(categoryKey) {
-        const row = document.createElement('tr');
+    document.getElementById("toggleOnlyToday").addEventListener("change",fetchAndRender);
+    document.getElementById("toggleUniqueType").addEventListener("change",fetchAndRender);
+    document.getElementById("toggleRealOnly").addEventListener("change",fetchAndRender);
 
-        let value = 1;
-
-        if (categoryKey === 'link' || categoryKey === 'major' || categoryKey === 'minor' || categoryKey === 'patch' || categoryKey === 'cve' || categoryKey === 'invalid' || categoryKey === 'version') {
-
-            value = 0;
-
-        }
-
-        if (categoryKey === 'today') {
-
-            value = 2;
-
-        }
-
-
-        row.id = categoryKey + "RowId";
-        row.innerHTML = `
-        <td>${capitalizeFirstLetter(categoryKey)}</td>
-        <td><input id="factor${capitalizeFirstLetter(categoryKey)}Id" type="range" value="${value}" onchange="extractData()" min="0" max="2"></td>
-        <td><span id="${categoryKey}AllId"></span></td>`;
-        return row;
-    }
-
-    function capitalizeFirstLetter(string) {
-        return string.charAt(0).toUpperCase() + string.slice(1);
-    }
-    </script>
-    <!-- absolute position -->
-    <a target="_blank" href="https://github.com/antrunner/releasetrain-client" class="github-corner" aria-label="View source on GitHub">
-        <svg width="80" height="80" viewBox="0 0 250 250" style="fill:#64CEAA; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true">
-            <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>s
-            <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path>
-            <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path>
-        </svg></a>
+    (async function boot(){ await initialLoad(); })();
+  </script>
 </body>
-
 </html>
