@@ -1,7 +1,9 @@
 import plantuml from './plantuml.js';
+import plantUMLEncoder from "https://cdn.skypack.dev/plantuml-encoder";
+
 
 // Set environment flag
-const IS_PRODUCTION = true;  // Change to `false` for development
+const IS_PRODUCTION = false;  // Change to `false` for development
 
 // Define URLs and paths for both environments
 const config = {
@@ -204,13 +206,23 @@ function getPlantuml() {
     // Fetch and sort version details
     versions = sortVersionsByOperatingSystem(versions);
 
-    plantUMLCode += `package "${sanitize(versions[0].name)} OS" {\n`;
+    let get_all_OS = versions.map(version => allowedOperatingSystems.find(os => os == version.name))
+    get_all_OS = get_all_OS.filter(os => os != undefined)
+    console.log("OS:- ", get_all_OS);
+    let ecosystem_string = "Ecosystem : " + get_all_OS.map(os => os).join(" | ")
+    console.log(ecosystem_string);
+     
+    
+    
+    plantUMLCode += `package "${sanitize(ecosystem_string)}" {\n`;
 
     // Extract component names from versions
     const getComponent = versions.map(version => version.name);
 
     // Group components by stack
     const { groupedStacks, extraComponents } = getStack(getComponent);
+    console.log("Grouped stacks: ", groupedStacks);
+    
     //console.log("Grouped Stacks (Strict Matching):", groupedStacks);
     console.log("Extra Components:", extraComponents);
     totalComponents = versions.length;
@@ -218,7 +230,7 @@ function getPlantuml() {
 
     // Function to generate component details
     function generateComponentDetails(version) {
-        //console.log('Version:', version);   
+        console.log('Version:', version);   
         version.currentVersion = version.currentVersion || version.latestVersion;
         if (!version || !version.currentVersion || !version.latestVersion) {
             //console.warn(`Skipping invalid version data: Missing currentVersion or latestVersion`);
@@ -250,8 +262,17 @@ function getPlantuml() {
     function addOSPackage(osName, components) {
 
         components.forEach(component => {
-            plantUMLCode += `package "${component.name}" {\n`;
-            plantUMLCode += `    component ${generateComponentDetails(component)}\n`;
+            plantUMLCode += `package "${component.name}"  {\n`;
+            let get_component_details = generateComponentDetails(component)
+            if (get_component_details.includes("CVE Info:"))
+            {
+                plantUMLCode += `    component #Orange ${get_component_details}\n`;
+            }
+            else
+            {
+                plantUMLCode += `    component ${get_component_details}\n`;
+            }
+            //plantUMLCode += `    component #Orange ${generateComponentDetails(component)}\n`;
             plantUMLCode += `}\n`;
         });
 
@@ -259,7 +280,7 @@ function getPlantuml() {
 
     // Function to add stack package
     function addStackPackage(stackName, components) {
-        plantUMLCode += `package "${stackName} stack" {\n`;
+        plantUMLCode += `package "${stackName} stack" as ${stackName} {\n`;
         const osComponents = {};
 
         components.forEach(component => {
@@ -274,26 +295,51 @@ function getPlantuml() {
             addOSPackage(osName, osComponents[osName]);
         }
     }
-
+    let hidden_links = []
     // if there are no grouped stacks just push the extra components
     if (groupedStacks.length === 0) {
         addOSPackage("Extra Components", versions);
     }
     else {
+        // // Process grouped stacks
+        // groupedStacks.forEach(stack => {
+        //     const stackComponents = versions.filter(version => stack.matchedComponents.includes(version.name));
+        //     console.log("Stack Components:", stackComponents);
+        //     addStackPackage(stack.stackName, stackComponents);
+        //     plantUMLCode += `}\n`;
+        // });
         // Process grouped stacks
-        groupedStacks.forEach(stack => {
-            const stackComponents = versions.filter(version => stack.matchedComponents.includes(version.name));
-            //console.log("Stack Components:", stackComponents);
-            addStackPackage(stack.stackName, stackComponents);
-        });
+// Process grouped stacks
+let previousStackName = null; // Track the last component of the previous stack
+
+groupedStacks.forEach((stack, index) => {
+    const stackComponents = versions.filter(version => stack.matchedComponents.includes(version.name));
+    if (stackComponents.length === 0) return; // Skip empty stacks
+    
+    // Add hidden link between previous and current stack
+    if (index > 0 && previousStackName) {
+        
+        let link = `${previousStackName} -[hidden]-> ${stack.stackName}\n`;
+        hidden_links.push(link)
+    }
+    
+    // Add the current stack
+    addStackPackage(stack.stackName, stackComponents);
+    plantUMLCode += `}\n`; // Close the stack package
+    
+    // Update the last component reference
+    previousStackName = stack.stackName;
+});
         // end the stack
-        plantUMLCode += `}\n`;
+        //plantUMLCode += `}\n`;
         // Process extra components
         const extraComponentVersions = versions.filter(version => extraComponents.some(extra => extra.component === version.name));
 
         addOSPackage("Extra Components", extraComponentVersions);
     }
-
+    hidden_links.forEach(links => {
+        plantUMLCode += links+`\n`
+    })
     plantUMLCode += `}\n@enduml\n`;
     console.log("PlantUML Code:", plantUMLCode);
     // Insert the PlantUML code into the HTML element with the id "plantuml-code"
@@ -324,49 +370,89 @@ function myRender(container, diagramData) {
     let ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    plantuml.renderPng(code)
-        .then((blob) => {
-            let imageUrl = URL.createObjectURL(blob);
-            let image = new Image();
+    const encoded = plantUMLEncoder.encode(code)
+    const imageURL = `https://www.plantuml.com/plantuml/png/${encoded}`;
+    let image = new Image();
+    image.onload = () => {
+        const viewportWidth = window.innerWidth * 0.95; // 80% of viewport width
+        const viewportHeight = window.innerHeight * 0.95; // 80% of viewport height
 
-            image.onload = () => {
-                const viewportWidth = window.innerWidth * 0.95; // 80% of viewport width
-                const viewportHeight = window.innerHeight * 0.95; // 80% of viewport height
+        // Calculate scaling to maintain aspect ratio
+        let scale = Math.min(viewportWidth / image.width, viewportHeight / image.height);
+        let scaledWidth = image.width * scale;
+        let scaledHeight = image.height * scale;
 
-                // Calculate scaling to maintain aspect ratio
-                let scale = Math.min(viewportWidth / image.width, viewportHeight / image.height);
-                let scaledWidth = image.width * scale;
-                let scaledHeight = image.height * scale;
+        // Ensure image does not exceed canvas limits
+        if (scaledHeight > viewportHeight) {
+            scaledHeight = viewportHeight;
+            scaledWidth = (image.width / image.height) * scaledHeight;
+        }
 
-                // Ensure image does not exceed canvas limits
-                if (scaledHeight > viewportHeight) {
-                    scaledHeight = viewportHeight;
-                    scaledWidth = (image.width / image.height) * scaledHeight;
-                }
+        // Set canvas dimensions based on scaled size
+        canvas.width = scaledWidth;
+        canvas.height = scaledHeight;
 
-                // Set canvas dimensions based on scaled size
-                canvas.width = scaledWidth;
-                canvas.height = scaledHeight;
+        // Clear previous drawing
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-                // Clear previous drawing
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Center the image
+        let offsetX = (canvas.width - scaledWidth) / 2;
+        let offsetY = (canvas.height - scaledHeight) / 2;
 
-                // Center the image
-                let offsetX = (canvas.width - scaledWidth) / 2;
-                let offsetY = (canvas.height - scaledHeight) / 2;
+        // Draw image with rounded borders
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(offsetX, offsetY, scaledWidth, scaledHeight, 5); // Adjust radius as needed
+        ctx.clip();
+        ctx.drawImage(image, offsetX, offsetY, scaledWidth, scaledHeight);
+        ctx.restore();
+    };
 
-                // Draw image with rounded borders
-                ctx.save();
-                ctx.beginPath();
-                ctx.roundRect(offsetX, offsetY, scaledWidth, scaledHeight, 5); // Adjust radius as needed
-                ctx.clip();
-                ctx.drawImage(image, offsetX, offsetY, scaledWidth, scaledHeight);
-                ctx.restore();
-            };
+    image.src = imageURL;
 
-            image.src = imageUrl;
-        })
-        .catch((error) => console.error('Error rendering PlantUML:', error));
+    // plantuml.renderPng(code)
+        // .then((blob) => {
+            // let imageUrl = URL.createObjectURL(blob);
+            // let image = new Image();
+
+            // image.onload = () => {
+                // const viewportWidth = window.innerWidth * 0.95; // 80% of viewport width
+                // const viewportHeight = window.innerHeight * 0.95; // 80% of viewport height
+
+                // // Calculate scaling to maintain aspect ratio
+                // let scale = Math.min(viewportWidth / image.width, viewportHeight / image.height);
+                // let scaledWidth = image.width * scale;
+                // let scaledHeight = image.height * scale;
+
+                // // Ensure image does not exceed canvas limits
+                // if (scaledHeight > viewportHeight) {
+                    // scaledHeight = viewportHeight;
+                    // scaledWidth = (image.width / image.height) * scaledHeight;
+                // }
+
+                // // Set canvas dimensions based on scaled size
+                // canvas.width = scaledWidth;
+                // canvas.height = scaledHeight;
+
+                // // Clear previous drawing
+                // ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // // Center the image
+                // let offsetX = (canvas.width - scaledWidth) / 2;
+                // let offsetY = (canvas.height - scaledHeight) / 2;
+
+                // // Draw image with rounded borders
+                // ctx.save();
+                // ctx.beginPath();
+                // ctx.roundRect(offsetX, offsetY, scaledWidth, scaledHeight, 5); // Adjust radius as needed
+                // ctx.clip();
+                // ctx.drawImage(image, offsetX, offsetY, scaledWidth, scaledHeight);
+                // ctx.restore();
+            // };
+
+            // image.src = imageUrl;
+        // })
+        // .catch((error) => console.error('Error rendering PlantUML:', error));
 
 }
 
