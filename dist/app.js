@@ -3,7 +3,7 @@ import plantUMLEncoder from "https://cdn.skypack.dev/plantuml-encoder";
 
 
 // Set environment flag
-const IS_PRODUCTION = false;  // Change to `false` for development
+const IS_PRODUCTION = true;  // Change to `false` for development
 
 // Define URLs and paths for both environments
 const config = {

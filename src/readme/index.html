@@ -1,1670 +1,1182 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
-  <title>ReleaseTrain.io — API & System Documentation</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
+  <title>ReleaseTrain.io — API & System Documentation</title>
   <script type="module">
     import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
     mermaid.initialize({ startOnLoad: true, securityLevel: "loose" });
   </script>
-
   <style>
     :root {
       --text: #1b1f23;
-      --muted: #555;
+      --muted: #59636e;
       --line: #d0d7de;
-      --bg: #fff;
-      --mono: Consolas, Monaco, "SFMono-Regular", Menlo, monospace;
-      --sans: system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
-      --code-bg: #f6f8fa;
-      --accent: #0a7;
-      --accent-2: #d4f4dd;
-      --accent-3: #2b7a2b;
-
-      --nav-bg: #ffffffcc;
-      --shadow: 0 4px 18px rgba(0, 0, 0, .08);
+      --bg: #ffffff;
+      --panel: #fbfcfe;
       --card: #ffffff;
+      --mono: Consolas, Monaco, "SFMono-Regular", Menlo, monospace;
+      --sans: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      --ok-bg: #dff4e4;
+      --ok-text: #1f6f3d;
+      --warn-bg: #fff5cc;
+      --warn-text: #7a5d00;
+      --err-bg: #fde7e9;
+      --err-text: #8b1e2d;
+      --accent: #0366d6;
+      --shadow: 0 8px 24px rgba(0,0,0,.06);
     }
 
-    html,
+    html, body { background: var(--bg); color: var(--text); }
     body {
-      background: var(--bg);
-      color: var(--text);
-    }
-
-    body {
-      font-family: var(--sans);
       margin: 0;
-      line-height: 1.6;
+      font-family: var(--sans);
       font-size: 15px;
+      line-height: 1.6;
     }
 
-    /* Layout */
-    .wrap {
-      max-width: 1180px;
-      margin: 0 auto;
-      padding: 1.25rem clamp(0.75rem, 2vw, 2rem);
-      display: grid;
-      grid-template-columns: 260px 1fr;
-      gap: 1.25rem;
-      align-items: start;
-    }
-
-    @media (max-width: 980px) {
-      .wrap {
-        grid-template-columns: 1fr;
-      }
-
-      .sidebar {
-        position: static;
-        top: auto;
-      }
-    }
-
-    /* Sidebar / TOC */
-    .sidebar {
-      position: sticky;
-      top: 1rem;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      background: var(--nav-bg);
-      backdrop-filter: blur(8px);
-      box-shadow: var(--shadow);
-      padding: .9rem .9rem .8rem;
-    }
-
-    .sidebar h2 {
-      font-size: .95rem;
-      margin: 0 0 .5rem;
-      padding: 0 0 .4rem;
-      border-bottom: 1px solid var(--line);
-      letter-spacing: .2px;
-    }
-
-    .toc {
-      list-style: none;
-      padding: 0;
-      margin: .5rem 0 0;
-    }
-
-    .toc li {
-      margin: .15rem 0;
-    }
-
-    .toc a {
-      display: block;
-      padding: .28rem .4rem;
-      border-radius: 6px;
-      color: #0366d6;
-      text-decoration: none;
-      word-break: break-word;
-    }
-
-    .toc a:hover {
-      background: #f3f4f6;
-      text-decoration: underline;
-    }
-
-    .toc .sub {
-      margin-left: .65rem;
-      border-left: 2px solid #eef1f4;
-      padding-left: .55rem;
-    }
-
-    /* Top header */
     header {
       border-bottom: 1px solid var(--line);
       background: #fff;
     }
 
-    .header-inner {
-      max-width: 1180px;
+    .header-inner, .wrap {
+      max-width: 1240px;
       margin: 0 auto;
-      padding: 1.1rem clamp(0.75rem, 2vw, 2rem);
+      padding-left: clamp(14px, 2vw, 28px);
+      padding-right: clamp(14px, 2vw, 28px);
     }
 
-    h1,
-    h2,
-    h3 {
-      line-height: 1.25;
+    .header-inner {
+      padding-top: 20px;
+      padding-bottom: 18px;
     }
 
-    h1 {
-      font-size: clamp(1.5rem, 2.2vw, 2.1rem);
-      margin: 0 0 .35rem;
-    }
+    h1, h2, h3, h4 { line-height: 1.25; margin: 0; }
+    h1 { font-size: clamp(1.6rem, 2.4vw, 2.25rem); margin-bottom: .4rem; }
+    h2 { font-size: clamp(1.2rem, 1.9vw, 1.55rem); margin-bottom: .65rem; }
+    h3 { font-size: 1.02rem; margin-bottom: .45rem; }
+    h4 { font-size: .96rem; margin-bottom: .35rem; }
+    p, ul, ol { margin: .5rem 0; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .subtitle, .muted { color: var(--muted); }
+    .small { font-size: .92rem; }
 
-    .subtitle {
-      margin: 0;
-      color: var(--muted);
-      max-width: 85ch;
-    }
-
-    .pillbar {
-      margin-top: .75rem;
+    .pillbar, .legend {
       display: flex;
       flex-wrap: wrap;
-      gap: .5rem;
+      gap: .55rem;
+      margin-top: .8rem;
     }
 
     .pill {
       display: inline-flex;
       align-items: center;
       gap: .45rem;
-      padding: .3rem .55rem;
-      border-radius: 999px;
+      padding: .35rem .62rem;
       border: 1px solid var(--line);
+      border-radius: 999px;
       background: #fff;
       font-size: .9rem;
-      color: var(--text);
-      white-space: nowrap;
     }
 
-    .pill a {
-      color: #0366d6;
-      text-decoration: none;
-    }
-
-    .pill a:hover {
-      text-decoration: underline;
-    }
-
-    /* Content */
-    main {
-      min-width: 0;
-    }
-
-    section.block {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 1rem 1.05rem;
-      margin: 0 0 1rem;
-      box-shadow: 0 1px 0 rgba(0, 0, 0, .02);
-    }
-
-    .block h2 {
-      font-size: clamp(1.15rem, 2vw, 1.5rem);
-      margin: 0 0 .6rem;
-      padding-bottom: .3rem;
-      border-bottom: 2px solid var(--line);
-    }
-
-    .block h3 {
-      font-size: 1.05rem;
-      margin: 1rem 0 .25rem;
-    }
-
-    p,
-    ul,
-    ol {
-      margin: .5rem 0;
-    }
-
-    a {
-      color: #0366d6;
-      text-decoration: none;
-      word-break: break-word;
-    }
-
-    a:hover {
-      text-decoration: underline;
-    }
-
-    .muted {
-      color: var(--muted);
-    }
-
-    .small {
-      font-size: .92rem;
-    }
-
-    /* Intro grid */
-    .introgrid {
+    .wrap {
       display: grid;
-      grid-template-columns: 1.15fr .85fr;
-      gap: 1rem;
+      grid-template-columns: 280px 1fr;
+      gap: 1.15rem;
+      padding-top: 18px;
+      padding-bottom: 22px;
       align-items: start;
     }
 
     @media (max-width: 980px) {
-      .introgrid {
-        grid-template-columns: 1fr;
-      }
+      .wrap { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.95);
+      box-shadow: var(--shadow);
+      padding: .95rem;
+      backdrop-filter: blur(8px);
+    }
+
+    .toc { list-style: none; padding: 0; margin: .5rem 0 0; }
+    .toc li { margin: .18rem 0; }
+    .toc a {
+      display: block;
+      padding: .28rem .42rem;
+      border-radius: 8px;
+      color: var(--accent);
+      word-break: break-word;
+    }
+    .toc a:hover { background: #f3f6fa; }
+    .toc .sub { margin-left: .75rem; padding-left: .65rem; border-left: 2px solid #edf1f5; }
+
+    section.block {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--card);
+      box-shadow: 0 1px 0 rgba(0,0,0,.02);
+      padding: 1rem 1.05rem;
+      margin-bottom: 1rem;
     }
 
     .callout {
       border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: .8rem .85rem;
-      background: #fafbfc;
+      border-radius: 12px;
+      background: var(--panel);
+      padding: .85rem .95rem;
     }
 
-    .callout h3 {
-      margin-top: 0;
+    .grid-2 { display: grid; grid-template-columns: 1.12fr .88fr; gap: 1rem; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: .8rem; }
+    @media (max-width: 980px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
     }
 
-    .keylist {
-      margin: .35rem 0 0;
-      padding-left: 1.1rem;
+    .api-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: .85rem;
+      margin-top: .7rem;
     }
 
-    .keylist li {
-      margin: .25rem 0;
+    .endpoint {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: .9rem;
+      background: #fff;
+      box-shadow: 0 1px 0 rgba(0,0,0,.02);
     }
 
-    /* Tables: no horizontal scroll by enabling wrapping and fixed layout */
+    .endpoint-head {
+      display: flex;
+      gap: .55rem;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: .45rem;
+    }
+
+    .method {
+      display: inline-block;
+      min-width: 44px;
+      text-align: center;
+      padding: .16rem .45rem;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      font-size: .78rem;
+      font-weight: 700;
+      background: #fff;
+    }
+
+    .method.get { background: #eef6ff; }
+    .method.post { background: #eefbf0; }
+    .method.put { background: #fff7ea; }
+
+    .path {
+      font-family: var(--mono);
+      font-size: .92rem;
+      overflow-wrap: anywhere;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: .14rem .45rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      font-size: .76rem;
+      background: #fff;
+      margin-right: .3rem;
+      margin-top: .2rem;
+    }
+
+    .kv {
+      margin: .55rem 0 0;
+      padding-left: 1.15rem;
+    }
+    .kv li { margin: .22rem 0; }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      margin: .75rem 0 1.2rem;
+      margin: .7rem 0 1rem;
       table-layout: fixed;
     }
 
-    th,
-    td {
+    th, td {
       border: 1px solid var(--line);
-      padding: .6rem .55rem;
+      padding: .58rem .55rem;
+      text-align: left;
       vertical-align: top;
       word-break: break-word;
       overflow-wrap: anywhere;
     }
 
-    thead th {
-      background: #f3f4f6;
-    }
+    thead th { background: #f4f6f8; }
 
-    th:nth-child(1),
-    td:nth-child(1) {
-      width: 80px;
-    }
-
-    th:nth-child(2),
-    td:nth-child(2) {
-      width: 280px;
-    }
-
-    /* Code blocks and inline code */
-    code,
-    pre code {
-      font-family: var(--mono);
-      font-size: 13px;
-    }
-
-    pre code {
-      display: block;
-      background: var(--code-bg);
-      border: 1px solid var(--line);
-      padding: .75rem .9rem;
-      border-radius: 6px;
+    code, pre code { font-family: var(--mono); font-size: 13px; }
+    pre {
+      margin: .45rem 0 0;
       white-space: pre-wrap;
       word-break: break-word;
       overflow-wrap: anywhere;
     }
-
+    pre code {
+      display: block;
+      background: #f6f8fa;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: .72rem .82rem;
+    }
     code.inline {
-      background: var(--code-bg);
+      padding: .06rem .25rem;
       border: 1px solid var(--line);
-      padding: .05rem .25rem;
       border-radius: 4px;
-    }
-
-    .mermaid {
-      text-align: center;
-      margin: 1.2rem 0 1.6rem;
-    }
-
-    /* Badges */
-    .badge {
-      display: inline-block;
-      padding: .15rem .45rem;
-      border-radius: 999px;
-      font-size: .8rem;
-      border: 1px solid var(--line);
-      background: #fff;
-    }
-
-    .ok {
-      background: var(--accent-2);
-      color: var(--accent-3);
-      border-color: #98d9a7;
-    }
-
-    .todo {
-      background: #fff6cc;
-      color: #6b5900;
-      border-color: #f1d36b;
-    }
-
-    /* Quick links list */
-    .linklist {
-      list-style: none;
-      padding-left: 0;
-    }
-
-    .linklist li {
-      margin: .25rem 0;
-    }
-
-    /* Back to top */
-    .toplink {
-      display: inline-block;
-      margin-top: .5rem;
-      font-size: .92rem;
-    }
-
-    /* ------------------- API CHECK ADDITIONS ------------------- */
-    .check-btn {
-      padding: .25rem .5rem;
-      font-size: .8rem;
-      border-radius: 6px;
-      border: 1px solid #d0d7de;
-      background: #fff;
-      cursor: pointer;
-      margin-right: .35rem;
-    }
-
-    .check-btn:hover {
-      background: #f3f4f6;
+      background: #f6f8fa;
     }
 
     .status {
       display: inline-block;
-      font-size: .75rem;
-      padding: .15rem .45rem;
+      font-size: .76rem;
+      padding: .16rem .45rem;
       border-radius: 999px;
-      border: 1px solid #d0d7de;
+      border: 1px solid var(--line);
       vertical-align: middle;
     }
+    .status.ok { background: var(--ok-bg); color: var(--ok-text); border-color: #9cd6ae; }
+    .status.warn { background: var(--warn-bg); color: var(--warn-text); border-color: #ead171; }
+    .status.err { background: var(--err-bg); color: var(--err-text); border-color: #f1abb5; }
 
-    .status.ok {
-      background: #d4f4dd;
-      color: #2b7a2b;
-      border-color: #98d9a7;
+    .check-btn {
+      padding: .28rem .55rem;
+      font-size: .81rem;
+      border-radius: 7px;
+      border: 1px solid var(--line);
+      background: #fff;
+      cursor: pointer;
+      margin-right: .35rem;
+    }
+    .check-btn:hover { background: #f3f4f6; }
+
+    .note {
+      border-left: 4px solid #9fb9d9;
+      padding-left: .75rem;
+      margin-top: .65rem;
+      color: var(--muted);
     }
 
-    .status.err {
-      background: #fde2e2;
-      color: #8a1f1f;
-      border-color: #f1a1a1;
+    .mermaid { text-align: center; margin: 1rem 0 1.4rem; }
+    .toplink { display: inline-block; margin-top: .4rem; font-size: .92rem; }
+  
+    /* Swagger-like API layout overrides */
+    .api-grid {
+      display: block !important;
+      margin-top: .75rem;
+    }
+    .endpoint {
+      width: 100%;
+      box-sizing: border-box;
+      border-radius: 10px;
+      margin-bottom: 14px;
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid #d9dee3;
+      box-shadow: none;
+      background: #fff;
+    }
+    .endpoint.swagger-ready {
+      border-left-width: 6px;
+    }
+    .endpoint.swagger-ready.method-get { border-left-color: #61affe; }
+    .endpoint.swagger-ready.method-post { border-left-color: #49cc90; }
+    .endpoint.swagger-ready.method-put { border-left-color: #fca130; }
+    .endpoint-body {
+      padding: 14px 16px 16px;
+    }
+    .endpoint-head {
+      margin: 0;
+      padding: 12px 16px;
+      border-bottom: 1px solid #e8edf2;
+      background: #fafbfd;
+      align-items: center;
+    }
+    .endpoint.swagger-ready.method-get .endpoint-head { background: rgba(97,175,254,.10); }
+    .endpoint.swagger-ready.method-post .endpoint-head { background: rgba(73,204,144,.10); }
+    .endpoint.swagger-ready.method-put .endpoint-head { background: rgba(252,161,48,.10); }
+
+    .method {
+      min-width: 62px;
+      font-size: .76rem;
+      letter-spacing: .02em;
+      color: #fff;
+      border: none;
+      padding: .33rem .65rem;
+      border-radius: 4px;
+    }
+    .method.get { background: #61affe; }
+    .method.post { background: #49cc90; }
+    .method.put { background: #fca130; }
+
+    .path {
+      font-size: 1rem;
+      font-weight: 700;
     }
 
-    .status.warn {
-      background: #fff6cc;
-      color: #6b5900;
-      border-color: #f1d36b;
-    }
-
-    .legend {
+    .endpoint-actions {
       display: flex;
       flex-wrap: wrap;
       gap: .5rem;
-      margin: .6rem 0 0;
+      margin: 10px 0 12px;
+    }
+    .test-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: .42rem .72rem;
+      border: 1px solid #b9c2cc;
+      border-radius: 6px;
+      background: #fff;
+      color: #1f2937;
+      font-size: .86rem;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .test-link:hover { background: #f6f8fa; text-decoration: none; }
+
+    .op-summary {
+      color: var(--muted);
+      margin-top: 2px;
+      margin-bottom: 0;
     }
 
-    .legend .pill {
-      font-size: .85rem;
+    .sample-url {
+      display: block;
+      margin-top: 2px;
+      color: #44505c;
+      font-size: .86rem;
+      font-family: var(--mono);
+      word-break: break-all;
     }
 
-    .hint {
-      margin: .35rem 0 0;
-    }
   </style>
 </head>
-
 <body id="top">
-
   <script>
-    // Traditional endpoint checker:
-    // - Uses GET (per your requirement)
-    // - Colors by class:
-    //   2xx/3xx -> ok
-    //   4xx     -> warn
-    //   5xx/err -> err
     async function checkEndpoint(btn, url) {
       const badge = btn.nextElementSibling;
-      badge.textContent = "checking…";
-      badge.className = "status";
-
+      badge.textContent = 'checking…';
+      badge.className = 'status';
       try {
-        const res = await fetch(url, { method: "GET" });
+        const res = await fetch(url, { method: 'GET' });
         const s = res.status;
-        badge.textContent = s + " " + (res.statusText || "");
-
-        if (s >= 200 && s < 400) badge.classList.add("ok");
-        else if (s >= 400 && s < 500) badge.classList.add("warn");
-        else badge.classList.add("err");
+        badge.textContent = s + ' ' + (res.statusText || '');
+        if (s >= 200 && s < 400) badge.classList.add('ok');
+        else if (s >= 400 && s < 500) badge.classList.add('warn');
+        else badge.classList.add('err');
       } catch (e) {
-        badge.textContent = "network error";
-        badge.classList.add("err");
+        badge.textContent = 'network error';
+        badge.classList.add('err');
       }
     }
-
-    // Convenience: run all checks in a section or page.
     async function checkAll(scopeId) {
       const root = scopeId ? document.getElementById(scopeId) : document;
       if (!root) return;
-      const buttons = root.querySelectorAll("button.check-btn[data-url]");
+      const buttons = root.querySelectorAll('button.check-btn[data-url]');
       for (const btn of buttons) {
-        await checkEndpoint(btn, btn.getAttribute("data-url"));
+        await checkEndpoint(btn, btn.getAttribute('data-url'));
       }
     }
+
+    function firstExampleUrl(endpointEl) {
+      const codes = endpointEl.querySelectorAll('pre code');
+      for (const code of codes) {
+        const m = code.textContent.match(/https:\/\/releasetrain\.io[^\s"'\\]+/);
+        if (m) return m[0];
+      }
+      return null;
+    }
+
+    function swaggerizeEndpoints() {
+      document.querySelectorAll('.endpoint').forEach((el) => {
+        const methodEl = el.querySelector('.method');
+        const pathEl = el.querySelector('.path');
+        const descEl = el.querySelector('p');
+        if (!methodEl || !pathEl) return;
+
+        const method = methodEl.textContent.trim().toLowerCase();
+        el.classList.add('swagger-ready', 'method-' + method);
+
+        // wrap everything after head in body for cleaner structure
+        const head = el.querySelector('.endpoint-head');
+        const body = document.createElement('div');
+        body.className = 'endpoint-body';
+
+        while (head.nextSibling) body.appendChild(head.nextSibling);
+        el.appendChild(body);
+
+        // add working test link from first explicit example URL
+        const exampleUrl = firstExampleUrl(el);
+        if (exampleUrl) {
+          const actions = document.createElement('div');
+          actions.className = 'endpoint-actions';
+
+          const testLink = document.createElement('a');
+          testLink.href = exampleUrl;
+          testLink.target = '_blank';
+          testLink.rel = 'noopener';
+          testLink.className = 'test-link';
+          testLink.textContent = 'Open test link';
+
+          const sample = document.createElement('span');
+          sample.className = 'sample-url';
+          sample.textContent = exampleUrl;
+
+          actions.appendChild(testLink);
+          body.insertBefore(actions, body.firstChild);
+          body.insertBefore(sample, actions.nextSibling);
+        }
+
+        if (descEl) descEl.classList.add('op-summary');
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', swaggerizeEndpoints);
   </script>
 
   <header>
     <div class="header-inner">
-      <h1>ReleaseTrain.io — Software Ecosystem Framework</h1>
-      <p class="subtitle">
-        A practical reference for the platform architecture, data flow, and API surface area.
-        ReleaseTrain ingests ecosystem signals (GitHub, CVE/NVD, Reddit), enriches and classifies updates,
-        and exposes the results via a backend API and triage UI.
-      </p>
-      <div class="pillbar" aria-label="Primary links">
-        <span class="pill">🌐 <strong>Live</strong>: <a href="https://releasetrain.io/" target="_blank"
-            rel="noopener">releasetrain.io</a></span>
-        <span class="pill">💻 <strong>Client</strong>: <a href="https://github.com/SE4CPS/releasetrain-client"
-            target="_blank" rel="noopener">SE4CPS/releasetrain-client</a></span>
-        <span class="pill">📋 <strong>Board</strong>: <a href="https://github.com/orgs/SE4CPS/projects/24"
-            target="_blank" rel="noopener">SE4CPS Project 24</a></span>
+      <h1>ReleaseTrain.io — API &amp; System Documentation</h1>
+      <p class="subtitle">This reference keeps the original structure, but now presents the endpoints in a Swagger-style layout, with fuller sample calls, parameter variants, practical explanations, and a direct test link for each API based on its example URL.</p>
+      <div class="pillbar">
+        <span class="pill">🌐 Live base URL: <a href="https://releasetrain.io" target="_blank" rel="noopener">https://releasetrain.io</a></span>
+        <span class="pill">🧭 Added: more sample calls</span>
+        <span class="pill">🧪 Added: parameter variants</span>
+        <span class="pill">📘 Added: behavior notes</span>
       </div>
-
-      <div class="legend" aria-label="Status legend">
+      <div class="legend">
         <span class="pill"><span class="status ok">2xx/3xx</span> OK</span>
-        <span class="pill"><span class="status warn">4xx</span> Client</span>
-        <span class="pill"><span class="status err">5xx</span> Server</span>
+        <span class="pill"><span class="status warn">4xx</span> Client issue</span>
+        <span class="pill"><span class="status err">5xx</span> Server issue</span>
       </div>
-      <p class="muted small hint">
-        Checks use <code class="inline">GET</code> and only report status codes (2xx/3xx/4xx/5xx).
-      </p>
     </div>
   </header>
 
   <div class="wrap">
-    <!-- Sidebar navigation -->
     <aside class="sidebar" aria-label="Page navigation">
       <h2>On this page</h2>
       <ul class="toc">
         <li><a href="#intro">Introduction</a></li>
-        <li><a href="#architecture">System Architecture</a></li>
-        <li class="sub"><a href="#agentic-vs-traditional">Agentic AI vs Traditional Software</a></li>
-        <li class="sub"><a href="#runtime-platform">Runtime & Platform</a></li>
-
-        <li><a href="#api">API</a></li>
-        <li class="sub"><a href="#api-conventions">Conventions</a></li>
-        <li class="sub"><a href="#api-quick-checks">Quick API Checks</a></li>
-        <li class="sub"><a href="#api-reddit">Reddit</a></li>
-        <li class="sub"><a href="#api-versions">Versions</a></li>
-        <li class="sub"><a href="#api-components">Components</a></li>
-        <li class="sub"><a href="#api-aggregations">Aggregations (Verification)</a></li>
-        <li class="sub"><a href="#api-test">Test & Discovery</a></li>
-
-        <li><a href="#security">Security</a></li>
-        <li><a href="#licensing">Licensing & Contributions</a></li>
+        <li><a href="#architecture">System architecture</a></li>
+        <li class="sub"><a href="#api-conventions">API conventions</a></li>
+        <li class="sub"><a href="#quick-checks">Quick checks</a></li>
+        <li><a href="#health-meta">Health &amp; meta</a></li>
+        <li><a href="#reddit">Reddit endpoints</a></li>
+        <li><a href="#versions">Version endpoints</a></li>
+        <li><a href="#components">Component endpoints</a></li>
+        <li><a href="#aggregations">Aggregation endpoints</a></li>
+        <li><a href="#testing">Test &amp; discovery endpoints</a></li>
+        <li><a href="#security">Security notes</a></li>
         <li><a href="#references">References</a></li>
       </ul>
     </aside>
 
-    <!-- Main content -->
     <main>
       <section id="intro" class="block">
         <h2>Introduction</h2>
-
-        <div class="introgrid">
+        <div class="grid-2">
           <div>
-            <p>
-              ReleaseTrain is built to help teams keep a steady pace with software ecosystem updates.
-              It collects update signals, improves their quality, classifies impact (type, security, breaking changes),
-              and presents actionable results for triage.
-            </p>
-
+            <p>ReleaseTrain gathers software update signals, stores them in MongoDB, enriches them with classifiers, and exposes the results through an Express API. The original documentation already covered the main surface area; this revision adds the pieces that usually matter when you actually walk the route: what parameters are accepted, which combinations are useful, and what response shape to expect.</p>
             <div class="callout">
-              <h3>How to use this document</h3>
-              <ul class="keylist">
-                <li><strong>Start with Architecture</strong> to understand the end to end flow.</li>
-                <li><strong>Use the API section</strong> as a direct reference for queries and examples.</li>
-                <li><strong>Use Test & Discovery</strong> to validate routes and detect duplicates.</li>
-              </ul>
+              <h3>What changed in this revision</h3>
+              <ol class="kv">
+                <li>Added practical <strong>curl</strong> examples for read and write routes.</li>
+                <li>Added <strong>parameter variants</strong> so consumers can see the different ways each endpoint behaves.</li>
+                <li>Added <strong>explanatory notes</strong> for pagination, date formats, projections, and route quirks.</li>
+              </ol>
             </div>
-
-            <p class="small muted">
-              Practical note: the structure below is intentionally simple and traditional: a fixed table of contents on
-              the left,
-              and the reference content on the right, with stable anchor links.
-            </p>
           </div>
-
           <div class="callout">
-            <h3>Quick jumps</h3>
-            <ul class="linklist">
-              <li>🧭 <a href="#architecture">System Architecture</a></li>
-              <li>🔌 <a href="#api">API Overview</a></li>
-              <li>🧪 <a href="#api-test">Test & Discovery</a></li>
-              <li>🛡️ <a href="#security">Security</a></li>
-            </ul>
-
-            <h3 style="margin-top:.9rem;">Conventions at a glance</h3>
-            <ul class="keylist">
-              <li><code class="inline">Base URL</code>: <code class="inline">https://releasetrain.io</code></li>
-              <li><code class="inline">Date</code>: <code class="inline">YYYYMMDD</code></li>
-              <li><code class="inline">Pagination</code>: page or cursor (Reddit)</li>
+            <h3>Quick operating notes</h3>
+            <ul class="kv">
+              <li><strong>Date format:</strong> most version endpoints use <code class="inline">YYYYMMDD</code>.</li>
+              <li><strong>Monthly format:</strong> month filters use <code class="inline">YYYYMM</code>.</li>
+              <li><strong>Cursor paging:</strong> some list routes support stable cursor-based paging through <code class="inline">X-Next-Cursor</code>.</li>
+              <li><strong>Write routes:</strong> <code class="inline">POST</code> creates/upserts, <code class="inline">PUT</code> updates an existing item.</li>
             </ul>
           </div>
         </div>
-
         <a class="toplink" href="#top">↑ Back to top</a>
       </section>
 
       <section id="architecture" class="block">
-        <h2>System Architecture</h2>
-
+        <h2>System architecture</h2>
         <div class="mermaid">
-          graph LR
-          A["a) Bot1 (GitHub) <span class='badge ok'>online</span>"] --> D["d) MongoDB Data Lake <span
-            class='badge ok'>atlas</span>"]
-          B["b) Bot2 (CVE/NVD) <span class='badge ok'>online</span>"] --> D
-          C["c) Bot3 (Reddit) <span class='badge ok'>online</span>"] --> D
+graph LR
+  A[GitHub bot] --> D[(MongoDB Atlas)]
+  B[CVE/NVD bot] --> D
+  C[Reddit bot] --> D
+  D --> E[ML / classification]
+  E --> F[Express API]
+  F --> G[Frontend views]
+  E --> H[Agentic workflows / RAG]
+  H --> F
+        </div>
+        <p class="note">The direction is traditional and sensible: collectors feed the data store, classifiers enrich it, and the API serves the frontend. The extra routes below are the stones placed on that path for health checks, filtering, aggregation, and diagnostics.</p>
+        <a class="toplink" href="#top">↑ Back to top</a>
+      </section>
 
-          Note1["Improve data quality <span class='badge todo'>ongoing</span>"] --> D
-
-          subgraph E_SG["e) AI / ML"]
-          direction LR
-          Type["Type <span class='badge ok'>ok</span>"]
-          Security["Security <span class='badge ok'>ok</span>"]
-          Breaking["Breaking <span class='badge ok'>ok</span>"]
-          Sentimental["Sentiment <span class='badge todo'>todo</span>"]
-          RAG["LLM / RAG <span class='badge todo'>pilot</span>"]
-          Type --> E["Classified Output"]
-          Security --> E
-          Breaking --> E
-          Sentimental --> E
-          RAG --> E
-          end
-
-          subgraph Azure["g) Azure Cloud"]
-          AZ["gpt-4o"] <--> RAG
-            end
-
-            E <--> Agent["🤖 Agentic AI (LLM+API+DB+Rules)"]
-              Agent <--> D
-                Agent <--> F["f) Backend API (Express)"]
-
-                  F <--> FEEntry["Frontend Router"]
-                    subgraph H["h) Frontend"]
-                    direction LR
-                    FE1["1) Ecosystem Graph Architecture <span class='badge ok'>ok</span>"]
-                    FE2["2) Ecosystem UML Architecture <span class='badge ok'>ok</span>"]
-                    FE3["3) Ecosystem Software Updates <span class='badge ok'>ok</span>"]
-                    FE4["4) Triage Buttons <span class='badge ok'>ok</span>"]
-                    FE5["5) Release Notes Generator <span class='badge todo'>todo</span>"]
-                    FEEntry --> FE1 & FE2 & FE3 & FE4 & FE5
-                    end
+      <section id="api-conventions" class="block">
+        <h2>API conventions</h2>
+        <div class="grid-3">
+          <div class="callout">
+            <h3>Pagination</h3>
+            <p class="small">List routes may support page/limit, cursor paging, or both. Cursor-based routes expose:</p>
+            <ul class="kv small">
+              <li><code class="inline">X-Next-Cursor</code></li>
+              <li><code class="inline">X-Page</code></li>
+              <li><code class="inline">X-Limit</code></li>
+              <li><code class="inline">Link</code></li>
+            </ul>
+          </div>
+          <div class="callout">
+            <h3>Projection</h3>
+            <p class="small">Routes such as <code class="inline">/api/v/search</code> and <code class="inline">/api/reddit/query/cve</code> accept <code class="inline">fields=field1,field2</code> to return a smaller payload. The implementation keeps <code class="inline">_id</code> unless explicitly handled otherwise.</p>
+          </div>
+          <div class="callout">
+            <h3>Built-in date window</h3>
+            <p class="small">Several older routes automatically use a moving two-year window ending tomorrow. That is helpful for browsing, but it also means these routes are not unrestricted historical queries.</p>
+          </div>
         </div>
 
-        <a class="toplink" href="#top">↑ Back to top</a>
-      </section>
-
-      <section id="agentic-vs-traditional" class="block">
-        <h2>Agentic AI vs Traditional Software</h2>
+        <h3>Useful request patterns</h3>
         <table>
           <thead>
-            <tr>
-              <th>Capability</th>
-              <th>Description / Example</th>
-              <th>Tech</th>
-              <th>What’s Different</th>
-            </tr>
+            <tr><th>Pattern</th><th>Meaning</th><th>Example</th></tr>
           </thead>
           <tbody>
-            <tr>
-              <td>Data Access & Reasoning</td>
-              <td>
-                Pulls GitHub, CVE/NVD, and Reddit; decides urgency:
-                <pre><code>if (cve.severity &gt;= 7) trigger_triage(); else ignore();
-
-const prompt = `
-I have a new CVE and a list of affected repos.
-Consider GitHub data and Reddit sentiment.
-Should we triage urgently? Explain.`;
-const result = llm.invoke(prompt);</code></pre>
-              </td>
-              <td>Python, LangChain, pymongo</td>
-              <td>Beyond fixed rules: uses context + language models for decisions.</td>
-            </tr>
-            <tr>
-              <td>Action Orchestration</td>
-              <td>Sequences multi tool workflows; updates backend, notifies UI.</td>
-              <td>LangChain Agents, FastAPI/Python</td>
-              <td>Dynamic tool use vs static pipelines.</td>
-            </tr>
-            <tr>
-              <td>Contextual Interpretation</td>
-              <td>LLM/RAG cross correlates signals and sentiment.</td>
-              <td>Azure OpenAI (gpt-4o), LlamaIndex</td>
-              <td>Understands text + relationships across sources.</td>
-            </tr>
+            <tr><td><code class="inline">q=a,b,c</code></td><td>Comma-separated component or subreddit names.</td><td><code class="inline">/api/v/search?q=chrome,firefox</code></td></tr>
+            <tr><td><code class="inline">limit=all</code></td><td>Disable paging on routes that support unlimited mode.</td><td><code class="inline">/api/v/search?limit=all</code></td></tr>
+            <tr><td><code class="inline">showCount=true</code></td><td>Add a total count to the response body.</td><td><code class="inline">/api/reddit/query/cve?showCount=true</code></td></tr>
+            <tr><td><code class="inline">fields=...</code></td><td>Return only selected fields.</td><td><code class="inline">/api/v/search?fields=versionId,versionNumber</code></td></tr>
           </tbody>
         </table>
-
         <a class="toplink" href="#top">↑ Back to top</a>
       </section>
 
-      <section id="runtime-platform" class="block">
-        <h2>Runtime & Platform</h2>
+      <section id="quick-checks" class="block">
+        <h2>Quick checks</h2>
+        <p class="small muted">These buttons use <code class="inline">GET</code> only and report the HTTP status. In practice this is like testing the ground before taking the next step.</p>
+        <p><button class="check-btn" onclick="checkAll('quick-checks')">Check all GET endpoints in this section</button></p>
         <table>
-          <thead>
-            <tr>
-              <th>Layer</th>
-              <th>Platform</th>
-              <th>Notes</th>
-            </tr>
-          </thead>
+          <thead><tr><th>Endpoint</th><th>Action</th></tr></thead>
           <tbody>
-            <tr>
-              <td>Bots (GitHub, CVE, Reddit)</td>
-              <td>Ubuntu 22.04 LTS</td>
-              <td>Python, APIs / feeds</td>
-            </tr>
-            <tr>
-              <td>Data Lake</td>
-              <td>MongoDB Atlas</td>
-              <td>Schemaless raw + enriched; indexes on <code class="inline">versionId</code>, etc.</td>
-            </tr>
-            <tr>
-              <td>Backend</td>
-              <td>Node.js + Express</td>
-              <td>NGINX reverse proxy; JSON APIs; CORS enabled</td>
-            </tr>
-            <tr>
-              <td>ML / Classification</td>
-              <td>Ubuntu 22.04 LTS</td>
-              <td>Daily classifiers: Type/Security/Breaking; Sentiment (planned)</td>
-            </tr>
-            <tr>
-              <td>LLM / RAG</td>
-              <td>Azure</td>
-              <td>gpt-4o, augmentation over Reddit/CVE/Release Notes</td>
-            </tr>
-            <tr>
-              <td>Frontend</td>
-              <td>Web</td>
-              <td>Graph/UML/Updates/Triage modules (MIT)</td>
-            </tr>
+            <tr><td><code>/api/health</code> <a href="<code>/api/health</code>" target="_blank">[Test]</a></td><td><button class="check-btn" data-url="/api/health" onclick="checkEndpoint(this,this.dataset.url)">Check</button><span class="status"></span></td></tr>
+            <tr><td><code>/api/meta</code> <a href="<code>/api/meta</code>" target="_blank">[Test]</a></td><td><button class="check-btn" data-url="/api/meta" onclick="checkEndpoint(this,this.dataset.url)">Check</button><span class="status"></span></td></tr>
+            <tr><td><code>/api/reddit?limit=25</code> <a href="<code>/api/reddit?limit=25</code>" target="_blank">[Test]</a></td><td><button class="check-btn" data-url="/api/reddit?limit=25" onclick="checkEndpoint(this,this.dataset.url)">Check</button><span class="status"></span></td></tr>
+            <tr><td><code>/api/v/search?q=chrome&amp;limit=10</code> <a href="<code>/api/v/search?q=chrome&amp;limit=10</code>" target="_blank">[Test]</a></td><td><button class="check-btn" data-url="/api/v/search?q=chrome&limit=10" onclick="checkEndpoint(this,this.dataset.url)">Check</button><span class="status"></span></td></tr>
+            <tr><td><code>/api/test/endpoints</code> <a href="<code>/api/test/endpoints</code>" target="_blank">[Test]</a></td><td><button class="check-btn" data-url="/api/test/endpoints" onclick="checkEndpoint(this,this.dataset.url)">Check</button><span class="status"></span></td></tr>
           </tbody>
         </table>
-
         <a class="toplink" href="#top">↑ Back to top</a>
       </section>
 
-      <section id="api" class="block">
-        <h2>API</h2>
-        <p class="muted small">
-          The API reference is grouped by domain (Reddit, Versions, Components, Aggregations) so it reads like a
-          handbook.
-        </p>
-
-        <h3 id="api-conventions">Conventions</h3>
-        <ul>
-          <li><strong>Base URL:</strong> <code class="inline">https://releasetrain.io</code> (examples below are
-            clickable).</li>
-          <li><strong>Date format:</strong> <code class="inline">YYYYMMDD</code> unless noted.</li>
-          <li><strong>Range helper:</strong> many endpoints implicitly limit to “last 2 years through tomorrow”.</li>
-          <li><strong>Headers (cursor paging):</strong> <code class="inline">X-Next-Cursor</code>, <code
-              class="inline">X-Total-Count</code>, <code class="inline">Link</code>, <code class="inline">X-Page</code>,
-            <code class="inline">X-Limit</code>.</li>
-          <li><strong>Status checks:</strong> every GET row below has a <strong>Check</strong> button that runs a GET
-            request and shows the HTTP status.</li>
-        </ul>
-
-        <section id="api-quick-checks" class="callout" style="margin-top: .85rem;">
-          <h3 style="margin:0 0 .5rem;">Quick API Checks (All GET)</h3>
-          <p class="muted small" style="margin:.25rem 0 .6rem;">
-            Use this to sanity-check routing and availability. Green = 2xx/3xx. Yellow = 4xx. Red = 5xx/network.
-          </p>
-
-          <div style="display:flex; flex-wrap:wrap; gap:.5rem; align-items:center;">
-            <button class="check-btn" onclick="checkAll()">Check all GET endpoints on this page</button>
-            <span class="status" style="border:none; padding:0; font-size:.9rem;"></span>
-          </div>
-
-          <table style="margin:.75rem 0 0;">
-            <thead>
-              <tr>
-                <th>Endpoint</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><code>/api/health</code></td>
-                <td>
-                  <button class="check-btn" data-url="/api/health" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                  <span class="status"></span>
-                </td>
-              </tr>
-              <tr>
-                <td><code>/api/meta</code></td>
-                <td>
-                  <button class="check-btn" data-url="/api/meta" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                  <span class="status"></span>
-                </td>
-              </tr>
-              <tr>
-                <td><code>/api/reddit?limit=25</code></td>
-                <td>
-                  <button class="check-btn" data-url="/api/reddit?limit=25" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                  <span class="status"></span>
-                </td>
-              </tr>
-              <tr>
-                <td><code>/api/v/?q=chrome,firefox</code></td>
-                <td>
-                  <button class="check-btn" data-url="/api/v/?q=chrome,firefox" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                  <span class="status"></span>
-                </td>
-              </tr>
-              <tr>
-                <td><code>/api/test/endpoints</code></td>
-                <td>
-                  <button class="check-btn" data-url="/api/test/endpoints" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                  <span class="status"></span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
-
+      <section id="health-meta" class="block">
+        <h2>Health &amp; meta</h2>
+        <div class="api-grid">
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/health</span></div>
+            <p>Lightweight health check. No database query.</p>
+            <pre><code>curl "https://releasetrain.io/api/health"</code></pre>
+            <pre><code>{
+  "ok": true,
+  "service": "releasetrain",
+  "serverTime": "2026-03-25T17:00:00.000Z"
+}</code></pre>
+          </article>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/meta</span></div>
+            <p>Diagnostics route that pings the database and reports collection names.</p>
+            <pre><code>curl "https://releasetrain.io/api/meta"</code></pre>
+            <pre><code>{
+  "ok": true,
+  "dbName": "releasetrain",
+  "ping": { "ok": 1 },
+  "collections": { "versions": "versions", "users": "users" }
+}</code></pre>
+          </article>
+        </div>
         <a class="toplink" href="#top">↑ Back to top</a>
       </section>
 
-      <!-- ===================== REDDIT ===================== -->
-      <section id="api-reddit" class="block">
-        <h2>Reddit</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Method</th>
-              <th>Endpoint</th>
-              <th>Description</th>
-              <th>Example</th>
-              <th>Sample</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>POST</td>
-              <td><code>/api/reddit</code></td>
-              <td>Upsert a post by <code class="inline">redditId</code>. Adds <code class="inline">updatedAt</code>.
-              </td>
-              <td>
-                <pre><code>curl -X POST "https://releasetrain.io/api/reddit" \
- -H "Content-Type: application/json" \
- -d '{"redditId":"1nq0h33","title":"Example","created_utc":"2025-09-28T12:00:00Z"}'</code></pre>
-              </td>
-              <td>
-                <pre><code>{"success":true,"message":"Reddit post added/updated.","redditId":"1nq0h33"}</code></pre>
-              </td>
-            </tr>
+      <section id="reddit" class="block">
+        <h2>Reddit endpoints</h2>
+        <div class="callout">
+          <h3>Reddit section at a glance</h3>
+          <p class="small">This group covers ingestion, listing, subreddit filtering, CVE text search, positive-score retrieval, monthly summaries, and direct single-item fetch/update operations. Some routes use simple page/limit paging, while others also support cursor-based navigation.</p>
+        </div>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/reddit</code></td>
-              <td>Newest first listing with <em>page/limit</em> or stable <em>cursor</em> pagination.</td>
-              <td>
-                <button class="check-btn" data-url="/api/reddit?limit=25" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                <span class="status"></span><br />
-                <a href="https://releasetrain.io/api/reddit?limit=25" target="_blank"
-                  rel="noopener">/api/reddit?limit=25</a>
-              </td>
-              <td>
-                <pre><code>{ "data":[ { "title":"...", "created_utc":"..." }, ... ] }</code></pre>
-              </td>
-            </tr>
+        <div class="api-grid">
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method post">POST</span><span class="path">/api/reddit</span></div>
+            <p>Insert or upsert a Reddit document by <code class="inline">redditId</code>. The route adds <code class="inline">updatedAt</code>.</p>
+            <div><span class="tag">Body: redditId recommended</span><span class="tag">Upsert</span></div>
+            <pre><code>curl -X POST "https://releasetrain.io/api/reddit" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "redditId": "1nq0h33",
+    "title": "Example post",
+    "subreddit": "programming",
+    "created_utc": "2025-09-28T12:00:00Z"
+  }'</code></pre>
+            <pre><code>{
+  "success": true,
+  "message": "Reddit post added successfully.",
+  "redditId": "1nq0h33"
+}</code></pre>
+          </article>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/reddit?month=YYYYMM</code></td>
-              <td>Monthly window filter when <code class="inline">created_utc</code> is ISO (YYYY-MM-...).</td>
-              <td>
-                <button class="check-btn" data-url="/api/reddit?month=202507&limit=25" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                <span class="status"></span><br />
-                <a href="https://releasetrain.io/api/reddit?month=202507&limit=25" target="_blank"
-                  rel="noopener">/api/reddit?month=202507&limit=25</a>
-              </td>
-              <td>
-                <pre><code>{ "data":[ ... ] }</code></pre>
-              </td>
-            </tr>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method put">PUT</span><span class="path">/api/reddit</span></div>
+            <p>Replace a Reddit document while preserving the existing Mongo <code class="inline">_id</code> if the same <code class="inline">redditId</code> already exists.</p>
+            <div><span class="tag">Body: redditId required</span><span class="tag">Preserves _id</span></div>
+            <pre><code>curl -X PUT "https://releasetrain.io/api/reddit" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "redditId": "1nq0h33",
+    "title": "Updated title",
+    "subreddit": "programming"
+  }'</code></pre>
+            <pre><code>{
+  "success": true,
+  "message": "Reddit post replaced (kept original _id).",
+  "redditId": "1nq0h33"
+}</code></pre>
+          </article>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/reddit?isUpdateRelated=true</code></td>
-              <td>Filter by existence and (optionally) value of <code class="inline">metadata.isUpdateRelated</code>.</td>
-              <td>
-                <button class="check-btn" data-url="/api/reddit?isUpdateRelated=true&limit=25" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                <span class="status"></span><br />
-                <a href="https://releasetrain.io/api/reddit?isUpdateRelated=true&limit=25" target="_blank"
-                  rel="noopener">/api/reddit?isUpdateRelated=true&limit=25</a>
-              </td>
-              <td>
-                <pre><code>{ "data":[ ... ] }</code></pre>
-              </td>
-            </tr>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/reddit</span></div>
+            <p>List Reddit docs, newest first. Supports page/limit, cursor paging, monthly filtering, and update-related filtering.</p>
+            <div><span class="tag">limit</span><span class="tag">page</span><span class="tag">cursor</span><span class="tag">month=YYYYMM</span><span class="tag">showCount=true</span></div>
+            <pre><code>curl "https://releasetrain.io/api/reddit?limit=25&page=1&showCount=true"
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/reddit?isUpdateRelated=true&amp;isUpdateRelatedValue=false</code></td>
-              <td>Only docs where <code class="inline">metadata.isUpdateRelated</code> exists and is false.</td>
-              <td>
-                <button class="check-btn" data-url="/api/reddit?isUpdateRelated=true&isUpdateRelatedValue=false&limit=25" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                <span class="status"></span><br />
-                <a href="https://releasetrain.io/api/reddit?isUpdateRelated=true&isUpdateRelatedValue=false&limit=25" target="_blank"
-                  rel="noopener">/api/reddit?isUpdateRelated=true&isUpdateRelatedValue=false&limit=25</a>
-              </td>
-              <td>
-                <pre><code>{ "data":[ ... ] }</code></pre>
-              </td>
-            </tr>
+curl "https://releasetrain.io/api/reddit?month=202507&limit=25"
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/reddit?isUpdateRelated=false</code></td>
-              <td>Only docs where <code class="inline">metadata.isUpdateRelated</code> does not exist.</td>
-              <td>
-                <button class="check-btn" data-url="/api/reddit?isUpdateRelated=false&limit=25" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                <span class="status"></span><br />
-                <a href="https://releasetrain.io/api/reddit?isUpdateRelated=false&limit=25" target="_blank"
-                  rel="noopener">/api/reddit?isUpdateRelated=false&limit=25</a>
-              </td>
-              <td>
-                <pre><code>{ "data":[ ... ] }</code></pre>
-              </td>
-            </tr>
+curl "https://releasetrain.io/api/reddit?isUpdateRelated=true&isUpdateRelatedValue=false&limit=25"</code></pre>
+            <pre><code>{
+  "data": [ { "title": "...", "created_utc": "..." } ],
+  "totalCount": 25
+}</code></pre>
+            <p class="small muted">Variant behavior: <code class="inline">isUpdateRelated=false</code> means the field does not exist; <code class="inline">isUpdateRelated=true&amp;isUpdateRelatedValue=false</code> means the field exists and is false.</p>
+          </article>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/reddit/count</code></td>
-              <td>Total posts in the last 2 years (inclusive to “tomorrow”).</td>
-              <td>
-                <button class="check-btn" data-url="/api/reddit/count" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                <span class="status"></span><br />
-                <a href="https://releasetrain.io/api/reddit/count" target="_blank"
-                  rel="noopener">/api/reddit/count</a>
-              </td>
-              <td>
-                <pre><code>{"totalRedditPosts":248}</code></pre>
-              </td>
-            </tr>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/reddit/stats/summary</span></div>
+            <p>Range summary over Reddit data. Reports total docs, risky docs, latest-update mentions, and CVE mentions.</p>
+            <div><span class="tag">start=YYYYMMDD</span><span class="tag">end=YYYYMMDD</span></div>
+            <pre><code>curl "https://releasetrain.io/api/reddit/stats/summary?start=20240101&end=20241231"</code></pre>
+            <pre><code>{
+  "success": true,
+  "range": { "start": "20240101", "end": "20241231" },
+  "totals": {
+    "total": 1200,
+    "risky": 52,
+    "aboutLatestUpdate": 140,
+    "aboutCve": 88
+  }
+}</code></pre>
+          </article>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/reddit/stats/summary</code></td>
-              <td>Summary totals for a date range on <code class="inline">created_utc</code> (string compare).</td>
-              <td>
-                <button class="check-btn" data-url="/api/reddit/stats/summary?start=20240101&end=20241231" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                <span class="status"></span><br />
-                <a href="https://releasetrain.io/api/reddit/stats/summary?start=20240101&end=20241231" target="_blank"
-                  rel="noopener">/api/reddit/stats/summary?start=20240101&end=20241231</a>
-              </td>
-              <td>
-                <pre><code>{ "success":true, "totals":{ "total":..., "risky":... } }</code></pre>
-              </td>
-            </tr>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/reddit/stats/by-month</span></div>
+            <p>Monthly counts for labeled training distribution.</p>
+            <div><span class="tag">startMonth=YYYYMM</span><span class="tag">endMonth=YYYYMM</span></div>
+            <pre><code>curl "https://releasetrain.io/api/reddit/stats/by-month?startMonth=202401&endMonth=202412"</code></pre>
+            <pre><code>{
+  "success": true,
+  "totalMonths": 12,
+  "data": [
+    { "month": "2024-01", "count": 31 },
+    { "month": "2024-02", "count": 27 }
+  ]
+}</code></pre>
+          </article>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/reddit/stats/by-month</code></td>
-              <td>Monthly counts for labeled training distribution.</td>
-              <td>
-                <button class="check-btn" data-url="/api/reddit/stats/by-month?startMonth=202401&endMonth=202412" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                <span class="status"></span><br />
-                <a href="https://releasetrain.io/api/reddit/stats/by-month?startMonth=202401&endMonth=202412" target="_blank"
-                  rel="noopener">/api/reddit/stats/by-month?startMonth=202401&endMonth=202412</a>
-              </td>
-              <td>
-                <pre><code>{ "success":true, "data":[{"month":"2024-01","count":...}, ...] }</code></pre>
-              </td>
-            </tr>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/reddit/count</span></div>
+            <p>Total post count over the built-in rolling two-year window.</p>
+            <pre><code>curl "https://releasetrain.io/api/reddit/count"</code></pre>
+            <pre><code>{ "totalRedditPosts": 248 }</code></pre>
+          </article>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/reddit/by-subreddit</code></td>
-              <td>Filter by exact subreddit(s), case-insensitive; optional <code class="inline">minScore</code>, <code
-                  class="inline">minComments</code>, <code class="inline">fields</code>, <code
-                  class="inline">page</code>, <code class="inline">limit</code>.</td>
-              <td>
-                <button class="check-btn" data-url="/api/reddit/by-subreddit?q=programming" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                <span class="status"></span><br />
-                <a href="https://releasetrain.io/api/reddit/by-subreddit?q=programming" target="_blank"
-                  rel="noopener">/api/reddit/by-subreddit?q=programming</a><br />
-                <a href="https://releasetrain.io/api/reddit/by-subreddit?q=programming,technology&minScore=50&minComments=10&limit=25&page=2&fields=title,subreddit,score,num_comments,created_utc"
-                  target="_blank" rel="noopener">/api/reddit/by-subreddit?...&minScore=50...</a>
-              </td>
-              <td>
-                <pre><code>{ "page":2, "limit":25, "count":25, "subreddits":["programming","technology"], "data":[ ... ] }</code></pre>
-              </td>
-            </tr>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/reddit/by-subreddit</span></div>
+            <p>Fetch by one or more subreddits, case-insensitive. Optional score, comment, pagination, and projection filters.</p>
+            <div><span class="tag">q or subreddit</span><span class="tag">minScore</span><span class="tag">minComments</span><span class="tag">fields</span><span class="tag">page</span><span class="tag">limit</span></div>
+            <pre><code>curl "https://releasetrain.io/api/reddit/by-subreddit?q=programming"
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/reddit/query/positive</code></td>
-              <td>All docs where <code class="inline">metadata.predicted.positiveScore &gt; 0.5</code>.</td>
-              <td>
-                <button class="check-btn" data-url="/api/reddit/query/positive" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                <span class="status"></span><br />
-                <a href="https://releasetrain.io/api/reddit/query/positive" target="_blank"
-                  rel="noopener">/api/reddit/query/positive</a>
-              </td>
-              <td>
-                <pre><code>{ "total":N, "minScore":0.5, "data":[ ... ] }</code></pre>
-              </td>
-            </tr>
+curl "https://releasetrain.io/api/reddit/by-subreddit?q=programming,technology&minScore=50&minComments=10&limit=25&page=2&fields=title,subreddit,score,num_comments,created_utc"</code></pre>
+            <pre><code>{
+  "page": 2,
+  "limit": 25,
+  "count": 25,
+  "subreddits": ["programming", "technology"],
+  "data": [ ... ]
+}</code></pre>
+          </article>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/reddit/query/cve</code></td>
-              <td>Search for CVE patterns across title, author_description, first comment, and comments. Default q is
-                <code class="inline">CVE-</code>.
-              </td>
-              <td>
-                <button class="check-btn" data-url="/api/reddit/query/cve?q=CVE-&limit=25" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                <span class="status"></span><br />
-                <a href="https://releasetrain.io/api/reddit/query/cve?q=CVE-&limit=25" target="_blank"
-                  rel="noopener">/api/reddit/query/cve?q=CVE-&limit=25</a>
-              </td>
-              <td>
-                <pre><code>{ "q":"CVE-", "commentsOnly":false, "data":[ ... ] }</code></pre>
-              </td>
-            </tr>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/reddit/query/positive</span></div>
+            <p>Returns all Reddit docs where <code class="inline">metadata.predicted.positiveScore &gt; 0.5</code>, sorted by score descending.</p>
+            <pre><code>curl "https://releasetrain.io/api/reddit/query/positive"</code></pre>
+            <pre><code>{
+  "total": 83,
+  "minScore": 0.5,
+  "data": [ ... ]
+}</code></pre>
+          </article>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/reddit/query/cve?commentsOnly=true</code></td>
-              <td>Search only in <code class="inline">comments.body</code>.</td>
-              <td>
-                <button class="check-btn" data-url="/api/reddit/query/cve?q=CVE-&commentsOnly=true&limit=25" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                <span class="status"></span><br />
-                <a href="https://releasetrain.io/api/reddit/query/cve?q=CVE-&commentsOnly=true&limit=25" target="_blank"
-                  rel="noopener">/api/reddit/query/cve?q=CVE-&commentsOnly=true&limit=25</a>
-              </td>
-              <td>
-                <pre><code>{ "commentsOnly":true, "data":[ ... ] }</code></pre>
-              </td>
-            </tr>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/reddit/query/cve</span></div>
+            <p>Text-search Reddit content for CVE-like strings. Defaults to <code class="inline">q=CVE-</code>. Supports comments-only search, projections, count, and cursor paging.</p>
+            <div><span class="tag">q</span><span class="tag">commentsOnly=true</span><span class="tag">fields</span><span class="tag">showCount=true</span><span class="tag">limit/page/cursor</span></div>
+            <pre><code>curl "https://releasetrain.io/api/reddit/query/cve?q=CVE-&limit=25"
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/reddit/:redditId</code></td>
-              <td>Fetch one by <code class="inline">redditId</code> or Mongo <code class="inline">_id</code>.</td>
-              <td>
-                <button class="check-btn" data-url="/api/reddit/1nq0h33" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                <span class="status"></span><br />
-                <a href="https://releasetrain.io/api/reddit/1nq0h33" target="_blank"
-                  rel="noopener">/api/reddit/1nq0h33</a>
-              </td>
-              <td>
-                <pre><code>{ "_id":"...", "redditId":"1nq0h33", ... }</code></pre>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+curl "https://releasetrain.io/api/reddit/query/cve?q=CVE-&commentsOnly=true&fields=title,comments,created_utc&limit=25"
 
+curl "https://releasetrain.io/api/reddit/query/cve?showCount=true&limit=25"</code></pre>
+            <pre><code>{
+  "q": "CVE-",
+  "commentsOnly": false,
+  "data": [ ... ],
+  "totalCount": 97
+}</code></pre>
+          </article>
+
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/reddit/query/filter</span></div>
+            <p>Filter Reddit docs by comment count and predicted positive score window.</p>
+            <div><span class="tag">minComments</span><span class="tag">minScore</span><span class="tag">maxScore</span><span class="tag">limit</span></div>
+            <pre><code>curl "https://releasetrain.io/api/reddit/query/filter?minComments=5&minScore=0.6&maxScore=0.95&limit=50"</code></pre>
+            <pre><code>{
+  "filters": { "minComments": 5, "minScore": 0.6, "maxScore": 0.95, "limit": 50 },
+  "total": 50,
+  "data": [ ... ]
+}</code></pre>
+          </article>
+
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/iot</span></div>
+            <p>Specialized Reddit view for selected IoT-style subreddits, with optional update-related filtering.</p>
+            <div><span class="tag">limit</span><span class="tag">page</span><span class="tag">updateRelated=true</span></div>
+            <pre><code>curl "https://releasetrain.io/api/iot?limit=100&page=1"
+
+curl "https://releasetrain.io/api/iot?limit=100&page=1&updateRelated=true"</code></pre>
+            <pre><code>{
+  "page": 1,
+  "limit": 100,
+  "count": 100,
+  "hasMore": true,
+  "updateRelated": true,
+  "data": [ ... ]
+}</code></pre>
+          </article>
+
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/subreddits/smoke</span></div>
+            <p>Simple footprint check to list distinct subreddits found in the Reddit collection.</p>
+            <pre><code>curl "https://releasetrain.io/api/subreddits/smoke"</code></pre>
+            <pre><code>{ "count": 14, "items": ["programming", "technology"] }</code></pre>
+          </article>
+
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/reddit/:redditId</span></div>
+            <p>Fetch a single Reddit item by Mongo ObjectId or Reddit short id.</p>
+            <div><span class="tag">24-hex ObjectId</span><span class="tag">or redditId 6–10 chars</span></div>
+            <pre><code>curl "https://releasetrain.io/api/reddit/1nq0h33"
+
+curl "https://releasetrain.io/api/reddit/660c38fce3cba9423e4f8f23"</code></pre>
+          </article>
+
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method put">PUT</span><span class="path">/api/reddit/:redditId</span></div>
+            <p>Update a single Reddit item by ObjectId or <code class="inline">redditId</code>.</p>
+            <pre><code>curl -X PUT "https://releasetrain.io/api/reddit/1nq0h33" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Retitled post","score":88}'</code></pre>
+          </article>
+        </div>
         <a class="toplink" href="#top">↑ Back to top</a>
       </section>
 
-      <!-- ===================== VERSIONS ===================== -->
-      <section id="api-versions" class="block">
-        <h2>Versions</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Method</th>
-              <th>Endpoint</th>
-              <th>Description</th>
-              <th>Example</th>
-              <th>Sample</th>
-            </tr>
-          </thead>
-          <tbody>
+      <section id="versions" class="block">
+        <h2>Version endpoints</h2>
+        <div class="callout">
+          <h3>Version section at a glance</h3>
+          <p class="small">There are two flavors here: older convenience routes such as <code class="inline">/api/v/</code> and the newer, more controlled search route <code class="inline">/api/v/search</code>. For a steady client integration, <code class="inline">/api/v/search</code> is the safer path because its filters and paging model are explicit.</p>
+        </div>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/health</code></td>
-              <td>Basic health check (no DB query).</td>
-              <td>
-                <button class="check-btn" data-url="/api/health" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                <span class="status"></span><br />
-                <a href="https://releasetrain.io/api/health" target="_blank" rel="noopener">/api/health</a>
-              </td>
-              <td>
-                <pre><code>{ "ok": true, "service":"releasetrain", "serverTime":"..." }</code></pre>
-              </td>
-            </tr>
+        <div class="api-grid">
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/v/latest10</span></div>
+            <p>Latest N versions per requested component.</p>
+            <div><span class="tag">q required</span><span class="tag">limit max 100</span></div>
+            <pre><code>curl "https://releasetrain.io/api/v/latest10?q=chrome,firefox&limit=10"</code></pre>
+            <pre><code>{
+  "q": ["chrome", "firefox"],
+  "limit": 10,
+  "data": {
+    "chrome": [ ... ],
+    "firefox": [ ... ]
+  }
+}</code></pre>
+          </article>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/meta</code></td>
-              <td>Light DB ping and metadata.</td>
-              <td>
-                <button class="check-btn" data-url="/api/meta" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                <span class="status"></span><br />
-                <a href="https://releasetrain.io/api/meta" target="_blank" rel="noopener">/api/meta</a>
-              </td>
-              <td>
-                <pre><code>{ "ok": true, "dbName":"releasetrain", "ping":{...}, "collections":{...} }</code></pre>
-              </td>
-            </tr>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/v/search</span></div>
+            <p>Unified read-only search for versions with filters, projections, count, and cursor paging.</p>
+            <div><span class="tag">q</span><span class="tag">channel</span><span class="tag">isCve</span><span class="tag">start/end</span><span class="tag">fields</span><span class="tag">showCount</span></div>
+            <pre><code>curl "https://releasetrain.io/api/v/search?q=chrome,firefox&limit=50&page=1&showCount=true"
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/v/latest10</code></td>
-              <td>Latest N versions per component (read-only).</td>
-              <td>
-                <button class="check-btn" data-url="/api/v/latest10?q=chrome&limit=10" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                <span class="status"></span><br />
-                <a href="https://releasetrain.io/api/v/latest10?q=chrome&limit=10" target="_blank"
-                  rel="noopener">/api/v/latest10?q=chrome&amp;limit=10</a>
-              </td>
-              <td>
-                <pre><code>{ "q":["chrome"], "limit":10, "data":{ "chrome":[ ... ] } }</code></pre>
-              </td>
-            </tr>
+curl "https://releasetrain.io/api/v/search?q=chrome&channel=patch&limit=25&page=1"
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/v/search</code></td>
-              <td>Unified search with paging (page/cursor), filtering, and optional projection.</td>
-              <td>
-                <button class="check-btn" data-url="/api/v/search?q=chrome,firefox&limit=50&page=1&showCount=true" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                <span class="status"></span><br />
-                <a href="https://releasetrain.io/api/v/search?q=chrome,firefox&limit=50&page=1&showCount=true"
-                  target="_blank"
-                  rel="noopener">/api/v/search?q=chrome,firefox&amp;limit=50&amp;page=1&amp;showCount=true</a>
-              </td>
-              <td>
-                <pre><code>{ "data":[ ... ], "totalCount": 1234 }</code></pre>
-              </td>
-            </tr>
+curl "https://releasetrain.io/api/v/search?q=chrome&isCve=true&fields=versionId,versionNumber,versionReleaseDate&limit=25"
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/v/search?channel=patch</code></td>
-              <td>Filter by release channel (<code class="inline">major|minor|patch|cve</code>).</td>
-              <td>
-                <button class="check-btn" data-url="/api/v/search?q=chrome&channel=patch&limit=25&page=1" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                <span class="status"></span><br />
-                <a href="https://releasetrain.io/api/v/search?q=chrome&channel=patch&limit=25&page=1"
-                  target="_blank"
-                  rel="noopener">/api/v/search?q=chrome&amp;channel=patch&amp;limit=25&amp;page=1</a>
-              </td>
-              <td>
-                <pre><code>{ "data":[ ... ] }</code></pre>
-              </td>
-            </tr>
+curl "https://releasetrain.io/api/v/search?q=chrome&start=20250101&end=20251231&limit=25"</code></pre>
+            <pre><code>{
+  "data": [
+    { "_id": "...", "versionId": "20250217chrome1.2.3", "versionNumber": "1.2.3" }
+  ],
+  "totalCount": 314
+}</code></pre>
+            <p class="small muted">Parameter variants: <code class="inline">channel=cve</code> sets <code class="inline">isCve=true</code>; <code class="inline">limit=all</code> disables paging; <code class="inline">cursor=...</code> continues from the response header.</p>
+          </article>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/v/search?isCve=true</code></td>
-              <td>Filter CVE items explicitly.</td>
-              <td>
-                <button class="check-btn" data-url="/api/v/search?q=chrome&isCve=true&limit=25&page=1" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                <span class="status"></span><br />
-                <a href="https://releasetrain.io/api/v/search?q=chrome&isCve=true&limit=25&page=1"
-                  target="_blank"
-                  rel="noopener">/api/v/search?q=chrome&amp;isCve=true&amp;limit=25&amp;page=1</a>
-              </td>
-              <td>
-                <pre><code>{ "data":[ ... ] }</code></pre>
-              </td>
-            </tr>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/v/stats/by-month</span></div>
+            <p>Monthly counts grouped by month and release channel, optionally limited to selected components.</p>
+            <div><span class="tag">startMonth</span><span class="tag">endMonth</span><span class="tag">q</span></div>
+            <pre><code>curl "https://releasetrain.io/api/v/stats/by-month?startMonth=202401&endMonth=202412&q=chrome,firefox"</code></pre>
+            <pre><code>{
+  "success": true,
+  "q": ["chrome", "firefox"],
+  "totalRows": 24,
+  "data": [
+    { "month": "2024-01", "channel": "major", "count": 2 },
+    { "month": "2024-01", "channel": "patch", "count": 5 }
+  ]
+}</code></pre>
+          </article>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/v/search?start=YYYYMMDD&amp;end=YYYYMMDD</code></td>
-              <td>Date range on <code class="inline">versionReleaseDate</code>.</td>
-              <td>
-                <button class="check-btn" data-url="/api/v/search?q=chrome&start=20250101&end=20251231&limit=25&page=1" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                <span class="status"></span><br />
-                <a href="https://releasetrain.io/api/v/search?q=chrome&start=20250101&end=20251231&limit=25&page=1"
-                  target="_blank"
-                  rel="noopener">/api/v/search?q=chrome&amp;start=20250101&amp;end=20251231...</a>
-              </td>
-              <td>
-                <pre><code>{ "data":[ ... ] }</code></pre>
-              </td>
-            </tr>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/v/count</span></div>
+            <p>Total version count inside the rolling two-year window.</p>
+            <pre><code>curl "https://releasetrain.io/api/v/count"</code></pre>
+            <pre><code>{ "totalVersions": 54210 }</code></pre>
+          </article>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/v/search?fields=versionId,versionNumber</code></td>
-              <td>Projection allow-list using <code class="inline">fields</code>.</td>
-              <td>
-                <button class="check-btn" data-url="/api/v/search?q=chrome&fields=versionId,versionNumber,versionReleaseDate&limit=25&page=1" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                <span class="status"></span><br />
-                <a href="https://releasetrain.io/api/v/search?q=chrome&fields=versionId,versionNumber,versionReleaseDate&limit=25&page=1"
-                  target="_blank"
-                  rel="noopener">/api/v/search?q=chrome&amp;fields=versionId,versionNumber,versionReleaseDate...</a>
-              </td>
-              <td>
-                <pre><code>{ "data":[ { "versionId":"...", "versionNumber":"...", "versionReleaseDate":"..." }, ... ] }</code></pre>
-              </td>
-            </tr>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/v/</span></div>
+            <p>Older convenience route that returns recent versions. Without <code class="inline">q</code>, it returns a broad recent slice; with <code class="inline">q</code>, it divides the total limit across components.</p>
+            <div><span class="tag">q optional</span><span class="tag">mobile user agents get smaller total limit</span></div>
+            <pre><code>curl "https://releasetrain.io/api/v/"
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/v/stats/by-month</code></td>
-              <td>Counts by month and channel (major/minor/patch/cve).</td>
-              <td>
-                <button class="check-btn" data-url="/api/v/stats/by-month?startMonth=202401&endMonth=202412&q=chrome,firefox" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                <span class="status"></span><br />
-                <a href="https://releasetrain.io/api/v/stats/by-month?startMonth=202401&endMonth=202412&q=chrome,firefox"
-                  target="_blank"
-                  rel="noopener">/api/v/stats/by-month?startMonth=202401&amp;endMonth=202412&amp;q=chrome,firefox</a>
-              </td>
-              <td>
-                <pre><code>{ "success":true, "totalRows":N, "data":[{"month":"2024-01","channel":"patch","count":...}, ...] }</code></pre>
-              </td>
-            </tr>
+curl "https://releasetrain.io/api/v/?q=chrome,firefox"</code></pre>
+            <pre><code>{ "versions": [ ... ] }</code></pre>
+          </article>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/dashboard/mltl-risk</code></td>
-              <td>Dashboard: versions with MLTL risk (no date range limit). Optional <code class="inline">q</code> filter.</td>
-              <td>
-                <button class="check-btn" data-url="/api/dashboard/mltl-risk?q=chrome,firefox" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                <span class="status"></span><br />
-                <a href="https://releasetrain.io/api/dashboard/mltl-risk?q=chrome,firefox"
-                  target="_blank"
-                  rel="noopener">/api/dashboard/mltl-risk?q=chrome,firefox</a>
-              </td>
-              <td>
-                <pre><code>{ "success":true, "totalVersions":N, "aggregate":{...}, "components":[ ... ] }</code></pre>
-              </td>
-            </tr>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/v/fc</span></div>
+            <p>Forecast the next release date for a single component.</p>
+            <div><span class="tag">q required</span></div>
+            <pre><code>curl "https://releasetrain.io/api/v/fc?q=chrome"</code></pre>
+            <pre><code>[ { "component": "chrome", "releaseDate": "2026-04-07", "version": "135.0.0" } ]</code></pre>
+          </article>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/v/count</code></td>
-              <td>Total versions in last 2 years.</td>
-              <td>
-                <button class="check-btn" data-url="/api/v/count" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                <span class="status"></span><br />
-                <a href="https://releasetrain.io/api/v/count" target="_blank" rel="noopener">/api/v/count</a>
-              </td>
-              <td>
-                <pre><code>{"totalVersions":1221}</code></pre>
-              </td>
-            </tr>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/v/fcc</span></div>
+            <p>Forecast coinciding release dates for multiple components.</p>
+            <div><span class="tag">q required</span></div>
+            <pre><code>curl "https://releasetrain.io/api/v/fcc?q=chrome,firefox"</code></pre>
+            <pre><code>[ { "component": "chrome" }, { "component": "firefox" } ]</code></pre>
+          </article>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/v/</code></td>
-              <td>Latest versions (last 2 years). Optional <code class="inline">q</code>=comma-separated components; mobile limit smaller.</td>
-              <td>
-                <button class="check-btn" data-url="/api/v/?q=chrome,firefox" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                <span class="status"></span><br />
-                <a href="https://releasetrain.io/api/v/?q=chrome,firefox" target="_blank"
-                  rel="noopener">/api/v/?q=chrome,firefox</a>
-              </td>
-              <td>
-                <pre><code>{ "versions":[ { "versionProductName":"chrome", ... }, ... ] }</code></pre>
-              </td>
-            </tr>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/v/:id</span></div>
+            <p>Fetch one version by Mongo ObjectId.</p>
+            <pre><code>curl "https://releasetrain.io/api/v/660c38fce3cba9423e4f8f23"</code></pre>
+          </article>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/v/fc</code></td>
-              <td>Forecast next release for a component via <code class="inline">releasetrain-forecast</code>.</td>
-              <td>
-                <button class="check-btn" data-url="/api/v/fc?q=chrome" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                <span class="status"></span><br />
-                <a href="https://releasetrain.io/api/v/fc?q=chrome" target="_blank"
-                  rel="noopener">/api/v/fc?q=chrome</a>
-              </td>
-              <td>
-                <pre><code>[ { "component":"chrome", "releaseDate":"..." } ]</code></pre>
-              </td>
-            </tr>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/v/versionId/:versionId</span></div>
+            <p>Fetch one version by business identifier rather than Mongo ObjectId.</p>
+            <pre><code>curl "https://releasetrain.io/api/v/versionId/20250217chrome1.2.3"</code></pre>
+          </article>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/v/fcc</code></td>
-              <td>Forecast coinciding release dates for a set of components.</td>
-              <td>
-                <button class="check-btn" data-url="/api/v/fcc?q=chrome,firefox" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                <span class="status"></span><br />
-                <a href="https://releasetrain.io/api/v/fcc?q=chrome,firefox" target="_blank"
-                  rel="noopener">/api/v/fcc?q=chrome,firefox</a>
-              </td>
-              <td>
-                <pre><code>[ { "component":"...", "coincideReleaseDate":"..." } ]</code></pre>
-              </td>
-            </tr>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method post">POST</span><span class="path">/api/v</span></div>
+            <p>Create a version document. The server normalizes <code class="inline">versionNumber</code>, infers the release channel, and fills timestamps/search tags.</p>
+            <pre><code>curl -X POST "https://releasetrain.io/api/v" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "versionProductName": "chrome",
+    "versionNumber": "124.0.1",
+    "versionReleaseDate": "20260325",
+    "versionReleaseChannel": "patch"
+  }'</code></pre>
+            <pre><code>{
+  "versionProductName": "chrome",
+  "versionNumber": "124.0.1",
+  "versionReleaseDate": "20260325",
+  "versionReleaseChannel": "patch",
+  "versionTimestamp": 1742922000000,
+  "versionTimestampLastUpdate": "2026-03-25T17:00:00.000Z"
+}</code></pre>
+          </article>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/v/:id</code></td>
-              <td>Fetch by Mongo <code class="inline">_id</code>.</td>
-              <td>
-                <button class="check-btn" data-url="/api/v/660c38fce3cba9423e4f8f23" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                <span class="status"></span><br />
-                <a href="https://releasetrain.io/api/v/660c38fce3cba9423e4f8f23" target="_blank"
-                  rel="noopener">/api/v/660c38fce3cba9423e4f8f23</a>
-              </td>
-              <td>
-                <pre><code>{ "versionProductName":"...", ... }</code></pre>
-              </td>
-            </tr>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method put">PUT</span><span class="path">/api/v/:id</span></div>
+            <p>Update an existing version by Mongo ObjectId.</p>
+            <pre><code>curl -X PUT "https://releasetrain.io/api/v/660c38fce3cba9423e4f8f23" \
+  -H "Content-Type: application/json" \
+  -d '{"classification":{"componentType":["browser"]}}'</code></pre>
+          </article>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/v/versionId/:versionId</code></td>
-              <td>Fetch by stable <code class="inline">versionId</code>.</td>
-              <td>
-                <button class="check-btn" data-url="/api/v/versionId/20250217component1.2.3" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                <span class="status"></span><br />
-                <a href="https://releasetrain.io/api/v/versionId/20250217component1.2.3" target="_blank"
-                  rel="noopener">/api/v/versionId/20250217component1.2.3</a>
-              </td>
-              <td>
-                <pre><code>{ "versionNumber":"1.2.3", ... }</code></pre>
-              </td>
-            </tr>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method put">PUT</span><span class="path">/api/v/versionId/:versionId</span></div>
+            <p>Update an existing version by business identifier. The route refreshes <code class="inline">versionTimestampLastUpdate</code>.</p>
+            <pre><code>curl -X PUT "https://releasetrain.io/api/v/versionId/20250217chrome1.2.3" \
+  -H "Content-Type: application/json" \
+  -d '{"newFieldName":"newValue"}'</code></pre>
+          </article>
 
-            <tr>
-              <td>POST</td>
-              <td><code>/api/v</code></td>
-              <td>Insert a version; cleans/normalizes <code class="inline">versionNumber</code>, sets timestamps/search tags.</td>
-              <td>
-                <pre><code>curl -X POST "https://releasetrain.io/api/v" \
- -H "Content-Type: application/json" \
- -d '{ "versionId":"20250901foo1.2.3", "versionProductName":"foo", "versionNumber":"1.2.3", "versionReleaseDate":"20250901" }'</code></pre>
-              </td>
-              <td>
-                <pre><code>{ "_id":"...", "versionId":"20250901foo1.2.3", ... }</code></pre>
-              </td>
-            </tr>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/v/aggregate/byDate</span></div>
+            <p>Count how many versions were released on a specific day.</p>
+            <div><span class="tag">date=YYYYMMDD</span></div>
+            <pre><code>curl "https://releasetrain.io/api/v/aggregate/byDate?date=20250723"</code></pre>
+            <pre><code>{ "success": true, "date": "20250723", "count": 42 }</code></pre>
+          </article>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/v/aggregate/byDate</code></td>
-              <td>Count of versions released on a given day.</td>
-              <td>
-                <button class="check-btn" data-url="/api/v/aggregate/byDate?date=20250723" onclick="checkEndpoint(this, this.dataset.url)">Check</button>
-                <span class="status"></span><br />
-                <a href="https://releasetrain.io/api/v/aggregate/byDate?date=20250723" target="_blank"
-                  rel="noopener">/api/v/aggregate/byDate?date=20250723</a>
-              </td>
-              <td>
-                <pre><code>{ "success":true, "date":"20250723", "count": 42 }</code></pre>
-              </td>
-            </tr>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/v/d/versionsByComponent</span></div>
+            <p>Return latest/current/CVE snapshots for one or more components encoded through repeated or single <code class="inline">component=key:value,...</code> strings.</p>
+            <div><span class="tag">component=name:chrome,version:118</span><span class="tag">component=name:chrome,version:118,os:linux</span></div>
+            <pre><code>curl "https://releasetrain.io/api/v/d/versionsByComponent?component=name:chrome,version:118"
 
-          </tbody>
-        </table>
+curl "https://releasetrain.io/api/v/d/versionsByComponent?component=name:chrome,version:118&component=name:firefox,version:123"</code></pre>
+            <pre><code>[
+  {
+    "name": "chrome",
+    "latestVersion": { ... },
+    "currentVersion": { ... },
+    "latestCveVersion": { ... }
+  }
+]</code></pre>
+          </article>
 
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/dashboard/mltl-risk</span></div>
+            <p>Dashboard-oriented aggregate for documents marked as MLTL risk. Optional component filter.</p>
+            <div><span class="tag">q optional</span></div>
+            <pre><code>curl "https://releasetrain.io/api/dashboard/mltl-risk"
+
+curl "https://releasetrain.io/api/dashboard/mltl-risk?q=chrome,firefox"</code></pre>
+            <pre><code>{
+  "success": true,
+  "totalVersions": 87,
+  "aggregate": {
+    "byChannel": { "major": 1, "minor": 4, "patch": 50, "cve": 18, "other": 0 },
+    "byComponentType": {},
+    "bySecurityType": {},
+    "byBreakingType": {}
+  },
+  "components": [ ... ]
+}</code></pre>
+          </article>
+        </div>
         <a class="toplink" href="#top">↑ Back to top</a>
       </section>
 
-      <!-- ===================== COMPONENTS ===================== -->
-      <section id="api-components" class="block">
-        <h2>Components</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Method</th>
-              <th>Endpoint</th>
-              <th>Description</th>
-              <th>Example</th>
-              <th>Sample</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>GET</td>
-              <td><code>/api/component/</code></td>
-              <td>Search components/versions (last 2 years). Query <code class="inline">q</code> matches product name or predicted type.</td>
-              <td>
-                <button class="check-btn" data-url="/api/component/?q=linux" onclick="checkEndpoint(this, this.dataset.url)">Check</button><span class="status"></span><br />
-                <a href="https://releasetrain.io/api/component/?q=linux" target="_blank"
-                  rel="noopener">/api/component/?q=linux</a>
-              </td>
-              <td>
-                <pre><code>[ { "versionProductName":"linux", ... }, ... ]</code></pre>
-              </td>
-            </tr>
+      <section id="components" class="block">
+        <h2>Component endpoints</h2>
+        <div class="api-grid">
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/component/</span></div>
+            <p>Search component records within the rolling two-year window. Matches either product name or predicted component type.</p>
+            <div><span class="tag">q optional</span><span class="tag">pageNumParam</span></div>
+            <pre><code>curl "https://releasetrain.io/api/component/?q=linux"
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/c/name/:componentName/:versionNumber?</code></td>
-              <td>Versions for a component (optionally filter by version).</td>
-              <td>
-                <button class="check-btn" data-url="/api/c/name/firefox" onclick="checkEndpoint(this, this.dataset.url)">Check</button><span class="status"></span><br />
-                <a href="https://releasetrain.io/api/c/name/firefox" target="_blank"
-                  rel="noopener">/api/c/name/firefox</a><br />
-                <a href="https://releasetrain.io/api/c/name/firefox/118.0.1" target="_blank"
-                  rel="noopener">/api/c/name/firefox/118.0.1</a>
-              </td>
-              <td>
-                <pre><code>{ "firefox":[ ... ] }</code></pre>
-              </td>
-            </tr>
+curl "https://releasetrain.io/api/component/?q=browser&pageNumParam=2"</code></pre>
+          </article>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/v/d/versionsByComponent</code></td>
-              <td>Compare latest/current/CVE for one or more components. Param format: <code class="inline">component=name:chrome,version:118</code></td>
-              <td>
-                <button class="check-btn" data-url="/api/v/d/versionsByComponent?component=name:chrome,version:118" onclick="checkEndpoint(this, this.dataset.url)">Check</button><span class="status"></span><br />
-                <a href="https://releasetrain.io/api/v/d/versionsByComponent?component=name:chrome,version:118"
-                  target="_blank" rel="noopener">/api/v/d/versionsByComponent?component=name:chrome,version:118</a>
-              </td>
-              <td>
-                <pre><code>[ { "name":"chrome", "latestVersion":{...}, "currentVersion":{...}, "latestCveVersion":{...} } ]</code></pre>
-              </td>
-            </tr>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/c/name/:componentName/:versionNumber?</span></div>
+            <p>Fetch version history for a specific component, optionally narrowed to one exact version number.</p>
+            <pre><code>curl "https://releasetrain.io/api/c/name/firefox"
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/c/os</code></td>
-              <td>Distinct OS names (last 2 years).</td>
-              <td>
-                <button class="check-btn" data-url="/api/c/os" onclick="checkEndpoint(this, this.dataset.url)">Check</button><span class="status"></span><br />
-                <a href="https://releasetrain.io/api/c/os" target="_blank" rel="noopener">/api/c/os</a>
-              </td>
-              <td>
-                <pre><code>["ubuntu","windows","macos", ... ]</code></pre>
-              </td>
-            </tr>
+curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre>
+            <pre><code>{ "firefox": [ ... ] }</code></pre>
+          </article>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/c/count</code></td>
-              <td>Distinct component count (last 2 years).</td>
-              <td>
-                <button class="check-btn" data-url="/api/c/count" onclick="checkEndpoint(this, this.dataset.url)">Check</button><span class="status"></span><br />
-                <a href="https://releasetrain.io/api/c/count" target="_blank" rel="noopener">/api/c/count</a>
-              </td>
-              <td>
-                <pre><code>{"totalComponents":142}</code></pre>
-              </td>
-            </tr>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/c/frequency</span></div>
+            <p>Builds a component list from top components and those updated today.</p>
+            <pre><code>curl "https://releasetrain.io/api/c/frequency"</code></pre>
+            <pre><code>{ "totalComponents": 20, "components": ["chrome", "firefox"] }</code></pre>
+          </article>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/c/names</code></td>
-              <td>All distinct component names (last 2 years).</td>
-              <td>
-                <button class="check-btn" data-url="/api/c/names" onclick="checkEndpoint(this, this.dataset.url)">Check</button><span class="status"></span><br />
-                <a href="https://releasetrain.io/api/c/names" target="_blank" rel="noopener">/api/c/names</a>
-              </td>
-              <td>
-                <pre><code>["chrome","firefox", ... ]</code></pre>
-              </td>
-            </tr>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/c/os</span></div>
+            <p>Returns distinct component names classified as OS in the rolling two-year window.</p>
+            <pre><code>curl "https://releasetrain.io/api/c/os"</code></pre>
+          </article>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/c/frequency</code></td>
-              <td>Top frequent + “today” updated components (derived set).</td>
-              <td>
-                <button class="check-btn" data-url="/api/c/frequency" onclick="checkEndpoint(this, this.dataset.url)">Check</button><span class="status"></span><br />
-                <a href="https://releasetrain.io/api/c/frequency" target="_blank" rel="noopener">/api/c/frequency</a>
-              </td>
-              <td>
-                <pre><code>{ "totalComponents": 20, "components":[ "chrome", "nodejs", ... ] }</code></pre>
-              </td>
-            </tr>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/c/count</span></div>
+            <p>Total number of distinct components in the rolling two-year window.</p>
+            <pre><code>curl "https://releasetrain.io/api/c/count"</code></pre>
+            <pre><code>{ "totalComponents": 1440 }</code></pre>
+          </article>
 
-          </tbody>
-        </table>
-
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/c/names</span></div>
+            <p>Return distinct component names in the rolling two-year window.</p>
+            <pre><code>curl "https://releasetrain.io/api/c/names"</code></pre>
+          </article>
+        </div>
         <a class="toplink" href="#top">↑ Back to top</a>
       </section>
 
-      <!-- ===================== AGGREGATIONS ===================== -->
-      <section id="api-aggregations" class="block">
-        <h2>Aggregations (Verification)</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Method</th>
-              <th>Endpoint</th>
-              <th>Description</th>
-              <th>Example</th>
-              <th>Sample</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>GET</td>
-              <td><code>/api/aggregate/v/oldestTimestamp</code></td>
-              <td>Oldest release date among most recent <code class="inline">N</code> updates; includes delta in days.</td>
-              <td>
-                <button class="check-btn" data-url="/api/aggregate/v/oldestTimestamp?count=1000" onclick="checkEndpoint(this, this.dataset.url)">Check</button><span class="status"></span><br />
-                <a href="https://releasetrain.io/api/aggregate/v/oldestTimestamp?count=1000" target="_blank"
-                  rel="noopener">/api/aggregate/v/oldestTimestamp?count=1000</a>
-              </td>
-              <td>
-                <pre><code>{ "oldest":"20240101", "deltaInDays": 212 }</code></pre>
-              </td>
-            </tr>
+      <section id="aggregations" class="block">
+        <h2>Aggregation endpoints</h2>
+        <p class="small muted">These routes are verification tools. They help you measure volume, gaps, and classification counts after data collection. In older field terms, these are the checkpoints that tell you whether the path is holding.</p>
+        <div class="api-grid">
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/v/oldestTimestamp</span></div>
+            <p>Find the release date of the Nth newest document and compute the age in days.</p>
+            <div><span class="tag">count</span></div>
+            <pre><code>curl "https://releasetrain.io/api/aggregate/v/oldestTimestamp?count=1000"</code></pre>
+            <pre><code>{ "oldest": "20250723", "deltaInDays": 245 }</code></pre>
+          </article>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/aggregate/v/updateTypeCount</code></td>
-              <td>Counts by <code class="inline">major|minor|patch|other</code>.</td>
-              <td>
-                <button class="check-btn" data-url="/api/aggregate/v/updateTypeCount?timestamp=20250723" onclick="checkEndpoint(this, this.dataset.url)">Check</button><span class="status"></span><br />
-                <a href="https://releasetrain.io/api/aggregate/v/updateTypeCount?timestamp=20250723" target="_blank"
-                  rel="noopener">/api/aggregate/v/updateTypeCount?timestamp=20250723</a>
-              </td>
-              <td>
-                <pre><code>{ "timestamp":"20250723", "major":2, "minor":3, "patch":1, "other":4 }</code></pre>
-              </td>
-            </tr>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/v/updateTypeCount</span></div>
+            <p>Count major, minor, patch, and other versions for a single day.</p>
+            <div><span class="tag">timestamp=YYYYMMDD</span></div>
+            <pre><code>curl "https://releasetrain.io/api/aggregate/v/updateTypeCount?timestamp=20250723"</code></pre>
+            <pre><code>{ "timestamp": "20250723", "major": 2, "minor": 5, "patch": 17, "other": 1 }</code></pre>
+          </article>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/aggregate/v/componentTypeCount</code></td>
-              <td>Counts by <code class="inline">classification.componentType</code>.</td>
-              <td>
-                <button class="check-btn" data-url="/api/aggregate/v/componentTypeCount?timestamp=20250730" onclick="checkEndpoint(this, this.dataset.url)">Check</button><span class="status"></span><br />
-                <a href="https://releasetrain.io/api/aggregate/v/componentTypeCount?timestamp=20250730"
-                  target="_blank" rel="noopener">/api/aggregate/v/componentTypeCount?timestamp=20250730</a>
-              </td>
-              <td>
-                <pre><code>{ "timestamp":"20250730", "total":8, "components":{"browser":3,"runtime":5} }</code></pre>
-              </td>
-            </tr>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/v/componentTypeCount</span></div>
+            <p>Count classified component types for a single day.</p>
+            <pre><code>curl "https://releasetrain.io/api/aggregate/v/componentTypeCount?timestamp=20250730"</code></pre>
+            <pre><code>{ "timestamp": "20250730", "total": 40, "components": { "browser": 8, "os": 6 } }</code></pre>
+          </article>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/aggregate/v/sourceCountByType</code></td>
-              <td>Counts for <code class="inline">CVE</code> (by <code class="inline">isCve</code>) or channel (<code
-                  class="inline">major|minor|patch</code>).</td>
-              <td>
-                <button class="check-btn" data-url="/api/aggregate/v/sourceCountByType?sourceType=CVE&timestamp=20250723" onclick="checkEndpoint(this, this.dataset.url)">Check</button><span class="status"></span><br />
-                <a href="https://releasetrain.io/api/aggregate/v/sourceCountByType?sourceType=CVE&timestamp=20250723"
-                  target="_blank"
-                  rel="noopener">/api/aggregate/v/sourceCountByType?sourceType=CVE&amp;timestamp=20250723</a>
-              </td>
-              <td>
-                <pre><code>{ "timestamp":"20250723", "sourceType":"CVE", "count":6 }</code></pre>
-              </td>
-            </tr>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/v/sourceCountByType</span></div>
+            <p>Count one source type for a given day. <code class="inline">sourceType</code> can be <code class="inline">CVE</code> or a regular release channel such as <code class="inline">major</code>, <code class="inline">minor</code>, or <code class="inline">patch</code>.</p>
+            <pre><code>curl "https://releasetrain.io/api/aggregate/v/sourceCountByType?sourceType=CVE&timestamp=20250723"
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/aggregate/v/versionCountByDay</code></td>
-              <td>Daily counts in a window.</td>
-              <td>
-                <button class="check-btn" data-url="/api/aggregate/v/versionCountByDay?start=20250701&end=20250730" onclick="checkEndpoint(this, this.dataset.url)">Check</button><span class="status"></span><br />
-                <a href="https://releasetrain.io/api/aggregate/v/versionCountByDay?start=20250701&end=20250730"
-                  target="_blank" rel="noopener">/api/aggregate/v/versionCountByDay?start=20250701&amp;end=20250730</a>
-              </td>
-              <td>
-                <pre><code>{ "range":{"start":"20250701","end":"20250730"}, "days":[{"_id":"20250701","count":4}, ...] }</code></pre>
-              </td>
-            </tr>
+curl "https://releasetrain.io/api/aggregate/v/sourceCountByType?sourceType=patch&timestamp=20250723"</code></pre>
+          </article>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/aggregate/v/missingFields</code></td>
-              <td>Find docs missing a field.</td>
-              <td>
-                <button class="check-btn" data-url="/api/aggregate/v/missingFields?field=versionNumber&limit=50" onclick="checkEndpoint(this, this.dataset.url)">Check</button><span class="status"></span><br />
-                <a href="https://releasetrain.io/api/aggregate/v/missingFields?field=versionNumber&limit=50"
-                  target="_blank" rel="noopener">/api/aggregate/v/missingFields?field=versionNumber&amp;limit=50</a>
-              </td>
-              <td>
-                <pre><code>{ "field":"versionNumber","missingCount":3,"sample":[ ... ] }</code></pre>
-              </td>
-            </tr>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/v/versionCountByDay</span></div>
+            <p>Day-by-day version counts over an explicit date range.</p>
+            <pre><code>curl "https://releasetrain.io/api/aggregate/v/versionCountByDay?start=20250701&end=20250730"</code></pre>
+            <pre><code>{ "range": { "start": "20250701", "end": "20250730" }, "days": [ ... ] }</code></pre>
+          </article>
 
-            <tr>
-              <td>GET</td>
-              <td><code>/api/aggregate/v/classificationSummary</code></td>
-              <td>Summary across <code class="inline">classification.securityType</code> and <code class="inline">breakingType</code>.</td>
-              <td>
-                <button class="check-btn" data-url="/api/aggregate/v/classificationSummary?timestamp=20250723" onclick="checkEndpoint(this, this.dataset.url)">Check</button><span class="status"></span><br />
-                <a href="https://releasetrain.io/api/aggregate/v/classificationSummary?timestamp=20250723"
-                  target="_blank" rel="noopener">/api/aggregate/v/classificationSummary?timestamp=20250723</a>
-              </td>
-              <td>
-                <pre><code>{ "timestamp":"20250723","total":5,"classification":{"breakingAPI":2,"securityHigh":3} }</code></pre>
-              </td>
-            </tr>
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/v/missingFields</span></div>
+            <p>Sample documents where a requested field is missing, null, or empty.</p>
+            <div><span class="tag">field required</span><span class="tag">limit optional</span></div>
+            <pre><code>curl "https://releasetrain.io/api/aggregate/v/missingFields?field=versionNumber&limit=50"</code></pre>
+            <pre><code>{ "field": "versionNumber", "missingCount": 50, "sample": [ ... ] }</code></pre>
+          </article>
 
-          </tbody>
-        </table>
-
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/v/classificationSummary</span></div>
+            <p>Summarize security and breaking classification tags for one day.</p>
+            <pre><code>curl "https://releasetrain.io/api/aggregate/v/classificationSummary?timestamp=20250723"</code></pre>
+            <pre><code>{
+  "timestamp": "20250723",
+  "total": 14,
+  "classification": { "security-fix": 8, "breaking-change": 6 }
+}</code></pre>
+          </article>
+        </div>
         <a class="toplink" href="#top">↑ Back to top</a>
       </section>
 
-      <!-- ===================== TEST & DISCOVERY ===================== -->
-      <section id="api-test" class="block">
-        <h2>Test & Discovery</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Method</th>
-              <th>Endpoint</th>
-              <th>Description</th>
-              <th>Example</th>
-              <th>Sample</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>GET</td>
-              <td><code>/api/test/endpoints</code></td>
-              <td>Lists registered routes and methods; detects duplicates.</td>
-              <td>
-                <button class="check-btn" data-url="/api/test/endpoints" onclick="checkEndpoint(this, this.dataset.url)">Check</button><span class="status"></span><br />
-                <a href="https://releasetrain.io/api/test/endpoints" target="_blank"
-                  rel="noopener">/api/test/endpoints</a>
-              </td>
-              <td>
-                <pre><code>{ "totalEndpoints": N, "endpoints":[ { "methods":["GET"], "path":"/api/v" }, ... ] }</code></pre>
-              </td>
-            </tr>
-            <tr>
-              <td>GET</td>
-              <td><code>/api/test/endpoints/html</code></td>
-              <td>HTML table of GET endpoints with example queries and output.</td>
-              <td>
-                <button class="check-btn" data-url="/api/test/endpoints/html" onclick="checkEndpoint(this, this.dataset.url)">Check</button><span class="status"></span><br />
-                <a href="https://releasetrain.io/api/test/endpoints/html" target="_blank"
-                  rel="noopener">/api/test/endpoints/html</a>
-              </td>
-              <td>
-                <pre><code>&lt;html&gt;... table ...&lt;/html&gt;</code></pre>
-              </td>
-            </tr>
-            <tr>
-              <td>GET</td>
-              <td><code>/api/test/all</code></td>
-              <td>Executes a set of GET calls against the local server; returns statuses.</td>
-              <td>
-                <button class="check-btn" data-url="/api/test/all" onclick="checkEndpoint(this, this.dataset.url)">Check</button><span class="status"></span><br />
-                <a href="http://localhost:3000/api/test/all" target="_blank" rel="noopener">http://localhost:3000/api/test/all</a>
-              </td>
-              <td>
-                <pre><code>{ "totalGET": 10, "results":[ { "path":"/api/v", "status":200, ... }, ... ] }</code></pre>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <section id="testing" class="block">
+        <h2>Test &amp; discovery endpoints</h2>
+        <div class="api-grid">
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/test/all</span></div>
+            <p>Runs a built-in suite of GET requests against selected routes and returns status plus payload samples.</p>
+            <pre><code>curl "https://releasetrain.io/api/test/all"</code></pre>
+            <pre><code>{
+  "totalGET": 11,
+  "results": [
+    { "method": "GET", "path": "/api/v?q=chrome,firefox", "status": 200, "success": true }
+  ]
+}</code></pre>
+          </article>
 
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/test/endpoints</span></div>
+            <p>Enumerates all registered routes and flags duplicates if they exist.</p>
+            <pre><code>curl "https://releasetrain.io/api/test/endpoints"</code></pre>
+            <pre><code>{
+  "totalEndpoints": 30,
+  "endpoints": [
+    { "methods": ["GET"], "path": "/api/health" },
+    { "methods": ["GET"], "path": "/api/meta" }
+  ]
+}</code></pre>
+          </article>
+
+          <article class="endpoint">
+            <div class="endpoint-head"><span class="method get">GET</span><span class="path">/api/test/endpoints/html</span></div>
+            <p>HTML view of discovered GET endpoints with generated example URLs and sample outputs.</p>
+            <pre><code>curl "https://releasetrain.io/api/test/endpoints/html"</code></pre>
+          </article>
+        </div>
         <a class="toplink" href="#top">↑ Back to top</a>
       </section>
 
       <section id="security" class="block">
-        <h2>Security</h2>
-        <p>
-          All endpoints are JSON over HTTPS behind NGINX. MongoDB Atlas connections use authenticated URIs with TLS.
-          CORS is enabled for API consumption; custom headers are exposed for cursor pagination.
-          Certificates are provisioned via Let’s Encrypt/Certbot. API key based access is supported (rotate regularly).
-        </p>
-
-        <h3>Current Limitations</h3>
-        <ul>
-          <li>API keys not yet rotated on a schedule.</li>
-          <li>Inconsistent component labels in some frontend views.</li>
-          <li>No automated security tests (authn/z, header policy, schema validation) yet.</li>
-          <li>Upstream inputs (Reddit/CVE feeds) require stricter validation.</li>
-        </ul>
-
-        <h3>Next Steps (Hardening)</h3>
-        <ul>
-          <li>Move secrets to environment variables / vault; enforce rotation and per service keys.</li>
-          <li>Add request schema validation (e.g., <code class="inline">zod</code>/<code class="inline">ajv</code>) and output allow lists.</li>
-          <li>Enable basic WAF rules, rate limiting, and IP allow lists for write endpoints.</li>
-          <li>Automate CI security tests (SAST/DAST), dependency checks, and SBOM.</li>
-          <li>Structured audit logs (success/failure, auth context, redaction for PII).</li>
-        </ul>
-
-        <a class="toplink" href="#top">↑ Back to top</a>
-      </section>
-
-      <section id="licensing" class="block">
-        <h2>Licensing & Contributions</h2>
-        <p><strong>License:</strong> MIT. Contributions via pull requests, issues, and feature proposals are welcome.</p>
+        <h2>Security notes</h2>
+        <div class="callout">
+          <ol class="kv">
+            <li>The uploaded backend file contains a hard-coded MongoDB connection string with credentials. In ordinary engineering practice, that belongs in environment variables or a secrets manager, not in source control.</li>
+            <li>Write routes accept broad JSON payloads. A stronger next step would be schema validation before insert or update.</li>
+            <li>Cursor tokens are opaque base64 payloads. Treat them as transport values, not user-editable state.</li>
+          </ol>
+        </div>
         <a class="toplink" href="#top">↑ Back to top</a>
       </section>
 
       <section id="references" class="block">
         <h2>References</h2>
-        <ul>
-          <li id="ref1">[1] Kan, V., Lnu, M. P., Berhe, S., El Kari, C., Maynard, M., &amp; Khomh, F. (2025). <em><a
-                href="https://www.sciencedirect.com/science/article/pii/S1877050925008440" target="_blank"
-                rel="noopener">Automated UML Visualization of Software Ecosystems</a></em>, <strong>Procedia CS
-              257</strong>, 834–841.</li>
-          <li id="ref2">[2] Veed, S. P., Daftary, S. M., Singh, B., Rudra, M., Berhe, S., Maynard, M., &amp; Khomh, F.
-            (2025). <em><a href="https://sdiotsec.github.io/accepted_papers_posters/sdiotsec25-final78.pdf"
-                target="_blank" rel="noopener">IoT Software Updates: User Perspectives in the Context of NIST IR
-                8259A</a></em>, SDIoTSec 2025.</li>
-          <li id="ref3">[3] Singh, B., Daftary, S., Rudra, M., Veed, S., Berhe, S., Maynard, M., &amp; Khomh, F. (2024).
-            <em><a href="https://okipublishing.com/book/index.php/okip/catalog/view/46/58/321" target="_blank"
-                rel="noopener">Enriching Release Notes with Reddit Feedback</a></em>, OKI eBooks.</li>
-          <li id="ref4">[4] Berhe, S., Kan, V., Khan, O., Pader, N., Farooqui, A. Z., Maynard, M., &amp; Khomh, F.
-            (2024). <em><a href="https://sciencedirect.com/science/article/pii/S187705092401305X" target="_blank"
-                rel="noopener">Triage Software Update Impact via Release Notes Classification</a></em>, <strong>Procedia
-              CS 238</strong>, 618–622.</li>
-          <li id="ref5">[5] Berhe, S., Maynard, M., &amp; Khomh, F. (2023). <em><a
-                href="https://sciencedirect.com/science/article/pii/S1877050923006129" target="_blank"
-                rel="noopener">Maintenance Cost of Software Ecosystem Updates</a></em>, <strong>Procedia CS
-              220</strong>, 608–615.</li>
+        <ul class="kv">
+          <li><a href="https://releasetrain.io/" target="_blank" rel="noopener">ReleaseTrain live site</a></li>
+          <li><a href="https://github.com/SE4CPS/releasetrain-client" target="_blank" rel="noopener">SE4CPS/releasetrain-client</a></li>
+          <li><a href="https://github.com/orgs/SE4CPS/projects/24" target="_blank" rel="noopener">SE4CPS project board</a></li>
         </ul>
-
-        <a class="toplink" href="#top">↑ Back to top</a>
+        <p class="small muted">This updated HTML is designed to be dropped in directly as a standalone documentation page.</p>
       </section>
     </main>
   </div>
-
 </body>
-
 </html>
