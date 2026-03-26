@@ -829,7 +829,19 @@ curl "https://releasetrain.io/api/reddit/query/cve?showCount=true&amp;limit=25"<
 <p>Simple footprint check to list distinct subreddits found in the Reddit collection.</p>
 <pre><code>curl "https://releasetrain.io/api/subreddits/smoke"</code></pre>
 <pre><code>{ "count": 14, "items": ["programming", "technology"] }</code></pre>
-</div></details><details class="endpoint method-post"><summary class="endpoint-head"><span class="method post">POST</span><span class="path">/api/reddit</span></summary><div class="endpoint-body"><div class="endpoint-actions"><a class="test-link" href="https://releasetrain.io/api/reddit" rel="noopener" target="_blank">Open test link</a></div><div class="sample-url">https://releasetrain.io/api/reddit</div>
+</div></details>
+
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/reddit/meta/subreddits</span></summary><div class="endpoint-body"><div class="endpoint-actions"><a class="test-link" href="https://releasetrain.io/api/reddit/meta/subreddits" rel="noopener" target="_blank">Open test link</a></div><div class="sample-url">https://releasetrain.io/api/reddit/meta/subreddits</div>
+
+<p>Return all unique subreddits from the Reddit collection.</p>
+<pre><code>curl "https://releasetrain.io/api/reddit/meta/subreddits"</code></pre>
+<pre><code>{
+  "success": true,
+  "count": 14,
+  "data": ["programming", "technology"]
+}</code></pre>
+</div></details>
+<details class="endpoint method-post"><summary class="endpoint-head"><span class="method post">POST</span><span class="path">/api/reddit</span></summary><div class="endpoint-body"><div class="endpoint-actions"><a class="test-link" href="https://releasetrain.io/api/reddit" rel="noopener" target="_blank">Open test link</a></div><div class="sample-url">https://releasetrain.io/api/reddit</div>
 
 <p>Insert or upsert a Reddit document by <code class="inline">redditId</code>. The route adds <code class="inline">updatedAt</code>.</p>
 <div><span class="tag">Body: redditId recommended</span><span class="tag">Upsert</span></div>

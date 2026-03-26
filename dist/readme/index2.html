@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Request and Display</title>
+    <link href="https://releasetrain.io/img/favicon.ico" rel="icon" type="image/x-icon" />
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+            font-size: 9pt;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            table-layout: auto;
+            word-wrap: break-word;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        th {
+            background-color: #f4f4f4;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        td {
+            background-color: #fff;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .collapsible {
+            cursor: pointer;
+            text-align: left;
+            outline: none;
+            font-size: 12px;
+        }
+
+        .content {
+            padding: 0 18px;
+            display: none;
+            overflow: hidden;
+            background-color: #f9f9f9;
+        }
+
+        .red {
+            background-color: #ffcccc;
+        }
+
+        .orange {
+            background-color: #ffe6cc;
+        }
+
+        .yellow {
+            background-color: #ffffcc;
+        }
+
+        .tag {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-right: 5px;
+            display: inline-block;
+        }
+
+        .security {
+            background-color: #ffcccc;
+            color: #cc0000;
+        }
+
+        .breaking {
+            background-color: #ffffcc;
+            color: #cccc00;
+        }
+
+        .highlight {
+            background-color: #e0e0e0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <section>
+        <span>Recent Most Critical Update:</span>
+        <span id="critical-updates">
+            <!-- Critical updates will be inserted here -->
+        </span>
+    </section>
+
+    <table id="data-table">
+        <thead>
+            <tr>
+                <th>Component</th>
+                <th>Release Note Count</th>
+                <th>Reddit Post Count</th>
+                <th>Reddit Version</th>
+                <th>Reddit Version Match</th>
+                <th>Reddit Post Upvote / Comment</th>
+                <th>Predicted Component<br> (Release Note)</th>
+                <th>Predicted Component<br> (Reddit Post)</th>
+                <th>Average Word Count <br> (Release Notes / Reddit)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data will be inserted here -->
+        </tbody>
+    </table>
+
+    <script>
+        const criticalUpdates = [];
+        const seenUrls = new Set();
+        const existingTitles = new Set();
+        const versionPattern = /\b(?:v)?(\d+)(?:\.(\d+))?(?:\.(\d+))?\b/g;
+
+        function getQueryParameter(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        function fetchData(components) {
+            const tableBody = document.querySelector('#data-table tbody');
+            tableBody.innerHTML = ''; // Clear any existing rows
+
+            components.forEach(component => {
+                if (!component || typeof component !== 'string') {
+                    console.error('Invalid component:', component);
+                    return;
+                }
+
+                const url = `https://releasetrain.io/api/c/name/${component.trim()}`;
+                fetch(url)
+                    .then(response => response.json())
+                    .then(dataArray => {
+                        if (!dataArray || !dataArray[component]) {
+                            console.error('No data found for component:', component);
+                            return;
+                        }
+
+                        let totalUpdates = dataArray[component].length;
+                        let totalRedditPosts = new Set();
+                        let redditWithVersion = 0;
+                        let redditWithVersionUnmatched = 0;
+                        let redditWithMajorVersionMatch = 0;
+                        let redditWithMinorVersionMatch = 0;
+                        let redditWithPatchVersionMatch = 0;
+                        let predictedComponentTypes = {};
+                        let predictedComponentTypesReddit = {};
+                        let redditUrls = new Set();
+
+                        let redditUpvote = 0;
+                        let redditUpvoteCount = 0;
+
+                        let redditCommentCount = 0;
+
+                        let earliestRedditPost = null;
+                        let latestRedditPost = null;
+                        let earliestReleaseDate = null;
+                        let latestReleaseDate = null;
+                        let postTitles = [];
+
+                        let totalReleaseNoteWords = 0;
+                        let totalRedditTitleWords = 0;
+                        let releaseNoteCount = 0;
+
+                        let unmatchedMajorCount = 0;
+                        let unmatchedMinorCount = 0;
+                        let unmatchedPatchCount = 0;
+
+                        securityTrueCount = 0;
+                        securityFalseCount = 0;
+                        breakingTrueCount = 0;
+                        breakingFalseCount = 0;
+
+                        dataArray[component].forEach(data => {
+
+                            const redditPosts = data.user_post_reddit || {};
+
+                            data.versionReleaseDate = data.versionReleaseDate ? new Date(data.versionReleaseDate.slice(0, 4) + '-' + data.versionReleaseDate.slice(4, 6) + '-' + data.versionReleaseDate.slice(6, 8)) : 0;
+
+                            if (data.versionPredictedComponentType && data.versionPredictedComponentType.trim() !== '') {
+                                const type = data.versionPredictedComponentType;
+                                if (predictedComponentTypes[type]) {
+                                    predictedComponentTypes[type]++;
+                                } else {
+                                    predictedComponentTypes[type] = 1;
+                                }
+                            }
+
+                            if (data.predictedRedditComponent) {
+                                for (const [typeReddit, count] of Object.entries(data.predictedRedditComponent)) {
+                                    predictedComponentTypesReddit[typeReddit] = count;
+                                }
+                            }
+
+                            if (data.versionReleaseDate) {
+                                const releaseDate = new Date(data.versionReleaseDate);
+                                if (!earliestReleaseDate || releaseDate < earliestReleaseDate) {
+                                    earliestReleaseDate = releaseDate;
+                                }
+                                if (!latestReleaseDate || releaseDate > latestReleaseDate) {
+                                    latestReleaseDate = releaseDate;
+                                }
+                            }
+
+                            if (data.versionSummary) {
+                                totalReleaseNoteWords += data.versionSummary.split(' ').length;
+                                releaseNoteCount++;
+                            }
+
+                            unmatchedMajorCount = 0;
+                            unmatchedMinorCount = 0;
+                            unmatchedPatchCount = 0;
+
+                            Object.values(redditPosts).forEach(post => {
+
+                                const matches = post.title.matchAll(versionPattern);
+                                post.versionList = [];
+
+                                for (const match of matches) {
+                                    const majorVersion = match[1];
+                                    const minorVersion = match[2];
+                                    const patchVersion = match[3];
+
+                                    if (!majorVersion) continue; // No valid version found
+
+                                    let versionString = majorVersion;
+                                    if (minorVersion) {
+                                        versionString += `.${minorVersion}`;
+                                    }
+                                    if (patchVersion) {
+                                        versionString += `.${patchVersion}`;
+                                    }
+
+                                    post.versionList.push(versionString);
+
+                                    let isVersionMatch = false;
+
+                                    // Logic to check if the version matches with the data.versionNumber (to be defined as per your logic)
+                                    if (data.versionNumber) {
+                                        const dataVersionParts = data.versionNumber.split('.');
+                                        if (majorVersion === dataVersionParts[0]) {
+                                            if (minorVersion === dataVersionParts[1]) {
+                                                if (patchVersion === dataVersionParts[2]) {
+                                                    isVersionMatch = true;
+                                                } else if (!patchVersion) {
+                                                    isVersionMatch = true;
+                                                }
+                                            } else if (!minorVersion) {
+                                                isVersionMatch = true;
+                                            }
+                                        }
+                                    }
+
+                                    if (!isVersionMatch) {
+                                        if (!minorVersion && !patchVersion) {
+                                            unmatchedMajorCount++;
+                                        } else if (!patchVersion) {
+                                            unmatchedMinorCount++;
+                                        } else {
+                                            unmatchedPatchCount++;
+                                        }
+                                    }
+                                }
+
+                                post.versionList = post.versionList || [];
+                                post.upvote_ratio = post.upvote_ratio || 0;
+                                post.created_utc = post.created_utc || 0;
+
+                                if (!totalRedditPosts.has(post.post_id) && (post.isSecurity || post.isBreaking)) {
+
+                                    redditWithVersion += post.versionList.length;
+                                    totalRedditPosts.add(post.post_id);
+                                    redditUrls.add(post.url);
+                                    postTitles.push({
+                                        title: post.title,
+                                        isSecurity: post.isSecurity,
+                                        isBreaking: post.isBreaking,
+                                        componentType: data.versionPredictedComponentTypeReddit,
+                                        url: post.url,
+                                        numComments: post.num_comments,
+                                        created_utc: post.created_utc
+                                    });
+
+                                    totalRedditTitleWords += post.title.split(' ').length;
+
+                                    redditUpvote += Number(post.upvote_ratio);
+                                    redditUpvoteCount++;
+
+                                    if (data.versionNumber) {
+
+                                        const versionParts = data.versionNumber.split('.');
+                                        const majorVersion = versionParts[0];
+                                        const minorVersion = `${versionParts[0]}.${versionParts[1]}`;
+                                        const patchVersion = data.versionNumber;
+
+                                        let isVersionMatch = false;
+
+                                        post.versionList.forEach(version => {
+                                            if (version.startsWith(majorVersion)) {
+                                                redditWithMajorVersionMatch++;
+                                                isVersionMatch = true;
+                                                if (version.startsWith(minorVersion)) {
+                                                    redditWithMinorVersionMatch++;
+                                                    if (version === patchVersion) {
+                                                        redditWithPatchVersionMatch++;
+                                                    }
+                                                }
+                                            }
+
+                                            if (isVersionMatch === false) {
+                                                redditWithVersionUnmatched++;
+                                            }
+
+                                        });
+                                    }
+
+                                    const postDate = new Date(post.created_utc); // Convert to milliseconds
+
+                                    if (!earliestRedditPost || postDate < earliestRedditPost) {
+                                        earliestRedditPost = postDate;
+                                    }
+                                    if (!latestRedditPost || postDate > latestRedditPost) {
+                                        latestRedditPost = postDate;
+                                    }
+
+                                    if (((data.isBreaking && post.isBreaking) || (data.isSecurity && post.isSecurity)) && seenUrls.has(post.url) === false) {
+
+                                        seenUrls.add(post.url);
+
+                                        securityTrueCount = post.isSecurity === true ? securityTrueCount + 1 : securityTrueCount;
+                                        breakingTrueCount = post.isBreaking === true ? breakingTrueCount + 1 : breakingTrueCount;
+
+                                        securityFalseCount = post.isSecurity === false ? securityFalseCount + 1 : securityFalseCount;
+                                        breakingFalseCount = post.isBreaking === false ? breakingFalseCount + 1 : breakingFalseCount;
+
+                                        criticalUpdates.push({
+                                            component: component,
+                                            date: postDate,
+                                            title: post.title,
+                                            url: post.url,
+                                            isSecurity: post.isSecurity,
+                                            isBreaking: post.isBreaking,
+                                            componentType: data.versionPredictedComponentTypeReddit.toUpperCase() || 'NONE',
+                                            securityPostCount: post.securityPostCount,
+                                            breakingPostCount: post.breakingPostCount
+                                        });
+                                    }
+                                }
+                            });
+                        });
+
+                        redditCommentCount = postTitles.reduce((count, post) => count + (post.numComments || 0), 0);
+
+                        const redditUrlsLinks = Array.from(redditUrls).map(url => `<a href="${url}" target="_blank">${url}</a>`).join('<br>');
+
+                        const totalComponentCount = Object.values(predictedComponentTypes).reduce((sum, count) => sum + count, 0);
+
+                        const predictedComponentTypesHTML = Object.entries(predictedComponentTypes)
+                            .sort(([, a], [, b]) => b - a)
+                            .map(([key, value]) => {
+                                const percentage = ((value / totalComponentCount) * 100).toFixed(2);
+                                return `<div>${key}: ${value} (${percentage}%)</div>`;
+                            })
+                            .join('');
+
+                        const totalCount = Object.values(predictedComponentTypesReddit).reduce((sum, count) => sum + count, 0);
+
+                        const predictedComponentTypesRedditHTML = Object.entries(predictedComponentTypesReddit)
+                            .sort(([, a], [, b]) => b - a)
+                            .map(([key, value]) => {
+                                const percentage = ((value / totalCount) * 100).toFixed(2);
+                                return `<div>${key}: ${value} (${percentage}%)</div>`;
+                            })
+                            .join('');
+
+                        const earliestReleaseDateStr = earliestReleaseDate ? earliestReleaseDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'N/A';
+                        const latestReleaseDateStr = latestReleaseDate ? latestReleaseDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'N/A';
+                        const earliestDateStr = earliestRedditPost ? earliestRedditPost.toISOString() : 'N/A';
+                        const latestDateStr = latestRedditPost ? latestRedditPost.toISOString() : 'N/A';
+
+                        const averageReleaseNoteWords = (totalReleaseNoteWords / releaseNoteCount).toFixed(2);
+                        const averageRedditTitleWords = (totalRedditTitleWords / totalRedditPosts.size).toFixed(2);
+
+                        const totalVersionedRedditPosts = redditWithMajorVersionMatch + redditWithMinorVersionMatch + redditWithPatchVersionMatch + redditWithVersionUnmatched;
+
+                        const percentageMajor = totalVersionedRedditPosts ? ((redditWithMajorVersionMatch / totalVersionedRedditPosts) * 100).toFixed(2) : '0.00';
+                        const percentageMinor = totalVersionedRedditPosts ? ((redditWithMinorVersionMatch / totalVersionedRedditPosts) * 100).toFixed(2) : '0.00';
+                        const percentagePatch = totalVersionedRedditPosts ? ((redditWithPatchVersionMatch / totalVersionedRedditPosts) * 100).toFixed(2) : '0.00';
+                        const percentageUnmatched = totalVersionedRedditPosts ? ((redditWithVersionUnmatched / totalVersionedRedditPosts) * 100).toFixed(2) : '0.00';
+
+                        const row = `
+                            <tr>
+                                <td>${component}</td>
+                                <td><b>${totalUpdates}</b><br><small>(${earliestReleaseDateStr} - ${latestReleaseDateStr})</small></td>
+                                <td><b>${totalRedditPosts.size}</b><br><small>(${earliestRedditPost.toLocaleString('en-US', { month: 'short', year: 'numeric' })} - ${latestRedditPost.toLocaleString('en-US', { month: 'short', year: 'numeric' })})</small></td>
+                                <td>${redditWithVersion}</td>
+                                <td>
+                                    major.x.x: ${redditWithMajorVersionMatch} (${percentageMajor}%) <br>
+                                    major.minor.x: ${redditWithMinorVersionMatch} (${percentageMinor}%) <br>
+                                    major.minor.patch: ${redditWithPatchVersionMatch} (${percentagePatch}%) <br>
+                                    unmatched: ${redditWithVersionUnmatched} (${percentageUnmatched}%) <br>
+                                    unmatched details - major: ${unmatchedMajorCount}, minor: ${unmatchedMinorCount}, patch: ${unmatchedPatchCount}
+                                </td>
+                                <td>
+                                    ${Math.floor(redditUpvote)} (of ${redditUpvoteCount}) <br>
+                                    Number of Comments: ${redditCommentCount}
+                                </td>
+                                <td>${predictedComponentTypesHTML}</td>
+                                <td>
+                                    ${predictedComponentTypesRedditHTML} <br>
+                                    Security (True): ${securityTrueCount}, Security (False): ${securityFalseCount} <br>
+                                    Breaking (True): ${breakingTrueCount}, Breaking (False): ${breakingFalseCount}
+                                </td>
+                                <td>${averageReleaseNoteWords} / ${averageRedditTitleWords}</td>
+                            </tr>
+                            <tr>
+                                <td colspan="9">
+                                    <button class="collapsible">View Post Titles</button>
+                                    <div class="content">
+                                    ${postTitles
+                                .sort((a, b) => {
+                                    if (a.isSecurity && !b.isSecurity) {
+                                        return -1;
+                                    }
+                                    if (!a.isSecurity && b.isSecurity) {
+                                        return 1;
+                                    }
+                                    if (a.isBreaking && !b.isBreaking) {
+                                        return -1;
+                                    }
+                                    if (!a.isBreaking && b.isBreaking) {
+                                        return 1;
+                                    }
+                                    return 0;
+                                })
+                                .map(post => {
+                                    let tags = '';
+                                    if (post.isSecurity) {
+                                        tags += '<span class="tag security">Security</span>';
+                                    }
+                                    if (post.isBreaking) {
+                                        tags += '<span class="tag breaking">Breaking</span>';
+                                    }
+
+                                    // Highlight version numbers
+                                    const highlightedTitle = post.title.replace(versionPattern, '<span class="highlight">$&</span>');
+
+                                    return `<p>${tags} ${highlightedTitle} <a href="${post.url}" target="_blank">Open Link</a><span class="date"> created on: ${post.created_utc}</span><span> (${post.numComments} comments)</span></p>`;
+                                }).join('')}
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+
+                        tableBody.innerHTML += row;
+
+                        // Add event listener for collapsible buttons
+                        document.querySelectorAll('.collapsible').forEach(button => {
+                            button.addEventListener('click', function () {
+                                this.classList.toggle('active');
+                                const content = this.nextElementSibling;
+                                content.style.display = content.style.display === 'block' ? 'none' : 'block';
+                            });
+                        });
+
+                        // Sort and display the top 5 critical updates
+                        criticalUpdates.sort((a, b) => {
+                            if (a.isSecurity && !b.isSecurity) {
+                                return -1;
+                            }
+                            if (!a.isSecurity && b.isSecurity) {
+                                return 1;
+                            }
+                            if (a.isBreaking && !b.isBreaking) {
+                                return -1;
+                            }
+                            if (!a.isBreaking && b.isBreaking) {
+                                return 1;
+                            }
+
+                            return new Date(b.date) - new Date(a.date); // Sort by date descending if equal
+                        });
+                    })
+                    .then(() => {
+
+                        const thirtyDaysAgo = new Date();
+                        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 21);
+
+                        const filteredPosts = criticalUpdates.filter(post => {
+                            const postDate = new Date(post.date);
+                            return postDate >= thirtyDaysAgo;
+                        });
+
+                        const topCriticalUpdates = filteredPosts.slice(0, 1);
+
+                        const criticalUpdatesList = document.querySelector('#critical-updates');
+
+                        if (topCriticalUpdates.length > 0) {
+                            const update = topCriticalUpdates[0]; // Assuming the first update is the most critical
+
+                            const currentDate = new Date();
+                            const postDate = new Date(update.date);
+                            const timeDifference = currentDate - postDate;
+                            const daysAgo = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+
+                            let dateLabel;
+                            if (daysAgo === 0) {
+                                dateLabel = 'today';
+                            } else {
+                                dateLabel = `${daysAgo} days ago`;
+                            }
+
+                            const dateFormatted = postDate.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+                            const updateType = update.isSecurity ? 'Security' : update.isBreaking ? 'Breaking' : 'Other';
+                            const updateColor = update.isSecurity ? 'red' : update.isBreaking ? 'orange' : 'blue';
+
+                            criticalUpdatesList.innerHTML = `
+                                <div style="padding: 10px; background-color: #f9f9f9; border-left: 5px solid ${updateColor}; margin-bottom: 10px;">
+                                    <b>Component:</b> ${update.component.toUpperCase()} |
+                                    <b>Date:</b> ${dateFormatted} (${dateLabel}) |
+                                    <b>Title:</b> <a href="${update.url}" target="_blank">${update.title}</a> |
+                                    <b>Type:</b> <span style="color: ${updateColor};">${updateType}</span>
+                                </div>
+                            `;
+                        }
+                    })
+                    .catch(error => {
+                        // console.error('Error fetching data for component', component, ':', error);
+                    });
+            });
+        }
+
+
+
+        function fetchSubreddits() {
+            const url = 'https://releasetrain.io/api/reddit/meta/subreddits';
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (!data || !Array.isArray(data.data)) {
+                        console.error('Invalid data received for subreddits:', data);
+                        return;
+                    }
+
+                    const subreddits = [...new Set(
+                        data.data
+                            .filter(name => typeof name === 'string' && name.trim().length > 0)
+                            .map(name => name.trim().toLowerCase())
+                    )].sort();
+
+                    window.availableSubreddits = subreddits;
+                    console.log('Available subreddits:', subreddits);
+                })
+                .catch(error => {
+                    console.error('Error fetching subreddits:', error);
+                });
+        }
+
+        function fetchDefaultComponents() {
+            const url = 'https://releasetrain.io/api/c/os';
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (!data || !Array.isArray(data)) {
+                        console.error('Invalid data received for default components:', data);
+                        return;
+                    }
+                    const components = [...new Set(data.filter(name => typeof name === 'string' && name.trim().length > 0).map(name => name.toLowerCase()))].sort();
+                    fetchData(components);
+                })
+                .catch(error => {
+                    console.error('Error fetching default components:', error);
+                });
+        }
+
+        fetchSubreddits();
+
+        const componentsParam = getQueryParameter('q');
+        if (componentsParam) {
+            const components = componentsParam.split(',').filter(name => typeof name === 'string' && name.trim().length > 0).map(name => name.toLowerCase()).sort();
+            fetchData(components);
+        } else {
+            fetchDefaultComponents();
+        }
+    </script>
+</body>
+
+</html>
