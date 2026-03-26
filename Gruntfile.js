@@ -25,7 +25,7 @@ module.exports = function (grunt) {
                     'dist/index.html': 'src/index.html',
                     'dist/doc/index.html': 'src/doc/index.html',
                     'dist/research/index.html': 'src/research/index.html',
-                    'dist/api/index.html': 'src/api/index.html',
+                    'dist/docs/index.html': 'src/docs/index.html',
                     'dist/readme/index.html': 'src/readme/index.html',
                     'dist/reset.css': 'src/reset.css',
                     'dist/plantuml-core.jar': 'src/plantuml-core.jar',
