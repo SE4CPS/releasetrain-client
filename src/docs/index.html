@@ -699,7 +699,66 @@ curl "https://releasetrain.io/api/reddit/query/cve?showCount=true&amp;limit=25"<
   "total": 50,
   "data": [ ... ]
 }</code></pre>
-</div></details><details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/reddit/query/positive</span></summary><div class="endpoint-body"><div class="endpoint-actions"><a class="test-link" href="https://releasetrain.io/api/reddit/query/positive" rel="noopener" target="_blank">Test</a></div>
+</div></details>
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/reddit/query/update-related</span></summary><div class="endpoint-body"><div class="endpoint-actions"><a class="test-link" href="https://releasetrain.io/api/reddit/query/update-related?isLabeled=true&amp;limit=25&amp;page=1" rel="noopener" target="_blank">Test</a></div>
+<p>Filter Reddit documents by the nested update-related fields under <code class="inline">metadata.labeled.isUpdateRelated</code> and <code class="inline">metadata.predicted.isUpdateRelated</code>.</p>
+<div><span class="tag">isLabeled=true|false</span><span class="tag">isUpdateRelated=true|false</span><span class="tag">limit</span><span class="tag">page</span></div>
+<table>
+<thead>
+<tr><th>Param</th><th>Meaning</th><th>Walks field</th></tr>
+</thead>
+<tbody>
+<tr><td><code class="inline">isLabeled=true</code></td><td>Use human labels only. If <code class="inline">isUpdateRelated</code> is omitted, return rows where the label exists and is not null.</td><td><code class="inline">metadata.labeled.isUpdateRelated</code></td></tr>
+<tr><td><code class="inline">isLabeled=false</code></td><td>Use predicted values. If <code class="inline">isUpdateRelated</code> is omitted, return rows where the prediction exists and is not null.</td><td><code class="inline">metadata.predicted.isUpdateRelated</code></td></tr>
+<tr><td><code class="inline">isUpdateRelated=true</code></td><td>Return only update-related rows on the selected branch.</td><td>Selected by <code class="inline">isLabeled</code></td></tr>
+<tr><td><code class="inline">isUpdateRelated=false</code></td><td>Return only non-update-related rows on the selected branch.</td><td>Selected by <code class="inline">isLabeled</code></td></tr>
+<tr><td><code class="inline">limit</code></td><td>Page size. Example: <code class="inline">25</code>.</td><td>Pagination</td></tr>
+<tr><td><code class="inline">page</code></td><td>1-based page number.</td><td>Pagination</td></tr>
+</tbody>
+</table>
+<p class="small muted">This route follows the older stable pattern: first choose the branch with <code class="inline">isLabeled</code>, then choose the truth value with <code class="inline">isUpdateRelated</code>, then walk forward with <code class="inline">limit</code> and <code class="inline">page</code>.</p>
+<pre><code>curl "https://releasetrain.io/api/reddit/query/update-related?isLabeled=true&amp;limit=25&amp;page=1"
+
+curl "https://releasetrain.io/api/reddit/query/update-related?isLabeled=true&amp;isUpdateRelated=true&amp;limit=25&amp;page=1"
+
+curl "https://releasetrain.io/api/reddit/query/update-related?isLabeled=true&amp;isUpdateRelated=false&amp;limit=25&amp;page=1"
+
+curl "https://releasetrain.io/api/reddit/query/update-related?isLabeled=false&amp;limit=25&amp;page=1"
+
+curl "https://releasetrain.io/api/reddit/query/update-related?isLabeled=false&amp;isUpdateRelated=true&amp;limit=25&amp;page=1"
+
+curl "https://releasetrain.io/api/reddit/query/update-related?isLabeled=false&amp;isUpdateRelated=false&amp;limit=25&amp;page=1"
+
+curl "https://releasetrain.io/api/reddit/query/update-related?isLabeled=true&amp;isUpdateRelated=true&amp;limit=50&amp;page=2"</code></pre>
+<pre><code>{
+  "filters": {
+    "isLabeled": "true",
+    "isUpdateRelated": "true"
+  },
+  "pagination": {
+    "page": 1,
+    "limit": 25,
+    "total": 642,
+    "totalPages": 26,
+    "hasNext": true,
+    "hasPrev": false
+  },
+  "data": [ ... ]
+}</code></pre>
+<div class="callout">
+<h3>Quick test buttons by use case</h3>
+<div class="endpoint-actions">
+<a class="test-link" href="https://releasetrain.io/api/reddit/query/update-related?isLabeled=true&amp;limit=25&amp;page=1" rel="noopener" target="_blank">Labeled not-null</a>
+<a class="test-link" href="https://releasetrain.io/api/reddit/query/update-related?isLabeled=true&amp;isUpdateRelated=true&amp;limit=25&amp;page=1" rel="noopener" target="_blank">Labeled true</a>
+<a class="test-link" href="https://releasetrain.io/api/reddit/query/update-related?isLabeled=true&amp;isUpdateRelated=false&amp;limit=25&amp;page=1" rel="noopener" target="_blank">Labeled false</a>
+<a class="test-link" href="https://releasetrain.io/api/reddit/query/update-related?isLabeled=false&amp;limit=25&amp;page=1" rel="noopener" target="_blank">Predicted not-null</a>
+<a class="test-link" href="https://releasetrain.io/api/reddit/query/update-related?isLabeled=false&amp;isUpdateRelated=true&amp;limit=25&amp;page=1" rel="noopener" target="_blank">Predicted true</a>
+<a class="test-link" href="https://releasetrain.io/api/reddit/query/update-related?isLabeled=false&amp;isUpdateRelated=false&amp;limit=25&amp;page=1" rel="noopener" target="_blank">Predicted false</a>
+</div>
+</div>
+</div></details>
+
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/reddit/query/positive</span></summary><div class="endpoint-body"><div class="endpoint-actions"><a class="test-link" href="https://releasetrain.io/api/reddit/query/positive" rel="noopener" target="_blank">Test</a></div>
 <p>Returns all Reddit docs where <code class="inline">metadata.predicted.positiveScore &gt; 0.5</code>, sorted by score descending.</p>
 <pre><code>curl "https://releasetrain.io/api/reddit/query/positive"</code></pre>
 <pre><code>{
