@@ -492,6 +492,36 @@ h2{font-size:1rem!important;margin-bottom:.35rem!important}
 }
 
 </style>
+
+<style id="sidebar-copy-buttons-style">
+.toc-copy-row{
+  display:flex;
+  align-items:center;
+  gap:.35rem;
+}
+.toc-copy-row a{
+  flex:1 1 auto;
+  min-width:0;
+}
+.toc-copy-btn{
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:.14rem .42rem;
+  font-size:.72rem;
+  line-height:1.2;
+  border:1px solid #b9c2cc;
+  border-radius:5px;
+  background:#fff;
+  color:#1f2937;
+  cursor:pointer;
+  text-decoration:none;
+  white-space:nowrap;
+}
+.toc-copy-btn:hover{ background:#f6f8fa; }
+</style>
+
 </head>
 <body id="top">
 <script>
@@ -609,7 +639,7 @@ document.addEventListener('DOMContentLoaded', normalizeEndpoints);
 <h2>Reddit endpoints</h2>
 <div class="callout">
 <h3>Reddit section at a glance</h3>
-<p class="small">This group covers ingestion, listing, subreddit filtering, CVE text search, positive-score retrieval, monthly summaries, and direct single-item fetch/update operations. Some routes use simple page/limit paging, while others also support cursor-based navigation.</p>
+<p class="small">This group covers ingestion, listing, subreddit filtering, update-related question search, CVE text search, positive-score retrieval, monthly summaries, and direct single-item fetch/update operations. Some routes use simple page/limit paging, while others also support cursor-based navigation.</p>
 </div><p class="section-sort-note">Endpoints are collapsed by default and ordered by method first, then by route.</p>
 <div class="api-grid">
 
@@ -700,6 +730,69 @@ curl "https://releasetrain.io/api/reddit/query/cve?showCount=true&amp;limit=25"<
   "data": [ ... ]
 }</code></pre>
 </div></details>
+
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/reddit/query/questions</span></summary><div class="endpoint-body"><div class="endpoint-actions"><a class="test-link" href="https://releasetrain.io/api/reddit/query/questions?where=either&amp;limit=25&amp;page=1&amp;showCount=true" rel="noopener" target="_blank">Test</a></div>
+<p>Return only Reddit docs where <code class="inline">metadata.predicted.isUpdateRelated</code> is <code class="inline">true</code> and a question indicator appears in <code class="inline">title</code>, <code class="inline">author_description</code>, or both.</p>
+<div><span class="tag">where=title|description|either</span><span class="tag">requireTitleQuestion=true|false</span><span class="tag">fields</span><span class="tag">showCount=true</span><span class="tag">limit</span><span class="tag">page</span></div>
+<table>
+<thead>
+<tr><th>Param</th><th>Meaning</th><th>Walks field</th></tr>
+</thead>
+<tbody>
+<tr><td><code class="inline">where=title</code></td><td>Question detection checks only the title.</td><td><code class="inline">title</code></td></tr>
+<tr><td><code class="inline">where=description</code></td><td>Question detection checks only the author description.</td><td><code class="inline">author_description</code></td></tr>
+<tr><td><code class="inline">where=either</code></td><td>Question detection passes if either title or author description is question-like.</td><td><code class="inline">title</code> or <code class="inline">author_description</code></td></tr>
+<tr><td><code class="inline">requireTitleQuestion=true</code></td><td>Title must be question-like even when <code class="inline">where=either</code>.</td><td><code class="inline">title</code></td></tr>
+<tr><td><code class="inline">fields</code></td><td>Optional comma-separated projection. Example: <code class="inline">title,author_description,created_utc,subreddit</code>.</td><td>Projection</td></tr>
+<tr><td><code class="inline">showCount=true</code></td><td>Include the total matching count.</td><td>Count</td></tr>
+<tr><td><code class="inline">limit</code></td><td>Page size. Example: <code class="inline">25</code>.</td><td>Pagination</td></tr>
+<tr><td><code class="inline">page</code></td><td>1-based page number.</td><td>Pagination</td></tr>
+</tbody>
+</table>
+<p class="small muted">This route follows a narrow path: first require <code class="inline">metadata.predicted.isUpdateRelated=true</code>, then check only <code class="inline">title</code> and <code class="inline">author_description</code> for question markers such as <code class="inline">?</code> or common question words.</p>
+<pre><code>curl "https://releasetrain.io/api/reddit/query/questions?where=title&amp;limit=25&amp;page=1&amp;showCount=true"
+
+curl "https://releasetrain.io/api/reddit/query/questions?where=description&amp;limit=25&amp;page=1&amp;showCount=true"
+
+curl "https://releasetrain.io/api/reddit/query/questions?where=either&amp;limit=25&amp;page=1&amp;showCount=true"
+
+curl "https://releasetrain.io/api/reddit/query/questions?where=either&amp;requireTitleQuestion=true&amp;fields=title,author_description,created_utc,subreddit&amp;limit=25&amp;page=1&amp;showCount=true"</code></pre>
+<pre><code>{
+  "filters": {
+    "where": "either",
+    "requireTitleQuestion": false,
+    "predictedIsUpdateRelated": true
+  },
+  "pagination": {
+    "page": 1,
+    "limit": 25,
+    "total": 128,
+    "totalPages": 6,
+    "hasNext": true,
+    "hasPrev": false
+  },
+  "data": [
+    {
+      "_id": "69d176bbda0850f83829b2d6",
+      "redditId": "1scjyl2",
+      "title": "Help with characters merging with one another",
+      "author_description": "Is there a comfy Ui node i can install to better generate multiple characters without them mixing up with one another?",
+      "created_utc": "2026-04-04T20:35:09",
+      "subreddit": "comfyui"
+    }
+  ]
+}</code></pre>
+<div class="callout">
+<h3>Quick test buttons by use case</h3>
+<div class="endpoint-actions">
+<a class="test-link" href="https://releasetrain.io/api/reddit/query/questions?where=title&amp;limit=25&amp;page=1&amp;showCount=true" rel="noopener" target="_blank">Title only</a>
+<a class="test-link" href="https://releasetrain.io/api/reddit/query/questions?where=description&amp;limit=25&amp;page=1&amp;showCount=true" rel="noopener" target="_blank">Description only</a>
+<a class="test-link" href="https://releasetrain.io/api/reddit/query/questions?where=either&amp;limit=25&amp;page=1&amp;showCount=true" rel="noopener" target="_blank">Either field</a>
+<a class="test-link" href="https://releasetrain.io/api/reddit/query/questions?where=either&amp;requireTitleQuestion=true&amp;limit=25&amp;page=1&amp;showCount=true" rel="noopener" target="_blank">Title required</a>
+</div>
+</div>
+</div></details>
+
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/reddit/query/update-related</span></summary><div class="endpoint-body"><div class="endpoint-actions"><a class="test-link" href="https://releasetrain.io/api/reddit/query/update-related?isLabeled=true&amp;limit=25&amp;page=1" rel="noopener" target="_blank">Test</a></div>
 <p>Filter Reddit documents by the nested update-related fields under <code class="inline">metadata.labeled.isUpdateRelated</code> and <code class="inline">metadata.predicted.isUpdateRelated</code>.</p>
 <div><span class="tag">isLabeled=true|false</span><span class="tag">isUpdateRelated=true|false</span><span class="tag">limit</span><span class="tag">page</span></div>
@@ -1136,5 +1229,133 @@ curl "https://releasetrain.io/api/aggregate/v/sourceCountByType?sourceType=patch
 </ul>
 </aside>
 </div>
+
+<script>
+function slugify(str){
+ return str.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+}
+document.addEventListener("DOMContentLoaded",()=>{
+  document.querySelectorAll('.endpoint').forEach(el=>{
+    const method = el.querySelector('.method')?.textContent.trim() || '';
+    const path = el.querySelector('.path')?.textContent.trim() || '';
+    if(!method || !path) return;
+    const id = slugify(method + '-' + path);
+    el.id = id;
+  });
+
+  const hash = location.hash.replace('#','');
+  if(hash){
+    const el = document.getElementById(hash);
+    if(el && el.tagName === 'DETAILS'){
+      el.open = true;
+      el.scrollIntoView({behavior:'smooth'});
+    }
+  }
+});
+</script>
+
+
+<script id="sidebar-copy-buttons-script">
+function addSidebarCopyButtons(){
+  const sidebar = document.querySelector('.sidebar');
+  if(!sidebar) return;
+
+  sidebar.querySelectorAll('.toc a[href^="#"]').forEach((link) => {
+    if (link.dataset.copyEnhanced === 'true') return;
+
+    const hash = link.getAttribute('href');
+    if (!hash || hash === '#top') return;
+
+    const target = document.querySelector(hash);
+    if (!target || !(target.matches('details.endpoint') || target.closest?.('details.endpoint'))) return;
+
+    const row = document.createElement('div');
+    row.className = 'toc-copy-row';
+
+    link.parentNode.insertBefore(row, link);
+    row.appendChild(link);
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'toc-copy-btn';
+    btn.textContent = 'Copy';
+
+    btn.addEventListener('click', async (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const fullUrl = window.location.origin + window.location.pathname + hash;
+      try {
+        await navigator.clipboard.writeText(fullUrl);
+        const old = btn.textContent;
+        btn.textContent = 'Copied';
+        setTimeout(() => { btn.textContent = old; }, 1200);
+      } catch (e) {
+        btn.textContent = 'Failed';
+        setTimeout(() => { btn.textContent = 'Copy'; }, 1200);
+      }
+    });
+
+    row.appendChild(btn);
+    link.dataset.copyEnhanced = 'true';
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Wait one turn so endpoint ids added by the existing script are already present.
+  setTimeout(addSidebarCopyButtons, 0);
+});
+</script>
+
+
+<script>
+// generate ids + add copy button in summary + open by hash
+function slugify(str){
+  return str.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  document.querySelectorAll('.endpoint').forEach(el => {
+    const head = el.querySelector('.endpoint-head');
+    const method = head?.querySelector('.method')?.textContent.trim();
+    const path = head?.querySelector('.path')?.textContent.trim();
+    if(!method || !path) return;
+
+    const id = slugify(method + '-' + path);
+    el.id = id;
+
+    // add copy button (only once)
+    if (!head.querySelector('.copy-api-btn')) {
+      const btn = document.createElement('button');
+      btn.className = 'copy-api-btn';
+      btn.textContent = 'Copy Link';
+      btn.style.marginLeft = 'auto';
+      btn.style.fontSize = '11px';
+
+      btn.onclick = async (e) => {
+        e.stopPropagation();
+        const url = window.location.origin + window.location.pathname + '#' + id;
+        await navigator.clipboard.writeText(url);
+        btn.textContent = 'Copied';
+        setTimeout(()=>btn.textContent='Copy Link',1200);
+      };
+
+      head.appendChild(btn);
+    }
+  });
+
+  // open if hash exists
+  const hash = location.hash.replace('#','');
+  if(hash){
+    const el = document.getElementById(hash);
+    if(el && el.tagName === 'DETAILS'){
+      el.open = true;
+      el.scrollIntoView({behavior:'smooth'});
+    }
+  }
+
+});
+</script>
+
 </body>
 </html>
