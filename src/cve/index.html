@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Releasetrain — CVE Intelligence</title>
+  <title>Releasetrain — CVE Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="How the Reddit community talks about CVEs — timeline, history, and aggregates" />
   <link rel="icon" href="https://releasetrain.io/img/favicon.ico" type="image/x-icon" />
@@ -440,19 +440,6 @@
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
 
-  <!-- <header class="topbar" role="banner" id="topbar">
-    <div class="topbar-main">
-      <span class="brand">Releasetrain <b>CVE</b></span>
-      <span class="topbar-title">Reddit CVE Intelligence</span>
-      <div class="topbar-spacer"></div>
-      <nav class="nav-links" aria-label="Site navigation">
-        <a href="../index.html">Feed</a>
-        <a href="index.html">Reddit</a>
-        <a href="../docs/index.html">Docs</a>
-      </nav>
-    </div>
-  </header> -->
-
   <main class="page" id="main">
 
     <div id="statusBar" role="status" aria-live="polite">
@@ -580,7 +567,7 @@
 'use strict';
 
 const API_BASE = 'https://releasetrain.io/api';
-const BATCH    = 500;
+const BATCH    = 250;
 
 /* ── NVD Status definitions ─────────────────────────────── */
 const NVD_STATUSES = [
@@ -618,7 +605,8 @@ const STATE = {
 
 /* ── Topbar height ──────────────────────────────────────── */
 function setTopbarH() {
-  document.documentElement.style.setProperty('--topbar-h', EL.topbar.offsetHeight + 'px');
+  const h = EL.topbar ? EL.topbar.offsetHeight : 0;
+  document.documentElement.style.setProperty('--topbar-h', h + 'px');
 }
 window.addEventListener('resize', setTopbarH);
 
