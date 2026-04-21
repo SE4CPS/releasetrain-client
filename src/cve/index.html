@@ -2,59 +2,35 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Releasetrain — CVE Dashboard</title>
+  <title>Community CVE Discussions</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="How the Reddit community talks about CVEs — timeline, history, and aggregates" />
+  <meta name="description" content="How the Reddit community talks about CVEs: timeline, history, and aggregates" />
   <link rel="icon" href="https://releasetrain.io/img/favicon.ico" type="image/x-icon" />
   <style>
-    /* ── Design tokens ──────────────────────────────────── */
+    /* ── Design tokens (always light) ──────────────────── */
     :root {
-      --bg:       #f8f9fb;
+      --bg:       #f0f5ff;
       --panel:    #ffffff;
-      --text:     #1a1d23;
-      --muted:    #5c6470;
+      --text:     #1e293b;
+      --muted:    #64748b;
       --brand:    #2563eb;
       --brand-fg: #ffffff;
-      --line:     #d4d8df;
-      --chip:     #eef0f3;
-      --chipText: #374151;
+      --line:     #dde6f5;
+      --chip:     #e8f0fe;
+      --chipText: #334155;
       --focus:    #2563eb;
 
-      --bad:    #b91c1c;  --bad-bg:  #fef2f2;
+      --bad:    #b91c1c;  --bad-bg:  #fff0f0;
       --warn:   #c2410c;  --warn-bg: #fff7ed;
-      --ok:     #166534;  --ok-bg:   #f0fdf4;
-      --info:   #0369a1;  --info-bg: #f0f9ff;
-      --reddit: #e05d26;  --reddit-bg: #fff4ee;
-      --purple: #7c3aed;  --purple-bg: #f5f3ff;
+      --ok:     #166534;  --ok-bg:   #edfdf4;
+      --info:   #0369a1;  --info-bg: #eef6ff;
+      --reddit: #d9460f;  --reddit-bg: #fff3ee;
+      --purple: #6d28d9;  --purple-bg: #f3f0ff;
 
       --link:   #1d4ed8;
-      --shadow: 0 2px 8px rgba(0,0,0,.08);
+      --shadow: 0 1px 5px rgba(37,99,235,.07), 0 2px 12px rgba(0,0,0,.05);
       --rad:    10px;
       --topbar-h: 0px;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg:       #0f1117;
-        --panel:    #1a1f2e;
-        --text:     #f1f3f7;
-        --muted:    #9ca3af;
-        --brand:    #3b82f6;
-        --brand-fg: #ffffff;
-        --line:     #2d3548;
-        --chip:     #212840;
-        --chipText: #d1d5db;
-        --focus:    #60a5fa;
-
-        --bad:    #f87171;  --bad-bg:  #2d1515;
-        --warn:   #fb923c;  --warn-bg: #2d1a0a;
-        --ok:     #4ade80;  --ok-bg:   #0d2618;
-        --info:   #38bdf8;  --info-bg: #0c2233;
-        --reddit: #fb923c;  --reddit-bg: #2d1a0a;
-        --purple: #a78bfa;  --purple-bg: #1e1635;
-
-        --link:   #93c5fd;
-        --shadow: 0 4px 14px rgba(0,0,0,.5);
-      }
     }
 
     /* ── Reset ──────────────────────────────────────────── */
@@ -134,23 +110,7 @@
       transition: width .3s ease;
     }
 
-    /* ── KPI strip ──────────────────────────────────────── */
-    .kpi-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 10px; margin-bottom: 20px;
-    }
-    .kpi {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: var(--rad);
-      padding: 12px 14px;
-      display: flex; flex-direction: column; gap: 2px;
-    }
-    .kpi-val { font-size: 1.75rem; font-weight: 800; line-height: 1; color: var(--brand); }
-    .kpi-label { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
-
-    /* ── Two-column main ────────────────────────────────── */
+/* ── Two-column main ────────────────────────────────── */
     .main-grid {
       display: grid;
       grid-template-columns: 320px 1fr;
@@ -278,7 +238,7 @@
     .chip.info    { background: var(--info-bg);   color: var(--info); }
     .chip.ok      { background: var(--ok-bg);     color: var(--ok); }
     .chip.neutral { background: var(--chip);      color: var(--chipText); }
-    /* CVE chips are <a> tags — keep chip look, no underline */
+    /* CVE chips are <a> tags: keep chip look, no underline */
     a.chip { text-decoration: none; cursor: pointer; }
     a.chip:hover { filter: brightness(.92); }
     a.chip:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
@@ -364,7 +324,7 @@
     .tl-dot.dot-release     { background: var(--purple); box-shadow: 0 0 0 1px var(--purple); }
     .tl-dot.dot-release-cve { background: var(--bad);   box-shadow: 0 0 0 1px var(--bad); border-radius: 3px; }
 
-    /* version release item — slightly de-emphasised */
+    /* version release item: slightly de-emphasised */
     .tl-item.tl-release .tl-label { color: var(--muted); font-weight: 500; }
     .tl-item.tl-release .tl-date  { opacity: .7; }
 
@@ -377,7 +337,7 @@
     }
     a.cve-highlight:hover { background: var(--bad); color: #fff; }
 
-    /* "Latest version" release item — prominent green-left border */
+    /* "Latest version" release item: prominent green-left border */
     .tl-item.tl-latest {
       background: var(--ok-bg);
       border-left: 3px solid var(--ok);
@@ -428,6 +388,131 @@
     .empty-state { text-align: center; padding: 36px 20px; color: var(--muted); font-size: 13px; }
     .empty-state .icon { font-size: 2rem; margin-bottom: 8px; }
 
+    /* ── Glossary legend ────────────────────────────────── */
+    .legend-toggle {
+      display: flex; align-items: center; gap: 6px;
+      padding: 11px 14px; cursor: pointer; list-style: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color .15s;
+    }
+    .legend-toggle::-webkit-details-marker { display: none; }
+    .legend-toggle::before {
+      content: "▶"; font-size: 9px; color: var(--muted);
+      transition: transform .2s; flex-shrink: 0;
+    }
+    details[open] > .legend-toggle::before { transform: rotate(90deg); }
+    details[open] > .legend-toggle { border-bottom-color: var(--line); }
+    .legend-toggle h2 { margin: 0; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
+    .legend-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 0; }
+    .legend-section-title {
+      font-size: 9px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .6px; color: var(--muted);
+      margin: 12px 0 6px; border-top: 1px solid var(--line); padding-top: 10px;
+    }
+    .legend-section-title:first-child { margin-top: 0; border-top: none; padding-top: 0; }
+    .legend-term {
+      display: grid; grid-template-columns: 90px 1fr;
+      gap: 6px 10px; padding: 5px 0;
+      border-bottom: 1px solid var(--chip);
+      font-size: 11px; line-height: 1.45;
+      align-items: baseline;
+    }
+    .legend-term:last-child { border-bottom: none; }
+    .lt-key {
+      font-weight: 700; white-space: nowrap;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .lt-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .lt-dot.d-info   { background: var(--info); }
+    .lt-dot.d-warn   { background: var(--warn); }
+    .lt-dot.d-ok     { background: var(--ok); }
+    .lt-dot.d-bad    { background: var(--bad); }
+    .lt-dot.d-muted  { background: var(--muted); }
+    .lt-dot.d-reddit { background: var(--reddit); }
+    .lt-dot.d-brand  { background: var(--brand); }
+    .lt-val { color: var(--muted); }
+
+    /* ── NVD pipeline banner ────────────────────────────── */
+    .nvd-pipeline {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--rad);
+      padding: 14px 16px 16px;
+      margin-bottom: 20px;
+    }
+    .nvd-pipeline-title {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .6px; color: var(--muted); margin-bottom: 12px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .nvd-pipeline-range {
+      font-size: 11px; font-weight: 600; color: var(--brand);
+      text-transform: none; letter-spacing: 0; white-space: nowrap;
+    }
+    .nvd-pipeline-flow {
+      display: flex; align-items: stretch; gap: 0;
+      flex-wrap: wrap; row-gap: 8px;
+    }
+    .npp-arrow {
+      display: flex; align-items: center;
+      color: var(--muted); font-size: 20px; font-weight: 700;
+      padding: 0 5px; flex-shrink: 0; user-select: none;
+    }
+    .npp-divider {
+      width: 1px; background: var(--line);
+      margin: 0 12px; align-self: stretch; flex-shrink: 0;
+    }
+    .npp-step {
+      display: flex; flex-direction: column; align-items: center;
+      text-align: center; padding: 8px 14px;
+      border-radius: 8px; border: 1.5px solid var(--line);
+      background: var(--bg); min-width: 86px; gap: 3px;
+      cursor: default; transition: border-color .15s, box-shadow .15s;
+    }
+    .npp-step:hover { box-shadow: var(--shadow); }
+    .npp-step.s-source {
+      border-color: var(--reddit); background: var(--reddit-bg);
+    }
+    /* CVE List states (pre-NVD) — dashed border to distinguish from NVD states */
+    .npp-step.s-cvelist {
+      border: 1.5px dashed var(--muted); background: var(--bg); opacity: .85;
+    }
+    .npp-step.s-info    { border-color: var(--info);   background: var(--info-bg); }
+    .npp-step.s-muted   { border-color: var(--line);   background: var(--bg); }
+    .npp-step.s-warn    { border-color: var(--warn);   background: var(--warn-bg); }
+    .npp-step.s-ok      { border-color: var(--ok);     background: var(--ok-bg); }
+    .npp-step.s-bad     { border-color: var(--bad);    background: var(--bad-bg); }
+    .npp-count {
+      font-size: 1.5rem; font-weight: 800; line-height: 1;
+    }
+    .npp-step.s-source  .npp-count { color: var(--reddit); }
+    .npp-step.s-cvelist .npp-count { color: var(--muted); }
+    .npp-step.s-info    .npp-count { color: var(--info); }
+    .npp-step.s-muted   .npp-count { color: var(--muted); }
+    .npp-step.s-warn    .npp-count { color: var(--warn); }
+    .npp-step.s-ok      .npp-count { color: var(--ok); }
+    .npp-step.s-bad     .npp-count { color: var(--bad); }
+    .npp-label {
+      font-size: 9px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .4px; color: var(--muted); white-space: nowrap;
+    }
+    .npp-sub {
+      font-size: 9px; color: var(--muted); white-space: nowrap;
+    }
+    .npp-tail {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      margin-left: 8px;
+    }
+    .npp-system-label {
+      font-size: 9px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .5px; color: var(--muted);
+      padding: 2px 8px; border-radius: 999px;
+      background: var(--chip); white-space: nowrap;
+      align-self: flex-end; margin-bottom: 2px;
+    }
+
     /* ── Scroll container ───────────────────────────────── */
     .scroll-list {
       max-height: calc(100vh - var(--topbar-h) - 180px);
@@ -448,14 +533,13 @@
     </div>
     <div id="loadProgress"><div id="loadProgressFill" style="width:0%"></div></div>
 
-    <!-- KPI strip -->
-    <div class="kpi-row">
-      <div class="kpi"><div class="kpi-val" id="kpiTotal">—</div><div class="kpi-label">CVE Posts</div></div>
-      <div class="kpi"><div class="kpi-val" id="kpiUnique">—</div><div class="kpi-label">Unique CVEs</div></div>
-      <div class="kpi"><div class="kpi-val" id="kpiWithHistory">—</div><div class="kpi-label">With NVD History</div></div>
-      <div class="kpi"><div class="kpi-val" id="kpiEnriched">—</div><div class="kpi-label">Enriched</div></div>
-      <div class="kpi"><div class="kpi-val" id="kpiAvgScore">—</div><div class="kpi-label">Avg Upvote Ratio</div></div>
-      <div class="kpi"><div class="kpi-val" id="kpiComments">—</div><div class="kpi-label">Total Comments</div></div>
+    <!-- NVD pipeline banner -->
+    <div class="nvd-pipeline" id="nvdPipeline">
+      <div class="nvd-pipeline-title">
+        <span>CVE Lifecycle · Reddit post distribution per stage &nbsp;·&nbsp; <span style="font-weight:400;opacity:.7">dashed = CVE List (cve.org) &nbsp; solid = NVD</span></span>
+        <span class="nvd-pipeline-range" id="pipelineRange"></span>
+      </div>
+      <div class="nvd-pipeline-flow" id="nvdPipelineFlow"></div>
     </div>
 
     <div class="main-grid">
@@ -463,7 +547,105 @@
       <!-- LEFT: Aggregates sidebar -->
       <aside aria-label="Aggregates">
 
-        <!-- NVD Status Distribution — key chart -->
+        <!-- Glossary / Legend -->
+        <div class="panel legend-panel" style="margin-bottom:14px">
+          <details open>
+            <summary class="legend-toggle"><h2>Legend &amp; Glossary</h2></summary>
+            <div class="legend-body">
+
+              <div class="legend-section-title">Core Concepts</div>
+              <div class="legend-term">
+                <span class="lt-key">CVE</span>
+                <span class="lt-val">Common Vulnerabilities and Exposures: a public identifier for a known security flaw, e.g. CVE-2024-1234.</span>
+              </div>
+              <div class="legend-term">
+                <span class="lt-key">NVD</span>
+                <span class="lt-val">National Vulnerability Database: NIST's repository that adds severity scores, affected software lists, and analysis to CVE records.</span>
+              </div>
+              <div class="legend-term">
+                <span class="lt-key">CVSS</span>
+                <span class="lt-val">Common Vulnerability Scoring System: a 0–10 numeric severity score. 9–10 = Critical, 7–8.9 = High, 4–6.9 = Medium, 0–3.9 = Low.</span>
+              </div>
+              <div class="legend-term">
+                <span class="lt-key">CWE</span>
+                <span class="lt-val">Common Weakness Enumeration: a category describing the type of flaw, e.g. CWE-79 (XSS) or CWE-120 (Buffer Overflow).</span>
+              </div>
+              <div class="legend-term">
+                <span class="lt-key">CPE</span>
+                <span class="lt-val">Common Platform Enumeration: a structured name identifying the exact software or hardware version that is affected.</span>
+              </div>
+
+              <div class="legend-section-title">NVD Lifecycle States</div>
+              <div class="legend-term">
+                <span class="lt-key"><span class="lt-dot d-info"></span>Received</span>
+                <span class="lt-val">CVE just published to the CVE List. NVD has not yet started its analysis.</span>
+              </div>
+              <div class="legend-term">
+                <span class="lt-key"><span class="lt-dot d-muted"></span>Awaiting</span>
+                <span class="lt-val">Marked for NVD enrichment but the analysis work has not started yet.</span>
+              </div>
+              <div class="legend-term">
+                <span class="lt-key"><span class="lt-dot d-warn"></span>Undergoing</span>
+                <span class="lt-val">NVD analysts are actively reviewing the CVE: CVSS scores and affected products are being determined.</span>
+              </div>
+              <div class="legend-term">
+                <span class="lt-key"><span class="lt-dot d-ok"></span>Enriched</span>
+                <span class="lt-val">NVD enrichment is complete. CVSS score, CWE type, and CPE affected-product list have all been added.</span>
+              </div>
+              <div class="legend-term">
+                <span class="lt-key"><span class="lt-dot d-warn"></span>Modified</span>
+                <span class="lt-val">The CVE record was updated after enrichment was already complete (e.g. vendor added a CWE tag or a score was revised).</span>
+              </div>
+              <div class="legend-term">
+                <span class="lt-key"><span class="lt-dot d-muted"></span>Deferred</span>
+                <span class="lt-val">Not currently scheduled for NVD enrichment: typically low-priority or out-of-scope entries.</span>
+              </div>
+              <div class="legend-term">
+                <span class="lt-key"><span class="lt-dot d-bad"></span>Rejected</span>
+                <span class="lt-val">The CVE was marked invalid: it may be a duplicate, withdrawn by the CNA, or found not to be a real vulnerability.</span>
+              </div>
+              <div class="legend-term">
+                <span class="lt-key"><span class="lt-dot d-muted"></span>No History</span>
+                <span class="lt-val">No NVD change-history events were captured for this CVE in our database.</span>
+              </div>
+
+              <div class="legend-section-title">Dashboard Metrics</div>
+              <div class="legend-term">
+                <span class="lt-key">Pre-Analysis</span>
+                <span class="lt-val">The Reddit post was published <em>before</em> NVD completed its Initial Analysis: the community discussed the CVE while it was still unscored.</span>
+              </div>
+              <div class="legend-term">
+                <span class="lt-key">Initial Analysis</span>
+                <span class="lt-val">The first full NVD review of a CVE: marks the transition from "received" to "enriched" and adds CVSS scores and affected products.</span>
+              </div>
+              <div class="legend-term">
+                <span class="lt-key">Upvote Ratio</span>
+                <span class="lt-val">Fraction of Reddit votes that were upvotes. 100% = unanimous upvotes; 50% = equally split.</span>
+              </div>
+              <div class="legend-term">
+                <span class="lt-key">With NVD History</span>
+                <span class="lt-val">Posts whose CVE has at least one NVD change-history event recorded: these show a full event timeline.</span>
+              </div>
+
+              <div class="legend-section-title">Timeline Dots</div>
+              <div class="legend-term">
+                <span class="lt-key"><span class="lt-dot d-reddit"></span>Post</span>
+                <span class="lt-val">The original Reddit post publication date.</span>
+              </div>
+              <div class="legend-term">
+                <span class="lt-key"><span class="lt-dot d-brand"></span>Comment</span>
+                <span class="lt-val">A Reddit comment on the post.</span>
+              </div>
+              <div class="legend-term">
+                <span class="lt-key"><span class="lt-dot d-ok"></span>NVD Event</span>
+                <span class="lt-val">A recorded NVD status change (Received → Awaiting → Enriched, etc.).</span>
+              </div>
+
+            </div>
+          </details>
+        </div>
+
+        <!-- NVD Status Distribution: key chart -->
         <div class="panel" style="margin-bottom:14px">
           <div class="panel-head">
             <h2>CVE by NVD Status</h2>
@@ -521,7 +703,7 @@
         <div class="panel">
           <div class="panel-head">
             <h2>CVE Post Timeline</h2>
-            <span class="count-badge" id="timelineBadge">—</span>
+            <span class="count-badge" id="timelineBadge"></span>
           </div>
           <!-- source tabs -->
           <div class="src-tabs" id="srcTabs" role="group" aria-label="Filter by source">
@@ -589,7 +771,7 @@ const EL = {};
   'postList','cveSearch','statusFilter','versionFilter','sortSelect','timelineBadge',
   'srcTabs',
   'tabCountAll','tabCountReddit','tabCountStackoverflow','tabCountOther',
-  'kpiTotal','kpiUnique','kpiWithHistory','kpiEnriched','kpiAvgScore','kpiComments',
+  'nvdPipelineFlow','pipelineRange',
   'aggStatus','aggSource','aggCompType','aggSecType','aggSubreddit','aggMonthly','topbar'
 ].forEach(id => { EL[id] = document.getElementById(id); });
 
@@ -631,7 +813,7 @@ async function loadAll() {
   EL.loadProgress.style.display = 'block';
 
   try {
-    /* first batch — get totalCount */
+    /* first batch: get totalCount */
     const first = await fetchBatch();
     STATE.totalCount = first.totalCount ?? first.data?.length ?? 0;
     STATE.all        = first.data ?? [];
@@ -640,7 +822,6 @@ async function loadAll() {
     setProgress(STATE.all.length, STATE.totalCount);
     applyFilter();
     renderAggregates();
-    renderKPIs();
 
     let cursor = first.cursor ?? null;
 
@@ -661,7 +842,7 @@ async function loadAll() {
     setStatus(`${STATE.all.length} CVE posts loaded`, 'done');
     EL.loadProgress.style.display = 'none';
 
-    /* kick off version index in the background — feeds the version filters */
+    /* kick off version index in the background: feeds the version filters */
     fetchVersionIndex();
 
   } catch (e) {
@@ -691,7 +872,7 @@ async function fetchVersionIndex() {
       versions.map(v => (v.versionProductName ?? '').toLowerCase()).filter(Boolean)
     );
 
-    /* latest release per component — track by date prefix on versionId */
+    /* latest release per component: track by date prefix on versionId */
     const latestByComp = {};
     versions.forEach(v => {
       const comp    = compFromVersionId(v.versionId);
@@ -707,7 +888,7 @@ async function fetchVersionIndex() {
 
     applyFilter();
   } catch {
-    /* silently ignore — version filter stays on "All version states" */
+    /* silently ignore: version filter stays on "All version states" */
   }
 }
 
@@ -748,7 +929,7 @@ function applyFilter() {
     if (srcF && getSource(p) !== srcF) return false;
     /* text search */
     if (q) {
-      const cveIds = (p.detectedCVEs ?? []).flatMap(c => c.cveId ?? []).join(' ').toLowerCase();
+      const cveIds = (p.detectedCVEs ?? []).flatMap(c => c.cveIds ?? (c.cveId ? [c.cveId] : [])).join(' ').toLowerCase();
       if (!cveIds.includes(q) &&
           !(p.title ?? '').toLowerCase().includes(q) &&
           !(p.subreddit ?? '').toLowerCase().includes(q) &&
@@ -756,7 +937,7 @@ function applyFilter() {
     }
     /* status filter */
     if (stFilt && currentNvdStatus(p) !== stFilt) return false;
-    /* version filter — match post subreddit against versionProductName */
+    /* version filter: match post subreddit against versionProductName */
     if (vFilt && vFilt !== '') {
       const productSet = vFilt === 'has-noncve' ? STATE.nonCveProductSet : STATE.latestProductSet;
       if (productSet !== null) {
@@ -816,12 +997,12 @@ function renderTimeline() {
 /* ── Build one post card ────────────────────────────────── */
 function buildPostCard(post) {
   const cves       = post.detectedCVEs ?? [];
-  const allCveIds  = cves.flatMap(c => c.cveId ?? []);
+  const allCveIds  = [...new Set(cves.flatMap(c => c.cveIds ?? (c.cveId ? [c.cveId] : [])))];
   const secTypes   = post.classification?.securityType ?? [];
   const compTypes  = post.classification?.componentType ?? [];
   const curStatus  = currentNvdStatus(post);
   const nvdMeta    = NVD_BY_KEY[curStatus] ?? NVD_BY_KEY.unknown;
-  const date       = post.created_utc ? fmtDate(post.created_utc) : '—';
+  const date       = post.created_utc ? fmtDate(post.created_utc) : '';
   const ratio      = typeof post.upvote_ratio === 'number' ? Math.round(post.upvote_ratio * 100) : null;
 
   const li      = document.createElement('li');
@@ -871,7 +1052,7 @@ function buildPostCard(post) {
     (ratio !== null
       ? `<span><span class="score-bar"><span class="score-fill" style="width:${ratio}%"></span></span> ${ratio}%</span>`
       : '') +
-    `<span>👤 ${escHtml(post.author ?? '—')}</span>`;
+    `<span>👤 ${escHtml(post.author ?? '')}</span>`;
 
   meta.appendChild(titleDiv);
   meta.appendChild(chips);
@@ -919,7 +1100,7 @@ function buildCveTimeline(post, cve) {
 
   const label = document.createElement('div');
   label.className = 'tl-section-label';
-  const cveIds = cve.cveId ?? [];
+  const cveIds = cve.cveIds ?? (cve.cveId ? [cve.cveId] : []);
   if (cveIds.length) {
     cveIds.forEach((id, i) => {
       if (i > 0) label.appendChild(document.createTextNode(' · '));
@@ -932,7 +1113,7 @@ function buildCveTimeline(post, cve) {
       a.textContent = id;
       label.appendChild(a);
     });
-    label.appendChild(document.createTextNode(' — Event Timeline'));
+    label.appendChild(document.createTextNode(' · Event Timeline'));
   } else {
     label.textContent = 'Event Timeline';
   }
@@ -1039,7 +1220,7 @@ function buildCveTimeline(post, cve) {
     tlWrap.appendChild(item);
   });
 
-  /* placeholder — replaced by enrichTimeline() on first open */
+  /* placeholder: replaced by enrichTimeline() on first open */
   const placeholder = document.createElement('div');
   placeholder.className = 'tl-version-loading';
   placeholder.textContent = 'Loading release context…';
@@ -1105,7 +1286,7 @@ function parseCveHistory(raw) {
 
   if (current) entries.push(current);
 
-  /* sort chronologically — NVD history can arrive newest-first */
+  /* sort chronologically: NVD history can arrive newest-first */
   entries.sort((a, b) => {
     if (!a.rawDate && !b.rawDate) return 0;
     if (!a.rawDate) return 1;
@@ -1300,22 +1481,101 @@ function toYMD(date) {
   return date.toISOString().slice(0, 10).replace(/-/g, '');
 }
 
-/* ── Render KPIs ────────────────────────────────────────── */
-function renderKPIs() {
-  const posts = STATE.all;
-  const allIds     = new Set(posts.flatMap(p => (p.detectedCVEs ?? []).flatMap(c => c.cveId ?? [])));
-  const withHist   = posts.filter(p => (p.detectedCVEs ?? []).some(c => c.cveChangeHistory?.trim())).length;
-  const enriched   = posts.filter(p => currentNvdStatus(p) === 'enriched').length;
-  const ratios     = posts.map(p => p.upvote_ratio).filter(v => typeof v === 'number');
-  const avg        = ratios.length ? ratios.reduce((a, b) => a + b, 0) / ratios.length : 0;
-  const totalComm  = posts.reduce((s, p) => s + (p.num_comments ?? 0), 0);
 
-  EL.kpiTotal.textContent       = STATE.totalCount || posts.length;
-  EL.kpiUnique.textContent      = allIds.size;
-  EL.kpiWithHistory.textContent = withHist;
-  EL.kpiEnriched.textContent    = enriched;
-  EL.kpiAvgScore.textContent    = (avg * 100).toFixed(0) + '%';
-  EL.kpiComments.textContent    = totalComm;
+/* ── NVD pipeline banner ────────────────────────────────── */
+/*
+ * Main flow  : Received → Awaiting → Undergoing → Enriched → Modified
+ * Side states: Deferred, Rejected, No History (shown after a divider)
+ */
+function renderNvdPipeline(statusMap, totalPosts) {
+  /*
+   * Cumulative logic: each step in the main flow accumulates all steps
+   * that come after it, because a CVE that is "Enriched" has already
+   * passed through Received → Awaiting → Undergoing.
+   *
+   *   Received  = received + awaiting + undergoing + enriched + modified
+   *   Awaiting  = awaiting + undergoing + enriched + modified
+   *   Undergoing= undergoing + enriched + modified
+   *   Enriched  = enriched + modified
+   *   Modified  = modified only
+   */
+  const mainFlow = [
+    { key: 'received',   label: 'Received',   cls: 's-info' },
+    { key: 'awaiting',   label: 'Awaiting',   cls: 's-muted' },
+    { key: 'undergoing', label: 'Undergoing', cls: 's-warn' },
+    { key: 'enriched',   label: 'Enriched',   cls: 's-ok' },
+    { key: 'modified',   label: 'Modified',   cls: 's-warn' },
+  ];
+  const sideStates = [
+    { key: 'deferred', label: 'Deferred',   cls: 's-muted' },
+    { key: 'rejected', label: 'Rejected',   cls: 's-bad' },
+    { key: 'unknown',  label: 'No History', cls: 's-muted' },
+  ];
+
+  /* Build cumulative counts right-to-left through the main flow */
+  const raw = mainFlow.map(s => statusMap.get(s.key) ?? 0);
+  const cumulative = raw.map((_, i) => raw.slice(i).reduce((a, b) => a + b, 0));
+
+  let html = '';
+
+  /* Reddit source node */
+  html += `<div class="npp-step s-source">` +
+          `<span class="npp-count">${totalPosts}</span>` +
+          `<span class="npp-label">Reddit Posts</span>` +
+          `<span class="npp-sub">with CVE mentions</span>` +
+          `</div>`;
+
+  html += `<span class="npp-arrow">›</span>`;
+
+  /* CVE List: Reserved — CNA assigns the ID, may still be private/embargoed */
+  html += `<div class="npp-step s-cvelist" title="A CNA (CVE Numbering Authority) reserved this CVE ID. Details may still be private at this point.">` +
+          `<span class="npp-count">${totalPosts}</span>` +
+          `<span class="npp-label">Reserved</span>` +
+          `<span class="npp-sub">CVE List · cve.org</span>` +
+          `</div>`;
+
+  html += `<span class="npp-arrow">›</span>`;
+
+  /* CVE List: Published — details posted publicly to cve.org, NVD can now ingest it */
+  html += `<div class="npp-step s-cvelist" title="CVE details are now public on the CVE List (cve.org). NVD ingests it from here.">` +
+          `<span class="npp-count">${totalPosts}</span>` +
+          `<span class="npp-label">Published</span>` +
+          `<span class="npp-sub">CVE List · cve.org</span>` +
+          `</div>`;
+
+  /* Main pipeline — cumulative counts, raw count as subtitle */
+  mainFlow.forEach((s, i) => {
+    const cum = cumulative[i];
+    const own = raw[i];
+    const pct = totalPosts > 0 ? Math.round(cum / totalPosts * 100) + '%' : '';
+    const sub = own !== cum
+      ? `${pct} · ${own} currently here`
+      : `${pct} of posts`;
+    html += `<span class="npp-arrow">›</span>`;
+    html += `<div class="npp-step ${s.cls}" title="${escHtml(NVD_BY_KEY[s.key]?.desc ?? '')}">` +
+            `<span class="npp-count">${cum}</span>` +
+            `<span class="npp-label">${escHtml(s.label)}</span>` +
+            (sub ? `<span class="npp-sub">${sub}</span>` : '') +
+            `</div>`;
+  });
+
+  /* Divider before side states */
+  html += `<span class="npp-divider"></span>`;
+
+  /* Side states — raw counts only, these are branches not in the main flow */
+  sideStates.forEach(s => {
+    const n = statusMap.get(s.key) ?? 0;
+    if (!n) return;
+    const pct = totalPosts > 0 ? Math.round(n / totalPosts * 100) + '%' : '';
+    html += `<div class="npp-step ${s.cls}" title="${escHtml(NVD_BY_KEY[s.key]?.desc ?? '')}">` +
+            `<span class="npp-count">${n}</span>` +
+            `<span class="npp-label">${escHtml(s.label)}</span>` +
+            (pct ? `<span class="npp-sub">${pct} of posts</span>` : '') +
+            `</div>`;
+    html += `<span class="npp-arrow" style="font-size:11px;opacity:.4">·</span>`;
+  });
+
+  EL.nvdPipelineFlow.innerHTML = html;
 }
 
 /* ── Render aggregates ──────────────────────────────────── */
@@ -1323,7 +1583,7 @@ function renderAggregates() {
   const posts = STATE.all;
   const total = posts.length || 1;
 
-  /* NVD Status distribution — key chart */
+  /* NVD Status distribution: key chart */
   const statusMap = new Map(NVD_STATUSES.map(s => [s.key, 0]));
   posts.forEach(p => {
     const k = currentNvdStatus(p);
@@ -1332,6 +1592,17 @@ function renderAggregates() {
 
   /* update dropdown with live counts */
   updateStatusDropdown(statusMap, posts.length);
+
+  /* NVD pipeline banner */
+  renderNvdPipeline(statusMap, posts.length);
+
+  /* Date range in pipeline title */
+  const dates  = posts.map(p => p.created_utc ? new Date(p.created_utc) : null).filter(Boolean);
+  if (dates.length) {
+    const oldest = new Date(Math.min(...dates.map(d => d.getTime())));
+    const newest = new Date(Math.max(...dates.map(d => d.getTime())));
+    EL.pipelineRange.textContent = fmtMonthYear(oldest) + ' to ' + fmtMonthYear(newest);
+  }
 
   const maxStatus = Math.max(...statusMap.values(), 1);
   EL.aggStatus.innerHTML = NVD_STATUSES
@@ -1345,7 +1616,7 @@ function renderAggregates() {
       </div>`;
     }).join('') || '<span style="font-size:12px;color:var(--muted)">No data yet</span>';
 
-  /* By source — tab counts + sidebar chart */
+  /* By source: tab counts + sidebar chart */
   const srcCount = { reddit: 0, stackoverflow: 0, other: 0 };
   posts.forEach(p => { srcCount[getSource(p)]++; });
   EL.tabCountAll.textContent          = posts.length;
@@ -1423,7 +1694,7 @@ function updateStatusDropdown(statusMap, total) {
   });
   EL.statusFilter.innerHTML = html;
 
-  /* restore — if the option is now disabled (count hit 0) fall back to all */
+  /* restore: if the option is now disabled (count hit 0) fall back to all */
   const opt = EL.statusFilter.querySelector(`option[value="${selected}"]`);
   EL.statusFilter.value = (opt && !opt.disabled) ? selected : '';
 }
@@ -1479,7 +1750,7 @@ function mkChip(text, cls) {
   return s;
 }
 
-/* Source chip — Reddit shows subreddit, SO shows site name */
+/* Source chip: Reddit shows subreddit, SO shows site name */
 function mkSourceChip(post) {
   const src = getSource(post);
   if (src === 'reddit') {
@@ -1513,13 +1784,18 @@ function parseDate(str) {
   try { const d = new Date(str); return isNaN(d) ? null : d; } catch { return null; }
 }
 
+function fmtMonthYear(d) {
+  try { return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }); }
+  catch { return String(d); }
+}
+
 function fmtDate(iso) {
   try { return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
   catch { return String(iso); }
 }
 
 function fmtDateTime(d) {
-  if (!d) return '—';
+  if (!d) return '';
   try {
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' ' +
            d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
