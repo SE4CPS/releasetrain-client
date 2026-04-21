@@ -25,6 +25,7 @@ module.exports = function (grunt) {
                     'dist/index.html': 'src/index.html',
                     'dist/doc/index.html': 'src/doc/index.html',
                     'dist/research/index.html': 'src/research/index.html',
+                    'dist/cve/index.html': 'src/cve/index.html',
                     'dist/docs/index.html': 'src/docs/index.html',
                     'dist/readme/index.html': 'src/readme/index.html',
                     'dist/reset.css': 'src/reset.css',

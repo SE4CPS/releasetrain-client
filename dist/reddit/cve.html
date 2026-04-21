@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Releasetrain — CVE Intelligence</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="How the Reddit community talks about CVEs — timeline, history, and aggregates" />
+  <link rel="icon" href="https://releasetrain.io/img/favicon.ico" type="image/x-icon" />
+  <style>
+    /* ── Design tokens ──────────────────────────────────── */
+    :root {
+      --bg:       #f8f9fb;
+      --panel:    #ffffff;
+      --text:     #1a1d23;
+      --muted:    #5c6470;
+      --brand:    #2563eb;
+      --brand-fg: #ffffff;
+      --line:     #d4d8df;
+      --chip:     #eef0f3;
+      --chipText: #374151;
+      --focus:    #2563eb;
+
+      --bad:    #b91c1c;  --bad-bg:  #fef2f2;
+      --warn:   #c2410c;  --warn-bg: #fff7ed;
+      --ok:     #166534;  --ok-bg:   #f0fdf4;
+      --info:   #0369a1;  --info-bg: #f0f9ff;
+      --reddit: #e05d26;  --reddit-bg: #fff4ee;
+      --purple: #7c3aed;  --purple-bg: #f5f3ff;
+
+      --link:   #1d4ed8;
+      --shadow: 0 2px 8px rgba(0,0,0,.08);
+      --rad:    10px;
+      --topbar-h: 0px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:       #0f1117;
+        --panel:    #1a1f2e;
+        --text:     #f1f3f7;
+        --muted:    #9ca3af;
+        --brand:    #3b82f6;
+        --brand-fg: #ffffff;
+        --line:     #2d3548;
+        --chip:     #212840;
+        --chipText: #d1d5db;
+        --focus:    #60a5fa;
+
+        --bad:    #f87171;  --bad-bg:  #2d1515;
+        --warn:   #fb923c;  --warn-bg: #2d1a0a;
+        --ok:     #4ade80;  --ok-bg:   #0d2618;
+        --info:   #38bdf8;  --info-bg: #0c2233;
+        --reddit: #fb923c;  --reddit-bg: #2d1a0a;
+        --purple: #a78bfa;  --purple-bg: #1e1635;
+
+        --link:   #93c5fd;
+        --shadow: 0 4px 14px rgba(0,0,0,.5);
+      }
+    }
+
+    /* ── Reset ──────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font: 14px/1.6 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    /* ── Skip link ──────────────────────────────────────── */
+    .skip-link {
+      position: absolute; top: -100%; left: 8px;
+      padding: 8px 14px;
+      background: var(--brand); color: var(--brand-fg);
+      border-radius: 0 0 var(--rad) var(--rad);
+      font-weight: 700; text-decoration: none; z-index: 9999;
+    }
+    .skip-link:focus { top: 0; }
+
+    /* ── Topbar ─────────────────────────────────────────── */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 1000;
+      background: var(--panel);
+      border-bottom: 2px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+    .topbar-main {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 16px; flex-wrap: wrap;
+    }
+    .brand { font-size: 15px; font-weight: 800; letter-spacing: .2px; white-space: nowrap; flex-shrink: 0; }
+    .brand b { color: var(--brand); }
+    .topbar-title { font-size: 13px; color: var(--muted); flex-shrink: 0; }
+    .topbar-spacer { flex: 1 1 auto; }
+    .nav-links { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+    .nav-links a {
+      font-size: 12px; font-weight: 600; color: var(--muted);
+      text-decoration: none; padding: 4px 10px;
+      border-radius: 6px; white-space: nowrap;
+      transition: background .15s, color .15s;
+    }
+    .nav-links a:hover { background: var(--chip); color: var(--text); }
+    .nav-links a:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+    /* ── Layout ─────────────────────────────────────────── */
+    .page {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: calc(var(--topbar-h) + 24px) 16px 48px;
+    }
+
+    /* ── Status bar ─────────────────────────────────────── */
+    #statusBar {
+      font-size: 12px; color: var(--muted);
+      padding: 6px 0 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    #statusBar .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--brand); flex-shrink: 0;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+    #statusBar.done .dot { background: var(--ok); animation: none; }
+    #statusBar.error .dot { background: var(--bad); animation: none; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    /* ── Progress bar (loading all) ─────────────────────── */
+    #loadProgress {
+      height: 3px; background: var(--chip); border-radius: 999px;
+      margin-bottom: 16px; overflow: hidden; display: none;
+    }
+    #loadProgressFill {
+      height: 100%; background: var(--brand); border-radius: 999px;
+      transition: width .3s ease;
+    }
+
+    /* ── KPI strip ──────────────────────────────────────── */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px; margin-bottom: 20px;
+    }
+    .kpi {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--rad);
+      padding: 12px 14px;
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .kpi-val { font-size: 1.75rem; font-weight: 800; line-height: 1; color: var(--brand); }
+    .kpi-label { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+
+    /* ── Two-column main ────────────────────────────────── */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 18px; align-items: start;
+    }
+    @media (max-width: 920px) { .main-grid { grid-template-columns: 1fr; } }
+
+    /* ── Panel / card ───────────────────────────────────── */
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--rad);
+      overflow: hidden;
+    }
+    .panel-head {
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .panel-head h2 {
+      margin: 0; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .6px; color: var(--muted);
+    }
+    .panel-head .count-badge {
+      margin-left: auto;
+      font-size: 10px; font-weight: 700;
+      background: var(--chip); color: var(--chipText);
+      border-radius: 999px; padding: 1px 7px;
+    }
+
+    /* ── Aggregate charts ───────────────────────────────── */
+    .agg-section { padding: 14px; }
+    .agg-section + .agg-section { border-top: 1px solid var(--line); }
+    .bar-row {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 5px; font-size: 11px;
+    }
+    .bar-label { flex: 0 0 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bar-track { flex: 1; height: 9px; background: var(--chip); border-radius: 999px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 999px; background: var(--brand); transition: width .4s ease; }
+    .bar-fill.bad    { background: var(--bad); }
+    .bar-fill.warn   { background: var(--warn); }
+    .bar-fill.ok     { background: var(--ok); }
+    .bar-fill.info   { background: var(--info); }
+    .bar-fill.purple { background: var(--purple); }
+    .bar-fill.muted  { background: var(--muted); }
+    .bar-count { flex: 0 0 26px; text-align: right; color: var(--muted); font-size: 10px; }
+
+    /* ── Pill list ──────────────────────────────────────── */
+    .pill-list { display: flex; flex-wrap: wrap; gap: 5px; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: var(--chip); color: var(--chipText);
+      border-radius: 999px; padding: 2px 9px; font-size: 10px; font-weight: 600;
+    }
+    .pill .pct { color: var(--muted); font-weight: 400; }
+
+    /* ── NVD Status badge ───────────────────────────────── */
+    .nvd-badge {
+      display: inline-block; font-size: 9px; font-weight: 700;
+      border-radius: 999px; padding: 1px 7px; white-space: nowrap;
+      letter-spacing: .3px;
+    }
+    .nvd-received          { background: var(--info-bg);   color: var(--info); }
+    .nvd-awaiting          { background: var(--chip);       color: var(--chipText); }
+    .nvd-undergoing        { background: var(--warn-bg);    color: var(--warn); }
+    .nvd-enriched          { background: var(--ok-bg);      color: var(--ok); }
+    .nvd-modified          { background: var(--warn-bg);    color: var(--warn); }
+    .nvd-deferred          { background: var(--chip);       color: var(--muted); }
+    .nvd-rejected          { background: var(--bad-bg);     color: var(--bad); }
+    .nvd-unknown           { background: var(--chip);       color: var(--muted); }
+
+    /* ── Timeline controls ──────────────────────────────── */
+    .timeline-controls {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .search-input {
+      flex: 1; min-width: 140px;
+      border: 1px solid var(--line); border-radius: 7px;
+      background: var(--bg); color: var(--text);
+      padding: 5px 10px; font-size: 13px;
+    }
+    .search-input:focus { outline: 2px solid var(--focus); outline-offset: 2px; border-color: transparent; }
+    .sort-select {
+      border: 1px solid var(--line); border-radius: 7px;
+      background: var(--bg); color: var(--text);
+      padding: 5px 8px; font-size: 12px; cursor: pointer;
+    }
+    .sort-select:focus { outline: 2px solid var(--focus); outline-offset: 2px; }
+    .status-filter {
+      border: 1px solid var(--line); border-radius: 7px;
+      background: var(--bg); color: var(--text);
+      padding: 5px 8px; font-size: 12px; cursor: pointer;
+    }
+    .status-filter:focus { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+    /* ── Post list ──────────────────────────────────────── */
+    #postList { list-style: none; margin: 0; padding: 0; }
+    .post-card { border-bottom: 1px solid var(--line); }
+    .post-card:last-child { border-bottom: none; }
+
+    .post-summary {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 12px 14px; cursor: pointer; list-style: none;
+    }
+    .post-summary::-webkit-details-marker { display: none; }
+    .post-summary::before {
+      content: "▶"; font-size: 9px; color: var(--muted); flex-shrink: 0;
+      margin-top: 5px; transition: transform .2s;
+    }
+    details[open] > .post-summary::before { transform: rotate(90deg); }
+
+    .post-meta { flex: 1; min-width: 0; }
+    .post-title { font-size: 13px; font-weight: 600; line-height: 1.4; margin-bottom: 4px; }
+    .post-title a { color: var(--text); text-decoration: none; }
+    .post-title a:hover { color: var(--link); }
+    .post-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 5px; }
+
+    .chip { font-size: 10px; font-weight: 700; border-radius: 999px; padding: 1px 7px; white-space: nowrap; }
+    .chip.cve     { background: var(--bad-bg);    color: var(--bad); }
+    .chip.sub     { background: var(--reddit-bg); color: var(--reddit); }
+    .chip.sec     { background: var(--bad-bg);    color: var(--bad); }
+    .chip.info    { background: var(--info-bg);   color: var(--info); }
+    .chip.ok      { background: var(--ok-bg);     color: var(--ok); }
+    .chip.neutral { background: var(--chip);      color: var(--chipText); }
+
+    .post-row2 {
+      display: flex; gap: 10px; align-items: center;
+      font-size: 11px; color: var(--muted); flex-wrap: wrap;
+    }
+    .score-bar {
+      display: inline-block; width: 36px; height: 5px;
+      background: var(--chip); border-radius: 999px; vertical-align: middle; overflow: hidden;
+    }
+    .score-fill { height: 100%; border-radius: 999px; background: var(--ok); }
+
+    /* ── Post detail ────────────────────────────────────── */
+    .post-detail { padding: 0 14px 16px 34px; }
+
+    .detail-description {
+      font-size: 12px; color: var(--muted); line-height: 1.6;
+      background: var(--chip); border-radius: 7px;
+      padding: 10px 12px; margin-bottom: 14px;
+      white-space: pre-wrap; word-break: break-word;
+    }
+
+    /* ── Unified CVE+Reddit timeline ────────────────────── */
+    .tl-section-label {
+      font-size: 10px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .6px;
+      margin-bottom: 10px;
+    }
+    .tl-wrap {
+      position: relative;
+      padding-left: 22px;
+      margin-bottom: 16px;
+    }
+    /* vertical connector line */
+    .tl-wrap::before {
+      content: '';
+      position: absolute; left: 7px; top: 10px; bottom: 10px;
+      width: 2px; background: var(--line);
+      border-radius: 1px;
+    }
+    .tl-item {
+      position: relative;
+      margin-bottom: 0;
+      padding: 0 0 14px 0;
+    }
+    .tl-item:last-child { padding-bottom: 0; }
+    /* dot on the line */
+    .tl-dot {
+      position: absolute; left: -18px; top: 4px;
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--muted);
+      border: 2px solid var(--panel);
+      box-shadow: 0 0 0 1px var(--muted);
+    }
+    .tl-dot.dot-post     { background: var(--reddit); box-shadow: 0 0 0 1px var(--reddit); }
+    .tl-dot.dot-comment  { background: var(--brand);  box-shadow: 0 0 0 1px var(--brand); }
+    .tl-dot.dot-received     { background: var(--info);   box-shadow: 0 0 0 1px var(--info); }
+    .tl-dot.dot-awaiting     { background: var(--muted);  box-shadow: 0 0 0 1px var(--muted); }
+    .tl-dot.dot-undergoing   { background: var(--warn);   box-shadow: 0 0 0 1px var(--warn); }
+    .tl-dot.dot-enriched     { background: var(--ok);     box-shadow: 0 0 0 1px var(--ok); }
+    .tl-dot.dot-modified     { background: var(--warn);   box-shadow: 0 0 0 1px var(--warn); }
+    .tl-dot.dot-deferred     { background: var(--muted);  box-shadow: 0 0 0 1px var(--muted); }
+    .tl-dot.dot-rejected     { background: var(--bad);    box-shadow: 0 0 0 1px var(--bad); }
+
+    .tl-header { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; flex-wrap: wrap; }
+    .tl-date { font-size: 10px; color: var(--muted); flex-shrink: 0; }
+    .tl-label { font-size: 12px; font-weight: 600; }
+    .tl-sublabel { font-size: 10px; color: var(--muted); }
+    .tl-body {
+      font-size: 11px; color: var(--muted); line-height: 1.5;
+      white-space: pre-wrap; word-break: break-word;
+      background: var(--chip); border-radius: 6px;
+      padding: 7px 9px; margin-top: 4px;
+    }
+    .tl-body.reddit-body { border-left: 3px solid var(--reddit); }
+    .tl-body.comment-body { border-left: 3px solid var(--brand); }
+
+    /* ── Skeleton ───────────────────────────────────────── */
+    .skeleton {
+      background: linear-gradient(90deg, var(--chip) 25%, var(--line) 50%, var(--chip) 75%);
+      background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 6px;
+    }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    .skel-row { height: 13px; margin-bottom: 7px; }
+    .skel-row.short { width: 55%; } .skel-row.long { width: 90%; }
+    .skel-card { padding: 12px 14px; border-bottom: 1px solid var(--line); }
+
+    /* ── Empty / error ──────────────────────────────────── */
+    .empty-state { text-align: center; padding: 36px 20px; color: var(--muted); font-size: 13px; }
+    .empty-state .icon { font-size: 2rem; margin-bottom: 8px; }
+
+    /* ── Scroll container ───────────────────────────────── */
+    .scroll-list {
+      max-height: calc(100vh - var(--topbar-h) - 180px);
+      overflow-y: auto; overscroll-behavior: contain;
+    }
+
+    :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar" role="banner" id="topbar">
+    <div class="topbar-main">
+      <span class="brand">Releasetrain <b>CVE</b></span>
+      <span class="topbar-title">Reddit CVE Intelligence</span>
+      <div class="topbar-spacer"></div>
+      <nav class="nav-links" aria-label="Site navigation">
+        <a href="../index.html">Feed</a>
+        <a href="index.html">Reddit</a>
+        <a href="../docs/index.html">Docs</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page" id="main">
+
+    <div id="statusBar" role="status" aria-live="polite">
+      <span class="dot"></span>
+      <span id="statusText">Loading CVE data…</span>
+    </div>
+    <div id="loadProgress"><div id="loadProgressFill" style="width:0%"></div></div>
+
+    <!-- KPI strip -->
+    <div class="kpi-row">
+      <div class="kpi"><div class="kpi-val" id="kpiTotal">—</div><div class="kpi-label">CVE Posts</div></div>
+      <div class="kpi"><div class="kpi-val" id="kpiUnique">—</div><div class="kpi-label">Unique CVEs</div></div>
+      <div class="kpi"><div class="kpi-val" id="kpiWithHistory">—</div><div class="kpi-label">With NVD History</div></div>
+      <div class="kpi"><div class="kpi-val" id="kpiEnriched">—</div><div class="kpi-label">Enriched</div></div>
+      <div class="kpi"><div class="kpi-val" id="kpiAvgScore">—</div><div class="kpi-label">Avg Upvote Ratio</div></div>
+      <div class="kpi"><div class="kpi-val" id="kpiComments">—</div><div class="kpi-label">Total Comments</div></div>
+    </div>
+
+    <div class="main-grid">
+
+      <!-- LEFT: Aggregates sidebar -->
+      <aside aria-label="Aggregates">
+
+        <!-- NVD Status Distribution — key chart -->
+        <div class="panel" style="margin-bottom:14px">
+          <div class="panel-head">
+            <h2>CVE by NVD Status</h2>
+            <span class="count-badge">Current Status</span>
+          </div>
+          <div class="agg-section" id="aggStatus">
+            <div class="skel-card"><div class="skeleton skel-row long"></div><div class="skeleton skel-row short"></div></div>
+          </div>
+        </div>
+
+        <!-- Component types -->
+        <div class="panel" style="margin-bottom:14px">
+          <div class="panel-head"><h2>CVE by Component Type</h2></div>
+          <div class="agg-section" id="aggCompType">
+            <div class="skel-card"><div class="skeleton skel-row long"></div></div>
+          </div>
+        </div>
+
+        <!-- Security types -->
+        <div class="panel" style="margin-bottom:14px">
+          <div class="panel-head"><h2>CVE by Security Tag</h2></div>
+          <div class="agg-section" id="aggSecType">
+            <div class="skel-card"><div class="skeleton skel-row long"></div></div>
+          </div>
+        </div>
+
+        <!-- Top subreddits -->
+        <div class="panel" style="margin-bottom:14px">
+          <div class="panel-head"><h2>Top Subreddits</h2></div>
+          <div class="agg-section" id="aggSubreddit">
+            <div class="skel-card"><div class="skeleton skel-row long"></div></div>
+          </div>
+        </div>
+
+        <!-- Monthly volume -->
+        <div class="panel">
+          <div class="panel-head"><h2>Posts per Month</h2></div>
+          <div class="agg-section" id="aggMonthly">
+            <div class="skel-card"><div class="skeleton skel-row long"></div></div>
+          </div>
+        </div>
+
+      </aside>
+
+      <!-- RIGHT: Post timeline -->
+      <div>
+        <div class="panel">
+          <div class="panel-head">
+            <h2>CVE Post Timeline</h2>
+            <span class="count-badge" id="timelineBadge">—</span>
+          </div>
+          <div class="timeline-controls">
+            <input class="search-input" type="search" id="cveSearch"
+              placeholder="Filter by CVE ID, title, author, subreddit…"
+              aria-label="Filter CVE posts" />
+            <select class="status-filter" id="statusFilter" aria-label="Filter by NVD status">
+              <option value="">All statuses</option>
+            </select>
+            <select class="sort-select" id="sortSelect" aria-label="Sort order">
+              <option value="date-desc">Newest first</option>
+              <option value="date-asc">Oldest first</option>
+              <option value="score-desc">Highest score</option>
+              <option value="comments-desc">Most comments</option>
+              <option value="ratio-desc">Best ratio</option>
+            </select>
+          </div>
+          <div class="scroll-list" id="postScrollArea">
+            <ul id="postList" aria-label="CVE posts">
+              <li class="skel-card"><div class="skeleton skel-row long"></div><div class="skeleton skel-row short"></div></li>
+              <li class="skel-card"><div class="skeleton skel-row long"></div><div class="skeleton skel-row short"></div></li>
+              <li class="skel-card"><div class="skeleton skel-row long"></div><div class="skeleton skel-row short"></div></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /main-grid -->
+  </main>
+
+<script>
+'use strict';
+
+const API_BASE = 'https://releasetrain.io/api';
+const BATCH    = 5000;   /* large enough to pull everything in one shot */
+
+/* ── NVD Status definitions ─────────────────────────────── */
+const NVD_STATUSES = [
+  { key: 'received',    label: 'Received',                  cls: 'nvd-received',    bar: 'info',    desc: 'CVE recently published to the CVE List.' },
+  { key: 'awaiting',   label: 'Awaiting Enrichment',        cls: 'nvd-awaiting',    bar: '',        desc: 'Marked for NVD enrichment efforts.' },
+  { key: 'undergoing', label: 'Undergoing Enrichment',      cls: 'nvd-undergoing',  bar: 'warn',    desc: 'Currently being enriched by the NVD team.' },
+  { key: 'enriched',   label: 'Enriched',                   cls: 'nvd-enriched',    bar: 'ok',      desc: 'NVD enrichment complete.' },
+  { key: 'modified',   label: 'Modified After Enrichment',  cls: 'nvd-modified',    bar: 'warn',    desc: 'Record updated after enrichment was complete.' },
+  { key: 'deferred',   label: 'Not Scheduled',              cls: 'nvd-deferred',    bar: 'muted',   desc: 'Not currently scheduled for NVD enrichment.' },
+  { key: 'rejected',   label: 'Rejected',                   cls: 'nvd-rejected',    bar: 'bad',     desc: 'Marked Rejected in the CVE List.' },
+  { key: 'unknown',    label: 'No History',                  cls: 'nvd-unknown',     bar: 'muted',   desc: 'No NVD change history captured.' },
+];
+const NVD_BY_KEY = Object.fromEntries(NVD_STATUSES.map(s => [s.key, s]));
+
+/* ── DOM cache ──────────────────────────────────────────── */
+const EL = {};
+[
+  'statusBar','statusText','loadProgress','loadProgressFill',
+  'postList','cveSearch','statusFilter','sortSelect','timelineBadge',
+  'kpiTotal','kpiUnique','kpiWithHistory','kpiEnriched','kpiAvgScore','kpiComments',
+  'aggStatus','aggCompType','aggSecType','aggSubreddit','aggMonthly','topbar'
+].forEach(id => { EL[id] = document.getElementById(id); });
+
+/* ── State ──────────────────────────────────────────────── */
+const STATE = {
+  all:        [],
+  filtered:   [],
+  totalCount: 0,
+};
+
+/* ── Topbar height ──────────────────────────────────────── */
+function setTopbarH() {
+  document.documentElement.style.setProperty('--topbar-h', EL.topbar.offsetHeight + 'px');
+}
+window.addEventListener('resize', setTopbarH);
+
+/* ── Status helper ──────────────────────────────────────── */
+function setStatus(msg, type = '') {
+  EL.statusText.textContent = msg;
+  EL.statusBar.className    = type;
+}
+
+/* ── Fetch one batch ────────────────────────────────────── */
+async function fetchBatch(cursor = null) {
+  /* ask for BATCH records; if server caps it the cursor loop will drain the rest */
+  const params = new URLSearchParams({ q: 'CVE-', limit: String(BATCH), showCount: 'true' });
+  if (cursor) params.set('cursor', cursor);
+  const r = await fetch(`${API_BASE}/reddit/query/cve?${params}`);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
+
+/* ── Load ALL posts via cursor pagination ───────────────── */
+async function loadAll() {
+  EL.loadProgress.style.display = 'block';
+
+  try {
+    /* first batch — get totalCount */
+    const first = await fetchBatch();
+    STATE.totalCount = first.totalCount ?? first.data?.length ?? 0;
+    STATE.all        = first.data ?? [];
+
+    setStatus(`Loading ${STATE.all.length} of ${STATE.totalCount}…`);
+    setProgress(STATE.all.length, STATE.totalCount);
+    applyFilter();
+    renderAggregates();
+    renderKPIs();
+
+    let cursor = first.cursor ?? null;
+
+    /* keep fetching until cursor is gone */
+    while (cursor) {
+      const batch = await fetchBatch(cursor);
+      const items = batch.data ?? [];
+      STATE.all   = [...STATE.all, ...items];
+      cursor      = batch.cursor ?? null;
+
+      setStatus(`Loading ${STATE.all.length} of ${STATE.totalCount}…`);
+      setProgress(STATE.all.length, STATE.totalCount);
+      applyFilter();
+      renderAggregates();
+      renderKPIs();
+    }
+
+    setStatus(`${STATE.all.length} CVE posts loaded`, 'done');
+    EL.loadProgress.style.display = 'none';
+
+  } catch (e) {
+    setStatus('Failed to load: ' + e.message, 'error');
+    EL.postList.innerHTML = `<li class="empty-state"><div class="icon">⚠️</div>${escHtml(e.message)}</li>`;
+    EL.loadProgress.style.display = 'none';
+  } finally {
+    setTopbarH();
+  }
+}
+
+function setProgress(loaded, total) {
+  const pct = total > 0 ? Math.min(100, Math.round(loaded / total * 100)) : 0;
+  EL.loadProgressFill.style.width = pct + '%';
+}
+
+/* ── Search / sort / filter ─────────────────────────────── */
+let searchTimer;
+EL.cveSearch.addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(applyFilter, 200); });
+EL.sortSelect.addEventListener('change', applyFilter);
+EL.statusFilter.addEventListener('change', applyFilter);
+
+function applyFilter() {
+  const q      = EL.cveSearch.value.trim().toLowerCase();
+  const srt    = EL.sortSelect.value;
+  const stFilt = EL.statusFilter.value;
+
+  let list = STATE.all.filter(p => {
+    /* text search */
+    if (q) {
+      const cveIds = (p.detectedCVEs ?? []).flatMap(c => c.cveId ?? []).join(' ').toLowerCase();
+      if (!cveIds.includes(q) &&
+          !(p.title ?? '').toLowerCase().includes(q) &&
+          !(p.subreddit ?? '').toLowerCase().includes(q) &&
+          !(p.author ?? '').toLowerCase().includes(q)) return false;
+    }
+    /* status filter */
+    if (stFilt) {
+      const curStatus = currentNvdStatus(p);
+      if (curStatus !== stFilt) return false;
+    }
+    return true;
+  });
+
+  list = list.slice().sort((a, b) => {
+    switch (srt) {
+      case 'date-asc':      return ts(a) - ts(b);
+      case 'score-desc':    return (b.score ?? 0) - (a.score ?? 0);
+      case 'comments-desc': return (b.num_comments ?? 0) - (a.num_comments ?? 0);
+      case 'ratio-desc':    return (b.upvote_ratio ?? 0) - (a.upvote_ratio ?? 0);
+      default:              return ts(b) - ts(a);
+    }
+  });
+
+  STATE.filtered = list;
+  renderTimeline();
+}
+
+function ts(p) { return p.created_utc ? new Date(p.created_utc).getTime() : 0; }
+
+/* ── Determine current NVD status for a post ────────────── */
+function currentNvdStatus(post) {
+  const cves = post.detectedCVEs ?? [];
+  for (const cve of cves) {
+    if (cve.cveChangeHistory?.trim()) {
+      const entries = parseCveHistory(cve.cveChangeHistory);
+      if (entries.length) return entries[entries.length - 1].statusKey;
+    }
+  }
+  return 'unknown';
+}
+
+/* ── Render timeline list ───────────────────────────────── */
+function renderTimeline() {
+  EL.timelineBadge.textContent = STATE.filtered.length;
+  const frag = document.createDocumentFragment();
+
+  if (!STATE.filtered.length) {
+    const li = document.createElement('li');
+    li.className = 'empty-state';
+    li.innerHTML = '<div class="icon">🔍</div>No posts match your filter.';
+    frag.appendChild(li);
+    EL.postList.replaceChildren(frag);
+    return;
+  }
+
+  STATE.filtered.forEach(post => frag.appendChild(buildPostCard(post)));
+  EL.postList.replaceChildren(frag);
+}
+
+/* ── Build one post card ────────────────────────────────── */
+function buildPostCard(post) {
+  const cves       = post.detectedCVEs ?? [];
+  const allCveIds  = cves.flatMap(c => c.cveId ?? []);
+  const secTypes   = post.classification?.securityType ?? [];
+  const compTypes  = post.classification?.componentType ?? [];
+  const curStatus  = currentNvdStatus(post);
+  const nvdMeta    = NVD_BY_KEY[curStatus] ?? NVD_BY_KEY.unknown;
+  const date       = post.created_utc ? fmtDate(post.created_utc) : '—';
+  const ratio      = typeof post.upvote_ratio === 'number' ? Math.round(post.upvote_ratio * 100) : null;
+
+  const li      = document.createElement('li');
+  li.className  = 'post-card';
+  const details = document.createElement('details');
+
+  /* ── Summary ── */
+  const summary = document.createElement('summary');
+  summary.className = 'post-summary';
+
+  const meta = document.createElement('div');
+  meta.className = 'post-meta';
+
+  /* title */
+  const titleDiv = document.createElement('div');
+  titleDiv.className = 'post-title';
+  const a = document.createElement('a');
+  a.href = post.url ?? '#';
+  a.target = '_blank';
+  a.rel = 'noopener noreferrer';
+  a.textContent = decodeHtml(post.title ?? '(no title)');
+  titleDiv.appendChild(a);
+
+  /* chips row */
+  const chips = document.createElement('div');
+  chips.className = 'post-chips';
+
+  allCveIds.forEach(id => chips.appendChild(mkChip(id, 'cve')));
+  if (post.subreddit) chips.appendChild(mkChip('r/' + post.subreddit, 'sub'));
+  secTypes.forEach(t  => chips.appendChild(mkChip(t, 'sec')));
+  compTypes.forEach(t => chips.appendChild(mkChip(t, 'info')));
+
+  /* NVD status badge */
+  const badge = document.createElement('span');
+  badge.className = 'nvd-badge ' + nvdMeta.cls;
+  badge.textContent = nvdMeta.label;
+  badge.title = nvdMeta.desc;
+  chips.appendChild(badge);
+
+  /* meta row2 */
+  const row2 = document.createElement('div');
+  row2.className = 'post-row2';
+  row2.innerHTML =
+    `<span title="Posted">📅 ${date}</span>` +
+    `<span title="Score">⬆ ${post.score ?? 0}</span>` +
+    `<span title="Comments">💬 ${post.num_comments ?? 0}</span>` +
+    (ratio !== null
+      ? `<span><span class="score-bar"><span class="score-fill" style="width:${ratio}%"></span></span> ${ratio}%</span>`
+      : '') +
+    `<span>👤 ${escHtml(post.author ?? '—')}</span>`;
+
+  meta.appendChild(titleDiv);
+  meta.appendChild(chips);
+  meta.appendChild(row2);
+  summary.appendChild(meta);
+  details.appendChild(summary);
+
+  /* ── Detail body ── */
+  const detail = document.createElement('div');
+  detail.className = 'post-detail';
+
+  /* author description */
+  if (post.author_description?.trim()) {
+    const desc = document.createElement('div');
+    desc.className = 'detail-description reddit-body';
+    desc.textContent = decodeHtml(post.author_description).trim();
+    detail.appendChild(desc);
+  }
+
+  /* unified timeline per CVE */
+  cves.forEach(cve => {
+    detail.appendChild(buildCveTimeline(post, cve));
+  });
+
+  /* if no CVEs had history but we still have a reddit post, show a minimal timeline */
+  if (!cves.some(c => c.cveChangeHistory?.trim())) {
+    detail.appendChild(buildRedditOnlyTimeline(post));
+  }
+
+  details.appendChild(detail);
+  li.appendChild(details);
+  return li;
+}
+
+/* ── Build unified timeline for one CVE entry ───────────── */
+function buildCveTimeline(post, cve) {
+  const wrap = document.createElement('div');
+
+  const label = document.createElement('div');
+  label.className = 'tl-section-label';
+  label.textContent = (cve.cveId ?? []).join(' · ') + ' — Event Timeline';
+  wrap.appendChild(label);
+
+  /* collect all events */
+  const events = [];
+
+  /* 1. Reddit post event */
+  events.push({
+    ts:     post.created_utc ? new Date(post.created_utc) : null,
+    type:   'post',
+    label:  'Reddit post published',
+    sub:    `r/${post.subreddit ?? '?'} · by ${post.author ?? '?'} · score ${post.score ?? 0}`,
+    body:   decodeHtml(post.author_description ?? '').trim() || null,
+    dotCls: 'dot-post',
+  });
+
+  /* 2. CVE status change events from history */
+  const histEntries = parseCveHistory(cve.cveChangeHistory ?? '');
+  histEntries.forEach(e => {
+    events.push({
+      ts:     e.rawDate,
+      type:   'cve',
+      label:  'NVD Status: ' + (NVD_BY_KEY[e.statusKey]?.label ?? e.action),
+      sub:    e.action,
+      body:   e.changes || null,
+      dotCls: 'dot-' + e.statusKey,
+      nvdKey: e.statusKey,
+    });
+  });
+
+  /* 3. Reddit comments */
+  (post.comments ?? []).forEach(c => {
+    events.push({
+      ts:     c.created_utc ? new Date(c.created_utc) : null,
+      type:   'comment',
+      label:  'Comment by ' + (c.author ?? 'unknown'),
+      sub:    null,
+      body:   (c.body ?? '').slice(0, 500) + ((c.body ?? '').length > 500 ? '…' : ''),
+      dotCls: 'dot-comment',
+    });
+  });
+
+  /* sort chronologically; null dates go last */
+  events.sort((a, b) => {
+    if (!a.ts && !b.ts) return 0;
+    if (!a.ts) return 1;
+    if (!b.ts) return -1;
+    return a.ts - b.ts;
+  });
+
+  /* render */
+  const tlWrap = document.createElement('div');
+  tlWrap.className = 'tl-wrap';
+
+  events.forEach(ev => {
+    const item = document.createElement('div');
+    item.className = 'tl-item';
+
+    const dot = document.createElement('div');
+    dot.className = 'tl-dot ' + ev.dotCls;
+    item.appendChild(dot);
+
+    const header = document.createElement('div');
+    header.className = 'tl-header';
+
+    if (ev.ts) {
+      const dateSpan = document.createElement('span');
+      dateSpan.className = 'tl-date';
+      dateSpan.textContent = fmtDateTime(ev.ts);
+      header.appendChild(dateSpan);
+    }
+
+    const lbl = document.createElement('span');
+    lbl.className = 'tl-label';
+    lbl.textContent = ev.label;
+    header.appendChild(lbl);
+
+    if (ev.nvdKey) {
+      const nvdBadge = document.createElement('span');
+      nvdBadge.className = 'nvd-badge nvd-' + ev.nvdKey;
+      nvdBadge.textContent = NVD_BY_KEY[ev.nvdKey]?.label ?? ev.nvdKey;
+      header.appendChild(nvdBadge);
+    }
+
+    item.appendChild(header);
+
+    if (ev.sub) {
+      const sub = document.createElement('div');
+      sub.className = 'tl-sublabel';
+      sub.textContent = ev.sub;
+      item.appendChild(sub);
+    }
+
+    if (ev.body) {
+      const body = document.createElement('div');
+      body.className = 'tl-body' + (ev.type === 'post' ? ' reddit-body' : ev.type === 'comment' ? ' comment-body' : '');
+      body.textContent = ev.body;
+      item.appendChild(body);
+    }
+
+    tlWrap.appendChild(item);
+  });
+
+  wrap.appendChild(tlWrap);
+  return wrap;
+}
+
+/* minimal timeline for posts where no CVE has change history */
+function buildRedditOnlyTimeline(post) {
+  return buildCveTimeline(post, { cveId: [], cveChangeHistory: '' });
+}
+
+/* ── Parse CVE change history string ───────────────────── */
+/*
+ * Format (NVD):
+ *   1. 2026-03-23T15:30:30.950 | Initial Analysis | source=nvd@nist.gov | changeId=...
+ *      - Added CPE Configuration: OR
+ *             *cpe:2.3:a:oracle:...          ← continuation line (deep indent, no dash)
+ *      - Added Reference Type: ...
+ *   2. 2026-03-20T22:16:26.933 | CVE Modified | source=... | changeId=...
+ *      - Changed Description: ...
+ */
+function parseCveHistory(raw) {
+  if (!raw?.trim()) return [];
+  const lines   = raw.split('\n');
+  const entries = [];
+  let current   = null;
+
+  lines.forEach(line => {
+    /* top-level entry: "N. ISO-TIMESTAMP | Action Label | ..." */
+    const top = line.match(/^(\d+)\.\s+(\d{4}-\d{2}-\d{2}T[\d:.]+)\s*\|\s*([^|]+?)(?:\s*\|.*)?$/);
+    if (top) {
+      if (current) entries.push(current);
+      const rawDate = parseDate(top[2]);
+      const action  = top[3].trim();
+      current = {
+        rawDate,
+        date:      rawDate ? fmtDateTime(rawDate) : top[2],
+        action,
+        statusKey: actionToStatusKey(action),
+        changes:   '',
+      };
+      return;
+    }
+
+    if (!current) return;
+
+    /* bullet: "   - Added CPE Configuration: ..." */
+    const sub = line.match(/^\s+[-–]\s+(.+)$/);
+    if (sub) {
+      current.changes += (current.changes ? '\n' : '') + sub[1].trim();
+      return;
+    }
+
+    /* deep-indent continuation (e.g. CPE strings like "*cpe:2.3:...") */
+    const cont = line.match(/^(\s{6,})(\S.*)$/);
+    if (cont && current.changes) {
+      current.changes += '\n  ' + cont[2].trim();
+    }
+  });
+
+  if (current) entries.push(current);
+
+  /* sort chronologically — NVD history can arrive newest-first */
+  entries.sort((a, b) => {
+    if (!a.rawDate && !b.rawDate) return 0;
+    if (!a.rawDate) return 1;
+    if (!b.rawDate) return -1;
+    return a.rawDate - b.rawDate;
+  });
+
+  return entries;
+}
+
+/* ── Map NVD action label → status key ──────────────────── */
+/*
+ * Known NVD action labels (cveChangeHistory):
+ *
+ *  received:    "New CVE Received"
+ *  awaiting:    "Awaiting Analysis"
+ *  undergoing:  "Undergoing Analysis"
+ *  enriched:    "Initial Analysis", "Reanalysis", "CVE Translated",
+ *               "Analyzed", "CVSS Score Update" (done by NVD after analysis)
+ *  modified:    "CVE Modified", "CWE Remap", "CPE Deprecation Remap",
+ *               "Modified", "Changed"
+ *  deferred:    "Deferred", "Not Scheduled"
+ *  rejected:    "CVE Rejected", "Rejected"
+ */
+function actionToStatusKey(action) {
+  const a = (action ?? '').toLowerCase().trim();
+
+  /* --- reject / deferred first (clear-cut) --- */
+  if (a === 'cve rejected' || a === 'rejected' || a.startsWith('reject'))
+    return 'rejected';
+  if (a === 'deferred' || a.includes('not scheduled'))
+    return 'deferred';
+
+  /* --- completed-enrichment actions --- */
+  if (a === 'initial analysis' || a === 'reanalysis' ||
+      a === 'cve translated'   || a === 'analyzed'   ||
+      a === 'cvss score update' || a.includes('enriched'))
+    return 'enriched';
+
+  /* --- still-in-progress enrichment --- */
+  if (a === 'undergoing analysis' || a.includes('undergoing') || a.includes('in progress'))
+    return 'undergoing';
+
+  /* --- waiting to start --- */
+  if (a === 'awaiting analysis' || a.startsWith('awaiting'))
+    return 'awaiting';
+
+  /* --- post-enrichment modifications (catch-all for "modified/changed/remap") --- */
+  if (a === 'cve modified'          || a === 'modified'              ||
+      a === 'cwe remap'             || a === 'cpe deprecation remap' ||
+      a.includes('modified')        || a.includes('changed')         ||
+      a.includes('remap'))
+    return 'modified';
+
+  /* --- newly published --- */
+  if (a === 'new cve received'  || a.includes('received') ||
+      a.includes('new cve')     || a.includes('published') ||
+      a.startsWith('added'))
+    return 'received';
+
+  return 'unknown';
+}
+
+/* ── Render KPIs ────────────────────────────────────────── */
+function renderKPIs() {
+  const posts = STATE.all;
+  const allIds     = new Set(posts.flatMap(p => (p.detectedCVEs ?? []).flatMap(c => c.cveId ?? [])));
+  const withHist   = posts.filter(p => (p.detectedCVEs ?? []).some(c => c.cveChangeHistory?.trim())).length;
+  const enriched   = posts.filter(p => currentNvdStatus(p) === 'enriched').length;
+  const ratios     = posts.map(p => p.upvote_ratio).filter(v => typeof v === 'number');
+  const avg        = ratios.length ? ratios.reduce((a, b) => a + b, 0) / ratios.length : 0;
+  const totalComm  = posts.reduce((s, p) => s + (p.num_comments ?? 0), 0);
+
+  EL.kpiTotal.textContent       = STATE.totalCount || posts.length;
+  EL.kpiUnique.textContent      = allIds.size;
+  EL.kpiWithHistory.textContent = withHist;
+  EL.kpiEnriched.textContent    = enriched;
+  EL.kpiAvgScore.textContent    = (avg * 100).toFixed(0) + '%';
+  EL.kpiComments.textContent    = totalComm;
+}
+
+/* ── Render aggregates ──────────────────────────────────── */
+function renderAggregates() {
+  const posts = STATE.all;
+  const total = posts.length || 1;
+
+  /* NVD Status distribution — key chart */
+  const statusMap = new Map(NVD_STATUSES.map(s => [s.key, 0]));
+  posts.forEach(p => {
+    const k = currentNvdStatus(p);
+    statusMap.set(k, (statusMap.get(k) ?? 0) + 1);
+  });
+
+  /* update dropdown with live counts */
+  updateStatusDropdown(statusMap, posts.length);
+
+  const maxStatus = Math.max(...statusMap.values(), 1);
+  EL.aggStatus.innerHTML = NVD_STATUSES
+    .filter(s => (statusMap.get(s.key) ?? 0) > 0)
+    .map(s => {
+      const n = statusMap.get(s.key) ?? 0;
+      return `<div class="bar-row" title="${escHtml(s.desc)}">
+        <span class="bar-label">${escHtml(s.label)}</span>
+        <span class="bar-track"><span class="bar-fill ${s.bar}" style="width:${Math.round(n/maxStatus*100)}%"></span></span>
+        <span class="bar-count">${n}</span>
+      </div>`;
+    }).join('') || '<span style="font-size:12px;color:var(--muted)">No data yet</span>';
+
+  /* Component types */
+  const compMap = new Map();
+  posts.forEach(p => {
+    const ct = p.classification?.componentType ?? [];
+    ct.forEach(t => compMap.set(t, (compMap.get(t) ?? 0) + 1));
+    if (!ct.length) compMap.set('Unclassified', (compMap.get('Unclassified') ?? 0) + 1);
+  });
+  EL.aggCompType.innerHTML = renderBars(compMap, 'brand');
+
+  /* Security types */
+  const secMap = new Map();
+  posts.forEach(p => {
+    const st = p.classification?.securityType ?? [];
+    st.forEach(t => secMap.set(t, (secMap.get(t) ?? 0) + 1));
+    if (!st.length) secMap.set('No tag', (secMap.get('No tag') ?? 0) + 1);
+  });
+  EL.aggSecType.innerHTML = renderBars(secMap, 'bad');
+
+  /* Subreddits */
+  const subMap = new Map();
+  posts.forEach(p => {
+    const s = p.subreddit ?? 'unknown';
+    subMap.set(s, (subMap.get(s) ?? 0) + 1);
+  });
+  const topSubs = [...subMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 14);
+  EL.aggSubreddit.innerHTML = `<div class="pill-list">${
+    topSubs.map(([sub, n]) =>
+      `<span class="pill">r/${escHtml(sub)} <span class="pct">${Math.round(n/total*100)}%</span></span>`
+    ).join('')
+  }</div>`;
+
+  /* Monthly volume */
+  const monthMap = new Map();
+  posts.forEach(p => {
+    if (!p.created_utc) return;
+    const d   = new Date(p.created_utc);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    monthMap.set(key, (monthMap.get(key) ?? 0) + 1);
+  });
+  const months = [...monthMap.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  const maxM   = Math.max(...months.map(m => m[1]), 1);
+  EL.aggMonthly.innerHTML = months.length
+    ? months.map(([mo, n]) => `
+        <div class="bar-row">
+          <span class="bar-label">${mo}</span>
+          <span class="bar-track"><span class="bar-fill" style="width:${Math.round(n/maxM*100)}%"></span></span>
+          <span class="bar-count">${n}</span>
+        </div>`).join('')
+    : '<span style="font-size:12px;color:var(--muted)">No date data yet</span>';
+}
+
+/* ── Update status filter dropdown with live counts ─────── */
+function updateStatusDropdown(statusMap, total) {
+  const selected = EL.statusFilter.value;   /* preserve current selection */
+
+  let html = `<option value="">All statuses (${total})</option>`;
+  NVD_STATUSES.forEach(s => {
+    const n = statusMap.get(s.key) ?? 0;
+    html += `<option value="${s.key}"${n === 0 ? ' disabled' : ''}>` +
+            `${escHtml(s.label)} (${n})</option>`;
+  });
+  EL.statusFilter.innerHTML = html;
+
+  /* restore — if the option is now disabled (count hit 0) fall back to all */
+  const opt = EL.statusFilter.querySelector(`option[value="${selected}"]`);
+  EL.statusFilter.value = (opt && !opt.disabled) ? selected : '';
+}
+
+function renderBars(map, colorClass) {
+  const sorted = [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12);
+  const maxV   = Math.max(...sorted.map(e => e[1]), 1);
+  if (!sorted.length) return '<span style="font-size:12px;color:var(--muted)">No data</span>';
+  return sorted.map(([label, n]) => `
+    <div class="bar-row">
+      <span class="bar-label" title="${escHtml(label)}">${escHtml(label)}</span>
+      <span class="bar-track"><span class="bar-fill ${colorClass}" style="width:${Math.round(n/maxV*100)}%"></span></span>
+      <span class="bar-count">${n}</span>
+    </div>`).join('');
+}
+
+/* ── Utilities ──────────────────────────────────────────── */
+function mkChip(text, cls) {
+  const s = document.createElement('span');
+  s.className = 'chip ' + cls;
+  s.textContent = text;
+  return s;
+}
+
+function parseDate(str) {
+  try { const d = new Date(str); return isNaN(d) ? null : d; } catch { return null; }
+}
+
+function fmtDate(iso) {
+  try { return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
+  catch { return String(iso); }
+}
+
+function fmtDateTime(d) {
+  if (!d) return '—';
+  try {
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' ' +
+           d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  } catch { return String(d); }
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function decodeHtml(s) {
+  return String(s)
+    .replace(/&gt;/g,'>').replace(/&lt;/g,'<')
+    .replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;/g,"'");
+}
+
+/* ── Boot ───────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  setTopbarH();
+  loadAll();
+});
+</script>
+</body>
+</html>
