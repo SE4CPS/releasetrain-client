@@ -5,7 +5,9 @@
   <meta charset="utf-8" />
   <title>Releasetrain</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Release updates grouped by component — last 6 months" />
+  <meta name="description" content="Release updates grouped by component: last 6 months" />
+  <meta name="theme-color" content="#2563eb" />
+  <meta name="color-scheme" content="light" />
 
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>" />
   <link rel="apple-touch-icon" href="./img/rt-512x512.png" />
@@ -51,7 +53,7 @@
 
     /* ── Reset ──────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; }
-    html, body { margin: 0; min-height: 100%; }
+    html, body { margin: 0; height: 100%; overflow: hidden; }
     body {
       background: var(--bg);
       color: var(--text);
@@ -270,7 +272,7 @@
       content: "✓"; font-size: 10px; font-weight: 900; margin-right: 1px;
     }
 
-    /* Right count half — color per filter key */
+    /* Right count half: color per filter key */
     .toggle .count {
       padding: 4px 7px; color: #fff;
       display: inline-flex; align-items: center;
@@ -329,6 +331,14 @@
       background: var(--surface); border: 1px solid var(--border);
       border-radius: 12px; box-shadow: var(--shadow-sm); overflow: hidden;
     }
+    #feedPanel {
+      position: sticky;
+      top: calc(var(--topbar-h) + 16px);
+      max-height: calc(100vh - var(--topbar-h) - 32px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+    @media (max-width: 640px) { #feedPanel { position: static; max-height: none; overflow-y: visible; } }
     .panel-header {
       display: flex; align-items: center; gap: 8px;
       padding: 12px 16px; border-bottom: 1px solid var(--border);
@@ -468,8 +478,10 @@
       border-radius: 12px;
       overflow: hidden;
     }
-    @media (max-width: 640px) { #graphView { position: static; height: 70vh; } }
-    #g-graphContainer { position: absolute; inset: 0; }
+    @media (max-width: 640px) {
+      #graphView { position: static; height: 60vh; border-radius: 8px; }
+    }
+    #g-graphContainer { position: absolute; inset: 0; touch-action: none; }
     #g-graphCostBadge {
       position: absolute; left: 10px; top: 10px; z-index: 5;
       padding: 4px 10px; border-radius: 8px; border: 1px solid #1e2433;
@@ -554,6 +566,69 @@
       padding: 0;
     }
     @media (max-width: 640px) { #ackView { position: static; height: 80vh; } }
+
+    /* ── Changelog view ────────────────────────────────────── */
+    #changelogView {
+      position: sticky;
+      top: calc(var(--topbar-h) + 16px);
+      height: calc(100vh - var(--topbar-h) - 32px);
+      overflow-y: auto; overscroll-behavior: contain;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: var(--shadow-sm);
+    }
+    @media (max-width: 640px) { #changelogView { position: static; height: auto; } }
+    .cl-header {
+      padding: 18px 20px 14px; position: sticky; top: 0; z-index: 2;
+      background: var(--surface); border-bottom: 1px solid var(--border);
+    }
+    .cl-header h2 { margin: 0 0 4px; font-size: 15px; font-weight: 700; }
+    .cl-header p  { margin: 0; font-size: 12px; color: var(--muted); }
+    .cl-body { padding: 12px 16px 32px; display: flex; flex-direction: column; gap: 0; }
+    .cl-release {
+      display: grid; grid-template-columns: 90px 1fr;
+      gap: 0 16px; padding: 14px 0; border-bottom: 1px solid var(--border);
+    }
+    .cl-release:last-child { border-bottom: none; }
+    .cl-date-col { padding-top: 3px; }
+    .cl-date { font-size: 11px; font-weight: 700; color: var(--muted); white-space: nowrap; }
+    .cl-ver  {
+      display: inline-flex; align-items: center;
+      font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px;
+      background: var(--brand-light); color: var(--brand); margin-top: 4px; white-space: nowrap;
+    }
+    .cl-ver.cl-ver-minor { background: #f0fdf4; color: #16a34a; }
+    .cl-ver.cl-ver-patch { background: #f8fafc; color: var(--muted); border: 1px solid var(--border); }
+    .cl-content h3 { margin: 0 0 6px; font-size: 13px; font-weight: 700; }
+    .cl-content ul { margin: 0; padding: 0 0 0 16px; display: flex; flex-direction: column; gap: 3px; }
+    .cl-content li { font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .cl-content li strong { color: var(--text); }
+    .cl-tag {
+      display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 6px;
+      border-radius: 4px; margin-right: 4px; vertical-align: middle;
+    }
+    .cl-tag-feat { background: #dbeafe; color: #1d4ed8; }
+    .cl-tag-fix  { background: #dcfce7; color: #15803d; }
+    .cl-tag-ux   { background: #fef3c7; color: #b45309; }
+    .cl-tag-perf { background: #f3e8ff; color: #7c3aed; }
+
+    /* ── Phone: graph sidebar collapses to bottom overlay ─── */
+    @media (max-width: 640px) {
+      #graphControls {
+        position: fixed; bottom: 0; left: 0; right: 0; z-index: 900;
+        background: var(--surface); border-top: 1px solid var(--border);
+        border-radius: 16px 16px 0 0; box-shadow: 0 -4px 24px rgba(0,0,0,.12);
+        max-height: 45vh; overflow-y: auto; overscroll-behavior: contain;
+        padding-bottom: env(safe-area-inset-bottom, 8px);
+      }
+      #graphControls.graph-ctrl-hidden { display: none !important; }
+    }
+
+    /* ── Reduced motion ─────────────────────────────────────── */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
     .ack-header {
       padding: 18px 20px 14px;
       border-bottom: 1px solid var(--border);
@@ -595,7 +670,7 @@
     #docsView summary { padding: 0 !important; background: transparent !important; color: inherit !important; font-weight: inherit !important; font-size: inherit !important; gap: 0 !important; transition: none !important; }
     #docsView summary::before { display: none !important; content: none !important; }
     #docsView details[open] > summary { background: transparent !important; color: inherit !important; }
-    /* Docs content — scoped */
+    /* Docs content: scoped */
     #docsView { font-size: 13px; line-height: 1.6; color: #1b1f23; }
     #docsView .d-wrap { padding: 10px 16px 20px; }
     #docsView h2 { font-size: 1rem; font-weight: 700; margin: 0 0 .35rem; color: #1b1f23; }
@@ -937,7 +1012,7 @@
       background: var(--db-bg);
       position: sticky; top: calc(var(--topbar-h) + 16px);
       height: calc(100vh - var(--topbar-h) - 32px);
-      overflow-y: scroll;
+      overflow: hidden;
       border: 1px solid #dde6f5; border-radius: 12px;
       display: flex; flex-direction: column;
     }
@@ -1046,7 +1121,7 @@
   <!-- ── Topbar: brand + nav only ── -->
   <header class="topbar" role="banner" id="topbar">
     <div class="topbar-main">
-      <a class="brand" href="/" aria-label="Releasetrain home">Releasetrain <em>v3.13.3</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home">Releasetrain <em>v3.14.0</em></a>
       <div class="topbar-spacer"></div>
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle navigation" aria-expanded="false" aria-controls="navLinks">☰</button>
@@ -1057,6 +1132,7 @@
         <a id="cveLink" class="nav-link" href="#" title="Show CVE discussions (in-page)">🔐 CVE</a>
         <a id="dashboardLink" class="nav-link" href="#" title="Show release dashboard (in-page)">📈 Dashboard</a>
         <a id="docsLink" class="nav-link" href="#" title="Show API documentation (in-page)">📖 Docs</a>
+        <a id="changelogLink" class="nav-link" href="#" title="What's new: version history">📝 Changelog</a>
         <a id="ackLink" class="nav-link" href="#" title="Show acknowledgements (in-page)">🤝 Credits</a>
         <a class="nav-link" href="https://github.com/SE4CPS/releasetrain-client"
           target="_blank" rel="noopener noreferrer">⭐ GitHub</a>
@@ -1276,6 +1352,21 @@
         </details>
       </div>
 
+      <!-- ── Changelog controls (shown only in changelog view) ── -->
+      <div id="changelogControls" style="display:none">
+        <div class="sidebar-section">
+          <div class="sidebar-label">Version history</div>
+          <p style="font-size:12px;color:var(--muted);line-height:1.6;margin:0 0 10px">
+            All notable changes are documented here. Follows
+            <a href="https://semver.org" target="_blank" rel="noopener noreferrer" style="color:var(--brand)">semver</a>.
+          </p>
+          <a class="btn btn-ghost" href="https://github.com/SE4CPS/releasetrain-client"
+            target="_blank" rel="noopener noreferrer" style="font-size:12px;padding:5px 10px;display:inline-flex;align-items:center;gap:5px">
+            ⭐ GitHub
+          </a>
+        </div>
+      </div>
+
       <!-- ── Ack controls (shown only in credits view) ── -->
       <div id="ackControls" style="display:none">
         <div class="sidebar-section">
@@ -1417,7 +1508,7 @@
 
 <section class="block" id="d-versions">
 <h2>Version endpoints</h2>
-<div class="callout"><h3>Versions at a glance</h3><p class="small">Two flavors: older convenience routes like <code class="inline">/api/v/</code> and the newer <code class="inline">/api/v/search</code>. For steady client integration, <code class="inline">/api/v/search</code> is the safer path — its filters and paging model are explicit.</p></div>
+<div class="callout"><h3>Versions at a glance</h3><p class="small">Two flavors: older convenience routes like <code class="inline">/api/v/</code> and the newer <code class="inline">/api/v/search</code>. For steady client integration, <code class="inline">/api/v/search</code> is the safer path: its filters and paging model are explicit.</p></div>
 <p class="section-sort-note">Endpoints collapsed by default, ordered method-first then route.</p>
 <div class="api-grid">
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/dashboard/mltl-risk</span></summary><div class="endpoint-body"><p>Dashboard aggregate for documents marked as MLTL risk. Optional component filter.</p><div><span class="tag">q optional</span></div><pre><code>curl "https://releasetrain.io/api/dashboard/mltl-risk?q=chrome,firefox"</code></pre></div></details>
@@ -1475,9 +1566,9 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
 
       </div></div><!-- /#docsView -->
 
-      <!-- CVE view (shown only in CVE view) — timeline only; aggregates live in sidebar -->
+      <!-- CVE view (shown only in CVE view): timeline only; aggregates live in sidebar -->
       <div id="cveView" class="cv-host" style="display:none">
-        <!-- NVD pipeline banner — collapsible -->
+        <!-- NVD pipeline banner: collapsible -->
         <details class="cv-details">
           <summary>CVE Lifecycle Pipeline</summary>
           <div class="nvd-pipeline" id="nvdPipeline">
@@ -1495,7 +1586,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
           <div class="cv-search-bar">
             <input class="cv-search-input" type="search" id="cveSearch" placeholder="Filter by CVE ID, title, author, subreddit…" aria-label="Filter CVE posts" />
           </div>
-          <!-- Source tabs — collapsible -->
+          <!-- Source tabs: collapsible -->
           <details class="cv-details">
             <summary>Source</summary>
             <div class="src-tabs" id="srcTabs" role="group" aria-label="Filter by source">
@@ -1505,7 +1596,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
               <button class="src-tab" data-src="other">Other <span class="tab-count" id="tabCountOther"></span></button>
             </div>
           </details>
-          <!-- Filters — collapsible -->
+          <!-- Filters: collapsible -->
           <details class="cv-details">
             <summary>Filters</summary>
             <div class="cv-filter-group">
@@ -1721,6 +1812,117 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
         </div>
       </div><!-- /#dashboardView -->
 
+      <!-- Changelog view -->
+      <div id="changelogView" style="display:none" aria-label="Version changelog">
+        <div class="cl-header">
+          <h2>📝 Changelog</h2>
+          <p>What's new: all notable changes to releasetrain.io.</p>
+        </div>
+        <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-05-17</div>
+              <div class="cl-ver cl-ver-minor">v3.14.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Dashboard graphs, phone layout &amp; changelog</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Hub-and-spoke dependency map</strong> on dashboard right pane: visualises component→versions, CVE versions, Reddit posts, and Reddit+CVE edges on a DPR-aware canvas.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Ecosystem snapshot graph</strong> on aggregate left pane: auto-selects the most diversely-connected component from the live dataset.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Release cadence</strong> bar chart (releases/week) and <strong>Reddit mention trend</strong> line chart added to the component pane.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Reddit mention trend was always empty: day-key format mismatch (<code>YYYYMMDD</code> vs <code>YYYY-MM-DD</code>) corrected.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Dashboard right pane now scrolls independently; left pane and page remain locked.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> <strong>Changelog view</strong> added (this page) with semver-labelled entries.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Graph view on phones: Sigma canvas reduced to 60 vh; sidebar controls collapse to a fixed bottom-sheet overlay.</li>
+                <li><span class="cl-tag cl-tag-perf">perf</span> <code>touch-action: none</code> on graph canvas prevents iOS scroll hijack during pinch-zoom.</li>
+                <li><span class="cl-tag cl-tag-perf">perf</span> <code>prefers-reduced-motion</code> media query disables all animations for users who opt out.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Added <code>meta theme-color</code> and <code>color-scheme</code> for better browser chrome theming.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-05-10</div>
+              <div class="cl-ver cl-ver-patch">v3.13.3</div>
+            </div>
+            <div class="cl-content">
+              <h3>Dashboard two-pane layout</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Two-pane dashboard: <strong>Total Aggregate</strong> (left, always global) and <strong>Component</strong> (right, filtered).</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Sample chips in empty right pane for quick component selection.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Page scroll locked while dashboard is active; restored on exit.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Removed duplicate "Add component" input from dashboard sidebar.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Main search always syncs to dashboard on activate.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-04-28</div>
+              <div class="cl-ver cl-ver-patch">v3.13.2</div>
+            </div>
+            <div class="cl-content">
+              <h3>Dashboard KPIs &amp; timeline</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> KPI strip: Today count, Last 2 yrs, CVE today, Signals today: all with delta badges.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Release &amp; signal timeline line chart with configurable window (7 / 30 / 90 days).</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Update-type bar chart (major / minor / patch / CVE) with yesterday comparison.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-03-15</div>
+              <div class="cl-ver cl-ver-patch">v3.13.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>📈 Dashboard view introduced</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> New Dashboard nav entry with sidebar controls (timeline window, date picker).</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Aggregate version counts fetched from <code>/api/v/aggregate</code> endpoints.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Community signals section: Reddit and StackOverflow post counts.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-01-20</div>
+              <div class="cl-ver cl-ver-patch">v3.12.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>CVE timeline view</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Dedicated CVE view with filterable timeline and CVSS severity chips.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Reddit / SO risk-signal overlay on CVE cards.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Responsive CVE cards collapse gracefully on narrow viewports.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2025-11-04</div>
+              <div class="cl-ver cl-ver-patch">v3.11.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Graph view: Sigma.js</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Component dependency graph powered by Sigma.js with cost-based node colouring.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Layer toggles (versions, Reddit/SO posts, CVE posts, CVE versions).</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Ring-overlay canvas for component groupings.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Node info panel on click with links to API endpoints.</li>
+              </ul>
+            </div>
+          </div>
+
+        </div>
+      </div><!-- /#changelogView -->
+
       <!-- Credits / Acknowledgements view -->
       <div id="ackView" style="display:none">
         <div class="ack-header">
@@ -1728,8 +1930,8 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
           <p>We gratefully thank the following open data, open-source teams, and services whose APIs, feeds, databases, and software helped build releasetrain.io.</p>
         </div>
         <ul class="ack-list">
-          <li><a target="_blank" rel="noopener" href="https://nvd.nist.gov/">NIST NVD — National Vulnerability Database</a><span>CVE enrichment, CVSS scores, and affected-software data</span></li>
-          <li><a target="_blank" rel="noopener" href="https://cve.mitre.org/">MITRE CVE — Common Vulnerabilities and Exposures</a><span>Public CVE identifiers and descriptions</span></li>
+          <li><a target="_blank" rel="noopener" href="https://nvd.nist.gov/">NIST NVD: National Vulnerability Database</a><span>CVE enrichment, CVSS scores, and affected-software data</span></li>
+          <li><a target="_blank" rel="noopener" href="https://cve.mitre.org/">MITRE CVE: Common Vulnerabilities and Exposures</a><span>Public CVE identifiers and descriptions</span></li>
           <li><a target="_blank" rel="noopener" href="https://developer.github.com/v3/">GitHub API</a><span>Release notes, repository metadata, and version data</span></li>
           <li><a target="_blank" rel="noopener" href="https://www.reddit.com/dev/api/">Reddit API</a><span>Community discussion signals for security and update topics</span></li>
           <li><a target="_blank" rel="noopener" href="https://api.stackexchange.com/">Stack Exchange API</a><span>StackOverflow post data for community risk signals</span></li>
@@ -1809,18 +2011,18 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
       <button class="btn btn-ghost" data-close-dialog="g-legendDialog" style="padding:4px 10px">Close</button>
     </div>
     <div style="font-size:13px">
-      <p style="font-weight:700;margin:0 0 6px">Outer ring — Components</p>
+      <p style="font-weight:700;margin:0 0 6px">Outer ring: Components</p>
       <ul style="margin:0 0 10px 16px;line-height:1.8">
         <li><span style="color:#22c55e">■</span> green = low cost / up-to-date</li>
         <li><span style="color:#ef4444">■</span> red = highest cost</li>
         <li>Gray scale between min and max cost</li>
       </ul>
-      <p style="font-weight:700;margin:0 0 6px">Middle ring — CVE versions</p>
+      <p style="font-weight:700;margin:0 0 6px">Middle ring: CVE versions</p>
       <ul style="margin:0 0 10px 16px;line-height:1.8">
         <li><span style="color:#ef4444">■</span> red = version with a known CVE (<code>latestCveVersion</code>)</li>
         <li>Close to component = recent; near center = older (&gt; 1 year)</li>
       </ul>
-      <p style="font-weight:700;margin:0 0 6px">Near-outer band — Community posts</p>
+      <p style="font-weight:700;margin:0 0 6px">Near-outer band: Community posts</p>
       <ul style="margin:0 0 10px 16px;line-height:1.8">
         <li><span style="color:#fb7185">■</span> rose = post mentioning <code>CVE-XXXX-XXXXX</code> anywhere</li>
         <li><span style="color:#a855f7">■</span> violet = Reddit post</li>
@@ -1917,7 +2119,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
       "btn-major", "btn-minor", "btn-patch", "btn-cve", "btn-potential-cve", "btn-reddit",
       "btn-reddit-risk", "btn-reddit-risk-latest", "btn-reddit-risk-cve", "btn-so-risk",
       "filterForm", "components", "clearBtn", "fixedToggles", "typeToggles",
-      "homeLink", "graphLink", "archLink", "cveLink", "dashboardLink", "docsLink", "ackLink", "expandAllBtn", "activeFilters", "afTags", "afClearAll", "emptyState"
+      "homeLink", "graphLink", "archLink", "cveLink", "dashboardLink", "docsLink", "changelogLink", "ackLink", "expandAllBtn", "activeFilters", "afTags", "afClearAll", "emptyState"
     ].forEach(id => { EL[id] = document.getElementById(id); });
 
     const $ = s => document.querySelector(s);
@@ -2546,7 +2748,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
           const apiUrl = `${API_ORIGIN}/api/v/search?q=${encodeURIComponent(id)}`;
           info.innerHTML = `<span style="font-weight:700">${disp}</span> <span style="color:#22c55e;font-size:10px">cost ${comp.cost}${mkClose()}</span><div style="margin-top:4px">${tagHtml || '<span style="opacity:.5">No tags</span>'}</div>${mkLinks("", apiUrl, id)}`;
           const td = document.getElementById("g-tagsContent");
-          if (td) td.innerHTML = `<b>${disp}</b> — ${comp.tags.size} tags:<div style="margin-top:6px">${tagHtml || '<span style="opacity:.5">No tags</span>'}</div>`;
+          if (td) td.innerHTML = `<b>${disp}</b>: ${comp.tags.size} tags:<div style="margin-top:6px">${tagHtml || '<span style="opacity:.5">No tags</span>'}</div>`;
         } else {
           info.innerHTML = `<span style="font-weight:700">${id}${mkClose()}</span>`;
         }
@@ -2590,6 +2792,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
       if (DB_ACTIVE)  deactivateDashboard();
       if (D_ACTIVE)   deactivateDocs();
       if (ACK_ACTIVE) deactivateAck();
+      if (CL_ACTIVE)  deactivateChangelog();
       G_ACTIVE = true;
       setViewParam("graph");
       document.getElementById("graphView").style.display = "block";
@@ -2635,6 +2838,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
       else if (DB_ACTIVE) { e.preventDefault(); deactivateDashboard(); }
       else if (D_ACTIVE)  { e.preventDefault(); deactivateDocs(); }
       else if (ACK_ACTIVE){ e.preventDefault(); deactivateAck(); }
+      else if (CL_ACTIVE) { e.preventDefault(); deactivateChangelog(); }
     });
 
     EL.homeLink.addEventListener("click", e => {
@@ -2645,6 +2849,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
       else if (DB_ACTIVE) deactivateDashboard();
       else if (D_ACTIVE)  deactivateDocs();
       else if (ACK_ACTIVE) deactivateAck();
+      else if (CL_ACTIVE) deactivateChangelog();
     });
 
     /* ── Unified layer + option checkboxes ───────────────────── */
@@ -2797,11 +3002,11 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
       const { groupedStacks, extraComponents } = aGetStack(names);
       const ts = new Date().toLocaleString("en-US", { weekday:"short", year:"numeric", month:"short", day:"numeric", hour:"numeric", minute:"numeric", second:"numeric", hour12:false, timeZoneName:"short" });
       const fills = {
-        cveFill:   "#fecaca",  /* light red    — CVE / security     */
-        majorFill: "#fed7aa",  /* light orange — breaking / major   */
-        minorFill: "#fef9c3",  /* light yellow — minor update       */
-        patchFill: "#dbeafe",  /* light blue   — patch available    */
-        okFill:    "#dcfce7",  /* light green  — up to date        */
+        cveFill:   "#fecaca",  /* light red   : CVE / security     */
+        majorFill: "#fed7aa",  /* light orange: breaking / major   */
+        minorFill: "#fef9c3",  /* light yellow: minor update       */
+        patchFill: "#dbeafe",  /* light blue  : patch available    */
+        okFill:    "#dcfce7",  /* light green : up to date        */
       };
       let uml = `@startuml\nskinparam BackgroundColor #ffffff\nskinparam DefaultTextAlignment left\nskinparam Shadowing false\nskinparam PackageBorderColor #cbd5e1\nskinparam PackageBackgroundColor #ffffff\nskinparam ComponentBorderColor #94a3b8\nskinparam ComponentBackgroundColor #ffffff\nskinparam ArrowColor #111827\nskinparam FontColor #111827\ntitle "Software Ecosystem: ${ts}"\nlegend right\n  |= Legend |= <#fecaca> CVE | <#fed7aa> Breaking | <#fef9c3> Minor | <#dbeafe> Patch | <#dcfce7> OK |\nendlegend\n`;
       uml += `package "Ecosystem" #transparent {\n`;
@@ -2917,6 +3122,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
       if (DB_ACTIVE)  deactivateDashboard();
       if (D_ACTIVE)   deactivateDocs();
       if (ACK_ACTIVE) deactivateAck();
+      if (CL_ACTIVE)  deactivateChangelog();
       A_ACTIVE = true;
       setViewParam("arch");
       document.getElementById("archView").style.display = "flex";
@@ -3113,6 +3319,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
       if (CV_ACTIVE)  deactivateCve();
       if (DB_ACTIVE)  deactivateDashboard();
       if (ACK_ACTIVE) deactivateAck();
+      if (CL_ACTIVE)  deactivateChangelog();
       D_ACTIVE = true;
       setViewParam("docs");
       document.getElementById("docsView").style.display = "block";
@@ -3140,6 +3347,41 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
       activateDocs();
     });
 
+    /* ── Changelog Module ───────────────────────────────────── */
+    let CL_ACTIVE = false;
+
+    function activateChangelog() {
+      if (G_ACTIVE)  deactivateGraph();
+      if (A_ACTIVE)  deactivateArch();
+      if (CV_ACTIVE) deactivateCve();
+      if (DB_ACTIVE) deactivateDashboard();
+      if (D_ACTIVE)  deactivateDocs();
+      if (ACK_ACTIVE) deactivateAck();
+      CL_ACTIVE = true;
+      setViewParam("changelog");
+      document.getElementById("changelogView").style.display = "block";
+      document.getElementById("feedPanel").style.display = "none";
+      document.getElementById("changelogControls").style.display = "";
+      document.getElementById("feedSidebarSections").style.display = "none";
+      EL.changelogLink.classList.add("nav-active");
+    }
+
+    function deactivateChangelog() {
+      CL_ACTIVE = false;
+      setViewParam("");
+      document.getElementById("changelogView").style.display = "none";
+      document.getElementById("feedPanel").style.display = "";
+      document.getElementById("changelogControls").style.display = "none";
+      document.getElementById("feedSidebarSections").style.display = "";
+      EL.changelogLink.classList.remove("nav-active");
+    }
+
+    EL.changelogLink.addEventListener("click", e => {
+      e.preventDefault();
+      if (CL_ACTIVE) { deactivateChangelog(); return; }
+      activateChangelog();
+    });
+
     /* ── Credits / Ack Module ────────────────────────────────── */
     let ACK_ACTIVE = false;
 
@@ -3149,6 +3391,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
       if (CV_ACTIVE) deactivateCve();
       if (DB_ACTIVE) deactivateDashboard();
       if (D_ACTIVE)  deactivateDocs();
+      if (CL_ACTIVE) deactivateChangelog();
       ACK_ACTIVE = true;
       setViewParam("credits");
       document.getElementById("ackView").style.display = "block";
@@ -3866,6 +4109,8 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
         activateDashboard();
       } else if (view === "credits") {
         activateAck();
+      } else if (view === "changelog") {
+        activateChangelog();
       }
     });
 
@@ -4462,6 +4707,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
       if (DB_ACTIVE)  deactivateDashboard();
       if (D_ACTIVE)   deactivateDocs();
       if (ACK_ACTIVE) deactivateAck();
+      if (CL_ACTIVE)  deactivateChangelog();
       CV_ACTIVE = true;
       setViewParam("cve");
       document.getElementById("cveView").style.display = "flex";
@@ -4662,7 +4908,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
       setText('db-subtitle-today-types', todayLabel);
       setText('db-subtitle-today-cve', todayLabel);
       const qParam = dbCurrentComponents.length ? dbCurrentComponents.join(',') : '';
-      /* Left pane (aggregate) always fetches global totals — no q filter.
+      /* Left pane (aggregate) always fetches global totals: no q filter.
          Right pane (component) uses selectedVersions which is filtered by q. */
       const [
         todayByDate, yesterdayByDate, countTwoYrs, countAllMaybe, versionTL, namesResp,
@@ -4870,7 +5116,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
       }
       setText('db-metric-risk-positive', posRisk!=null?posRisk:redditData.filter(d=>dbRiskScore(d)>0).length);
 
-      /* Timeline delta (chart removed — now shown via db-chart-release-window in left pane) */
+      /* Timeline delta (chart removed: now shown via db-chart-release-window in left pane) */
       if (tlCounts.length>=2) dbSetDelta('db-delta-timeline-daily',tlCounts[tlCounts.length-1],tlCounts[tlCounts.length-2]);
       else dbSetDelta('db-delta-timeline-daily',0,0);
 
@@ -4936,7 +5182,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
         if (multiList.length) {
           const top=multiList[0];
           interestEl.innerHTML='<strong>Multi-source components (last 7 days)</strong><br/>'+
-            'Top: <strong>'+top.name+'</strong> — '+
+            'Top: <strong>'+top.name+'</strong>: '+
             '<a href="'+DB_BASE+'/api/v/?q='+top.name+'" target="_blank" rel="noopener">versions</a> · '+
             '<a href="'+DB_BASE+'/api/aggregate/v/sourceCountByType?sourceType=CVE&timestamp='+refDate+'&q='+top.name+'" target="_blank" rel="noopener">CVE counts</a> · '+
             '<a href="'+DB_BASE+'/api/reddit?limit=100&showCount=true&q='+top.name+'" target="_blank" rel="noopener">Reddit posts</a><br/>'+
@@ -5188,9 +5434,9 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
       if (CV_ACTIVE)  deactivateCve();
       if (D_ACTIVE)   deactivateDocs();
       if (ACK_ACTIVE) deactivateAck();
+      if (CL_ACTIVE)  deactivateChangelog();
       DB_ACTIVE = true;
       setViewParam("dashboard");
-      document.documentElement.style.overflow = 'hidden';
       document.getElementById("dashboardView").style.display = "block";
       document.getElementById("feedPanel").style.display = "none";
       document.getElementById("dashboardControls").style.display = "";
@@ -5206,7 +5452,6 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
     function deactivateDashboard() {
       DB_ACTIVE = false;
       setViewParam("");
-      document.documentElement.style.overflow = '';
       document.getElementById("dashboardView").style.display = "none";
       document.getElementById("feedPanel").style.display = "";
       document.getElementById("dashboardControls").style.display = "none";
