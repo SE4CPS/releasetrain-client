@@ -555,6 +555,14 @@ p, ul, ol{margin:.28rem 0!important}
 <aside aria-label="Page navigation" class="sidebar">
 <h2>On this page</h2>
 <ul class="toc">
+<li><a href="#architecture">System Architecture</a>
+  <ul class="toc sub">
+    <li><a href="#arch-platform">Platform Overview</a></li>
+    <li><a href="#arch-data-flow">Data Ingestion Flow</a></li>
+    <li><a href="#arch-api">API Topology</a></li>
+    <li><a href="#arch-request">Request Lifecycle</a></li>
+  </ul>
+</li>
 <li><a href="#health-meta">Health &amp; meta</a></li>
 <li><a href="#reddit">Reddit endpoints</a></li>
 <li><a href="#versions">Version endpoints</a></li>
@@ -564,6 +572,281 @@ p, ul, ol{margin:.28rem 0!important}
 </ul>
 </aside>
 <main>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SYSTEM ARCHITECTURE
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="block" id="architecture">
+<h2>System Architecture</h2>
+<p class="small muted">End-to-end overview of the ReleaseTrain.io platform — how data is collected, stored, served, and consumed. Four diagrams cover the platform topology, data ingestion pipeline, API surface, and a single request lifecycle.</p>
+
+<!-- ─── 1. Platform Overview ──────────────────────────────────── -->
+<section class="block" id="arch-platform" style="margin-top:.9rem">
+<h3>1 — Platform Overview</h3>
+<p class="small muted">Five subsystems collaborate to collect, store, serve, and visualise software-release intelligence. Arrows show the primary data or control path.</p>
+<div class="mermaid">
+graph TB
+    subgraph SOURCES ["External Data Sources"]
+        direction TB
+        REDDIT_API["Reddit API<br/>(pushshift / PRAW)"]
+        CVE_FEEDS["CVE / NVD Feeds<br/>(JSON feeds)"]
+        VER_SOURCES["Vendor Release Pages<br/>(Chrome, Firefox, Android …)"]
+    end
+
+    subgraph BOT ["releasetrain-bot  •  Python collector"]
+        direction LR
+        BOT_REDDIT["Reddit scraper"]
+        BOT_CVE["CVE poller"]
+        BOT_VER["Version tracker"]
+        BOT_ML["ML labeller<br/>(isUpdateRelated,<br/>positiveScore)"]
+    end
+
+    subgraph STORE ["MongoDB Atlas"]
+        COL_V[("versions<br/>collection")]
+        COL_R[("reddit<br/>collection")]
+        COL_C[("components<br/>collection")]
+    end
+
+    subgraph SERVER ["releasetrain-server  •  Node / Express REST API"]
+        direction LR
+        RT_V["/api/v/*<br/>Versions"]
+        RT_R["/api/reddit/*<br/>Reddit"]
+        RT_C["/api/c/*<br/>Components"]
+        RT_AGG["/api/aggregate/*<br/>Aggregations"]
+        RT_DASH["/api/dashboard/*<br/>Dashboard"]
+        RT_SYS["/api/health<br/>/api/meta<br/>/api/test/*"]
+    end
+
+    subgraph CLIENT ["releasetrain-client  •  Static JS / HTML"]
+        direction LR
+        UI_DASH["Dashboard view"]
+        UI_GRAPH["Component graph<br/>(Sigma.js)"]
+        UI_CVE["CVE view"]
+        UI_DOCS["Docs / API explorer<br/>(this page)"]
+        UI_ARCH["Architecture view<br/>(PlantUML)"]
+    end
+
+    subgraph CHAT ["releasetrain-chat  •  Streamlit + RAG"]
+        CHAT_APP["Chat interface"]
+        CHAT_RAG["Retrieval pipeline<br/>(embeddings + LLM)"]
+    end
+
+    REDDIT_API --> BOT_REDDIT
+    CVE_FEEDS  --> BOT_CVE
+    VER_SOURCES --> BOT_VER
+
+    BOT_REDDIT --> BOT_ML
+    BOT_CVE    --> COL_V
+    BOT_VER    --> COL_V
+    BOT_ML     --> COL_R
+    BOT_ML     --> COL_C
+
+    COL_V --> RT_V
+    COL_V --> RT_AGG
+    COL_V --> RT_DASH
+    COL_R --> RT_R
+    COL_C --> RT_C
+
+    RT_V   --> UI_DASH
+    RT_R   --> UI_DASH
+    RT_C   --> UI_GRAPH
+    RT_V   --> UI_CVE
+    RT_AGG --> UI_DASH
+
+    SERVER --> CHAT_APP
+    CHAT_APP <--> CHAT_RAG
+    STORE    --> CHAT_RAG
+
+    classDef external fill:#eef6ff,stroke:#9fb9d9,color:#1b1f23
+    classDef bot     fill:#fff7ea,stroke:#ead171,color:#1b1f23
+    classDef db      fill:#eefbf0,stroke:#9cd6ae,color:#1b1f23
+    classDef api     fill:#f4f6f8,stroke:#d0d7de,color:#1b1f23
+    classDef ui      fill:#fbfcfe,stroke:#d0d7de,color:#1b1f23
+    classDef chat    fill:#fde7e9,stroke:#f1abb5,color:#1b1f23
+
+    class REDDIT_API,CVE_FEEDS,VER_SOURCES external
+    class BOT_REDDIT,BOT_CVE,BOT_VER,BOT_ML bot
+    class COL_V,COL_R,COL_C db
+    class RT_V,RT_R,RT_C,RT_AGG,RT_DASH,RT_SYS api
+    class UI_DASH,UI_GRAPH,UI_CVE,UI_DOCS,UI_ARCH ui
+    class CHAT_APP,CHAT_RAG chat
+</div>
+<a class="toplink" href="#top">↑ Back to top</a>
+</section>
+
+<!-- ─── 2. Data Ingestion Flow ────────────────────────────────── -->
+<section class="block" id="arch-data-flow" style="margin-top:.9rem">
+<h3>2 — Data Ingestion &amp; Enrichment Pipeline</h3>
+<p class="small muted">How raw signals from Reddit, CVE feeds, and vendor release pages become structured, ML-enriched records in MongoDB.</p>
+<div class="mermaid">
+flowchart LR
+    subgraph COLLECT ["Collection"]
+        direction TB
+        C1["Reddit\nAPI poll"]
+        C2["CVE / NVD\nJSON feed"]
+        C3["Vendor release\npage scrape"]
+    end
+
+    subgraph NORMALISE ["Normalise"]
+        direction TB
+        N1["Deduplicate\nby redditId"]
+        N2["Parse version\nnumber semver"]
+        N3["Infer release\nchannel\n(major/minor/patch/cve)"]
+    end
+
+    subgraph ENRICH ["Enrich"]
+        direction TB
+        E1["ML predict\nisUpdateRelated"]
+        E2["ML predict\npositiveScore"]
+        E3["Stamp versionId\n(YYYYMMDD + name + ver)"]
+        E4["Build search tags\n&amp; timestamps"]
+    end
+
+    subgraph STORE ["Store — MongoDB"]
+        direction TB
+        S1[("reddit")]
+        S2[("versions")]
+        S3[("components")]
+    end
+
+    C1 --> N1 --> E1 --> E2 --> S1
+    C2 --> N2 --> N3 --> E3 --> E4 --> S2
+    C3 --> N2
+    E4 --> S3
+
+    classDef phase fill:#f4f6f8,stroke:#d0d7de,color:#1b1f23,rx:6
+    classDef store fill:#eefbf0,stroke:#9cd6ae,color:#1b1f23
+    class C1,C2,C3,N1,N2,N3,E1,E2,E3,E4 phase
+    class S1,S2,S3 store
+</div>
+<a class="toplink" href="#top">↑ Back to top</a>
+</section>
+
+<!-- ─── 3. API Topology ───────────────────────────────────────── -->
+<section class="block" id="arch-api" style="margin-top:.9rem">
+<h3>3 — API Endpoint Topology</h3>
+<p class="small muted">All route groups exposed by the ReleaseTrain server, their HTTP methods, and their primary MongoDB collection dependency.</p>
+<div class="mermaid">
+graph LR
+    CLIENT(["Browser /\nAPI consumer"])
+
+    subgraph API ["REST API  —  releasetrain.io"]
+        direction TB
+
+        subgraph SYS ["System"]
+            S1["GET /api/health"]
+            S2["GET /api/meta"]
+        end
+
+        subgraph VER ["Versions  /api/v/*"]
+            V1["GET  /api/v/search"]
+            V2["GET  /api/v/latest10"]
+            V3["GET  /api/v/count"]
+            V4["GET  /api/v/fc  (forecast)"]
+            V5["GET  /api/v/fcc (coincide)"]
+            V6["GET  /api/v/aggregate/byDate"]
+            V7["GET  /api/v/stats/by-month"]
+            V8["POST /api/v"]
+            V9["PUT  /api/v/:id"]
+        end
+
+        subgraph COMP ["Components  /api/c/*"]
+            C1["GET /api/c/names"]
+            C2["GET /api/c/frequency"]
+            C3["GET /api/c/count"]
+            C4["GET /api/c/os"]
+            C5["GET /api/c/name/:name"]
+            C6["GET /api/component/"]
+        end
+
+        subgraph RED ["Reddit  /api/reddit/*"]
+            R1["GET  /api/reddit"]
+            R2["GET  /api/reddit/:id"]
+            R3["GET  /api/reddit/by-subreddit"]
+            R4["GET  /api/reddit/query/questions"]
+            R5["GET  /api/reddit/query/update-related"]
+            R6["GET  /api/reddit/query/positive"]
+            R7["GET  /api/reddit/query/cve"]
+            R8["GET  /api/reddit/stats/*"]
+            R9["POST /api/reddit"]
+            R10["PUT  /api/reddit/:id"]
+        end
+
+        subgraph AGG ["Aggregations  /api/aggregate/*"]
+            A1["GET /api/aggregate/v/updateTypeCount"]
+            A2["GET /api/aggregate/v/classificationSummary"]
+            A3["GET /api/aggregate/v/componentTypeCount"]
+            A4["GET /api/aggregate/v/versionCountByDay"]
+            A5["GET /api/aggregate/v/missingFields"]
+            A6["GET /api/aggregate/v/sourceCountByType"]
+        end
+
+        subgraph DASH ["Dashboard"]
+            D1["GET /api/dashboard/mltl-risk"]
+        end
+
+        subgraph TEST ["Test &amp; Discovery"]
+            T1["GET /api/test/all"]
+            T2["GET /api/test/endpoints"]
+            T3["GET /api/test/endpoints/html"]
+        end
+    end
+
+    DB_V[("versions")]
+    DB_R[("reddit")]
+
+    CLIENT --> SYS
+    CLIENT --> VER
+    CLIENT --> COMP
+    CLIENT --> RED
+    CLIENT --> AGG
+    CLIENT --> DASH
+    CLIENT --> TEST
+
+    VER  --> DB_V
+    COMP --> DB_V
+    AGG  --> DB_V
+    DASH --> DB_V
+    RED  --> DB_R
+
+    classDef db fill:#eefbf0,stroke:#9cd6ae,color:#1b1f23
+    class DB_V,DB_R db
+</div>
+<a class="toplink" href="#top">↑ Back to top</a>
+</section>
+
+<!-- ─── 4. Request Lifecycle ──────────────────────────────────── -->
+<section class="block" id="arch-request" style="margin-top:.9rem">
+<h3>4 — Typical Request Lifecycle</h3>
+<p class="small muted">Sequence from browser interaction to JSON response, using a version-search request as the canonical example.</p>
+<div class="mermaid">
+sequenceDiagram
+    autonumber
+    actor User as User (Browser)
+    participant Client as releasetrain-client<br/>(Static JS)
+    participant API    as releasetrain-server<br/>(Express REST)
+    participant DB     as MongoDB Atlas<br/>(versions collection)
+
+    User->>Client: Types component name,<br/>clicks "Search"
+    Client->>API: GET /api/v/search?q=chrome&amp;limit=25&amp;page=1&amp;showCount=true
+    API->>API: Validate &amp; normalise params<br/>(q → array, limit clamp, channel map)
+    API->>DB: db.versions.find({versionProductName:{$in:[…]}})<br/>.sort({versionTimestamp:-1}).skip(offset).limit(25)
+    DB-->>API: Array of version documents
+    API->>DB: db.versions.countDocuments(…) [if showCount=true]
+    DB-->>API: totalCount integer
+    API-->>Client: 200 OK  { data:[…], totalCount:314 }
+    Client->>Client: Render version cards / chart
+    Client-->>User: Updated UI
+
+    Note over API,DB: All reads operate inside a<br/>rolling 2-year timestamp window<br/>unless ?start / ?end override it.
+</div>
+<a class="toplink" href="#top">↑ Back to top</a>
+</section>
+
+<a class="toplink" href="#top">↑ Back to top</a>
+</section>
+<!-- end #architecture -->
+
 <section class="block" id="health-meta">
 <h2>Health &amp; meta</h2><p class="section-sort-note">Endpoints are collapsed by default and ordered by method first, then by route.</p>
 <div class="api-grid">

@@ -288,6 +288,7 @@
     .toggle[data-key="reddit-risk-latest"].count { background: #b45309; }
     .toggle[data-key="reddit-risk-cve"]   .count { background: #dc2626; }
     .toggle[data-key="so-risk"]           .count { background: #d97706; }
+    .toggle[data-key="so"]               .count { background: #f59e0b; }
     .toggle[data-key^="type:"]            .count { background: #2563eb; }
     .toggle[aria-pressed="true"] .count { filter: brightness(1.12); }
 
@@ -398,7 +399,10 @@
 
     .li.kind-cve { border-left-color: var(--cve); background: var(--cve-bg); }
     .li.kind-cve:hover { background: #fee2e2; }
-    .li.kind-reddit.risk { border-left-color: var(--risk); }
+    .li.kind-reddit { border-left-color: #fb923c; background: #fffbf7; }
+    .li.kind-reddit:hover { background: #fff7ed; }
+    .li.kind-reddit.risk { border-left-color: var(--risk); background: var(--risk-bg); }
+    .li.kind-stackoverflow { border-left-color: #f59e0b; background: #fefdf7; }
     .li.kind-stackoverflow.risk { border-left-color: var(--risk); }
     .li.is-new { border-left-color: var(--new); }
 
@@ -718,6 +722,26 @@
     #docsView .status.err  { background: #fde7e9; color: #8b1e2d; border-color: #f1abb5; }
     #docsView .note { border-left: 4px solid #9fb9d9; padding-left: .75rem; margin-top: .5rem; color: #59636e; }
     #docsView .toplink { display: inline-block; margin-top: .3rem; font-size: .85rem; color: #0366d6; }
+    #docsView .mermaid { text-align: center; margin: .8rem 0 1.2rem; overflow-x: auto; }
+    /* arch-sub: collapsible details blocks inside #d-architecture */
+    #docsView details.arch-sub { border: 1px solid #d0d7de; border-radius: 8px; background: #fff; margin-top: .6rem; overflow: hidden; }
+    #docsView summary.d-arch-sum { list-style: none; display: flex !important; align-items: center !important; gap: .45rem !important; padding: .58rem .8rem !important; cursor: pointer; font-size: .88rem !important; font-weight: 700 !important; color: #1b1f23 !important; background: #f6f8fa !important; border-bottom: 1px solid transparent; transition: background .12s !important; }
+    #docsView details.arch-sub[open] > summary.d-arch-sum { border-bottom-color: #d0d7de !important; }
+    #docsView summary.d-arch-sum:hover { background: #edf0f4 !important; }
+    #docsView summary.d-arch-sum::-webkit-details-marker { display: none !important; }
+    #docsView summary.d-arch-sum::before { content: '\203A' !important; display: inline-block !important; font-size: 15px !important; line-height: 1 !important; transition: transform .15s !important; }
+    #docsView details.arch-sub[open] > summary.d-arch-sum::before { transform: rotate(90deg) !important; }
+    #docsView .arch-sub-body { padding: .55rem .8rem .8rem; }
+    /* arch-view: nested frontend-view details inside arch-sub */
+    #docsView details.arch-view { border: 1px solid #e8edf2; border-radius: 6px; margin: .28rem 0; background: #fafbfd; overflow: hidden; }
+    #docsView summary.d-arch-view-sum { list-style: none; display: flex !important; align-items: center !important; gap: .4rem !important; padding: .38rem .6rem !important; cursor: pointer; font-size: .82rem !important; font-weight: 600 !important; color: #1b1f23 !important; background: transparent !important; transition: background .12s !important; }
+    #docsView details.arch-view[open] > summary.d-arch-view-sum { background: #f0f3f6 !important; border-bottom: 1px solid #e8edf2 !important; }
+    #docsView summary.d-arch-view-sum:hover { background: #edf0f4 !important; }
+    #docsView summary.d-arch-view-sum::-webkit-details-marker { display: none !important; }
+    #docsView summary.d-arch-view-sum::before { content: '\203A' !important; display: inline-block !important; font-size: 13px !important; line-height: 1 !important; transition: transform .15s !important; }
+    #docsView details.arch-view[open] > summary.d-arch-view-sum::before { transform: rotate(90deg) !important; }
+    #docsView .arch-view-body { padding: .35rem .62rem .5rem; font-size: .82rem; color: #44505c; line-height: 1.55; }
+    #docsView .arch-view-body code { font-family: Consolas,Monaco,monospace; font-size: 11px; background: #f0f3f6; border: 1px solid #d0d7de; border-radius: 3px; padding: .05rem .25rem; }
     #docsView .endpoint-actions { display: flex; flex-wrap: wrap; gap: .45rem; margin: 0 0 6px; }
     #docsView .test-link { display: inline-flex; align-items: center; padding: .26rem .55rem; border: 1px solid #b9c2cc; border-radius: 5px; background: #fff; color: #1f2937; font-size: .8rem; font-weight: 600; text-decoration: none; }
     #docsView .test-link:hover { background: #f6f8fa; text-decoration: none; }
@@ -739,6 +763,21 @@
     .d-toc a { display: block; padding: 5px 8px; border-radius: 6px; font-size: 12px; color: var(--brand); text-decoration: none; }
     .d-toc a:hover { background: var(--brand-light); }
     .d-toc a.d-active { background: var(--brand-light); font-weight: 700; }
+    /* Sidebar live stats widget */
+    .sb-stat-group { border: 1px solid var(--border); border-radius: 7px; overflow: hidden; margin-bottom: 6px; }
+    .sb-stat-group:last-child { margin-bottom: 0; }
+    .sb-stat-head { list-style: none; display: flex; align-items: center; gap: 5px; padding: 6px 9px; cursor: pointer; font-size: 11px; font-weight: 700; color: #1b1f23; background: #f6f8fa; border-bottom: 1px solid transparent; }
+    .sb-stat-group[open] > .sb-stat-head { border-bottom-color: var(--border); }
+    .sb-stat-head::-webkit-details-marker { display: none; }
+    .sb-stat-head::before { content: '›'; font-size: 12px; display: inline-block; transition: transform .13s; }
+    .sb-stat-group[open] > .sb-stat-head::before { transform: rotate(90deg); }
+    .sb-stat-body { padding: 5px 8px 7px; }
+    .sb-stat-row { display: flex; justify-content: space-between; align-items: center; padding: 2px 0; font-size: 11px; color: #1b1f23; border-bottom: 1px solid #f0f3f6; }
+    .sb-stat-row:last-child { border-bottom: none; }
+    .sb-stat-row span:first-child { color: #59636e; }
+    .sb-stat-row span:last-child { font-weight: 700; color: #0366d6; }
+    .sb-stat-row.size-row span:last-child { color: #1a7f37; font-size: 10px; }
+    .sb-stat-divider { border: none; border-top: 1px dashed #e0e4ea; margin: 4px 0; }
 
     /* ── Back to top FAB ────────────────────────────────────── */
     #backToTop {
@@ -1194,6 +1233,10 @@
                 title="AI-detected isUpdateRelated or score > 0.5 (StackOverflow)">
                 <span class="lbl">⚠️ SO Risk</span><span id="btn-so-risk" class="count">0</span>
               </button>
+              <button class="toggle" data-key="so" aria-pressed="false" type="button"
+                title="All Stack Overflow posts matched to this component">
+                <span class="lbl">🟧 SO</span><span id="btn-so" class="count">0</span>
+              </button>
             </div>
           </div>
         </details>
@@ -1337,10 +1380,40 @@
 
       <!-- ── Docs controls (shown only in docs view) ── -->
       <div id="docsControls" style="display:none">
+
+        <!-- Live collection stats — always visible -->
+        <div class="sidebar-section" style="padding-bottom:6px;border-top:1px solid var(--border)">
+          <div class="sidebar-label" style="margin-bottom:6px">Live Collection Stats</div>
+
+          <details class="sb-stat-group" open>
+            <summary class="sb-stat-head">📦 Versions</summary>
+            <div class="sb-stat-body">
+              <div class="sb-stat-row"><span>Total</span><span id="dsb-v-total">…</span></div>
+              <div class="sb-stat-row"><span>CVE advisories</span><span id="dsb-v-cve">…</span></div>
+              <div class="sb-stat-row"><span>Release notes</span><span id="dsb-v-noncve">…</span></div>
+              <hr class="sb-stat-divider">
+              <div class="sb-stat-row size-row"><span>Est. size</span><span id="dsb-v-size">…</span></div>
+            </div>
+          </details>
+
+          <details class="sb-stat-group" open>
+            <summary class="sb-stat-head">💬 Community</summary>
+            <div class="sb-stat-body">
+              <div class="sb-stat-row"><span>Total</span><span id="dsb-r-total">…</span></div>
+              <div class="sb-stat-row"><span>Reddit posts</span><span id="dsb-r-reddit">…</span></div>
+              <div class="sb-stat-row"><span>Stack Overflow</span><span id="dsb-r-so">…</span></div>
+              <hr class="sb-stat-divider">
+              <div class="sb-stat-row size-row"><span>Est. size</span><span id="dsb-r-size">…</span></div>
+            </div>
+          </details>
+        </div>
+
         <details class="sb-details" open>
           <summary>API Reference</summary>
-          <div class="sidebar-section" style="padding-bottom:14px">
+          <div class="sidebar-section" style="padding-bottom:4px">
             <ul class="d-toc">
+              <li><a href="#" data-target="d-architecture">🏗 System Architecture</a></li>
+              <li><a href="#" data-target="d-quickstart">⚡ Quick start</a></li>
               <li><a href="#" data-target="d-health-meta">🏥 Health &amp; meta</a></li>
               <li><a href="#" data-target="d-reddit">💬 Reddit</a></li>
               <li><a href="#" data-target="d-versions">📦 Versions</a></li>
@@ -1350,6 +1423,31 @@
             </ul>
           </div>
         </details>
+
+        <details class="sb-details">
+          <summary>Data &amp; Schema</summary>
+          <div class="sidebar-section" style="padding-bottom:4px">
+            <ul class="d-toc">
+              <li><a href="#" data-target="d-data-models">📋 Data models</a></li>
+              <li><a href="#" data-target="d-ml-fields">🤖 ML fields</a></li>
+              <li><a href="#" data-target="d-field-projection">🔍 Field projection</a></li>
+              <li><a href="#" data-target="d-glossary">📖 Glossary</a></li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="sb-details">
+          <summary>Integration Guide</summary>
+          <div class="sidebar-section" style="padding-bottom:4px">
+            <ul class="d-toc">
+              <li><a href="#" data-target="d-pagination">📄 Pagination</a></li>
+              <li><a href="#" data-target="d-errors">⚠ Errors</a></li>
+              <li><a href="#" data-target="d-security">🔒 Security</a></li>
+              <li><a href="#" data-target="d-stats">📊 Live stats</a></li>
+            </ul>
+          </div>
+        </details>
+
       </div>
 
       <!-- ── Changelog controls (shown only in changelog view) ── -->
@@ -1475,6 +1573,337 @@
       <!-- Docs view (shown only in docs view) -->
       <div id="docsView" style="display:none"><div class="d-wrap">
 
+<!-- ═══ SYSTEM ARCHITECTURE ══════════════════════════════════════ -->
+<section class="block" id="d-architecture">
+
+<h2 style="margin-bottom:.35rem">System Architecture</h2>
+<p class="small" style="margin-bottom:.3rem">An open-source pipeline for tracking software releases, security advisories, and community signals. The goal is to continuously poll 20+ vendor feeds, package registries, and developer forums; normalise every event into one of two MongoDB collections (<code class="inline">versions</code> or <code class="inline">reddit</code>); stamp each document with a structured identifier; and expose the full corpus through a typed REST API and a static browser client. No proprietary transforms, no vendor lock-in.</p>
+<p class="small muted" style="margin-bottom:.15rem">Each section is collapsed by default. Click any heading to expand.</p>
+
+<!-- 1. Platform Overview -->
+<details class="arch-sub">
+<summary class="d-arch-sum">Platform Overview</summary>
+<div class="arch-sub-body">
+<p class="small muted" style="margin:.25rem 0 .5rem">Six subsystems, two MongoDB collections, one REST API. Arrows show the primary data and control paths.</p>
+<div class="mermaid">
+graph TB
+    subgraph SOURCES ["External Sources · 20+ feeds"]
+        SRC1["Security Feeds<br/>NVD · CVE · Patch Tuesday · Ubuntu · Debian"]
+        SRC2["Browser Releases<br/>Chrome · Firefox · Safari"]
+        SRC3["Runtimes and Platforms<br/>Node.js · Python · Linux Kernel · Eclipse"]
+        SRC4["Community Signals<br/>Reddit 20+ subreddits · Stack Overflow"]
+    end
+    subgraph BOT ["releasetrain-bot · Python collector fleet"]
+        BOT_V["Version pollers<br/>15+ release scrapers"]
+        BOT_R["Reddit scraper<br/>PRAW"]
+        BOT_ML["ML labeller<br/>isUpdateRelated · positiveScore"]
+    end
+    subgraph STORE ["MongoDB Atlas"]
+        COL_V[("versions")]
+        COL_R[("reddit")]
+    end
+    subgraph SERVER ["releasetrain-server · Node and Express"]
+        RT_V["/api/v/*"]
+        RT_R["/api/reddit/*"]
+        RT_AGG["/api/aggregate/*"]
+    end
+    subgraph CLIENT ["releasetrain-client · Static JS and HTML"]
+        UI_FEED["Feed and Dashboard"]
+        UI_CVE["CVE View"]
+        UI_GRAPH["Component Graph"]
+        UI_OTHER["Docs · Label · Archive views"]
+    end
+    subgraph CHAT ["releasetrain-chat · Streamlit RAG"]
+        CHAT_EMB["Embeddings<br/>text encoder"]
+        CHAT_LLM["LLM Inference<br/>DigitalOcean GenAI"]
+        CHAT_UI["Chat Interface"]
+    end
+    SRC1 & SRC2 & SRC3 --> BOT_V --> COL_V
+    SRC4 --> BOT_R --> BOT_ML --> COL_R
+    COL_V --> RT_V & RT_AGG
+    COL_R --> RT_R
+    RT_V --> UI_FEED & UI_CVE & UI_GRAPH
+    RT_R --> UI_FEED
+    COL_V & COL_R --> CHAT_EMB --> CHAT_LLM --> CHAT_UI
+    classDef ext  fill:#eef6ff,stroke:#9fb9d9,color:#1b1f23
+    classDef bot  fill:#fff7ea,stroke:#ead171,color:#1b1f23
+    classDef db   fill:#eefbf0,stroke:#9cd6ae,color:#1b1f23
+    classDef api  fill:#f4f6f8,stroke:#d0d7de,color:#1b1f23
+    classDef ui   fill:#fbfcfe,stroke:#d0d7de,color:#1b1f23
+    classDef chat fill:#fde7e9,stroke:#f1abb5,color:#1b1f23
+    class SRC1,SRC2,SRC3,SRC4 ext
+    class BOT_V,BOT_R,BOT_ML bot
+    class COL_V,COL_R db
+    class RT_V,RT_R,RT_AGG api
+    class UI_FEED,UI_CVE,UI_GRAPH,UI_OTHER ui
+    class CHAT_EMB,CHAT_LLM,CHAT_UI chat
+</div>
+</div>
+</details>
+
+<!-- 2. Source Coverage -->
+<details class="arch-sub">
+<summary class="d-arch-sum">Source Coverage: 20+ release and community feeds</summary>
+<div class="arch-sub-body">
+<p class="small muted" style="margin:.25rem 0 .5rem">Security and vendor feeds write to the versions collection. Community signals write to the reddit collection.</p>
+<div class="mermaid">
+flowchart LR
+    subgraph SEC ["Security · 9 sources"]
+        S1["NVD and CVE"]
+        S2["Microsoft Patch Tuesday"]
+        S3["Ubuntu Security Notices"]
+        S4["Debian Advisories"]
+        S5["Android Security Bulletins"]
+        S6["Apple Security Updates"]
+        S7["VMware Advisories"]
+        S8["Oracle Critical Patches"]
+        S9["Samsung Security"]
+    end
+    subgraph BROWS ["Browsers · 3 sources"]
+        B1["Google Chrome Stable"]
+        B2["Mozilla Firefox"]
+        B3["Safari Release Notes"]
+    end
+    subgraph RUN ["Runtimes · 6 sources"]
+        R1["Node.js"]
+        R2["Python"]
+        R3["Linux Kernel Stable"]
+        R4["Eclipse Foundation"]
+        R5["Android Studio"]
+        R6["Let's Encrypt"]
+    end
+    subgraph COMM ["Community · 5 sources"]
+        C1["Reddit 20+ subreddits"]
+        C2["Stack Overflow Tags"]
+        C3["GitHub Security Advisories"]
+        C4["npm Advisories"]
+        C5["PyPI Feed"]
+    end
+    DB_V[("versions")]
+    DB_R[("reddit")]
+    SEC   --> DB_V
+    BROWS --> DB_V
+    RUN   --> DB_V
+    COMM  --> DB_R
+    classDef db fill:#eefbf0,stroke:#9cd6ae,color:#1b1f23
+    class DB_V,DB_R db
+</div>
+</div>
+</details>
+
+<!-- 3. Data Ingestion and Enrichment -->
+<details class="arch-sub">
+<summary class="d-arch-sum">Data Ingestion and Enrichment Pipeline</summary>
+<div class="arch-sub-body">
+<p class="small muted" style="margin:.25rem 0 .5rem">Raw signals pass through four stages before landing in MongoDB.</p>
+<div class="mermaid">
+flowchart LR
+    subgraph COLLECT ["Collect"]
+        C1["Poll vendor feeds<br/>and release pages"]
+        C2["Scrape Reddit<br/>via PRAW"]
+    end
+    subgraph NORM ["Normalise"]
+        N1["Deduplicate<br/>by redditId or versionId"]
+        N2["Parse semver<br/>and release channel"]
+    end
+    subgraph ENRICH ["Enrich"]
+        E1["Predict isUpdateRelated"]
+        E2["Predict positiveScore"]
+        E3["Stamp versionId<br/>YYYYMMDD · name · version"]
+        E4["Add search tags<br/>and timestamps"]
+    end
+    subgraph STORE ["Store"]
+        S1[("versions")]
+        S2[("reddit")]
+    end
+    C1 --> N2 --> E3 --> E4 --> S1
+    C2 --> N1 --> E1 --> E2 --> S2
+    classDef db fill:#eefbf0,stroke:#9cd6ae,color:#1b1f23
+    class S1,S2 db
+</div>
+</div>
+</details>
+
+<!-- 4. API Topology -->
+<details class="arch-sub">
+<summary class="d-arch-sum">API Topology: REST route groups and MongoDB dependencies</summary>
+<div class="arch-sub-body">
+<p class="small muted" style="margin:.25rem 0 .5rem">All REST route groups and the MongoDB collection each reads or writes.</p>
+<div class="mermaid">
+graph LR
+    CL(["Client or API consumer"])
+    subgraph API ["REST API · releasetrain.io"]
+        subgraph VER ["/api/v/* · Versions"]
+            V1["GET search · latest10 · count<br/>fc · fcc · stats/by-month"]
+            V2["POST and PUT versions"]
+        end
+        subgraph RED ["/api/reddit/* · Reddit"]
+            R1["GET reddit · by-subreddit<br/>questions · positive · cve · stats"]
+            R2["POST and PUT reddit"]
+        end
+        subgraph AGG ["/api/aggregate/* · Aggregations"]
+            A1["GET v/typeBreakdown · v/updateTypeCount<br/>v/classificationSummary · v/versionCountByDay"]
+            A2["GET reddit/summary · reddit/count<br/>reddit/bySource · reddit/bySubreddit · reddit/countByDay"]
+        end
+        subgraph SYS ["System"]
+            S1["GET health · meta<br/>test/all · test/endpoints"]
+        end
+    end
+    DB_V[("versions")]
+    DB_R[("reddit")]
+    CL --> VER & RED & AGG & SYS
+    VER --> DB_V
+    AGG --> DB_V
+    RED --> DB_R
+    classDef db fill:#eefbf0,stroke:#9cd6ae,color:#1b1f23
+    class DB_V,DB_R db
+</div>
+</div>
+</details>
+
+<!-- 5. Frontend Views -->
+<details class="arch-sub">
+<summary class="d-arch-sum">Frontend Views: releasetrain-client</summary>
+<div class="arch-sub-body">
+<p class="small muted" style="margin:.25rem 0 .5rem">All views served as static HTML and JS from a single Nginx or http-server process. Click a view to expand details.</p>
+
+<details class="arch-view">
+<summary class="d-arch-view-sum">Feed and Dashboard</summary>
+<div class="arch-view-body">Real-time release feed with version cards, component filters, CVE badges and channel breakdown charts. Consumes <code>/api/v/search</code> and <code>/api/reddit</code>. Built with jQuery and Chart.js.</div>
+</details>
+
+<details class="arch-view">
+<summary class="d-arch-view-sum">CVE View</summary>
+<div class="arch-view-body">CVE post timeline with NVD pipeline banner showing post distribution across CVE lifecycle stages (Reserved, Awaiting Analysis, Analyzed, Published). Filters by source, date range and CVE ID pattern.</div>
+</details>
+
+<details class="arch-view">
+<summary class="d-arch-view-sum">Component Graph</summary>
+<div class="arch-view-body">Interactive network graph rendered with Sigma.js. Nodes are software components; edges represent co-release or dependency relationships. Data served from <code>/src/data/graph.json</code>.</div>
+</details>
+
+<details class="arch-view">
+<summary class="d-arch-view-sum">Architecture View</summary>
+<div class="arch-view-body">PlantUML diagram viewer rendered client-side via <code>plantuml-decoder.min.js</code> and the bundled WASM core. Displays system architecture diagrams defined in PlantUML DSL without any server round-trip.</div>
+</details>
+
+<details class="arch-view">
+<summary class="d-arch-view-sum">Docs and API Explorer</summary>
+<div class="arch-view-body">Full API reference with collapsible Swagger-style endpoint cards, curl copy buttons and live test links. System architecture rendered via Mermaid v10 (this section).</div>
+</details>
+
+<details class="arch-view">
+<summary class="d-arch-view-sum">Reddit View</summary>
+<div class="arch-view-body">Browsable interface over the reddit collection. Filters by subreddit, date, update-related label and predicted positive score. Consumes <code>/api/reddit</code> and all query sub-routes.</div>
+</details>
+
+<details class="arch-view">
+<summary class="d-arch-view-sum">Label View</summary>
+<div class="arch-view-body">Human-in-the-loop labelling interface for the <code>isUpdateRelated</code> classifier. Displays one Reddit post at a time and writes the label back via <code>PUT /api/reddit/:id</code>.</div>
+</details>
+
+<details class="arch-view">
+<summary class="d-arch-view-sum">EDI40-2023 View</summary>
+<div class="arch-view-body">Tracks EDI 4.0 2023 specification adoption and version history across LAMP, MEAN, MERN, MEVN and WAMP stacks.</div>
+</details>
+
+<details class="arch-view">
+<summary class="d-arch-view-sum">JUSPN View</summary>
+<div class="arch-view-body">Japanese specification release tracking with a stack-by-stack version matrix matching the EDI40-2023 use-case structure.</div>
+</details>
+
+<details class="arch-view">
+<summary class="d-arch-view-sum">MLTL View</summary>
+<div class="arch-view-body">Multi-language temporal logic module tracking version timelines and release cadences across programming language ecosystems.</div>
+</details>
+
+<details class="arch-view">
+<summary class="d-arch-view-sum">Changelog</summary>
+<div class="arch-view-body">Semantic version history of releasetrain-client following the semver convention.</div>
+</details>
+
+</div>
+</details>
+
+<!-- 6. AI Chat and RAG -->
+<details class="arch-sub">
+<summary class="d-arch-sum">AI Chat: RAG pipeline with vector search and LLM inference</summary>
+<div class="arch-sub-body">
+<p class="small muted" style="margin:.25rem 0 .5rem">A Streamlit application (<code class="inline">releasetrain-chat</code>) that wraps a retrieval-augmented generation pipeline over both MongoDB collections. At startup it encodes release notes and community posts into a FAISS vector index. At query time it retrieves the top-k most similar documents by cosine similarity, optionally reranked by a cross-encoder, then injects them into an LLM prompt served via DigitalOcean GenAI (Llama 3 or Mistral). Responses include source citations derived from the retrieved documents.</p>
+<div class="mermaid">
+flowchart TD
+    USER(["User question"])
+    subgraph RAG ["RAG Pipeline · releasetrain-chat · Streamlit"]
+        Q["Query encoder<br/>sentence-transformers"]
+        RET["Vector retriever<br/>top k similarity search"]
+        RANK["Reranker<br/>cross encoder scoring"]
+        AUG["Prompt augmenter<br/>release context injection"]
+        LLM["LLM Inference<br/>DigitalOcean GenAI Platform<br/>Llama 3 · Mistral"]
+    end
+    subgraph CORPUS ["Knowledge Corpus"]
+        DB_V[("versions")]
+        DB_R[("reddit")]
+        IDX[("FAISS vector index")]
+    end
+    USER --> Q --> RET
+    DB_V & DB_R --> IDX
+    IDX --> RET --> RANK --> AUG --> LLM --> ANS(["Grounded answer<br/>with source citations"])
+    classDef db   fill:#eefbf0,stroke:#9cd6ae,color:#1b1f23
+    classDef chat fill:#fde7e9,stroke:#f1abb5,color:#1b1f23
+    class DB_V,DB_R,IDX db
+    class Q,RET,RANK,AUG,LLM chat
+</div>
+<div style="margin-top:.55rem;display:grid;grid-template-columns:1fr 1fr;gap:.4rem">
+  <div class="callout" style="padding:.45rem .6rem">
+    <p class="small" style="font-weight:700;margin:0 0 .18rem;color:#1b1f23">Embedding model</p>
+    <p class="small muted" style="margin:0">sentence-transformers all-MiniLM-L6-v2 or OpenAI text-embedding-3-small. Encodes release notes and Reddit posts into dense 384 or 1536 dimensional vectors indexed in FAISS.</p>
+  </div>
+  <div class="callout" style="padding:.45rem .6rem">
+    <p class="small" style="font-weight:700;margin:0 0 .18rem;color:#1b1f23">LLM</p>
+    <p class="small muted" style="margin:0">Served via DigitalOcean GenAI Platform. Llama 3 70B or Mistral 7B receives an augmented prompt containing retrieved release context and returns a grounded, cited answer.</p>
+  </div>
+  <div class="callout" style="padding:.45rem .6rem">
+    <p class="small" style="font-weight:700;margin:0 0 .18rem;color:#1b1f23">Vector store</p>
+    <p class="small muted" style="margin:0">FAISS in memory index rebuilt at startup from both collections. Top k cosine similarity retrieval with configurable k (default 10 documents per query).</p>
+  </div>
+  <div class="callout" style="padding:.45rem .6rem">
+    <p class="small" style="font-weight:700;margin:0 0 .18rem;color:#1b1f23">Retrieval strategy</p>
+    <p class="small muted" style="margin:0">Hybrid: dense vector search over embeddings plus sparse BM25 keyword match over version IDs and CVE strings. Results merged and reranked before prompt injection.</p>
+  </div>
+</div>
+</div>
+</details>
+
+<!-- 7. Request Lifecycle -->
+<details class="arch-sub">
+<summary class="d-arch-sum">Request Lifecycle: Version search call path</summary>
+<div class="arch-sub-body">
+<p class="small muted" style="margin:.25rem 0 .5rem">Canonical read path through the stack for a version search call.</p>
+<div class="mermaid">
+sequenceDiagram
+    autonumber
+    actor User
+    participant Client as releasetrain-client
+    participant API    as Express REST API
+    participant DB     as MongoDB Atlas
+    User->>Client: Search for a component
+    Client->>API: GET /api/v/search with q and limit params
+    API->>API: Validate params and build filter
+    API->>DB: versions.find().sort().skip().limit()
+    DB-->>API: version documents
+    API->>DB: versions.countDocuments()
+    DB-->>API: totalCount
+    API-->>Client: 200 OK with data and totalCount
+    Client-->>User: Rendered results
+    Note over API,DB: Scoped to rolling 2 year window<br/>unless start or end param overrides
+</div>
+</div>
+</details>
+
+<a class="toplink" href="#">↑ Back to top</a>
+</section>
+<!-- end #d-architecture -->
+
 <section class="block" id="d-health-meta">
 <h2>Health &amp; meta</h2><p class="section-sort-note">Endpoints collapsed by default, ordered method-first then route.</p>
 <div class="api-grid">
@@ -1545,16 +1974,45 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
 
 <section class="block" id="d-aggregations">
 <h2>Aggregation endpoints</h2><p class="section-sort-note">Endpoints collapsed by default, ordered method-first then route.</p>
-<p class="small muted">Verification tools: measure volume, gaps, and classification counts after data collection.</p>
+<p class="small muted">Measure volume, gaps, and classification counts across both collections. All date params use <code class="inline">YYYYMMDD</code> format. Range-based endpoints default to the rolling 2-year window when <code class="inline">start</code>/<code class="inline">end</code> are omitted.</p>
+
+<h3 style="margin:.7rem 0 .3rem;font-size:.88rem;color:#59636e;text-transform:uppercase;letter-spacing:.04em">Versions · <code style="font-size:.8rem;text-transform:none">/api/aggregate/v/*</code></h3>
 <div class="api-grid">
-<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/v/classificationSummary</span></summary><div class="endpoint-body"><p>Summarize security and breaking classification tags for one day.</p><pre><code>curl "https://releasetrain.io/api/aggregate/v/classificationSummary?timestamp=20250723"</code></pre><pre><code>{ "timestamp": "20250723", "total": 14, "classification": { "security-fix": 8, "breaking-change": 6 } }</code></pre></div></details>
-<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/v/componentTypeCount</span></summary><div class="endpoint-body"><p>Count classified component types for a single day.</p><pre><code>curl "https://releasetrain.io/api/aggregate/v/componentTypeCount?timestamp=20250730"</code></pre><pre><code>{ "timestamp": "20250730", "total": 40, "components": { "browser": 8, "os": 6 } }</code></pre></div></details>
-<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/v/missingFields</span></summary><div class="endpoint-body"><p>Sample documents where a requested field is missing, null, or empty.</p><div><span class="tag">field required</span><span class="tag">limit optional</span></div><pre><code>curl "https://releasetrain.io/api/aggregate/v/missingFields?field=versionNumber&amp;limit=50"</code></pre></div></details>
-<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/v/oldestTimestamp</span></summary><div class="endpoint-body"><p>Find the release date of the Nth newest document and compute the age in days.</p><div><span class="tag">count</span></div><pre><code>curl "https://releasetrain.io/api/aggregate/v/oldestTimestamp?count=1000"</code></pre><pre><code>{ "oldest": "20250723", "deltaInDays": 245 }</code></pre></div></details>
-<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/v/sourceCountByType</span></summary><div class="endpoint-body"><p>Count one source type for a given day. <code class="inline">sourceType</code> can be <code class="inline">CVE</code>, <code class="inline">major</code>, <code class="inline">minor</code>, or <code class="inline">patch</code>.</p><pre><code>curl "https://releasetrain.io/api/aggregate/v/sourceCountByType?sourceType=CVE&amp;timestamp=20250723"</code></pre></div></details>
-<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/v/updateTypeCount</span></summary><div class="endpoint-body"><p>Count major, minor, patch, and other versions for a single day.</p><div><span class="tag">timestamp=YYYYMMDD</span></div><pre><code>curl "https://releasetrain.io/api/aggregate/v/updateTypeCount?timestamp=20250723"</code></pre><pre><code>{ "timestamp": "20250723", "major": 2, "minor": 5, "patch": 17, "other": 1 }</code></pre></div></details>
-<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/v/versionCountByDay</span></summary><div class="endpoint-body"><p>Day-by-day version counts over an explicit date range.</p><pre><code>curl "https://releasetrain.io/api/aggregate/v/versionCountByDay?start=20250701&amp;end=20250730"</code></pre></div></details>
-</div><a class="toplink" href="#">↑ Back to top</a></section>
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/v/typeBreakdown</span></summary><div class="endpoint-body"><p>CVE vs release-note split plus per-channel breakdown for a date range. Omit <code class="inline">start</code>/<code class="inline">end</code> to use the rolling 2-year window.</p><div><span class="tag">start optional</span><span class="tag">end optional</span></div><pre><code>curl "https://releasetrain.io/api/aggregate/v/typeBreakdown?start=20250101&end=20251231"</code></pre><pre><code>{
+  "range": { "start": "20250101", "end": "20251231" },
+  "total": 4821,
+  "cveCount": 1203,
+  "nonCveCount": 3618,
+  "byChannel": { "major": 312, "minor": 1540, "patch": 1766, "cve": 1203, "other": 0 }
+}</code></pre></div></details>
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/v/classificationSummary</span></summary><div class="endpoint-body"><p>Summarize security and breaking classification tags for one day.</p><div><span class="tag">timestamp=YYYYMMDD required</span></div><pre><code>curl "https://releasetrain.io/api/aggregate/v/classificationSummary?timestamp=20250723"</code></pre><pre><code>{ "timestamp": "20250723", "total": 14, "classification": { "security-fix": 8, "breaking-change": 6 } }</code></pre></div></details>
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/v/componentTypeCount</span></summary><div class="endpoint-body"><p>Count classified component types for a single day.</p><div><span class="tag">timestamp=YYYYMMDD required</span></div><pre><code>curl "https://releasetrain.io/api/aggregate/v/componentTypeCount?timestamp=20250730"</code></pre><pre><code>{ "timestamp": "20250730", "total": 40, "components": { "browser": 8, "os": 6 } }</code></pre></div></details>
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/v/missingFields</span></summary><div class="endpoint-body"><p>Sample documents where a requested field is missing, null, or empty. Useful for data quality audits.</p><div><span class="tag">field required</span><span class="tag">limit optional</span></div><pre><code>curl "https://releasetrain.io/api/aggregate/v/missingFields?field=versionNumber&amp;limit=50"</code></pre></div></details>
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/v/oldestTimestamp</span></summary><div class="endpoint-body"><p>Find the release date of the Nth newest document and compute its age in days.</p><div><span class="tag">count optional</span></div><pre><code>curl "https://releasetrain.io/api/aggregate/v/oldestTimestamp?count=1000"</code></pre><pre><code>{ "oldest": "20250723", "deltaInDays": 245 }</code></pre></div></details>
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/v/sourceCountByType</span></summary><div class="endpoint-body"><p>Count one source type for a given day. <code class="inline">sourceType</code>: <code class="inline">cve</code>, <code class="inline">major</code>, <code class="inline">minor</code>, <code class="inline">patch</code>.</p><div><span class="tag">sourceType required</span><span class="tag">timestamp=YYYYMMDD required</span></div><pre><code>curl "https://releasetrain.io/api/aggregate/v/sourceCountByType?sourceType=cve&amp;timestamp=20250723"</code></pre><pre><code>{ "timestamp": "20250723", "sourceType": "cve", "count": 18 }</code></pre></div></details>
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/v/updateTypeCount</span></summary><div class="endpoint-body"><p>Count major, minor, patch, and other versions for a single day.</p><div><span class="tag">timestamp=YYYYMMDD required</span></div><pre><code>curl "https://releasetrain.io/api/aggregate/v/updateTypeCount?timestamp=20250723"</code></pre><pre><code>{ "timestamp": "20250723", "major": 2, "minor": 5, "patch": 17, "other": 1 }</code></pre></div></details>
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/v/versionCountByDay</span></summary><div class="endpoint-body"><p>Day-by-day version counts over an explicit date range.</p><div><span class="tag">start=YYYYMMDD required</span><span class="tag">end=YYYYMMDD required</span></div><pre><code>curl "https://releasetrain.io/api/aggregate/v/versionCountByDay?start=20250701&amp;end=20250730"</code></pre><pre><code>{ "range": { "start": "20250701", "end": "20250730" }, "days": [{ "_id": "20250701", "count": 12 }] }</code></pre></div></details>
+</div>
+
+<h3 style="margin:.9rem 0 .3rem;font-size:.88rem;color:#59636e;text-transform:uppercase;letter-spacing:.04em">Community · <code style="font-size:.8rem;text-transform:none">/api/aggregate/reddit/*</code></h3>
+<div class="api-grid">
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/reddit/summary</span></summary><div class="endpoint-body"><p>Full overview in one call: totals, Reddit vs Stack Overflow split, top subreddits/components, and score stats. Omit <code class="inline">start</code>/<code class="inline">end</code> for the rolling 2-year window.</p><div><span class="tag">start optional</span><span class="tag">end optional</span><span class="tag">topN optional · default 10</span></div><pre><code>curl "https://releasetrain.io/api/aggregate/reddit/summary?topN=5"</code></pre><pre><code>{
+  "range": { "start": "20240518", "end": "20260518" },
+  "total": 28340,
+  "bySource": { "reddit": 21050, "stackoverflow": 7290 },
+  "topSubreddits": [{ "_id": "android", "count": 4120 }, { "_id": "chrome", "count": 2980 }],
+  "score": { "avg": 14.3, "max": 4821, "totalWithPositiveScore": 19204 }
+}</code></pre></div></details>
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/reddit/count</span></summary><div class="endpoint-body"><p>Total post count plus Reddit vs Stack Overflow split for a date range.</p><div><span class="tag">start optional</span><span class="tag">end optional</span></div><pre><code>curl "https://releasetrain.io/api/aggregate/reddit/count?start=20250101&end=20251231"</code></pre><pre><code>{ "range": { "start": "20250101", "end": "20251231" }, "total": 14820, "redditCount": 11340, "stackoverflowCount": 3480 }</code></pre></div></details>
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/reddit/bySource</span></summary><div class="endpoint-body"><p>Counts grouped by <code class="inline">source</code> field. Documents without a source field are counted as <code class="inline">reddit</code>.</p><div><span class="tag">start optional</span><span class="tag">end optional</span></div><pre><code>curl "https://releasetrain.io/api/aggregate/reddit/bySource"</code></pre><pre><code>{ "range": { "start": "20240518", "end": "20260518" }, "total": 28340, "sources": { "reddit": 21050, "stackoverflow": 7290 } }</code></pre></div></details>
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/reddit/bySubreddit</span></summary><div class="endpoint-body"><p>Top subreddits or Stack Overflow components by post count, with average score. Filter by source to compare communities.</p><div><span class="tag">start optional</span><span class="tag">end optional</span><span class="tag">limit optional · default 20 · max 100</span><span class="tag">source optional · reddit | stackoverflow</span></div><pre><code>curl "https://releasetrain.io/api/aggregate/reddit/bySubreddit?limit=5&source=reddit"</code></pre><pre><code>{
+  "range": { "start": "20240518", "end": "20260518" },
+  "source": "reddit", "limit": 5,
+  "subreddits": [{ "_id": "android", "count": 4120, "avgScore": 18.4 }]
+}</code></pre></div></details>
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/reddit/countByDay</span></summary><div class="endpoint-body"><p>Post count per day. Same shape as <code class="inline">/api/aggregate/v/versionCountByDay</code>. Filter by source to compare Reddit vs Stack Overflow ingestion cadence.</p><div><span class="tag">start=YYYYMMDD required</span><span class="tag">end=YYYYMMDD required</span><span class="tag">source optional · reddit | stackoverflow</span></div><pre><code>curl "https://releasetrain.io/api/aggregate/reddit/countByDay?start=20250701&end=20250730&source=stackoverflow"</code></pre><pre><code>{ "range": { "start": "20250701", "end": "20250730" }, "source": "stackoverflow", "days": [{ "_id": "20250701", "count": 8 }] }</code></pre></div></details>
+</div>
+<a class="toplink" href="#">↑ Back to top</a></section>
 
 <section class="block" id="d-testing">
 <h2>Test &amp; discovery endpoints</h2><p class="section-sort-note">Endpoints collapsed by default, ordered method-first then route.</p>
@@ -1563,6 +2021,378 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/test/endpoints</span></summary><div class="endpoint-body"><p>Enumerates all registered routes and flags duplicates.</p><pre><code>curl "https://releasetrain.io/api/test/endpoints"</code></pre><pre><code>{ "totalEndpoints": 30, "endpoints": [ { "methods": ["GET"], "path": "/api/health" } ] }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/test/endpoints/html</span></summary><div class="endpoint-body"><p>HTML view of discovered GET endpoints with generated example URLs and sample outputs.</p><pre><code>curl "https://releasetrain.io/api/test/endpoints/html"</code></pre></div></details>
 </div><a class="toplink" href="#">↑ Back to top</a></section>
+
+
+<!-- ═══ QUICK START ══════════════════════════════════════════════ -->
+<section class="block" id="d-quickstart">
+<details class="arch-sub">
+<summary class="d-arch-sum">⚡ Quick Start</summary>
+<div class="arch-sub-body">
+<p class="small muted" style="margin:.2rem 0 .6rem">Three requests that cover the most common use cases. Paste any into a terminal to verify connectivity and explore the response shape. Base URL: <code class="inline">https://releasetrain.io</code> · All <code class="inline">GET</code> endpoints are public and unauthenticated.</p>
+
+<h3 style="font-size:.87rem;margin:.4rem 0 .28rem">What released in the last 7 days?</h3>
+<pre><code>curl "https://releasetrain.io/api/v/search?start=20260511&end=20260518&limit=25&showCount=true"</code></pre>
+
+<h3 style="font-size:.87rem;margin:.55rem 0 .28rem">Any CVEs published this month?</h3>
+<pre><code>curl "https://releasetrain.io/api/v/search?channel=cve&start=20260501&end=20260531&limit=50&showCount=true"</code></pre>
+
+<h3 style="font-size:.87rem;margin:.55rem 0 .28rem">What is Reddit saying about Chrome right now?</h3>
+<pre><code>curl "https://releasetrain.io/api/reddit/by-subreddit?q=chrome&minScore=5&limit=25"</code></pre>
+
+<h3 style="font-size:.87rem;margin:.55rem 0 .28rem">Latest 10 Firefox releases with key fields only</h3>
+<pre><code>curl "https://releasetrain.io/api/v/latest10?q=firefox&limit=10"</code></pre>
+
+<h3 style="font-size:.87rem;margin:.55rem 0 .28rem">Forecast Chrome's next release date</h3>
+<pre><code>curl "https://releasetrain.io/api/v/fc?q=chrome"</code></pre>
+</div>
+</details>
+<a class="toplink" href="#">↑ Back to top</a>
+</section>
+
+<!-- ═══ DATA MODELS ═══════════════════════════════════════════════ -->
+<section class="block" id="d-data-models">
+<details class="arch-sub">
+<summary class="d-arch-sum">📋 Data Models</summary>
+<div class="arch-sub-body">
+<p class="small muted" style="margin:.2rem 0 .55rem">Two MongoDB collections store all release intelligence. Not every document has every field — the schema evolves as new sources are added.</p>
+
+<details class="arch-sub">
+<summary class="d-arch-sum">versions collection</summary>
+<div class="arch-sub-body">
+<p class="small muted" style="margin:.2rem 0 .45rem">One document per software version release. Written by the bot fleet; read by <code class="inline">/api/v/*</code> and <code class="inline">/api/aggregate/*</code>.</p>
+<table>
+<thead><tr><th style="width:34%">Field</th><th style="width:16%">Type</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code class="inline">_id</code></td><td>ObjectId</td><td>MongoDB document ID</td></tr>
+<tr><td><code class="inline">versionId</code></td><td>string</td><td>Composite key: <code class="inline">YYYYMMDD + productName + versionNumber</code>. Unique per release.</td></tr>
+<tr><td><code class="inline">versionProductName</code></td><td>string</td><td>Normalised product name, lowercase. e.g. <code class="inline">chrome</code>, <code class="inline">firefox</code></td></tr>
+<tr><td><code class="inline">versionNumber</code></td><td>string</td><td>Semver string. e.g. <code class="inline">124.0.1</code></td></tr>
+<tr><td><code class="inline">versionReleaseDate</code></td><td>string</td><td>Release date as <code class="inline">YYYYMMDD</code></td></tr>
+<tr><td><code class="inline">versionReleaseChannel</code></td><td>string</td><td>Inferred: <code class="inline">major</code> · <code class="inline">minor</code> · <code class="inline">patch</code> · <code class="inline">cve</code> · <code class="inline">other</code></td></tr>
+<tr><td><code class="inline">versionTimestamp</code></td><td>number</td><td>Unix milliseconds derived from <code class="inline">versionReleaseDate</code></td></tr>
+<tr><td><code class="inline">versionTimestampLastUpdate</code></td><td>string</td><td>ISO-8601 datetime of last write</td></tr>
+<tr><td><code class="inline">isCve</code></td><td>boolean</td><td><code class="inline">true</code> when channel is <code class="inline">cve</code></td></tr>
+<tr><td><code class="inline">classification.componentType</code></td><td>string[]</td><td>e.g. <code class="inline">["browser"]</code>, <code class="inline">["os"]</code>, <code class="inline">["runtime"]</code></td></tr>
+<tr><td><code class="inline">classification.securityType</code></td><td>string[]</td><td>e.g. <code class="inline">["security-fix"]</code></td></tr>
+<tr><td><code class="inline">classification.breakingType</code></td><td>string[]</td><td>e.g. <code class="inline">["breaking-change"]</code></td></tr>
+<tr><td><code class="inline">metadata.predicted.isUpdateRelated</code></td><td>boolean</td><td>ML prediction: is this an update-related version?</td></tr>
+<tr><td><code class="inline">metadata.predicted.positiveScore</code></td><td>number</td><td>Sentiment score 0–1. Above 0.5 is positive.</td></tr>
+<tr><td><code class="inline">metadata.labeled.isUpdateRelated</code></td><td>boolean|null</td><td>Human override. <code class="inline">null</code> = unlabeled.</td></tr>
+</tbody>
+</table>
+<pre><code>{
+  "_id": "660c38fce3cba9423e4f8f23",
+  "versionId": "20250217chrome124.0.1",
+  "versionProductName": "chrome",
+  "versionNumber": "124.0.1",
+  "versionReleaseDate": "20250217",
+  "versionReleaseChannel": "patch",
+  "versionTimestamp": 1739750400000,
+  "versionTimestampLastUpdate": "2025-02-17T10:00:00.000Z",
+  "isCve": false,
+  "classification": { "componentType": ["browser"] },
+  "metadata": {
+    "predicted": { "isUpdateRelated": true, "positiveScore": 0.72 },
+    "labeled":   { "isUpdateRelated": null }
+  }
+}</code></pre>
+</div>
+</details>
+
+<details class="arch-sub">
+<summary class="d-arch-sum">reddit collection</summary>
+<div class="arch-sub-body">
+<p class="small muted" style="margin:.2rem 0 .45rem">One document per Reddit post. Written by the scraper and ML labeller; read by <code class="inline">/api/reddit/*</code>.</p>
+<table>
+<thead><tr><th style="width:34%">Field</th><th style="width:16%">Type</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code class="inline">_id</code></td><td>ObjectId</td><td>MongoDB document ID</td></tr>
+<tr><td><code class="inline">redditId</code></td><td>string</td><td>Reddit short ID, e.g. <code class="inline">1nq0h33</code>. Deduplication key.</td></tr>
+<tr><td><code class="inline">title</code></td><td>string</td><td>Post title</td></tr>
+<tr><td><code class="inline">subreddit</code></td><td>string</td><td>Subreddit name without prefix, e.g. <code class="inline">programming</code></td></tr>
+<tr><td><code class="inline">author_description</code></td><td>string</td><td>Post body / selftext</td></tr>
+<tr><td><code class="inline">score</code></td><td>number</td><td>Reddit upvote score at ingestion time</td></tr>
+<tr><td><code class="inline">num_comments</code></td><td>number</td><td>Comment count at ingestion time</td></tr>
+<tr><td><code class="inline">created_utc</code></td><td>string</td><td>ISO-8601 datetime of original Reddit post</td></tr>
+<tr><td><code class="inline">updatedAt</code></td><td>string</td><td>ISO-8601 datetime of last upsert</td></tr>
+<tr><td><code class="inline">comments</code></td><td>object[]</td><td>Top-level comment objects from the thread</td></tr>
+<tr><td><code class="inline">metadata.predicted.isUpdateRelated</code></td><td>boolean</td><td>ML prediction: does this post discuss a software update?</td></tr>
+<tr><td><code class="inline">metadata.predicted.positiveScore</code></td><td>number</td><td>Sentiment score 0–1</td></tr>
+<tr><td><code class="inline">metadata.labeled.isUpdateRelated</code></td><td>boolean|null</td><td>Human label. <code class="inline">null</code> = unlabeled.</td></tr>
+</tbody>
+</table>
+<pre><code>{
+  "_id": "69d176bbda0850f83829b2d6",
+  "redditId": "1nq0h33",
+  "title": "Chrome 124 breaks extension manifest v2",
+  "subreddit": "chrome",
+  "author_description": "After updating to 124.0.1 my uBlock Origin stopped...",
+  "score": 342,
+  "num_comments": 87,
+  "created_utc": "2025-02-18T09:14:00.000Z",
+  "updatedAt": "2025-02-18T12:00:00.000Z",
+  "metadata": {
+    "predicted": { "isUpdateRelated": true, "positiveScore": 0.21 },
+    "labeled":   { "isUpdateRelated": true }
+  }
+}</code></pre>
+</div>
+</details>
+</div>
+</details>
+<a class="toplink" href="#">↑ Back to top</a>
+</section>
+
+<!-- ═══ PAGINATION ════════════════════════════════════════════════ -->
+<section class="block" id="d-pagination">
+<details class="arch-sub">
+<summary class="d-arch-sum">📄 Pagination Guide</summary>
+<div class="arch-sub-body">
+<p class="small muted" style="margin:.2rem 0 .6rem">The API supports two paging schemes. Use <strong>page/limit</strong> for random access; use <strong>cursor</strong> for efficient forward scrolling through large result sets without offset drift.</p>
+
+<h3 style="font-size:.87rem;margin:0 0 .3rem">Page / Limit</h3>
+<table>
+<thead><tr><th style="width:28%">Param</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code class="inline">page</code></td><td>1-based page number. Default: <code class="inline">1</code></td></tr>
+<tr><td><code class="inline">limit</code></td><td>Documents per page. Default: <code class="inline">25</code>. Pass <code class="inline">limit=all</code> to disable paging (large collections only).</td></tr>
+<tr><td><code class="inline">showCount=true</code></td><td>Adds <code class="inline">totalCount</code> to the response body at the cost of an extra <code class="inline">countDocuments</code> call.</td></tr>
+</tbody>
+</table>
+<pre><code>curl "https://releasetrain.io/api/v/search?q=chrome&limit=50&page=2&showCount=true"
+# response: { "data": [...], "totalCount": 314 }</code></pre>
+
+<h3 style="font-size:.87rem;margin:.65rem 0 .3rem">Cursor (forward-only)</h3>
+<table>
+<thead><tr><th style="width:28%">Param</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code class="inline">cursor</code></td><td>Opaque token from the <code class="inline">X-Next-Cursor</code> response header. Omit for the first page.</td></tr>
+</tbody>
+</table>
+<pre><code># First page — capture the X-Next-Cursor response header
+curl -i "https://releasetrain.io/api/v/search?q=chrome&limit=50"
+
+# Subsequent page
+curl "https://releasetrain.io/api/v/search?q=chrome&limit=50&cursor=TOKEN"</code></pre>
+
+<h3 style="font-size:.87rem;margin:.65rem 0 .3rem">Support by endpoint</h3>
+<table>
+<thead><tr><th style="width:50%">Endpoint</th><th style="width:25%">Page/Limit</th><th>Cursor</th></tr></thead>
+<tbody>
+<tr><td><code class="inline">/api/v/search</code></td><td>✓</td><td>✓</td></tr>
+<tr><td><code class="inline">/api/v/latest10</code></td><td>✓</td><td>✗</td></tr>
+<tr><td><code class="inline">/api/reddit</code></td><td>✓</td><td>✓</td></tr>
+<tr><td><code class="inline">/api/reddit/by-subreddit</code></td><td>✓</td><td>✗</td></tr>
+<tr><td><code class="inline">/api/reddit/query/cve</code></td><td>✓</td><td>✓</td></tr>
+<tr><td><code class="inline">/api/reddit/query/questions</code></td><td>✓</td><td>✗</td></tr>
+<tr><td><code class="inline">/api/reddit/query/update-related</code></td><td>✓</td><td>✗</td></tr>
+<tr><td><code class="inline">/api/iot</code></td><td>✓</td><td>✗</td></tr>
+</tbody>
+</table>
+</div>
+</details>
+<a class="toplink" href="#">↑ Back to top</a>
+</section>
+
+<!-- ═══ ML FIELDS ════════════════════════════════════════════════ -->
+<section class="block" id="d-ml-fields">
+<details class="arch-sub">
+<summary class="d-arch-sum">🤖 ML Fields</summary>
+<div class="arch-sub-body">
+<p class="small muted" style="margin:.2rem 0 .6rem">Two predicted fields are added to every Reddit document by the bot ML labeller. Human overrides live alongside predictions so consumers can choose which branch to trust.</p>
+
+<div class="callout" style="margin-bottom:.55rem">
+<h3 style="font-size:.87rem;margin:0 0 .28rem"><code class="inline">metadata.predicted.isUpdateRelated</code></h3>
+<p class="small" style="margin:0 0 .35rem">Text classifier trained on labeled Reddit posts. Predicts whether a post discusses a software update — a new release, patch announcement, upgrade discussion, or CVE advisory.</p>
+<table style="margin:.3rem 0 .4rem">
+<thead><tr><th style="width:28%">Value</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code class="inline">true</code></td><td>Post likely discusses a software update or release event</td></tr>
+<tr><td><code class="inline">false</code></td><td>Post predicted as not update-related</td></tr>
+<tr><td>field absent</td><td>Document has not been scored yet</td></tr>
+</tbody>
+</table>
+<p class="small muted" style="margin:0">Query predicted positives: <code class="inline">/api/reddit/query/update-related?isLabeled=false&isUpdateRelated=true</code>. Switch to <code class="inline">isLabeled=true</code> to use human labels.</p>
+</div>
+
+<div class="callout" style="margin-bottom:.55rem">
+<h3 style="font-size:.87rem;margin:0 0 .28rem"><code class="inline">metadata.predicted.positiveScore</code></h3>
+<p class="small" style="margin:0 0 .35rem">Sentiment classifier output. Continuous score 0–1 reflecting community sentiment toward the update being discussed. Scores above 0.5 are considered positive.</p>
+<table style="margin:.3rem 0 .4rem">
+<thead><tr><th style="width:28%">Range</th><th>Interpretation</th></tr></thead>
+<tbody>
+<tr><td><code class="inline">0.0 – 0.5</code></td><td>Neutral to negative sentiment</td></tr>
+<tr><td><code class="inline">0.5 – 0.75</code></td><td>Mildly positive</td></tr>
+<tr><td><code class="inline">0.75 – 1.0</code></td><td>Strongly positive</td></tr>
+</tbody>
+</table>
+<p class="small muted" style="margin:0">Retrieve high-confidence positives: <code class="inline">/api/reddit/query/positive</code>. Use <code class="inline">/api/reddit/query/filter?minScore=0.75&maxScore=1.0</code> for a custom window.</p>
+</div>
+
+<div class="callout">
+<h3 style="font-size:.87rem;margin:0 0 .28rem">Human labels vs predictions</h3>
+<p class="small" style="margin:0">Human labels live under <code class="inline">metadata.labeled.isUpdateRelated</code> and take precedence over predictions for training and evaluation. The <strong>Label view</strong> in releasetrain-client is the labelling interface. Pass <code class="inline">isLabeled=true</code> on any query route to read only human-verified data.</p>
+</div>
+</div>
+</details>
+<a class="toplink" href="#">↑ Back to top</a>
+</section>
+
+<!-- ═══ GLOSSARY ══════════════════════════════════════════════════ -->
+<section class="block" id="d-glossary">
+<details class="arch-sub">
+<summary class="d-arch-sum">📖 Glossary</summary>
+<div class="arch-sub-body">
+<p class="small muted" style="margin:.2rem 0 .5rem">Domain-specific terms used throughout the API, codebase and this documentation.</p>
+<table>
+<thead><tr><th style="width:30%">Term</th><th>Definition</th></tr></thead>
+<tbody>
+<tr><td><code class="inline">versionId</code></td><td>Composite business key: <code class="inline">YYYYMMDD + productName + versionNumber</code>. Unique per release. Used by <code class="inline">/api/v/versionId/:id</code>.</td></tr>
+<tr><td><code class="inline">versionReleaseChannel</code></td><td>Inferred semver category: <code class="inline">major</code> (breaking), <code class="inline">minor</code> (feature), <code class="inline">patch</code> (bugfix), <code class="inline">cve</code> (security advisory), <code class="inline">other</code> (non-standard).</td></tr>
+<tr><td><code class="inline">isCve</code></td><td>Set to <code class="inline">true</code> when a version document originates from a CVE or NVD advisory rather than a regular release channel.</td></tr>
+<tr><td><code class="inline">isUpdateRelated</code></td><td>Boolean: does a Reddit post discuss a software update? Stored under <code class="inline">metadata.predicted</code> (ML) and <code class="inline">metadata.labeled</code> (human).</td></tr>
+<tr><td><code class="inline">positiveScore</code></td><td>ML-predicted sentiment score 0–1. Reflects community tone toward the update discussed in a Reddit post.</td></tr>
+<tr><td><code class="inline">rolling 2-year window</code></td><td>Most read routes restrict results to the past two years by default. Override with <code class="inline">?start=YYYYMMDD&end=YYYYMMDD</code>.</td></tr>
+<tr><td><code class="inline">redditId</code></td><td>Reddit's own short alphanumeric post ID, e.g. <code class="inline">1nq0h33</code>. Used as the deduplication key on ingestion.</td></tr>
+<tr><td><code class="inline">cursor</code></td><td>Opaque pagination token from the <code class="inline">X-Next-Cursor</code> response header. Pass on the next request to continue without offset drift.</td></tr>
+<tr><td><code class="inline">componentType</code></td><td>Classification tag assigned during enrichment: <code class="inline">browser</code>, <code class="inline">os</code>, <code class="inline">runtime</code>, <code class="inline">package</code>, <code class="inline">tool</code>.</td></tr>
+<tr><td><code class="inline">MLTL</code></td><td>Multi-Language Temporal Logic. A spec-tracking module for cross-language version timeline analysis.</td></tr>
+<tr><td><code class="inline">JUSPN</code></td><td>Japanese specification release tracking module. Mirrors the EDI40-2023 stack matrix for Japanese standard editions.</td></tr>
+<tr><td><code class="inline">EDI40-2023</code></td><td>EDI 4.0 2023 specification adoption tracker covering LAMP, MEAN, MERN, MEVN and WAMP stack version matrices.</td></tr>
+</tbody>
+</table>
+</div>
+</details>
+<a class="toplink" href="#">↑ Back to top</a>
+</section>
+
+<!-- ═══ ERRORS ════════════════════════════════════════════════════ -->
+<section class="block" id="d-errors">
+<details class="arch-sub">
+<summary class="d-arch-sum">⚠ Error Format</summary>
+<div class="arch-sub-body">
+<p class="small muted" style="margin:.2rem 0 .5rem">All error responses return JSON. Use the HTTP status code for programmatic branching; the <code class="inline">message</code> field is human-readable context.</p>
+<table>
+<thead><tr><th style="width:18%">Status</th><th style="width:30%">When</th><th>Body shape</th></tr></thead>
+<tbody>
+<tr><td><code class="inline">200 OK</code></td><td>Success</td><td><code class="inline">{ "data": [...] }</code> or collection-specific shape</td></tr>
+<tr><td><code class="inline">400 Bad Request</code></td><td>Missing or invalid parameter</td><td><code class="inline">{ "error": "Bad Request", "message": "..." }</code></td></tr>
+<tr><td><code class="inline">404 Not Found</code></td><td>Document ID does not exist</td><td><code class="inline">{ "error": "Not Found", "message": "document not found" }</code></td></tr>
+<tr><td><code class="inline">500 Server Error</code></td><td>Unhandled exception or DB error</td><td><code class="inline">{ "error": "Internal Server Error", "message": "..." }</code></td></tr>
+</tbody>
+</table>
+<pre><code>// 400 example
+{ "error": "Bad Request", "message": "field param is required" }
+
+// 404 example
+{ "error": "Not Found", "message": "document not found" }</code></pre>
+<div class="callout" style="margin-top:.5rem">
+<p class="small" style="margin:0">The <code class="inline">/api/health</code> and <code class="inline">/api/meta</code> routes use a slightly different shape: <code class="inline">{ "ok": true }</code> on success and <code class="inline">{ "ok": false, "error": "..." }</code> on failure.</p>
+</div>
+</div>
+</details>
+<a class="toplink" href="#">↑ Back to top</a>
+</section>
+
+<!-- ═══ FIELD PROJECTION ══════════════════════════════════════════ -->
+<section class="block" id="d-field-projection">
+<details class="arch-sub">
+<summary class="d-arch-sum">🔍 Field Projection</summary>
+<div class="arch-sub-body">
+<p class="small muted" style="margin:.2rem 0 .5rem">Several endpoints accept a <code class="inline">fields</code> query parameter that limits the fields returned per document — useful for reducing payload size when building lightweight dashboards or mobile clients.</p>
+<pre><code># Return only title, subreddit and score
+curl "https://releasetrain.io/api/reddit?limit=50&fields=title,subreddit,score"
+
+# Return only key version fields
+curl "https://releasetrain.io/api/v/search?q=chrome&fields=versionId,versionNumber,versionReleaseDate"
+
+# Nested fields via dot notation
+curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdateRelated"</code></pre>
+<table style="margin-top:.5rem">
+<thead><tr><th style="width:55%">Endpoint</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td><code class="inline">/api/v/search</code></td><td>All version fields including nested paths</td></tr>
+<tr><td><code class="inline">/api/reddit</code></td><td>All reddit fields including nested paths</td></tr>
+<tr><td><code class="inline">/api/reddit/query/cve</code></td><td>All reddit fields</td></tr>
+<tr><td><code class="inline">/api/reddit/query/questions</code></td><td>All reddit fields</td></tr>
+<tr><td><code class="inline">/api/reddit/query/update-related</code></td><td>All reddit fields</td></tr>
+<tr><td><code class="inline">/api/reddit/by-subreddit</code></td><td>All reddit fields</td></tr>
+</tbody>
+</table>
+<div class="callout" style="margin-top:.45rem">
+<p class="small" style="margin:0"><code class="inline">_id</code> is always returned regardless of the <code class="inline">fields</code> value. Nested paths use dot notation, e.g. <code class="inline">metadata.predicted.positiveScore</code>.</p>
+</div>
+</div>
+</details>
+<a class="toplink" href="#">↑ Back to top</a>
+</section>
+
+<!-- ═══ SECURITY ══════════════════════════════════════════════════ -->
+<section class="block" id="d-security">
+<details class="arch-sub">
+<summary class="d-arch-sum">🔒 Security and Access</summary>
+<div class="arch-sub-body">
+<p class="small muted" style="margin:.2rem 0 .5rem">Current access model for the REST API.</p>
+<table>
+<thead><tr><th style="width:28%">Concern</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>Authentication</td><td>None required for <code class="inline">GET</code> endpoints. The full read surface is public.</td></tr>
+<tr><td>Write access</td><td><code class="inline">POST</code> and <code class="inline">PUT</code> routes are intended for the bot fleet and are not token-guarded in the current version — treat them as internal.</td></tr>
+<tr><td>CORS</td><td>Permissive. All origins are allowed for <code class="inline">GET</code> requests. Safe to call from browser JavaScript.</td></tr>
+<tr><td>Rate limiting</td><td>No hard limit is enforced. For long-running integrations, cache responses locally and use <code class="inline">cursor</code> or <code class="inline">start/end</code> to request only new data.</td></tr>
+<tr><td>HTTPS</td><td>All production traffic is served over HTTPS. HTTP redirects to HTTPS.</td></tr>
+<tr><td>Data sensitivity</td><td>All data is derived from public sources (Reddit, public vendor advisories, NVD). No PII is stored.</td></tr>
+</tbody>
+</table>
+</div>
+</details>
+<a class="toplink" href="#">↑ Back to top</a>
+</section>
+
+<!-- ═══ LIVE STATS ════════════════════════════════════════════════ -->
+<section class="block" id="d-stats">
+<details class="arch-sub">
+<summary class="d-arch-sum">📊 Live Collection Stats</summary>
+<div class="arch-sub-body">
+<p class="small muted" style="margin:.2rem 0 .55rem">Fetched live from the API on first load. Rolling 2-year window. Est. size based on average document size.</p>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:.55rem;margin-bottom:.55rem">
+
+  <!-- Versions card -->
+  <div class="callout" style="padding:.6rem .7rem">
+    <p style="font-weight:700;margin:0 0 .35rem;color:#1b1f23;font-size:.88rem">📦 Versions</p>
+    <table style="margin:0;font-size:12px;border:none">
+      <tbody>
+        <tr><td style="border:none;padding:2px 0;color:#59636e;width:58%">Total</td><td style="border:none;padding:2px 0;font-weight:800;color:#0366d6;font-size:1.1rem" id="d-stat-versions">…</td></tr>
+        <tr><td style="border:none;padding:2px 0;color:#59636e">CVE advisories</td><td style="border:none;padding:2px 0;font-weight:700;color:#cf222e" id="d-stat-v-cve">…</td></tr>
+        <tr><td style="border:none;padding:2px 0;color:#59636e">Release notes</td><td style="border:none;padding:2px 0;font-weight:700;color:#1a7f37" id="d-stat-v-noncve">…</td></tr>
+        <tr><td style="border:none;padding:3px 0 0;color:#59636e">Est. size</td><td style="border:none;padding:3px 0 0;font-weight:600;color:#6e40c9;font-size:11px" id="d-stat-v-size">…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Community card -->
+  <div class="callout" style="padding:.6rem .7rem">
+    <p style="font-weight:700;margin:0 0 .35rem;color:#1b1f23;font-size:.88rem">💬 Community</p>
+    <table style="margin:0;font-size:12px;border:none">
+      <tbody>
+        <tr><td style="border:none;padding:2px 0;color:#59636e;width:58%">Total</td><td style="border:none;padding:2px 0;font-weight:800;color:#0366d6;font-size:1.1rem" id="d-stat-reddit">…</td></tr>
+        <tr><td style="border:none;padding:2px 0;color:#59636e">Reddit posts</td><td style="border:none;padding:2px 0;font-weight:700;color:#ff4500" id="d-stat-r-reddit">…</td></tr>
+        <tr><td style="border:none;padding:2px 0;color:#59636e">Stack Overflow</td><td style="border:none;padding:2px 0;font-weight:700;color:#f48024" id="d-stat-r-so">…</td></tr>
+        <tr><td style="border:none;padding:3px 0 0;color:#59636e">Est. size</td><td style="border:none;padding:3px 0 0;font-weight:600;color:#6e40c9;font-size:11px" id="d-stat-r-size">…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<div class="callout" id="d-stats-freshness" style="padding:.42rem .6rem">
+  <p class="small muted" style="margin:0">Loading freshness info…</p>
+</div>
+</div>
+</details>
+<a class="toplink" href="#">↑ Back to top</a>
+</section>
 
       </div></div><!-- /#docsView -->
 
@@ -2109,7 +2939,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
   <script>
     /* ── Constants ────────────────────────────────────────────── */
     const API_BASE = "https://releasetrain.io/api/";
-    const GROUPS_BATCH = 6, TOP_TYPES = 10, REDDIT_LIMIT = 400, MAX_VER_DESC = 220;
+    const GROUPS_BATCH = 6, PAGE_LIMIT = 150, TOP_TYPES = 10, REDDIT_LIMIT = 400, MAX_VER_DESC = 220;
     const SIX_MONTHS_MS = 1000 * 60 * 60 * 24 * 180;
     const SIX_MONTHS_AGO = Date.now() - SIX_MONTHS_MS;
 
@@ -2117,7 +2947,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
     const EL = {};
     ["feed", "sentinel", "status", "navLoader", "kpi-page", "kpi-range", "kpi-uniq", "kpi-reddit",
       "btn-major", "btn-minor", "btn-patch", "btn-cve", "btn-potential-cve", "btn-reddit",
-      "btn-reddit-risk", "btn-reddit-risk-latest", "btn-reddit-risk-cve", "btn-so-risk",
+      "btn-reddit-risk", "btn-reddit-risk-latest", "btn-reddit-risk-cve", "btn-so-risk", "btn-so",
       "filterForm", "components", "clearBtn", "fixedToggles", "typeToggles",
       "homeLink", "graphLink", "archLink", "cveLink", "dashboardLink", "docsLink", "changelogLink", "ackLink", "expandAllBtn", "activeFilters", "afTags", "afClearAll", "emptyState"
     ].forEach(id => { EL[id] = document.getElementById(id); });
@@ -2823,10 +3653,14 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
         }
         gShowGraphPrompt(); return;
       }
-      if (!G_LOADED) {
-        EL.navLoader.classList.add("active");
-        try { await gLoadSigma(); } finally { EL.navLoader.classList.remove("active"); }
-      }
+      // Use cached versions + cached/in-flight reddit — no extra API calls
+      EL.navLoader.classList.add("active");
+      try {
+        await Promise.all([
+          G_LOADED ? Promise.resolve() : gLoadSigma(),
+          STATE.redditReady || Promise.resolve()  // resolves instantly if reddit already loaded
+        ]);
+      } finally { EL.navLoader.classList.remove("active"); }
       gBuildGraph(STATE.candidates.length ? STATE.candidates : STATE.rawVersions, STATE.redditAll);
       gRender();
     });
@@ -3282,6 +4116,22 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
       dNormalizeEndpoints(scope);
       dInitIds(scope);
 
+      // Render Mermaid diagrams inside docsView (loaded lazily via CDN)
+      function runMermaid() {
+        if (typeof window.mermaid !== "undefined") {
+          const nodes = Array.from(scope.querySelectorAll(".mermaid:not([data-processed])"));
+          if (nodes.length) window.mermaid.run({ nodes });
+        }
+      }
+      if (typeof window.mermaid !== "undefined") {
+        runMermaid();
+      } else {
+        const s = document.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js";
+        s.onload = () => { window.mermaid.initialize({ startOnLoad: false, securityLevel: "loose" }); runMermaid(); };
+        document.head.appendChild(s);
+      }
+
       document.querySelectorAll(".d-toc a[data-target]").forEach(a => {
         a.addEventListener("click", e => {
           e.preventDefault();
@@ -3311,6 +4161,55 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
         tocLinks.forEach(a => a.classList.remove("d-active"));
         if (active) active.classList.add("d-active");
       }, 80), { passive: true });
+
+      // Populate live collection stats — sidebar + #d-stats section
+      Promise.all([
+        fetch('https://releasetrain.io/api/v/count').then(r => r.json()).catch(() => null),
+        fetch('https://releasetrain.io/api/reddit/count').then(r => r.json()).catch(() => null),
+        fetch('https://releasetrain.io/api/c/count').then(r => r.json()).catch(() => null),
+      ]).then(([vData, rData, cData]) => {
+        const fmt = n => typeof n === 'number' ? n.toLocaleString() : '—';
+        const fmtSize = bytes => {
+          const mb = bytes / (1024 * 1024);
+          return mb < 1 ? (bytes / 1024).toFixed(0) + ' KB' : mb.toFixed(1) + ' MB';
+        };
+        const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+
+        if (vData) {
+          const vTotal = vData.totalVersions, vCve = vData.cveCount ?? 0, vNon = vData.nonCveCount ?? (vTotal - vCve);
+          const vSize = fmtSize(vTotal * 800);
+          // main content
+          set('d-stat-versions', fmt(vTotal));
+          set('d-stat-v-cve', fmt(vCve));
+          set('d-stat-v-noncve', fmt(vNon));
+          set('d-stat-v-size', vSize + ' / 5 MB max');
+          // sidebar
+          set('dsb-v-total', fmt(vTotal));
+          set('dsb-v-cve', fmt(vCve));
+          set('dsb-v-noncve', fmt(vNon));
+          set('dsb-v-size', vSize + ' / 5 MB');
+        }
+
+        if (rData) {
+          const rTotal = rData.totalRedditPosts, rReddit = rData.redditCount ?? 0, rSO = rData.stackoverflowCount ?? 0;
+          const rSize = fmtSize(rTotal * 2000);
+          // main content
+          set('d-stat-reddit', fmt(rTotal));
+          set('d-stat-r-reddit', fmt(rReddit));
+          set('d-stat-r-so', fmt(rSO));
+          set('d-stat-r-size', rSize + ' / 5 MB max');
+          // sidebar
+          set('dsb-r-total', fmt(rTotal));
+          set('dsb-r-reddit', fmt(rReddit));
+          set('dsb-r-so', fmt(rSO));
+          set('dsb-r-size', rSize + ' / 5 MB');
+        }
+
+        if (cData) set('d-stat-components', fmt(cData.totalComponents));
+
+        const fresh = document.getElementById('d-stats-freshness');
+        if (fresh) fresh.innerHTML = '<p class="small muted" style="margin:0">Version data polled continuously from 20+ release feeds. Reddit &amp; Stack Overflow ingested on a rolling schedule. Both collections maintain a rolling 2-year window.</p>';
+      });
     }
 
     function activateDocs() {
@@ -3432,26 +4331,43 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
 
     /* ── API ──────────────────────────────────────────────────── */
     const Api = {
-      async versions(qCsv) {
-        const q = qCsv ? `?q=${encodeCsvKeepCommas(qCsv)}` : "";
-        const url = `${API_BASE}v/${q}`;
+      async versions(qCsv, cursor) {
+        const params = new URLSearchParams({ limit: String(PAGE_LIMIT) });
+        if (qCsv) params.set("q", encodeCsvKeepCommas(qCsv));
+        if (cursor) params.set("cursor", cursor);
+        // Push 6-month window to server so it only returns recent docs
+        const sixMoAgo = new Date(SIX_MONTHS_AGO);
+        params.set("start", sixMoAgo.toISOString().slice(0,10).replace(/-/g,''));
+        const url = `${API_BASE}v/search?${params}`;
         const res = await fetch(url, { headers: { Accept: "application/json" } });
         if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-        return (await res.json()).versions || [];
+        const json = await res.json();
+        return { versions: json.data || [], nextCursor: json.nextCursor || null };
       },
       async reddit() {
-        const res = await fetch(`${API_BASE}reddit/query/positive`, { headers: { Accept: "application/json" } });
+        // Fetch all recent posts sorted by date; positiveScore filter was too strict
+        const res = await fetch(`${API_BASE}reddit?limit=${REDDIT_LIMIT}`, { headers: { Accept: "application/json" } });
         if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
         const list = await res.json();
         const arr = Array.isArray(list) ? list : (list.data || list.posts || list.results || []);
-        return arr.map(p => ({
-          redditId: p.redditId || p._id || p.id,
-          title: p.title, subreddit: p.subreddit, url: p.url,
-          created_utc: p.created_utc || p.createdAt || p.updatedAt,
-          num_comments: p.num_comments, score: p.score,
-          metadata: p.metadata, source: p.source,
-          isAboutLatestUpdate: p.isAboutLatestUpdate, isAboutCve: p.isAboutCve
-        }));
+        return arr.map(p => {
+          // Reddit API stores created_utc as Unix seconds; convert to ISO so Date() works correctly
+          const rawDate = p.created_utc || p.createdAt || p.updatedAt;
+          let created_utc = rawDate;
+          if (typeof rawDate === 'number' && rawDate < 1e10) {
+            created_utc = new Date(rawDate * 1000).toISOString();
+          } else if (typeof rawDate === 'string' && /^\d{9,10}$/.test(rawDate.trim())) {
+            created_utc = new Date(Number(rawDate) * 1000).toISOString();
+          }
+          return {
+            redditId: p.redditId || p._id || p.id,
+            title: p.title, subreddit: p.subreddit, url: p.url,
+            created_utc,
+            num_comments: p.num_comments, score: p.score,
+            metadata: p.metadata, source: p.source,
+            isAboutLatestUpdate: p.isAboutLatestUpdate, isAboutCve: p.isAboutCve
+          };
+        });
       }
     };
 
@@ -3469,7 +4385,10 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
       observer: null, loading: false,
       filters: { components: [], toggles: new Set() },
       expandedAll: false,
-      candidates: []
+      candidates: [],
+      redditReady: null,   // promise — set once, never re-fetched
+      nextCursor: null,    // server cursor for the next versions page
+      fetchingPage: false  // prevents concurrent server page fetches
     };
 
     /* ── Reddit indexing ──────────────────────────────────────── */
@@ -3490,15 +4409,44 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
         if (p.url) STATE.redditByUrl.set(String(p.url), p);
       }
       for (const arr of STATE.redditBySub.values())
-        arr.sort((a, b) => (+new Date(b.created_utc || 0)) - (+new Date(a.created_utc || 0)) || (b.score || 0) - (a.score || 0));
+        arr.sort((a, b) => redditTime(b) - redditTime(a) || (b.score || 0) - (a.score || 0));
+    }
+
+    function redditTime(p) {
+      const raw = p.created_utc || p.updatedAt || p.createdAt || 0;
+      if (typeof raw === 'number') return raw < 1e10 ? raw * 1000 : raw;
+      const t = +new Date(raw); return isFinite(t) ? t : 0;
+    }
+
+    // versionTimestamp is set to Date.now() on every bot upsert — use versionReleaseDate instead
+    function versionTime(v) {
+      const rd = String(v.versionReleaseDate || '');
+      if (/^\d{8}$/.test(rd)) {
+        return +new Date(rd.slice(0,4) + '-' + rd.slice(4,6) + '-' + rd.slice(6,8) + 'T12:00:00Z');
+      }
+      return 0;
+    }
+
+    // Returns all posts from subreddits that match the component name (exact or partial)
+    function postsForComponent(name) {
+      if (!name || name.length < 3) return [];
+      const seen = new Set();
+      const result = [];
+      for (const [sub, posts] of STATE.redditBySub) {
+        if (sub === name || (sub.length >= 3 && (sub.includes(name) || name.includes(sub)))) {
+          for (const p of posts) { if (!seen.has(p.redditId)) { seen.add(p.redditId); result.push(p); } }
+        }
+      }
+      result.sort((a, b) => redditTime(b) - redditTime(a) || (b.score || 0) - (a.score || 0));
+      return result;
     }
 
     function redditMatchesForVersionBase(v, limit = 6, onlyRisks = false) {
       const name = norm(canonComponentName(v).nameOut); if (!name) return [];
-      const arr = STATE.redditBySub.get(name) || [], out = [];
+      const arr = postsForComponent(name), out = [];
       for (const p of arr) {
         if (getPostSource(p) !== "reddit") continue;
-        if (+new Date(p.created_utc || 0) < SIX_MONTHS_AGO) continue;
+        if (redditTime(p) < SIX_MONTHS_AGO) continue;
         if (onlyRisks && !isRisk(p)) continue;
         out.push(p); if (out.length >= limit) break;
       }
@@ -3507,10 +4455,10 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
 
     function stackoverflowMatchesForVersionBase(v, limit = 6, onlyRisks = false) {
       const name = norm(canonComponentName(v).nameOut); if (!name) return [];
-      const arr = STATE.redditBySub.get(name) || [], out = [];
+      const arr = postsForComponent(name), out = [];
       for (const p of arr) {
         if (getPostSource(p) !== "stackoverflow") continue;
-        if (+new Date(p.created_utc || 0) < SIX_MONTHS_AGO) continue;
+        if (redditTime(p) < SIX_MONTHS_AGO) continue;
         if (onlyRisks && !isRisk(p)) continue;
         out.push(p); if (out.length >= limit) break;
       }
@@ -3526,15 +4474,15 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
         map.get(c.key).items.push(v);
       }
       const arr = Array.from(map.values());
-      arr.forEach(g => g.items.sort((a, b) => (+new Date(b.versionTimestampLastUpdate || b.versionTimestamp || 0)) - (+new Date(a.versionTimestampLastUpdate || a.versionTimestamp || 0))));
-      arr.sort((a, b) => (+new Date(b.items[0]?.versionTimestampLastUpdate || b.items[0]?.versionTimestamp || 0)) - (+new Date(a.items[0]?.versionTimestampLastUpdate || a.items[0]?.versionTimestamp || 0)));
+      arr.forEach(g => g.items.sort((a, b) => versionTime(b) - versionTime(a)));
+      arr.sort((a, b) => versionTime(b.items[0]) - versionTime(a.items[0]));
       return arr;
     }
 
     /* ── Aggregates ───────────────────────────────────────────── */
     function computeAggregates(list) {
       let major = 0, minor = 0, patch = 0, cve = 0; const uniqComps = new Set(), typeCounts = new Map();
-      const rIds = new Set(), rRiskIds = new Set(), rRiskLatIds = new Set(), rRiskCveIds = new Set(), soRiskIds = new Set();
+      const rIds = new Set(), rRiskIds = new Set(), rRiskLatIds = new Set(), rRiskCveIds = new Set(), soIds = new Set(), soRiskIds = new Set();
       let potentialCve = 0;
       for (const it of list) {
         const ch = norm(it.versionReleaseChannel);
@@ -3549,6 +4497,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
         const mltlSrc = it.mltl && Array.isArray(it.mltl.src) ? it.mltl.src : [];
         const potPosts = mltlSrc.map(u => STATE.redditByUrl.get(String(u))).filter(p => p?.isAboutLatestUpdate && p?.isAboutCve);
         if (potPosts.length) potentialCve++;
+        for (const p of stackoverflowMatchesForVersionBase(it, REDDIT_LIMIT, false)) if (getPostSource(p) === "stackoverflow") soIds.add(getPostId(p));
         for (const p of stackoverflowMatchesForVersionBase(it, REDDIT_LIMIT, true)) if (getPostSource(p) === "stackoverflow") soRiskIds.add(getPostId(p));
         uniqComps.add(canonComponentName(it).key);
         for (const t of (it.classification?.componentType || [])) {
@@ -3559,7 +4508,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
       return {
         major, minor, patch, cve, reddit: rIds.size, redditRisk: rRiskIds.size,
         redditRiskLatest: rRiskLatIds.size, redditRiskCve: rRiskCveIds.size,
-        soRisk: soRiskIds.size, potentialCve, uniq: uniqComps.size, typeCounts
+        so: soIds.size, soRisk: soRiskIds.size, potentialCve, uniq: uniqComps.size, typeCounts
       };
     }
 
@@ -3573,6 +4522,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
       EL["btn-reddit-risk"].textContent = a.redditRisk;
       EL["btn-reddit-risk-latest"].textContent = a.redditRiskLatest;
       EL["btn-reddit-risk-cve"].textContent = a.redditRiskCve;
+      EL["btn-so"].textContent = a.so;
       EL["btn-so-risk"].textContent = a.soRisk;
       EL["kpi-uniq"].textContent = a.uniq;
     }
@@ -3616,7 +4566,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
         major: channel === "major", minor: channel === "minor", patch: channel === "patch",
         cve: !!v.isCve, reddit: rc > 0,
         "reddit-risk": rRiskCount > 0, "reddit-risk-latest": rRiskLatestCount > 0,
-        "reddit-risk-cve": rRiskCveCount > 0, "so-risk": soRiskCount > 0,
+        "reddit-risk-cve": rRiskCveCount > 0, so: soCount > 0, "so-risk": soRiskCount > 0,
         "potential-cve": hasPotentialCve
       };
       for (const k of set) {
@@ -3631,8 +4581,8 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
       buildSuggestionPool();
       const comps = STATE.filters.components;
       const candidates = STATE.rawVersions.filter(v => {
-        const ts = +new Date(v.versionTimestampLastUpdate || v.versionTimestamp || 0);
-        if (!isFinite(ts) || ts < SIX_MONTHS_AGO) return false;
+        const ts = versionTime(v);
+        if (!ts || ts < SIX_MONTHS_AGO) return false;
         if (!comps.length) return true;
         const name = norm(v.versionProductName);
         const tags = (Array.isArray(v.versionSearchTags) ? v.versionSearchTags.join(",") : "").toLowerCase();
@@ -3700,22 +4650,29 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
         }
       }
 
-      const timeline = [];
-      for (const v of group.items) {
-        timeline.push({
-          t: +new Date(v.versionTimestampLastUpdate || v.versionTimestamp || 0),
-          kind: v.isCve ? "cve" : "update",
-          channel: (v.versionReleaseChannel || "other").toLowerCase(),
-          label: `${safe(v.versionProductName, "")} ${v.versionNumber || ""}`.trim(),
-          url: (v.versionUrl?.startsWith("http")) ? v.versionUrl : ((v.versionReleaseNotes?.startsWith("http")) ? v.versionReleaseNotes : "#"),
-          raw: v
-        });
-      }
-      for (const p of rUnion) {
+      const vEntries = group.items.map(v => ({
+        t: versionTime(v),
+        kind: v.isCve ? "cve" : "update",
+        channel: (v.versionReleaseChannel || "other").toLowerCase(),
+        label: `${safe(v.versionProductName, "")} ${v.versionNumber || ""}`.trim(),
+        url: (v.versionUrl && v.versionUrl.startsWith("http")) ? v.versionUrl : ((v.versionReleaseNotes && v.versionReleaseNotes.startsWith("http")) ? v.versionReleaseNotes : "#"),
+        raw: v
+      }));
+      const rEntries = rUnion.map(p => {
         const src = getPostSource(p);
-        timeline.push({ t: +new Date(p.created_utc || 0), kind: src === "stackoverflow" ? "stackoverflow" : "reddit", channel: null, label: p.title, url: p.url, raw: p });
+        const t = redditTime(p);
+        return { t, kind: src === "stackoverflow" ? "stackoverflow" : "reddit", channel: null, label: p.title, url: p.url, raw: p };
+      });
+      // Merge two already-sorted-desc arrays into one sorted timeline
+      vEntries.sort((a, b) => b.t - a.t);
+      rEntries.sort((a, b) => b.t - a.t);
+      const timeline = [];
+      let vi = 0, ri = 0;
+      while (vi < vEntries.length && ri < rEntries.length) {
+        timeline.push(vEntries[vi].t >= rEntries[ri].t ? vEntries[vi++] : rEntries[ri++]);
       }
-      timeline.sort((a, b) => b.t - a.t);
+      while (vi < vEntries.length) timeline.push(vEntries[vi++]);
+      while (ri < rEntries.length) timeline.push(rEntries[ri++]);
 
       const cveCount = timeline.filter(x => x.kind === "cve").length;
       const redditCount = timeline.filter(x => x.kind === "reddit").length;
@@ -3795,6 +4752,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
 
         if (it.kind === "reddit") {
           chipsEl.insertAdjacentHTML("beforeend", chip("💬 reddit", "reddit"));
+          if (it.raw?.subreddit) chipsEl.insertAdjacentHTML("beforeend", chip(`r/${it.raw.subreddit}`, "soft"));
           const scorePred = it.raw?.metadata?.predicted?.positiveScore;
           const scoreField = typeof it.raw?.score === "number" ? it.raw.score : null;
           const scoreVal = typeof scorePred === "number" ? scorePred : scoreField;
@@ -3874,19 +4832,82 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
     }
 
     /* ── Infinite scroll ──────────────────────────────────────── */
+
+    // Apply current component + toggle filters to a list of versions (used for incoming pages)
+    function filterVersions(vers) {
+      const comps = STATE.filters.components;
+      const candidates = vers.filter(v => {
+        const ts = versionTime(v);
+        if (!ts || ts < SIX_MONTHS_AGO) return false;
+        if (!comps.length) return true;
+        const name = norm(v.versionProductName);
+        const tags = (Array.isArray(v.versionSearchTags) ? v.versionSearchTags.join(",") : "").toLowerCase();
+        return comps.some(t => name.includes(t) || tags.includes(t));
+      });
+      if (!STATE.filters.toggles.size) return candidates;
+      return candidates.filter(v => {
+        const r  = redditMatchesForVersionBase(v, 6, false);
+        const rr = redditMatchesForVersionBase(v, 6, true);
+        const soAll  = stackoverflowMatchesForVersionBase(v, 6, false);
+        const soRisk = stackoverflowMatchesForVersionBase(v, 6, true);
+        const rLatest = rr.filter(p => p.isAboutLatestUpdate).length;
+        const rCve    = rr.filter(p => p.isAboutCve).length;
+        const potPosts = (v.mltl && Array.isArray(v.mltl.src) ? v.mltl.src : [])
+          .map(u => STATE.redditByUrl.get(String(u))).filter(p => p && p.isAboutLatestUpdate && p.isAboutCve);
+        return matchesToggles(v, r.length, rr.length, soAll.length, soRisk.length, rLatest, rCve, potPosts.length > 0);
+      });
+    }
+
     function appendNextGroups() {
-      if (STATE.loading) return;
-      if (STATE.groupIndex >= STATE.groupsFiltered.length) {
-        EL.sentinel.textContent = STATE.groupsFiltered.length ? "✅ End of results" : "🔍 No results";
+      if (STATE.loading || STATE.fetchingPage) return;
+
+      // Render next batch of already-loaded groups
+      if (STATE.groupIndex < STATE.groupsFiltered.length) {
+        STATE.loading = true;
+        const frag = document.createDocumentFragment();
+        const end = Math.min(STATE.groupIndex + GROUPS_BATCH, STATE.groupsFiltered.length);
+        for (let i = STATE.groupIndex; i < end; i++) frag.appendChild(renderComponentNode(STATE.groupsFiltered[i], i));
+        EL.feed.appendChild(frag);
+        STATE.groupIndex = end;
+        STATE.loading = false;
         return;
       }
-      STATE.loading = true;
-      const frag = document.createDocumentFragment();
-      const end = Math.min(STATE.groupIndex + GROUPS_BATCH, STATE.groupsFiltered.length);
-      for (let i = STATE.groupIndex; i < end; i++) frag.appendChild(renderComponentNode(STATE.groupsFiltered[i], i));
-      EL.feed.appendChild(frag);
-      STATE.groupIndex = end;
-      STATE.loading = false;
+
+      // All client groups rendered — fetch next server page if cursor exists
+      if (STATE.nextCursor) {
+        STATE.fetchingPage = true;
+        EL.sentinel.textContent = "Loading more…";
+        const q = (EL.components && EL.components.value || "").trim();
+        Api.versions(q, STATE.nextCursor).then(({ versions: newVers, nextCursor }) => {
+          STATE.nextCursor = nextCursor;
+          STATE.fetchingPage = false;
+          if (!newVers.length) { EL.sentinel.textContent = "✅ End of results"; return; }
+
+          STATE.rawVersions = STATE.rawVersions.concat(newVers);
+          const newFiltered = filterVersions(newVers);
+          const newGroups   = groupByComponentName(newFiltered);
+
+          // Merge: accumulate items into existing groups, collect truly new ones
+          const existingMap = new Map(STATE.groupsFiltered.map(g => [g.key, g]));
+          const brandNew = [];
+          newGroups.forEach(g => {
+            if (existingMap.has(g.key)) existingMap.get(g.key).items.push(...g.items);
+            else brandNew.push(g);
+          });
+          STATE.groupsFiltered = STATE.groupsFiltered.concat(brandNew);
+          EL["kpi-page"].textContent = STATE.groupsFiltered.length;
+
+          if (brandNew.length) appendNextGroups();
+          else if (!nextCursor) EL.sentinel.textContent = "✅ End of results";
+        }).catch(e => {
+          STATE.fetchingPage = false;
+          console.error("[FEED] page fetch:", e);
+          EL.sentinel.textContent = "Error loading more";
+        });
+        return;
+      }
+
+      EL.sentinel.textContent = STATE.groupsFiltered.length ? "✅ End of results" : "🔍 No results";
     }
 
     function setupObserver() {
@@ -3905,12 +4926,49 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
     });
 
     /* ── Boot ─────────────────────────────────────────────────── */
+    function refreshRenderedGroupsWithReddit() {
+      const rendered = Array.from(EL.feed.querySelectorAll(".feedGroup[data-component]"));
+      rendered.forEach(existingNode => {
+        const compName = existingNode.dataset.component;
+        const idx = STATE.groupsFiltered.findIndex(g => g.name === compName);
+        if (idx < 0) return;
+        const wasOpen = existingNode.open;
+        const scrollTop = existingNode.scrollTop;
+        const newNode = renderComponentNode(STATE.groupsFiltered[idx], idx);
+        newNode.open = wasOpen;
+        existingNode.replaceWith(newNode);
+        newNode.scrollTop = scrollTop;
+      });
+    }
+
+    function ensureRedditLoaded() {
+      if (!STATE.redditReady) {
+        STATE.redditReady = Api.reddit().catch(() => []).then(reddit => {
+          STATE.redditAll = reddit;
+          buildRedditIndex(reddit);
+          EL["kpi-reddit"].textContent = getSourceCounts().reddit;
+          // Recompute sidebar toggle counts now that reddit index is populated
+          const list = STATE.candidates.length ? STATE.candidates : STATE.rawVersions;
+          if (list.length) paintFixedCounts(computeAggregates(list));
+          // Re-render rendered feed cards so reddit posts and chips appear
+          refreshRenderedGroupsWithReddit();
+          if (G_ACTIVE) {
+            gBuildGraph(STATE.candidates.length ? STATE.candidates : STATE.rawVersions, STATE.redditAll);
+            gRender();
+          }
+        });
+      }
+      return STATE.redditReady;
+    }
+
     async function boot() {
       EL.status.textContent = "Loading…";
       EL.navLoader.classList.add("active");
       EL.feed.innerHTML = "";
       EL.emptyState.classList.remove("show");
       STATE.groupIndex = 0;
+      STATE.nextCursor = null;
+      STATE.rawVersions = [];
 
       try {
         const rawQ = new URL(location.href).searchParams.get("q") || "";
@@ -3918,12 +4976,11 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
         STATE.filters.components = tokens(rawQ);
         setLinksHref();
 
-        const [vers, reddit] = await Promise.all([Api.versions(rawQ), Api.reddit().catch(() => [])]);
-        STATE.redditAll = reddit;
-        buildRedditIndex(reddit);
-        EL["kpi-reddit"].textContent = getSourceCounts().reddit;
+        // First page only — renders immediately, more loaded lazily as user scrolls
+        const { versions: vers, nextCursor } = await Api.versions(rawQ);
+        STATE.nextCursor = nextCursor;
 
-        if (!(vers || []).length) {
+        if (!vers.length) {
           EL.status.textContent = "No versions found";
           EL.sentinel.textContent = "No results";
           EL.emptyState.classList.add("show");
@@ -3933,6 +4990,9 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
         vers.sort((a, b) => (+new Date(b.versionTimestampLastUpdate || b.versionTimestamp || 0)) - (+new Date(a.versionTimestampLastUpdate || a.versionTimestamp || 0)));
         STATE.rawVersions = vers;
         applyFilters();
+
+        // Reddit loads in background — never blocks feed
+        ensureRedditLoaded();
       } catch (e) {
         console.error(e);
         EL.feed.innerHTML = `<p class="meta" style="padding:14px;color:var(--cve)">⚠️ Error: ${e.message}</p>`;
@@ -3957,8 +5017,11 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
           dbSetCompsLabel(dbComps);
           dbLoadDashboard();
         }
-        const vers = await Api.versions(input);
-        if (!(vers || []).length) {
+        STATE.nextCursor = null;
+        STATE.rawVersions = [];
+        const { versions: vers, nextCursor: nc } = await Api.versions(input);
+        STATE.nextCursor = nc;
+        if (!vers.length) {
           EL.feed.innerHTML = ""; EL.sentinel.textContent = "No results";
           EL.emptyState.classList.add("show"); EL.status.textContent = "No versions";
           return;
@@ -4093,7 +5156,9 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
       if (view === "graph") {
         activateGraph();
         EL.navLoader.classList.add("active");
-        try { await gLoadSigma(); } finally { EL.navLoader.classList.remove("active"); }
+        try {
+          await Promise.all([gLoadSigma(), ensureRedditLoaded()]);
+        } finally { EL.navLoader.classList.remove("active"); }
         gBuildGraph(STATE.candidates.length ? STATE.candidates : STATE.rawVersions, STATE.redditAll);
         gRender();
       } else if (view === "arch") {
