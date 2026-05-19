@@ -1290,6 +1290,17 @@
           </div>
         </details>
 
+        <details class="sb-details" open>
+          <summary>Activity (7 days)</summary>
+          <div class="sidebar-section" style="padding-bottom:10px">
+            <div style="position:relative;height:90px"><canvas id="home-activity-chart"></canvas></div>
+            <div style="display:flex;gap:12px;justify-content:center;font-size:10px;color:var(--muted);margin-top:4px">
+              <span><span style="color:#6366f1;font-size:12px">●</span> Versions</span>
+              <span><span style="color:#22c55e;font-size:12px">●</span> Community</span>
+            </div>
+          </div>
+        </details>
+
       </div><!-- /#feedSidebarSections -->
 
       <!-- ── Graph controls (shown only in graph view) ── -->
@@ -2683,10 +2694,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               <h3>Live Collection Stats in home sidebar, mobile feed scroll, 7-day data window</h3>
               <ul>
                 <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Live Collection Stats panel added to the default feed sidebar</strong>: shows total versions, CVE advisories, release notes, and community post counts fetched from the API on page load.</li>
-                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Today count and yesterday delta</strong> displayed in brackets next to the Versions Total row: format is <code>54,210 [42 today, +12%]</code>. Fetched from <code>/api/v/aggregate/byDate</code> for today and yesterday.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Today count and yesterday delta in brackets</strong> for both Versions and Community totals: format is <code>54,210 [42 today, +12%]</code>. Delta % is green when higher than yesterday, red when lower. Fetched from <code>/api/v/aggregate/byDate</code> and <code>/api/aggregate/reddit/count</code>.</li>
                 <li><span class="cl-tag cl-tag-ux">ux</span> Home sidebar stats also pre-populate the Docs sidebar Live Collection Stats so values appear immediately when switching to the Docs view.</li>
                 <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Feed panel scrollable on mobile</strong>: <code>max-height: 70vh; overflow-y: auto</code> on <code>#feedPanel</code> at <code>max-width: 640px</code> so the version feed scrolls independently rather than expanding the full page height.</li>
                 <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Data window changed from 6 months to 7 days</strong>: <code>Api.versions</code> sends <code>start</code> as 7 days ago; client-side version and community post filters apply the same 7-day cutoff. Feed header updated to reflect the new window.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Feed sort and Range KPI now use <code>versionReleaseDate</code></strong> instead of <code>versionTimestampLastUpdate</code>. Since bots set <code>versionTimestamp</code> to <code>Date.now()</code> on every upsert, the old sort collapsed all items to today. Range now reflects actual release date spread across the 7-day window.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Removed <code>start</code> param from <code>Api.versions()</code></strong>: previously sending <code>start = 7 days ago</code> restricted the server to only documents with <code>versionReleaseDate</code> in the last 7 days. Server now uses its 2-year rolling window and returns the 150 most recently released versions; the 7-day client filter then trims the result. <code>end=today</code> is still sent to suppress future-dated documents.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <code>versionTime()</code> now strips dashes before testing the 8-digit pattern, accepting both <code>YYYYMMDD</code> and <code>YYYY-MM-DD</code> release date formats.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Community bracket now always shown</strong> when API data is available, even when today count is zero. Previously the bracket was suppressed if <code>rTodayN === 0</code>, hiding the delta from endpoints that count by <code>created_utc</code> rather than ingestion date.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Range KPI updates as infinite scroll loads new pages</strong>: extracted range calculation into <code>updateRangeKpi(items)</code> helper, called from both <code>applyFilters()</code> and the scroll page-fetch callback after new groups are merged into <code>STATE.groupsFiltered</code>.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Full 7-day window now loads automatically</strong>: <code>appendNextGroups</code> always continues via <code>requestAnimationFrame</code> after each batch, so once all local groups are rendered it falls through to the cursor-fetch branch and loads subsequent server pages without requiring a scroll.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Relative time labels for recent feed items</strong>: items from the last 2 hours now display "X min ago" (under 60 min), "1 hr ago" or "2 hr ago" (under 2 hr) instead of "Today". Older items keep the existing "Today" / "Yesterday" / date labels. <code>isNew</code> is now based on a midnight timestamp comparison rather than string matching.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Activity chart added to home sidebar</strong>: compact 7-day per-day line chart showing versions and community post counts computed from loaded state. Renders using Chart.js, loaded lazily on first use.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Community bracket today count now accurate</strong>: bracket is computed from <code>STATE.redditAll</code> using <code>redditTime()</code> after the post index loads, replacing the unreliable <code>/api/aggregate/reddit/count</code> per-day endpoint which counted by <code>created_utc</code> rather than ingestion date.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <strong>CVE feed items now open NIST NVD</strong>: the open link on CVE entries resolves to <code>versionUrl</code> (the NVD advisory URL stored on the document) instead of the internal API endpoint. Falls back to the API URL when <code>versionUrl</code> is absent.</li>
               </ul>
             </div>
           </div>
@@ -3070,7 +3091,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const today = new Date(); today.setHours(0, 0, 0, 0);
         const yest = new Date(today); yest.setDate(today.getDate() - 1);
         const dStart = new Date(dt); dStart.setHours(0, 0, 0, 0);
-        if (dStart.getTime() === today.getTime()) return "Today";
+        if (dStart.getTime() === today.getTime()) {
+          const diffMin = Math.floor((Date.now() - ms) / 60000);
+          if (diffMin < 1)  return "Just now";
+          if (diffMin < 60) return `${diffMin} min ago`;
+          const diffHr = Math.floor(diffMin / 60);
+          if (diffHr <= 2)  return `${diffHr} hr ago`;
+          return "Today";
+        }
         if (dStart.getTime() === yest.getTime()) return "Yesterday";
         return dt.toLocaleDateString(undefined, { month: "short", day: "numeric" });
       } catch { return ""; }
@@ -4401,9 +4429,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const params = new URLSearchParams({ limit: String(PAGE_LIMIT) });
         if (qCsv) params.set("q", encodeCsvKeepCommas(qCsv));
         if (cursor) params.set("cursor", cursor);
-        // Push 7-day window to server; cap end at today so future docs are never fetched
-        const sevenDaysAgo = new Date(SEVEN_DAYS_AGO);
-        params.set("start", sevenDaysAgo.toISOString().slice(0,10).replace(/-/g,''));
+        // No start — server uses its 2-year rolling window; client filters to 7 days.
+        // Cap end at today so future-dated docs are never fetched.
         const today = new Date(); today.setHours(23,59,59,999);
         params.set("end", today.toISOString().slice(0,10).replace(/-/g,''));
         const url = `${API_BASE}v/search?${params}`;
@@ -4444,6 +4471,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const display = titleCase((v && v.versionProductName) || "");
       return { key: normKey(display), nameOut: display };
     };
+
+    let _homeRTotalNum = null;   // total reddit/community count from /api/reddit/count
+    let _activityChart = null;  // Chart.js instance for sidebar activity chart
+    let _chartJsLoading = false; // prevents duplicate CDN injections
 
     /* ── State ────────────────────────────────────────────────── */
     const STATE = {
@@ -4488,7 +4519,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     // versionTimestamp is set to Date.now() on every bot upsert — use versionReleaseDate instead
     function versionTime(v) {
-      const rd = String(v.versionReleaseDate || '');
+      const rd = String(v.versionReleaseDate || '').trim().replace(/-/g, '');
       if (/^\d{8}$/.test(rd)) {
         return +new Date(rd.slice(0,4) + '-' + rd.slice(4,6) + '-' + rd.slice(6,8) + 'T12:00:00Z');
       }
@@ -4644,6 +4675,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       return true;
     }
 
+    /* ── Range KPI helper ────────────────────────────────────── */
+    function updateRangeKpi(items) {
+      if (!items || !items.length) { EL["kpi-range"].innerHTML = `📅 Range: <em>—</em>`; return; }
+      const fmt = d => d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+      EL["kpi-range"].innerHTML = `📅 Range: <em>${fmt(new Date(SEVEN_DAYS_AGO))} – ${fmt(new Date())}</em>`;
+    }
+
     /* ── Apply filters ────────────────────────────────────────── */
     function applyFilters() {
       buildSuggestionPool();
@@ -4676,14 +4714,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
       EL["kpi-reddit"].textContent = getSourceCounts().reddit;
 
-      if (filtered.length) {
-        const getMs = v => +new Date(v.versionTimestampLastUpdate || v.versionTimestamp || 0);
-        const min = new Date(Math.min(...filtered.map(getMs)));
-        const max = new Date(Math.max(...filtered.map(getMs)));
-        EL["kpi-range"].innerHTML = `📅 Range: <em>${min.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })} – ${max.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</em>`;
-      } else {
-        EL["kpi-range"].innerHTML = `📅 Range: <em>—</em>`;
-      }
+      updateRangeKpi(filtered);
 
       STATE.candidates = candidates;
       STATE.groupsFiltered = groupByComponentName(filtered);
@@ -4775,7 +4806,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       for (const it of timeline) {
         const li = document.createElement("div");
         const dayLabel = dayLabelFromMillis(it.t);
-        const isNew = dayLabel === "Today";
+        const _todayMidnight = new Date(); _todayMidnight.setHours(0, 0, 0, 0);
+        const isNew = it.t >= _todayMidnight.getTime();
 
         let liClass = "li";
         if (it.kind === "cve") liClass += " kind-cve";
@@ -4842,7 +4874,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           if (isRisk(it.raw)) chipsEl.insertAdjacentHTML("beforeend", chip(scoreVal != null ? `⚠️ RISK ${Number(scoreVal).toFixed(2)}` : "⚠️ RISK", "warn"));
         } else if (it.kind === "cve") {
           chipsEl.insertAdjacentHTML("beforeend", chip("🔴 CVE", "bad"));
-          if (it.raw?._id) chipsEl.insertAdjacentHTML("beforeend", `<span class="chip link">ID <a href="https://releasetrain.io/api/v/${it.raw._id}" target="_blank" rel="noopener">open ↗</a></span>`);
+          const cveHref = (it.url && it.url.startsWith("http")) ? it.url : (it.raw?._id ? `https://releasetrain.io/api/v/${it.raw._id}` : null);
+          if (cveHref) chipsEl.insertAdjacentHTML("beforeend", `<span class="chip link"><a href="${cveHref}" target="_blank" rel="noopener">open ↗</a></span>`);
         } else {
           const ch = it.channel || "other";
           const chLabel = ch === "major" ? "🔖 major" : ch === "patch" ? "🩹 patch" : ch === "minor" ? "🔹 minor" : ch;
@@ -4858,7 +4891,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             .forEach(t => chipsEl.insertAdjacentHTML("beforeend", chip(String(t).toLowerCase(), "bad")));
           (r.classification?.breakingType || []).filter(x => x && x !== "UNKNOWN").slice(0, 1)
             .forEach(t => chipsEl.insertAdjacentHTML("beforeend", chip(String(t).toLowerCase(), "warn")));
-          if (r._id) chipsEl.insertAdjacentHTML("beforeend", `<span class="chip link"><a href="https://releasetrain.io/api/v/${r._id}" target="_blank" rel="noopener">open ↗</a></span>`);
+          if (r._id && it.kind !== "cve") chipsEl.insertAdjacentHTML("beforeend", `<span class="chip link"><a href="https://releasetrain.io/api/v/${r._id}" target="_blank" rel="noopener">open ↗</a></span>`);
         }
 
         body.appendChild(chipsEl);
@@ -4940,6 +4973,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         EL.feed.appendChild(frag);
         STATE.groupIndex = end;
         STATE.loading = false;
+        // Always continue via rAF: next local batch OR (when groupIndex reaches
+        // the end) fall through to the cursor-fetch branch so older server pages
+        // load automatically without requiring a user scroll.
+        requestAnimationFrame(appendNextGroups);
         return;
       }
 
@@ -4966,6 +5003,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           });
           STATE.groupsFiltered = STATE.groupsFiltered.concat(brandNew);
           EL["kpi-page"].textContent = STATE.groupsFiltered.length;
+          updateRangeKpi(STATE.groupsFiltered.flatMap(g => g.items));
 
           if (brandNew.length) appendNextGroups();
           else if (!nextCursor) EL.sentinel.textContent = "✅ End of results";
@@ -5022,6 +5060,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           if (list.length) paintFixedCounts(computeAggregates(list));
           // Re-render rendered feed cards so reddit posts and chips appear
           refreshRenderedGroupsWithReddit();
+          updateCommunityBracket();
+          updateActivityChart();
           if (G_ACTIVE) {
             gBuildGraph(STATE.candidates.length ? STATE.candidates : STATE.rawVersions, STATE.redditAll);
             gRender();
@@ -5057,7 +5097,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           return;
         }
 
-        vers.sort((a, b) => (+new Date(b.versionTimestampLastUpdate || b.versionTimestamp || 0)) - (+new Date(a.versionTimestampLastUpdate || a.versionTimestamp || 0)));
+        vers.sort((a, b) => (versionTime(b) || +new Date(b.versionTimestampLastUpdate || b.versionTimestamp || 0)) - (versionTime(a) || +new Date(a.versionTimestampLastUpdate || a.versionTimestamp || 0)));
         STATE.rawVersions = vers;
         applyFilters();
 
@@ -5096,7 +5136,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           EL.emptyState.classList.add("show"); EL.status.textContent = "No versions";
           return;
         }
-        vers.sort((a, b) => (+new Date(b.versionTimestampLastUpdate || b.versionTimestamp || 0)) - (+new Date(a.versionTimestampLastUpdate || a.versionTimestamp || 0)));
+        vers.sort((a, b) => (versionTime(b) || +new Date(b.versionTimestampLastUpdate || b.versionTimestamp || 0)) - (versionTime(a) || +new Date(a.versionTimestampLastUpdate || a.versionTimestamp || 0)));
         STATE.rawVersions = vers;
         applyFilters();
       } catch (e) { console.error(e); EL.status.textContent = "Filter failed"; }
@@ -5220,16 +5260,101 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     EL.components.addEventListener("blur", () => setTimeout(hideSuggestions, 150));
 
+    /* ── Community bracket (uses loaded reddit data, accurate count) ── */
+    function updateCommunityBracket() {
+      if (_homeRTotalNum == null) return;
+      const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+      const yestStart = new Date(todayStart); yestStart.setDate(yestStart.getDate() - 1);
+      const todayMs = todayStart.getTime(), yestMs = yestStart.getTime();
+      let todayN = 0, yestN = 0;
+      for (const p of STATE.redditAll) {
+        const t = redditTime(p);
+        if (t >= todayMs) todayN++;
+        else if (t >= yestMs) yestN++;
+      }
+      const fmtN = n => n.toLocaleString();
+      const pct = yestN ? Math.round((todayN - yestN) / yestN * 100) : null;
+      const deltaHtml = pct != null
+        ? `, <span style="color:${pct > 0 ? '#16a34a' : pct < 0 ? '#dc2626' : '#6b7280'};font-weight:700">${pct >= 0 ? '+' : ''}${pct}%</span>`
+        : '';
+      const el = document.getElementById('home-r-total');
+      if (el) el.innerHTML = fmtN(_homeRTotalNum) + ` [${fmtN(todayN)} today${deltaHtml}]`;
+    }
+
+    /* ── Sidebar activity chart ────────────────────────────────── */
+    function updateActivityChart() {
+      const canvas = document.getElementById('home-activity-chart');
+      if (!canvas) return;
+      const DAY_MS = 86400000;
+      const todayMidnight = new Date(); todayMidnight.setHours(0, 0, 0, 0);
+      const buckets = Array.from({ length: 7 }, (_, i) => {
+        const ms = todayMidnight.getTime() - (6 - i) * DAY_MS;
+        const d = new Date(ms);
+        const label = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        return { ms, label, v: 0, r: 0 };
+      });
+      const endMs = buckets[6].ms + DAY_MS;
+      for (const v of STATE.rawVersions) {
+        const t = versionTime(v); if (!t) continue;
+        const i = Math.floor((t - buckets[0].ms) / DAY_MS);
+        if (i >= 0 && i < 7) buckets[i].v++;
+      }
+      for (const p of STATE.redditAll) {
+        const t = redditTime(p); if (!t) continue;
+        const i = Math.floor((t - buckets[0].ms) / DAY_MS);
+        if (i >= 0 && i < 7) buckets[i].r++;
+      }
+      const labels = buckets.map(b => b.label);
+      const vData  = buckets.map(b => b.v);
+      const rData  = buckets.map(b => b.r);
+      const doRender = () => {
+        try {
+          if (_activityChart) { try { _activityChart.destroy(); } catch (_) {} _activityChart = null; }
+          _activityChart = new Chart(canvas.getContext('2d'), {
+            type: 'line',
+            data: { labels, datasets: [
+              { label: 'Versions',  data: vData, borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.10)', tension: 0.3, pointRadius: 2, borderWidth: 1.5, fill: true },
+              { label: 'Community', data: rData, borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.07)',  tension: 0.3, pointRadius: 2, borderWidth: 1.5, fill: true },
+            ]},
+            options: {
+              responsive: true, maintainAspectRatio: false, animation: false,
+              plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false, bodyFont: { size: 10 }, titleFont: { size: 10 } } },
+              scales: {
+                x: { grid: { display: false }, ticks: { font: { size: 9 }, color: '#9ca3af', maxRotation: 0 } },
+                y: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { font: { size: 9 }, color: '#9ca3af', maxTicksLimit: 3 }, beginAtZero: true }
+              }
+            }
+          });
+        } catch (e) { console.warn('[activity-chart]', e); }
+      };
+      if (typeof Chart !== 'undefined') { doRender(); }
+      else if (!_chartJsLoading) {
+        _chartJsLoading = true;
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+        s.onload = () => { _chartJsLoading = false; doRender(); };
+        document.head.appendChild(s);
+      }
+    }
+
     // Fetch live collection stats for home sidebar on page load
     (async function loadHomeStats() {
       const fmtDate = d => d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
       const today = new Date(), yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
       const todayStr = fmtDate(today), yestStr = fmtDate(yesterday);
       const fmt = n => typeof n === 'number' ? n.toLocaleString() : '—';
-      const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+      const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+      const setHtml = (id, val) => { const el = document.getElementById(id); if (el) el.innerHTML = val; };
       const fmtSize = bytes => { const mb = bytes / (1024*1024); return mb < 1 ? (bytes/1024).toFixed(0)+' KB' : mb.toFixed(1)+' MB'; };
+      const colorDelta = (todayN, yestN) => {
+        if (!yestN || !todayN) return '';
+        const pct = Math.round((todayN - yestN) / yestN * 100);
+        const sign = pct >= 0 ? '+' : '';
+        const color = pct > 0 ? '#16a34a' : pct < 0 ? '#dc2626' : '#6b7280';
+        return `, <span style="color:${color};font-weight:700">${sign}${pct}%</span>`;
+      };
       try {
-        const [vData, rData, todayData, yestData] = await Promise.all([
+        const [vData, rData, vTodayData, vYestData] = await Promise.all([
           fetch('https://releasetrain.io/api/v/count').then(r => r.json()).catch(() => null),
           fetch('https://releasetrain.io/api/reddit/count').then(r => r.json()).catch(() => null),
           fetch(`https://releasetrain.io/api/v/aggregate/byDate?date=${todayStr}`).then(r => r.json()).catch(() => null),
@@ -5237,34 +5362,34 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         ]);
         if (vData) {
           const vTotal = vData.totalVersions, vCve = vData.cveCount ?? 0, vNon = vData.nonCveCount ?? (vTotal - vCve);
-          const todayCount = todayData?.count ?? 0;
-          const yestCount = yestData?.count ?? 0;
-          const pct = yestCount > 0 ? Math.round((todayCount - yestCount) / yestCount * 100) : null;
-          const deltaStr = pct !== null ? `${pct >= 0 ? '+' : ''}${pct}%` : '';
-          const bracket = todayCount > 0 ? ` [${fmt(todayCount)} today${deltaStr ? ', ' + deltaStr : ''}]` : '';
-          set('home-v-total', fmt(vTotal) + bracket);
-          set('home-v-cve', fmt(vCve));
-          set('home-v-noncve', fmt(vNon));
-          set('dsb-v-total', fmt(vTotal));
-          set('dsb-v-cve', fmt(vCve));
-          set('dsb-v-noncve', fmt(vNon));
-          set('dsb-v-size', fmtSize(vTotal * 800) + ' / 5 MB');
+          const vTodayN = vTodayData?.count ?? 0, vYestN = vYestData?.count ?? 0;
+          const vBracket = vTodayN > 0 ? ` [${fmt(vTodayN)} today${colorDelta(vTodayN, vYestN)}]` : '';
+          setHtml('home-v-total', fmt(vTotal) + vBracket);
+          setText('home-v-cve', fmt(vCve));
+          setText('home-v-noncve', fmt(vNon));
+          setText('dsb-v-total', fmt(vTotal));
+          setText('dsb-v-cve', fmt(vCve));
+          setText('dsb-v-noncve', fmt(vNon));
+          setText('dsb-v-size', fmtSize(vTotal * 800) + ' / 5 MB');
         }
         if (rData) {
-          const rTotal = rData.totalRedditPosts, rReddit = rData.redditCount ?? 0, rSO = rData.stackoverflowCount ?? 0;
-          set('home-r-total', fmt(rTotal));
-          set('home-r-reddit', fmt(rReddit));
-          set('home-r-so', fmt(rSO));
-          set('dsb-r-total', fmt(rTotal));
-          set('dsb-r-reddit', fmt(rReddit));
-          set('dsb-r-so', fmt(rSO));
-          set('dsb-r-size', fmtSize(rTotal * 2000) + ' / 5 MB');
+          _homeRTotalNum = rData.totalRedditPosts;
+          const rReddit = rData.redditCount ?? 0, rSO = rData.stackoverflowCount ?? 0;
+          setHtml('home-r-total', fmt(_homeRTotalNum));
+          setText('home-r-reddit', fmt(rReddit));
+          setText('home-r-so', fmt(rSO));
+          setText('dsb-r-total', fmt(_homeRTotalNum));
+          setText('dsb-r-reddit', fmt(rReddit));
+          setText('dsb-r-so', fmt(rSO));
+          setText('dsb-r-size', fmtSize(_homeRTotalNum * 2000) + ' / 5 MB');
+          updateCommunityBracket();
         }
       } catch (_) { /* stats are non-critical */ }
     })();
 
     setupObserver();
     boot().then(async () => {
+      updateActivityChart();
       const view = new URL(location.href).searchParams.get("view");
       if (view === "graph") {
         activateGraph();
