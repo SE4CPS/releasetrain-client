@@ -1294,8 +1294,9 @@
           <summary>Activity (7 days)</summary>
           <div class="sidebar-section" style="padding-bottom:10px">
             <div style="position:relative;height:90px"><canvas id="home-activity-chart"></canvas></div>
-            <div style="display:flex;gap:12px;justify-content:center;font-size:10px;color:var(--muted);margin-top:4px">
+            <div style="display:flex;gap:10px;justify-content:center;font-size:10px;color:var(--muted);margin-top:4px">
               <span><span style="color:#6366f1;font-size:12px">●</span> Versions</span>
+              <span><span style="color:#ef4444;font-size:12px">●</span> CVE</span>
               <span><span style="color:#22c55e;font-size:12px">●</span> Community</span>
             </div>
           </div>
@@ -2708,6 +2709,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                 <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Activity chart added to home sidebar</strong>: compact 7-day per-day line chart showing versions and community post counts computed from loaded state. Renders using Chart.js, loaded lazily on first use.</li>
                 <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Community bracket today count now accurate</strong>: bracket is computed from <code>STATE.redditAll</code> using <code>redditTime()</code> after the post index loads, replacing the unreliable <code>/api/aggregate/reddit/count</code> per-day endpoint which counted by <code>created_utc</code> rather than ingestion date.</li>
                 <li><span class="cl-tag cl-tag-fix">fix</span> <strong>CVE feed items now open NIST NVD</strong>: the open link on CVE entries resolves to <code>versionUrl</code> (the NVD advisory URL stored on the document) instead of the internal API endpoint. Falls back to the API URL when <code>versionUrl</code> is absent.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Activity chart data sourced from range aggregate endpoints</strong>: <code>loadHomeStats</code> now calls <code>/api/aggregate/v/versionCountByDay</code> and <code>/api/aggregate/reddit/countByDay</code> with a single 7-day window each (2 requests total), replacing 14 individual per-day calls. Results are mapped from sparse <code>{ _id, count }</code> arrays to the fixed 7-day label sequence before passing to <code>updateActivityChart</code>.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Community line in activity chart now renders correctly</strong>: <code>/api/aggregate/reddit/countByDay</code> was filtering <code>created_utc</code> with YYYYMMDD strings, which matched nothing because the field stores Unix epoch seconds (int/double/string) or ISO date strings. Endpoint rewritten to normalize <code>created_utc</code> to a UTC Date via a <code>$switch</code> pipeline stage, then filter and group on the normalized value. Client also patches the community dataset from <code>STATE.redditAll</code> after reddit loads, as a fallback for the current deployment.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>CVE line added to activity chart</strong>: chart now shows three lines: Versions (indigo), CVE (red), Community (green). CVE per-day counts sourced from new <code>/api/aggregate/v/cveCountByDay</code> endpoint, which filters <code>isCve: true</code> and groups by <code>versionReleaseDate</code>. Falls back to counting <code>v.isCve</code> from <code>STATE.rawVersions</code> when API data is unavailable.</li>
               </ul>
             </div>
           </div>
@@ -4473,7 +4477,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     };
 
     let _homeRTotalNum = null;   // total reddit/community count from /api/reddit/count
-    let _activityChart = null;  // Chart.js instance for sidebar activity chart
+    let _rTodayApi = null, _rYestApi = null; // per-day community counts from aggregate API
+    let _activityChart = null;   // Chart.js instance for sidebar activity chart
     let _chartJsLoading = false; // prevents duplicate CDN injections
 
     /* ── State ────────────────────────────────────────────────── */
@@ -5061,7 +5066,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           // Re-render rendered feed cards so reddit posts and chips appear
           refreshRenderedGroupsWithReddit();
           updateCommunityBracket();
-          updateActivityChart();
           if (G_ACTIVE) {
             gBuildGraph(STATE.candidates.length ? STATE.candidates : STATE.rawVersions, STATE.redditAll);
             gRender();
@@ -5260,17 +5264,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     EL.components.addEventListener("blur", () => setTimeout(hideSuggestions, 150));
 
-    /* ── Community bracket (uses loaded reddit data, accurate count) ── */
+    /* ── Community bracket ── uses aggregate API counts when available ── */
     function updateCommunityBracket() {
       if (_homeRTotalNum == null) return;
-      const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
-      const yestStart = new Date(todayStart); yestStart.setDate(yestStart.getDate() - 1);
-      const todayMs = todayStart.getTime(), yestMs = yestStart.getTime();
-      let todayN = 0, yestN = 0;
-      for (const p of STATE.redditAll) {
-        const t = redditTime(p);
-        if (t >= todayMs) todayN++;
-        else if (t >= yestMs) yestN++;
+      let todayN, yestN;
+      if (_rTodayApi != null) {
+        todayN = _rTodayApi; yestN = _rYestApi ?? 0;
+      } else {
+        const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+        const yestStart = new Date(todayStart); yestStart.setDate(yestStart.getDate() - 1);
+        const todayMs = todayStart.getTime(), yestMs = yestStart.getTime();
+        todayN = 0; yestN = 0;
+        for (const p of STATE.redditAll) {
+          const t = redditTime(p);
+          if (t >= todayMs) todayN++;
+          else if (t >= yestMs) yestN++;
+        }
       }
       const fmtN = n => n.toLocaleString();
       const pct = yestN ? Math.round((todayN - yestN) / yestN * 100) : null;
@@ -5281,40 +5290,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (el) el.innerHTML = fmtN(_homeRTotalNum) + ` [${fmtN(todayN)} today${deltaHtml}]`;
     }
 
-    /* ── Sidebar activity chart ────────────────────────────────── */
-    function updateActivityChart() {
+    /* ── Sidebar activity chart ── only loadHomeStats calls this ── */
+    function updateActivityChart(labels, vData, cveData, rData) {
       const canvas = document.getElementById('home-activity-chart');
       if (!canvas) return;
-      const DAY_MS = 86400000;
-      const todayMidnight = new Date(); todayMidnight.setHours(0, 0, 0, 0);
-      const buckets = Array.from({ length: 7 }, (_, i) => {
-        const ms = todayMidnight.getTime() - (6 - i) * DAY_MS;
-        const d = new Date(ms);
-        const label = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-        return { ms, label, v: 0, r: 0 };
-      });
-      const endMs = buckets[6].ms + DAY_MS;
-      for (const v of STATE.rawVersions) {
-        const t = versionTime(v); if (!t) continue;
-        const i = Math.floor((t - buckets[0].ms) / DAY_MS);
-        if (i >= 0 && i < 7) buckets[i].v++;
-      }
-      for (const p of STATE.redditAll) {
-        const t = redditTime(p); if (!t) continue;
-        const i = Math.floor((t - buckets[0].ms) / DAY_MS);
-        if (i >= 0 && i < 7) buckets[i].r++;
-      }
-      const labels = buckets.map(b => b.label);
-      const vData  = buckets.map(b => b.v);
-      const rData  = buckets.map(b => b.r);
       const doRender = () => {
         try {
           if (_activityChart) { try { _activityChart.destroy(); } catch (_) {} _activityChart = null; }
           _activityChart = new Chart(canvas.getContext('2d'), {
             type: 'line',
             data: { labels, datasets: [
-              { label: 'Versions',  data: vData, borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.10)', tension: 0.3, pointRadius: 2, borderWidth: 1.5, fill: true },
-              { label: 'Community', data: rData, borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.07)',  tension: 0.3, pointRadius: 2, borderWidth: 1.5, fill: true },
+              { label: 'Versions',  data: vData,   borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.10)', tension: 0.3, pointRadius: 2, borderWidth: 1.5, fill: true },
+              { label: 'CVE',       data: cveData, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.07)',   tension: 0.3, pointRadius: 2, borderWidth: 1.5, fill: false },
+              { label: 'Community', data: rData,   borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.07)',  tension: 0.3, pointRadius: 2, borderWidth: 1.5, fill: true },
             ]},
             options: {
               responsive: true, maintainAspectRatio: false, animation: false,
@@ -5340,8 +5328,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // Fetch live collection stats for home sidebar on page load
     (async function loadHomeStats() {
       const fmtDate = d => d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
-      const today = new Date(), yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
-      const todayStr = fmtDate(today), yestStr = fmtDate(yesterday);
+      const today = new Date();
       const fmt = n => typeof n === 'number' ? n.toLocaleString() : '—';
       const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
       const setHtml = (id, val) => { const el = document.getElementById(id); if (el) el.innerHTML = val; };
@@ -5353,16 +5340,31 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const color = pct > 0 ? '#16a34a' : pct < 0 ? '#dc2626' : '#6b7280';
         return `, <span style="color:${color};font-weight:700">${sign}${pct}%</span>`;
       };
+      // Build 7-day date array (oldest → today)
+      const days = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(today); d.setDate(today.getDate() - (6 - i));
+        return { str: fmtDate(d), label: d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) };
+      });
       try {
-        const [vData, rData, vTodayData, vYestData] = await Promise.all([
+        const startStr = days[0].str, endStr = days[6].str;
+        const [vData, rData, vByDay, cveByDay, rByDay] = await Promise.all([
           fetch('https://releasetrain.io/api/v/count').then(r => r.json()).catch(() => null),
           fetch('https://releasetrain.io/api/reddit/count').then(r => r.json()).catch(() => null),
-          fetch(`https://releasetrain.io/api/v/aggregate/byDate?date=${todayStr}`).then(r => r.json()).catch(() => null),
-          fetch(`https://releasetrain.io/api/v/aggregate/byDate?date=${yestStr}`).then(r => r.json()).catch(() => null),
+          fetch(`https://releasetrain.io/api/aggregate/v/versionCountByDay?start=${startStr}&end=${endStr}`).then(r => r.json()).catch(() => null),
+          fetch(`https://releasetrain.io/api/aggregate/v/cveCountByDay?start=${startStr}&end=${endStr}`).then(r => r.json()).catch(() => null),
+          fetch(`https://releasetrain.io/api/aggregate/reddit/countByDay?start=${startStr}&end=${endStr}`).then(r => r.json()).catch(() => null),
         ]);
+        // Map sparse per-day results (only dates with data) to the full 7-day array
+        const vMap   = Object.fromEntries((vByDay?.days   ?? []).map(d => [d._id, d.count]));
+        const cveMap = Object.fromEntries((cveByDay?.days ?? []).map(d => [d._id, d.count]));
+        const rMap   = Object.fromEntries((rByDay?.days   ?? []).map(d => [d._id, d.count]));
+        const vDaily   = days.map(d => vMap[d.str]   ?? 0);
+        const cveDaily = days.map(d => cveMap[d.str] ?? 0);
+        const rDaily   = days.map(d => rMap[d.str]   ?? 0);
+        const vTodayN = vDaily[6], vYestN = vDaily[5];
+        _rTodayApi = rDaily[6]; _rYestApi = rDaily[5];
         if (vData) {
           const vTotal = vData.totalVersions, vCve = vData.cveCount ?? 0, vNon = vData.nonCveCount ?? (vTotal - vCve);
-          const vTodayN = vTodayData?.count ?? 0, vYestN = vYestData?.count ?? 0;
           const vBracket = vTodayN > 0 ? ` [${fmt(vTodayN)} today${colorDelta(vTodayN, vYestN)}]` : '';
           setHtml('home-v-total', fmt(vTotal) + vBracket);
           setText('home-v-cve', fmt(vCve));
@@ -5384,12 +5386,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           setText('dsb-r-size', fmtSize(_homeRTotalNum * 2000) + ' / 5 MB');
           updateCommunityBracket();
         }
+        updateActivityChart(days.map(d => d.label), vDaily, cveDaily, rDaily);
       } catch (_) { /* stats are non-critical */ }
     })();
 
     setupObserver();
     boot().then(async () => {
-      updateActivityChart();
       const view = new URL(location.href).searchParams.get("view");
       if (view === "graph") {
         activateGraph();
