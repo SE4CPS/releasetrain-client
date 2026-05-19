@@ -148,6 +148,7 @@
     }
     @media (max-width: 900px) { .layout { grid-template-columns: 230px 1fr; } }
     @media (max-width: 640px) {
+      html, body { overflow: auto; height: auto; }
       .layout { grid-template-columns: 1fr; padding: calc(var(--topbar-h) + 12px) 12px 32px; }
     }
 
@@ -2670,6 +2671,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                 <li><span class="cl-tag cl-tag-ux">ux</span> Reddit items in the feed card show an orange left border and an <code>r/subreddit</code> chip; Stack Overflow items show amber.</li>
                 <li><span class="cl-tag cl-tag-docs">docs</span> Docs view rewritten: marketing language removed, section headings use <code>:</code> instead of <code>·</code>, AI chat section now describes the RAG pipeline technically (FAISS index, cosine similarity, cross-encoder reranking, LLM prompt injection).</li>
                 <li><span class="cl-tag cl-tag-fix">fix</span> Default feed no longer shows future-dated documents: server request now sends <code>end=today</code> and the client-side filter rejects any version with <code>versionReleaseDate &gt; now</code>.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Mobile scroll broken: <code>html, body { overflow: hidden }</code> was trapping all content on narrow viewports where the feed panel loses its own scroll container. Override to <code>overflow: auto; height: auto</code> at <code>max-width: 640px</code>.</li>
               </ul>
             </div>
           </div>
