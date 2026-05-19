@@ -340,7 +340,7 @@
       overflow-y: auto;
       overscroll-behavior: contain;
     }
-    @media (max-width: 640px) { #feedPanel { position: static; max-height: none; overflow-y: visible; } }
+    @media (max-width: 640px) { #feedPanel { position: static; max-height: 70vh; overflow-y: auto; } }
     .panel-header {
       display: flex; align-items: center; gap: 8px;
       padding: 12px 16px; border-bottom: 1px solid var(--border);
@@ -1162,7 +1162,7 @@
   <!-- ── Topbar: brand + nav only ── -->
   <header class="topbar" role="banner" id="topbar">
     <div class="topbar-main">
-      <a class="brand" href="/" aria-label="Releasetrain home">Releasetrain <em>v3.15.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home">Releasetrain <em>v3.16.0</em></a>
       <div class="topbar-spacer"></div>
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle navigation" aria-expanded="false" aria-controls="navLinks">☰</button>
@@ -1265,6 +1265,28 @@
               <div class="kpi">💬 Reddit <em id="kpi-reddit">0</em></div>
               <div class="kpi" id="kpi-range">📅 Range: <em>—</em></div>
             </div>
+          </div>
+        </details>
+
+        <details class="sb-details">
+          <summary>Live Collection Stats</summary>
+          <div class="sidebar-section" style="padding-bottom:12px">
+            <details class="sb-stat-group" open>
+              <summary class="sb-stat-head">📦 Versions</summary>
+              <div class="sb-stat-body">
+                <div class="sb-stat-row"><span>Total</span><span id="home-v-total">…</span></div>
+                <div class="sb-stat-row"><span>CVE advisories</span><span id="home-v-cve">…</span></div>
+                <div class="sb-stat-row"><span>Release notes</span><span id="home-v-noncve">…</span></div>
+              </div>
+            </details>
+            <details class="sb-stat-group" open>
+              <summary class="sb-stat-head">💬 Community</summary>
+              <div class="sb-stat-body">
+                <div class="sb-stat-row"><span>Total</span><span id="home-r-total">…</span></div>
+                <div class="sb-stat-row"><span>Reddit posts</span><span id="home-r-reddit">…</span></div>
+                <div class="sb-stat-row"><span>Stack Overflow</span><span id="home-r-so">…</span></div>
+              </div>
+            </details>
           </div>
         </details>
 
@@ -2654,6 +2676,23 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
           <div class="cl-release">
             <div class="cl-date-col">
+              <div class="cl-date">2026-05-19</div>
+              <div class="cl-ver cl-ver-minor">v3.16.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Live Collection Stats in home sidebar, mobile feed scroll, 7-day data window</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Live Collection Stats panel added to the default feed sidebar</strong>: shows total versions, CVE advisories, release notes, and community post counts fetched from the API on page load.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Today count and yesterday delta</strong> displayed in brackets next to the Versions Total row: format is <code>54,210 [42 today, +12%]</code>. Fetched from <code>/api/v/aggregate/byDate</code> for today and yesterday.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Home sidebar stats also pre-populate the Docs sidebar Live Collection Stats so values appear immediately when switching to the Docs view.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Feed panel scrollable on mobile</strong>: <code>max-height: 70vh; overflow-y: auto</code> on <code>#feedPanel</code> at <code>max-width: 640px</code> so the version feed scrolls independently rather than expanding the full page height.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Data window changed from 6 months to 7 days</strong>: <code>Api.versions</code> sends <code>start</code> as 7 days ago; client-side version and community post filters apply the same 7-day cutoff. Feed header updated to reflect the new window.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
               <div class="cl-date">2026-05-18</div>
               <div class="cl-ver cl-ver-minor">v3.15.0</div>
             </div>
@@ -2672,6 +2711,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                 <li><span class="cl-tag cl-tag-docs">docs</span> Docs view rewritten: marketing language removed, section headings use <code>:</code> instead of <code>·</code>, AI chat section now describes the RAG pipeline technically (FAISS index, cosine similarity, cross-encoder reranking, LLM prompt injection).</li>
                 <li><span class="cl-tag cl-tag-fix">fix</span> Default feed no longer shows future-dated documents: server request now sends <code>end=today</code> and the client-side filter rejects any version with <code>versionReleaseDate &gt; now</code>.</li>
                 <li><span class="cl-tag cl-tag-fix">fix</span> Mobile scroll broken: <code>html, body { overflow: hidden }</code> was trapping all content on narrow viewports where the feed panel loses its own scroll container. Override to <code>overflow: auto; height: auto</code> at <code>max-width: 640px</code>.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> New bot <code>nodejs.py</code>: polls <code>nodejs.org/dist/index.json</code>, derives release channel from semver and security flag, maps LTS codename, and posts to <code>/api/v</code>. Lookback window configurable via <code>LOOKBACK_DAYS</code>.</li>
               </ul>
             </div>
           </div>
@@ -2816,7 +2856,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
       <section class="panel" id="feedPanel" aria-label="Updates feed">
         <header class="panel-header">
-          <h2>📋 Recent Updates <small>(last 6 months)</small></h2>
+          <h2>📋 Recent Updates <small>(last 7 days)</small></h2>
           <button class="btn btn-ghost" type="button" id="expandAllBtn"
             title="Expand or collapse all groups">Expand all</button>
           <div id="status" class="status" aria-live="polite">Idle</div>
@@ -2966,8 +3006,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     /* ── Constants ────────────────────────────────────────────── */
     const API_BASE = "https://releasetrain.io/api/";
     const GROUPS_BATCH = 6, PAGE_LIMIT = 150, TOP_TYPES = 10, REDDIT_LIMIT = 400, MAX_VER_DESC = 220;
-    const SIX_MONTHS_MS = 1000 * 60 * 60 * 24 * 180;
-    const SIX_MONTHS_AGO = Date.now() - SIX_MONTHS_MS;
+    const SEVEN_DAYS_MS = 1000 * 60 * 60 * 24 * 7;
+    const SEVEN_DAYS_AGO = Date.now() - SEVEN_DAYS_MS;
 
     /* ── DOM cache ────────────────────────────────────────────── */
     const EL = {};
@@ -4361,9 +4401,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const params = new URLSearchParams({ limit: String(PAGE_LIMIT) });
         if (qCsv) params.set("q", encodeCsvKeepCommas(qCsv));
         if (cursor) params.set("cursor", cursor);
-        // Push 6-month window to server; cap end at today so future docs are never fetched
-        const sixMoAgo = new Date(SIX_MONTHS_AGO);
-        params.set("start", sixMoAgo.toISOString().slice(0,10).replace(/-/g,''));
+        // Push 7-day window to server; cap end at today so future docs are never fetched
+        const sevenDaysAgo = new Date(SEVEN_DAYS_AGO);
+        params.set("start", sevenDaysAgo.toISOString().slice(0,10).replace(/-/g,''));
         const today = new Date(); today.setHours(23,59,59,999);
         params.set("end", today.toISOString().slice(0,10).replace(/-/g,''));
         const url = `${API_BASE}v/search?${params}`;
@@ -4474,7 +4514,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const arr = postsForComponent(name), out = [];
       for (const p of arr) {
         if (getPostSource(p) !== "reddit") continue;
-        if (redditTime(p) < SIX_MONTHS_AGO) continue;
+        if (redditTime(p) < SEVEN_DAYS_AGO) continue;
         if (onlyRisks && !isRisk(p)) continue;
         out.push(p); if (out.length >= limit) break;
       }
@@ -4486,7 +4526,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const arr = postsForComponent(name), out = [];
       for (const p of arr) {
         if (getPostSource(p) !== "stackoverflow") continue;
-        if (redditTime(p) < SIX_MONTHS_AGO) continue;
+        if (redditTime(p) < SEVEN_DAYS_AGO) continue;
         if (onlyRisks && !isRisk(p)) continue;
         out.push(p); if (out.length >= limit) break;
       }
@@ -4611,7 +4651,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const NOW = Date.now();
       const candidates = STATE.rawVersions.filter(v => {
         const ts = versionTime(v);
-        if (!ts || ts < SIX_MONTHS_AGO || ts > NOW) return false;
+        if (!ts || ts < SEVEN_DAYS_AGO || ts > NOW) return false;
         if (!comps.length) return true;
         const name = norm(v.versionProductName);
         const tags = (Array.isArray(v.versionSearchTags) ? v.versionSearchTags.join(",") : "").toLowerCase();
@@ -4868,7 +4908,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const NOW = Date.now();
       const candidates = vers.filter(v => {
         const ts = versionTime(v);
-        if (!ts || ts < SIX_MONTHS_AGO || ts > NOW) return false;
+        if (!ts || ts < SEVEN_DAYS_AGO || ts > NOW) return false;
         if (!comps.length) return true;
         const name = norm(v.versionProductName);
         const tags = (Array.isArray(v.versionSearchTags) ? v.versionSearchTags.join(",") : "").toLowerCase();
@@ -5179,6 +5219,49 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     });
 
     EL.components.addEventListener("blur", () => setTimeout(hideSuggestions, 150));
+
+    // Fetch live collection stats for home sidebar on page load
+    (async function loadHomeStats() {
+      const fmtDate = d => d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+      const today = new Date(), yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+      const todayStr = fmtDate(today), yestStr = fmtDate(yesterday);
+      const fmt = n => typeof n === 'number' ? n.toLocaleString() : '—';
+      const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+      const fmtSize = bytes => { const mb = bytes / (1024*1024); return mb < 1 ? (bytes/1024).toFixed(0)+' KB' : mb.toFixed(1)+' MB'; };
+      try {
+        const [vData, rData, todayData, yestData] = await Promise.all([
+          fetch('https://releasetrain.io/api/v/count').then(r => r.json()).catch(() => null),
+          fetch('https://releasetrain.io/api/reddit/count').then(r => r.json()).catch(() => null),
+          fetch(`https://releasetrain.io/api/v/aggregate/byDate?date=${todayStr}`).then(r => r.json()).catch(() => null),
+          fetch(`https://releasetrain.io/api/v/aggregate/byDate?date=${yestStr}`).then(r => r.json()).catch(() => null),
+        ]);
+        if (vData) {
+          const vTotal = vData.totalVersions, vCve = vData.cveCount ?? 0, vNon = vData.nonCveCount ?? (vTotal - vCve);
+          const todayCount = todayData?.count ?? 0;
+          const yestCount = yestData?.count ?? 0;
+          const pct = yestCount > 0 ? Math.round((todayCount - yestCount) / yestCount * 100) : null;
+          const deltaStr = pct !== null ? `${pct >= 0 ? '+' : ''}${pct}%` : '';
+          const bracket = todayCount > 0 ? ` [${fmt(todayCount)} today${deltaStr ? ', ' + deltaStr : ''}]` : '';
+          set('home-v-total', fmt(vTotal) + bracket);
+          set('home-v-cve', fmt(vCve));
+          set('home-v-noncve', fmt(vNon));
+          set('dsb-v-total', fmt(vTotal));
+          set('dsb-v-cve', fmt(vCve));
+          set('dsb-v-noncve', fmt(vNon));
+          set('dsb-v-size', fmtSize(vTotal * 800) + ' / 5 MB');
+        }
+        if (rData) {
+          const rTotal = rData.totalRedditPosts, rReddit = rData.redditCount ?? 0, rSO = rData.stackoverflowCount ?? 0;
+          set('home-r-total', fmt(rTotal));
+          set('home-r-reddit', fmt(rReddit));
+          set('home-r-so', fmt(rSO));
+          set('dsb-r-total', fmt(rTotal));
+          set('dsb-r-reddit', fmt(rReddit));
+          set('dsb-r-so', fmt(rSO));
+          set('dsb-r-size', fmtSize(rTotal * 2000) + ' / 5 MB');
+        }
+      } catch (_) { /* stats are non-critical */ }
+    })();
 
     setupObserver();
     boot().then(async () => {
