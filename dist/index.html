@@ -1152,6 +1152,44 @@
     /* Node graph canvas */
     #dashboardView .db-graph-wrap { position: relative; width: 100%; flex: 1; min-height: 0; overflow: hidden; }
     #dashboardView .db-graph-wrap canvas { display: block; width: 100%; height: 100%; }
+
+    /* ── Mobile scroll: all views ────────────────────────────────────── */
+    @media (max-width: 640px) {
+      /* Dashboard: stack panes and let the page scroll */
+      #dashboardView {
+        position: static;
+        height: auto;
+        overflow: visible;
+      }
+      #dashboardView .db-two-pane {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        overflow: visible;
+        min-height: unset;
+      }
+      #dashboardView .db-pane {
+        overflow-y: visible;
+        min-height: unset;
+        height: auto;
+      }
+      #dashboardView .db-pane-comp { overflow-y: visible; }
+      #dashboardView .db-graph-wrap { height: 50vh; min-height: 160px; flex: none; }
+
+      /* Docs and Ack: drop fixed height so page scrolls naturally */
+      #docsView  { height: auto; overflow-y: visible; }
+      #ackView   { height: auto; overflow-y: visible; }
+
+      /* CVE: keep height for flex scroll-list to work; enable touch scroll */
+      #cveView { height: auto; min-height: 85vh; overflow: visible; }
+      #cveView .panel { overflow: visible; min-height: 0; }
+      #cveView .scroll-list { touch-action: pan-y; -webkit-overflow-scrolling: touch; min-height: 55vh; flex: none; }
+
+      /* Feed, docs, ack inner scroll containers: ensure iOS touch scroll */
+      #feedPanel, #docsView, #ackView { touch-action: pan-y; -webkit-overflow-scrolling: touch; }
+
+      /* Changelog: ensure content is not clipped */
+      #changelogView { overflow-y: visible; }
+    }
   </style>
 </head>
 
@@ -2712,6 +2750,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                 <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Activity chart data sourced from range aggregate endpoints</strong>: <code>loadHomeStats</code> now calls <code>/api/aggregate/v/versionCountByDay</code> and <code>/api/aggregate/reddit/countByDay</code> with a single 7-day window each (2 requests total), replacing 14 individual per-day calls. Results are mapped from sparse <code>{ _id, count }</code> arrays to the fixed 7-day label sequence before passing to <code>updateActivityChart</code>.</li>
                 <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Community line in activity chart now renders correctly</strong>: <code>/api/aggregate/reddit/countByDay</code> was filtering <code>created_utc</code> with YYYYMMDD strings, which matched nothing because the field stores Unix epoch seconds (int/double/string) or ISO date strings. Endpoint rewritten to normalize <code>created_utc</code> to a UTC Date via a <code>$switch</code> pipeline stage, then filter and group on the normalized value. Client also patches the community dataset from <code>STATE.redditAll</code> after reddit loads, as a fallback for the current deployment.</li>
                 <li><span class="cl-tag cl-tag-feat">feat</span> <strong>CVE line added to activity chart</strong>: chart now shows three lines: Versions (indigo), CVE (red), Community (green). CVE per-day counts sourced from new <code>/api/aggregate/v/cveCountByDay</code> endpoint, which filters <code>isCve: true</code> and groups by <code>versionReleaseDate</code>. Falls back to counting <code>v.isCve</code> from <code>STATE.rawVersions</code> when API data is unavailable.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Mobile scroll restored for all views</strong>: dashboard had no mobile CSS rule and was unscrollable with <code>overflow: hidden</code> and a two-column pane layout. All views now scroll on mobile: dashboard panes stack vertically and the page scrolls naturally; docs and ack views drop their fixed height so page scroll applies; CVE view sets a <code>min-height</code> and adds <code>touch-action: pan-y</code> to the inner scroll list; changelog clears its overflow clip; <code>-webkit-overflow-scrolling: touch</code> added to all inner-scroll containers for iOS compatibility.</li>
               </ul>
             </div>
           </div>
