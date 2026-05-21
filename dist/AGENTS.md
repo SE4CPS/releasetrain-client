@@ -39,7 +39,6 @@ When a correction or confirmed approach from a chat session is clearly reusable,
 - If a pattern was applied repeatedly across multiple changes in a session: extract it as an explicit rule.
 - Do not save ephemeral task details (what was fixed today, PR descriptions, current bug context).
 - Place new rules in the section they relate to. If no section fits, add a new one before `## What not to do`.
-- Apply the same self-update rule to `releasetrain-server/AGENTS.md` when server-side patterns emerge.
 
 ---
 

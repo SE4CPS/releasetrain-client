@@ -1276,7 +1276,7 @@
   <!-- ── Topbar: brand + nav only ── -->
   <header class="topbar" role="banner" id="topbar">
     <div class="topbar-main">
-      <a class="brand" href="/" aria-label="Releasetrain home">Releasetrain <em>v3.16.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home">Releasetrain <em>v3.17.0</em></a>
       <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
       <div class="topbar-spacer"></div>
       <button class="nav-toggle" type="button" id="navToggle"
@@ -2813,6 +2813,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-05-21</div>
+              <div class="cl-ver cl-ver-minor">v3.17.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>User bookmarks, topbar login indicator, account advantages panel</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Bookmarks</strong>: signed-in users can save named searches via the 🔖 button in the feed sidebar. Each bookmark stores a URL and generates a public share link (<code>?share=&lt;shareId&gt;</code>). Opening a share link restores the saved search automatically.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Topbar login chip</strong>: a small badge showing the logged-in user name or email appears in the topbar at all times when a session is active. Clicking it opens the Account view.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Bookmark list in Account view</strong>: the profile panel lists all saved bookmarks with Open, Copy link, and Delete actions. Refresh button reloads the list from the API.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Why create an account section</strong>: collapsible panel in the sign-in view lists the technical advantages of having an account: server-side bookmark storage, cross-device persistence, share links, JWT session, and admin role access.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
