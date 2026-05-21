@@ -660,7 +660,13 @@
     .ack-list li span { font-size: 12px; color: var(--muted); }
 
     /* ── User account management view ──────────────────────── */
-    #usersView { max-width: 580px; padding: 20px; }
+    #usersView {
+      max-width: 580px; padding: 20px;
+      position: sticky; top: calc(var(--topbar-h) + 16px);
+      height: calc(100vh - var(--topbar-h) - 32px);
+      overflow-y: auto; overscroll-behavior: contain;
+    }
+    @media (max-width: 640px) { #usersView { position: static; height: auto; overflow-y: visible; } }
     .ua-tabs {
       display: flex; border-bottom: 2px solid var(--border); margin-bottom: 0;
     }
