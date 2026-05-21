@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -473,52 +473,44 @@
     @keyframes pulse { from { background-position: 0 0; } to { background-position: 200% 0; } }
     .sentinel { font-size: 12px; text-align: center; color: var(--muted); padding: 12px 0 6px; }
 
-    /* ── Graph view ─────────────────────────────────────────── */
+    /* ── Graph view (Chart.js) ── */
     #graphView {
       position: sticky;
       top: calc(var(--topbar-h) + 16px);
       height: calc(100vh - var(--topbar-h) - 32px);
-      background: #0f1115;
-      border: 1px solid #1e2433;
-      border-radius: 12px;
-      overflow: hidden;
+      overflow-y: auto;
+      overscroll-behavior: contain;
     }
     @media (max-width: 640px) {
-      #graphView { position: static; height: 60vh; border-radius: 8px; }
+      #graphView { position: static; height: auto; }
     }
-    #g-graphContainer { position: absolute; inset: 0; touch-action: none; }
-    #g-graphCostBadge {
-      position: absolute; left: 10px; top: 10px; z-index: 5;
-      padding: 4px 10px; border-radius: 8px; border: 1px solid #1e2433;
-      background: rgba(15,17,21,.88); color: #fff;
-      font: 700 11px/1.4 inherit; pointer-events: none;
-      white-space: nowrap; max-width: 90%; overflow: hidden; text-overflow: ellipsis;
+    .g-chart-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
     }
-    #g-nodeInfo {
-      position: absolute; bottom: 10px; left: 10px; right: 10px;
-      background: rgba(23,26,33,.96); border: 1px solid #1e2433;
-      border-radius: 8px; padding: 8px 10px;
-      color: #fff; font-size: 11px; max-height: 130px; overflow-y: auto;
+    @media (max-width: 720px) {
+      .g-chart-grid { grid-template-columns: 1fr; }
     }
-    .g-switch { display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; }
-    .g-switch input { accent-color: var(--brand); margin: 0; }
-    .g-type-filters { display: flex; flex-wrap: wrap; gap: 4px; max-height: 110px; overflow-y: auto; }
-    .g-type-label {
-      display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px;
-      border: 1px solid var(--border); border-radius: var(--radius-full);
-      background: var(--chip-bg); color: var(--chip-text);
-      font-size: 11px; cursor: pointer; white-space: nowrap;
+    .g-chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px 12px;
+      box-shadow: var(--shadow-sm);
     }
-    .g-type-label input { margin: 0; accent-color: var(--brand); }
-    .g-reg-table { width: 100%; border-collapse: collapse; }
-    .g-reg-table td { padding: 3px 2px; font-size: 11px; color: var(--text); }
-    .g-reg-table input[type=range] { width: 80px; accent-color: var(--brand); vertical-align: middle; }
-    .g-tag-pill {
-      display: inline-flex; align-items: center; gap: 5px; margin: 2px;
-      border: 1px solid var(--border); background: var(--chip-bg);
-      padding: 2px 7px; border-radius: 999px; font-size: 11px; cursor: pointer;
+    .g-chart-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 10px;
     }
-    .g-tag-pill input { margin: 0; accent-color: var(--brand); }
+    .g-chart-wrap {
+      position: relative;
+      height: 200px;
+    }
     .nav-link.nav-active { background: var(--brand-light); color: var(--brand); }
 
     /* ── Arch view ──────────────────────────────────────────── */
@@ -1435,72 +1427,31 @@
       <!-- ── Graph controls (shown only in graph view) ── -->
       <div id="graphControls" style="display:none">
 
-        <details class="sb-details">
-          <summary>Layers &amp; Legend</summary>
-          <div class="sidebar-section" style="padding-bottom:12px">
-            <div style="display:flex;flex-direction:column;gap:7px">
-              <label class="g-switch"><input type="checkbox" id="g-show-versions" checked> 📦 Versions</label>
-              <label class="g-switch"><input type="checkbox" id="g-show-posts" checked> 💬 Reddit / SO</label>
-              <label class="g-switch"><input type="checkbox" id="g-show-cve-posts"> 🔴 CVE posts only</label>
-              <label class="g-switch"><input type="checkbox" id="g-show-cve" checked> 🔐 CVE versions</label>
-            </div>
-            <div style="margin-top:10px;display:grid;grid-template-columns:14px 1fr;row-gap:3px;column-gap:5px;font-size:10px;color:var(--muted);line-height:1.3">
-              <span style="color:#22c55e;font-size:13px;line-height:1">●</span><span>version · low cost</span>
-              <span style="color:#9ca3af;font-size:13px;line-height:1">●</span><span>version · mid cost</span>
-              <span style="color:#ef4444;font-size:13px;line-height:1">●</span><span>version · high cost / isCve</span>
-              <span style="color:#fb7185;font-size:13px;line-height:1">●</span><span>post · CVE mention</span>
-              <span style="color:#a855f7;font-size:13px;line-height:1">●</span><span>post · reddit</span>
-              <span style="color:#3b82f6;font-size:13px;line-height:1">●</span><span>post · stackoverflow</span>
-              <span style="color:#60a5fa;font-size:11px;line-height:1.3;grid-column:1/-1">rings = 30-day intervals · closer = more recent</span>
-            </div>
-            <div style="margin-top:8px;font-size:10px;color:var(--muted);line-height:1.5;border-top:1px solid var(--border);padding-top:7px">
-              <strong style="color:var(--text)">How to use</strong><br>
-              Click a node → details + API &amp; source links<br>
-              Zoom slider (View) · ⚙ Edges for tag connections
-            </div>
-          </div>
-        </details>
+        <div class="sidebar-section">
+          <div class="sidebar-label">Time window</div>
+          <select id="g-window" style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font:inherit;font-size:12px;cursor:pointer">
+            <option value="7">Last 7 days</option>
+            <option value="30">Last 30 days</option>
+            <option value="90" selected>Last 90 days</option>
+            <option value="180">Last 180 days</option>
+          </select>
+        </div>
 
-        <details class="sb-details">
-          <summary>Options</summary>
-          <div class="sidebar-section" style="padding-bottom:12px">
-            <div style="display:flex;flex-direction:column;gap:7px">
-              <label class="g-switch"><input type="checkbox" id="g-posts-riskOnly"> Risk / update posts only</label>
-              <label class="g-switch"><input type="checkbox" id="g-onlyToday"> Today's releases only</label>
-              <label class="g-switch"><input type="checkbox" id="g-realOnly"> Real components only</label>
-              <label class="g-switch"><input type="checkbox" id="g-uniqueType"> Unique type per node</label>
-            </div>
+        <div class="sidebar-section">
+          <div class="sidebar-label">Data source</div>
+          <div style="display:flex;flex-direction:column;gap:6px;font-size:12px">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="radio" name="g-scope" id="g-scope-search" value="search" checked style="accent-color:var(--brand)"> Current search</label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="radio" name="g-scope" id="g-scope-all" value="all" style="accent-color:var(--brand)"> All loaded data</label>
           </div>
-        </details>
+        </div>
 
-        <details class="sb-details">
-          <summary>Node Types</summary>
-          <div class="sidebar-section" style="padding-bottom:12px">
-            <div id="g-typeFilters" class="g-type-filters"></div>
-          </div>
-        </details>
+        <div class="sidebar-section">
+          <button id="g-refreshBtn" class="btn btn-ghost" style="width:100%;font-size:12px">↺ Refresh charts</button>
+        </div>
 
-        <details class="sb-details">
-          <summary>Cost Factors</summary>
-          <div class="sidebar-section" style="padding-bottom:12px">
-            <table class="g-reg-table" id="g-regTable" style="width:100%">
-              <tr><td style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px" colspan="2">Attribute → Factor (0–2)</td></tr>
-            </table>
-          </div>
-        </details>
-
-        <details class="sb-details">
-          <summary>View</summary>
-          <div class="sidebar-section" style="padding-bottom:14px">
-            <input id="g-zoomRange" type="range" min="60" max="220" value="140" style="width:100%;accent-color:var(--brand);margin-bottom:2px">
-            <div id="g-zoomLabel" style="font-size:11px;color:var(--muted)">140%</div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
-              <button id="g-edgesBtn" class="btn btn-ghost" type="button" style="font-size:12px;padding:5px 10px">⚙ Edges</button>
-              <button id="g-legendBtn" class="btn btn-ghost" type="button" style="font-size:12px;padding:5px 10px">📖 Legend</button>
-              <button id="g-tagsBtn" class="btn btn-ghost" type="button" style="font-size:12px;padding:5px 10px">🏷 Tags</button>
-            </div>
-          </div>
-        </details>
+        <div class="sidebar-section" style="font-size:11px;color:var(--muted)">
+          <div id="g-statsLine">—</div>
+        </div>
 
       </div>
 
@@ -1727,10 +1678,24 @@
 
       <!-- Graph canvas (shown only in graph view) -->
       <div id="graphView" style="display:none">
-        <div id="g-graphCostBadge">cost: 0</div>
-        <div id="g-graphContainer"></div>
-        <canvas id="g-ringCanvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2"></canvas>
-        <div id="g-nodeInfo" style="display:none"></div>
+        <div class="g-chart-grid">
+          <div class="g-chart-card">
+            <div class="g-chart-title">Release Activity</div>
+            <div class="g-chart-wrap"><canvas id="g-chartActivity"></canvas></div>
+          </div>
+          <div class="g-chart-card">
+            <div class="g-chart-title">Top Components</div>
+            <div class="g-chart-wrap"><canvas id="g-chartComponents"></canvas></div>
+          </div>
+          <div class="g-chart-card">
+            <div class="g-chart-title">Channel Breakdown</div>
+            <div class="g-chart-wrap"><canvas id="g-chartChannels"></canvas></div>
+          </div>
+          <div class="g-chart-card">
+            <div class="g-chart-title">CVE Trend</div>
+            <div class="g-chart-wrap"><canvas id="g-chartCve"></canvas></div>
+          </div>
+        </div>
       </div>
 
       <!-- Arch canvas (shown only in arch view) -->
@@ -2840,6 +2805,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                 <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Why create an account section</strong>: collapsible panel in the sign-in view lists the technical advantages of having an account including org namespaces, server-side bookmark storage, cross-device persistence, share links, JWT session, and admin role access.</li>
                 <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Org namespaces moved server-side</strong>: org names are now snapshotted onto the bookmark document at creation time and returned by the share endpoint. Share URLs are clean (<code>?share=abc123</code> only). Recipients see a "Shared by: orgname" banner for 4 seconds when opening a share link. Org chips are shown on each bookmark row in the Account view.</li>
                 <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Bookmark rename</strong>: an Edit button on each bookmark row opens an inline text input. Submitting saves the new name via <code>PUT /api/bookmarks/:id</code> and refreshes the list. Keyboard shortcuts Enter and Escape confirm and cancel the edit.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Chart.js graph view</strong>: the Graph view now renders four Chart.js charts: release activity over time (line), top components by release count (horizontal bar), channel breakdown (donut), and CVE releases per week (bar). Sigma.js network graph removed. Time window and data source are selectable from the sidebar.</li>
               </ul>
             </div>
           </div>
@@ -3015,9 +2981,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <li><a target="_blank" rel="noopener" href="https://developer.github.com/v3/">GitHub API</a><span>Release notes, repository metadata, and version data</span></li>
           <li><a target="_blank" rel="noopener" href="https://www.reddit.com/dev/api/">Reddit API</a><span>Community discussion signals for security and update topics</span></li>
           <li><a target="_blank" rel="noopener" href="https://api.stackexchange.com/">Stack Exchange API</a><span>StackOverflow post data for community risk signals</span></li>
-          <li><a target="_blank" rel="noopener" href="https://www.chartjs.org/">Chart.js</a><span>Dashboard chart rendering</span></li>
+          <li><a target="_blank" rel="noopener" href="https://www.chartjs.org/">Chart.js</a><span>Dashboard and graph view charts: release activity, top components, channel breakdown, CVE trend</span></li>
           <li><a target="_blank" rel="noopener" href="https://www.plantuml.com/">PlantUML</a><span>Architecture diagram generation</span></li>
-          <li><a target="_blank" rel="noopener" href="https://sigmajs.org/">Sigma.js</a><span>Component dependency graph visualisation</span></li>
           <li><a target="_blank" rel="noopener" href="https://github.com/nicolo-ribaudo/pako">pako</a><span>PlantUML deflate encoding</span></li>
           <li><a target="_blank" rel="noopener" href="https://distrowatch.com/">Linux Distrowatch</a><span>Linux distribution release feed</span></li>
           <li><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Android_version_history">Android Wikipedia</a><span>Android version history content</span></li>
@@ -3193,66 +3158,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
   </div><!-- /.layout -->
 
   <button id="backToTop" aria-label="Back to top" title="Back to top">↑</button>
-
-  <!-- ── Graph dialogs ── -->
-  <dialog id="g-edgesDialog" style="border:1px solid var(--border);border-radius:12px;padding:16px;background:var(--surface);color:var(--text);max-width:500px;width:min(96vw,500px)">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px">
-      <strong>Edge Settings</strong>
-      <button class="btn btn-ghost" data-close-dialog="g-edgesDialog" style="padding:4px 10px">Close</button>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
-      <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="g-edgeUseTags" checked style="accent-color:var(--brand)"> Use shared tags to draw edges</label>
-      <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="g-edgeUseType" checked style="accent-color:var(--brand)"> Use shared component types</label>
-      <div>
-        <div style="font-size:12px;color:var(--muted);margin-bottom:4px">Exclude tags used by more than <b id="g-edgeCommonPctLabel">12%</b> of components</div>
-        <input id="g-edgeCommonPct" type="range" min="5" max="95" value="12" style="width:100%;accent-color:var(--brand)">
-      </div>
-      <div>
-        <div style="font-size:12px;font-weight:700;margin-bottom:4px">Tag universe <span id="g-edgeTagsMeta" style="font-weight:400;color:var(--muted)"></span></div>
-        <div id="g-edgeTagsChecklist" style="max-height:180px;overflow-y:auto;display:flex;flex-wrap:wrap"></div>
-      </div>
-    </div>
-  </dialog>
-
-  <dialog id="g-legendDialog" style="border:1px solid var(--border);border-radius:12px;padding:16px;background:var(--surface);color:var(--text);max-width:400px;width:min(96vw,400px)">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px">
-      <strong>Legend</strong>
-      <button class="btn btn-ghost" data-close-dialog="g-legendDialog" style="padding:4px 10px">Close</button>
-    </div>
-    <div style="font-size:13px">
-      <p style="font-weight:700;margin:0 0 6px">Outer ring: Components</p>
-      <ul style="margin:0 0 10px 16px;line-height:1.8">
-        <li><span style="color:#22c55e">■</span> green = low cost / up-to-date</li>
-        <li><span style="color:#ef4444">■</span> red = highest cost</li>
-        <li>Gray scale between min and max cost</li>
-      </ul>
-      <p style="font-weight:700;margin:0 0 6px">Middle ring: CVE versions</p>
-      <ul style="margin:0 0 10px 16px;line-height:1.8">
-        <li><span style="color:#ef4444">■</span> red = version with a known CVE (<code>latestCveVersion</code>)</li>
-        <li>Close to component = recent; near center = older (&gt; 1 year)</li>
-      </ul>
-      <p style="font-weight:700;margin:0 0 6px">Near-outer band: Community posts</p>
-      <ul style="margin:0 0 10px 16px;line-height:1.8">
-        <li><span style="color:#fb7185">■</span> rose = post mentioning <code>CVE-XXXX-XXXXX</code> anywhere</li>
-        <li><span style="color:#a855f7">■</span> violet = Reddit post</li>
-        <li><span style="color:#3b82f6">■</span> blue = StackOverflow post</li>
-        <li>Posts mentioning a CVE show a <span style="font-size:10px;background:#450a0a;color:#f87171;border-radius:4px;padding:1px 4px">CVE</span> badge on click</li>
-      </ul>
-      <p style="font-weight:700;margin:0 0 6px">Edge distance = time</p>
-      <ul style="margin:0 0 6px 16px;line-height:1.8">
-        <li><b>Close to component</b> = recent; <b>near center</b> = older</li>
-        <li>Edge brighter = more recent</li>
-      </ul>
-    </div>
-  </dialog>
-
-  <dialog id="g-tagsDialog" style="border:1px solid var(--border);border-radius:12px;padding:16px;background:var(--surface);color:var(--text);max-width:420px;width:min(96vw,420px)">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px">
-      <strong>Node Tags</strong>
-      <button class="btn btn-ghost" data-close-dialog="g-tagsDialog" style="padding:4px 10px">Close</button>
-    </div>
-    <div id="g-tagsContent" style="font-size:13px;color:var(--muted)">Click a node in the graph to see its tags here.</div>
-  </dialog>
 
   <!-- ── Arch dialogs ── -->
   <dialog id="a-metricsDialog" style="border:1px solid var(--border);border-radius:12px;padding:16px;background:var(--surface);color:var(--text);max-width:520px;width:min(96vw,520px)">
@@ -3441,42 +3346,28 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       /* archLink is now in-page (#); no href update needed */
     }
 
-    /* ── Graph Module ─────────────────────────────────────────── */
-    const G_SW = new Set(["github","gitlab","bitbucket","access","can","core","enterprise","management","downloads","users","union","man","tc","oss","beta","production","link","version","component"]);
-    const G_EDGE = { useTags: true, useType: true, commonThreshold: 0.12, excludedTags: new Set() };
-    const G_ECO = { components:{}, edges:{}, attrList:null, attrMap:{}, typeSet:new Set(), selectedTypes:null, cost:0, tagCounts:new Map() };
-    let G_GRAPH = { postNodes: [], postEdges: [], cveNodes: [], cveEdges: [] };
-    let G_SIGMA = null, G_LOADED = false, G_INIT = false, G_ACTIVE = false;
-    const gEl = id => document.getElementById("g-" + id);
-
-    function gLoadSigma() {
-      if (G_LOADED) return Promise.resolve();
+    /* ── Graph Module (Chart.js) ─────────────────────────────── */
+    let G_ACTIVE = false, G_CJ_LOADED = false;
+    let G_CHARTS = {};
+    function gLoadChartJs() {
+      if (G_CJ_LOADED) return Promise.resolve();
       return new Promise((res, rej) => {
-        const s = document.createElement("script"); s.src = "./lib/sigma.min.js";
-        s.onload = () => { G_LOADED = true; res(); }; s.onerror = rej;
+        const s = document.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js";
+        s.onload = () => { G_CJ_LOADED = true; res(); };
+        s.onerror = rej;
         document.head.appendChild(s);
       });
     }
 
-    function gIsLast24h(v) {
-      const now = Date.now(); let t = null;
-      if (v.versionReleaseEpochMs != null) t = Number(v.versionReleaseEpochMs);
-      else if (v.versionReleaseEpoch != null) t = Number(v.versionReleaseEpoch) * 1000;
-      else if (v.versionReleaseDateISO) t = Date.parse(v.versionReleaseDateISO);
-      else if (v.versionReleaseDateTime) t = Date.parse(v.versionReleaseDateTime);
-      if (Number.isFinite(t)) return now - t >= 0 && now - t <= 86400000;
-      const d = String(v.versionReleaseDate || "").trim(); if (!d) return false;
-      const fmt = x => x.getFullYear() + String(x.getMonth()+1).padStart(2,"0") + String(x.getDate()).padStart(2,"0");
-      const td = new Date(), yd = new Date(td); yd.setDate(td.getDate()-1);
-      return d === fmt(td) || d === fmt(yd);
-    }
-
-    function gExtractTypes(v) {
-      const s = new Set();
-      (v?.classification?.componentType || []).forEach(t => { if (t) s.add(String(t).trim()); });
-      [v.versionPredictedComponentType, v.predictedComponentType, v.componentType, v.versionType, v.productType]
-        .forEach(c => { if (c) s.add(String(c).trim()); });
-      return [...s].map(x => x.toLowerCase().trim()).filter(Boolean);
+    function gGetVersionEpoch(v) {
+      if (v.versionReleaseEpochMs != null) return Number(v.versionReleaseEpochMs);
+      if (v.versionReleaseEpoch  != null) return Number(v.versionReleaseEpoch) * 1000;
+      if (v.versionReleaseDateISO)  return Date.parse(v.versionReleaseDateISO);
+      if (v.versionReleaseDateTime) return Date.parse(v.versionReleaseDateTime);
+      const d = String(v.versionReleaseDate || "");
+      if (d.length >= 8) return new Date(+d.slice(0,4), +d.slice(4,6)-1, +d.slice(6,8)).getTime();
+      return 0;
     }
 
     function gChannelOf(v) {
@@ -3489,519 +3380,111 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       return ch;
     }
 
-    function gIsReal(key, tags) {
-      if (!key || G_SW.has(key) || key.length <= 2) return false;
-      if (/^[0-9]+$/.test(key) || /^[a-z]{1,4}$/.test(key)) return false;
-      if (key.includes("sourcecodester")) return false;
-      if (tags && tags.size < 2) return false;
-      return true;
+    function gDestroyCharts() {
+      Object.values(G_CHARTS).forEach(c => { if (c) try { c.destroy(); } catch(e) {} });
+      G_CHARTS = {};
     }
 
-    function gInitEco() {
-      G_ECO.attrList = ["component","link","version","major","minor","patch","cve","today"];
-      G_ECO.attrMap = {};
-      G_ECO.attrList.forEach(a => {
-        const init = a === "today" ? 2 : ["link","major","minor","patch","cve","invalid","version"].includes(a) ? 0 : 1;
-        G_ECO.attrMap[a] = { factor: init, count: 0 };
-      });
-      const reg = gEl("regTable");
-      while (reg.rows.length > 1) reg.deleteRow(1);
-      G_ECO.attrList.forEach(a => {
-        const tr = reg.insertRow(-1);
-        tr.innerHTML = `<td>${a}</td><td><input id="g-f-${a}" type="range" min="0" max="2" value="${G_ECO.attrMap[a].factor}" style="width:80px;accent-color:var(--brand);vertical-align:middle"></td>`;
-        tr.querySelector("input").addEventListener("input", () => { gRecalcEco(); gRender(); });
-      });
-      gEl("zoomRange").addEventListener("input", () => { gEl("zoomLabel").textContent = gEl("zoomRange").value + "%"; gRender(); });
-      G_INIT = true;
-    }
-
-    function gRecomputeTagCounts() {
-      G_ECO.tagCounts = new Map();
-      for (const k of Object.keys(G_ECO.components))
-        for (const t of G_ECO.components[k].tags)
-          G_ECO.tagCounts.set(t, (G_ECO.tagCounts.get(t) || 0) + 1);
-    }
-
-    function gBuildEdges() {
-      G_ECO.edges = {}; G_ECO.attrMap["link"].count = 0;
-      gRecomputeTagCounts();
-      const keys = Object.keys(G_ECO.components), n = Math.max(1, keys.length);
-      for (let i = 0; i < keys.length; i++) {
-        for (let j = i + 1; j < keys.length; j++) {
-          const A = G_ECO.components[keys[i]], B = G_ECO.components[keys[j]];
-          let ok = false; const reasons = [];
-          if (G_EDGE.useTags) {
-            const sh = [...A.tags].filter(t => B.tags.has(t) && (G_ECO.tagCounts.get(t)||0)/n <= G_EDGE.commonThreshold && !G_EDGE.excludedTags.has(t) && !G_SW.has(t) && isNaN(t));
-            if (sh.length) { ok = true; reasons.push(...sh); }
-          }
-          if (G_EDGE.useType) {
-            const st = [...A.typeSet].filter(t => B.typeSet.has(t));
-            if (st.length) { ok = true; reasons.push(`type:${st[0]}`); }
-          }
-          if (ok) {
-            G_ECO.edges[`${A.id}-${B.id}`] = { id:`${A.id}-${B.id}`, source:A.id, target:B.id, tags:reasons.slice(0,50) };
-            G_ECO.attrMap["link"].count++;
-            if (A.attributeObjectList?.link) A.attributeObjectList.link.count++;
-          }
-        }
+    function gRenderCharts(versions) {
+      gDestroyCharts();
+      if (!versions || !versions.length) {
+        const statsEl = document.getElementById("g-statsLine");
+        if (statsEl) statsEl.textContent = "No data loaded. Run a search first.";
+        return;
       }
-      gRefreshEdgeDialog();
-    }
+      const windowDays = Number(document.getElementById("g-window").value) || 90;
+      const cutoff = Date.now() - windowDays * 86400000;
+      const filtered = versions.filter(v => gGetVersionEpoch(v) >= cutoff);
+      const statsEl = document.getElementById("g-statsLine");
+      if (statsEl) statsEl.textContent = filtered.length + " releases in last " + windowDays + "d";
 
-    function gRecalcEco() {
-      G_ECO.cost = 0;
-      G_ECO.attrList.forEach(a => { const el = document.getElementById(`g-f-${a}`); if (el) G_ECO.attrMap[a].factor = Number(el.value); });
-      const vr = new Set(["major","minor","patch","cve","today"]);
-      Object.values(G_ECO.components).forEach(c => { c.cost = 0; c.costVer = 0; });
-      G_ECO.attrList.forEach(a => {
-        G_ECO.cost += G_ECO.attrMap[a].count * G_ECO.attrMap[a].factor;
-        Object.values(G_ECO.components).forEach(c => {
-          const cnt = c.attributeObjectList[a]?.count || 0;
-          c.cost += cnt * G_ECO.attrMap[a].factor;
-          if (vr.has(a)) c.costVer += (cnt > 0 ? 1 : 0) * G_ECO.attrMap[a].factor;
+      const WEEK_MS = 7 * 86400000;
+
+      // ── 1. Release Activity Over Time (line, weekly) ──────────
+      {
+        const buckets = new Map();
+        filtered.forEach(v => {
+          const ep = gGetVersionEpoch(v);
+          const key = new Date(ep - (ep % WEEK_MS)).toISOString().slice(0, 10);
+          buckets.set(key, (buckets.get(key) || 0) + 1);
         });
-      });
-      const b = gEl("graphCostBadge"); if (b) b.textContent = `cost ${G_ECO.cost}`;
-    }
-
-    function gRenderTypeFilters() {
-      const wrap = gEl("typeFilters"); wrap.innerHTML = "";
-      const types = [...G_ECO.typeSet].sort();
-      if (!types.length) { G_ECO.selectedTypes = null; return; }
-      if (!G_ECO.selectedTypes) G_ECO.selectedTypes = new Set(types);
-      else types.forEach(t => G_ECO.selectedTypes.add(t));
-      types.forEach(t => {
-        const lbl = document.createElement("label"); lbl.className = "g-type-label";
-        const chk = document.createElement("input"); chk.type = "checkbox"; chk.checked = G_ECO.selectedTypes.has(t);
-        chk.addEventListener("change", e => { if (e.target.checked) G_ECO.selectedTypes.add(t); else G_ECO.selectedTypes.delete(t); gRender(); });
-        lbl.appendChild(chk); lbl.appendChild(document.createTextNode(" " + (t || "unknown")));
-        wrap.appendChild(lbl);
-      });
-    }
-
-    function gTransform(rawVersions) {
-      if (!G_INIT) gInitEco();
-      G_ECO.components = {}; G_ECO.edges = {}; G_ECO.typeSet = new Set(); G_ECO.tagCounts = new Map();
-      G_ECO.attrList.forEach(a => { G_ECO.attrMap[a].count = 0; });
-      const onlyToday = gEl("onlyToday")?.checked;
-      const uniqueType = gEl("uniqueType")?.checked;
-      const realOnly = gEl("realOnly")?.checked;
-      const src = onlyToday ? rawVersions.filter(gIsLast24h) : rawVersions;
-      for (const v of src) {
-        const nameRaw = (v.versionProductName || "").trim(); if (!nameRaw) continue;
-        const key = nameRaw.toLowerCase().trim();
-        const tags = new Set((v.versionSearchTags || []).map(t => t.toLowerCase().trim()));
-        if (realOnly && !gIsReal(key, tags)) continue;
-        if (!G_ECO.components[key]) {
-          G_ECO.components[key] = { id:key, display:nameRaw, cost:0, costVer:0, type:null, typeSet:new Set(), tags:new Set(), attributeObjectList:{} };
-          G_ECO.attrList.forEach(a => { G_ECO.components[key].attributeObjectList[a] = { count: 0 }; });
-        }
-        const c = G_ECO.components[key];
-        if (!c.display) c.display = nameRaw;
-        tags.forEach(t => c.tags.add(t));
-        const types = gExtractTypes(v);
-        types.forEach(t => c.typeSet.add(t));
-        if (types.length) { if (!c.type || uniqueType) c.type = types[0]; types.forEach(t => G_ECO.typeSet.add(t)); }
-        const ch = gChannelOf(v);
-        c.attributeObjectList[ch].count++; c.attributeObjectList["version"].count++; c.attributeObjectList["component"].count = 1;
-        G_ECO.attrMap[ch].count++; G_ECO.attrMap["version"].count++;
-        G_ECO.attrMap["component"].count = Object.keys(G_ECO.components).length;
-        if (gIsLast24h(v)) { G_ECO.attrMap["today"].count++; c.attributeObjectList["today"].count++; }
-      }
-      gBuildEdges(); gRenderTypeFilters(); gRecalcEco();
-    }
-
-    /* ── Unified post overlay (time-distance layout) ────────── */
-    function gGetVersionEpoch(v) {
-      if (v.versionReleaseEpochMs != null) return Number(v.versionReleaseEpochMs);
-      if (v.versionReleaseEpoch  != null) return Number(v.versionReleaseEpoch) * 1000;
-      if (v.versionReleaseDateISO)  return Date.parse(v.versionReleaseDateISO);
-      if (v.versionReleaseDateTime) return Date.parse(v.versionReleaseDateTime);
-      const d = String(v.versionReleaseDate || "");
-      if (d.length >= 8) return new Date(+d.slice(0,4), +d.slice(4,6)-1, +d.slice(6,8)).getTime();
-      return 0;
-    }
-
-    function gBuildPostOverlay(rawVersions, redditPosts) {
-      const showPosts    = document.getElementById("g-show-posts").checked;
-      const showCvePosts = document.getElementById("g-show-cve-posts").checked;
-      const riskOnly     = document.getElementById("g-posts-riskOnly").checked;
-
-      if (!showPosts && !showCvePosts) { G_GRAPH.postNodes = []; G_GRAPH.postEdges = []; return; }
-
-      const CVE_PAT = /\bCVE-\d{4}-\d+\b/i;
-
-      // Latest release epoch per component
-      const compEpoch = new Map();
-      for (const v of rawVersions) {
-        const key = (v.versionProductName || "").toLowerCase().trim();
-        const ep = gGetVersionEpoch(v);
-        if (ep > (compEpoch.get(key) || 0)) compEpoch.set(key, ep);
-      }
-
-      const knownSet = Object.keys(G_ECO.components).length > 0
-        ? new Set(Object.keys(G_ECO.components))
-        : new Set(rawVersions.map(v => (v.versionProductName || "").toLowerCase().trim()).filter(Boolean));
-
-      const postNodes = [], postEdges = [];
-      let postIdx = 0;
-
-      for (const p of redditPosts) {
-        const sub = (p.subreddit || "").toLowerCase().trim();
-        if (!knownSet.has(sub)) continue;
-        const isSO  = getPostSource(p) === "stackoverflow";
-        const risk  = isRisk(p);
-        if (riskOnly && !risk) continue;
-
-        const hasCve = CVE_PAT.test(p.title || "")
-          || CVE_PAT.test(p.selftext || p.body || p.description || "")
-          || CVE_PAT.test(p.url || "")
-          || !!p.isAboutCve;
-
-        // CVE post: skip only if both layers are off; non-CVE post: skip if posts layer is off
-        if (hasCve && !showCvePosts && !showPosts) continue;
-        if (!hasCve && !showPosts) continue;
-
-        const postEpoch = +(new Date(p.created_utc || 0)) || Date.now();
-        const daysDiff  = Math.abs(postEpoch - (compEpoch.get(sub) || postEpoch)) / 86400000;
-
-        const pid = `post:${postIdx++}`;
-        const redditId = p.redditId || p._id || p.id || "";
-        postNodes.push({ id: pid, sub, isSO, risk, isAboutCve: !!p.isAboutCve, hasCve, daysDiff,
-          label: (p.title || "").slice(0, 60), url: p.url || "", redditId });
-        postEdges.push({ id: `${pid}->${sub}`, source: pid, target: sub });
-      }
-
-      G_GRAPH.postNodes = postNodes;
-      G_GRAPH.postEdges = postEdges;
-    }
-
-    function gBuildCveOverlay(rawVersions) {
-      const showCve = document.getElementById("g-show-cve").checked;
-      if (!showCve) { G_GRAPH.cveNodes = []; G_GRAPH.cveEdges = []; return; }
-
-      const knownSet = Object.keys(G_ECO.components).length > 0
-        ? new Set(Object.keys(G_ECO.components))
-        : new Set(rawVersions.map(v => (v.versionProductName || "").toLowerCase().trim()).filter(Boolean));
-
-      const cveNodes = [], cveEdges = [], seen = new Set();
-
-      for (const v of rawVersions) {
-        if (!v.isCve) continue;
-        const compRaw = (v.versionProductName || "").trim(); if (!compRaw) continue;
-        const compKey = compRaw.toLowerCase();
-        if (!knownSet.has(compKey)) continue;
-
-        const cveId  = aExtractCveCode(v.versionUrl) || v.versionNumber || "CVE";
-        const nodeId = `cve:${compKey}:${cveId}`;
-        if (seen.has(nodeId)) continue;
-        seen.add(nodeId);
-
-        const daysDiff = Math.abs(Date.now() - (gGetVersionEpoch(v) || Date.now())) / 86400000;
-
-        cveNodes.push({ id: nodeId, compKey, cveId, daysDiff,
-          label: cveId, url: v.versionUrl || "",
-          ver: v.versionNumber || "", versionId: v._id || "" });
-        cveEdges.push({ id: `${nodeId}->${compKey}`, source: nodeId, target: compKey });
-      }
-
-      G_GRAPH.cveNodes = cveNodes;
-      G_GRAPH.cveEdges = cveEdges;
-    }
-
-    function gBuildGraph(rawVersions, redditPosts) {
-      if (document.getElementById("g-show-versions").checked) {
-        gTransform(rawVersions);
-      } else {
-        G_ECO.components = {}; G_ECO.edges = {}; G_ECO.cost = 0;
-        if (G_ECO.attrMap) Object.keys(G_ECO.attrMap).forEach(a => { G_ECO.attrMap[a].count = 0; });
-      }
-      gBuildPostOverlay(rawVersions, redditPosts);
-      gBuildCveOverlay(rawVersions);
-    }
-
-    /* ── Unified render ─────────────────────────────────────── */
-    function gSetupRings(compPos, sigmaNodes, R) {
-      const ringCanvas = document.getElementById("g-ringCanvas");
-      if (!ringCanvas || !G_SIGMA) return;
-
-      function draw() {
-        if (!G_SIGMA) return;
-        const view = document.getElementById("graphView");
-        const w = view.offsetWidth, h = view.offsetHeight;
-        if (!w || !h) return;
-        ringCanvas.width  = w;
-        ringCanvas.height = h;
-        const ctx = ringCanvas.getContext("2d");
-        ctx.clearRect(0, 0, w, h);
-
-        // Reconstruct sigma's rescale normalization from the node bounding box
-        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-        sigmaNodes.forEach(n => {
-          if (n.x < minX) minX = n.x; if (n.x > maxX) maxX = n.x;
-          if (n.y < minY) minY = n.y; if (n.y > maxY) maxY = n.y;
-        });
-        const rangeX = (maxX - minX) || 1, rangeY = (maxY - minY) || 1;
-        const normScale = Math.min(w, h) * 0.9 / Math.max(rangeX, rangeY);
-        const ncx = (minX + maxX) / 2, ncy = (minY + maxY) / 2;
-
-        // Safe camera read (Sigma v1 stores camera on .cameras.cam0 or .camera)
-        const cam = G_SIGMA.cameras?.cam0 ?? G_SIGMA.camera ?? { x: 0, y: 0, ratio: 1 };
-        const camX = cam.x || 0, camY = cam.y || 0, camR = cam.ratio || 1;
-
-        function toScreen(gx, gy) {
-          const nx = (gx - ncx) * normScale;
-          const ny = (gy - ncy) * normScale;
-          return { x: (nx - camX) / camR + w / 2, y: (ny - camY) / camR + h / 2 };
-        }
-
-        // Ring radius in graph-space: CVE scale → R·0.75·days/365
-        // Post scale   → R·0.20·days/90 (≈ similar per-day step)
-        // Use CVE scale (longer range) as reference
-        const dayToGR = days => R * 0.75 * days / 365;
-
-        compPos.forEach(({ x: cx, y: cy }) => {
-          const sc = toScreen(cx, cy);
-          for (let day = 30; day <= 365; day += 30) {
-            const sR = dayToGR(day) * normScale / camR;
-            if (sR < 4) continue;
-            const isQ = day % 90 === 0;
-            ctx.beginPath();
-            ctx.arc(sc.x, sc.y, sR, 0, Math.PI * 2);
-            ctx.strokeStyle = isQ ? `rgba(148,163,184,0.38)` : `rgba(148,163,184,0.16)`;
-            ctx.lineWidth   = isQ ? 1.4 : 0.8;
-            ctx.setLineDash(isQ ? [] : [4, 5]);
-            ctx.stroke();
-            ctx.setLineDash([]);
-            // label quarterly rings (3m, 6m, 9m, 1y) at right edge
-            if (isQ) {
-              const lbl = day === 365 ? "1y" : `${day / 30}m`;
-              ctx.font = `9px system-ui,sans-serif`;
-              ctx.fillStyle = `rgba(148,163,184,0.55)`;
-              ctx.fillText(lbl, sc.x + sR + 3, sc.y + 3);
-            }
-          }
+        const sorted = [...buckets.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+        G_CHARTS.activity = new Chart(document.getElementById("g-chartActivity"), {
+          type: "line",
+          data: {
+            labels: sorted.map(([k]) => k),
+            datasets: [{ label: "Releases", data: sorted.map(([, v]) => v),
+              borderColor: "#2563eb", backgroundColor: "rgba(37,99,235,0.08)",
+              tension: 0.3, fill: true, pointRadius: 2 }]
+          },
+          options: { responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { x: { ticks: { maxTicksLimit: 8, maxRotation: 30 } } } }
         });
       }
 
-      // Redraw on every sigma render (covers pan + zoom from mouse)
-      G_SIGMA.bind("render", draw);
-      draw();
-    }
-
-    const G_EXAMPLES = [
-      "AutoGPT","Automate","automation","CLine","ChatGPT","FastAPI","LLM","LangChain",
-      "LocalStack","OpenAI","Vllm","agi","codeium","comfyui","datascience","deeplearning",
-      "dgraph","docker","elasticsearch","keras","kubernetes","langflow","llama",
-      "machinelearning","mcp","mlflow","mongodb","n8n","next.js","node.js","nousresearch",
-      "ollama","openclaw","picoclaw","pytorch","python","rag","react","redis",
-      "scrapegraphai","singularity","stablediffusion","tensorflow","transformers",
-      "unsloth","vectordatabase","whisper"
-    ];
-
-    function gPickExample(name) {
-      const inp = document.getElementById("components");
-      if (inp) { inp.value = name; }
-      const form = document.getElementById("filterForm");
-      if (form) form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
-    }
-
-    function gShowGraphPrompt() {
-      const container = gEl("graphContainer");
-      if (G_SIGMA) { try { G_SIGMA.kill(); } catch(e) {} G_SIGMA = null; }
-      const rc = document.getElementById("g-ringCanvas");
-      if (rc) { const c = rc.getContext("2d"); c.clearRect(0,0,rc.width,rc.height); }
-      const chips = G_EXAMPLES.map(n =>
-        `<span class="g-example-chip" data-name="${n.replace(/"/g,'&quot;')}" style="display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-size:11px;cursor:pointer;border:1px solid #263043;background:#0f1c30;color:#93c5fd;white-space:nowrap">${n}</span>`
-      ).join("");
-      container.innerHTML = `
-        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:24px;box-sizing:border-box;text-align:center">
-          <div style="font-size:22px;margin-bottom:8px">🔍</div>
-          <div style="font-size:14px;font-weight:700;color:#e2e8f0;margin-bottom:4px">Enter a component to explore the graph</div>
-          <div style="font-size:12px;color:#64748b;margin-bottom:18px">Type in the search box on the left, or pick an example below</div>
-          <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:680px">${chips}</div>
-        </div>`;
-      container.addEventListener("click", e => {
-        const chip = e.target.closest(".g-example-chip");
-        if (chip) gPickExample(chip.dataset.name);
-      }, { once: true });
-      gEl("graphCostBadge").textContent = "No component selected";
-    }
-
-    function gRender() {
-      if (!G_LOADED || typeof sigma === "undefined") return;
-      const query = (document.getElementById("components")?.value || "").trim();
-      if (!query) { gShowGraphPrompt(); return; }
-      const showVersions = document.getElementById("g-show-versions").checked;
-      const R = Math.round((40 * Number(gEl("zoomRange").value || 140)) / 100);
-      const MAX_DAYS = 90;
-
-      // ── Component nodes (outer ring) ──────────────────────────
-      const compKeys = showVersions
-        ? Object.keys(G_ECO.components).filter(k =>
-            !G_ECO.selectedTypes || !G_ECO.selectedTypes.size ||
-            !G_ECO.components[k].type || G_ECO.selectedTypes.has(G_ECO.components[k].type))
-        : [...new Set((G_GRAPH.postNodes || []).map(p => p.sub))];
-
-      let minC = Infinity, maxC = -Infinity;
-      if (showVersions) compKeys.forEach(k => {
-        const c = G_ECO.components[k].cost; if (c < minC) minC = c; if (c > maxC) maxC = c;
-      });
-
-      const compPos = new Map(); // key → {x, y, angle}
-      const sigmaNodes = [];
-      compKeys.forEach((k, i) => {
-        const angle = 2 * Math.PI * i / Math.max(1, compKeys.length);
-        const x = Math.round(R * Math.cos(angle)), y = Math.round(R * Math.sin(angle));
-        compPos.set(k, { x, y, angle });
-
-        let color = "#22c55e", label = k;
-        if (showVersions && G_ECO.components[k]) {
-          const comp = G_ECO.components[k];
-          label = `${comp.display || k} (${comp.cost})`;
-          const cost = comp.cost;
-          if      (cost === 0 || cost === minC) color = "#22c55e";
-          else if (maxC > minC && cost === maxC) color = "#ef4444";
-          else if (isFinite(minC) && maxC !== minC) {
-            const v2 = Math.round(210 - ((cost - minC) / (maxC - minC)) * 140);
-            color = `rgb(${v2},${v2},${v2})`;
-          }
-        }
-        sigmaNodes.push({ id: k, label, x, y, size: 2, color });
-      });
-
-      // only post→component edges; version-version edges are removed
-      const sigmaEdges = [];
-
-      // ── CVE version nodes (middle ring, red, time-distance) ──
-      const cveLookup = new Map();
-      const CVE_MAX_DAYS = 365;
-      (G_GRAPH.cveNodes || []).forEach(cve => {
-        const anchor = compPos.get(cve.compKey); if (!anchor) return;
-        // recent CVEs close to component, old ones near center; cap at 0.75*R
-        const fraction = 0.75 * (1 - Math.min(cve.daysDiff / CVE_MAX_DAYS, 0.80));
-        const jitterAngle = (Math.random() - 0.5) * 0.6;
-        const dist = R * (0.25 + fraction); // range: 0.25*R … 0.75*R
-        const x = Math.round(dist * Math.cos(anchor.angle + jitterAngle));
-        const y = Math.round(dist * Math.sin(anchor.angle + jitterAngle));
-        const edgeAlpha = (0.3 + 0.7 * (1 - Math.min(cve.daysDiff / CVE_MAX_DAYS, 1))).toFixed(2);
-        sigmaNodes.push({ id: cve.id, label: cve.label, x, y, size: 1.5, color: "#ef4444" });
-        sigmaEdges.push({ id: `${cve.id}->${cve.compKey}`, source: cve.id, target: cve.compKey,
-          size: 1, color: `rgba(239,68,68,${edgeAlpha})` });
-        cveLookup.set(cve.id, cve);
-      });
-
-      // ── Post nodes (outer time-distance, beyond CVE ring) ────
-      const postLookup = new Map();
-      (G_GRAPH.postNodes || []).forEach(post => {
-        const anchor = compPos.get(post.sub); if (!anchor) return;
-        // posts float outside/beyond CVE ring toward the component; older ones drift in
-        const fraction = 1 - Math.min(post.daysDiff / MAX_DAYS, 0.85);
-        const jitterAngle = (Math.random() - 0.5) * 0.75;
-        const dist = R * (0.80 + 0.20 * fraction); // range: 0.80*R … R (just inside component)
-        const x = Math.round(dist * Math.cos(anchor.angle + jitterAngle));
-        const y = Math.round(dist * Math.sin(anchor.angle + jitterAngle));
-        // hasCve = rose/salmon; SO = blue; Reddit = violet; pure red is reserved for isCve version nodes
-        const color = post.hasCve ? "#fb7185" : (post.isSO ? "#3b82f6" : "#a855f7");
-        const edgeAlpha = (0.25 + 0.75 * (1 - Math.min(post.daysDiff / MAX_DAYS, 1))).toFixed(2);
-        sigmaNodes.push({ id: post.id, label: post.label.slice(0, 35), x, y, size: 1, color });
-        sigmaEdges.push({ id: `${post.id}->${post.sub}`, source: post.id, target: post.sub,
-          size: 1, color: `rgba(168,85,247,${edgeAlpha})` }); // violet edge fades with age
-        postLookup.set(post.id, post);
-      });
-
-      // ── Render ────────────────────────────────────────────────
-      const container = gEl("graphContainer"); container.innerHTML = "";
-      if (G_SIGMA) { try { G_SIGMA.kill(); } catch(e) {} G_SIGMA = null; }
-      if (!sigmaNodes.length) {
-        container.innerHTML = `<div style="color:#9ca3af;text-align:center;padding-top:20%;font-size:13px">No data to display.<br><small>Enable at least one layer or search for components.</small></div>`;
-        gEl("graphCostBadge").textContent = "No data"; return;
-      }
-      G_SIGMA = new sigma({ graph: { nodes: sigmaNodes, edges: sigmaEdges }, renderer: { container, type: "canvas" },
-        settings: { drawLabels: true, labelSize: 12, defaultLabelSize: 12, defaultLabelColor: "#ffffff", labelColor: "default",
-          font: "system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif", drawEdgeLabels: false, batchEdgesDrawing: true,
-          defaultNodeColor: "#22c55e", defaultEdgeColor: "#374151" } });
-
-      const API_ORIGIN = location.origin;
-      const mkClose = () => `<button onclick="this.parentNode.style.display='none'" style="float:right;background:none;border:none;color:#9ca3af;cursor:pointer;font-size:16px;line-height:1;margin-left:6px">×</button>`;
-      const mkLink = (href, label, color) => href
-        ? `<a href="${href}" target="_blank" rel="noopener" style="font-size:10px;color:${color};text-decoration:none;white-space:nowrap" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">↗ ${label}</a>`
-        : "";
-      const mkLinks = (sourceUrl, apiUrl, feedComp) => {
-        const parts = [
-          mkLink(sourceUrl, "source", "#94a3b8"),
-          mkLink(apiUrl,    "api",    "#60a5fa"),
-          mkLink(feedComp ? `/?q=${encodeURIComponent(feedComp)}` : "", "feed", "#4ade80"),
-        ].filter(Boolean);
-        return parts.length ? `<div style="display:flex;gap:10px;margin-top:5px;flex-wrap:wrap">${parts.join("")}</div>` : "";
-      };
-
-      G_SIGMA.bind("clickNode", e => {
-        const id = e.data.node.id;
-        const info = gEl("nodeInfo");
-        const cveNode = cveLookup.get(id);
-        const post = postLookup.get(id);
-        if (cveNode) {
-          const verTxt = cveNode.ver ? ` · v${cveNode.ver}` : "";
-          const apiUrl = cveNode.versionId ? `${API_ORIGIN}/api/v/${cveNode.versionId}` : `${API_ORIGIN}/api/v/search?q=${encodeURIComponent(cveNode.compKey)}&isCve=true`;
-          info.innerHTML = `<span style="display:flex;align-items:center;font-weight:700;font-size:11px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;margin-right:5px;flex-shrink:0"></span>🔐 ${cveNode.cveId}${mkClose()}</span><div style="margin-top:4px;font-size:11px;color:#9ca3af">Component: ${cveNode.compKey}${verTxt} · ${Math.round(cveNode.daysDiff)}d ago</div>${mkLinks(cveNode.url, apiUrl, cveNode.compKey)}`;
-        } else if (post) {
-          const dotColor = post.hasCve ? "#fb7185" : (post.isSO ? "#3b82f6" : "#a855f7");
-          const icon = post.isSO ? "📚 " : "💬 ";
-          const cveTag = post.hasCve ? `<span style="font-size:10px;background:#450a0a;color:#f87171;border-radius:4px;padding:1px 4px;margin-left:4px">CVE</span>` : "";
-          const dot = `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${dotColor};margin-right:5px;flex-shrink:0"></span>`;
-          const apiUrl = post.redditId ? `${API_ORIGIN}/api/reddit/${post.redditId}` : "";
-          info.innerHTML = `<span style="display:flex;align-items:center;font-weight:700;font-size:11px">${dot}${icon}${post.label}${cveTag}${mkClose()}</span><div style="margin-top:4px;font-size:11px;color:#9ca3af">Component: ${post.sub} · ${Math.round(post.daysDiff)}d from release</div>${mkLinks(post.url, apiUrl, post.sub)}`;
-        } else if (showVersions && G_ECO.components[id]) {
-          const comp = G_ECO.components[id], disp = comp.display || id;
-          const usedTags = new Set();
-          Object.values(G_ECO.edges).forEach(edge => {
-            if (edge.source === id || edge.target === id)
-              edge.tags.forEach(t => { if (!t.startsWith("type:")) usedTags.add(t); });
-          });
-          const tagHtml = [...comp.tags].sort().map(t =>
-            `<span style="display:inline-block;margin:1px;padding:1px 5px;border-radius:999px;font-size:10px;background:${usedTags.has(t)?"#183029":"#1e2433"};color:${usedTags.has(t)?"#22c55e":"#9ca3af"};border:1px solid ${usedTags.has(t)?"#22c55e":"#374151"}">${t}</span>`).join("");
-          const apiUrl = `${API_ORIGIN}/api/v/search?q=${encodeURIComponent(id)}`;
-          info.innerHTML = `<span style="font-weight:700">${disp}</span> <span style="color:#22c55e;font-size:10px">cost ${comp.cost}${mkClose()}</span><div style="margin-top:4px">${tagHtml || '<span style="opacity:.5">No tags</span>'}</div>${mkLinks("", apiUrl, id)}`;
-          const td = document.getElementById("g-tagsContent");
-          if (td) td.innerHTML = `<b>${disp}</b>: ${comp.tags.size} tags:<div style="margin-top:6px">${tagHtml || '<span style="opacity:.5">No tags</span>'}</div>`;
-        } else {
-          info.innerHTML = `<span style="font-weight:700">${id}${mkClose()}</span>`;
-        }
-        info.style.display = "block";
-      });
-
-      const nComp = compKeys.length;
-      const nPost = (G_GRAPH.postNodes || []).length;
-      const nCve  = (G_GRAPH.cveNodes  || []).length;
-      const badge = gEl("graphCostBadge");
-      badge.textContent = showVersions
-        ? `cost ${G_ECO.cost} · ${nComp} components · ${nPost} posts · ${nCve} CVEs · ${sigmaEdges.length} edges`
-        : `${nComp} components · ${nPost} posts · ${nCve} CVEs · ${sigmaEdges.length} edges`;
-
-      gSetupRings(compPos, sigmaNodes, R);
-    }
-
-    function gRefreshEdgeDialog() {
-      const cnt = new Map();
-      Object.values(G_ECO.edges).forEach(e => { (e.tags||[]).forEach(t => { if (!t.startsWith("type:")) cnt.set(t,(cnt.get(t)||0)+1); }); });
-      const tags = [...cnt.keys()].sort((a,b) => (cnt.get(b)||0) - (cnt.get(a)||0));
-      const meta = document.getElementById("g-edgeTagsMeta"), list = document.getElementById("g-edgeTagsChecklist");
-      if (!meta || !list) return;
-      meta.textContent = `(${tags.length} tags)`;
-      list.innerHTML = tags.length ? "" : `<span style="opacity:.6;font-size:12px">No tag-based edges yet.</span>`;
-      tags.forEach(tag => {
-        const pill = document.createElement("label"); pill.className = "g-tag-pill";
-        pill.innerHTML = `<input type="checkbox" ${!G_EDGE.excludedTags.has(tag)?"checked":""}><span>${tag}</span><span style="opacity:.5">${cnt.get(tag)}</span>`;
-        pill.querySelector("input").addEventListener("change", e => {
-          if (e.target.checked) G_EDGE.excludedTags.delete(tag); else G_EDGE.excludedTags.add(tag);
-          gBuildEdges(); gRecalcEco(); gRender();
+      // ── 2. Top Components (horizontal bar, top 20) ────────────
+      {
+        const counts = new Map();
+        filtered.forEach(v => {
+          const k = (v.versionProductName || "unknown").toLowerCase().trim();
+          counts.set(k, (counts.get(k) || 0) + 1);
         });
-        list.appendChild(pill);
-      });
+        const top = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 20);
+        G_CHARTS.components = new Chart(document.getElementById("g-chartComponents"), {
+          type: "bar",
+          data: {
+            labels: top.map(([k]) => k),
+            datasets: [{ label: "Releases", data: top.map(([, v]) => v), backgroundColor: "#2563eb" }]
+          },
+          options: { indexAxis: "y", responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { x: { ticks: { precision: 0 } } } }
+        });
+      }
+
+      // ── 3. Channel Breakdown (donut) ──────────────────────────
+      {
+        const ch = { major: 0, minor: 0, patch: 0, cve: 0 };
+        filtered.forEach(v => { const c = gChannelOf(v); if (c in ch) ch[c]++; });
+        const labels = Object.keys(ch).filter(k => ch[k] > 0);
+        const colors = { major: "#c2410c", minor: "#059669", patch: "#2563eb", cve: "#dc2626" };
+        G_CHARTS.channels = new Chart(document.getElementById("g-chartChannels"), {
+          type: "doughnut",
+          data: { labels, datasets: [{ data: labels.map(k => ch[k]), backgroundColor: labels.map(k => colors[k]) }] },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "right" } } }
+        });
+      }
+
+      // ── 4. CVE Trend (bar, weekly) ────────────────────────────
+      {
+        const buckets = new Map();
+        filtered.filter(v => gChannelOf(v) === "cve" || v.isCve || v.latestCveVersion).forEach(v => {
+          const ep = gGetVersionEpoch(v);
+          const key = new Date(ep - (ep % WEEK_MS)).toISOString().slice(0, 10);
+          buckets.set(key, (buckets.get(key) || 0) + 1);
+        });
+        const sorted = [...buckets.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+        G_CHARTS.cve = new Chart(document.getElementById("g-chartCve"), {
+          type: "bar",
+          data: {
+            labels: sorted.map(([k]) => k),
+            datasets: [{ label: "CVE releases", data: sorted.map(([, v]) => v), backgroundColor: "#dc2626" }]
+          },
+          options: { responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { x: { ticks: { maxTicksLimit: 8, maxRotation: 30 } }, y: { ticks: { precision: 0 } } } }
+        });
+      }
     }
 
-    /* ── Graph view: show / hide ──────────────────────────────── */
+    function gGetVersions() {
+      const useSearch = document.getElementById("g-scope-search")?.checked;
+      if (useSearch && STATE.candidates.length) return STATE.candidates;
+      return STATE.rawVersions;
+    }
+
+    /* ── Graph view: show / hide ─────────────────────────────── */
     function activateGraph() {
       if (A_ACTIVE)   deactivateArch();
       if (CV_ACTIVE)  deactivateCve();
@@ -4019,6 +3502,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       EL.graphLink.classList.add("nav-active");
     }
     function deactivateGraph() {
+      gDestroyCharts();
       G_ACTIVE = false;
       setViewParam("");
       document.getElementById("graphView").style.display = "none";
@@ -4032,24 +3516,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       e.preventDefault();
       if (G_ACTIVE) { deactivateGraph(); return; }
       activateGraph();
-      const query = (EL.components?.value || "").trim();
-      if (!query) {
-        if (!G_LOADED) {
-          EL.navLoader.classList.add("active");
-          try { await gLoadSigma(); } finally { EL.navLoader.classList.remove("active"); }
-        }
-        gShowGraphPrompt(); return;
-      }
-      // Use cached versions + cached/in-flight reddit — no extra API calls
       EL.navLoader.classList.add("active");
-      try {
-        await Promise.all([
-          G_LOADED ? Promise.resolve() : gLoadSigma(),
-          STATE.redditReady || Promise.resolve()  // resolves instantly if reddit already loaded
-        ]);
-      } finally { EL.navLoader.classList.remove("active"); }
-      gBuildGraph(STATE.candidates.length ? STATE.candidates : STATE.rawVersions, STATE.redditAll);
-      gRender();
+      try { await gLoadChartJs(); } finally { EL.navLoader.classList.remove("active"); }
+      gRenderCharts(gGetVersions());
     });
 
     document.querySelector(".brand").addEventListener("click", e => {
@@ -4075,37 +3544,31 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       else if (UA_ACTIVE) deactivateUsers();
     });
 
-    /* ── Unified layer + option checkboxes ───────────────────── */
-    function gOnLayerChange() {
-      if (!G_ACTIVE || !G_LOADED) return;
-      const vers = STATE.candidates.length ? STATE.candidates : STATE.rawVersions;
-      gBuildGraph(vers, STATE.redditAll);
-      gRender();
-    }
-    ["g-show-versions","g-show-posts","g-show-cve-posts","g-show-cve",
-     "g-posts-riskOnly","g-onlyToday","g-realOnly","g-uniqueType"].forEach(id => {
-      document.getElementById(id)?.addEventListener("change", gOnLayerChange);
+    document.getElementById("g-refreshBtn").addEventListener("click", async () => {
+      if (!G_CJ_LOADED) {
+        EL.navLoader.classList.add("active");
+        try { await gLoadChartJs(); } finally { EL.navLoader.classList.remove("active"); }
+      }
+      gRenderCharts(gGetVersions());
     });
 
-    document.getElementById("g-edgesBtn").addEventListener("click", () => document.getElementById("g-edgesDialog").showModal());
-    document.getElementById("g-legendBtn").addEventListener("click", () => document.getElementById("g-legendDialog").showModal());
-    document.getElementById("g-tagsBtn").addEventListener("click",  () => document.getElementById("g-tagsDialog").showModal());
+    document.getElementById("g-window").addEventListener("change", () => {
+      if (!G_ACTIVE || !G_CJ_LOADED) return;
+      gRenderCharts(gGetVersions());
+    });
+
+    document.querySelectorAll("input[name='g-scope']").forEach(r => {
+      r.addEventListener("change", () => {
+        if (!G_ACTIVE || !G_CJ_LOADED) return;
+        gRenderCharts(gGetVersions());
+      });
+    });
+
     document.querySelectorAll("[data-close-dialog]").forEach(btn =>
       btn.addEventListener("click", () => document.getElementById(btn.dataset.closeDialog).close())
     );
-    const gEdgeUseTags = document.getElementById("g-edgeUseTags");
-    const gEdgeUseType = document.getElementById("g-edgeUseType");
-    const gEdgePct     = document.getElementById("g-edgeCommonPct");
-    const gEdgePctLbl  = document.getElementById("g-edgeCommonPctLabel");
-    function applyGEdge() {
-      G_EDGE.useTags = gEdgeUseTags.checked; G_EDGE.useType = gEdgeUseType.checked;
-      G_EDGE.commonThreshold = Number(gEdgePct.value) / 100;
-      gEdgePctLbl.textContent = gEdgePct.value + "%";
-      gBuildEdges(); gRecalcEco(); gRender();
-    }
-    gEdgeUseTags.addEventListener("change", applyGEdge);
-    gEdgeUseType.addEventListener("change", applyGEdge);
-    gEdgePct.addEventListener("input", applyGEdge);
+
+
 
     /* ── Arch Module ──────────────────────────────────────────── */
     const A_OS = new Set(["linux","windows","macos","ubuntu","centos","debian","redhat","fedora","arch","suse",
@@ -5026,7 +4489,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       EL.status.textContent = `${STATE.groupsFiltered.length} group${STATE.groupsFiltered.length !== 1 ? "s" : ""}`;
       appendNextGroups();
 
-      if (G_ACTIVE) { gBuildGraph(candidates, STATE.redditAll); gRender(); }
+      if (G_ACTIVE && G_CJ_LOADED) gRenderCharts(gGetVersions());
       if (A_ACTIVE) aLoadAndRender();
     }
 
@@ -5361,10 +4824,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           // Re-render rendered feed cards so reddit posts and chips appear
           refreshRenderedGroupsWithReddit();
           updateCommunityBracket();
-          if (G_ACTIVE) {
-            gBuildGraph(STATE.candidates.length ? STATE.candidates : STATE.rawVersions, STATE.redditAll);
-            gRender();
-          }
+          if (G_ACTIVE && G_CJ_LOADED) gRenderCharts(gGetVersions());
         });
       }
       return STATE.redditReady;
@@ -5691,11 +5151,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (view === "graph") {
         activateGraph();
         EL.navLoader.classList.add("active");
-        try {
-          await Promise.all([gLoadSigma(), ensureRedditLoaded()]);
-        } finally { EL.navLoader.classList.remove("active"); }
-        gBuildGraph(STATE.candidates.length ? STATE.candidates : STATE.rawVersions, STATE.redditAll);
-        gRender();
+        try { await gLoadChartJs(); } finally { EL.navLoader.classList.remove("active"); }
+        gRenderCharts(gGetVersions());
       } else if (view === "arch") {
         activateArch();
         EL.navLoader.classList.add("active");
