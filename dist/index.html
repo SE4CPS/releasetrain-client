@@ -7383,9 +7383,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     document.getElementById("ua-bm-save-btn").addEventListener("click", async () => {
       const q = document.getElementById("components").value.trim();
       if (!q) { alert("Enter a component search first, then save it as a bookmark."); return; }
-      const params = new URLSearchParams(location.search);
-      params.set("q", q);
-      const url = location.origin + location.pathname + "?" + params.toString();
+      const url = location.origin + location.pathname + "?q=" + encodeURIComponent(q);
       const name = prompt("Bookmark name:", q);
       if (!name) return;
       const res = await uaRequest("bookmarks/", { method: "POST", body: JSON.stringify({ name, url }) });
