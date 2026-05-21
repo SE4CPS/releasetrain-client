@@ -716,6 +716,24 @@
       padding: 3px 6px; border: 1px solid var(--border); border-radius: var(--radius-sm);
       font: inherit; font-size: 12px; background: var(--bg); color: var(--text); cursor: pointer;
     }
+    .ua-topbar-chip {
+      font-size: 12px; font-weight: 600; white-space: nowrap;
+      color: var(--brand); background: var(--brand-light);
+      border: 1px solid #bfdbfe; border-radius: var(--radius-full);
+      padding: 3px 10px; cursor: pointer; flex-shrink: 0;
+    }
+    .ua-topbar-chip:hover { background: #dbeafe; }
+    .ua-bm-list { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
+    .ua-bm-item {
+      display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); font-size: 13px;
+    }
+    .ua-bm-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ua-bm-actions { display: flex; gap: 5px; flex-shrink: 0; }
+    .ua-why-list { margin: 8px 0 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+    .ua-why-list li { font-size: 12px; color: var(--muted); display: flex; gap: 8px; align-items: flex-start; }
+    .ua-why-list li span { flex-shrink: 0; }
 
     /* ── Docs view ──────────────────────────────────────────── */
     #docsView {
@@ -1259,6 +1277,7 @@
   <header class="topbar" role="banner" id="topbar">
     <div class="topbar-main">
       <a class="brand" href="/" aria-label="Releasetrain home">Releasetrain <em>v3.16.0</em></a>
+      <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
       <div class="topbar-spacer"></div>
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle navigation" aria-expanded="false" aria-controls="navLinks">☰</button>
@@ -1297,6 +1316,7 @@
           <div class="search-actions">
             <button class="btn btn-primary" type="submit">Search</button>
             <button class="btn btn-ghost" type="button" id="clearBtn">Clear</button>
+            <button class="btn btn-ghost" type="button" id="ua-bm-save-btn" style="display:none" title="Save current search as a bookmark">🔖</button>
           </div>
         </form>
       </div>
@@ -3030,6 +3050,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               <button class="btn btn-primary" type="submit" id="ua-register-btn">Create account</button>
             </form>
           </div>
+        <details style="margin-top:12px">
+          <summary style="cursor:pointer;font-size:12px;color:var(--muted);list-style:none;display:flex;align-items:center;gap:4px">
+            <span style="font-size:10px">›</span> Why create an account?
+          </summary>
+          <ul class="ua-why-list">
+            <li><span>🔖</span>Save named searches and restore them across devices via server-side bookmark storage.</li>
+            <li><span>🔗</span>Generate public share links for any component search so collaborators can open the exact same view.</li>
+            <li><span>🔐</span>JWT-based session persists across tabs and survives page reloads without re-authenticating.</li>
+            <li><span>🛡</span>Admin role grants access to user management: view all accounts, change roles, remove users.</li>
+            <li><span>📌</span>Bookmark list is user-specific: each account holds its own saved searches, isolated from other users.</li>
+          </ul>
+        </details>
         </div>
 
         <!-- Authenticated state -->
@@ -3057,6 +3089,17 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                 <button class="btn btn-primary" type="submit">Update password</button>
               </form>
             </details>
+          </div>
+          <!-- Bookmarks -->
+          <div class="ua-card" style="margin-bottom:14px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              <span style="font-weight:700;font-size:13px">Bookmarks</span>
+              <span id="ua-bm-count" class="ua-muted" style="font-size:12px"></span>
+              <button id="ua-bm-refresh" class="btn btn-ghost" style="font-size:12px;padding:4px 10px;margin-left:auto">Refresh</button>
+            </div>
+            <p class="ua-muted" style="font-size:12px;margin:0 0 6px">Save searches using the 🔖 button in the sidebar. Share links are public.</p>
+            <div id="ua-bm-empty" class="ua-muted" style="font-size:12px;display:none">No bookmarks yet.</div>
+            <div id="ua-bm-list" class="ua-bm-list"></div>
           </div>
           <!-- Admin: all users -->
           <div id="ua-admin-section" style="display:none">
@@ -7008,6 +7051,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       el.style.display = text ? "" : "none";
     }
 
+    function uaUpdateTopbar() {
+      const user = uaUser();
+      const chip = document.getElementById("ua-topbar-user");
+      if (!chip) return;
+      if (user) {
+        chip.textContent = user.name || user.email;
+        chip.style.display = "";
+      } else {
+        chip.style.display = "none";
+      }
+    }
+
     function uaUpdateSidebar() {
       const user = uaUser();
       const el = document.getElementById("ua-sidebar-status");
@@ -7015,6 +7070,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       el.textContent = user
         ? (user.name || user.email) + " (" + user.role + ")"
         : "Not signed in.";
+      uaUpdateTopbar();
     }
 
     function uaRender() {
@@ -7022,6 +7078,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const user = uaUser();
       document.getElementById("ua-auth-panel").style.display = (!token || !user) ? "" : "none";
       document.getElementById("ua-profile-panel").style.display = (token && user) ? "" : "none";
+      const saveBtn = document.getElementById("ua-bm-save-btn");
+      if (saveBtn) saveBtn.style.display = (token && user) ? "" : "none";
       if (token && user) {
         document.getElementById("ua-profile-name").textContent = user.name || user.email;
         document.getElementById("ua-profile-email").textContent = user.email;
@@ -7035,6 +7093,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         } else {
           adminSection.style.display = "none";
         }
+        uaLoadBookmarks();
       }
       uaUpdateSidebar();
     }
@@ -7175,6 +7234,107 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     document.getElementById("ua-refresh-users").addEventListener("click", uaLoadUsers);
 
+    async function uaLoadBookmarks() {
+      const listEl = document.getElementById("ua-bm-list");
+      const emptyEl = document.getElementById("ua-bm-empty");
+      const countEl = document.getElementById("ua-bm-count");
+      if (!listEl) return;
+      listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:6px 0">Loading…</p>`;
+      if (emptyEl) emptyEl.style.display = "none";
+      const res = await uaRequest("bookmarks/").catch(() => null);
+      if (!res || !res.ok) {
+        listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:6px 0">Could not load bookmarks.</p>`;
+        return;
+      }
+      const data = await res.json();
+      if (countEl) countEl.textContent = "(" + data.data.length + ")";
+      if (!data.data.length) {
+        listEl.innerHTML = "";
+        if (emptyEl) emptyEl.style.display = "";
+        return;
+      }
+      const shareBase = location.origin + location.pathname + "?share=";
+      listEl.innerHTML = data.data.map(b => `
+        <div class="ua-bm-item" data-id="${uaEsc(b._id)}">
+          <span class="ua-bm-name" title="${uaEsc(b.name)}">${uaEsc(b.name)}</span>
+          <div class="ua-bm-actions">
+            <a href="${uaEsc(b.url)}" class="btn btn-ghost" style="font-size:12px;padding:4px 8px" title="Open saved search">Open</a>
+            <button class="btn btn-ghost ua-bm-share-btn" data-share="${uaEsc(b.shareId)}" style="font-size:12px;padding:4px 8px" title="Copy share link">Copy link</button>
+            <button class="btn btn-ghost ua-bm-del-btn" data-id="${uaEsc(b._id)}" style="font-size:12px;padding:4px 8px;color:var(--cve);border-color:#fca5a5">Delete</button>
+          </div>
+        </div>`).join("");
+
+      listEl.querySelectorAll(".ua-bm-share-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const shareId = btn.dataset.share;
+          const link = shareBase + encodeURIComponent(shareId);
+          navigator.clipboard.writeText(link).then(() => {
+            const orig = btn.textContent;
+            btn.textContent = "Copied!";
+            setTimeout(() => { btn.textContent = orig; }, 1500);
+          }).catch(() => {
+            prompt("Share link:", link);
+          });
+        });
+      });
+
+      listEl.querySelectorAll(".ua-bm-del-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          if (!confirm("Delete this bookmark?")) return;
+          const id = btn.dataset.id;
+          const res = await uaRequest("bookmarks/" + id, { method: "DELETE" });
+          if (res.ok) {
+            uaLoadBookmarks();
+          } else {
+            const err = await res.json().catch(() => ({}));
+            alert(err.error || "Failed to delete bookmark.");
+          }
+        });
+      });
+    }
+
+    document.getElementById("ua-bm-refresh").addEventListener("click", uaLoadBookmarks);
+
+    document.getElementById("ua-bm-save-btn").addEventListener("click", async () => {
+      const q = document.getElementById("components").value.trim();
+      if (!q) { alert("Enter a component search first, then save it as a bookmark."); return; }
+      const params = new URLSearchParams(location.search);
+      params.set("q", q);
+      const url = location.origin + location.pathname + "?" + params.toString();
+      const name = prompt("Bookmark name:", q);
+      if (!name) return;
+      const res = await uaRequest("bookmarks/", { method: "POST", body: JSON.stringify({ name, url }) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { alert(data.error || "Failed to save bookmark."); return; }
+      const btn = document.getElementById("ua-bm-save-btn");
+      const orig = btn.textContent;
+      btn.textContent = "Saved!";
+      setTimeout(() => { btn.textContent = orig; }, 1500);
+    });
+
+    // Restore shared bookmark on page load
+    (async function uaBmHandleShare() {
+      const shareId = new URLSearchParams(location.search).get("share");
+      if (!shareId) return;
+      try {
+        const res = await fetch(API_BASE + "bookmarks/share/" + encodeURIComponent(shareId));
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.url) return;
+        const target = new URL(data.url, location.href);
+        const q = target.searchParams.get("q") || "";
+        if (q) {
+          history.replaceState({}, "", target.pathname + "?" + target.searchParams.toString());
+          document.getElementById("components").value = q;
+          document.getElementById("filterForm").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+        }
+      } catch {}
+    })();
+
+    document.getElementById("ua-topbar-user").addEventListener("click", () => {
+      if (!UA_ACTIVE) activateUsers();
+    });
+
     function activateUsers() {
       if (G_ACTIVE)  deactivateGraph();
       if (A_ACTIVE)  deactivateArch();
@@ -7209,8 +7369,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       activateUsers();
     });
 
-    // Restore session state in sidebar on load
+    // Restore session state in sidebar and topbar on load
     uaUpdateSidebar();
+    // Show save button if already logged in
+    const _bsBtn = document.getElementById("ua-bm-save-btn");
+    if (_bsBtn && uaToken()) _bsBtn.style.display = "";
 
   </script>
 </body>

@@ -21,6 +21,88 @@ Read this before acting on any prompt.
 2. Add a changelog bullet to the current version entry in `#changelogView` inside `src/index.html`.
 3. Bump the version in the topbar brand (`<em>vX.Y.Z</em>`) and in `package.json` once per day maximum. If a version was already bumped today, add to the existing entry rather than creating a new one.
 
+### User account and bookmark changes
+
+When modifying the Account view (`#usersView`) or user/bookmark JS module:
+- Any change to the login/register/logout flow must also update `uaRender()` if visible state is affected.
+- Any new authenticated feature must call `uaToken()` to gate visibility (hide when not logged in).
+- Bookmark endpoints follow the pattern `API_BASE + "bookmarks/..."` with `requireAuth`; share links (`?share=<shareId>`) use `API_BASE + "bookmarks/share/<shareId>"` without auth.
+- The topbar chip (`#ua-topbar-user`) is updated by `uaUpdateTopbar()`, called from `uaUpdateSidebar()` and `uaRender()`.
+
+---
+
+## Self-update rule
+
+When a correction or confirmed approach from a chat session is clearly reusable, update this file immediately. Specifically:
+- If a rule was violated and the user corrected it: add or sharpen the relevant rule.
+- If an unusual approach was confirmed by the user: document it so the same judgment can be reproduced without re-deriving.
+- If a pattern was applied repeatedly across multiple changes in a session: extract it as an explicit rule.
+- Do not save ephemeral task details (what was fixed today, PR descriptions, current bug context).
+- Place new rules in the section they relate to. If no section fits, add a new one before `## What not to do`.
+- Apply the same self-update rule to `releasetrain-server/AGENTS.md` when server-side patterns emerge.
+
+---
+
+## Topbar persistent state
+
+Features that must be visible on every page regardless of active view (e.g. login status) go in the topbar as a chip or badge element:
+
+1. Add `<span id="myChip" style="display:none">` between `.brand` and `.topbar-spacer` in the topbar HTML.
+2. Write a dedicated `updateMyChip()` function that reads state and sets `chip.style.display` and `chip.textContent`.
+3. Call `updateMyChip()` from both the feature's `render()` function and the sidebar update function.
+4. On page load (at the bottom of the inline script, after all other init), call `updateMyChip()` to restore state for returning users.
+5. Add a click handler on the chip that navigates to the relevant view.
+
+Current instance: `#ua-topbar-user` chip, updated by `uaUpdateTopbar()`, called from `uaUpdateSidebar()` and `uaRender()`.
+
+---
+
+## Gated UI elements
+
+UI elements that require a logged-in session:
+- Default to `style="display:none"` in HTML.
+- Show/hide them inside `uaRender()` based on `uaToken()`.
+- Also restore visibility on page load: check `uaToken()` and set `display` directly in the init block at the bottom of the script. Do not rely solely on `uaRender()` being called on load.
+
+Current instance: `#ua-bm-save-btn` in the sidebar.
+
+---
+
+## Page-load side effects
+
+Use a self-invoking async function for actions that must fire exactly once on page load and may involve a `fetch`:
+
+```js
+(async function myHandler() {
+  const param = new URLSearchParams(location.search).get("myParam");
+  if (!param) return;
+  // fetch and restore state
+})();
+```
+
+Place these at the bottom of the inline script, after all event listeners but before `</script>`. Do not use `DOMContentLoaded` — the script is already deferred by its position at the bottom of `<body>`.
+
+Current instance: `uaBmHandleShare()` which reads `?share=` and restores a saved search.
+
+---
+
+## Clipboard copy pattern
+
+Always pair `navigator.clipboard.writeText()` with a `prompt()` fallback:
+
+```js
+navigator.clipboard.writeText(text).then(() => {
+  btn.textContent = "Copied!";
+  setTimeout(() => { btn.textContent = orig; }, 1500);
+}).catch(() => {
+  prompt("Copy this link:", text);
+});
+```
+
+The clipboard API is unavailable in non-secure contexts and on some mobile browsers.
+
+---
+
 ### Version bump rule
 
 | Change type | Bump |
@@ -155,6 +237,17 @@ fetch(API_BASE + "some/path", { headers });
 | GET | `users/` | Bearer + admin |
 | PUT | `users/:id` | Bearer (self or admin) |
 | DELETE | `users/:id` | Bearer + admin |
+
+### Bookmark endpoints
+
+| Method | Path | Auth | Notes |
+|---|---|---|---|
+| GET | `bookmarks/` | Bearer | Returns `{ data: [...] }` for the signed-in user |
+| POST | `bookmarks/` | Bearer | Body: `{ name, url }`. Returns `{ id, shareId }` |
+| DELETE | `bookmarks/:id` | Bearer | Deletes own bookmark only |
+| GET | `bookmarks/share/:shareId` | none | Returns `{ name, url }` for share link resolution |
+
+Share links use the format `?share=<shareId>` on the page URL. On load the inline script calls `uaBmHandleShare()` which fetches the share endpoint and restores the search.
 
 ---
 
