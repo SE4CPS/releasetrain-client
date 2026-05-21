@@ -659,6 +659,64 @@
     .ack-list li a:hover { text-decoration: underline; text-underline-offset: 2px; }
     .ack-list li span { font-size: 12px; color: var(--muted); }
 
+    /* ── User account management view ──────────────────────── */
+    #usersView { max-width: 580px; padding: 20px; }
+    .ua-tabs {
+      display: flex; border-bottom: 2px solid var(--border); margin-bottom: 0;
+    }
+    .ua-tab {
+      padding: 9px 18px; background: none; border: none; cursor: pointer;
+      font: 600 13px/1 inherit; color: var(--muted);
+      border-bottom: 2px solid transparent; margin-bottom: -2px;
+      transition: color .15s, border-color .15s;
+    }
+    .ua-tab:hover { color: var(--text); }
+    .ua-tab.ua-tab-active { color: var(--brand); border-bottom-color: var(--brand); }
+    .ua-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px; margin-top: 16px;
+    }
+    .ua-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+    .ua-field label { font: 600 12px/1 inherit; color: var(--text); }
+    .ua-opt { font-weight: 400; color: var(--muted); }
+    .ua-msg {
+      padding: 8px 12px; border-radius: var(--radius-sm);
+      font-size: 12px; margin-bottom: 12px; line-height: 1.5;
+    }
+    .ua-msg-error { background: var(--cve-bg); color: var(--cve); border: 1px solid #fca5a5; }
+    .ua-msg-ok    { background: var(--new-bg); color: var(--new); border: 1px solid #6ee7b7; }
+    .ua-badge {
+      display: inline-block; padding: 2px 10px; border-radius: var(--radius-full);
+      font: 700 11px/1.4 inherit; text-transform: uppercase; letter-spacing: .4px;
+    }
+    .ua-badge-user  { background: var(--chip-bg); color: var(--chip-text); }
+    .ua-badge-admin { background: var(--brand-light); color: var(--brand); }
+    .ua-profile-header {
+      display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); margin-bottom: 14px;
+    }
+    .ua-profile-info { display: flex; flex-direction: column; gap: 5px; flex: 1; }
+    .ua-profile-name { font: 700 15px/1 inherit; }
+    .ua-profile-email { font-size: 12px; color: var(--muted); }
+    .ua-muted { color: var(--muted); }
+    .ua-admin-header {
+      display: flex; align-items: center; gap: 8px; padding: 10px 0 8px;
+    }
+    .ua-user-row {
+      display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      margin-bottom: 6px; background: var(--surface); font-size: 13px;
+    }
+    .ua-user-info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+    .ua-user-info strong { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ua-user-info .ua-muted { font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ua-user-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .ua-role-sel {
+      padding: 3px 6px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+      font: inherit; font-size: 12px; background: var(--bg); color: var(--text); cursor: pointer;
+    }
+
     /* ── Docs view ──────────────────────────────────────────── */
     #docsView {
       position: sticky;
@@ -1213,6 +1271,7 @@
         <a id="docsLink" class="nav-link" href="#" title="Show API documentation (in-page)">📖 Docs</a>
         <a id="changelogLink" class="nav-link" href="#" title="What's new: version history">📝 Changelog</a>
         <a id="ackLink" class="nav-link" href="#" title="Show acknowledgements (in-page)">🤝 Credits</a>
+        <a id="usersLink" class="nav-link" href="#" title="User account management">👤 Account</a>
         <a class="nav-link" href="https://github.com/SE4CPS/releasetrain-client"
           target="_blank" rel="noopener noreferrer">⭐ GitHub</a>
       </nav>
@@ -1552,6 +1611,17 @@
             target="_blank" rel="noopener noreferrer" style="font-size:12px;padding:5px 10px;display:inline-flex;align-items:center;gap:5px">
             ⭐ GitHub
           </a>
+        </div>
+      </div>
+
+      <!-- ── Account controls (shown only in account view) ── -->
+      <div id="usersControls" style="display:none">
+        <div class="sidebar-section">
+          <div class="sidebar-label">Account</div>
+          <p style="font-size:12px;color:var(--muted);line-height:1.6;margin:0 0 10px">
+            Sign in to save preferences. Admins can manage all users and roles.
+          </p>
+          <div id="ua-sidebar-status" style="font-size:12px;color:var(--muted)">Not signed in.</div>
         </div>
       </div>
 
@@ -2918,6 +2988,89 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </ul>
       </div><!-- /#ackView -->
 
+      <!-- Account / user management view -->
+      <div id="usersView" style="display:none">
+
+        <!-- Unauthenticated state -->
+        <div id="ua-auth-panel">
+          <div class="ua-tabs">
+            <button id="ua-tab-login" class="ua-tab ua-tab-active" type="button">Sign in</button>
+            <button id="ua-tab-register" class="ua-tab" type="button">Register</button>
+          </div>
+          <div class="ua-card">
+            <form id="ua-login-form">
+              <h2 style="margin:0 0 16px;font-size:15px;font-weight:700">Sign in</h2>
+              <div id="ua-login-error" class="ua-msg ua-msg-error" style="display:none"></div>
+              <div class="ua-field">
+                <label for="ua-login-email">Email</label>
+                <input id="ua-login-email" type="email" class="search-input" autocomplete="email" required />
+              </div>
+              <div class="ua-field">
+                <label for="ua-login-password">Password</label>
+                <input id="ua-login-password" type="password" class="search-input" autocomplete="current-password" required />
+              </div>
+              <button class="btn btn-primary" type="submit" id="ua-login-btn">Sign in</button>
+            </form>
+            <form id="ua-register-form" style="display:none">
+              <h2 style="margin:0 0 16px;font-size:15px;font-weight:700">Create account</h2>
+              <div id="ua-register-error" class="ua-msg ua-msg-error" style="display:none"></div>
+              <div id="ua-register-ok" class="ua-msg ua-msg-ok" style="display:none"></div>
+              <div class="ua-field">
+                <label for="ua-reg-name">Name <span class="ua-opt">(optional)</span></label>
+                <input id="ua-reg-name" type="text" class="search-input" autocomplete="name" />
+              </div>
+              <div class="ua-field">
+                <label for="ua-reg-email">Email</label>
+                <input id="ua-reg-email" type="email" class="search-input" autocomplete="email" required />
+              </div>
+              <div class="ua-field">
+                <label for="ua-reg-password">Password <span class="ua-opt">(min 8 chars)</span></label>
+                <input id="ua-reg-password" type="password" class="search-input" autocomplete="new-password" minlength="8" required />
+              </div>
+              <button class="btn btn-primary" type="submit" id="ua-register-btn">Create account</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Authenticated state -->
+        <div id="ua-profile-panel" style="display:none">
+          <div class="ua-profile-header">
+            <div class="ua-profile-info">
+              <div id="ua-profile-name" class="ua-profile-name"></div>
+              <div id="ua-profile-email" class="ua-profile-email"></div>
+              <span id="ua-profile-role" class="ua-badge"></span>
+            </div>
+            <button id="ua-logout-btn" class="btn btn-ghost">Sign out</button>
+          </div>
+          <div class="ua-card" style="margin-bottom:14px">
+            <details>
+              <summary style="cursor:pointer;font-weight:700;font-size:13px;list-style:none;display:flex;align-items:center;gap:5px">
+                <span style="font-size:11px;color:var(--muted)">›</span> Change password
+              </summary>
+              <form id="ua-pw-form" style="margin-top:14px">
+                <div id="ua-pw-error" class="ua-msg ua-msg-error" style="display:none"></div>
+                <div id="ua-pw-ok" class="ua-msg ua-msg-ok" style="display:none"></div>
+                <div class="ua-field">
+                  <label for="ua-pw-new">New password <span class="ua-opt">(min 8 chars)</span></label>
+                  <input id="ua-pw-new" type="password" class="search-input" autocomplete="new-password" minlength="8" required />
+                </div>
+                <button class="btn btn-primary" type="submit">Update password</button>
+              </form>
+            </details>
+          </div>
+          <!-- Admin: all users -->
+          <div id="ua-admin-section" style="display:none">
+            <div class="ua-admin-header">
+              <span style="font-weight:700;font-size:13px">All users</span>
+              <span id="ua-user-count" class="ua-muted" style="font-size:12px"></span>
+              <button id="ua-refresh-users" class="btn btn-ghost" style="font-size:12px;padding:4px 10px;margin-left:auto">Refresh</button>
+            </div>
+            <div id="ua-user-list"></div>
+          </div>
+        </div>
+
+      </div><!-- /#usersView -->
+
       <section class="panel" id="feedPanel" aria-label="Updates feed">
         <header class="panel-header">
           <h2>📋 Recent Updates <small>(last 7 days)</small></h2>
@@ -3079,7 +3232,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       "btn-major", "btn-minor", "btn-patch", "btn-cve", "btn-potential-cve", "btn-reddit",
       "btn-reddit-risk", "btn-reddit-risk-latest", "btn-reddit-risk-cve", "btn-so-risk", "btn-so",
       "filterForm", "components", "clearBtn", "fixedToggles", "typeToggles",
-      "homeLink", "graphLink", "archLink", "cveLink", "dashboardLink", "docsLink", "changelogLink", "ackLink", "expandAllBtn", "activeFilters", "afTags", "afClearAll", "emptyState"
+      "homeLink", "graphLink", "archLink", "cveLink", "dashboardLink", "docsLink", "changelogLink", "ackLink", "usersLink", "expandAllBtn", "activeFilters", "afTags", "afClearAll", "emptyState"
     ].forEach(id => { EL[id] = document.getElementById(id); });
 
     const $ = s => document.querySelector(s);
@@ -3760,6 +3913,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (D_ACTIVE)   deactivateDocs();
       if (ACK_ACTIVE) deactivateAck();
       if (CL_ACTIVE)  deactivateChangelog();
+      if (UA_ACTIVE)  deactivateUsers();
       G_ACTIVE = true;
       setViewParam("graph");
       document.getElementById("graphView").style.display = "block";
@@ -3810,6 +3964,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       else if (D_ACTIVE)  { e.preventDefault(); deactivateDocs(); }
       else if (ACK_ACTIVE){ e.preventDefault(); deactivateAck(); }
       else if (CL_ACTIVE) { e.preventDefault(); deactivateChangelog(); }
+      else if (UA_ACTIVE) { e.preventDefault(); deactivateUsers(); }
     });
 
     EL.homeLink.addEventListener("click", e => {
@@ -3821,6 +3976,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       else if (D_ACTIVE)  deactivateDocs();
       else if (ACK_ACTIVE) deactivateAck();
       else if (CL_ACTIVE) deactivateChangelog();
+      else if (UA_ACTIVE) deactivateUsers();
     });
 
     /* ── Unified layer + option checkboxes ───────────────────── */
@@ -4094,6 +4250,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (D_ACTIVE)   deactivateDocs();
       if (ACK_ACTIVE) deactivateAck();
       if (CL_ACTIVE)  deactivateChangelog();
+      if (UA_ACTIVE)  deactivateUsers();
       A_ACTIVE = true;
       setViewParam("arch");
       document.getElementById("archView").style.display = "flex";
@@ -4356,6 +4513,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (DB_ACTIVE)  deactivateDashboard();
       if (ACK_ACTIVE) deactivateAck();
       if (CL_ACTIVE)  deactivateChangelog();
+      if (UA_ACTIVE)  deactivateUsers();
       D_ACTIVE = true;
       setViewParam("docs");
       document.getElementById("docsView").style.display = "block";
@@ -4393,6 +4551,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (DB_ACTIVE) deactivateDashboard();
       if (D_ACTIVE)  deactivateDocs();
       if (ACK_ACTIVE) deactivateAck();
+      if (UA_ACTIVE)  deactivateUsers();
       CL_ACTIVE = true;
       setViewParam("changelog");
       document.getElementById("changelogView").style.display = "block";
@@ -4428,6 +4587,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (DB_ACTIVE) deactivateDashboard();
       if (D_ACTIVE)  deactivateDocs();
       if (CL_ACTIVE) deactivateChangelog();
+      if (UA_ACTIVE) deactivateUsers();
       ACK_ACTIVE = true;
       setViewParam("credits");
       document.getElementById("ackView").style.display = "block";
@@ -6052,6 +6212,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (D_ACTIVE)   deactivateDocs();
       if (ACK_ACTIVE) deactivateAck();
       if (CL_ACTIVE)  deactivateChangelog();
+      if (UA_ACTIVE)  deactivateUsers();
       CV_ACTIVE = true;
       setViewParam("cve");
       document.getElementById("cveView").style.display = "flex";
@@ -6779,6 +6940,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (D_ACTIVE)   deactivateDocs();
       if (ACK_ACTIVE) deactivateAck();
       if (CL_ACTIVE)  deactivateChangelog();
+      if (UA_ACTIVE)  deactivateUsers();
       DB_ACTIVE = true;
       setViewParam("dashboard");
       document.getElementById("dashboardView").style.display = "block";
@@ -6808,6 +6970,248 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (DB_ACTIVE) { deactivateDashboard(); return; }
       activateDashboard();
     });
+
+    /************************* USER ACCOUNT MANAGEMENT *************************/
+
+    let UA_ACTIVE = false;
+
+    function uaToken() { return localStorage.getItem("rt_token"); }
+    function uaUser() {
+      try { return JSON.parse(localStorage.getItem("rt_user") || "null"); } catch { return null; }
+    }
+    function uaSetSession(token, user) {
+      localStorage.setItem("rt_token", token);
+      localStorage.setItem("rt_user", JSON.stringify(user));
+    }
+    function uaClearSession() {
+      localStorage.removeItem("rt_token");
+      localStorage.removeItem("rt_user");
+    }
+
+    async function uaRequest(path, opts = {}) {
+      const token = uaToken();
+      const headers = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = "Bearer " + token;
+      return fetch(API_BASE + path, { ...opts, headers: { ...headers, ...(opts.headers || {}) } });
+    }
+
+    function uaEsc(s) {
+      return String(s || "")
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    function uaShowMsg(id, text) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = text;
+      el.style.display = text ? "" : "none";
+    }
+
+    function uaUpdateSidebar() {
+      const user = uaUser();
+      const el = document.getElementById("ua-sidebar-status");
+      if (!el) return;
+      el.textContent = user
+        ? (user.name || user.email) + " (" + user.role + ")"
+        : "Not signed in.";
+    }
+
+    function uaRender() {
+      const token = uaToken();
+      const user = uaUser();
+      document.getElementById("ua-auth-panel").style.display = (!token || !user) ? "" : "none";
+      document.getElementById("ua-profile-panel").style.display = (token && user) ? "" : "none";
+      if (token && user) {
+        document.getElementById("ua-profile-name").textContent = user.name || user.email;
+        document.getElementById("ua-profile-email").textContent = user.email;
+        const badge = document.getElementById("ua-profile-role");
+        badge.textContent = user.role;
+        badge.className = "ua-badge ua-badge-" + user.role;
+        const adminSection = document.getElementById("ua-admin-section");
+        if (user.role === "admin") {
+          adminSection.style.display = "";
+          uaLoadUsers();
+        } else {
+          adminSection.style.display = "none";
+        }
+      }
+      uaUpdateSidebar();
+    }
+
+    async function uaLoadUsers() {
+      const listEl = document.getElementById("ua-user-list");
+      listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">Loading…</p>`;
+      const res = await uaRequest("users/").catch(() => null);
+      if (!res || !res.ok) {
+        listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">Could not load users.</p>`;
+        return;
+      }
+      const data = await res.json();
+      const countEl = document.getElementById("ua-user-count");
+      if (countEl) countEl.textContent = "(" + data.total + ")";
+      if (!data.data.length) {
+        listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">No users found.</p>`;
+        return;
+      }
+      const currentUser = uaUser();
+      listEl.innerHTML = data.data.map(u => {
+        const isSelf = currentUser && String(u._id) === String(currentUser.id);
+        return `<div class="ua-user-row" data-id="${uaEsc(u._id)}">
+          <div class="ua-user-info">
+            <strong>${uaEsc(u.name || u.email)}</strong>
+            <span class="ua-muted">${uaEsc(u.email)}</span>
+          </div>
+          <div class="ua-user-actions">
+            <select class="ua-role-sel" data-id="${uaEsc(u._id)}" aria-label="Role for ${uaEsc(u.email)}">
+              <option value="user"${u.role === "user" ? " selected" : ""}>user</option>
+              <option value="admin"${u.role === "admin" ? " selected" : ""}>admin</option>
+            </select>
+            ${isSelf
+              ? `<span style="font-size:11px;color:var(--muted);padding:4px 6px">you</span>`
+              : `<button class="btn btn-ghost ua-del-btn" data-id="${uaEsc(u._id)}" style="font-size:12px;padding:4px 10px;color:var(--cve);border-color:#fca5a5">Delete</button>`
+            }
+          </div>
+        </div>`;
+      }).join("");
+
+      listEl.querySelectorAll(".ua-role-sel").forEach(sel => {
+        sel.addEventListener("change", async () => {
+          const id = sel.dataset.id;
+          const role = sel.value;
+          const res = await uaRequest("users/" + id, { method: "PUT", body: JSON.stringify({ role }) });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            alert(err.error || "Failed to update role.");
+            uaLoadUsers();
+          }
+        });
+      });
+
+      listEl.querySelectorAll(".ua-del-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          if (!confirm("Delete this user? This cannot be undone.")) return;
+          const id = btn.dataset.id;
+          const res = await uaRequest("users/" + id, { method: "DELETE" });
+          if (res.ok) {
+            uaLoadUsers();
+          } else {
+            const err = await res.json().catch(() => ({}));
+            alert(err.error || "Failed to delete user.");
+          }
+        });
+      });
+    }
+
+    document.getElementById("ua-tab-login").addEventListener("click", () => {
+      document.getElementById("ua-login-form").style.display = "";
+      document.getElementById("ua-register-form").style.display = "none";
+      document.getElementById("ua-tab-login").classList.add("ua-tab-active");
+      document.getElementById("ua-tab-register").classList.remove("ua-tab-active");
+    });
+    document.getElementById("ua-tab-register").addEventListener("click", () => {
+      document.getElementById("ua-register-form").style.display = "";
+      document.getElementById("ua-login-form").style.display = "none";
+      document.getElementById("ua-tab-register").classList.add("ua-tab-active");
+      document.getElementById("ua-tab-login").classList.remove("ua-tab-active");
+    });
+
+    document.getElementById("ua-login-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      uaShowMsg("ua-login-error", "");
+      const email = document.getElementById("ua-login-email").value.trim();
+      const password = document.getElementById("ua-login-password").value;
+      const btn = document.getElementById("ua-login-btn");
+      btn.disabled = true; btn.textContent = "Signing in…";
+      try {
+        const res = await uaRequest("auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
+        const data = await res.json();
+        if (!res.ok) { uaShowMsg("ua-login-error", data.error || "Login failed."); return; }
+        uaSetSession(data.token, data.user);
+        uaRender();
+      } catch { uaShowMsg("ua-login-error", "Network error. Try again."); }
+      finally { btn.disabled = false; btn.textContent = "Sign in"; }
+    });
+
+    document.getElementById("ua-register-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      uaShowMsg("ua-register-error", "");
+      uaShowMsg("ua-register-ok", "");
+      const name = document.getElementById("ua-reg-name").value.trim();
+      const email = document.getElementById("ua-reg-email").value.trim();
+      const password = document.getElementById("ua-reg-password").value;
+      const btn = document.getElementById("ua-register-btn");
+      btn.disabled = true; btn.textContent = "Creating…";
+      try {
+        const res = await uaRequest("auth/register", { method: "POST", body: JSON.stringify({ name, email, password }) });
+        const data = await res.json();
+        if (!res.ok) { uaShowMsg("ua-register-error", data.error || "Registration failed."); return; }
+        uaShowMsg("ua-register-ok", "Account created. You can now sign in.");
+        ["ua-reg-name", "ua-reg-email", "ua-reg-password"].forEach(id => { document.getElementById(id).value = ""; });
+        document.getElementById("ua-tab-login").click();
+      } catch { uaShowMsg("ua-register-error", "Network error. Try again."); }
+      finally { btn.disabled = false; btn.textContent = "Create account"; }
+    });
+
+    document.getElementById("ua-logout-btn").addEventListener("click", async () => {
+      await uaRequest("auth/logout", { method: "POST" }).catch(() => {});
+      uaClearSession();
+      uaRender();
+    });
+
+    document.getElementById("ua-pw-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      uaShowMsg("ua-pw-error", "");
+      uaShowMsg("ua-pw-ok", "");
+      const user = uaUser();
+      if (!user) return;
+      const password = document.getElementById("ua-pw-new").value;
+      const res = await uaRequest("users/" + user.id, { method: "PUT", body: JSON.stringify({ password }) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { uaShowMsg("ua-pw-error", data.error || "Failed to update password."); return; }
+      uaShowMsg("ua-pw-ok", "Password updated.");
+      document.getElementById("ua-pw-new").value = "";
+    });
+
+    document.getElementById("ua-refresh-users").addEventListener("click", uaLoadUsers);
+
+    function activateUsers() {
+      if (G_ACTIVE)  deactivateGraph();
+      if (A_ACTIVE)  deactivateArch();
+      if (CV_ACTIVE) deactivateCve();
+      if (DB_ACTIVE) deactivateDashboard();
+      if (D_ACTIVE)  deactivateDocs();
+      if (ACK_ACTIVE) deactivateAck();
+      if (CL_ACTIVE) deactivateChangelog();
+      UA_ACTIVE = true;
+      setViewParam("account");
+      document.getElementById("usersView").style.display = "block";
+      document.getElementById("feedPanel").style.display = "none";
+      document.getElementById("usersControls").style.display = "";
+      document.getElementById("feedSidebarSections").style.display = "none";
+      EL.usersLink.classList.add("nav-active");
+      uaRender();
+    }
+
+    function deactivateUsers() {
+      UA_ACTIVE = false;
+      setViewParam("");
+      document.getElementById("usersView").style.display = "none";
+      document.getElementById("feedPanel").style.display = "";
+      document.getElementById("usersControls").style.display = "none";
+      document.getElementById("feedSidebarSections").style.display = "";
+      EL.usersLink.classList.remove("nav-active");
+    }
+
+    EL.usersLink.addEventListener("click", e => {
+      e.preventDefault();
+      if (UA_ACTIVE) { deactivateUsers(); return; }
+      activateUsers();
+    });
+
+    // Restore session state in sidebar on load
+    uaUpdateSidebar();
+
   </script>
 </body>
 
