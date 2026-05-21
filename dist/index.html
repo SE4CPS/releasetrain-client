@@ -737,6 +737,11 @@
     }
     .ua-bm-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .ua-bm-actions { display: flex; gap: 5px; flex-shrink: 0; }
+    .ua-org-chip {
+      display: inline-block; padding: 1px 7px; border-radius: var(--radius-full);
+      font-size: 11px; font-weight: 600; background: var(--brand-light);
+      color: var(--brand); border: 1px solid #bfdbfe;
+    }
     .ua-why-list { margin: 8px 0 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
     .ua-why-list li { font-size: 12px; color: var(--muted); display: flex; gap: 8px; align-items: flex-start; }
     .ua-why-list li span { flex-shrink: 0; }
@@ -1282,7 +1287,7 @@
   <!-- ── Topbar: brand + nav only ── -->
   <header class="topbar" role="banner" id="topbar">
     <div class="topbar-main">
-      <a class="brand" href="/" aria-label="Releasetrain home">Releasetrain <em>v3.18.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home">Releasetrain <em>v3.18.1</em></a>
       <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
       <div class="topbar-spacer"></div>
       <button class="nav-toggle" type="button" id="navToggle"
@@ -2823,7 +2828,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-05-21</div>
-              <div class="cl-ver cl-ver-minor">v3.18.0</div>
+              <div class="cl-ver cl-ver-patch">v3.18.1</div>
             </div>
             <div class="cl-content">
               <h3>Org namespaces in share links, bookmarks, topbar login indicator</h3>
@@ -2833,6 +2838,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                 <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Topbar login chip</strong>: a small badge showing the logged-in user name or email appears in the topbar at all times when a session is active. Clicking it opens the Account view.</li>
                 <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Bookmark list in Account view</strong>: the profile panel lists all saved bookmarks with Open, Copy link, and Delete actions. Refresh button reloads the list from the API.</li>
                 <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Why create an account section</strong>: collapsible panel in the sign-in view lists the technical advantages of having an account including org namespaces, server-side bookmark storage, cross-device persistence, share links, JWT session, and admin role access.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Org namespaces moved server-side</strong>: org names are now snapshotted onto the bookmark document at creation time and returned by the share endpoint. Share URLs are clean (<code>?share=abc123</code> only). Recipients see a "Shared by: orgname" banner for 4 seconds when opening a share link. Org chips are shown on each bookmark row in the Account view.</li>
               </ul>
             </div>
           </div>
@@ -7325,18 +7331,23 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         if (emptyEl) emptyEl.style.display = "";
         return;
       }
-      const orgs = uaOrgs();
-      const orgPrefix = orgs.length ? "org=" + encodeURIComponent(orgs.join(",")) + "&" : "";
-      const shareBase = location.origin + location.pathname + "?" + orgPrefix + "share=";
-      listEl.innerHTML = data.data.map(b => `
-        <div class="ua-bm-item" data-id="${uaEsc(b._id)}">
-          <span class="ua-bm-name" title="${uaEsc(b.name)}">${uaEsc(b.name)}</span>
+      const shareBase = location.origin + location.pathname + "?share=";
+      listEl.innerHTML = data.data.map(b => {
+        const orgChips = (b.orgs && b.orgs.length)
+          ? b.orgs.map(o => `<span class="ua-org-chip">${uaEsc(o)}</span>`).join("")
+          : "";
+        return `<div class="ua-bm-item" data-id="${uaEsc(b._id)}">
+          <div style="flex:1;min-width:0">
+            <span class="ua-bm-name" title="${uaEsc(b.name)}">${uaEsc(b.name)}</span>
+            ${orgChips ? `<div style="margin-top:3px;display:flex;gap:4px;flex-wrap:wrap">${orgChips}</div>` : ""}
+          </div>
           <div class="ua-bm-actions">
             <a href="${uaEsc(b.url)}" class="btn btn-ghost" style="font-size:12px;padding:4px 8px" title="Open saved search">Open</a>
             <button class="btn btn-ghost ua-bm-share-btn" data-share="${uaEsc(b.shareId)}" style="font-size:12px;padding:4px 8px" title="Copy share link">Copy link</button>
             <button class="btn btn-ghost ua-bm-del-btn" data-id="${uaEsc(b._id)}" style="font-size:12px;padding:4px 8px;color:var(--cve);border-color:#fca5a5">Delete</button>
           </div>
-        </div>`).join("");
+        </div>`;
+      }).join("");
 
       listEl.querySelectorAll(".ua-bm-share-btn").forEach(btn => {
         btn.addEventListener("click", () => {
@@ -7401,6 +7412,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           history.replaceState({}, "", target.pathname + "?" + target.searchParams.toString());
           document.getElementById("components").value = q;
           document.getElementById("filterForm").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+        }
+        if (data.orgs && data.orgs.length) {
+          const banner = document.createElement("div");
+          banner.style.cssText = "position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:8px 16px;font-size:12px;box-shadow:var(--shadow-md);z-index:9999;color:var(--muted)";
+          banner.textContent = "Shared by: " + data.orgs.join(", ");
+          document.body.appendChild(banner);
+          setTimeout(() => banner.remove(), 4000);
         }
       } catch {}
     })();

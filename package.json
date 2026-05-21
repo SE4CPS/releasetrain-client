@@ -1,6 +1,6 @@
 {
   "name": "releasetrain",
-  "version": "3.18.0",
+  "version": "3.18.1",
   "description": "Client for managing release tracking",
   "main": "src/app.js",
   "scripts": {
