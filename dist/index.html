@@ -3448,6 +3448,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const daysSince = ep > 0 ? Math.max(0, (Date.now() - ep) / 86400000) : windowDays / 2;
         const edgeLen = Math.round(80 + (daysSince / windowDays) * 280);
         const color = isCve ? "#dc2626" : ch === "major" ? "#c2410c" : ch === "minor" ? "#059669" : "#64748b";
+        const verSourceUrl = (v.versionUrl && v.versionUrl.startsWith("http")) ? v.versionUrl
+          : (v.versionReleaseNotes && v.versionReleaseNotes.startsWith("http")) ? v.versionReleaseNotes : null;
         nodes.add({
           id: nodeId,
           label: "v" + (v.versionNumber || "?"),
@@ -3459,10 +3461,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           title: (v.versionProductName || key) + " v" + (v.versionNumber || "?") +
                  (isCve ? " [CVE]" : "") + (ep > 0 ? "\n" + new Date(ep).toLocaleDateString() : "") +
                  (Math.round(daysSince) > 0 ? "\n" + Math.round(daysSince) + " days ago" : " (today)"),
+          sourceUrl: verSourceUrl,
+          sourceName: (v.versionProductName || key) + " v" + (v.versionNumber || "?"),
         });
+        const verDays = Math.round(daysSince);
         edges.add({
           from: nodeId, to: "comp:" + key,
           length: edgeLen,
+          label: verDays > 0 ? verDays + "d" : "today",
+          font: { size: 8, color: "#94a3b8", align: "middle", strokeWidth: 0 },
           color: { color: isCve ? "rgba(220,38,38,.35)" : "rgba(148,163,184,.35)", highlight: "#94a3b8" },
           width: isCve ? 1.5 : 0.7,
           dashes: false,
@@ -3497,10 +3504,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           title: (p.title || "").slice(0, 160) + (hasCve ? " [CVE]" : "") +
                  (isSO ? " [SO]" : " [Reddit]") + (risk ? " [high risk]" : "") +
                  (ep > 0 ? "\n" + Math.round(daysSince) + " days ago" : ""),
+          sourceUrl: p.url || null,
+          sourceName: (p.title || "").slice(0, 80),
         });
+        const postDays = Math.round(daysSince);
         edges.add({
           from: nodeId, to: "comp:" + sub,
           length: edgeLen,
+          label: postDays > 0 ? postDays + "d" : "today",
+          font: { size: 8, color: "#94a3b8", align: "middle", strokeWidth: 0 },
           color: { color: hasCve ? "rgba(251,113,133,.4)" : isSO ? "rgba(59,130,246,.3)" : "rgba(168,85,247,.3)", highlight: "#94a3b8" },
           width: (risk || hasCve) ? 1.2 : 0.5,
           dashes: !risk && !hasCve,
@@ -3548,16 +3560,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         if (!node || !info) return;
         const closeBtn = '<button onclick="document.getElementById(\'g-nodeInfoPanel\').style.display=\'none\'" style="float:right;background:none;border:none;cursor:pointer;font-size:15px;line-height:1;color:var(--muted);">×</button>';
         const isComp = nodeId.startsWith("comp:");
-        const isPost = nodeId.startsWith("post:");
         let html = closeBtn;
         if (isComp) {
           const key = nodeId.slice(5);
           const count = edges.get({ filter: e => e.to === nodeId }).length;
           html += '<strong style="font-size:12px">' + node.label + '</strong>';
           html += '<div style="margin-top:4px;color:var(--muted)">' + count + ' connected node' + (count !== 1 ? 's' : '') + '</div>';
-          html += '<div style="margin-top:4px"><a href="/?q=' + encodeURIComponent(key) + '" style="font-size:10px;color:var(--brand)">Open feed ↗</a></div>';
+          html += '<div style="margin-top:4px"><a href="/?q=' + encodeURIComponent(key) + '" target="_self" style="font-size:10px;color:var(--brand)">Open feed ↗</a></div>';
         } else {
-          html += '<div style="white-space:pre-wrap;word-break:break-word">' + (node.title || node.label) + '</div>';
+          html += '<strong style="font-size:11px;display:block;margin-bottom:4px">' + (node.sourceName || node.label) + '</strong>';
+          if (node.title) html += '<div style="font-size:10px;color:var(--muted);white-space:pre-line;margin-bottom:6px">' + node.title + '</div>';
+          if (node.sourceUrl) {
+            html += '<a href="' + node.sourceUrl + '" target="_blank" rel="noopener" style="font-size:10px;color:var(--brand);word-break:break-all">' + node.sourceUrl + ' ↗</a>';
+          } else {
+            html += '<span style="font-size:10px;color:var(--muted)">No source URL available.</span>';
+          }
         }
         info.innerHTML = html;
         info.style.display = "block";
