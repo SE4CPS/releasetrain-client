@@ -3411,31 +3411,47 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const edges = new vis.DataSet();
 
       /* ── Component hub nodes ── */
+      const addHub = (key, label) => {
+        if (compSet.has(key)) return;
+        compSet.add(key);
+        nodes.add({
+          id: "comp:" + key,
+          label: label || key,
+          group: "component",
+          shape: "ellipse",
+          size: 28,
+          mass: 6,
+          color: { background: "#2563eb", border: "#1d4ed8", highlight: { background: "#1d4ed8", border: "#1e40af" } },
+          font: { color: "#fff", size: 13, face: "system-ui,sans-serif", bold: true },
+          title: "Component: " + (label || key),
+        });
+      };
+
       const compSet = new Set();
+      /* Seed hubs from the URL query so every searched component gets a hub node
+         even if the first API page contains no versions for it. */
+      const rawQ = new URL(location.href).searchParams.get("q") || "";
+      rawQ.split(",").map(s => s.trim().toLowerCase()).filter(Boolean).forEach(q => addHub(q, q));
+      /* Also add hubs for any versionProductName that isn't already in compSet. */
       versions.forEach(v => {
         const key = (v.versionProductName || "").toLowerCase().trim();
-        if (!key) return;
-        if (!compSet.has(key)) {
-          compSet.add(key);
-          nodes.add({
-            id: "comp:" + key,
-            label: v.versionProductName || key,
-            group: "component",
-            shape: "ellipse",
-            size: 28,
-            mass: 6,
-            color: { background: "#2563eb", border: "#1d4ed8", highlight: { background: "#1d4ed8", border: "#1e40af" } },
-            font: { color: "#fff", size: 13, face: "system-ui,sans-serif", bold: true },
-            title: "Component: " + (v.versionProductName || key),
-          });
-        }
+        if (key) addHub(key, v.versionProductName || key);
       });
+
+      /* Fuzzy hub lookup: find the best hub for a given name string. */
+      const hubFor = name => {
+        if (!name) return null;
+        const n = name.toLowerCase();
+        if (compSet.has(n)) return n;
+        for (const c of compSet) { if (n.includes(c) || c.includes(n)) return c; }
+        return null;
+      };
 
       /* ── Version nodes ── */
       const seenVer = new Set();
       versions.forEach(v => {
-        const key = (v.versionProductName || "").toLowerCase().trim();
-        if (!key || !compSet.has(key)) return;
+        const key = hubFor((v.versionProductName || "").trim());
+        if (!key) return;
         const ch = gChannelOf(v);
         const isCve = ch === "cve" || !!v.isCve || !!v.latestCveVersion;
         if (isCve && !showCve) return;
@@ -3478,8 +3494,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
       /* ── Reddit / SO post nodes ── */
       (redditPosts || []).forEach(p => {
-        const sub = (p.subreddit || "").toLowerCase().trim();
-        if (!compSet.has(sub)) return;
+        const sub = hubFor((p.subreddit || "").trim());
+        if (!sub) return;
         const isSO = getPostSource(p) === "stackoverflow";
         if (isSO && !showSO) return;
         if (!isSO && !showRed) return;
@@ -3520,7 +3536,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       });
 
       const statsEl = document.getElementById("g-statsLine");
-      if (!nodes.length) {
+      const satelliteCount = nodes.length - compSet.size;
+      if (!compSet.size || satelliteCount <= 0) {
         const suggestions = ["linux","nginx","redis","kubernetes","openssl","postgresql","mysql","python","nodejs","mongodb"];
         const chips = suggestions.map(s =>
           `<a href="/?q=${encodeURIComponent(s)}&view=graph" style="display:inline-block;padding:4px 10px;margin:3px;border-radius:99px;border:1px solid var(--border);background:var(--surface);color:var(--brand);font-size:11px;text-decoration:none;cursor:pointer">${s}</a>`
