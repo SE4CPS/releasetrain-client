@@ -1276,7 +1276,7 @@
   <!-- ── Topbar: brand + nav only ── -->
   <header class="topbar" role="banner" id="topbar">
     <div class="topbar-main">
-      <a class="brand" href="/" aria-label="Releasetrain home">Releasetrain <em>v3.17.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home">Releasetrain <em>v3.18.0</em></a>
       <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
       <div class="topbar-spacer"></div>
       <button class="nav-toggle" type="button" id="navToggle"
@@ -2817,15 +2817,16 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-05-21</div>
-              <div class="cl-ver cl-ver-minor">v3.17.0</div>
+              <div class="cl-ver cl-ver-minor">v3.18.0</div>
             </div>
             <div class="cl-content">
-              <h3>User bookmarks, topbar login indicator, account advantages panel</h3>
+              <h3>Org namespaces in share links, bookmarks, topbar login indicator</h3>
               <ul>
-                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Bookmarks</strong>: signed-in users can save named searches via the 🔖 button in the feed sidebar. Each bookmark stores a URL and generates a public share link (<code>?share=&lt;shareId&gt;</code>). Opening a share link restores the saved search automatically.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Organization namespaces</strong>: users can add up to 2 org slugs to their profile. Each slug is embedded in every bookmark share link as <code>?org=name&amp;share=…</code> so recipients can identify the source organization. Slugs are validated as 1 to 32 alphanumeric, dash, or underscore characters.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Bookmarks</strong>: signed-in users can save named searches via the 🔖 button in the feed sidebar. Each bookmark stores a URL and generates a public share link. Opening a share link restores the saved search automatically.</li>
                 <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Topbar login chip</strong>: a small badge showing the logged-in user name or email appears in the topbar at all times when a session is active. Clicking it opens the Account view.</li>
                 <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Bookmark list in Account view</strong>: the profile panel lists all saved bookmarks with Open, Copy link, and Delete actions. Refresh button reloads the list from the API.</li>
-                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Why create an account section</strong>: collapsible panel in the sign-in view lists the technical advantages of having an account: server-side bookmark storage, cross-device persistence, share links, JWT session, and admin role access.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Why create an account section</strong>: collapsible panel in the sign-in view lists the technical advantages of having an account including org namespaces, server-side bookmark storage, cross-device persistence, share links, JWT session, and admin role access.</li>
               </ul>
             </div>
           </div>
@@ -3076,6 +3077,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <li><span>🔐</span>JWT-based session persists across tabs and survives page reloads without re-authenticating.</li>
             <li><span>🛡</span>Admin role grants access to user management: view all accounts, change roles, remove users.</li>
             <li><span>📌</span>Bookmark list is user-specific: each account holds its own saved searches, isolated from other users.</li>
+            <li><span>🏷</span>Add up to 2 org namespaces to your profile. They are embedded in every share link you generate as <code>?org=name&amp;share=…</code> so recipients know the source.</li>
           </ul>
         </details>
         </div>
@@ -3104,6 +3106,28 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                 </div>
                 <button class="btn btn-primary" type="submit">Update password</button>
               </form>
+            </details>
+          </div>
+          <!-- Org namespaces -->
+          <div class="ua-card" style="margin-bottom:14px">
+            <details>
+              <summary style="cursor:pointer;font-weight:700;font-size:13px;list-style:none;display:flex;align-items:center;gap:5px">
+                <span style="font-size:11px;color:var(--muted)">›</span> Organization namespaces <span class="ua-opt" style="font-weight:400;font-size:12px">(appear in share links)</span>
+              </summary>
+              <div style="margin-top:14px">
+                <div id="ua-org-error" class="ua-msg ua-msg-error" style="display:none"></div>
+                <div id="ua-org-ok" class="ua-msg ua-msg-ok" style="display:none"></div>
+                <p class="ua-muted" style="font-size:12px;margin:0 0 10px">Max 2. Each name is appended to share links as <code>?org=name&amp;share=…</code>. Alphanumeric, dash, or underscore only.</p>
+                <div class="ua-field">
+                  <label for="ua-org-1">Org 1</label>
+                  <input id="ua-org-1" type="text" class="search-input" placeholder="e.g. acme" maxlength="32" />
+                </div>
+                <div class="ua-field">
+                  <label for="ua-org-2">Org 2 <span class="ua-opt">(optional)</span></label>
+                  <input id="ua-org-2" type="text" class="search-input" placeholder="e.g. devops" maxlength="32" />
+                </div>
+                <button class="btn btn-primary" type="button" id="ua-org-save-btn">Save namespaces</button>
+              </div>
             </details>
           </div>
           <!-- Bookmarks -->
@@ -7038,6 +7062,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     function uaUser() {
       try { return JSON.parse(localStorage.getItem("rt_user") || "null"); } catch { return null; }
     }
+    function uaOrgs() { const u = uaUser(); return (u && Array.isArray(u.orgs)) ? u.orgs : []; }
     function uaSetSession(token, user) {
       localStorage.setItem("rt_token", token);
       localStorage.setItem("rt_user", JSON.stringify(user));
@@ -7099,6 +7124,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (token && user) {
         document.getElementById("ua-profile-name").textContent = user.name || user.email;
         document.getElementById("ua-profile-email").textContent = user.email;
+        const orgs = user.orgs || [];
+        document.getElementById("ua-org-1").value = orgs[0] || "";
+        document.getElementById("ua-org-2").value = orgs[1] || "";
         const badge = document.getElementById("ua-profile-role");
         badge.textContent = user.role;
         badge.className = "ua-badge ua-badge-" + user.role;
@@ -7248,6 +7276,28 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       document.getElementById("ua-pw-new").value = "";
     });
 
+    document.getElementById("ua-org-save-btn").addEventListener("click", async () => {
+      uaShowMsg("ua-org-error", "");
+      uaShowMsg("ua-org-ok", "");
+      const user = uaUser();
+      if (!user) return;
+      const slugRe = /^[a-zA-Z0-9_-]{1,32}$/;
+      const orgs = [
+        document.getElementById("ua-org-1").value.trim(),
+        document.getElementById("ua-org-2").value.trim()
+      ].filter(Boolean);
+      if (orgs.some(o => !slugRe.test(o))) {
+        uaShowMsg("ua-org-error", "Org names must be 1 to 32 alphanumeric, dash, or underscore characters.");
+        return;
+      }
+      const res = await uaRequest("users/" + user.id, { method: "PUT", body: JSON.stringify({ orgs }) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { uaShowMsg("ua-org-error", data.error || "Failed to save."); return; }
+      const stored = uaUser();
+      if (stored) { stored.orgs = orgs; localStorage.setItem("rt_user", JSON.stringify(stored)); }
+      uaShowMsg("ua-org-ok", "Namespaces saved.");
+    });
+
     document.getElementById("ua-refresh-users").addEventListener("click", uaLoadUsers);
 
     async function uaLoadBookmarks() {
@@ -7269,7 +7319,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         if (emptyEl) emptyEl.style.display = "";
         return;
       }
-      const shareBase = location.origin + location.pathname + "?share=";
+      const orgs = uaOrgs();
+      const orgPrefix = orgs.length ? "org=" + encodeURIComponent(orgs.join(",")) + "&" : "";
+      const shareBase = location.origin + location.pathname + "?" + orgPrefix + "share=";
       listEl.innerHTML = data.data.map(b => `
         <div class="ua-bm-item" data-id="${uaEsc(b._id)}">
           <span class="ua-bm-name" title="${uaEsc(b.name)}">${uaEsc(b.name)}</span>
