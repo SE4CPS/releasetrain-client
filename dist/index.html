@@ -3377,6 +3377,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (G_NETWORK) { try { G_NETWORK.destroy(); } catch(e) {} G_NETWORK = null; }
     }
 
+    function gChannelOf(v) {
+      return v.versionReleaseChannel || (v.isCve ? "cve" : "patch");
+    }
+
+    function gGetVersionEpoch(v) {
+      if (v.versionTimestamp > 0) return v.versionTimestamp;
+      const d = v.versionReleaseDate;
+      if (d && /^\d{8}$/.test(d)) {
+        return Date.UTC(+d.slice(0,4), +d.slice(4,6)-1, +d.slice(6,8));
+      }
+      return 0;
+    }
+
     function gBuildAndRender(versions, redditPosts) {
       gDestroyNetwork();
       const container = document.getElementById("g-networkContainer");
