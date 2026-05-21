@@ -2839,6 +2839,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                 <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Bookmark list in Account view</strong>: the profile panel lists all saved bookmarks with Open, Copy link, and Delete actions. Refresh button reloads the list from the API.</li>
                 <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Why create an account section</strong>: collapsible panel in the sign-in view lists the technical advantages of having an account including org namespaces, server-side bookmark storage, cross-device persistence, share links, JWT session, and admin role access.</li>
                 <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Org namespaces moved server-side</strong>: org names are now snapshotted onto the bookmark document at creation time and returned by the share endpoint. Share URLs are clean (<code>?share=abc123</code> only). Recipients see a "Shared by: orgname" banner for 4 seconds when opening a share link. Org chips are shown on each bookmark row in the Account view.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Bookmark rename</strong>: an Edit button on each bookmark row opens an inline text input. Submitting saves the new name via <code>PUT /api/bookmarks/:id</code> and refreshes the list. Keyboard shortcuts Enter and Escape confirm and cancel the edit.</li>
               </ul>
             </div>
           </div>
@@ -7343,6 +7344,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           </div>
           <div class="ua-bm-actions">
             <a href="${uaEsc(b.url)}" class="btn btn-ghost" style="font-size:12px;padding:4px 8px" title="Open saved search">Open</a>
+            <button class="btn btn-ghost ua-bm-edit-btn" data-id="${uaEsc(b._id)}" data-name="${uaEsc(b.name)}" style="font-size:12px;padding:4px 8px" title="Rename bookmark">Edit</button>
             <button class="btn btn-ghost ua-bm-share-btn" data-share="${uaEsc(b.shareId)}" style="font-size:12px;padding:4px 8px" title="Copy share link">Copy link</button>
             <button class="btn btn-ghost ua-bm-del-btn" data-id="${uaEsc(b._id)}" style="font-size:12px;padding:4px 8px;color:var(--cve);border-color:#fca5a5">Delete</button>
           </div>
@@ -7359,6 +7361,68 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             setTimeout(() => { btn.textContent = orig; }, 1500);
           }).catch(() => {
             prompt("Share link:", link);
+          });
+        });
+      });
+
+      listEl.querySelectorAll(".ua-bm-edit-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = btn.dataset.id;
+          const item = listEl.querySelector(`.ua-bm-item[data-id="${id}"]`);
+          if (!item) return;
+          const nameEl = item.querySelector(".ua-bm-name");
+          const currentName = btn.dataset.name;
+          const input = document.createElement("input");
+          input.type = "text";
+          input.value = currentName;
+          input.style.cssText = "font-size:12px;padding:3px 6px;border:1px solid var(--border);border-radius:var(--radius-sm);width:100%;box-sizing:border-box";
+          const saveBtn = document.createElement("button");
+          saveBtn.textContent = "Save";
+          saveBtn.className = "btn btn-ghost";
+          saveBtn.style.cssText = "font-size:12px;padding:4px 8px;margin-top:4px";
+          const cancelBtn = document.createElement("button");
+          cancelBtn.textContent = "Cancel";
+          cancelBtn.className = "btn btn-ghost";
+          cancelBtn.style.cssText = "font-size:12px;padding:4px 8px;margin-top:4px;margin-left:4px";
+          const editWrap = document.createElement("div");
+          editWrap.style.cssText = "flex:1;min-width:0";
+          editWrap.appendChild(input);
+          const editActions = document.createElement("div");
+          editActions.appendChild(saveBtn);
+          editActions.appendChild(cancelBtn);
+          editWrap.appendChild(editActions);
+          const actionsEl = item.querySelector(".ua-bm-actions");
+          const nameParent = nameEl.parentElement;
+          nameParent.style.display = "none";
+          actionsEl.style.display = "none";
+          item.appendChild(editWrap);
+          input.focus();
+          input.select();
+          const doCancel = () => {
+            item.removeChild(editWrap);
+            nameParent.style.display = "";
+            actionsEl.style.display = "";
+          };
+          cancelBtn.addEventListener("click", doCancel);
+          const doSave = async () => {
+            const newName = input.value.trim();
+            if (!newName) { input.focus(); return; }
+            saveBtn.disabled = true;
+            saveBtn.textContent = "Saving…";
+            const res = await uaRequest("bookmarks/" + id, { method: "PUT", body: JSON.stringify({ name: newName }) });
+            if (res.ok) {
+              uaLoadBookmarks();
+            } else {
+              const err = await res.json().catch(() => ({}));
+              alert(err.error || "Failed to rename bookmark.");
+              saveBtn.disabled = false;
+              saveBtn.textContent = "Save";
+            }
+          };
+          saveBtn.addEventListener("click", doSave);
+          input.addEventListener("keydown", e => {
+            if (e.key === "Enter") doSave();
+            if (e.key === "Escape") doCancel();
           });
         });
       });
