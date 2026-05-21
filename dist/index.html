@@ -7405,6 +7405,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const data = await res.json();
         if (!data.url) return;
         const target = new URL(data.url, location.href);
+        target.searchParams.delete("view");
         const q = target.searchParams.get("q") || "";
         if (q) {
           history.replaceState({}, "", target.pathname + "?" + target.searchParams.toString());
