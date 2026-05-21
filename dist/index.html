@@ -1,4 +1,3 @@
-﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -473,43 +472,37 @@
     @keyframes pulse { from { background-position: 0 0; } to { background-position: 200% 0; } }
     .sentinel { font-size: 12px; text-align: center; color: var(--muted); padding: 12px 0 6px; }
 
-    /* ── Graph view (Chart.js) ── */
+    /* ── Graph view (vis-network) ── */
     #graphView {
       position: sticky;
       top: calc(var(--topbar-h) + 16px);
       height: calc(100vh - var(--topbar-h) - 32px);
-      overflow-y: auto;
-      overscroll-behavior: contain;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--bg);
     }
     @media (max-width: 640px) {
-      #graphView { position: static; height: auto; }
+      #graphView { position: static; height: 70vh; }
     }
-    .g-chart-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
+    #g-networkContainer { width: 100%; height: 100%; }
+    #g-nodeInfoPanel {
+      position: absolute; bottom: 10px; left: 10px; right: 10px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 8px 12px;
+      font-size: 11px; max-height: 110px; overflow-y: auto;
+      z-index: 10; box-shadow: var(--shadow-md); color: var(--text);
     }
-    @media (max-width: 720px) {
-      .g-chart-grid { grid-template-columns: 1fr; }
+    #g-graphBadge {
+      position: absolute; top: 8px; left: 8px; z-index: 10;
+      background: rgba(255,255,255,.88); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 3px 9px;
+      font-size: 11px; font-weight: 600; color: var(--muted);
+      pointer-events: none; white-space: nowrap;
     }
-    .g-chart-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 14px 16px 12px;
-      box-shadow: var(--shadow-sm);
-    }
-    .g-chart-title {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: .5px;
-      margin-bottom: 10px;
-    }
-    .g-chart-wrap {
-      position: relative;
-      height: 200px;
+    .g-legend-dot {
+      display: inline-block; width: 9px; height: 9px;
+      border-radius: 50%; margin-right: 4px; vertical-align: middle;
     }
     .nav-link.nav-active { background: var(--brand-light); color: var(--brand); }
 
@@ -1427,26 +1420,59 @@
       <!-- ── Graph controls (shown only in graph view) ── -->
       <div id="graphControls" style="display:none">
 
-        <div class="sidebar-section">
-          <div class="sidebar-label">Time window</div>
-          <select id="g-window" style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font:inherit;font-size:12px;cursor:pointer">
-            <option value="7">Last 7 days</option>
-            <option value="30">Last 30 days</option>
-            <option value="90" selected>Last 90 days</option>
-            <option value="180">Last 180 days</option>
-          </select>
-        </div>
-
-        <div class="sidebar-section">
-          <div class="sidebar-label">Data source</div>
-          <div style="display:flex;flex-direction:column;gap:6px;font-size:12px">
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="radio" name="g-scope" id="g-scope-search" value="search" checked style="accent-color:var(--brand)"> Current search</label>
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="radio" name="g-scope" id="g-scope-all" value="all" style="accent-color:var(--brand)"> All loaded data</label>
+        <details class="sb-details" open>
+          <summary>Layers</summary>
+          <div class="sidebar-section" style="padding-bottom:10px">
+            <div style="display:flex;flex-direction:column;gap:7px">
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="g-show-versions" checked style="accent-color:var(--brand)"> <span class="g-legend-dot" style="background:#64748b"></span>Versions</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="g-show-cve" checked style="accent-color:var(--brand)"> <span class="g-legend-dot" style="background:#dc2626"></span>CVE versions</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="g-show-reddit" checked style="accent-color:var(--brand)"> <span class="g-legend-dot" style="background:#a855f7"></span>Reddit posts</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="g-show-so" checked style="accent-color:var(--brand)"> <span class="g-legend-dot" style="background:#3b82f6"></span>StackOverflow</label>
+            </div>
           </div>
-        </div>
+        </details>
+
+        <details class="sb-details">
+          <summary>Options</summary>
+          <div class="sidebar-section" style="padding-bottom:10px">
+            <div style="display:flex;flex-direction:column;gap:7px">
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="g-risk-only" style="accent-color:var(--brand)"> High-risk posts only</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="g-cve-posts" style="accent-color:var(--brand)"> <span class="g-legend-dot" style="background:#fb7185"></span>CVE-mentioning posts</label>
+            </div>
+          </div>
+        </details>
+
+        <details class="sb-details">
+          <summary>Time window</summary>
+          <div class="sidebar-section" style="padding-bottom:10px">
+            <select id="g-window" style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font:inherit;font-size:12px;cursor:pointer">
+              <option value="30">Last 30 days</option>
+              <option value="90" selected>Last 90 days</option>
+              <option value="180">Last 180 days</option>
+              <option value="365">Last 12 months</option>
+            </select>
+            <div style="margin-top:7px;font-size:10px;color:var(--muted);line-height:1.5">
+              Edge length = days since release or post.<br>Closer to hub = more recent.
+            </div>
+          </div>
+        </details>
+
+        <details class="sb-details">
+          <summary>Legend</summary>
+          <div class="sidebar-section" style="font-size:11px;color:var(--muted);line-height:2;padding-bottom:8px">
+            <div><span class="g-legend-dot" style="background:#2563eb;width:13px;height:13px"></span> Component hub</div>
+            <div><span class="g-legend-dot" style="background:#059669"></span> Minor release</div>
+            <div><span class="g-legend-dot" style="background:#c2410c"></span> Major release</div>
+            <div><span class="g-legend-dot" style="background:#64748b"></span> Patch release</div>
+            <div><span class="g-legend-dot" style="background:#dc2626"></span> CVE version</div>
+            <div><span class="g-legend-dot" style="background:#a855f7"></span> Reddit post</div>
+            <div><span class="g-legend-dot" style="background:#fb7185"></span> Reddit (CVE mention)</div>
+            <div><span class="g-legend-dot" style="background:#3b82f6"></span> StackOverflow</div>
+          </div>
+        </details>
 
         <div class="sidebar-section">
-          <button id="g-refreshBtn" class="btn btn-ghost" style="width:100%;font-size:12px">↺ Refresh charts</button>
+          <button id="g-refreshBtn" class="btn btn-ghost" style="width:100%;font-size:12px">↺ Refresh graph</button>
         </div>
 
         <div class="sidebar-section" style="font-size:11px;color:var(--muted)">
@@ -1678,24 +1704,9 @@
 
       <!-- Graph canvas (shown only in graph view) -->
       <div id="graphView" style="display:none">
-        <div class="g-chart-grid">
-          <div class="g-chart-card">
-            <div class="g-chart-title">Release Activity</div>
-            <div class="g-chart-wrap"><canvas id="g-chartActivity"></canvas></div>
-          </div>
-          <div class="g-chart-card">
-            <div class="g-chart-title">Top Components</div>
-            <div class="g-chart-wrap"><canvas id="g-chartComponents"></canvas></div>
-          </div>
-          <div class="g-chart-card">
-            <div class="g-chart-title">Channel Breakdown</div>
-            <div class="g-chart-wrap"><canvas id="g-chartChannels"></canvas></div>
-          </div>
-          <div class="g-chart-card">
-            <div class="g-chart-title">CVE Trend</div>
-            <div class="g-chart-wrap"><canvas id="g-chartCve"></canvas></div>
-          </div>
-        </div>
+        <div id="g-graphBadge">—</div>
+        <div id="g-networkContainer"></div>
+        <div id="g-nodeInfoPanel" style="display:none"></div>
       </div>
 
       <!-- Arch canvas (shown only in arch view) -->
@@ -2806,6 +2817,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                 <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Org namespaces moved server-side</strong>: org names are now snapshotted onto the bookmark document at creation time and returned by the share endpoint. Share URLs are clean (<code>?share=abc123</code> only). Recipients see a "Shared by: orgname" banner for 4 seconds when opening a share link. Org chips are shown on each bookmark row in the Account view.</li>
                 <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Bookmark rename</strong>: an Edit button on each bookmark row opens an inline text input. Submitting saves the new name via <code>PUT /api/bookmarks/:id</code> and refreshes the list. Keyboard shortcuts Enter and Escape confirm and cancel the edit.</li>
                 <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Chart.js graph view</strong>: the Graph view now renders four Chart.js charts: release activity over time (line), top components by release count (horizontal bar), channel breakdown (donut), and CVE releases per week (bar). Sigma.js network graph removed. Time window and data source are selectable from the sidebar.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>vis-network graph view</strong>: the Graph view now renders a force-directed node and edge network. Each searched component becomes a hub node. Version nodes, CVE release nodes (diamond), Reddit posts, CVE-mention posts, high-risk posts, and StackOverflow posts are positioned as satellites. Edge length encodes date delta: nodes from today are close to the hub; older nodes are farther. Multiple searched components produce multiple hub nodes. Layer visibility, time window, and risk filters are controlled from the sidebar.</li>
               </ul>
             </div>
           </div>
@@ -2981,7 +2993,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <li><a target="_blank" rel="noopener" href="https://developer.github.com/v3/">GitHub API</a><span>Release notes, repository metadata, and version data</span></li>
           <li><a target="_blank" rel="noopener" href="https://www.reddit.com/dev/api/">Reddit API</a><span>Community discussion signals for security and update topics</span></li>
           <li><a target="_blank" rel="noopener" href="https://api.stackexchange.com/">Stack Exchange API</a><span>StackOverflow post data for community risk signals</span></li>
-          <li><a target="_blank" rel="noopener" href="https://www.chartjs.org/">Chart.js</a><span>Dashboard and graph view charts: release activity, top components, channel breakdown, CVE trend</span></li>
+          <li><a target="_blank" rel="noopener" href="https://www.chartjs.org/">Chart.js</a><span>Dashboard charts: release activity, top components, channel breakdown, CVE trend</span></li>
+          <li><a target="_blank" rel="noopener" href="https://visjs.github.io/vis-network/docs/network/">vis-network</a><span>Graph view: force-directed node and edge network of components, versions, CVE releases, Reddit posts, and StackOverflow posts</span></li>
           <li><a target="_blank" rel="noopener" href="https://www.plantuml.com/">PlantUML</a><span>Architecture diagram generation</span></li>
           <li><a target="_blank" rel="noopener" href="https://github.com/nicolo-ribaudo/pako">pako</a><span>PlantUML deflate encoding</span></li>
           <li><a target="_blank" rel="noopener" href="https://distrowatch.com/">Linux Distrowatch</a><span>Linux distribution release feed</span></li>
@@ -3346,141 +3359,196 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       /* archLink is now in-page (#); no href update needed */
     }
 
-    /* ── Graph Module (Chart.js) ─────────────────────────────── */
-    let G_ACTIVE = false, G_CJ_LOADED = false;
-    let G_CHARTS = {};
-    function gLoadChartJs() {
-      if (G_CJ_LOADED) return Promise.resolve();
+    /* ── Graph Module (vis-network) ─────────────────────────────── */
+    let G_ACTIVE = false, G_VIS_LOADED = false;
+    let G_NETWORK = null;
+    function gLoadVisNetwork() {
+      if (G_VIS_LOADED) return Promise.resolve();
       return new Promise((res, rej) => {
         const s = document.createElement("script");
-        s.src = "https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js";
-        s.onload = () => { G_CJ_LOADED = true; res(); };
+        s.src = "https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.9/vis-network.min.js";
+        s.onload = () => { G_VIS_LOADED = true; res(); };
         s.onerror = rej;
         document.head.appendChild(s);
       });
     }
 
-    function gGetVersionEpoch(v) {
-      if (v.versionReleaseEpochMs != null) return Number(v.versionReleaseEpochMs);
-      if (v.versionReleaseEpoch  != null) return Number(v.versionReleaseEpoch) * 1000;
-      if (v.versionReleaseDateISO)  return Date.parse(v.versionReleaseDateISO);
-      if (v.versionReleaseDateTime) return Date.parse(v.versionReleaseDateTime);
-      const d = String(v.versionReleaseDate || "");
-      if (d.length >= 8) return new Date(+d.slice(0,4), +d.slice(4,6)-1, +d.slice(6,8)).getTime();
-      return 0;
+    function gDestroyNetwork() {
+      if (G_NETWORK) { try { G_NETWORK.destroy(); } catch(e) {} G_NETWORK = null; }
     }
 
-    function gChannelOf(v) {
-      const n = String(v.versionNumber || "0").split(".");
-      let ch = "invalid";
-      if (n[1] != 0 && n[2] == 0) ch = "minor";
-      if (v.versionReleaseChannel === "patch" || n[2] != 0) ch = "patch";
-      if (n[1] == 0 && n[2] == 0) ch = "major";
-      if (v.versionReleaseChannel === "cve") ch = "cve";
-      return ch;
-    }
+    function gBuildAndRender(versions, redditPosts) {
+      gDestroyNetwork();
+      const container = document.getElementById("g-networkContainer");
+      const badge = document.getElementById("g-graphBadge");
+      const info = document.getElementById("g-nodeInfoPanel");
+      if (info) info.style.display = "none";
 
-    function gDestroyCharts() {
-      Object.values(G_CHARTS).forEach(c => { if (c) try { c.destroy(); } catch(e) {} });
-      G_CHARTS = {};
-    }
+      const showVer  = document.getElementById("g-show-versions")?.checked !== false;
+      const showCve  = document.getElementById("g-show-cve")?.checked !== false;
+      const showRed  = document.getElementById("g-show-reddit")?.checked !== false;
+      const showSO   = document.getElementById("g-show-so")?.checked !== false;
+      const riskOnly = document.getElementById("g-risk-only")?.checked;
+      const cvePosts = document.getElementById("g-cve-posts")?.checked;
+      const windowDays = Number(document.getElementById("g-window")?.value) || 90;
+      const cutoff = Date.now() - windowDays * 86400000;
+      const CVE_PAT = /\bCVE-\d{4}-\d+\b/i;
 
-    function gRenderCharts(versions) {
-      gDestroyCharts();
-      if (!versions || !versions.length) {
-        const statsEl = document.getElementById("g-statsLine");
-        if (statsEl) statsEl.textContent = "No data loaded. Run a search first.";
+      const nodes = new vis.DataSet();
+      const edges = new vis.DataSet();
+
+      /* ── Component hub nodes ── */
+      const compSet = new Set();
+      versions.forEach(v => {
+        const key = (v.versionProductName || "").toLowerCase().trim();
+        if (!key) return;
+        if (!compSet.has(key)) {
+          compSet.add(key);
+          nodes.add({
+            id: "comp:" + key,
+            label: v.versionProductName || key,
+            group: "component",
+            shape: "ellipse",
+            size: 28,
+            mass: 6,
+            color: { background: "#2563eb", border: "#1d4ed8", highlight: { background: "#1d4ed8", border: "#1e40af" } },
+            font: { color: "#fff", size: 13, face: "system-ui,sans-serif", bold: true },
+            title: "Component: " + (v.versionProductName || key),
+          });
+        }
+      });
+
+      /* ── Version nodes ── */
+      const seenVer = new Set();
+      versions.forEach(v => {
+        const key = (v.versionProductName || "").toLowerCase().trim();
+        if (!key || !compSet.has(key)) return;
+        const ch = gChannelOf(v);
+        const isCve = ch === "cve" || !!v.isCve || !!v.latestCveVersion;
+        if (isCve && !showCve) return;
+        if (!isCve && !showVer) return;
+        const ep = gGetVersionEpoch(v);
+        if (ep > 0 && ep < cutoff) return;
+        const nodeId = "ver:" + (v._id || v.versionId || (key + v.versionNumber));
+        if (seenVer.has(nodeId)) return;
+        seenVer.add(nodeId);
+        const daysSince = ep > 0 ? Math.max(0, (Date.now() - ep) / 86400000) : windowDays / 2;
+        const edgeLen = Math.round(80 + (daysSince / windowDays) * 280);
+        const color = isCve ? "#dc2626" : ch === "major" ? "#c2410c" : ch === "minor" ? "#059669" : "#64748b";
+        nodes.add({
+          id: nodeId,
+          label: "v" + (v.versionNumber || "?"),
+          shape: isCve ? "diamond" : "dot",
+          size: isCve ? 11 : 7,
+          mass: 1,
+          color: { background: color, border: color, highlight: { background: color, border: color } },
+          font: { size: 9, color: "#334155", face: "system-ui,sans-serif" },
+          title: (v.versionProductName || key) + " v" + (v.versionNumber || "?") +
+                 (isCve ? " [CVE]" : "") + (ep > 0 ? "\n" + new Date(ep).toLocaleDateString() : "") +
+                 (Math.round(daysSince) > 0 ? "\n" + Math.round(daysSince) + " days ago" : " (today)"),
+        });
+        edges.add({
+          from: nodeId, to: "comp:" + key,
+          length: edgeLen,
+          color: { color: isCve ? "rgba(220,38,38,.35)" : "rgba(148,163,184,.35)", highlight: "#94a3b8" },
+          width: isCve ? 1.5 : 0.7,
+          dashes: false,
+        });
+      });
+
+      /* ── Reddit / SO post nodes ── */
+      (redditPosts || []).forEach(p => {
+        const sub = (p.subreddit || "").toLowerCase().trim();
+        if (!compSet.has(sub)) return;
+        const isSO = getPostSource(p) === "stackoverflow";
+        if (isSO && !showSO) return;
+        if (!isSO && !showRed) return;
+        const risk = isRisk(p);
+        const hasCve = CVE_PAT.test(p.title || "") || CVE_PAT.test(p.selftext || "") || !!p.isAboutCve;
+        if (riskOnly && !risk && !hasCve) return;
+        if (cvePosts && !hasCve) return;
+        const ep = +(new Date(p.created_utc || 0)) || 0;
+        if (ep > 0 && ep < cutoff) return;
+        const daysSince = ep > 0 ? Math.max(0, (Date.now() - ep) / 86400000) : windowDays / 2;
+        const nodeId = "post:" + (p.redditId || p._id || p.id || Math.random().toString(36).slice(2));
+        const edgeLen = Math.round(80 + (daysSince / windowDays) * 280);
+        const color = hasCve ? "#fb7185" : isSO ? "#3b82f6" : risk ? "#e879f9" : "#a855f7";
+        nodes.add({
+          id: nodeId,
+          label: (p.title || "").slice(0, 28) + ((p.title || "").length > 28 ? "…" : ""),
+          shape: "dot",
+          size: (risk || hasCve) ? 9 : 6,
+          mass: 1,
+          color: { background: color, border: color, highlight: { background: color, border: color } },
+          font: { size: 9, color: "#334155", face: "system-ui,sans-serif" },
+          title: (p.title || "").slice(0, 160) + (hasCve ? " [CVE]" : "") +
+                 (isSO ? " [SO]" : " [Reddit]") + (risk ? " [high risk]" : "") +
+                 (ep > 0 ? "\n" + Math.round(daysSince) + " days ago" : ""),
+        });
+        edges.add({
+          from: nodeId, to: "comp:" + sub,
+          length: edgeLen,
+          color: { color: hasCve ? "rgba(251,113,133,.4)" : isSO ? "rgba(59,130,246,.3)" : "rgba(168,85,247,.3)", highlight: "#94a3b8" },
+          width: (risk || hasCve) ? 1.2 : 0.5,
+          dashes: !risk && !hasCve,
+        });
+      });
+
+      const statsEl = document.getElementById("g-statsLine");
+      if (!nodes.length) {
+        container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:13px;color:var(--muted)">Search for a component to build the graph.</div>';
+        if (badge) badge.textContent = "No data";
+        if (statsEl) statsEl.textContent = "No data.";
         return;
       }
-      const windowDays = Number(document.getElementById("g-window").value) || 90;
-      const cutoff = Date.now() - windowDays * 86400000;
-      const filtered = versions.filter(v => gGetVersionEpoch(v) >= cutoff);
-      const statsEl = document.getElementById("g-statsLine");
-      if (statsEl) statsEl.textContent = filtered.length + " releases in last " + windowDays + "d";
+      container.innerHTML = "";
+      if (badge) badge.textContent = nodes.length + " nodes · " + edges.length + " edges";
+      if (statsEl) statsEl.textContent = compSet.size + " component" + (compSet.size !== 1 ? "s" : "") + " · " + nodes.length + " nodes · " + edges.length + " edges";
 
-      const WEEK_MS = 7 * 86400000;
-
-      // ── 1. Release Activity Over Time (line, weekly) ──────────
-      {
-        const buckets = new Map();
-        filtered.forEach(v => {
-          const ep = gGetVersionEpoch(v);
-          const key = new Date(ep - (ep % WEEK_MS)).toISOString().slice(0, 10);
-          buckets.set(key, (buckets.get(key) || 0) + 1);
-        });
-        const sorted = [...buckets.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-        G_CHARTS.activity = new Chart(document.getElementById("g-chartActivity"), {
-          type: "line",
-          data: {
-            labels: sorted.map(([k]) => k),
-            datasets: [{ label: "Releases", data: sorted.map(([, v]) => v),
-              borderColor: "#2563eb", backgroundColor: "rgba(37,99,235,0.08)",
-              tension: 0.3, fill: true, pointRadius: 2 }]
+      G_NETWORK = new vis.Network(container, { nodes, edges }, {
+        physics: {
+          enabled: true,
+          solver: "barnesHut",
+          barnesHut: {
+            gravitationalConstant: -3000,
+            centralGravity: 0.25,
+            springLength: 120,
+            springConstant: 0.03,
+            damping: 0.12,
           },
-          options: { responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: { x: { ticks: { maxTicksLimit: 8, maxRotation: 30 } } } }
-        });
-      }
+          stabilization: { enabled: true, iterations: 200, updateInterval: 30 },
+        },
+        interaction: { hover: true, tooltipDelay: 150, zoomView: true, dragView: true },
+        nodes: { borderWidth: 1, borderWidthSelected: 2 },
+        edges: { smooth: { type: "continuous", roundness: 0.15 }, arrows: { to: false } },
+      });
 
-      // ── 2. Top Components (horizontal bar, top 20) ────────────
-      {
-        const counts = new Map();
-        filtered.forEach(v => {
-          const k = (v.versionProductName || "unknown").toLowerCase().trim();
-          counts.set(k, (counts.get(k) || 0) + 1);
-        });
-        const top = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 20);
-        G_CHARTS.components = new Chart(document.getElementById("g-chartComponents"), {
-          type: "bar",
-          data: {
-            labels: top.map(([k]) => k),
-            datasets: [{ label: "Releases", data: top.map(([, v]) => v), backgroundColor: "#2563eb" }]
-          },
-          options: { indexAxis: "y", responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: { x: { ticks: { precision: 0 } } } }
-        });
-      }
-
-      // ── 3. Channel Breakdown (donut) ──────────────────────────
-      {
-        const ch = { major: 0, minor: 0, patch: 0, cve: 0 };
-        filtered.forEach(v => { const c = gChannelOf(v); if (c in ch) ch[c]++; });
-        const labels = Object.keys(ch).filter(k => ch[k] > 0);
-        const colors = { major: "#c2410c", minor: "#059669", patch: "#2563eb", cve: "#dc2626" };
-        G_CHARTS.channels = new Chart(document.getElementById("g-chartChannels"), {
-          type: "doughnut",
-          data: { labels, datasets: [{ data: labels.map(k => ch[k]), backgroundColor: labels.map(k => colors[k]) }] },
-          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "right" } } }
-        });
-      }
-
-      // ── 4. CVE Trend (bar, weekly) ────────────────────────────
-      {
-        const buckets = new Map();
-        filtered.filter(v => gChannelOf(v) === "cve" || v.isCve || v.latestCveVersion).forEach(v => {
-          const ep = gGetVersionEpoch(v);
-          const key = new Date(ep - (ep % WEEK_MS)).toISOString().slice(0, 10);
-          buckets.set(key, (buckets.get(key) || 0) + 1);
-        });
-        const sorted = [...buckets.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-        G_CHARTS.cve = new Chart(document.getElementById("g-chartCve"), {
-          type: "bar",
-          data: {
-            labels: sorted.map(([k]) => k),
-            datasets: [{ label: "CVE releases", data: sorted.map(([, v]) => v), backgroundColor: "#dc2626" }]
-          },
-          options: { responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: { x: { ticks: { maxTicksLimit: 8, maxRotation: 30 } }, y: { ticks: { precision: 0 } } } }
-        });
-      }
+      /* ── Node click: show info panel ── */
+      G_NETWORK.on("click", function(params) {
+        if (!params.nodes.length) { if (info) info.style.display = "none"; return; }
+        const nodeId = params.nodes[0];
+        const node = nodes.get(nodeId);
+        if (!node || !info) return;
+        const closeBtn = '<button onclick="document.getElementById(\'g-nodeInfoPanel\').style.display=\'none\'" style="float:right;background:none;border:none;cursor:pointer;font-size:15px;line-height:1;color:var(--muted);">×</button>';
+        const isComp = nodeId.startsWith("comp:");
+        const isPost = nodeId.startsWith("post:");
+        let html = closeBtn;
+        if (isComp) {
+          const key = nodeId.slice(5);
+          const count = edges.get({ filter: e => e.to === nodeId }).length;
+          html += '<strong style="font-size:12px">' + node.label + '</strong>';
+          html += '<div style="margin-top:4px;color:var(--muted)">' + count + ' connected node' + (count !== 1 ? 's' : '') + '</div>';
+          html += '<div style="margin-top:4px"><a href="/?q=' + encodeURIComponent(key) + '" style="font-size:10px;color:var(--brand)">Open feed ↗</a></div>';
+        } else {
+          html += '<div style="white-space:pre-wrap;word-break:break-word">' + (node.title || node.label) + '</div>';
+        }
+        info.innerHTML = html;
+        info.style.display = "block";
+      });
     }
 
     function gGetVersions() {
-      const useSearch = document.getElementById("g-scope-search")?.checked;
-      if (useSearch && STATE.candidates.length) return STATE.candidates;
+      if (STATE.candidates.length) return STATE.candidates;
       return STATE.rawVersions;
     }
 
@@ -3502,7 +3570,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       EL.graphLink.classList.add("nav-active");
     }
     function deactivateGraph() {
-      gDestroyCharts();
+      gDestroyNetwork();
       G_ACTIVE = false;
       setViewParam("");
       document.getElementById("graphView").style.display = "none";
@@ -3517,8 +3585,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (G_ACTIVE) { deactivateGraph(); return; }
       activateGraph();
       EL.navLoader.classList.add("active");
-      try { await gLoadChartJs(); } finally { EL.navLoader.classList.remove("active"); }
-      gRenderCharts(gGetVersions());
+      try { await gLoadVisNetwork(); } finally { EL.navLoader.classList.remove("active"); }
+      gBuildAndRender(gGetVersions(), STATE.redditAll);
     });
 
     document.querySelector(".brand").addEventListener("click", e => {
@@ -3544,25 +3612,23 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       else if (UA_ACTIVE) deactivateUsers();
     });
 
+    function gReRender() {
+      if (!G_ACTIVE || !G_VIS_LOADED) return;
+      gBuildAndRender(gGetVersions(), STATE.redditAll);
+    }
+
     document.getElementById("g-refreshBtn").addEventListener("click", async () => {
-      if (!G_CJ_LOADED) {
+      if (!G_VIS_LOADED) {
         EL.navLoader.classList.add("active");
-        try { await gLoadChartJs(); } finally { EL.navLoader.classList.remove("active"); }
+        try { await gLoadVisNetwork(); } finally { EL.navLoader.classList.remove("active"); }
       }
-      gRenderCharts(gGetVersions());
+      gBuildAndRender(gGetVersions(), STATE.redditAll);
     });
 
-    document.getElementById("g-window").addEventListener("change", () => {
-      if (!G_ACTIVE || !G_CJ_LOADED) return;
-      gRenderCharts(gGetVersions());
+    ["g-show-versions","g-show-cve","g-show-reddit","g-show-so","g-risk-only","g-cve-posts"].forEach(id => {
+      document.getElementById(id)?.addEventListener("change", gReRender);
     });
-
-    document.querySelectorAll("input[name='g-scope']").forEach(r => {
-      r.addEventListener("change", () => {
-        if (!G_ACTIVE || !G_CJ_LOADED) return;
-        gRenderCharts(gGetVersions());
-      });
-    });
+    document.getElementById("g-window")?.addEventListener("change", gReRender);
 
     document.querySelectorAll("[data-close-dialog]").forEach(btn =>
       btn.addEventListener("click", () => document.getElementById(btn.dataset.closeDialog).close())
@@ -4489,7 +4555,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       EL.status.textContent = `${STATE.groupsFiltered.length} group${STATE.groupsFiltered.length !== 1 ? "s" : ""}`;
       appendNextGroups();
 
-      if (G_ACTIVE && G_CJ_LOADED) gRenderCharts(gGetVersions());
+      if (G_ACTIVE && G_VIS_LOADED) gBuildAndRender(gGetVersions(), STATE.redditAll);
       if (A_ACTIVE) aLoadAndRender();
     }
 
@@ -4824,7 +4890,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           // Re-render rendered feed cards so reddit posts and chips appear
           refreshRenderedGroupsWithReddit();
           updateCommunityBracket();
-          if (G_ACTIVE && G_CJ_LOADED) gRenderCharts(gGetVersions());
+          if (G_ACTIVE && G_VIS_LOADED) gBuildAndRender(gGetVersions(), STATE.redditAll);
         });
       }
       return STATE.redditReady;
@@ -5151,8 +5217,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (view === "graph") {
         activateGraph();
         EL.navLoader.classList.add("active");
-        try { await gLoadChartJs(); } finally { EL.navLoader.classList.remove("active"); }
-        gRenderCharts(gGetVersions());
+        try { await gLoadVisNetwork(); } finally { EL.navLoader.classList.remove("active"); }
+        gBuildAndRender(gGetVersions(), STATE.redditAll);
       } else if (view === "arch") {
         activateArch();
         EL.navLoader.classList.add("active");

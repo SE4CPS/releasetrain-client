@@ -21,6 +21,22 @@ Read this before acting on any prompt.
 2. Add a changelog bullet to the current version entry in `#changelogView` inside `src/index.html`.
 3. Bump the version in the topbar brand (`<em>vX.Y.Z</em>`) and in `package.json` once per day maximum. If a version was already bumped today, add to the existing entry rather than creating a new one.
 
+### End-of-task commit and push
+
+Run this sequence after every completed task:
+
+```bash
+npx grunt                                      # sync src/ to dist/
+git add src/index.html package.json dist/      # stage only known-safe paths
+git commit -m "short description of change"
+git push origin master
+```
+
+Rules:
+- Stage specific paths by name. Never use `git add -A` or `git add .` — the repo may contain `.env` or other secrets.
+- Write the commit message in the imperative: "add org namespace share links", not "added".
+- Confirm with the user before running `git push origin master`. The push is the only irreversible step.
+
 ### User account and bookmark changes
 
 When modifying the Account view (`#usersView`) or user/bookmark JS module:
