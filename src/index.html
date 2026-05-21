@@ -3366,7 +3366,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (G_VIS_LOADED) return Promise.resolve();
       return new Promise((res, rej) => {
         const s = document.createElement("script");
-        s.src = "https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.9/vis-network.min.js";
+        s.src = "https://cdn.jsdelivr.net/npm/vis-network@9.1.9/standalone/umd/vis-network.min.js";
         s.onload = () => { G_VIS_LOADED = true; res(); };
         s.onerror = rej;
         document.head.appendChild(s);
@@ -3496,9 +3496,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
       const statsEl = document.getElementById("g-statsLine");
       if (!nodes.length) {
-        container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:13px;color:var(--muted)">Search for a component to build the graph.</div>';
+        const suggestions = ["linux","nginx","redis","kubernetes","openssl","postgresql","mysql","python","nodejs","mongodb"];
+        const chips = suggestions.map(s =>
+          `<a href="/?q=${encodeURIComponent(s)}&view=graph" style="display:inline-block;padding:4px 10px;margin:3px;border-radius:99px;border:1px solid var(--border);background:var(--surface);color:var(--brand);font-size:11px;text-decoration:none;cursor:pointer">${s}</a>`
+        ).join("");
+        container.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;padding:24px;text-align:center"><div style="font-size:13px;color:var(--muted)">Search for a component in the feed to populate the graph, or pick a suggestion:</div><div style="max-width:420px">${chips}</div></div>`;
         if (badge) badge.textContent = "No data";
-        if (statsEl) statsEl.textContent = "No data.";
+        if (statsEl) statsEl.textContent = "No data. Search for a component first.";
         return;
       }
       container.innerHTML = "";

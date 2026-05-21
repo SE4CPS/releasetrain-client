@@ -297,6 +297,45 @@ Share links use the format `?share=<shareId>` on the page URL. On load the inlin
 
 ---
 
+## Empty-state suggestions
+
+Views that depend on a user-supplied search query (graph view, feed) must render a suggestion panel when no data is loaded, not a bare "no data" message.
+
+The suggestion panel must:
+1. Explain what the user needs to do in one short sentence.
+2. Render a row of clickable suggestion chips. Each chip is an `<a href="/?q=<term>&view=<viewId>">` link so clicking navigates with the search pre-filled and the correct view active.
+3. Use design tokens (`--brand`, `--border`, `--surface`, `--muted`) and inline styles only (no new CSS classes).
+
+Example for the graph view (empty `nodes.DataSet`):
+```js
+const suggestions = ["linux","nginx","redis","kubernetes","openssl"];
+const chips = suggestions.map(s =>
+  `<a href="/?q=${encodeURIComponent(s)}&view=graph" style="...pill styles...">${s}</a>`
+).join("");
+container.innerHTML = `<div style="...centered column...">
+  <div style="font-size:13px;color:var(--muted)">Search for a component to populate the graph, or pick a suggestion:</div>
+  <div>${chips}</div>
+</div>`;
+```
+
+Current instance: `gBuildAndRender()` in the graph module renders this panel when `nodes.length === 0`.
+
+---
+
+## CDN libraries
+
+Load external libraries lazily via a `load*()` function that appends a `<script>` to `document.head`. Use these verified CDN URLs:
+
+| Library | URL |
+|---|---|
+| vis-network 9.1.9 | `https://cdn.jsdelivr.net/npm/vis-network@9.1.9/standalone/umd/vis-network.min.js` |
+| Chart.js | `https://cdn.jsdelivr.net/npm/chart.js` |
+| pako 2.1.0 | `https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js` |
+
+Do not use cdnjs paths for vis-network. The cdnjs path does not serve a standalone UMD bundle and will 404.
+
+---
+
 ## What not to do
 
 - Do not split or add a second `<script>` block in `src/index.html`. All in-page view logic belongs in the single existing `<script>` tag.
