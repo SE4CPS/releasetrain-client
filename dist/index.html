@@ -1277,7 +1277,7 @@
   <!-- ── Topbar: brand + nav only ── -->
   <header class="topbar" role="banner" id="topbar">
     <div class="topbar-main">
-      <a class="brand" href="/" aria-label="Releasetrain home">Releasetrain <em>v3.21.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home">Releasetrain <em>v3.21.1</em></a>
       <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
       <div class="topbar-spacer"></div>
       <button class="nav-toggle" type="button" id="navToggle"
@@ -2717,6 +2717,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-05-22</div>
+              <div class="cl-ver cl-ver-patch">v3.21.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Strip trailing commas from search queries</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Query normalization</strong>: trailing and leading commas are stripped before tracking a search, displaying top searches in the sidebar, and showing queries in the admin search events table.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-entry">
+            <div class="cl-meta">
               <div class="cl-ver cl-ver-minor">v3.21.0</div>
             </div>
             <div class="cl-content">
@@ -3390,6 +3402,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     window.addEventListener("resize", updateOffsets);
     new ResizeObserver(updateOffsets).observe($(".topbar"));
 
+    const normalizeQuery = q => String(q || "").split(",").map(t => t.trim()).filter(Boolean).join(",");
     const encodeCsvKeepCommas = csv => {
       const terms = String(csv || "").split(",").map(t => t.trim()).filter(Boolean);
       if (!terms.length) return "";
@@ -5303,12 +5316,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           listEl.innerHTML = '<span style="font-size:11px;color:var(--muted)">No searches yet.</span>';
           return;
         }
-        listEl.innerHTML = items.map(item =>
-          '<a href="/?q=' + encodeURIComponent(item.query) + '" style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);text-decoration:none;color:var(--text);font-size:12px">'
-          + '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + String(item.query).replace(/&/g,"&amp;").replace(/</g,"&lt;") + '</span>'
-          + '<span style="font-size:11px;color:var(--muted);margin-left:8px;flex-shrink:0">' + item.count + (item.count === 1 ? ' search' : ' searches') + '</span>'
-          + '</a>'
-        ).join("");
+        listEl.innerHTML = items.map(item => {
+          const q = normalizeQuery(item.query);
+          if (!q) return "";
+          return '<a href="/?q=' + encodeCsvKeepCommas(q) + '" style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);text-decoration:none;color:var(--text);font-size:12px">'
+            + '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + q.replace(/&/g,"&amp;").replace(/</g,"&lt;") + '</span>'
+            + '<span style="font-size:11px;color:var(--muted);margin-left:8px;flex-shrink:0">' + item.count + (item.count === 1 ? ' search' : ' searches') + '</span>'
+            + '</a>';
+        }).filter(Boolean).join("");
       } catch {
         listEl.innerHTML = '<span style="font-size:11px;color:var(--muted)">Could not load.</span>';
       }
@@ -6794,12 +6809,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         <tbody>` +
         events.map(e => {
           const t = e.timestamp ? new Date(e.timestamp).toLocaleString() : "";
+          const q = normalizeQuery(e.query);
           const isAnon = !e.userId || e.userId === "anonymous";
           const userCell = isAnon
             ? `<span class="ua-se-anon">anonymous</span>`
             : `<span title="${esc(e.userId)}">${esc((e.userId || "").slice(-8))}</span>`;
           return `<tr>
-            <td title="${esc(e.query)}">${esc(e.query)}</td>
+            <td title="${esc(q)}">${esc(q)}</td>
             <td>${userCell}</td>
             <td style="white-space:nowrap">${esc(t)}</td>
             <td>${esc(e.ip || "")}</td>
@@ -6810,13 +6826,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     }
 
     function trackSearch(q) {
-      if (!q || !q.trim()) return;
+      const normalized = normalizeQuery(q);
+      if (!normalized) return;
       const headers = { "Content-Type": "application/json" };
       const token = localStorage.getItem("rt_token");
       if (token) headers["Authorization"] = "Bearer " + token;
       fetch(API_BASE + "events/search", {
         method: "POST", headers,
-        body: JSON.stringify({ query: q.trim() })
+        body: JSON.stringify({ query: normalized })
       }).catch(() => {});
     }
 
