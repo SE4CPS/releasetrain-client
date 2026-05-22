@@ -2711,6 +2711,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                 <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Vendor releases visible in home feed</strong>: two filters were hiding vendor-published releases. Server-side: <code>end=today</code> (local date) excluded documents stamped with tomorrow's UTC date; vendor docs now bypass the date cap. Client-side: <code>versionTime()</code> maps a release date to noon UTC, which is ahead of local <code>Date.now()</code> for negative-offset timezones; vendor docs now bypass the future-date guard.</li>
                 <li><span class="cl-tag cl-tag-fix">fix</span> <strong>View URL params consistent with nav labels</strong>: <code>?view=network</code> renamed to <code>?view=release</code> to match the 🌐 Release nav label. Added missing <code>?view=account</code> routing entry so the Account view is reachable via URL.</li>
                 <li><span class="cl-tag cl-tag-ux">ux</span> <strong>No <code>%2C</code> in URL</strong>: multi-component search queries now display literal commas in the address bar. Trailing commas typed in the search field are stripped before writing to the URL.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Subreddit search</strong>: searching a subreddit name with no matching versioned component now shows a community posts group. Posts from matching subreddits are surfaced even when no version data exists for that name.</li>
               </ul>
             </div>
           </div>
@@ -4637,6 +4638,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
       STATE.candidates = candidates;
       STATE.groupsFiltered = groupByComponentName(filtered);
+
+      // Inject subreddit-only groups for search terms that match a subreddit
+      // but have no version data — so community posts are still surfaced.
+      if (STATE.filters.components.length) {
+        const existingKeys = new Set(STATE.groupsFiltered.map(g => g.key));
+        for (const term of STATE.filters.components) {
+          const posts = postsForComponent(term);
+          const recent = posts.filter(p => getPostSource(p) === "reddit" && redditTime(p) >= SEVEN_DAYS_AGO);
+          if (!recent.length) continue;
+          const c = canonComponentName({ versionProductName: term });
+          if (existingKeys.has(c.key)) continue;
+          STATE.groupsFiltered.push({ key: c.key, name: c.nameOut, items: [{ versionProductName: term, _synthetic: true }] });
+        }
+      }
+
       STATE.groupIndex = 0;
       EL.feed.innerHTML = "";
       EL["kpi-page"].textContent = STATE.groupsFiltered.length;
@@ -4669,7 +4685,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         }
       }
 
-      const vEntries = group.items.map(v => ({
+      const vEntries = group.items.filter(v => !v._synthetic).map(v => ({
         t: versionTime(v),
         kind: v.isCve ? "cve" : "update",
         channel: (v.versionReleaseChannel || "other").toLowerCase(),
