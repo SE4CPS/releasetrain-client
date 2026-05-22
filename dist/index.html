@@ -1270,7 +1270,7 @@
   <!-- ── Topbar: brand + nav only ── -->
   <header class="topbar" role="banner" id="topbar">
     <div class="topbar-main">
-      <a class="brand" href="/" aria-label="Releasetrain home">Releasetrain <em>v3.20.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home">Releasetrain <em>v3.20.1</em></a>
       <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
       <div class="topbar-spacer"></div>
       <button class="nav-toggle" type="button" id="navToggle"
@@ -2697,6 +2697,23 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-05-21</div>
+              <div class="cl-ver cl-ver-patch">v3.20.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Release view fixes, URL cleanup, view param consistency</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Release view: vendor-only</strong>: removed source filter dropdown; view always shows the current account's own published releases. Source filter no longer allowed switching to third-party extracted data.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Experience reports embedded</strong>: reports are now stored as an array on the version document and rendered inline on load. Removed separate <code>knowledge_reports</code> collection and the extra fetch per card.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Vendor releases visible in home feed</strong>: two filters were hiding vendor-published releases. Server-side: <code>end=today</code> (local date) excluded documents stamped with tomorrow's UTC date; vendor docs now bypass the date cap. Client-side: <code>versionTime()</code> maps a release date to noon UTC, which is ahead of local <code>Date.now()</code> for negative-offset timezones; vendor docs now bypass the future-date guard.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <strong>View URL params consistent with nav labels</strong>: <code>?view=network</code> renamed to <code>?view=release</code> to match the 🌐 Release nav label. Added missing <code>?view=account</code> routing entry so the Account view is reachable via URL.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> <strong>No <code>%2C</code> in URL</strong>: multi-component search queries now display literal commas in the address bar. Trailing commas typed in the search field are stripped before writing to the URL.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
