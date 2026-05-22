@@ -1168,8 +1168,14 @@
     #dashboardControls .ri-ctrl-label { font-size:11px; color:var(--muted); margin-bottom:3px; }
 
     /* ── Network view ────────────────────────────────────────── */
-    #networkView { padding: 20px; max-width: 700px; }
-    @media (max-width: 640px) { #networkView { padding: 12px; position: static; height: auto; overflow: visible; } }
+    #networkView {
+      padding: 20px; max-width: 700px;
+      position: sticky; top: calc(var(--topbar-h) + 16px);
+      height: calc(100vh - var(--topbar-h) - 32px);
+      overflow-y: auto; overscroll-behavior: contain;
+      box-sizing: border-box;
+    }
+    @media (max-width: 640px) { #networkView { position: static; height: auto; overflow-y: visible; padding: 12px; } }
     #networkView .nk-tabs {
       display: flex; border-bottom: 2px solid var(--border); margin-bottom: 16px;
     }
@@ -1279,7 +1285,7 @@
         <a id="changelogLink" class="nav-link" href="#" title="What's new: version history">📝 Changelog</a>
         <a id="ackLink" class="nav-link" href="#" title="Show acknowledgements (in-page)">🤝 Credits</a>
         <a id="usersLink" class="nav-link" href="#" title="User account management">👤 Account</a>
-        <a id="networkLink" class="nav-link" href="#" title="Release Knowledge Network">🌐 Network</a>
+        <a id="networkLink" class="nav-link" href="#" title="Releases: publish and report production outcomes">🌐 Release</a>
         <a class="nav-link" href="https://github.com/SE4CPS/releasetrain-client"
           target="_blank" rel="noopener noreferrer">⭐ GitHub</a>
       </nav>
@@ -1720,9 +1726,9 @@
       <!-- ── Network controls (shown only in network view) ── -->
       <div id="networkControls" style="display:none">
         <div class="sidebar-section">
-          <div class="sidebar-label">Release Knowledge Network</div>
+          <div class="sidebar-label">Releases</div>
           <p style="font-size:11px;color:var(--muted);line-height:1.5;margin:4px 0 0">
-            Vendors publish releases. Users report outcomes. Collective operational knowledge grows with each report.
+            Vendors publish releases. Users report production outcomes. Collective knowledge grows with each report.
           </p>
         </div>
         <div class="sidebar-section">
@@ -3074,9 +3080,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         <!-- login gate -->
         <div id="nk-gate" style="display:none;text-align:center;padding:48px 20px">
           <div style="font-size:36px;margin-bottom:12px">🌐</div>
-          <div style="font-size:15px;font-weight:700;margin-bottom:8px">Release Knowledge Network</div>
+          <div style="font-size:15px;font-weight:700;margin-bottom:8px">Releases</div>
           <p style="font-size:12px;color:var(--muted);max-width:340px;margin:0 auto 18px;line-height:1.7">
-            Vendors publish releases. Users report production outcomes. The network answers questions like
+            Vendors publish releases. Users report production outcomes. Collective knowledge answers questions like
             "How did version 4.2 perform?" or "Who upgraded successfully from 3.9?"
           </p>
           <p style="font-size:11px;color:var(--muted);margin:0 auto 18px;max-width:300px;line-height:1.6">
