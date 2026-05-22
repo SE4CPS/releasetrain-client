@@ -3334,9 +3334,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     new ResizeObserver(updateOffsets).observe($(".topbar"));
 
     const encodeCsvKeepCommas = csv => {
-      const cleaned = String(csv || "").replace(/ /g, " ").replace(/\s*,\s*/g, ",").trim();
-      if (!cleaned) return "";
-      return cleaned.split(",").map(t => encodeURIComponent(t)).join(",");
+      const terms = String(csv || "").split(",").map(t => t.trim()).filter(Boolean);
+      if (!terms.length) return "";
+      return terms.map(t => encodeURIComponent(t)).join(",");
     };
 
     function buildHrefWithQ(path, csv) {
@@ -3352,7 +3352,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const url = new URL(location.href);
       if (view) url.searchParams.set("view", view);
       else url.searchParams.delete("view");
-      history.replaceState({}, "", url.toString());
+      // URLSearchParams encodes commas as %2C; restore them for readability
+      history.replaceState({}, "", url.toString().replace(/%2C/gi, ","));
     }
 
     function setLinksHref() {
@@ -6804,7 +6805,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     document.getElementById("ua-bm-save-btn").addEventListener("click", async () => {
       const q = document.getElementById("components").value.trim();
       if (!q) { alert("Enter a component search first, then save it as a bookmark."); return; }
-      const url = location.origin + location.pathname + "?q=" + encodeURIComponent(q);
+      const url = location.origin + location.pathname + "?q=" + encodeCsvKeepCommas(q);
       const name = prompt("Bookmark name:", q);
       if (!name) return;
       const res = await uaRequest("bookmarks/", { method: "POST", body: JSON.stringify({ name, url }) });
