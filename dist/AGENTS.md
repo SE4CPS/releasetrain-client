@@ -275,6 +275,24 @@ Share links use the format `?share=<shareId>` on the page URL. On load the inlin
 
 ---
 
+## Mobile layout and scrolling
+
+Every view must be scrollable and usable on mobile. Apply these rules to every view you add or modify:
+
+1. Never set `overflow: hidden` or `position: fixed` on a view container without a corresponding `@media (max-width: 640px)` override that restores `position: static` and `height: auto`.
+2. Grid layouts (`display: grid; grid-template-columns: 1fr 1fr`) must collapse to a single column on mobile:
+   ```css
+   @media (max-width: 640px) {
+     #myView .my-grid { grid-template-columns: 1fr; }
+   }
+   ```
+3. Do not set a fixed `height` or `max-height` that clips content on small screens without `overflow-y: auto` as a fallback.
+4. The page body must always be scrollable on mobile. Do not lock `document.body.style.overflow` or `document.documentElement.style.overflow` unconditionally; if you must lock scroll for a desktop overlay, restore it in `deactivate*()` and add a guard so it only applies above the mobile breakpoint (`window.innerWidth > 640`).
+5. Sidebar controls that appear in a view must wrap or stack on mobile; do not use `white-space: nowrap` or fixed widths that overflow the viewport.
+6. Test that the view renders without horizontal scroll on a 375px wide viewport before marking the task complete.
+
+---
+
 ## Output style
 
 - No hyphens or dashes in written prose or UI text. Use commas, colons, or rewrite the sentence instead.

@@ -567,7 +567,7 @@
       box-shadow: var(--shadow-sm);
       padding: 0;
     }
-    @media (max-width: 640px) { #ackView { position: static; height: 80vh; } }
+    @media (max-width: 640px) { #ackView { position: static; height: auto; overflow-y: visible; } }
 
     /* ── Changelog view ────────────────────────────────────── */
     #changelogView {
@@ -1169,28 +1169,29 @@
 
     /* ── Mobile scroll: all views ────────────────────────────────────── */
     @media (max-width: 640px) {
-      /* Dashboard: let page scroll on mobile */
-      #dashboardView {
-        position: static;
-        height: auto;
-        overflow: visible;
-      }
+      /* Unlock body scroll: all views stack and page scrolls naturally */
+      html, body { height: auto; overflow-y: auto; }
+
+      /* Risk Report */
+      #dashboardView { position: static; height: auto; overflow: visible; }
       #dashboardView .ri-cards { grid-template-columns: 1fr; }
 
-      /* Docs and Ack: drop fixed height so page scrolls naturally */
-      #docsView  { height: auto; overflow-y: visible; }
-      #ackView   { height: auto; overflow-y: visible; }
+      /* Docs: position: static so sticky does not clip content */
+      #docsView { position: static; height: auto; overflow-y: visible; }
 
-      /* CVE: keep height for flex scroll-list to work; enable touch scroll */
+      /* Ack: full height so all content is reachable */
+      #ackView { position: static; height: auto; overflow-y: visible; }
+
+      /* CVE: enable touch scroll; flex layout handled by its own media query */
       #cveView { height: auto; min-height: 85vh; overflow: visible; }
       #cveView .panel { overflow: visible; min-height: 0; }
       #cveView .scroll-list { touch-action: pan-y; -webkit-overflow-scrolling: touch; min-height: 55vh; flex: none; }
 
-      /* Feed, docs, ack inner scroll containers: ensure iOS touch scroll */
-      #feedPanel, #docsView, #ackView { touch-action: pan-y; -webkit-overflow-scrolling: touch; }
-
-      /* Changelog: ensure content is not clipped */
+      /* Changelog */
       #changelogView { overflow-y: visible; }
+
+      /* Touch-scroll hint for iOS */
+      #feedPanel, #docsView, #ackView { touch-action: pan-y; -webkit-overflow-scrolling: touch; }
     }
   </style>
 </head>
