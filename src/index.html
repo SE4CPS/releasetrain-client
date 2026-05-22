@@ -706,6 +706,13 @@
     .ua-admin-header {
       display: flex; align-items: center; gap: 8px; padding: 10px 0 8px;
     }
+    #ua-search-events-section { margin-top: 24px; }
+    .ua-se-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+    .ua-se-table th { text-align: left; padding: 6px 8px; border-bottom: 2px solid var(--border); color: var(--muted); font-weight: 600; white-space: nowrap; }
+    .ua-se-table td { padding: 5px 8px; border-bottom: 1px solid var(--border); vertical-align: top; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ua-se-table tr:last-child td { border-bottom: none; }
+    .ua-se-anon { color: var(--muted); font-style: italic; }
+    @media (max-width: 640px) { .ua-se-table td:nth-child(4), .ua-se-table th:nth-child(4) { display: none; } }
     .ua-user-row {
       display: flex; align-items: center; gap: 10px; padding: 10px 14px;
       border: 1px solid var(--border); border-radius: var(--radius-sm);
@@ -1270,7 +1277,7 @@
   <!-- ── Topbar: brand + nav only ── -->
   <header class="topbar" role="banner" id="topbar">
     <div class="topbar-main">
-      <a class="brand" href="/" aria-label="Releasetrain home">Releasetrain <em>v3.20.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home">Releasetrain <em>v3.21.0</em></a>
       <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
       <div class="topbar-spacer"></div>
       <button class="nav-toggle" type="button" id="navToggle"
@@ -2700,6 +2707,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
           <div class="cl-release">
             <div class="cl-date-col">
+              <div class="cl-date">2026-05-22</div>
+              <div class="cl-ver cl-ver-minor">v3.21.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Component search tracking, admin search activity view</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Search tracking</strong>: every component search is recorded server-side with query, timestamp, IP, and user agent. Logged-in users are identified by userId; unauthenticated searches are recorded as anonymous.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Admin search activity</strong>: the Account view for admin users now includes a Component searches table showing all recorded searches across all users, including anonymous, sorted newest first.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
               <div class="cl-date">2026-05-21</div>
               <div class="cl-ver cl-ver-patch">v3.20.1</div>
             </div>
@@ -3087,6 +3108,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               <button id="ua-refresh-users" class="btn btn-ghost" style="font-size:12px;padding:4px 10px;margin-left:auto">Refresh</button>
             </div>
             <div id="ua-user-list"></div>
+            <div id="ua-search-events-section" style="display:none">
+              <div class="ua-admin-header" style="margin-top:16px">
+                <span style="font-weight:700;font-size:13px">Component searches</span>
+                <span id="ua-se-count" class="ua-muted" style="font-size:12px"></span>
+                <button id="ua-refresh-searches" class="btn btn-ghost" style="font-size:12px;padding:4px 10px;margin-left:auto">Refresh</button>
+              </div>
+              <div id="ua-se-list"></div>
+            </div>
           </div>
         </div>
 
@@ -5019,6 +5048,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         setLinksHref();
 
         // First page only — renders immediately, more loaded lazily as user scrolls
+        trackSearch(rawQ);
         const { versions: vers, nextCursor } = await Api.versions(rawQ);
         STATE.nextCursor = nextCursor;
 
@@ -5057,6 +5087,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         if (DB_ACTIVE) riPopulateVersions();
         STATE.nextCursor = null;
         STATE.rawVersions = [];
+        trackSearch(input);
         const { versions: vers, nextCursor: nc } = await Api.versions(input);
         STATE.nextCursor = nc;
         if (!vers.length) {
@@ -6538,6 +6569,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         if (user.role === "admin") {
           adminSection.style.display = "";
           uaLoadUsers();
+          uaLoadSearchEvents();
         } else {
           adminSection.style.display = "none";
         }
@@ -6703,6 +6735,57 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     });
 
     document.getElementById("ua-refresh-users").addEventListener("click", uaLoadUsers);
+    document.getElementById("ua-refresh-searches").addEventListener("click", uaLoadSearchEvents);
+
+    async function uaLoadSearchEvents() {
+      const section = document.getElementById("ua-search-events-section");
+      const listEl  = document.getElementById("ua-se-list");
+      const countEl = document.getElementById("ua-se-count");
+      section.style.display = "";
+      listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">Loading…</p>`;
+      const res = await uaRequest("events/search?limit=200").catch(() => null);
+      if (!res || !res.ok) {
+        listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">Could not load search events.</p>`;
+        return;
+      }
+      const data = await res.json();
+      const events = data.data || [];
+      if (countEl) countEl.textContent = "(" + events.length + ")";
+      if (!events.length) {
+        listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">No searches recorded yet.</p>`;
+        return;
+      }
+      const esc = s => String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+      listEl.innerHTML = `<table class="ua-se-table">
+        <thead><tr><th>Query</th><th>User</th><th>Time</th><th>IP</th><th>User agent</th></tr></thead>
+        <tbody>` +
+        events.map(e => {
+          const t = e.timestamp ? new Date(e.timestamp).toLocaleString() : "";
+          const isAnon = !e.userId || e.userId === "anonymous";
+          const userCell = isAnon
+            ? `<span class="ua-se-anon">anonymous</span>`
+            : `<span title="${esc(e.userId)}">${esc((e.userId || "").slice(-8))}</span>`;
+          return `<tr>
+            <td title="${esc(e.query)}">${esc(e.query)}</td>
+            <td>${userCell}</td>
+            <td style="white-space:nowrap">${esc(t)}</td>
+            <td>${esc(e.ip || "")}</td>
+            <td title="${esc(e.userAgent)}">${esc((e.userAgent || "").slice(0, 60))}</td>
+          </tr>`;
+        }).join("") +
+        `</tbody></table>`;
+    }
+
+    function trackSearch(q) {
+      if (!q || !q.trim()) return;
+      const headers = { "Content-Type": "application/json" };
+      const token = localStorage.getItem("rt_token");
+      if (token) headers["Authorization"] = "Bearer " + token;
+      fetch(API_BASE + "events/search", {
+        method: "POST", headers,
+        body: JSON.stringify({ query: q.trim() })
+      }).catch(() => {});
+    }
 
     async function uaLoadBookmarks() {
       const listEl = document.getElementById("ua-bm-list");
