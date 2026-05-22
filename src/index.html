@@ -4589,7 +4589,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const NOW = Date.now();
       const candidates = STATE.rawVersions.filter(v => {
         const ts = versionTime(v);
-        if (!ts || ts < SEVEN_DAYS_AGO || ts > NOW) return false;
+        if (!ts || ts < SEVEN_DAYS_AGO) return false;
+        if (ts > NOW && !v.isVendorPublished) return false;
         if (!comps.length) return true;
         const name = norm(v.versionProductName);
         const tags = (Array.isArray(v.versionSearchTags) ? v.versionSearchTags.join(",") : "").toLowerCase();
@@ -4841,7 +4842,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const NOW = Date.now();
       const candidates = vers.filter(v => {
         const ts = versionTime(v);
-        if (!ts || ts < SEVEN_DAYS_AGO || ts > NOW) return false;
+        if (!ts || ts < SEVEN_DAYS_AGO) return false;
+        if (ts > NOW && !v.isVendorPublished) return false;
         if (!comps.length) return true;
         const name = norm(v.versionProductName);
         const tags = (Array.isArray(v.versionSearchTags) ? v.versionSearchTags.join(",") : "").toLowerCase();
