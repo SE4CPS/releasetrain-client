@@ -1421,6 +1421,15 @@
           </div>
         </details>
 
+        <details class="sb-details" id="top-searches-details" open>
+          <summary>Top searches (24h)</summary>
+          <div class="sidebar-section" style="padding-bottom:12px">
+            <div id="top-searches-list" style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+              <span style="font-size:11px;color:var(--muted)">Loading...</span>
+            </div>
+          </div>
+        </details>
+
       </div><!-- /#feedSidebarSections -->
 
       <!-- ── Graph controls (shown only in graph view) ── -->
@@ -2715,6 +2724,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               <ul>
                 <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Search tracking</strong>: every component search is recorded server-side with query, timestamp, IP, and user agent. Logged-in users are identified by userId; unauthenticated searches are recorded as anonymous.</li>
                 <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Admin search activity</strong>: the Account view for admin users now includes a Component searches table showing all recorded searches across all users, including anonymous, sorted newest first.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Top searches sidebar</strong>: the home feed sidebar shows the top 3 searched components in the last 24 hours as clickable links, open by default. Sourced from a new public aggregate endpoint.</li>
               </ul>
             </div>
           </div>
@@ -5281,6 +5291,29 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     }
 
     // Fetch live collection stats for home sidebar on page load
+    (async function loadTopSearches() {
+      const listEl = document.getElementById("top-searches-list");
+      if (!listEl) return;
+      try {
+        const res = await fetch(API_BASE + "events/search/top?n=3");
+        if (!res.ok) throw new Error(res.status);
+        const data = await res.json();
+        const items = data.data || [];
+        if (!items.length) {
+          listEl.innerHTML = '<span style="font-size:11px;color:var(--muted)">No searches yet.</span>';
+          return;
+        }
+        listEl.innerHTML = items.map(item =>
+          '<a href="/?q=' + encodeURIComponent(item.query) + '" style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);text-decoration:none;color:var(--text);font-size:12px">'
+          + '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + String(item.query).replace(/&/g,"&amp;").replace(/</g,"&lt;") + '</span>'
+          + '<span style="font-size:11px;color:var(--muted);margin-left:8px;flex-shrink:0">' + item.count + (item.count === 1 ? ' search' : ' searches') + '</span>'
+          + '</a>'
+        ).join("");
+      } catch {
+        listEl.innerHTML = '<span style="font-size:11px;color:var(--muted)">Could not load.</span>';
+      }
+    })();
+
     (async function loadHomeStats() {
       const fmtDate = d => d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
       const today = new Date();
