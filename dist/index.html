@@ -1732,6 +1732,12 @@
           </p>
         </div>
         <div class="sidebar-section">
+          <div class="ri-ctrl-label" style="margin-bottom:3px">Source</div>
+          <select id="nk-source-filter" class="sidebar-input" style="width:100%;box-sizing:border-box;margin-bottom:8px">
+            <option value="vendor">Vendor published</option>
+            <option value="extracted">Third-party extracted</option>
+            <option value="all">All</option>
+          </select>
           <input id="nk-search" type="text" class="sidebar-input" placeholder="Filter by component or version" style="width:100%;box-sizing:border-box" />
         </div>
         <div id="nk-sidebar-status" style="font-size:11px;color:var(--muted);padding:0 2px"></div>
@@ -6186,50 +6192,67 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const token = localStorage.getItem("rt_token");
         const headers = { Accept: "application/json" };
         if (token) headers["Authorization"] = "Bearer " + token;
-        const qs = filter ? "?q=" + encodeURIComponent(filter) : "";
-        const res = await fetch(API_BASE + "knowledge/releases" + qs, { headers });
+        const params = new URLSearchParams();
+        if (filter) params.set("q", filter);
+        params.set("source", document.getElementById("nk-source-filter")?.value || "vendor");
+        const res = await fetch(API_BASE + "knowledge/releases?" + params, { headers });
         if (!res.ok) throw new Error(res.status);
         const data = await res.json();
         nkRenderReleases(Array.isArray(data) ? data : (data.data || []));
       } catch {
-        listEl.innerHTML = '<div class="nk-empty">No published releases yet. Be the first to publish.</div>';
+        listEl.innerHTML = '<div class="nk-empty">No releases found.</div>';
       }
     }
 
     function nkRenderReleases(releases) {
       const listEl = document.getElementById("nk-release-list");
       if (!releases.length) {
-        listEl.innerHTML = '<div class="nk-empty">No published releases yet. Be the first to publish.</div>';
+        listEl.innerHTML = '<div class="nk-empty">No releases found.</div>';
         return;
       }
       listEl.innerHTML = "";
       releases.forEach(r => {
-        const date = r.publishedAt ? new Date(r.publishedAt).toLocaleDateString() : "";
-        const chCls = r.channel === "security" ? "ri-pill-red" : r.channel === "major" ? "ri-pill-amber" : r.channel === "minor" ? "ri-pill-blue" : "ri-pill-gray";
+        const id       = String(r._id || "");
+        const comp     = r.versionProductName || r.component || "";
+        const ver      = r.versionNumber || r.version || "";
+        const ch       = r.versionReleaseChannel || r.channel || "patch";
+        const ns       = r.vendorNs || "";
+        const notesUrl = r.versionUrl || r.versionReleaseNotes || r.notesUrl || null;
+        const desc     = r.description || "";
+        const isVendor = !!r.isVendorPublished;
+        const dateStr  = r.publishedAt
+          ? new Date(r.publishedAt).toLocaleDateString()
+          : (r.versionTimestamp ? new Date(r.versionTimestamp).toLocaleDateString() : "");
+
+        const chCls = ch === "security" ? "ri-pill-red" : ch === "major" ? "ri-pill-amber" : ch === "minor" ? "ri-pill-blue" : "ri-pill-gray";
+        const nsBadge = isVendor
+          ? '<span class="nk-release-ns">' + nkEsc(ns) + '</span>'
+          : '<span class="nk-release-ns" style="background:var(--chip-bg);color:var(--chip-text);border-color:var(--border)">extracted</span>';
+
         const card = document.createElement("div");
         card.className = "nk-release-card";
         card.innerHTML =
           '<div class="nk-release-head">'
-          + '<span class="nk-release-ns">' + nkEsc(r.vendorNs || "") + '</span>'
-          + '<span class="nk-release-comp">' + nkEsc(r.component || "") + '</span>'
-          + '<span class="nk-release-ver">v' + nkEsc(r.version || "") + '</span>'
-          + '<span class="ri-pill ' + chCls + '" style="font-size:10px">' + nkEsc(r.channel || "patch") + '</span>'
-          + (date ? '<span class="nk-release-meta">' + date + '</span>' : '')
+          + nsBadge
+          + '<span class="nk-release-comp">' + nkEsc(comp) + '</span>'
+          + '<span class="nk-release-ver">v' + nkEsc(ver) + '</span>'
+          + '<span class="ri-pill ' + chCls + '" style="font-size:10px">' + nkEsc(ch) + '</span>'
+          + (dateStr ? '<span class="nk-release-meta">' + dateStr + '</span>' : '')
           + '</div>'
-          + '<div class="nk-release-body" id="nk-body-' + nkEsc(r._id || "") + '">'
-          + (r.description ? '<p style="font-size:12px;margin:0 0 10px;color:var(--text)">' + nkEsc(r.description) + '</p>' : '')
-          + (r.notesUrl ? '<p style="font-size:11px;margin:0 0 10px"><a href="' + nkEsc(r.notesUrl) + '" target="_blank" rel="noopener" style="color:var(--brand)">Release notes ↗</a></p>' : '')
-          + '<div id="nk-reports-' + nkEsc(r._id || "") + '" style="margin-bottom:8px"><span style="font-size:11px;color:var(--muted)">Loading reports...</span></div>'
-          + (uaToken() ? '<button class="btn btn-sm" style="margin-top:6px" data-nk-report="' + nkEsc(r._id || "") + '">Add experience</button>' : '')
+          + '<div class="nk-release-body" id="nk-body-' + nkEsc(id) + '">'
+          + (desc ? '<p style="font-size:12px;margin:0 0 10px;color:var(--text)">' + nkEsc(desc) + '</p>' : '')
+          + (notesUrl ? '<p style="font-size:11px;margin:0 0 10px"><a href="' + nkEsc(notesUrl) + '" target="_blank" rel="noopener" style="color:var(--brand)">Release notes ↗</a></p>' : '')
+          + '<div id="nk-reports-' + nkEsc(id) + '" style="margin-bottom:8px"><span style="font-size:11px;color:var(--muted)">Loading reports...</span></div>'
+          + (uaToken() ? '<button class="btn btn-sm" style="margin-top:6px" data-nk-report="' + nkEsc(id) + '">Add experience</button>' : '')
           + '</div>';
         card.querySelector(".nk-release-head").addEventListener("click", () => {
           const body = card.querySelector(".nk-release-body");
           const open = body.classList.toggle("open");
-          if (open) nkLoadReports(r._id);
+          if (open) nkLoadReports(id);
         });
         if (uaToken()) {
           const btn = card.querySelector("[data-nk-report]");
-          if (btn) btn.addEventListener("click", () => nkShowReportForm(r._id, card));
+          if (btn) btn.addEventListener("click", () => nkShowReportForm(id, card));
         }
         listEl.appendChild(card);
       });
@@ -6369,6 +6392,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     });
 
     document.getElementById("nk-search").addEventListener("input", () => {
+      if (NET_ACTIVE && uaToken()) nkLoadReleases(document.getElementById("nk-search").value);
+    });
+    document.getElementById("nk-source-filter").addEventListener("change", () => {
       if (NET_ACTIVE && uaToken()) nkLoadReleases(document.getElementById("nk-search").value);
     });
 
