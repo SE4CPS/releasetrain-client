@@ -1120,7 +1120,7 @@
     .cv-host .scroll-list { overflow-y:auto;overscroll-behavior:contain; }
     #cveView .scroll-list { flex: 1 1 0; min-height: 0; }
 
-    /* ── Release Risk Intelligence (dashboard) ───────────────── */
+    /* ── Risk Report view ────────────────────────────────────── */
     #dashboardView {
       position: sticky; top: calc(var(--topbar-h) + 16px);
       height: calc(100vh - var(--topbar-h) - 32px);
@@ -2596,8 +2596,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               <div class="ri-card-body" id="ri-body-cve">&#8212;</div>
             </div>
             <div class="ri-card">
-              <div class="ri-card-title">Community Signals</div>
-              <div class="ri-card-body" id="ri-body-signals">&#8212;</div>
+              <div class="ri-card-title">Community Risk</div>
+              <div class="ri-card-body" id="ri-body-risk">&#8212;</div>
             </div>
             <div class="ri-card">
               <div class="ri-card-title">Version Details</div>
@@ -5118,7 +5118,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         activateDocs();
       } else if (view === "cve") {
         activateCve();
-      } else if (view === "dashboard") {
+      } else if (view === "risk") {
         activateDashboard();
       } else if (view === "credits") {
         activateAck();
@@ -5748,7 +5748,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       activateCve();
     });
 
-    /* ── Release Risk Intelligence (Dashboard) ───────────────── */
+    /* ── Risk Report ─────────────────────────────────────────── */
     let DB_ACTIVE = false;
 
     function riPopulateVersions() {
@@ -5841,7 +5841,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const rec =
         score >= 75 ? "Defer deployment. Review all CVE advisories and test in an isolated environment before production." :
         score >= 50 ? "Test thoroughly in staging. Review breaking changes and CVE details before production deployment." :
-        score >= 25 ? "Standard staging validation recommended. Review community signals and release notes before deploying." :
+        score >= 25 ? "Standard staging validation recommended. Review community risk posts and release notes before deploying." :
                       "Safe to deploy. No blocking security advisories detected. Standard validation applies.";
 
       riRenderResults({ compRaw, targetV, recentVers: allRecentVers, cveVers: allCveVers, isCveTarget, channel, posts: allPosts, riskPostsList: allRiskPostsList, cvePostsList: allCvePostsList, soPostsList: allSoPostsList, score, level, scoreColor, rec, windowDays });
@@ -5913,7 +5913,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         });
         if (riskPostsList.length > 4) sigHtml += '<div class="ri-post-meta">+' + (riskPostsList.length - 4) + ' more risk posts</div>';
       }
-      document.getElementById("ri-body-signals").innerHTML = sigHtml;
+      document.getElementById("ri-body-risk").innerHTML = sigHtml;
 
       let verHtml = "";
       if (!targetV) {
@@ -5944,7 +5944,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (CL_ACTIVE)  deactivateChangelog();
       if (UA_ACTIVE)  deactivateUsers();
       DB_ACTIVE = true;
-      setViewParam("dashboard");
+      setViewParam("risk");
       document.getElementById("dashboardView").style.display = "block";
       document.getElementById("feedPanel").style.display = "none";
       document.getElementById("dashboardControls").style.display = "";
