@@ -1646,7 +1646,7 @@
           <div style="font-size:10px;color:var(--muted);line-height:1.7">
             <div>CVE target version: +40</div>
             <div>CVE releases (×8, max 24): +8 each</div>
-            <div>Risk posts (×5, max 20): +5 each</div>
+            <div>Risk posts (score×10 if &gt;0.5, else +5, max 20)</div>
             <div>CVE community posts: +8</div>
             <div>Major release: +12</div>
             <div>Minor release: +4</div>
@@ -5825,7 +5825,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       let score = 0;
       if (isCveTarget)               score += 40;
       score += Math.min(allCveVers.length * 8, 24);
-      score += Math.min(allRiskPostsList.length * 5, 20);
+      let postRiskPts = 0;
+      allRiskPostsList.forEach(p => {
+        const ps = getUpdateScore(p);
+        postRiskPts += (typeof ps === "number" && ps > 0.5) ? Math.round(ps * 10) : 5;
+      });
+      score += Math.min(postRiskPts, 20);
       if (allCvePostsList.length)    score += 8;
       if (channel === "major")       score += 12;
       if (channel === "minor")       score += 4;
@@ -5899,9 +5904,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         riskPostsList.slice(0, 4).forEach(p => {
           const ep = +(new Date(p.created_utc || 0));
           const daysAgo = ep ? Math.round((Date.now() - ep) / 86400000) : 0;
+          const ps = getUpdateScore(p);
+          const psTag = (typeof ps === "number" && ps > 0.5) ? ' · score ' + ps.toFixed(2) : '';
           sigHtml += '<div class="ri-post-item">'
             + (p.url ? '<a class="ri-post-link" href="' + riEsc(p.url) + '" target="_blank" rel="noopener">' + riEsc((p.title || "").slice(0, 70)) + '</a>' : riEsc((p.title || "").slice(0, 70)))
-            + (ep ? '<div class="ri-post-meta">' + (daysAgo > 0 ? daysAgo + 'd ago' : 'today') + ' · ' + (getPostSource(p) === "stackoverflow" ? "SO" : "Reddit") + '</div>' : '')
+            + (ep ? '<div class="ri-post-meta">' + (daysAgo > 0 ? daysAgo + 'd ago' : 'today') + ' · ' + (getPostSource(p) === "stackoverflow" ? "SO" : "Reddit") + psTag + '</div>' : '')
             + '</div>';
         });
         if (riskPostsList.length > 4) sigHtml += '<div class="ri-post-meta">+' + (riskPostsList.length - 4) + ' more risk posts</div>';
