@@ -211,18 +211,45 @@ EL.myLink.addEventListener("click", e => {
 
 Also add `if (MY_ACTIVE) deactivateMy();` to every other existing `activate*()` function and to the brand and home-link click handlers.
 
+### URL view param convention
+
+The URL view param (`?view=X`) is the canonical identifier for a view. It must be derived from the nav link label: lowercase, spaces replaced with hyphens, emoji stripped. Examples: "🌐 Release" → `release`, "🛡 Risk Report" → `risk`, "👤 Account" → `account`.
+
+**All three of these must always be identical (same string):**
+
+| Location | Example |
+|---|---|
+| `setViewParam("X")` inside `activate*()` | `setViewParam("release")` |
+| `view === "X"` in the URL param routing handler | `view === "release"` |
+| Nav link `title` attribute (use the full label, not the param) | `title="Releases: ..."` |
+
+**Every view must have a `view === "X"` routing entry** in the `boot().then(...)` block. Missing it means `?view=X` silently shows the home feed instead of the view.
+
 ### Renaming a view
 
 When renaming a view's nav link label, update ALL of the following in one pass:
 
 1. The `<a>` element's visible text and `title` attribute.
-2. The `setViewParam("old")` call inside `activate*()` — change to the new string.
-3. The `view === "old"` routing check in the URL param handler at the bottom of the script.
-4. Any sidebar section heading or intro text that names the view.
+2. `setViewParam("old")` inside `activate*()` → new param string.
+3. `view === "old"` in the routing handler → new param string.
+4. Any sidebar section heading or intro text that references the old name.
 5. All user-visible text inside the view HTML that references the old name.
-6. The URL view param value written to `AGENTS.md` if it appears there.
 
 Missing any of these leaves stale strings in the URL or UI that diverge from the nav label.
+
+### Current view param registry
+
+| Nav label | `?view=` param | `activate*` function |
+|---|---|---|
+| 📊 Graph | `graph` | `activateGraph()` |
+| 🏗 Arch | `arch` | `activateArch()` |
+| 🔐 CVE | `cve` | `activateCve()` |
+| 🛡 Risk Report | `risk` | `activateDashboard()` |
+| 📖 Docs | `docs` | `activateDocs()` |
+| 📝 Changelog | `changelog` | `activateChangelog()` |
+| 🤝 Credits | `credits` | `activateAck()` |
+| 👤 Account | `account` | `activateUsers()` |
+| 🌐 Release | `release` | `activateNetwork()` |
 
 ---
 

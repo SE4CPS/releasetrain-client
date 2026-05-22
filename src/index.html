@@ -5299,12 +5299,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         activateCve();
       } else if (view === "risk") {
         activateDashboard();
-      } else if (view === "network") {
+      } else if (view === "release") {
         activateNetwork();
       } else if (view === "credits") {
         activateAck();
       } else if (view === "changelog") {
         activateChangelog();
+      } else if (view === "account") {
+        activateUsers();
       }
     });
 
@@ -6335,7 +6337,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (CL_ACTIVE)  deactivateChangelog();
       if (UA_ACTIVE)  deactivateUsers();
       NET_ACTIVE = true;
-      setViewParam("network");
+      setViewParam("release");
       document.getElementById("networkView").style.display = "block";
       document.getElementById("feedPanel").style.display = "none";
       document.getElementById("networkControls").style.display = "";
