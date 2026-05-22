@@ -1202,7 +1202,7 @@
   <!-- ── Topbar: brand + nav only ── -->
   <header class="topbar" role="banner" id="topbar">
     <div class="topbar-main">
-      <a class="brand" href="/" aria-label="Releasetrain home">Releasetrain <em>v3.18.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home">Releasetrain <em>v3.19.0</em></a>
       <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
       <div class="topbar-spacer"></div>
       <button class="nav-toggle" type="button" id="navToggle"
@@ -1212,7 +1212,7 @@
         <a id="graphLink" class="nav-link" href="#" title="Show component graph (in-page)">📊 Graph</a>
         <a id="archLink" class="nav-link" href="#" title="Show architecture diagram (in-page)">🏗 Arch</a>
         <a id="cveLink" class="nav-link" href="#" title="Show CVE discussions (in-page)">🔐 CVE</a>
-        <a id="dashboardLink" class="nav-link" href="#" title="Show release dashboard (in-page)">📈 Dashboard</a>
+        <a id="dashboardLink" class="nav-link" href="#" title="Show release risk report (in-page)">🛡 Risk Report</a>
         <a id="docsLink" class="nav-link" href="#" title="Show API documentation (in-page)">📖 Docs</a>
         <a id="changelogLink" class="nav-link" href="#" title="What's new: version history">📝 Changelog</a>
         <a id="ackLink" class="nav-link" href="#" title="Show acknowledgements (in-page)">🤝 Credits</a>
@@ -1613,11 +1613,11 @@
       <!-- ── Dashboard controls (shown only in dashboard view) ── -->
       <div id="dashboardControls" style="display:none">
         <div class="sidebar-section">
-          <div class="ri-ctrl-label">Component</div>
-          <input id="ri-comp-input" type="text" class="sidebar-input" placeholder="e.g. redis" style="width:100%;box-sizing:border-box" />
+          <div class="ri-ctrl-label" style="margin-bottom:3px">Using search query</div>
+          <div style="font-size:10px;color:var(--muted);line-height:1.4">Components are read from the feed search field. Multiple components are supported (comma separated).</div>
         </div>
         <div class="sidebar-section">
-          <div class="ri-ctrl-label">Version <span style="color:var(--muted);font-size:10px">(optional)</span></div>
+          <div class="ri-ctrl-label">Version <span style="color:var(--muted);font-size:10px">(optional, single component)</span></div>
           <select id="ri-ver-select" class="sidebar-input" style="width:100%;box-sizing:border-box">
             <option value="">Latest / all</option>
           </select>
@@ -1634,6 +1634,24 @@
           <button id="ri-analyze-btn" class="btn btn-primary" style="width:100%">Analyze Risk</button>
         </div>
         <div id="ri-sidebar-status" style="font-size:11px;color:var(--muted);margin-top:2px;padding:0 2px"></div>
+        <div class="sidebar-section" style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px">
+          <div class="ri-ctrl-label" style="margin-bottom:6px">Score legend</div>
+          <div style="font-size:11px;line-height:1.8">
+            <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#16a34a;margin-right:5px;vertical-align:middle"></span><strong>0–24 Low:</strong> No blocking advisories</div>
+            <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#b45309;margin-right:5px;vertical-align:middle"></span><strong>25–49 Medium:</strong> Review before deploying</div>
+            <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#c2410c;margin-right:5px;vertical-align:middle"></span><strong>50–74 High:</strong> Staged rollout required</div>
+            <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#b91c1c;margin-right:5px;vertical-align:middle"></span><strong>75–100 Critical:</strong> Defer deployment</div>
+          </div>
+          <div class="ri-ctrl-label" style="margin-top:8px;margin-bottom:4px">Scoring factors</div>
+          <div style="font-size:10px;color:var(--muted);line-height:1.7">
+            <div>CVE target version: +40</div>
+            <div>CVE releases (×8, max 24): +8 each</div>
+            <div>Risk posts (×5, max 20): +5 each</div>
+            <div>CVE community posts: +8</div>
+            <div>Major release: +12</div>
+            <div>Minor release: +4</div>
+          </div>
+        </div>
       </div>
 
     </aside>
@@ -2596,6 +2614,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-05-21</div>
+              <div class="cl-ver cl-ver-minor">v3.19.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Risk Report: multi-component, search integration, score legend</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Renamed Dashboard to Risk Report</strong>: nav link and title updated to reflect the feature's purpose.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Multi-component risk analysis</strong>: the risk report now reads components directly from the feed search field. Multiple comma-separated components are supported and scored together.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Score legend</strong>: the sidebar shows risk level thresholds (Low, Medium, High, Critical) and the scoring factors used to compute the score.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Removed redundant Component input from the Risk Report sidebar; the feed search field is now the single source of truth for component selection.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -4807,7 +4841,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       EL.navLoader.classList.add("active");
       try {
         STATE.filters.components = tokens(input);
-        if (DB_ACTIVE) riSyncFromSearch();
+        if (DB_ACTIVE) riPopulateVersions();
         STATE.nextCursor = null;
         STATE.rawVersions = [];
         const { versions: vers, nextCursor: nc } = await Api.versions(input);
@@ -4832,7 +4866,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       setLinksHref();
       $$("#fixedToggles .toggle, #typeToggles .toggle").forEach(b => b.setAttribute("aria-pressed", "false"));
       refreshActiveFilters();
-      if (DB_ACTIVE) { const el = document.getElementById("ri-comp-input"); if (el) el.value = ""; }
+      if (DB_ACTIVE) riPopulateVersions();
       boot();
     });
 
@@ -5717,18 +5751,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     /* ── Release Risk Intelligence (Dashboard) ───────────────── */
     let DB_ACTIVE = false;
 
-    function riSyncFromSearch() {
-      const input = document.getElementById("ri-comp-input");
-      if (!input) return;
-      const q = (new URL(location.href).searchParams.get("q") || "").split(",")[0].trim();
-      if (q && !input.value) input.value = q;
-    }
-
-    function riPopulateVersions(comp) {
+    function riPopulateVersions() {
       const sel = document.getElementById("ri-ver-select");
       if (!sel) return;
       sel.innerHTML = '<option value="">Latest / all</option>';
-      if (!comp) return;
+      const comps = EL.components.value.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+      if (!comps.length || comps.length > 1) { sel.disabled = comps.length > 1; return; }
+      sel.disabled = false;
+      const comp = comps[0];
       const all = STATE.candidates.length ? STATE.candidates : STATE.rawVersions;
       const cv = all.filter(v => {
         const n = (v.versionProductName || "").toLowerCase();
@@ -5748,43 +5778,57 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     }
 
     function riAnalyze() {
-      const compRaw = (document.getElementById("ri-comp-input")?.value || "").trim();
-      const comp = compRaw.toLowerCase();
+      const comps = EL.components.value.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
       const selVal = document.getElementById("ri-ver-select")?.value || "";
       const windowDays = Number(document.getElementById("ri-window-select")?.value) || 30;
       const statusEl = document.getElementById("ri-sidebar-status");
-      if (!comp) { if (statusEl) statusEl.textContent = "Enter a component name."; return; }
+      if (!comps.length) { if (statusEl) statusEl.textContent = "Run a search in the feed first."; return; }
       if (statusEl) statusEl.textContent = "Analyzing...";
 
       const cutoff = Date.now() - windowDays * 86400000;
       const all = STATE.candidates.length ? STATE.candidates : STATE.rawVersions;
-      const compVers = all.filter(v => {
-        const n = (v.versionProductName || "").toLowerCase();
-        return n.includes(comp) || comp.includes(n);
+      const compRaw = EL.components.value.split(",").map(s => s.trim()).filter(Boolean).join(", ");
+      const CVE_PAT = /\bCVE-\d{4}-\d+\b/i;
+
+      let allRecentVers = [], allCveVers = [], allPosts = [], allRiskPostsList = [], allCvePostsList = [], allSoPostsList = [];
+      let targetV = null;
+
+      comps.forEach(comp => {
+        const compVers = all.filter(v => {
+          const n = (v.versionProductName || "").toLowerCase();
+          return n.includes(comp) || comp.includes(n);
+        });
+        if (!targetV && selVal) targetV = compVers.find(v => v._id === selVal || v.versionId === selVal || v.versionNumber === selVal);
+        if (!targetV && compVers.length) targetV = compVers[0];
+
+        const recentVers = compVers.filter(v => { const ep = gGetVersionEpoch(v); return ep === 0 || ep >= cutoff; });
+        const cveVers = recentVers.filter(v => v.isCve || gChannelOf(v) === "cve");
+        allRecentVers = allRecentVers.concat(recentVers);
+        allCveVers = allCveVers.concat(cveVers);
+
+        const posts = postsForComponent(comp).filter(p => { const ep = +(new Date(p.created_utc || 0)); return ep === 0 || ep >= cutoff; });
+        allPosts = allPosts.concat(posts);
+        allRiskPostsList = allRiskPostsList.concat(posts.filter(isRisk));
+        allCvePostsList  = allCvePostsList.concat(posts.filter(p => CVE_PAT.test(p.title || "") || p.isAboutCve));
+        allSoPostsList   = allSoPostsList.concat(posts.filter(p => getPostSource(p) === "stackoverflow"));
       });
 
-      let targetV = null;
-      if (selVal) targetV = compVers.find(v => v._id === selVal || v.versionId === selVal || v.versionNumber === selVal);
-      if (!targetV && compVers.length) targetV = compVers[0];
+      const dedup = (arr, key) => [...new Map(arr.map(x => [x[key] || (x._id || Math.random()), x])).values()];
+      allPosts = dedup(allPosts, "url");
+      allRiskPostsList = dedup(allRiskPostsList, "url");
+      allCvePostsList  = dedup(allCvePostsList, "url");
+      allSoPostsList   = dedup(allSoPostsList, "url");
 
-      const recentVers = compVers.filter(v => { const ep = gGetVersionEpoch(v); return ep === 0 || ep >= cutoff; });
-      const cveVers = recentVers.filter(v => v.isCve || gChannelOf(v) === "cve");
       const isCveTarget = targetV && (targetV.isCve || gChannelOf(targetV) === "cve");
       const channel = targetV ? gChannelOf(targetV) : "unknown";
 
-      const CVE_PAT = /\bCVE-\d{4}-\d+\b/i;
-      const posts = postsForComponent(comp).filter(p => { const ep = +(new Date(p.created_utc || 0)); return ep === 0 || ep >= cutoff; });
-      const riskPostsList = posts.filter(isRisk);
-      const cvePostsList  = posts.filter(p => CVE_PAT.test(p.title || "") || p.isAboutCve);
-      const soPostsList   = posts.filter(p => getPostSource(p) === "stackoverflow");
-
       let score = 0;
-      if (isCveTarget)         score += 40;
-      score += Math.min(cveVers.length * 8, 24);
-      score += Math.min(riskPostsList.length * 5, 20);
-      if (cvePostsList.length) score += 8;
-      if (channel === "major") score += 12;
-      if (channel === "minor") score += 4;
+      if (isCveTarget)               score += 40;
+      score += Math.min(allCveVers.length * 8, 24);
+      score += Math.min(allRiskPostsList.length * 5, 20);
+      if (allCvePostsList.length)    score += 8;
+      if (channel === "major")       score += 12;
+      if (channel === "minor")       score += 4;
       score = Math.min(score, 100);
 
       const level      = score >= 75 ? "Critical" : score >= 50 ? "High" : score >= 25 ? "Medium" : "Low";
@@ -5795,7 +5839,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         score >= 25 ? "Standard staging validation recommended. Review community signals and release notes before deploying." :
                       "Safe to deploy. No blocking security advisories detected. Standard validation applies.";
 
-      riRenderResults({ compRaw, targetV, recentVers, cveVers, isCveTarget, channel, posts, riskPostsList, cvePostsList, soPostsList, score, level, scoreColor, rec, windowDays });
+      riRenderResults({ compRaw, targetV, recentVers: allRecentVers, cveVers: allCveVers, isCveTarget, channel, posts: allPosts, riskPostsList: allRiskPostsList, cvePostsList: allCvePostsList, soPostsList: allSoPostsList, score, level, scoreColor, rec, windowDays });
       if (statusEl) statusEl.textContent = "Done.";
     }
 
@@ -5899,9 +5943,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       document.getElementById("dashboardControls").style.display = "";
       document.getElementById("feedSidebarSections").style.display = "none";
       EL.dashboardLink.classList.add("nav-active");
-      riSyncFromSearch();
-      const comp = (document.getElementById("ri-comp-input")?.value || "").trim().toLowerCase();
-      riPopulateVersions(comp);
+      riPopulateVersions();
     }
 
     function deactivateDashboard() {
@@ -5921,10 +5963,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     });
 
     document.getElementById("ri-analyze-btn").addEventListener("click", riAnalyze);
-    document.getElementById("ri-comp-input").addEventListener("change", () => {
-      const comp = (document.getElementById("ri-comp-input")?.value || "").trim().toLowerCase();
-      riPopulateVersions(comp);
-    });
 
     /************************* USER ACCOUNT MANAGEMENT *************************/
 
