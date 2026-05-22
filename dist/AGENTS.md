@@ -211,6 +211,19 @@ EL.myLink.addEventListener("click", e => {
 
 Also add `if (MY_ACTIVE) deactivateMy();` to every other existing `activate*()` function and to the brand and home-link click handlers.
 
+### Renaming a view
+
+When renaming a view's nav link label, update ALL of the following in one pass:
+
+1. The `<a>` element's visible text and `title` attribute.
+2. The `setViewParam("old")` call inside `activate*()` — change to the new string.
+3. The `view === "old"` routing check in the URL param handler at the bottom of the script.
+4. Any sidebar section heading or intro text that names the view.
+5. All user-visible text inside the view HTML that references the old name.
+6. The URL view param value written to `AGENTS.md` if it appears there.
+
+Missing any of these leaves stale strings in the URL or UI that diverge from the nav label.
+
 ---
 
 ## API integration
