@@ -1732,12 +1732,6 @@
           </p>
         </div>
         <div class="sidebar-section">
-          <div class="ri-ctrl-label" style="margin-bottom:3px">Source</div>
-          <select id="nk-source-filter" class="sidebar-input" style="width:100%;box-sizing:border-box;margin-bottom:8px">
-            <option value="vendor">Vendor published</option>
-            <option value="extracted">Third-party extracted</option>
-            <option value="all">All</option>
-          </select>
           <input id="nk-search" type="text" class="sidebar-input" placeholder="Filter by component or version" style="width:100%;box-sizing:border-box" />
         </div>
         <div id="nk-sidebar-status" style="font-size:11px;color:var(--muted);padding:0 2px"></div>
@@ -6194,7 +6188,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         if (token) headers["Authorization"] = "Bearer " + token;
         const params = new URLSearchParams();
         if (filter) params.set("q", filter);
-        params.set("source", document.getElementById("nk-source-filter")?.value || "vendor");
+        params.set("source", "vendor");
         const res = await fetch(API_BASE + "knowledge/releases?" + params, { headers });
         if (!res.ok) throw new Error(res.status);
         const data = await res.json();
@@ -6226,15 +6220,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           : (r.versionTimestamp ? new Date(r.versionTimestamp).toLocaleDateString() : "");
 
         const chCls = ch === "security" ? "ri-pill-red" : ch === "major" ? "ri-pill-amber" : ch === "minor" ? "ri-pill-blue" : "ri-pill-gray";
-        const nsBadge = isVendor
-          ? '<span class="nk-release-ns">' + nkEsc(ns) + '</span>'
-          : '<span class="nk-release-ns" style="background:var(--chip-bg);color:var(--chip-text);border-color:var(--border)">extracted</span>';
+
+        const reportsHtml = nkRenderReportsHtml(r.reports || []);
 
         const card = document.createElement("div");
         card.className = "nk-release-card";
         card.innerHTML =
           '<div class="nk-release-head">'
-          + nsBadge
+          + '<span class="nk-release-ns">' + nkEsc(ns) + '</span>'
           + '<span class="nk-release-comp">' + nkEsc(comp) + '</span>'
           + '<span class="nk-release-ver">v' + nkEsc(ver) + '</span>'
           + '<span class="ri-pill ' + chCls + '" style="font-size:10px">' + nkEsc(ch) + '</span>'
@@ -6243,13 +6236,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           + '<div class="nk-release-body" id="nk-body-' + nkEsc(id) + '">'
           + (desc ? '<p style="font-size:12px;margin:0 0 10px;color:var(--text)">' + nkEsc(desc) + '</p>' : '')
           + (notesUrl ? '<p style="font-size:11px;margin:0 0 10px"><a href="' + nkEsc(notesUrl) + '" target="_blank" rel="noopener" style="color:var(--brand)">Release notes ↗</a></p>' : '')
-          + '<div id="nk-reports-' + nkEsc(id) + '" style="margin-bottom:8px"><span style="font-size:11px;color:var(--muted)">Loading reports...</span></div>'
+          + '<div id="nk-reports-' + nkEsc(id) + '" style="margin-bottom:8px">' + reportsHtml + '</div>'
           + (uaToken() ? '<button class="btn btn-sm" style="margin-top:6px" data-nk-report="' + nkEsc(id) + '">Add experience</button>' : '')
           + '</div>';
         card.querySelector(".nk-release-head").addEventListener("click", () => {
-          const body = card.querySelector(".nk-release-body");
-          const open = body.classList.toggle("open");
-          if (open) nkLoadReports(id);
+          card.querySelector(".nk-release-body").classList.toggle("open");
         });
         if (uaToken()) {
           const btn = card.querySelector("[data-nk-report]");
@@ -6259,32 +6250,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       });
     }
 
-    async function nkLoadReports(releaseId) {
-      const el = document.getElementById("nk-reports-" + releaseId);
-      if (!el) return;
-      try {
-        const token = localStorage.getItem("rt_token");
-        const headers = { Accept: "application/json" };
-        if (token) headers["Authorization"] = "Bearer " + token;
-        const res = await fetch(API_BASE + "knowledge/releases/" + encodeURIComponent(releaseId) + "/reports", { headers });
-        if (!res.ok) throw new Error(res.status);
-        const data = await res.json();
-        const reports = Array.isArray(data) ? data : (data.data || []);
-        if (!reports.length) { el.innerHTML = '<span style="font-size:11px;color:var(--muted)">No experience reports yet.</span>'; return; }
-        const labels = { success: "Worked well", issues: "Had issues", upgrade: "Upgraded from" };
-        const cls    = { success: "nk-outcome-ok", issues: "nk-outcome-issue", upgrade: "nk-outcome-upgrade" };
-        el.innerHTML = reports.map(rp => {
-          const date = rp.reportedAt ? new Date(rp.reportedAt).toLocaleDateString() : "";
-          return '<div class="nk-report-item">'
-            + '<span class="' + (cls[rp.outcome] || "") + '">' + nkEsc(labels[rp.outcome] || rp.outcome || "") + '</span>'
-            + (rp.fromVersion ? ' from v' + nkEsc(rp.fromVersion) : '')
-            + (rp.description ? ' — ' + nkEsc(rp.description.slice(0, 120)) : '')
-            + (date ? '<div style="font-size:10px;color:var(--muted);margin-top:2px">' + date + (rp.reportedBy ? ' · ' + nkEsc(rp.reportedBy) : '') + '</div>' : '')
-            + '</div>';
-        }).join("");
-      } catch {
-        el.innerHTML = '<span style="font-size:11px;color:var(--muted)">Could not load reports.</span>';
-      }
+    function nkRenderReportsHtml(reports) {
+      if (!reports.length) return '<span style="font-size:11px;color:var(--muted)">No experience reports yet.</span>';
+      const labels = { success: "Worked well", issues: "Had issues", upgrade: "Upgraded from" };
+      const cls    = { success: "nk-outcome-ok", issues: "nk-outcome-issue", upgrade: "nk-outcome-upgrade" };
+      return reports.map(rp => {
+        const date = rp.reportedAt ? new Date(rp.reportedAt).toLocaleDateString() : "";
+        return '<div class="nk-report-item">'
+          + '<span class="' + (cls[rp.outcome] || "") + '">' + nkEsc(labels[rp.outcome] || rp.outcome || "") + '</span>'
+          + (rp.fromVersion ? ' from v' + nkEsc(rp.fromVersion) : '')
+          + (rp.description ? ' — ' + nkEsc(rp.description.slice(0, 120)) : '')
+          + (date ? '<div style="font-size:10px;color:var(--muted);margin-top:2px">' + date + (rp.reportedBy ? ' · ' + nkEsc(rp.reportedBy) : '') + '</div>' : '')
+          + '</div>';
+      }).join("");
     }
 
     function nkShowReportForm(releaseId, card) {
@@ -6324,7 +6302,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || res.status);
           msgEl.style.color = "#16a34a";
           msgEl.textContent = "Thank you for your report.";
-          setTimeout(() => { wrap.remove(); nkLoadReports(releaseId); }, 1200);
+          setTimeout(() => { wrap.remove(); nkLoadReleases(document.getElementById("nk-search").value); }, 1200);
         } catch (err) {
           msgEl.style.color = "#b91c1c";
           msgEl.textContent = "Could not submit: " + nkEsc(String(err.message || "error"));
@@ -6395,9 +6373,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     document.getElementById("nk-search").addEventListener("input", () => {
       if (NET_ACTIVE && uaToken()) nkLoadReleases(document.getElementById("nk-search").value);
     });
-    document.getElementById("nk-source-filter").addEventListener("change", () => {
-      if (NET_ACTIVE && uaToken()) nkLoadReleases(document.getElementById("nk-search").value);
-    });
+
 
     document.getElementById("nk-publish-form").addEventListener("submit", async e => {
       e.preventDefault();
