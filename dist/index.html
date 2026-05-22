@@ -1167,6 +1167,67 @@
     #dashboardView .ri-post-meta { font-size:10px; color:var(--muted); margin-top:1px; }
     #dashboardControls .ri-ctrl-label { font-size:11px; color:var(--muted); margin-bottom:3px; }
 
+    /* ── Network view ────────────────────────────────────────── */
+    #networkView { padding: 20px; max-width: 700px; }
+    @media (max-width: 640px) { #networkView { padding: 12px; position: static; height: auto; overflow: visible; } }
+    #networkView .nk-tabs {
+      display: flex; border-bottom: 2px solid var(--border); margin-bottom: 16px;
+    }
+    #networkView .nk-tab {
+      padding: 8px 18px; background: none; border: none; cursor: pointer;
+      font: 600 13px/1 inherit; color: var(--muted);
+      border-bottom: 2px solid transparent; margin-bottom: -2px;
+      transition: color .15s, border-color .15s;
+    }
+    #networkView .nk-tab:hover { color: var(--text); }
+    #networkView .nk-tab.nk-tab-active { color: var(--brand); border-bottom-color: var(--brand); }
+    #networkView .nk-tab-panel { display: none; }
+    #networkView .nk-tab-panel.nk-tab-panel-active { display: block; }
+    #networkView .nk-form { display: flex; flex-direction: column; gap: 12px; }
+    #networkView .nk-field { display: flex; flex-direction: column; gap: 4px; }
+    #networkView .nk-label { font: 600 12px/1 inherit; color: var(--text); }
+    #networkView .nk-hint { font-size: 10px; color: var(--muted); margin-top: 2px; }
+    #networkView .nk-input {
+      padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+      background: var(--bg); color: var(--text); font: inherit; font-size: 13px;
+      width: 100%; box-sizing: border-box;
+    }
+    #networkView .nk-input:focus { outline: none; border-color: var(--brand); }
+    #networkView .nk-textarea { min-height: 80px; resize: vertical; }
+    #networkView .nk-msg {
+      padding: 8px 12px; border-radius: var(--radius-sm);
+      font-size: 12px; margin-bottom: 6px; line-height: 1.5;
+    }
+    #networkView .nk-msg-error { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+    #networkView .nk-msg-ok    { background: #dcfce7; color: #16a34a; border: 1px solid #86efac; }
+    #networkView .nk-release-list { display: flex; flex-direction: column; gap: 8px; }
+    #networkView .nk-release-card {
+      border: 1px solid var(--border); border-radius: var(--radius);
+      background: var(--surface); overflow: hidden;
+    }
+    #networkView .nk-release-head {
+      display: flex; align-items: center; gap: 8px; padding: 10px 14px; cursor: pointer; flex-wrap: wrap;
+    }
+    #networkView .nk-release-head:hover { background: var(--brand-light); }
+    #networkView .nk-release-ns {
+      font-size: 11px; font-weight: 700; color: var(--brand);
+      background: var(--brand-light); border: 1px solid #bfdbfe;
+      border-radius: var(--radius-full); padding: 1px 8px; flex-shrink: 0;
+    }
+    #networkView .nk-release-comp { font: 600 13px/1 inherit; flex: 1; min-width: 0; }
+    #networkView .nk-release-ver  { font-size: 12px; color: var(--muted); white-space: nowrap; }
+    #networkView .nk-release-meta { font-size: 10px; color: var(--muted); white-space: nowrap; }
+    #networkView .nk-release-body { border-top: 1px solid var(--border); padding: 12px 14px; display: none; }
+    #networkView .nk-release-body.open { display: block; }
+    #networkView .nk-report-item {
+      padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px;
+    }
+    #networkView .nk-report-item:last-child { border-bottom: none; padding-bottom: 0; }
+    #networkView .nk-outcome-ok      { color: #16a34a; font-weight: 600; }
+    #networkView .nk-outcome-issue   { color: #b91c1c; font-weight: 600; }
+    #networkView .nk-outcome-upgrade { color: #1d4ed8; font-weight: 600; }
+    #networkView .nk-empty { color: var(--muted); font-size: 12px; text-align: center; padding: 24px 0; }
+
     /* ── Mobile scroll: all views ────────────────────────────────────── */
     @media (max-width: 640px) {
       /* Unlock body scroll: all views stack and page scrolls naturally */
@@ -1203,7 +1264,7 @@
   <!-- ── Topbar: brand + nav only ── -->
   <header class="topbar" role="banner" id="topbar">
     <div class="topbar-main">
-      <a class="brand" href="/" aria-label="Releasetrain home">Releasetrain <em>v3.19.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home">Releasetrain <em>v3.20.0</em></a>
       <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
       <div class="topbar-spacer"></div>
       <button class="nav-toggle" type="button" id="navToggle"
@@ -1218,6 +1279,7 @@
         <a id="changelogLink" class="nav-link" href="#" title="What's new: version history">📝 Changelog</a>
         <a id="ackLink" class="nav-link" href="#" title="Show acknowledgements (in-page)">🤝 Credits</a>
         <a id="usersLink" class="nav-link" href="#" title="User account management">👤 Account</a>
+        <a id="networkLink" class="nav-link" href="#" title="Release Knowledge Network">🌐 Network</a>
         <a class="nav-link" href="https://github.com/SE4CPS/releasetrain-client"
           target="_blank" rel="noopener noreferrer">⭐ GitHub</a>
       </nav>
@@ -1653,6 +1715,20 @@
             <div>Minor release: +4</div>
           </div>
         </div>
+      </div>
+
+      <!-- ── Network controls (shown only in network view) ── -->
+      <div id="networkControls" style="display:none">
+        <div class="sidebar-section">
+          <div class="sidebar-label">Release Knowledge Network</div>
+          <p style="font-size:11px;color:var(--muted);line-height:1.5;margin:4px 0 0">
+            Vendors publish releases. Users report outcomes. Collective operational knowledge grows with each report.
+          </p>
+        </div>
+        <div class="sidebar-section">
+          <input id="nk-search" type="text" class="sidebar-input" placeholder="Filter by component or version" style="width:100%;box-sizing:border-box" />
+        </div>
+        <div id="nk-sidebar-status" style="font-size:11px;color:var(--muted);padding:0 2px"></div>
       </div>
 
     </aside>
@@ -2619,6 +2695,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-05-21</div>
+              <div class="cl-ver cl-ver-minor">v3.20.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Release Knowledge Network view</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Network view</strong>: new 🌐 Network nav entry. Authenticated vendors can publish releases under a unique namespace. Namespaces are validated against existing tracked vendor names. Other users can report production outcomes per release (worked well, had issues, upgraded from version).</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Discover tab</strong>: lists published releases with collapsible experience reports. Reports show outcome, from-version, description, date, and reporter.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Publish tab</strong>: form with vendor namespace, component name, version, channel, optional release notes URL and description. Namespace is validated client-side before submission.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Unauthenticated users see a gate screen explaining the feature with a direct sign-in prompt.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-05-21</div>
               <div class="cl-ver cl-ver-minor">v3.19.0</div>
             </div>
             <div class="cl-content">
@@ -2976,6 +3068,77 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
       </div><!-- /#usersView -->
 
+      <!-- ── Network view ── -->
+      <div id="networkView" style="display:none">
+
+        <!-- login gate -->
+        <div id="nk-gate" style="display:none;text-align:center;padding:48px 20px">
+          <div style="font-size:36px;margin-bottom:12px">🌐</div>
+          <div style="font-size:15px;font-weight:700;margin-bottom:8px">Release Knowledge Network</div>
+          <p style="font-size:12px;color:var(--muted);max-width:340px;margin:0 auto 18px;line-height:1.7">
+            Vendors publish releases. Users report production outcomes. The network answers questions like
+            "How did version 4.2 perform?" or "Who upgraded successfully from 3.9?"
+          </p>
+          <p style="font-size:11px;color:var(--muted);margin:0 auto 18px;max-width:300px;line-height:1.6">
+            Value grows with participation. Sign in to publish releases and report experiences.
+          </p>
+          <button class="btn btn-primary" id="nk-signin-btn">Sign in to participate</button>
+        </div>
+
+        <!-- authenticated main panel -->
+        <div id="nk-main" style="display:none;padding:16px;max-width:680px">
+          <div class="nk-tabs">
+            <button class="nk-tab nk-tab-active" data-nk-tab="discover">Discover</button>
+            <button class="nk-tab" data-nk-tab="publish">Publish a Release</button>
+          </div>
+
+          <!-- discover -->
+          <div class="nk-tab-panel nk-tab-panel-active" id="nk-panel-discover">
+            <div id="nk-release-list" class="nk-release-list">
+              <div class="nk-empty">Loading releases...</div>
+            </div>
+          </div>
+
+          <!-- publish -->
+          <div class="nk-tab-panel" id="nk-panel-publish">
+            <div id="nk-publish-msg" style="display:none" class="nk-msg"></div>
+            <form id="nk-publish-form" class="nk-form" autocomplete="off">
+              <div class="nk-field">
+                <label class="nk-label" for="nk-vendor-ns">Vendor namespace</label>
+                <input id="nk-vendor-ns" class="nk-input" type="text" placeholder="e.g. acmecorp" maxlength="32" required />
+                <span class="nk-hint">3 to 32 characters: lowercase letters, digits, hyphens. Must not match an existing tracked vendor name.</span>
+              </div>
+              <div class="nk-field">
+                <label class="nk-label" for="nk-comp-name">Component name</label>
+                <input id="nk-comp-name" class="nk-input" type="text" placeholder="e.g. payment-service" maxlength="64" required />
+              </div>
+              <div class="nk-field">
+                <label class="nk-label" for="nk-ver-num">Version</label>
+                <input id="nk-ver-num" class="nk-input" type="text" placeholder="e.g. 4.2.1" maxlength="32" required />
+              </div>
+              <div class="nk-field">
+                <label class="nk-label" for="nk-channel">Channel</label>
+                <select id="nk-channel" class="nk-input">
+                  <option value="patch">Patch</option>
+                  <option value="minor">Minor</option>
+                  <option value="major">Major</option>
+                  <option value="security">Security</option>
+                </select>
+              </div>
+              <div class="nk-field">
+                <label class="nk-label" for="nk-notes-url">Release notes URL <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+                <input id="nk-notes-url" class="nk-input" type="url" placeholder="https://..." maxlength="512" />
+              </div>
+              <div class="nk-field">
+                <label class="nk-label" for="nk-description">Description <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+                <textarea id="nk-description" class="nk-input nk-textarea" placeholder="What changed in this release?" maxlength="1000"></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary" style="align-self:flex-start">Publish Release</button>
+            </form>
+          </div>
+        </div>
+      </div><!-- /#networkView -->
+
       <section class="panel" id="feedPanel" aria-label="Updates feed">
         <header class="panel-header">
           <h2>📋 Recent Updates <small>(last 7 days)</small></h2>
@@ -3077,7 +3240,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       "btn-major", "btn-minor", "btn-patch", "btn-cve", "btn-potential-cve", "btn-reddit",
       "btn-reddit-risk", "btn-reddit-risk-latest", "btn-reddit-risk-cve", "btn-so-risk", "btn-so",
       "filterForm", "components", "clearBtn", "fixedToggles", "typeToggles",
-      "homeLink", "graphLink", "archLink", "cveLink", "dashboardLink", "docsLink", "changelogLink", "ackLink", "usersLink", "expandAllBtn", "activeFilters", "afTags", "afClearAll", "emptyState"
+      "homeLink", "graphLink", "archLink", "cveLink", "dashboardLink", "docsLink", "changelogLink", "ackLink", "usersLink", "networkLink", "expandAllBtn", "activeFilters", "afTags", "afClearAll", "emptyState"
     ].forEach(id => { EL[id] = document.getElementById(id); });
 
     const $ = s => document.querySelector(s);
@@ -3456,6 +3619,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (ACK_ACTIVE) deactivateAck();
       if (CL_ACTIVE)  deactivateChangelog();
       if (UA_ACTIVE)  deactivateUsers();
+      if (NET_ACTIVE) deactivateNetwork();
       G_ACTIVE = true;
       setViewParam("graph");
       document.getElementById("graphView").style.display = "block";
@@ -3485,7 +3649,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     });
 
     document.querySelector(".brand").addEventListener("click", e => {
-      if (G_ACTIVE)  { e.preventDefault(); deactivateGraph(); }
+      if (G_ACTIVE)   { e.preventDefault(); deactivateGraph(); }
       else if (A_ACTIVE)  { e.preventDefault(); deactivateArch(); }
       else if (CV_ACTIVE) { e.preventDefault(); deactivateCve(); }
       else if (DB_ACTIVE) { e.preventDefault(); deactivateDashboard(); }
@@ -3493,11 +3657,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       else if (ACK_ACTIVE){ e.preventDefault(); deactivateAck(); }
       else if (CL_ACTIVE) { e.preventDefault(); deactivateChangelog(); }
       else if (UA_ACTIVE) { e.preventDefault(); deactivateUsers(); }
+      else if (NET_ACTIVE){ e.preventDefault(); deactivateNetwork(); }
     });
 
     EL.homeLink.addEventListener("click", e => {
       e.preventDefault();
-      if (G_ACTIVE)  deactivateGraph();
+      if (G_ACTIVE)   deactivateGraph();
       else if (A_ACTIVE)  deactivateArch();
       else if (CV_ACTIVE) deactivateCve();
       else if (DB_ACTIVE) deactivateDashboard();
@@ -3505,6 +3670,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       else if (ACK_ACTIVE) deactivateAck();
       else if (CL_ACTIVE) deactivateChangelog();
       else if (UA_ACTIVE) deactivateUsers();
+      else if (NET_ACTIVE) deactivateNetwork();
     });
 
     function gReRender() {
@@ -3771,6 +3937,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (ACK_ACTIVE) deactivateAck();
       if (CL_ACTIVE)  deactivateChangelog();
       if (UA_ACTIVE)  deactivateUsers();
+      if (NET_ACTIVE) deactivateNetwork();
       A_ACTIVE = true;
       setViewParam("arch");
       document.getElementById("archView").style.display = "flex";
@@ -4034,6 +4201,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (ACK_ACTIVE) deactivateAck();
       if (CL_ACTIVE)  deactivateChangelog();
       if (UA_ACTIVE)  deactivateUsers();
+      if (NET_ACTIVE) deactivateNetwork();
       D_ACTIVE = true;
       setViewParam("docs");
       document.getElementById("docsView").style.display = "block";
@@ -4072,6 +4240,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (D_ACTIVE)  deactivateDocs();
       if (ACK_ACTIVE) deactivateAck();
       if (UA_ACTIVE)  deactivateUsers();
+      if (NET_ACTIVE) deactivateNetwork();
       CL_ACTIVE = true;
       setViewParam("changelog");
       document.getElementById("changelogView").style.display = "block";
@@ -4108,6 +4277,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (D_ACTIVE)  deactivateDocs();
       if (CL_ACTIVE) deactivateChangelog();
       if (UA_ACTIVE) deactivateUsers();
+      if (NET_ACTIVE) deactivateNetwork();
       ACK_ACTIVE = true;
       setViewParam("credits");
       document.getElementById("ackView").style.display = "block";
@@ -5121,6 +5291,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         activateCve();
       } else if (view === "risk") {
         activateDashboard();
+      } else if (view === "network") {
+        activateNetwork();
       } else if (view === "credits") {
         activateAck();
       } else if (view === "changelog") {
@@ -5723,6 +5895,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (ACK_ACTIVE) deactivateAck();
       if (CL_ACTIVE)  deactivateChangelog();
       if (UA_ACTIVE)  deactivateUsers();
+      if (NET_ACTIVE) deactivateNetwork();
       CV_ACTIVE = true;
       setViewParam("cve");
       document.getElementById("cveView").style.display = "flex";
@@ -5944,6 +6117,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (ACK_ACTIVE) deactivateAck();
       if (CL_ACTIVE)  deactivateChangelog();
       if (UA_ACTIVE)  deactivateUsers();
+      if (NET_ACTIVE) deactivateNetwork();
       DB_ACTIVE = true;
       setViewParam("risk");
       document.getElementById("dashboardView").style.display = "block";
@@ -5971,6 +6145,271 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     });
 
     document.getElementById("ri-analyze-btn").addEventListener("click", riAnalyze);
+
+    /************************* RELEASE KNOWLEDGE NETWORK *************************/
+
+    let NET_ACTIVE = false;
+
+    function nkEsc(s) {
+      return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
+
+    function nkKnownVendors() {
+      const all = STATE.candidates.length ? STATE.candidates : STATE.rawVersions;
+      const names = new Set();
+      all.forEach(v => {
+        const n = (v.versionProductName || "").toLowerCase().replace(/[^a-z0-9-]/g, "");
+        if (n.length >= 3) names.add(n);
+      });
+      return names;
+    }
+
+    function nkValidateNs(ns) {
+      if (!/^[a-z0-9][a-z0-9-]{2,31}$/.test(ns))
+        return "Namespace must be 3 to 32 characters: lowercase letters, digits, and hyphens only.";
+      if (nkKnownVendors().has(ns))
+        return "Namespace conflicts with an existing tracked vendor. Choose a unique namespace.";
+      return null;
+    }
+
+    async function nkLoadReleases(filter) {
+      const listEl = document.getElementById("nk-release-list");
+      if (!listEl) return;
+      listEl.innerHTML = '<div class="nk-empty">Loading...</div>';
+      try {
+        const token = localStorage.getItem("rt_token");
+        const headers = { Accept: "application/json" };
+        if (token) headers["Authorization"] = "Bearer " + token;
+        const qs = filter ? "?q=" + encodeURIComponent(filter) : "";
+        const res = await fetch(API_BASE + "knowledge/releases" + qs, { headers });
+        if (!res.ok) throw new Error(res.status);
+        const data = await res.json();
+        nkRenderReleases(Array.isArray(data) ? data : (data.data || []));
+      } catch {
+        listEl.innerHTML = '<div class="nk-empty">No published releases yet. Be the first to publish.</div>';
+      }
+    }
+
+    function nkRenderReleases(releases) {
+      const listEl = document.getElementById("nk-release-list");
+      if (!releases.length) {
+        listEl.innerHTML = '<div class="nk-empty">No published releases yet. Be the first to publish.</div>';
+        return;
+      }
+      listEl.innerHTML = "";
+      releases.forEach(r => {
+        const date = r.publishedAt ? new Date(r.publishedAt).toLocaleDateString() : "";
+        const chCls = r.channel === "security" ? "ri-pill-red" : r.channel === "major" ? "ri-pill-amber" : r.channel === "minor" ? "ri-pill-blue" : "ri-pill-gray";
+        const card = document.createElement("div");
+        card.className = "nk-release-card";
+        card.innerHTML =
+          '<div class="nk-release-head">'
+          + '<span class="nk-release-ns">' + nkEsc(r.vendorNs || "") + '</span>'
+          + '<span class="nk-release-comp">' + nkEsc(r.component || "") + '</span>'
+          + '<span class="nk-release-ver">v' + nkEsc(r.version || "") + '</span>'
+          + '<span class="ri-pill ' + chCls + '" style="font-size:10px">' + nkEsc(r.channel || "patch") + '</span>'
+          + (date ? '<span class="nk-release-meta">' + date + '</span>' : '')
+          + '</div>'
+          + '<div class="nk-release-body" id="nk-body-' + nkEsc(r._id || "") + '">'
+          + (r.description ? '<p style="font-size:12px;margin:0 0 10px;color:var(--text)">' + nkEsc(r.description) + '</p>' : '')
+          + (r.notesUrl ? '<p style="font-size:11px;margin:0 0 10px"><a href="' + nkEsc(r.notesUrl) + '" target="_blank" rel="noopener" style="color:var(--brand)">Release notes ↗</a></p>' : '')
+          + '<div id="nk-reports-' + nkEsc(r._id || "") + '" style="margin-bottom:8px"><span style="font-size:11px;color:var(--muted)">Loading reports...</span></div>'
+          + (uaToken() ? '<button class="btn btn-sm" style="margin-top:6px" data-nk-report="' + nkEsc(r._id || "") + '">Add experience</button>' : '')
+          + '</div>';
+        card.querySelector(".nk-release-head").addEventListener("click", () => {
+          const body = card.querySelector(".nk-release-body");
+          const open = body.classList.toggle("open");
+          if (open) nkLoadReports(r._id);
+        });
+        if (uaToken()) {
+          const btn = card.querySelector("[data-nk-report]");
+          if (btn) btn.addEventListener("click", () => nkShowReportForm(r._id, card));
+        }
+        listEl.appendChild(card);
+      });
+    }
+
+    async function nkLoadReports(releaseId) {
+      const el = document.getElementById("nk-reports-" + releaseId);
+      if (!el) return;
+      try {
+        const token = localStorage.getItem("rt_token");
+        const headers = { Accept: "application/json" };
+        if (token) headers["Authorization"] = "Bearer " + token;
+        const res = await fetch(API_BASE + "knowledge/releases/" + encodeURIComponent(releaseId) + "/reports", { headers });
+        if (!res.ok) throw new Error(res.status);
+        const data = await res.json();
+        const reports = Array.isArray(data) ? data : (data.data || []);
+        if (!reports.length) { el.innerHTML = '<span style="font-size:11px;color:var(--muted)">No experience reports yet.</span>'; return; }
+        const labels = { success: "Worked well", issues: "Had issues", upgrade: "Upgraded from" };
+        const cls    = { success: "nk-outcome-ok", issues: "nk-outcome-issue", upgrade: "nk-outcome-upgrade" };
+        el.innerHTML = reports.map(rp => {
+          const date = rp.reportedAt ? new Date(rp.reportedAt).toLocaleDateString() : "";
+          return '<div class="nk-report-item">'
+            + '<span class="' + (cls[rp.outcome] || "") + '">' + nkEsc(labels[rp.outcome] || rp.outcome || "") + '</span>'
+            + (rp.fromVersion ? ' from v' + nkEsc(rp.fromVersion) : '')
+            + (rp.description ? ' — ' + nkEsc(rp.description.slice(0, 120)) : '')
+            + (date ? '<div style="font-size:10px;color:var(--muted);margin-top:2px">' + date + (rp.reportedBy ? ' · ' + nkEsc(rp.reportedBy) : '') + '</div>' : '')
+            + '</div>';
+        }).join("");
+      } catch {
+        el.innerHTML = '<span style="font-size:11px;color:var(--muted)">Could not load reports.</span>';
+      }
+    }
+
+    function nkShowReportForm(releaseId, card) {
+      const existing = card.querySelector(".nk-report-form");
+      if (existing) { existing.remove(); return; }
+      const wrap = document.createElement("div");
+      wrap.className = "nk-report-form";
+      wrap.innerHTML =
+        '<div style="border-top:1px solid var(--border);padding-top:10px;margin-top:8px">'
+        + '<div style="font-size:11px;font-weight:700;margin-bottom:8px;color:var(--muted)">Your experience</div>'
+        + '<select id="nk-rep-outcome-' + releaseId + '" class="nk-input" style="margin-bottom:6px">'
+        + '<option value="success">Worked well in production</option>'
+        + '<option value="issues">Had issues</option>'
+        + '<option value="upgrade">Successfully upgraded from a previous version</option>'
+        + '</select>'
+        + '<input id="nk-rep-from-' + releaseId + '" class="nk-input" type="text" placeholder="Upgraded from version (optional)" style="margin-bottom:6px" maxlength="32" />'
+        + '<textarea id="nk-rep-desc-' + releaseId + '" class="nk-input nk-textarea" placeholder="Describe your experience (optional)" style="min-height:60px;margin-bottom:8px" maxlength="500"></textarea>'
+        + '<button class="btn btn-primary btn-sm" id="nk-rep-submit-' + releaseId + '">Submit</button>'
+        + ' <button class="btn btn-sm" id="nk-rep-cancel-' + releaseId + '">Cancel</button>'
+        + '<div id="nk-rep-msg-' + releaseId + '" style="font-size:11px;color:var(--muted);margin-top:5px"></div>'
+        + '</div>';
+      card.querySelector(".nk-release-body").appendChild(wrap);
+      document.getElementById("nk-rep-cancel-" + releaseId).addEventListener("click", () => wrap.remove());
+      document.getElementById("nk-rep-submit-" + releaseId).addEventListener("click", async () => {
+        const outcome = document.getElementById("nk-rep-outcome-" + releaseId).value;
+        const fromVersion = (document.getElementById("nk-rep-from-" + releaseId).value || "").trim();
+        const description = (document.getElementById("nk-rep-desc-" + releaseId).value || "").trim();
+        const msgEl = document.getElementById("nk-rep-msg-" + releaseId);
+        msgEl.textContent = "Submitting...";
+        try {
+          const token = localStorage.getItem("rt_token");
+          const res = await fetch(API_BASE + "knowledge/releases/" + encodeURIComponent(releaseId) + "/reports", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+            body: JSON.stringify({ outcome, fromVersion, description })
+          });
+          if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || res.status);
+          msgEl.style.color = "#16a34a";
+          msgEl.textContent = "Thank you for your report.";
+          setTimeout(() => { wrap.remove(); nkLoadReports(releaseId); }, 1200);
+        } catch (err) {
+          msgEl.style.color = "#b91c1c";
+          msgEl.textContent = "Could not submit: " + nkEsc(String(err.message || "error"));
+        }
+      });
+    }
+
+    function nkRender() {
+      const gate = document.getElementById("nk-gate");
+      const main = document.getElementById("nk-main");
+      if (!uaToken()) {
+        gate.style.display = "block";
+        main.style.display = "none";
+        return;
+      }
+      gate.style.display = "none";
+      main.style.display = "block";
+      nkLoadReleases((document.getElementById("nk-search") || {}).value || "");
+    }
+
+    function activateNetwork() {
+      if (G_ACTIVE)   deactivateGraph();
+      if (A_ACTIVE)   deactivateArch();
+      if (CV_ACTIVE)  deactivateCve();
+      if (DB_ACTIVE)  deactivateDashboard();
+      if (D_ACTIVE)   deactivateDocs();
+      if (ACK_ACTIVE) deactivateAck();
+      if (CL_ACTIVE)  deactivateChangelog();
+      if (UA_ACTIVE)  deactivateUsers();
+      NET_ACTIVE = true;
+      setViewParam("network");
+      document.getElementById("networkView").style.display = "block";
+      document.getElementById("feedPanel").style.display = "none";
+      document.getElementById("networkControls").style.display = "";
+      document.getElementById("feedSidebarSections").style.display = "none";
+      EL.networkLink.classList.add("nav-active");
+      nkRender();
+    }
+
+    function deactivateNetwork() {
+      NET_ACTIVE = false;
+      setViewParam("");
+      document.getElementById("networkView").style.display = "none";
+      document.getElementById("feedPanel").style.display = "";
+      document.getElementById("networkControls").style.display = "none";
+      document.getElementById("feedSidebarSections").style.display = "";
+      EL.networkLink.classList.remove("nav-active");
+    }
+
+    EL.networkLink.addEventListener("click", e => {
+      e.preventDefault();
+      if (NET_ACTIVE) { deactivateNetwork(); return; }
+      activateNetwork();
+    });
+
+    document.getElementById("nk-signin-btn").addEventListener("click", () => activateUsers());
+
+    document.querySelectorAll("[data-nk-tab]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("[data-nk-tab]").forEach(b => b.classList.remove("nk-tab-active"));
+        btn.classList.add("nk-tab-active");
+        const target = btn.dataset.nkTab;
+        document.querySelectorAll(".nk-tab-panel").forEach(p => p.classList.remove("nk-tab-panel-active"));
+        document.getElementById("nk-panel-" + target).classList.add("nk-tab-panel-active");
+      });
+    });
+
+    document.getElementById("nk-search").addEventListener("input", () => {
+      if (NET_ACTIVE && uaToken()) nkLoadReleases(document.getElementById("nk-search").value);
+    });
+
+    document.getElementById("nk-publish-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      const msgEl = document.getElementById("nk-publish-msg");
+      const ns   = (document.getElementById("nk-vendor-ns").value || "").trim().toLowerCase();
+      const comp = (document.getElementById("nk-comp-name").value || "").trim();
+      const ver  = (document.getElementById("nk-ver-num").value || "").trim();
+      const channel     = document.getElementById("nk-channel").value;
+      const notesUrl    = (document.getElementById("nk-notes-url").value || "").trim();
+      const description = (document.getElementById("nk-description").value || "").trim();
+
+      const nsErr = nkValidateNs(ns);
+      if (nsErr) {
+        msgEl.className = "nk-msg nk-msg-error";
+        msgEl.textContent = nsErr;
+        msgEl.style.display = "block";
+        return;
+      }
+      msgEl.className = "nk-msg";
+      msgEl.textContent = "Publishing...";
+      msgEl.style.display = "block";
+      try {
+        const token = localStorage.getItem("rt_token");
+        const res = await fetch(API_BASE + "knowledge/releases", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+          body: JSON.stringify({ vendorNs: ns, component: comp, version: ver, channel, notesUrl, description })
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || err.message || res.status);
+        }
+        msgEl.className = "nk-msg nk-msg-ok";
+        msgEl.textContent = "Release published.";
+        document.getElementById("nk-publish-form").reset();
+        setTimeout(() => {
+          msgEl.style.display = "none";
+          document.querySelector("[data-nk-tab='discover']").click();
+        }, 1400);
+      } catch (err) {
+        msgEl.className = "nk-msg nk-msg-error";
+        msgEl.textContent = "Publish failed: " + nkEsc(String(err.message || "error"));
+        msgEl.style.display = "block";
+      }
+    });
 
     /************************* USER ACCOUNT MANAGEMENT *************************/
 
@@ -6403,6 +6842,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (D_ACTIVE)  deactivateDocs();
       if (ACK_ACTIVE) deactivateAck();
       if (CL_ACTIVE) deactivateChangelog();
+      if (NET_ACTIVE) deactivateNetwork();
       UA_ACTIVE = true;
       setViewParam("account");
       document.getElementById("usersView").style.display = "block";
