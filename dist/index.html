@@ -1120,144 +1120,62 @@
     .cv-host .scroll-list { overflow-y:auto;overscroll-behavior:contain; }
     #cveView .scroll-list { flex: 1 1 0; min-height: 0; }
 
-    /* ── Dashboard view + controls (scoped) ─────────────────── */
-    #dashboardView, #dashboardControls {
-      --db-bg:#ffffff; --db-text:#111827; --db-muted:#6b7280; --db-border:#d1d5db;
-      --db-accent:#2563eb; --db-accent-soft:#eff6ff; --db-accent-strong:#1d4ed8;
-      --db-accent-pos:#16a34a; --db-accent-neg:#b91c1c; --db-accent-neu:#6b7280;
-      --db-today:#f9fafb; --db-timeline:#fef2f2;
-      --db-chip:#e5e7eb; --db-chip-b:#d1d5db;
-      --db-prog:#2563eb; --db-prog-soft:#93c5fd;
-      color: var(--db-text);
-      font-family: system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
-      font-size: 13px; box-sizing: border-box;
-    }
-    /* ── Dashboard view: fixed-height, no outer scroll ── */
+    /* ── Release Risk Intelligence (dashboard) ───────────────── */
     #dashboardView {
-      background: var(--db-bg);
       position: sticky; top: calc(var(--topbar-h) + 16px);
       height: calc(100vh - var(--topbar-h) - 32px);
-      overflow: hidden;
-      border: 1px solid #dde6f5; border-radius: 12px;
+      border-radius: var(--radius); border: 1px solid var(--border);
+      background: var(--bg); overflow-y: auto; overscroll-behavior: contain;
       display: flex; flex-direction: column;
     }
-    #dashboardView .db-loading-bar {
-      height: 3px; width: 0; opacity: 0; flex-shrink: 0;
-      background: linear-gradient(to right,var(--db-prog),var(--db-prog-soft));
-      transition: width .4s ease-out, opacity .2s ease-out;
-    }
-    /* Two-pane split */
-    #dashboardView .db-two-pane { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr; flex: 1; min-height: 0; overflow: hidden; }
-    #dashboardView .db-pane { display: flex; flex-direction: column; gap: 7px; padding: 10px; min-height: 0; overflow-y: hidden; }
-    #dashboardView .db-pane-agg { background: var(--db-today); border-right: 1px solid var(--db-border); }
-    #dashboardView .db-pane-comp { background: #fff; overflow-y: auto; overscroll-behavior: contain; }
-    #dashboardView .db-pane-header {
-      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
-      color: var(--db-accent-strong); padding-bottom: 7px; border-bottom: 2px solid var(--db-accent);
-      flex-shrink: 0; display: flex; align-items: center; gap: 5px;
-    }
-    /* KPI strip */
-    #dashboardView .db-kpi-strip { display: flex; gap: 6px; flex-shrink: 0; }
-    #dashboardView .db-kpi-box {
-      flex: 1; min-width: 0; background: #fff; border: 1px solid #bfdbfe;
-      border-radius: 7px; padding: 7px 6px; text-align: center;
-    }
-    #dashboardView .db-kpi-box-red { background: #fff5f5; border-color: #fecaca; }
-    #dashboardView .db-kpi-box-warn { background: #fffbeb; border-color: #fde68a; }
-    #dashboardView .db-kpi-label { font-size: 9px; color: var(--db-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    #dashboardView .db-kpi-value { font-size: 20px; font-weight: 700; color: var(--db-accent-strong); line-height: 1.15; }
-    #dashboardView .db-kpi-box-red .db-kpi-value { color: var(--db-accent-neg); }
-    #dashboardView .db-kpi-box-warn .db-kpi-value { color: #b45309; }
-    #dashboardView .db-kpi-delta { font-size: 10px; color: var(--db-muted); }
-    /* Sections inside panes */
-    #dashboardView .db-section {
-      display: flex; flex-direction: column; background: #fff;
-      border: 1px solid var(--db-border); border-radius: 6px; padding: 8px;
-      min-height: 0; flex-shrink: 0;
-    }
-    #dashboardView .db-section-grow { flex: 1; flex-shrink: 1; }
-    #dashboardView .db-section-title {
-      font-size: 10px; font-weight: 600; color: var(--db-muted);
-      text-transform: uppercase; letter-spacing: .04em;
-      margin-bottom: 5px; flex-shrink: 0;
-      display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
-    }
-    #dashboardView .db-section-sub { color: var(--db-text); font-weight: 400; text-transform: none; letter-spacing: 0; font-size: 10px; }
-    /* Charts */
-    #dashboardView .db-chart-wrap { position: relative; flex: 1; min-height: 0; max-height: 160px; overflow: hidden; }
-    #dashboardView .db-chart-wrap-fixed { min-height: 85px; max-height: 110px; }
-    #dashboardView .db-chart-wrap canvas { width: 100% !important; height: 100% !important; }
-    /* Component state */
-    #dashboardView .db-no-comp {
+    #dashboardView .ri-idle {
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      flex: 1; padding: 20px; text-align: center; color: var(--db-muted);
+      flex: 1; padding: 32px; text-align: center; color: var(--muted);
     }
-    #dashboardView .db-no-comp-icon { font-size: 30px; margin-bottom: 8px; }
-    #dashboardView .db-no-comp-title { font-size: 13px; font-weight: 600; color: var(--db-text); margin-bottom: 4px; }
-    #dashboardView .db-no-comp-sub { font-size: 11px; margin-bottom: 14px; max-width: 220px; line-height: 1.4; }
-    #dashboardView .db-comp-state { display: flex; flex-direction: column; gap: 7px; flex: 1; min-height: 0; }
-    /* Shared primitives */
-    #dashboardView .db-badge { font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 999px; }
-    #dashboardView .db-badge-pos { color:var(--db-accent-pos); border:1px solid rgba(22,163,74,.35); background:rgba(22,163,74,.06); }
-    #dashboardView .db-badge-neg { color:var(--db-accent-neg); border:1px solid rgba(185,28,28,.35); background:rgba(185,28,28,.06); }
-    #dashboardView .db-badge-flat { color:var(--db-accent-neu); border:1px solid rgba(107,114,128,.35); background:rgba(243,244,246,.9); }
-    #dashboardView .db-stats { font-size: 10px; color: var(--db-muted); flex-shrink: 0; margin-top: 3px; }
-    #dashboardView .db-valid { font-size: 10px; margin-top: 2px; flex-shrink: 0; }
-    #dashboardView .db-valid-ok { color: var(--db-accent-pos); }
-    #dashboardView .db-valid-warn { color: #eab308; }
-    #dashboardView .db-valid-err { color: var(--db-accent-neg); }
-    #dashboardView .db-chip { display:inline-flex; align-items:center; padding:1px 6px; border-radius:999px; border:1px solid var(--db-chip-b); background:var(--db-chip); font-size:10px; }
-    #dashboardView .db-list-scroll { overflow-y: auto; padding-right: 2px; }
-    #dashboardView .db-list-head { font-size: 10px; font-weight: 600; color: var(--db-muted); margin: 3px 0; }
-    #dashboardView .db-post-item { font-size: 11px; margin-bottom: 3px; border-bottom: 1px dashed #e5e7eb; padding-bottom: 2px; }
-    #dashboardView .db-post-title { font-weight: 500; margin-bottom: 1px; }
-    #dashboardView .db-post-meta { font-size: 10px; color: var(--db-muted); }
-    #dashboardView a { color: #1d4ed8; text-decoration: none; }
-    #dashboardView a:hover { text-decoration: underline; }
-    #dashboardView .db-interesting { font-size: 11px; line-height: 1.4; overflow-y: auto; max-height: 100px; }
-    #dashboardView .db-interesting ul { margin: 3px 0; padding-left: 14px; }
-    #dashboardView .db-interesting li { margin: 2px 0; }
-    #dashboardView .db-tbl { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 2px; }
-    #dashboardView .db-tbl td { padding: 2px 4px; border-bottom: 1px solid #e5e7eb; }
-    #dashboardView .db-tbl td:first-child { color: var(--db-muted); }
-    #dashboardView .db-tbl td:last-child { text-align: right; font-weight: 500; }
-    #dashboardView .db-hl { color: var(--db-accent-neg); font-weight: 600; }
-    #dashboardView .db-cve-wrap { display: flex; gap: 6px; align-items: flex-start; }
-    #dashboardView .db-cve-half { flex: 1; min-width: 0; }
-    #dashboardView .db-sample-wrap { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
-    #dashboardView .db-sample-chip { font-size: 11px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--db-accent); color: var(--db-accent); background: transparent; cursor: pointer; transition: background .12s, color .12s; line-height: 1.5; }
-    #dashboardView .db-sample-chip:hover { background: var(--db-accent); color: #fff; }
-    /* Controls sidebar */
-    #dashboardControls { background: var(--db-today); display: flex; flex-direction: column; gap: 10px; padding: 10px 14px; }
-    #dashboardControls .db-ctrl-label { font-size: 11px; color: var(--db-muted); white-space: nowrap; }
-    #dashboardControls .db-ctrl-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 11px; }
-    #dashboardControls .db-status { font-size: 11px; color: var(--db-muted); }
-    #dashboardControls select, #dashboardControls input[type="date"] { font-size: 12px; padding: 3px 5px; border-radius: 4px; border: 1px solid var(--db-border); background: #fff; color: var(--db-text); }
-    /* Node graph canvas */
-    #dashboardView .db-graph-wrap { position: relative; width: 100%; flex: 1; min-height: 0; overflow: hidden; }
-    #dashboardView .db-graph-wrap canvas { display: block; width: 100%; height: 100%; }
+    #dashboardView .ri-idle-icon { font-size: 36px; margin-bottom: 12px; }
+    #dashboardView .ri-idle-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    #dashboardView .ri-idle-sub { font-size: 12px; line-height: 1.5; max-width: 280px; }
+    #dashboardView .ri-score-bar {
+      padding: 16px 20px; flex-shrink: 0; display: flex; align-items: center; gap: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    #dashboardView .ri-score-num { font-size: 42px; font-weight: 800; line-height: 1; min-width: 60px; text-align: center; }
+    #dashboardView .ri-score-info { flex: 1; min-width: 0; }
+    #dashboardView .ri-score-level { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+    #dashboardView .ri-score-comp { font-size: 11px; color: var(--muted); }
+    #dashboardView .ri-score-rec { font-size: 11px; margin-top: 4px; line-height: 1.4; color: var(--text); }
+    #dashboardView .ri-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 14px; }
+    #dashboardView .ri-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 11px 13px;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    #dashboardView .ri-card-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+    #dashboardView .ri-card-body { font-size: 11px; line-height: 1.5; color: var(--text); }
+    #dashboardView .ri-card-body a { color: var(--brand); text-decoration: none; }
+    #dashboardView .ri-card-body a:hover { text-decoration: underline; }
+    #dashboardView .ri-pill { display: inline-block; font-size: 10px; font-weight: 600; padding: 1px 7px; border-radius: 999px; margin: 2px 2px 0 0; }
+    #dashboardView .ri-pill-red    { background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; }
+    #dashboardView .ri-pill-amber  { background:#fef3c7; color:#b45309; border:1px solid #fcd34d; }
+    #dashboardView .ri-pill-green  { background:#dcfce7; color:#16a34a; border:1px solid #86efac; }
+    #dashboardView .ri-pill-blue   { background:#dbeafe; color:#1d4ed8; border:1px solid #93c5fd; }
+    #dashboardView .ri-pill-gray   { background:#f3f4f6; color:#374151; border:1px solid #d1d5db; }
+    #dashboardView .ri-post-item { font-size:11px; margin-bottom:4px; border-bottom:1px solid var(--border); padding-bottom:4px; }
+    #dashboardView .ri-post-item:last-child { border-bottom:none; margin-bottom:0; padding-bottom:0; }
+    #dashboardView .ri-post-link { color:var(--brand); font-weight:500; text-decoration:none; }
+    #dashboardView .ri-post-link:hover { text-decoration:underline; }
+    #dashboardView .ri-post-meta { font-size:10px; color:var(--muted); margin-top:1px; }
+    #dashboardControls .ri-ctrl-label { font-size:11px; color:var(--muted); margin-bottom:3px; }
 
     /* ── Mobile scroll: all views ────────────────────────────────────── */
     @media (max-width: 640px) {
-      /* Dashboard: stack panes and let the page scroll */
+      /* Dashboard: let page scroll on mobile */
       #dashboardView {
         position: static;
         height: auto;
         overflow: visible;
       }
-      #dashboardView .db-two-pane {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto;
-        overflow: visible;
-        min-height: unset;
-      }
-      #dashboardView .db-pane {
-        overflow-y: visible;
-        min-height: unset;
-        height: auto;
-      }
-      #dashboardView .db-pane-comp { overflow-y: visible; }
-      #dashboardView .db-graph-wrap { height: 50vh; min-height: 160px; flex: none; }
+      #dashboardView .ri-cards { grid-template-columns: 1fr; }
 
       /* Docs and Ack: drop fixed height so page scrolls naturally */
       #docsView  { height: auto; overflow-y: visible; }
@@ -1694,19 +1612,28 @@
 
       <!-- ── Dashboard controls (shown only in dashboard view) ── -->
       <div id="dashboardControls" style="display:none">
-        <div class="db-ctrl-line">
-          <span class="db-ctrl-label">Timeline</span>
-          <select id="db-timeline-window">
-            <option value="14">Last 14 days</option>
-            <option value="30" selected>Last 30 days</option>
-            <option value="90">Last 90 days</option>
+        <div class="sidebar-section">
+          <div class="ri-ctrl-label">Component</div>
+          <input id="ri-comp-input" type="text" class="sidebar-input" placeholder="e.g. redis" style="width:100%;box-sizing:border-box" />
+        </div>
+        <div class="sidebar-section">
+          <div class="ri-ctrl-label">Version <span style="color:var(--muted);font-size:10px">(optional)</span></div>
+          <select id="ri-ver-select" class="sidebar-input" style="width:100%;box-sizing:border-box">
+            <option value="">Latest / all</option>
           </select>
         </div>
-        <div class="db-ctrl-line">
-          <span class="db-ctrl-label">Date</span>
-          <input id="db-date-input" type="date" />
+        <div class="sidebar-section">
+          <div class="ri-ctrl-label">Window</div>
+          <select id="ri-window-select" class="sidebar-input" style="width:100%;box-sizing:border-box">
+            <option value="30" selected>Last 30 days</option>
+            <option value="90">Last 90 days</option>
+            <option value="180">Last 180 days</option>
+          </select>
         </div>
-        <div class="db-status" id="db-status-info">Ready.</div>
+        <div class="sidebar-section">
+          <button id="ri-analyze-btn" class="btn btn-primary" style="width:100%">Analyze Risk</button>
+        </div>
+        <div id="ri-sidebar-status" style="font-size:11px;color:var(--muted);margin-top:2px;padding:0 2px"></div>
       </div>
 
     </aside>
@@ -2625,188 +2552,40 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       </div><!-- /#cveView -->
 
       <!-- Dashboard view -->
+      <!-- Risk Intelligence view -->
       <div id="dashboardView" style="display:none">
-        <div class="db-loading-bar" id="db-loading-bar"></div>
-        <div class="db-two-pane">
-
-          <!-- ── LEFT PANE: Total Aggregate ── -->
-          <div class="db-pane db-pane-agg">
-            <div class="db-pane-header">🌐 Total Aggregate</div>
-
-            <!-- KPI strip -->
-            <div class="db-kpi-strip">
-              <div class="db-kpi-box">
-                <div class="db-kpi-label">Today</div>
-                <div class="db-kpi-value" id="db-metric-today-count">0</div>
-                <div class="db-kpi-delta"><span id="db-delta-release-volume">—</span></div>
-              </div>
-              <div class="db-kpi-box">
-                <div class="db-kpi-label">Last 2 yrs</div>
-                <div class="db-kpi-value" id="db-metric-two-years">0</div>
-              </div>
-              <div class="db-kpi-box db-kpi-box-red">
-                <div class="db-kpi-label">CVE today</div>
-                <div class="db-kpi-value" id="db-kpi-cve-count">0</div>
-                <div class="db-kpi-delta"><span id="db-delta-today-cve">—</span></div>
-              </div>
-              <div class="db-kpi-box db-kpi-box-warn">
-                <div class="db-kpi-label">Signals today</div>
-                <div class="db-kpi-value" id="db-kpi-signals-count">0</div>
-                <div class="db-kpi-delta"><span id="db-delta-signals">—</span></div>
-              </div>
-            </div>
-
-            <!-- Update types chart -->
-            <div class="db-section">
-              <div class="db-section-title">
-                Update types
-                <span class="db-section-sub" id="db-subtitle-today-types"></span>
-                <span class="db-badge db-badge-flat" id="db-delta-today-types">—</span>
-              </div>
-              <div class="db-chart-wrap db-chart-wrap-fixed"><canvas id="db-chart-today-types"></canvas></div>
-              <div class="db-stats" id="db-stats-today-types"></div>
-              <div class="db-valid" id="db-validation-today-types"></div>
-            </div>
-
-            <!-- Release + signal timeline -->
-            <div class="db-section db-section-grow">
-              <div class="db-section-title">
-                Release &amp; signal timeline
-                <span class="db-section-sub" id="db-subtitle-timeline-daily"></span>
-                <span class="db-badge db-badge-flat" id="db-delta-timeline-daily">—</span>
-              </div>
-              <div class="db-chart-wrap" style="min-height:80px"><canvas id="db-chart-release-window"></canvas></div>
-              <div class="db-stats" id="db-stats-release-window"></div>
-              <div class="db-valid" id="db-validation-release-volume"></div>
-            </div>
-
-            <!-- Community signals -->
-            <div class="db-section">
-              <div class="db-section-title">
-                Community signals
-                <span class="db-badge db-badge-flat" id="db-delta-signals-2">—</span>
-              </div>
-              <div style="display:flex;gap:5px;flex-shrink:0;margin-bottom:4px;flex-wrap:wrap">
-                <span class="db-chip">Reddit: <strong id="db-today-reddit-count">0</strong></span>
-                <span class="db-chip">SO: <strong id="db-today-so-count">0</strong></span>
-                <span id="db-metric-signals-extra" style="font-size:10px;color:var(--db-muted);align-self:center"></span>
-              </div>
-              <div class="db-list-scroll" style="max-height:75px">
-                <div id="db-signals-mixed-list"></div>
-              </div>
-              <div class="db-valid" id="db-validation-signals"></div>
-            </div>
-
-            <!-- Ecosystem snapshot graph -->
-            <div class="db-section db-section-grow" style="min-height:200px">
-              <div class="db-section-title">
-                Ecosystem snapshot
-                <span class="db-section-sub" id="db-agg-graph-subtitle">most connected component</span>
-              </div>
-              <div class="db-graph-wrap"><canvas id="db-graph-agg"></canvas></div>
-            </div>
-          </div>
-
-          <!-- ── RIGHT PANE: Component-specific ── -->
-          <div class="db-pane db-pane-comp">
-            <div class="db-pane-header" id="db-pane-comp-header">🔍 Component</div>
-
-            <!-- No component selected -->
-            <div class="db-no-comp" id="db-no-comp-state">
-              <div class="db-no-comp-icon">🔍</div>
-              <div class="db-no-comp-title">No component selected</div>
-              <div class="db-no-comp-sub">Search for a component above to see detailed tracking: releases, CVE history, and community signals</div>
-              <div id="db-sample-chips-area"></div>
-            </div>
-
-            <!-- Component selected -->
-            <div class="db-comp-state" id="db-comp-state" style="display:none">
-
-              <!-- Release timeline -->
-              <div class="db-section db-section-grow">
-                <div class="db-section-title">
-                  Release timeline
-                  <span class="db-section-sub" id="db-subtitle-selected-components"></span>
-                  <span class="db-badge db-badge-flat" id="db-delta-selected-components">—</span>
-                </div>
-                <div class="db-chart-wrap" style="min-height:80px"><canvas id="db-chart-selected-components"></canvas></div>
-                <div class="db-stats" id="db-stats-selected-components"></div>
-                <div class="db-valid" id="db-validation-selected-components"></div>
-              </div>
-
-              <!-- CVE & classification -->
-              <div class="db-section">
-                <div class="db-section-title">
-                  CVE &amp; classification
-                  <span class="db-section-sub" id="db-subtitle-today-cve"></span>
-                </div>
-                <div class="db-cve-wrap">
-                  <div class="db-cve-half"><table class="db-tbl"><tbody id="db-table-today-cve-main-body"></tbody></table></div>
-                  <div class="db-cve-half"><table class="db-tbl"><tbody id="db-table-today-cve-types-body"></tbody></table></div>
-                </div>
-                <div class="db-valid" id="db-validation-today-cve"></div>
-              </div>
-
-              <!-- Multi-source activity -->
-              <div class="db-section">
-                <div class="db-section-title">
-                  Multi-source activity
-                  <span style="font-weight:400;text-transform:none;font-size:9px;color:var(--db-muted)">releases + CVE + Reddit/SO · last 7 d</span>
-                  <span class="db-badge db-badge-flat" id="db-delta-interesting">—</span>
-                </div>
-                <div class="db-interesting" id="db-interesting-text"></div>
-                <div class="db-valid" id="db-validation-interesting"></div>
-              </div>
-
-              <!-- StackOverflow posts -->
-              <div class="db-section">
-                <div class="db-section-title">StackOverflow posts</div>
-                <div class="db-list-scroll" style="max-height:90px">
-                  <div id="db-signals-so-list"></div>
-                </div>
-              </div>
-
-              <!-- Vendor hub-and-spoke graph -->
-              <div class="db-section" style="min-height:220px">
-                <div class="db-section-title">
-                  Dependency map
-                  <span class="db-section-sub">versions · CVE versions · Reddit posts · Reddit CVEs</span>
-                </div>
-                <div class="db-graph-wrap" style="min-height:180px"><canvas id="db-graph-comp"></canvas></div>
-              </div>
-
-              <!-- Release cadence bar chart -->
-              <div class="db-section" style="min-height:130px">
-                <div class="db-section-title">Release cadence <span class="db-section-sub">releases/week</span></div>
-                <div class="db-chart-wrap" style="min-height:100px"><canvas id="db-chart-cadence"></canvas></div>
-              </div>
-
-              <!-- Reddit risk trend line chart -->
-              <div class="db-section" style="min-height:130px">
-                <div class="db-section-title">Reddit mention trend <span class="db-section-sub">daily signal volume</span></div>
-                <div class="db-chart-wrap" style="min-height:100px"><canvas id="db-chart-risk-trend"></canvas></div>
-              </div>
-            </div>
-          </div>
+        <div id="ri-idle" class="ri-idle">
+          <div class="ri-idle-icon">&#x1F50D;</div>
+          <div class="ri-idle-title">Release Risk Intelligence</div>
+          <div class="ri-idle-sub">Select a component and optionally a specific version, then click Analyze Risk to get a deployment risk assessment.</div>
         </div>
-
-        <!-- Hidden stubs: IDs still written by JS but not displayed -->
-        <div style="display:none" aria-hidden="true">
-          <span id="db-metric-all-time">0</span>
-          <span id="db-metric-risk-positive">0</span>
-          <span id="db-metric-components-total">0</span>
-          <span id="db-metric-components-names">0</span>
-          <span id="db-metric-components-sample">—</span>
-          <span id="db-metric-components-reddit">0</span>
-          <span id="db-metric-components-so">0</span>
-          <div id="db-stats-components-window"></div>
-          <div id="db-stats-components-sample"></div>
-          <div id="db-validation-components-window"></div>
-          <div id="db-delta-components-window">—</div>
-          <div id="db-stats-timeline-daily"></div>
-          <div id="db-validation-timeline-daily"></div>
-          <canvas id="db-chart-timeline-daily" width="1" height="1"></canvas>
-          <div id="db-subtitle-signals"></div>
+        <div id="ri-results" style="display:none">
+          <div class="ri-score-bar">
+            <div class="ri-score-num" id="ri-score-num">0</div>
+            <div class="ri-score-info">
+              <div class="ri-score-level" id="ri-score-level">Low Risk</div>
+              <div class="ri-score-comp" id="ri-score-comp">&#8212;</div>
+              <div class="ri-score-rec" id="ri-score-rec"></div>
+            </div>
+          </div>
+          <div class="ri-cards">
+            <div class="ri-card">
+              <div class="ri-card-title">Recommendation</div>
+              <div class="ri-card-body" id="ri-body-rec">&#8212;</div>
+            </div>
+            <div class="ri-card">
+              <div class="ri-card-title">CVE / Security</div>
+              <div class="ri-card-body" id="ri-body-cve">&#8212;</div>
+            </div>
+            <div class="ri-card">
+              <div class="ri-card-title">Community Signals</div>
+              <div class="ri-card-body" id="ri-body-signals">&#8212;</div>
+            </div>
+            <div class="ri-card">
+              <div class="ri-card-title">Version Details</div>
+              <div class="ri-card-body" id="ri-body-ver">&#8212;</div>
+            </div>
+          </div>
         </div>
       </div><!-- /#dashboardView -->
 
@@ -5028,11 +4807,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       EL.navLoader.classList.add("active");
       try {
         STATE.filters.components = tokens(input);
-        if (DB_ACTIVE) {
-          const dbComps = input.split(',').map(s=>s.trim()).filter(Boolean);
-          dbSetCompsLabel(dbComps);
-          dbLoadDashboard();
-        }
+        if (DB_ACTIVE) riSyncFromSearch();
         STATE.nextCursor = null;
         STATE.rawVersions = [];
         const { versions: vers, nextCursor: nc } = await Api.versions(input);
@@ -5057,7 +4832,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       setLinksHref();
       $$("#fixedToggles .toggle, #typeToggles .toggle").forEach(b => b.setAttribute("aria-pressed", "false"));
       refreshActiveFilters();
-      if (DB_ACTIVE) { dbSetCompsLabel([]); dbLoadDashboard(); }
+      if (DB_ACTIVE) { const el = document.getElementById("ri-comp-input"); if (el) el.value = ""; }
       boot();
     });
 
@@ -5939,698 +5714,174 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       activateCve();
     });
 
-    /* ── Dashboard Module ────────────────────────────────────── */
-    let DB_ACTIVE = false, DB_INIT = false;
-    const DB_BASE = 'https://releasetrain.io';
-    let dbCharts = {}, dbPendingFetches = 0, dbCurrentComponents = [];
-    const dbColors = ['#1d4ed8','#16a34a','#b91c1c','#f59e0b','#0d9488','#7c3aed','#db2777','#6b7280'];
-    const DB_FALLBACK_SAMPLES = ['chrome','linux','firefox','nodejs','python','kubernetes','nginx','redis'];
-    function dbPickSample(name) {
-      if (EL.components) EL.components.value = name;
-      if (EL.filterForm) EL.filterForm.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));
-    }
-    function dbSampleChips(names) {
-      return '<div class="db-sample-wrap">Try: '+
-        names.map(n=>'<button class="db-sample-chip" type="button" onclick="dbPickSample(\''+n.replace(/'/g,"\\'")+'\')">'+ n +'</button>').join('')+
-      '</div>';
+    /* ── Release Risk Intelligence (Dashboard) ───────────────── */
+    let DB_ACTIVE = false;
+
+    function riSyncFromSearch() {
+      const input = document.getElementById("ri-comp-input");
+      if (!input) return;
+      const q = (new URL(location.href).searchParams.get("q") || "").split(",")[0].trim();
+      if (q && !input.value) input.value = q;
     }
 
-    function dbStartLoading() {
-      dbPendingFetches++;
-      if (dbPendingFetches === 1) {
-        const bar = document.getElementById('db-loading-bar');
-        if (bar) { bar.style.opacity='1'; bar.style.width='0'; requestAnimationFrame(()=>{ bar.style.width='80%'; }); }
-      }
-    }
-    function dbFinishLoading() {
-      if (dbPendingFetches > 0) dbPendingFetches--;
-      if (dbPendingFetches === 0) {
-        const bar = document.getElementById('db-loading-bar');
-        if (bar) { bar.style.width='100%'; setTimeout(()=>{ bar.style.opacity='0'; bar.style.width='0'; }, 300); }
-      }
-    }
-    async function dbFetchJson(url) {
-      try {
-        dbStartLoading();
-        const res = await fetch(url);
-        if (!res.ok) { console.error('db fetch failed', url, res.status); return null; }
-        return await res.json();
-      } catch(e) { console.error('db fetch error', url, e); return null; }
-      finally { dbFinishLoading(); }
-    }
-    function dbFmtDate(d) {
-      return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
-    }
-    function dbParseDate(s) {
-      return new Date(+s.slice(0,4), +s.slice(4,6)-1, +s.slice(6,8));
-    }
-    function dbFmtDateInput(d) {
-      return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-    }
-    function dbFmtHumanAbs(s) {
-      try { return dbParseDate(s).toLocaleDateString(undefined,{month:'short',day:'numeric'}); } catch{ return s; }
-    }
-    function dbDateMinus(s, n) {
-      const d = dbParseDate(s); d.setDate(d.getDate()-n); return dbFmtDate(d);
-    }
-    function dbFmtHuman(s) {
-      try {
-        const today = dbFmtDate(new Date());
-        if (s === today) return 'Today';
-        if (s === dbDateMinus(today,1)) return 'Yesterday';
-        return dbFmtHumanAbs(s);
-      } catch { return s; }
-    }
-    function dbFmtLabel(s, n) {
-      const dt = dbParseDate(s);
-      const wd = dt.toLocaleDateString(undefined,{weekday:'short'});
-      const rel = dbFmtHuman(s);
-      const core = (rel==='Today'||rel==='Yesterday') ? rel+' ('+wd+')' : wd+' '+rel;
-      return n != null ? core+' ('+n+')' : core;
-    }
-    function dbDestroyChart(id) {
-      if (dbCharts[id]) { dbCharts[id].destroy(); delete dbCharts[id]; }
-    }
-    function dbSetDelta(id, a, b) {
-      const el = document.getElementById(id); if (!el) return;
-      const delta = (isFinite(a)?a:0)-(isFinite(b)?b:0);
-      el.classList.remove('db-badge-pos','db-badge-neg','db-badge-flat');
-      if (delta > 0) { el.textContent='+'+delta; el.classList.add('db-badge-pos'); }
-      else if (delta < 0) { el.textContent=String(delta); el.classList.add('db-badge-neg'); }
-      else { el.textContent='+0'; el.classList.add('db-badge-flat'); }
-    }
-    function dbSetValid(id, ok, msg) {
-      const el = document.getElementById(id); if (!el) return;
-      el.textContent = msg;
-      el.className = 'db-valid '+(ok?'db-valid-ok':'db-valid-err');
-    }
-    function dbSetWarn(id, msg) {
-      const el = document.getElementById(id); if (!el) return;
-      el.textContent = msg; el.className = 'db-valid db-valid-warn';
-    }
-    function dbSetCompsLabel(list) {
-      dbCurrentComponents = Array.isArray(list) ? list.slice() : [];
-    }
-    function dbMinMax(vals, lbls) {
-      if (!vals||!vals.length) return null;
-      let minV=Infinity,maxV=-Infinity,minI=-1,maxI=-1;
-      vals.forEach((v,i)=>{ if(v==null||isNaN(v))return; if(v<minV){minV=v;minI=i;} if(v>maxV){maxV=v;maxI=i;} });
-      if(!isFinite(minV)||!isFinite(maxV)) return null;
-      return {min:minV,minLabel:lbls&&lbls[minI]!=null?lbls[minI]:'',max:maxV,maxLabel:lbls&&lbls[maxI]!=null?lbls[maxI]:''};
-    }
-    function dbDayKey(c) {
-      if (!c) return null;
-      if (typeof c==='number') return dbFmtDate(new Date(c*1000));
-      if (typeof c==='string') {
-        if (/^\d{8}$/.test(c)) return c;
-        if (/^\d+(\.\d+)?$/.test(c)) return dbFmtDate(new Date(parseFloat(c)*1000));
-        const d = new Date(c); if (!isNaN(d)) return dbFmtDate(d);
-      }
-      if (c instanceof Date) return dbFmtDate(c);
-      return null;
-    }
-    function dbTimestamp(c) {
-      if (!c) return 0;
-      if (typeof c==='number') return c*1000;
-      if (typeof c==='string') {
-        if (/^\d+(\.\d+)?$/.test(c)) return parseFloat(c)*1000;
-        const d = new Date(c); if (!isNaN(d)) return d.getTime();
-      }
-      if (c instanceof Date) return c.getTime();
-      return 0;
-    }
-    function dbClassifySource(doc) {
-      const src = ((doc.metadata||{}).source||doc.source||'').toLowerCase();
-      const url = (doc.url||'').toLowerCase();
-      return (src.includes('stackoverflow')||url.includes('stackoverflow.com')) ? 'stackoverflow' : 'reddit';
-    }
-    function dbRiskScore(doc) {
-      const m = doc.metadata||{};
-      let r = doc.riskScore??m.riskScore??m.risk;
-      if (typeof r==='number') return r;
-      if (typeof r==='string'&&r.trim()) { const n=parseFloat(r); if (!isNaN(n)) return n; }
-      return 0;
-    }
-    function dbIsUpdateRelated(doc) {
-      return !!((doc.metadata||{}).predicted||{}).isUpdateRelated;
-    }
-    function dbFlattenClass(root) {
-      const out = {};
-      if (!root||typeof root!=='object') return out;
-      Object.entries(root).forEach(([k,v])=>{
-        if (v&&typeof v==='object'&&!Array.isArray(v)) {
-          Object.entries(v).forEach(([sk,sv])=>{
-            const l=String(sk).toLowerCase();
-            if(l==='unknown'||l==='unclassified') return;
-            out[sk]=(out[sk]||0)+(typeof sv==='number'?sv:0);
-          });
-        } else if (typeof v==='number') {
-          const l=String(k).toLowerCase();
-          if(l!=='unknown'&&l!=='unclassified') out[k]=(out[k]||0)+v;
-        }
+    function riPopulateVersions(comp) {
+      const sel = document.getElementById("ri-ver-select");
+      if (!sel) return;
+      sel.innerHTML = '<option value="">Latest / all</option>';
+      if (!comp) return;
+      const all = STATE.candidates.length ? STATE.candidates : STATE.rawVersions;
+      const cv = all.filter(v => {
+        const n = (v.versionProductName || "").toLowerCase();
+        return n.includes(comp) || comp.includes(n);
       });
-      return out;
+      cv.slice(0, 50).forEach(v => {
+        const opt = document.createElement("option");
+        opt.value = v._id || v.versionId || v.versionNumber;
+        const ch = gChannelOf(v);
+        opt.textContent = "v" + (v.versionNumber || "?") + " (" + ch + (v.isCve ? " CVE" : "") + ")";
+        sel.appendChild(opt);
+      });
     }
 
-    async function dbLoadDashboard() {
-      const statusEl = document.getElementById('db-status-info');
-      if (statusEl) statusEl.textContent = 'Loading…';
-      const dateInput = document.getElementById('db-date-input');
-      const windowSel = document.getElementById('db-timeline-window');
-      let refDate;
-      if (dateInput&&dateInput.value) { refDate = dateInput.value.replace(/-/g,''); }
-      else { refDate = dbFmtDate(new Date()); if(dateInput) dateInput.value=dbFmtDateInput(new Date()); }
-      const windowDays = parseInt(windowSel?windowSel.value:30,10)||30;
-      const startDate = dbDateMinus(refDate, windowDays-1);
-      const yesterday = dbDateMinus(refDate,1);
-      const weekStart = dbDateMinus(refDate,6);
-      const humanStart = dbFmtHuman(startDate), humanRef = dbFmtHuman(refDate);
-      const todayKey = dbFmtDate(new Date());
-      const todayLabel = refDate===todayKey?'Today':refDate===dbDateMinus(todayKey,1)?'Yesterday':dbFmtHuman(refDate);
-      const setText = (id,v)=>{ const e=document.getElementById(id); if(e) e.textContent=v; };
-      setText('db-subtitle-timeline-daily', humanStart+' to '+humanRef);
-      setText('db-subtitle-selected-components', humanStart+' to '+humanRef);
-      setText('db-subtitle-today-types', todayLabel);
-      setText('db-subtitle-today-cve', todayLabel);
-      const qParam = dbCurrentComponents.length ? dbCurrentComponents.join(',') : '';
-      /* Left pane (aggregate) always fetches global totals: no q filter.
-         Right pane (component) uses selectedVersions which is filtered by q. */
-      const [
-        todayByDate, yesterdayByDate, countTwoYrs, countAllMaybe, versionTL, namesResp,
-        typeToday, typeYesterday, classToday, classYesterday, cveToday, cveYesterday,
-        redditResp, selectedVersions
-      ] = await Promise.all([
-        dbFetchJson(DB_BASE+'/api/v/aggregate/byDate?date='+refDate),
-        dbFetchJson(DB_BASE+'/api/v/aggregate/byDate?date='+yesterday),
-        dbFetchJson(DB_BASE+'/api/v/count'),
-        dbFetchJson(DB_BASE+'/api/v/countAll').then(r=>r||null),
-        dbFetchJson(DB_BASE+'/api/aggregate/v/versionCountByDay?start='+startDate+'&end='+refDate),
-        dbFetchJson(DB_BASE+'/api/c/names'),
-        dbFetchJson(DB_BASE+'/api/aggregate/v/updateTypeCount?timestamp='+refDate),
-        dbFetchJson(DB_BASE+'/api/aggregate/v/updateTypeCount?timestamp='+yesterday),
-        dbFetchJson(DB_BASE+'/api/aggregate/v/classificationSummary?timestamp='+refDate),
-        dbFetchJson(DB_BASE+'/api/aggregate/v/classificationSummary?timestamp='+yesterday),
-        dbFetchJson(DB_BASE+'/api/aggregate/v/sourceCountByType?sourceType=CVE&timestamp='+refDate),
-        dbFetchJson(DB_BASE+'/api/aggregate/v/sourceCountByType?sourceType=CVE&timestamp='+yesterday),
-        dbFetchJson(DB_BASE+'/api/reddit?limit=5000&showCount=true'),
-        qParam ? dbFetchJson(DB_BASE+'/api/v/?q='+qParam) : null
-      ]);
+    function riEsc(s) {
+      return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
 
-      const redditData = redditResp&&Array.isArray(redditResp.data)?redditResp.data:[];
-      const allNames = Array.isArray(namesResp)?namesResp:[];
+    function riAnalyze() {
+      const compRaw = (document.getElementById("ri-comp-input")?.value || "").trim();
+      const comp = compRaw.toLowerCase();
+      const selVal = document.getElementById("ri-ver-select")?.value || "";
+      const windowDays = Number(document.getElementById("ri-window-select")?.value) || 30;
+      const statusEl = document.getElementById("ri-sidebar-status");
+      if (!comp) { if (statusEl) statusEl.textContent = "Enter a component name."; return; }
+      if (statusEl) statusEl.textContent = "Analyzing...";
 
-      /* Release volume */
-      const todayCount = todayByDate&&typeof todayByDate.count==='number'?todayByDate.count:0;
-      const yesterdayCount = yesterdayByDate&&typeof yesterdayByDate.count==='number'?yesterdayByDate.count:0;
-      const twoYrsTotal = countTwoYrs&&typeof countTwoYrs.totalVersions==='number'?countTwoYrs.totalVersions:0;
-      let allTimeTotal = twoYrsTotal;
-      if (countAllMaybe) {
-        if (typeof countAllMaybe.totalAllVersions==='number') allTimeTotal=countAllMaybe.totalAllVersions;
-        else if (typeof countAllMaybe.totalVersions==='number') allTimeTotal=countAllMaybe.totalVersions;
-      }
-      setText('db-metric-all-time', allTimeTotal);
-      setText('db-metric-two-years', twoYrsTotal);
-      setText('db-metric-today-count', todayCount);
-      dbSetDelta('db-delta-release-volume', todayCount, yesterdayCount);
-
-      const tlDays = Array.isArray(versionTL&&versionTL.days)?versionTL.days:[];
-      const tlRaw = tlDays.map(d=>d._id);
-      const tlCounts = tlDays.map(d=>d.count);
-      const tlDisplay = tlRaw.map((d,i)=>dbFmtLabel(d,tlCounts[i]||0));
-      const trueByDay={}, falseByDay={};
-      redditData.forEach(doc=>{
-        if (dbClassifySource(doc)!=='reddit') return;
-        const dk = dbDayKey(doc.created_utc);
-        if (!dk||dk<startDate||dk>refDate) return;
-        const m = dbIsUpdateRelated(doc)?trueByDay:falseByDay;
-        m[dk]=(m[dk]||0)+1;
+      const cutoff = Date.now() - windowDays * 86400000;
+      const all = STATE.candidates.length ? STATE.candidates : STATE.rawVersions;
+      const compVers = all.filter(v => {
+        const n = (v.versionProductName || "").toLowerCase();
+        return n.includes(comp) || comp.includes(n);
       });
-      dbDestroyChart('db-chart-release-window');
-      dbCharts['db-chart-release-window'] = new Chart(
-        document.getElementById('db-chart-release-window').getContext('2d'),
-        { type:'line', data:{labels:tlDisplay,datasets:[
-          {label:'Daily updates',data:tlCounts,borderWidth:2,tension:.2,fill:false,borderColor:'#1d4ed8',backgroundColor:'#1d4ed8',pointRadius:2,pointHitRadius:4},
-          {label:'Reddit update-related',data:tlRaw.map(d=>trueByDay[d]||0),borderWidth:2,tension:.2,fill:false,borderColor:'#f97373',backgroundColor:'#f97373',pointRadius:2,pointHitRadius:4},
-          {label:'Reddit other',data:tlRaw.map(d=>falseByDay[d]||0),borderWidth:2,tension:.2,fill:false,borderColor:'#fbbf24',backgroundColor:'#fbbf24',pointRadius:2,pointHitRadius:4}
-        ]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+ctx.parsed.y}}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9},precision:0}}}} }
-      );
-      const tlStats = dbMinMax(tlCounts, tlRaw);
-      const sumWindow = tlCounts.reduce((a,b)=>a+b,0);
-      if (tlStats) {
-        const e=document.getElementById('db-stats-release-window');
-        if(e) e.innerHTML='Window '+tlRaw.length+' days. Min <span class="db-hl">'+tlStats.min+'</span> on '+dbFmtHuman(tlStats.minLabel)+', max <span class="db-hl">'+tlStats.max+'</span> on '+dbFmtHuman(tlStats.maxLabel)+'.';
-      } else { setText('db-stats-release-window','No daily counts for this window.'); }
-      dbSetValid('db-validation-release-volume',true,'Validation: sum of daily counts ('+sumWindow+') consistent with window.');
 
-      /* Components */
-      const compsDistinct = allNames.length;
-      setText('db-metric-components-total', compsDistinct);
-      setText('db-metric-components-names', compsDistinct);
-      setText('db-metric-components-sample', allNames.slice(0,4).join(', ')||'n/a');
-      setText('db-stats-components-window','Sample drawn from distinct set.');
-      setText('db-stats-components-sample','Names list length = distinct set size ('+compsDistinct+').');
-      dbSetValid('db-validation-components-window', compsDistinct===allNames.length,'Validation: totalComponents = names length ('+compsDistinct+').');
-      dbSetDelta('db-delta-components-window', compsDistinct, compsDistinct);
+      let targetV = null;
+      if (selVal) targetV = compVers.find(v => v._id === selVal || v.versionId === selVal || v.versionNumber === selVal);
+      if (!targetV && compVers.length) targetV = compVers[0];
 
-      /* Today types */
-      const tt=typeToday||{}, ty=typeYesterday||{};
-      const todayMaj=tt.major||0,todayMin=tt.minor||0,todayPat=tt.patch||0,todayOth=tt.other||0;
-      const yestSumTypes=(ty.major||0)+(ty.minor||0)+(ty.patch||0)+(ty.other||0);
-      const typeLabelsBase=['Major','Minor','Patch'].concat(todayOth>0?['Other']:[]);
-      const typeData=[todayMaj,todayMin,todayPat].concat(todayOth>0?[todayOth]:[]);
-      const typeLabels=typeLabelsBase.map((n,i)=>n+' ('+(typeData[i]||0)+')');
-      dbDestroyChart('db-chart-today-types');
-      dbCharts['db-chart-today-types'] = new Chart(
-        document.getElementById('db-chart-today-types').getContext('2d'),
-        { type:'bar', data:{labels:typeLabels,datasets:[{label:'Today',data:typeData,borderWidth:1}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.parsed.y+' updates'}}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9},precision:0}}}} }
-      );
-      const sumTypes=typeData.reduce((a,b)=>a+b,0);
-      const typeStats=dbMinMax(typeData,typeLabelsBase);
-      if (typeStats) {
-        const e=document.getElementById('db-stats-today-types');
-        if(e) e.innerHTML='Sum <span class="db-hl">'+sumTypes+'</span>. Min <span class="db-hl">'+typeStats.min+'</span> '+typeStats.minLabel+', max <span class="db-hl">'+typeStats.max+'</span> '+typeStats.maxLabel+'.';
-      } else { setText('db-stats-today-types','No type counts.'); }
-      if (sumTypes===todayCount) dbSetValid('db-validation-today-types',true,'Validation: sum of types ('+sumTypes+') = countByDate ('+todayCount+').');
-      else dbSetWarn('db-validation-today-types','Validation: sum of types ('+sumTypes+') ≠ countByDate ('+todayCount+').');
-      dbSetDelta('db-delta-today-types', sumTypes, yestSumTypes);
+      const recentVers = compVers.filter(v => { const ep = gGetVersionEpoch(v); return ep === 0 || ep >= cutoff; });
+      const cveVers = recentVers.filter(v => v.isCve || gChannelOf(v) === "cve");
+      const isCveTarget = targetV && (targetV.isCve || gChannelOf(targetV) === "cve");
+      const channel = targetV ? gChannelOf(targetV) : "unknown";
 
-      /* CVE + classification */
-      const classTodayRaw=(classToday&&classToday.classification)||{};
-      const classYestRaw=(classYesterday&&classYesterday.classification)||{};
-      const flatToday=dbFlattenClass(classTodayRaw);
-      const classEntries=Object.entries(flatToday).sort((a,b)=>(b[1]||0)-(a[1]||0));
-      const classBases=classEntries.map(([k])=>k), classVals=classEntries.map(([,v])=>v);
-      const cveTodayCount=cveToday&&typeof cveToday.count==='number'?cveToday.count:0;
-      const cveYestCount=cveYesterday&&typeof cveYesterday.count==='number'?cveYesterday.count:0;
-      setText('db-kpi-cve-count', cveTodayCount);
-      const classStats=dbMinMax(classVals,classBases);
-      const sumClassToday=classVals.reduce((a,b)=>a+b,0);
-      const classTotalApi=classToday&&typeof classToday.total==='number'?classToday.total:null;
-      let compTypeEntries=[];
-      const ctr=classTodayRaw&&classTodayRaw.componentType;
-      if (ctr) {
-        if (Array.isArray(ctr)) { const tmp={}; ctr.forEach(n=>{ if(n) tmp[n]=(tmp[n]||0)+1; }); compTypeEntries=Object.entries(tmp); }
-        else if (typeof ctr==='object') compTypeEntries=Object.entries(ctr);
-        compTypeEntries.sort((a,b)=>(b[1]||0)-(a[1]||0));
-      }
-      const mainBody=document.getElementById('db-table-today-cve-main-body');
-      const typesBody=document.getElementById('db-table-today-cve-types-body');
-      const addRow=(body,label,value,hl)=>{
-        const tr=document.createElement('tr');
-        const td1=document.createElement('td'),td2=document.createElement('td');
-        td1.textContent=label;
-        td2[hl?'innerHTML':'textContent']=hl?'<span class="db-hl">'+value+'</span>':value;
-        tr.append(td1,td2); body.appendChild(tr);
-      };
-      if (mainBody&&typesBody) {
-        mainBody.innerHTML=''; typesBody.innerHTML='';
-        addRow(mainBody,'CVE tagged today',cveTodayCount,false);
-        if (classTotalApi!=null) addRow(mainBody,'Classification total',classTotalApi,false);
-        addRow(mainBody,'Classification slices sum',sumClassToday,false);
-        if (classStats) {
-          addRow(mainBody,'Min class',classStats.min+' ('+classStats.minLabel+')',true);
-          addRow(mainBody,'Max class',classStats.max+' ('+classStats.maxLabel+')',true);
-        }
-        const topE=(compTypeEntries.length?compTypeEntries:classEntries).slice(0,3);
-        if (topE.length) {
-          addRow(mainBody,'Top types',topE.map(([n,v])=>n+' ('+v+')').join(', '),false);
-          topE.forEach(([n,v],i)=>addRow(typesBody,n,v,i===0));
-        } else addRow(typesBody,'No types','-',false);
-      }
-      if (classTotalApi!=null&&classTotalApi===sumClassToday)
-        dbSetValid('db-validation-today-cve',true,'Validation: slices ('+sumClassToday+') = total ('+classTotalApi+'). CVE today: '+cveTodayCount+'.');
-      else if (classTotalApi!=null)
-        dbSetWarn('db-validation-today-cve','Validation: slices '+sumClassToday+' ≠ total '+classTotalApi+'. CVE today: '+cveTodayCount+'.');
-      else dbSetWarn('db-validation-today-cve','Validation: no total from API. Slices: '+sumClassToday+'. CVE today: '+cveTodayCount+'.');
-      const flatYest=dbFlattenClass(classYestRaw);
-      const sumYest=Object.values(flatYest).reduce((a,b)=>a+b,0)+cveYestCount;
-      dbSetDelta('db-delta-today-cve', sumClassToday+cveTodayCount, sumYest);
+      const CVE_PAT = /\bCVE-\d{4}-\d+\b/i;
+      const posts = postsForComponent(comp).filter(p => { const ep = +(new Date(p.created_utc || 0)); return ep === 0 || ep >= cutoff; });
+      const riskPostsList = posts.filter(isRisk);
+      const cvePostsList  = posts.filter(p => CVE_PAT.test(p.title || "") || p.isAboutCve);
+      const soPostsList   = posts.filter(p => getPostSource(p) === "stackoverflow");
 
-      /* Signals */
-      const totalDocs=redditResp&&typeof redditResp.totalCount==='number'?redditResp.totalCount:redditData.length;
-      const todayReddit=[],todaySo=[],yestReddit=[],yestSo=[];
-      redditData.forEach(doc=>{
-        const dk=dbDayKey(doc.created_utc); if(!dk) return;
-        const src=dbClassifySource(doc);
-        if (dk===refDate) (src==='stackoverflow'?todaySo:todayReddit).push(doc);
-        if (dk===yesterday) (src==='stackoverflow'?yestSo:yestReddit).push(doc);
-      });
-      setText('db-today-reddit-count', todayReddit.length);
-      setText('db-today-so-count', todaySo.length);
-      const sigExEl=document.getElementById('db-metric-signals-extra');
-      if(sigExEl) sigExEl.innerHTML='Today total: '+(todayReddit.length+todaySo.length)+'<br/>Sample: '+totalDocs;
-      setText('db-subtitle-signals','Sample of latest posts');
-      const soListEl=document.getElementById('db-signals-so-list');
-      const mixListEl=document.getElementById('db-signals-mixed-list');
-      if(soListEl) soListEl.innerHTML='';
-      if(mixListEl) mixListEl.innerHTML='';
-      const soPosts=redditData.filter(d=>dbClassifySource(d)==='stackoverflow').sort((a,b)=>dbTimestamp(b.created_utc)-dbTimestamp(a.created_utc)).slice(0,4);
-      if (soListEl) {
-        if (soPosts.length) soPosts.forEach(doc=>{
-          const dk=dbDayKey(doc.created_utc)||''; const t=doc.title||'(no title)'; const u=doc.url||'';
-          const el=document.createElement('div'); el.className='db-post-item';
-          el.innerHTML='<div class="db-post-title">'+(u?'<a href="'+u+'" target="_blank" rel="noopener">'+t+'</a>':t)+'</div>'+
-            '<div class="db-post-meta">StackOverflow'+(dk?' | '+dbFmtHuman(dk):'')+' </div>';
-          soListEl.appendChild(el);
-        }); else soListEl.innerHTML='<div style="font-size:11px;color:var(--db-muted)">No SO posts in sample.</div>';
-      }
-      if (mixListEl) {
-        redditData.slice().sort((a,b)=>dbTimestamp(b.created_utc)-dbTimestamp(a.created_utc)).slice(0,6).forEach(doc=>{
-          const dk=dbDayKey(doc.created_utc)||''; const src=dbClassifySource(doc);
-          const t=doc.title||'(no title)'; const u=doc.url||'';
-          const el=document.createElement('div'); el.className='db-post-item';
-          el.innerHTML='<div class="db-post-title">'+(u?'<a href="'+u+'" target="_blank" rel="noopener">'+t+'</a>':t)+'</div>'+
-            '<div class="db-post-meta">'+src+(dk?' | '+dbFmtHuman(dk):'')+' </div>';
-          mixListEl.appendChild(el);
-        });
-        if (!redditData.length) mixListEl.innerHTML='<div style="font-size:11px;color:var(--db-muted)">No posts loaded.</div>';
-      }
-      dbSetValid('db-validation-signals', redditData.length<=totalDocs,'Validation: sample ('+redditData.length+') ≤ header total ('+totalDocs+').');
-      const sigTodayTotal = todayReddit.length+todaySo.length;
-      const sigYestTotal = yestReddit.length+yestSo.length;
-      dbSetDelta('db-delta-signals', sigTodayTotal, sigYestTotal);
-      dbSetDelta('db-delta-signals-2', sigTodayTotal, sigYestTotal);
-      setText('db-kpi-signals-count', sigTodayTotal);
-      const redditSample=redditData.filter(d=>dbClassifySource(d)==='reddit').length;
-      const soSample=redditData.filter(d=>dbClassifySource(d)==='stackoverflow').length;
-      setText('db-metric-components-reddit', redditSample);
-      setText('db-metric-components-so', soSample);
-      let posRisk=null;
-      if (redditResp) {
-        posRisk = redditResp.positiveRiskCount??redditResp.riskPositiveCount??redditResp.riskCount??null;
-      }
-      setText('db-metric-risk-positive', posRisk!=null?posRisk:redditData.filter(d=>dbRiskScore(d)>0).length);
+      let score = 0;
+      if (isCveTarget)         score += 40;
+      score += Math.min(cveVers.length * 8, 24);
+      score += Math.min(riskPostsList.length * 5, 20);
+      if (cvePostsList.length) score += 8;
+      if (channel === "major") score += 12;
+      if (channel === "minor") score += 4;
+      score = Math.min(score, 100);
 
-      /* Timeline delta (chart removed: now shown via db-chart-release-window in left pane) */
-      if (tlCounts.length>=2) dbSetDelta('db-delta-timeline-daily',tlCounts[tlCounts.length-1],tlCounts[tlCounts.length-2]);
-      else dbSetDelta('db-delta-timeline-daily',0,0);
+      const level      = score >= 75 ? "Critical" : score >= 50 ? "High" : score >= 25 ? "Medium" : "Low";
+      const scoreColor = score >= 75 ? "#b91c1c"  : score >= 50 ? "#c2410c" : score >= 25 ? "#b45309" : "#16a34a";
+      const rec =
+        score >= 75 ? "Defer deployment. Review all CVE advisories and test in an isolated environment before production." :
+        score >= 50 ? "Test thoroughly in staging. Review breaking changes and CVE details before production deployment." :
+        score >= 25 ? "Standard staging validation recommended. Review community signals and release notes before deploying." :
+                      "Safe to deploy. No blocking security advisories detected. Standard validation applies.";
 
-      /* Selected components */
-      dbDestroyChart('db-chart-selected-components');
-      let selDatasets=[], selTotal=0;
-      if (dbCurrentComponents.length&&selectedVersions&&Array.isArray(selectedVersions.versions)) {
-        const dayIdx={}; tlRaw.forEach((d,i)=>{ dayIdx[d]=i; });
-        const lcSel=dbCurrentComponents.map(c=>c.toLowerCase());
-        const seriesMap={}; dbCurrentComponents.forEach(c=>{ seriesMap[c]=tlRaw.map(()=>0); });
-        selectedVersions.versions.forEach(v=>{
-          const n=v.versionProductName, dk=v.versionReleaseDate;
-          if (!n||!dk||dk<startDate||dk>refDate) return;
-          const idx=dayIdx[dk]; if (idx==null) return;
-          lcSel.forEach((lc,i)=>{ if(lc===String(n).toLowerCase()) seriesMap[dbCurrentComponents[i]][idx]=(seriesMap[dbCurrentComponents[i]][idx]||0)+1; });
-        });
-        selDatasets=dbCurrentComponents.map((c,i)=>{
-          const col=dbColors[i%dbColors.length];
-          const data=seriesMap[c]||tlRaw.map(()=>0);
-          selTotal+=data.reduce((a,b)=>a+b,0);
-          return {label:c,data,borderWidth:1,tension:.2,fill:false,borderColor:col,backgroundColor:col};
-        });
-        const verInWindow=(selectedVersions.versions||[]).filter(v=>v.versionReleaseDate>=startDate&&v.versionReleaseDate<=refDate).length;
-        setText('db-subtitle-selected-components', humanStart+' to '+humanRef+' for '+dbCurrentComponents.join(', '));
-        dbSetValid('db-validation-selected-components', selTotal===verInWindow,'Validation: series sum ('+selTotal+') = versions in window ('+verInWindow+').');
+      riRenderResults({ compRaw, targetV, recentVers, cveVers, isCveTarget, channel, posts, riskPostsList, cvePostsList, soPostsList, score, level, scoreColor, rec, windowDays });
+      if (statusEl) statusEl.textContent = "Done.";
+    }
+
+    function riRenderResults({ compRaw, targetV, recentVers, cveVers, isCveTarget, channel, posts, riskPostsList, cvePostsList, soPostsList, score, level, scoreColor, rec, windowDays }) {
+      document.getElementById("ri-idle").style.display = "none";
+      document.getElementById("ri-results").style.display = "";
+
+      const numEl = document.getElementById("ri-score-num");
+      numEl.textContent = score;
+      numEl.style.color = scoreColor;
+      const lvlEl = document.getElementById("ri-score-level");
+      lvlEl.textContent = level + " Risk";
+      lvlEl.style.color = scoreColor;
+      document.getElementById("ri-score-comp").textContent =
+        compRaw + (targetV ? " v" + (targetV.versionNumber || "?") : " (all versions)");
+      document.getElementById("ri-score-rec").textContent = rec;
+
+      const pillCls = { Critical:"ri-pill-red", High:"ri-pill-red", Medium:"ri-pill-amber", Low:"ri-pill-green" }[level] || "ri-pill-gray";
+      let recHtml = '<div style="margin-bottom:6px">'
+        + '<span class="ri-pill ' + pillCls + '">' + riEsc(level) + ' Risk</span>'
+        + ' <span class="ri-pill ri-pill-gray">' + riEsc(channel) + ' release</span>';
+      if (isCveTarget) recHtml += ' <span class="ri-pill ri-pill-red">CVE release</span>';
+      if (channel === "major") recHtml += ' <span class="ri-pill ri-pill-amber">Breaking changes likely</span>';
+      recHtml += '</div><div style="line-height:1.5">' + riEsc(rec) + '</div>'
+        + '<div style="margin-top:8px;font-size:10px;color:var(--muted)">'
+        + recentVers.length + ' version' + (recentVers.length !== 1 ? 's' : '') + ' in last ' + windowDays + 'd'
+        + ' · ' + posts.length + ' community post' + (posts.length !== 1 ? 's' : '') + '</div>';
+      document.getElementById("ri-body-rec").innerHTML = recHtml;
+
+      let cveHtml = "";
+      if (!cveVers.length && !isCveTarget) {
+        cveHtml = '<span style="color:var(--muted)">No CVE releases detected in the last ' + windowDays + ' days.</span>';
       } else {
-        selDatasets=[{label:'All',data:tlRaw.map(()=>0),borderWidth:1,tension:.2,fill:false}];
-        setText('db-subtitle-selected-components','No component selected');
-        dbSetValid('db-validation-selected-components',true,'Select a component to filter.');
-      }
-      dbCharts['db-chart-selected-components'] = new Chart(
-        document.getElementById('db-chart-selected-components').getContext('2d'),
-        { type:'line', data:{labels:tlRaw.map(d=>dbFmtLabel(d,null)),datasets:selDatasets},
-          options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+ctx.parsed.y+' versions'}}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9},precision:0}}}} }
-      );
-      const totalByDay=tlRaw.map((_,i)=>selDatasets.reduce((acc,ds)=>acc+(ds.data[i]||0),0));
-      const selStats=dbMinMax(totalByDay,tlRaw);
-      const totalAll=totalByDay.reduce((a,b)=>a+b,0);
-      if (selStats) {
-        const e=document.getElementById('db-stats-selected-components');
-        if(e) e.innerHTML='Sum <span class="db-hl">'+totalAll+'</span>. Min <span class="db-hl">'+selStats.min+'</span> on '+dbFmtHuman(selStats.minLabel)+', max <span class="db-hl">'+selStats.max+'</span> on '+dbFmtHuman(selStats.maxLabel)+'.';
-      } else setText('db-stats-selected-components','No updates in window.');
-      if (totalByDay.length>=2) dbSetDelta('db-delta-selected-components',totalByDay[totalByDay.length-1],totalByDay[totalByDay.length-2]);
-      else dbSetDelta('db-delta-selected-components',0,0);
-
-      /* Multi-source interesting */
-      const interestEl=document.getElementById('db-interesting-text');
-      const multiList=[];
-      if (dbCurrentComponents.length&&selectedVersions&&Array.isArray(selectedVersions.versions)&&redditData.length) {
-        dbCurrentComponents.forEach(nameRaw=>{
-          const name=String(nameRaw||'').toLowerCase(); if(!name) return;
-          const releases7=(selectedVersions.versions||[]).filter(v=>v.versionProductName&&String(v.versionProductName).toLowerCase()===name&&v.versionReleaseDate&&v.versionReleaseDate>=weekStart&&v.versionReleaseDate<=refDate&&!v.isCve).length;
-          const cve7=(selectedVersions.versions||[]).filter(v=>v.versionProductName&&String(v.versionProductName).toLowerCase()===name&&v.versionReleaseDate&&v.versionReleaseDate>=weekStart&&v.versionReleaseDate<=refDate&&(v.isCve||(v.versionReleaseChannel&&String(v.versionReleaseChannel).toLowerCase()==='cve'))).length;
-          const posts7=redditData.filter(doc=>{
-            const dk=dbDayKey(doc.created_utc); if(!dk||dk<weekStart||dk>refDate) return false;
-            return (doc.title||'').toLowerCase().includes(name)||(doc.selftext||'').toLowerCase().includes(name);
-          }).length;
-          if (releases7>0&&cve7>0&&posts7>0) multiList.push({name:nameRaw,releases:releases7,cve:cve7,posts:posts7,total:releases7+cve7+posts7});
+        if (isCveTarget) cveHtml += '<div style="margin-bottom:5px"><span class="ri-pill ri-pill-red">Target version is a CVE/security release</span></div>';
+        cveHtml += '<div style="margin-bottom:4px"><strong>' + cveVers.length + '</strong> CVE release' + (cveVers.length !== 1 ? 's' : '') + ' in last ' + windowDays + 'd</div>';
+        cveVers.slice(0, 5).forEach(v => {
+          const url = (v.versionUrl && v.versionUrl.startsWith("http")) ? v.versionUrl : null;
+          const ep  = gGetVersionEpoch(v);
+          cveHtml += '<div class="ri-post-item">';
+          cveHtml += url ? '<a class="ri-post-link" href="' + riEsc(url) + '" target="_blank" rel="noopener">v' + riEsc(v.versionNumber || "?") + ' ↗</a>' : 'v' + riEsc(v.versionNumber || "?");
+          if (ep) cveHtml += ' <span class="ri-post-meta">' + new Date(ep).toLocaleDateString() + '</span>';
+          cveHtml += '</div>';
         });
-        multiList.sort((a,b)=>b.total-a.total);
+        if (cveVers.length > 5) cveHtml += '<div class="ri-post-meta">+' + (cveVers.length - 5) + ' more</div>';
+        if (cvePostsList.length) cveHtml += '<div style="margin-top:6px"><span class="ri-pill ri-pill-red">' + cvePostsList.length + ' community CVE post' + (cvePostsList.length !== 1 ? 's' : '') + '</span></div>';
       }
-      if (interestEl) {
-        if (multiList.length) {
-          const top=multiList[0];
-          interestEl.innerHTML='<strong>Multi-source components (last 7 days)</strong><br/>'+
-            'Top: <strong>'+top.name+'</strong>: '+
-            '<a href="'+DB_BASE+'/api/v/?q='+top.name+'" target="_blank" rel="noopener">versions</a> · '+
-            '<a href="'+DB_BASE+'/api/aggregate/v/sourceCountByType?sourceType=CVE&timestamp='+refDate+'&q='+top.name+'" target="_blank" rel="noopener">CVE counts</a> · '+
-            '<a href="'+DB_BASE+'/api/reddit?limit=100&showCount=true&q='+top.name+'" target="_blank" rel="noopener">Reddit posts</a><br/>'+
-            '<ul>'+multiList.map(e=>'<li><strong>'+e.name+'</strong> – '+e.releases+' releases, '+e.cve+' CVE, '+e.posts+' posts (total <span class="db-hl">'+e.total+'</span>)</li>').join('')+'</ul>';
-          dbSetValid('db-validation-interesting',true,'Validation: each component has releases + CVE + posts in last 7 days.');
-        } else {
-          interestEl.innerHTML='<strong>No component selected.</strong><br/>Pick one to see multi-source activity.';
-          dbSetValid('db-validation-interesting',true,'Select a component to see multi-source activity.');
-        }
-      }
-      const multiToday=todayCount+cveTodayCount+sigTodayTotal;
-      const multiYest=yesterdayCount+cveYestCount+sigYestTotal;
-      dbSetDelta('db-delta-interesting', multiToday, multiYest);
+      document.getElementById("ri-body-cve").innerHTML = cveHtml;
 
-      /* Show/hide component pane */
-      const noCompEl = document.getElementById('db-no-comp-state');
-      const compStateEl = document.getElementById('db-comp-state');
-      const compHeaderEl = document.getElementById('db-pane-comp-header');
-      const sampleArea = document.getElementById('db-sample-chips-area');
-      if (dbCurrentComponents.length) {
-        if (noCompEl) noCompEl.style.display = 'none';
-        if (compStateEl) compStateEl.style.display = 'flex';
-        if (compHeaderEl) compHeaderEl.textContent = '🔍 ' + dbCurrentComponents.join(', ');
+      let sigHtml = "";
+      if (!posts.length) {
+        sigHtml = '<span style="color:var(--muted)">No community posts found for this component.</span>';
       } else {
-        if (noCompEl) noCompEl.style.display = 'flex';
-        if (compStateEl) compStateEl.style.display = 'none';
-        if (compHeaderEl) compHeaderEl.textContent = '🔍 Component';
-        if (sampleArea) sampleArea.innerHTML = dbSampleChips(allNames.length ? allNames.slice(0,8) : DB_FALLBACK_SAMPLES);
-      }
-
-      /* ── Graph + cadence + risk trend ── */
-      const topComp = dbFindTopComponent(allNames, redditData, selectedVersions, startDate, refDate);
-      if (topComp) {
-        const aggSubEl = document.getElementById('db-agg-graph-subtitle');
-        if (aggSubEl) aggSubEl.textContent = topComp;
-        const aggGraph = dbBuildCompGraph(topComp, selectedVersions, redditData, startDate, refDate);
-        requestAnimationFrame(() => dbDrawNodeGraph('db-graph-agg', aggGraph));
-      }
-      if (dbCurrentComponents.length) {
-        const mainComp = dbCurrentComponents[0];
-        const compGraph = dbBuildCompGraph(mainComp, selectedVersions, redditData, startDate, refDate);
-        requestAnimationFrame(() => {
-          dbDrawNodeGraph('db-graph-comp', compGraph);
-          dbDrawCadenceChart('db-chart-cadence', selectedVersions, mainComp, startDate, refDate);
-          dbDrawRiskTrend('db-chart-risk-trend', mainComp, redditData, startDate, refDate);
+        sigHtml = '<div style="margin-bottom:6px">'
+          + '<span class="ri-pill ' + (riskPostsList.length ? "ri-pill-amber" : "ri-pill-green") + '">' + riskPostsList.length + ' risk post' + (riskPostsList.length !== 1 ? 's' : '') + '</span> '
+          + '<span class="ri-pill ri-pill-blue">' + soPostsList.length + ' SO</span> '
+          + '<span class="ri-pill ri-pill-gray">' + posts.length + ' total</span></div>';
+        riskPostsList.slice(0, 4).forEach(p => {
+          const ep = +(new Date(p.created_utc || 0));
+          const daysAgo = ep ? Math.round((Date.now() - ep) / 86400000) : 0;
+          sigHtml += '<div class="ri-post-item">'
+            + (p.url ? '<a class="ri-post-link" href="' + riEsc(p.url) + '" target="_blank" rel="noopener">' + riEsc((p.title || "").slice(0, 70)) + '</a>' : riEsc((p.title || "").slice(0, 70)))
+            + (ep ? '<div class="ri-post-meta">' + (daysAgo > 0 ? daysAgo + 'd ago' : 'today') + ' · ' + (getPostSource(p) === "stackoverflow" ? "SO" : "Reddit") + '</div>' : '')
+            + '</div>';
         });
+        if (riskPostsList.length > 4) sigHtml += '<div class="ri-post-meta">+' + (riskPostsList.length - 4) + ' more risk posts</div>';
       }
+      document.getElementById("ri-body-signals").innerHTML = sigHtml;
 
-      if (statusEl) statusEl.textContent = 'Ready.';
-    }
-
-    /* ── Hub-and-spoke network graph ── */
-    function dbDrawNodeGraph(canvasId, graphData) {
-      const canvas = document.getElementById(canvasId);
-      if (!canvas) return;
-      const wrap = canvas.parentElement;
-      const W = Math.max(wrap.clientWidth || 300, 200);
-      const H = Math.max(wrap.clientHeight || 220, 180);
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = W * dpr; canvas.height = H * dpr;
-      canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-      const ctx = canvas.getContext('2d');
-      ctx.scale(dpr, dpr);
-      ctx.clearRect(0, 0, W, H);
-      if (!graphData || !graphData.name) {
-        ctx.fillStyle = '#9ca3af'; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-        ctx.fillText('No data', W / 2, H / 2); return;
+      let verHtml = "";
+      if (!targetV) {
+        verHtml = '<span style="color:var(--muted)">No version data found for <strong>' + riEsc(compRaw) + '</strong>. Run a search first.</span>';
+      } else {
+        const ep  = gGetVersionEpoch(targetV);
+        const url = (targetV.versionUrl && targetV.versionUrl.startsWith("http")) ? targetV.versionUrl
+          : (targetV.versionReleaseNotes && targetV.versionReleaseNotes.startsWith("http")) ? targetV.versionReleaseNotes : null;
+        const chCls = channel === "cve" ? "ri-pill-red" : channel === "major" ? "ri-pill-amber" : "ri-pill-blue";
+        verHtml = '<table style="width:100%;border-collapse:collapse;font-size:11px">'
+          + '<tr><td style="color:var(--muted);padding:2px 4px 2px 0;white-space:nowrap">Component</td><td>' + riEsc(targetV.versionProductName || compRaw) + '</td></tr>'
+          + '<tr><td style="color:var(--muted);padding:2px 4px 2px 0">Version</td><td><strong>v' + riEsc(targetV.versionNumber || "?") + '</strong></td></tr>'
+          + '<tr><td style="color:var(--muted);padding:2px 4px 2px 0">Channel</td><td><span class="ri-pill ' + chCls + '">' + riEsc(channel) + '</span></td></tr>'
+          + (ep ? '<tr><td style="color:var(--muted);padding:2px 4px 2px 0">Released</td><td>' + new Date(ep).toLocaleDateString() + '</td></tr>' : '')
+          + (url ? '<tr><td style="color:var(--muted);padding:2px 4px 2px 0">Notes</td><td><a href="' + riEsc(url) + '" target="_blank" rel="noopener" style="color:var(--brand)">Release notes</a></td></tr>' : '')
+          + '</table>';
+        if (channel === "major") verHtml += '<div style="margin-top:8px;padding:6px 8px;background:#fef3c7;border-radius:4px;font-size:10px;color:#92400e">Major version update. Review migration guides and test all integrations before deploying.</div>';
       }
-      const HUB_TYPES = [
-        { key: 'version',     label: 'Versions',    color: '#16a34a', fx: 0.5,  fy: 0.16 },
-        { key: 'cve-version', label: 'CVE',         color: '#b91c1c', fx: 0.83, fy: 0.5  },
-        { key: 'reddit',      label: 'Reddit',      color: '#7c3aed', fx: 0.5,  fy: 0.84 },
-        { key: 'reddit-cve',  label: 'Reddit+CVE',  color: '#d97706', fx: 0.17, fy: 0.5  },
-      ];
-      const cx = W * 0.5, cy = H * 0.5, centerR = Math.max(Math.min(W, H) * 0.09, 20);
-      const byType = {};
-      HUB_TYPES.forEach(h => byType[h.key] = []);
-      (graphData.items || []).forEach(item => { if (byType[item.type]) byType[item.type].push(item.label); });
-      ctx.save();
-      HUB_TYPES.forEach(hub => {
-        const hx = hub.fx * W, hy = hub.fy * H;
-        const items = byType[hub.key] || [];
-        ctx.beginPath(); ctx.strokeStyle = hub.color + '40'; ctx.lineWidth = 1.5;
-        ctx.setLineDash([4, 3]); ctx.moveTo(cx, cy); ctx.lineTo(hx, hy); ctx.stroke(); ctx.setLineDash([]);
-        const maxLeaves = 5, shown = items.slice(0, maxLeaves);
-        const baseAngle = Math.atan2(hy - cy, hx - cx);
-        shown.forEach((label, i) => {
-          const spread = Math.PI / 5;
-          const a = baseAngle - spread * (shown.length - 1) / 2 + spread * i;
-          const leafDist = Math.min(W, H) * 0.18;
-          const lx = hx + Math.cos(a) * leafDist, ly = hy + Math.sin(a) * leafDist;
-          ctx.beginPath(); ctx.strokeStyle = hub.color + '30'; ctx.lineWidth = 1;
-          ctx.moveTo(hx, hy); ctx.lineTo(lx, ly); ctx.stroke();
-          ctx.beginPath(); ctx.fillStyle = hub.color + 'bb'; ctx.arc(lx, ly, 3.5, 0, Math.PI * 2); ctx.fill();
-          ctx.fillStyle = '#374151'; ctx.font = '7.5px system-ui';
-          ctx.textAlign = lx < hx ? 'right' : (lx > hx + 2 ? 'left' : 'center');
-          const lbl = label.length > 14 ? label.slice(0, 13) + '…' : label;
-          ctx.fillText(lbl, lx + (lx < hx ? -6 : lx > hx + 2 ? 6 : 0), ly + 3);
-        });
-        if (items.length > maxLeaves) {
-          ctx.fillStyle = '#9ca3af'; ctx.font = '7px system-ui'; ctx.textAlign = 'center';
-          const moreAngle = baseAngle; const ld = Math.min(W, H) * 0.18;
-          ctx.fillText('+' + (items.length - maxLeaves), hx + Math.cos(moreAngle) * ld, hy + Math.sin(moreAngle) * ld + 12);
-        }
-        const hubR = 14;
-        ctx.beginPath(); ctx.fillStyle = hub.color + '18'; ctx.strokeStyle = hub.color; ctx.lineWidth = 1.5;
-        ctx.arc(hx, hy, hubR, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-        ctx.fillStyle = hub.color; ctx.font = 'bold 7px system-ui'; ctx.textAlign = 'center';
-        ctx.fillText(hub.label, hx, hy - hubR - 3);
-        ctx.font = 'bold 9px system-ui'; ctx.fillText(items.length || '0', hx, hy + 3.5);
-      });
-      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, centerR);
-      grad.addColorStop(0, '#60a5fa'); grad.addColorStop(1, '#1d4ed8');
-      ctx.beginPath(); ctx.fillStyle = grad;
-      ctx.shadowColor = '#3b82f666'; ctx.shadowBlur = 12;
-      ctx.arc(cx, cy, centerR, 0, Math.PI * 2); ctx.fill();
-      ctx.shadowBlur = 0; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
-      ctx.fillStyle = '#fff'; ctx.font = 'bold 9px system-ui'; ctx.textAlign = 'center';
-      const n = graphData.name.length > 13 ? graphData.name.slice(0, 12) + '…' : graphData.name;
-      ctx.fillText(n, cx, cy + 3); ctx.font = '7px system-ui'; ctx.fillStyle = '#bfdbfe';
-      ctx.fillText('component', cx, cy + 12);
-      ctx.restore();
-    }
-
-    function dbBuildCompGraph(compName, versions, redditData, startDate, refDate) {
-      const name = String(compName || '').toLowerCase();
-      const vArr = (versions && Array.isArray(versions.versions)) ? versions.versions : [];
-      const items = [];
-      vArr.filter(v => {
-        const n = String(v.versionProductName || '').toLowerCase();
-        return n === name && v.versionReleaseDate && v.versionReleaseDate >= startDate &&
-               !v.isCve && !(String(v.versionReleaseChannel || '').toLowerCase() === 'cve');
-      }).slice(0, 8).forEach(v => items.push({ type: 'version', label: String(v.versionNumber || v.versionName || 'v?') }));
-      vArr.filter(v => {
-        const n = String(v.versionProductName || '').toLowerCase();
-        return n === name && v.versionReleaseDate && v.versionReleaseDate >= startDate &&
-               (v.isCve || String(v.versionReleaseChannel || '').toLowerCase() === 'cve');
-      }).slice(0, 6).forEach(v => items.push({ type: 'cve-version', label: String(v.versionNumber || v.cveId || 'CVE') }));
-      const rdArr = Array.isArray(redditData) ? redditData : [];
-      const rdPosts = rdArr.filter(doc => {
-        const dk = dbDayKey(doc.created_utc);
-        if (!dk || dk < startDate || dk > refDate) return false;
-        return (doc.title || '').toLowerCase().includes(name) || (doc.selftext || '').toLowerCase().includes(name);
-      });
-      rdPosts.filter(d => !(d.title || '').toLowerCase().includes('cve')).slice(0, 5)
-        .forEach(d => items.push({ type: 'reddit', label: String(d.title || 'post').slice(0, 30) }));
-      rdPosts.filter(d => (d.title || '').toLowerCase().includes('cve')).slice(0, 5)
-        .forEach(d => items.push({ type: 'reddit-cve', label: String(d.title || 'CVE post').slice(0, 30) }));
-      return { name: compName, items };
-    }
-
-    function dbFindTopComponent(allNames, redditData, selectedVersions, startDate, refDate) {
-      if (!allNames || !allNames.length) return null;
-      const vArr = (selectedVersions && Array.isArray(selectedVersions.versions)) ? selectedVersions.versions : [];
-      const rdArr = Array.isArray(redditData) ? redditData : [];
-      let best = null, bestScore = -1;
-      allNames.slice(0, 50).forEach(compName => {
-        const name = String(compName || '').toLowerCase();
-        const hasVersion = vArr.some(v => String(v.versionProductName || '').toLowerCase() === name && !v.isCve);
-        const hasCVE = vArr.some(v => String(v.versionProductName || '').toLowerCase() === name && (v.isCve || String(v.versionReleaseChannel || '').toLowerCase() === 'cve'));
-        const rdMatches = rdArr.filter(d => {
-          const dk = dbDayKey(d.created_utc);
-          if (!dk || dk < startDate || dk > refDate) return false;
-          return (d.title || '').toLowerCase().includes(name) || (d.selftext || '').toLowerCase().includes(name);
-        });
-        const hasReddit = rdMatches.length > 0;
-        const hasRdCve = rdMatches.some(d => (d.title || '').toLowerCase().includes('cve'));
-        const score = (hasVersion ? 1 : 0) + (hasCVE ? 1 : 0) + (hasReddit ? 1 : 0) + (hasRdCve ? 1 : 0);
-        if (score > bestScore) { bestScore = score; best = compName; }
-      });
-      return best;
-    }
-
-    function dbDrawCadenceChart(canvasId, versions, compName, startDate, refDate) {
-      const canvas = document.getElementById(canvasId);
-      if (!canvas || typeof Chart === 'undefined') return;
-      const name = String(compName || '').toLowerCase();
-      const vArr = (versions && Array.isArray(versions.versions)) ? versions.versions : [];
-      const buckets = {};
-      vArr.filter(v => {
-        const n = String(v.versionProductName || '').toLowerCase();
-        return n === name && v.versionReleaseDate && v.versionReleaseDate >= startDate &&
-               v.versionReleaseDate <= refDate && !v.isCve && String(v.versionReleaseChannel || '').toLowerCase() !== 'cve';
-      }).forEach(v => {
-        const d = new Date(v.versionReleaseDate.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3'));
-        if (isNaN(d)) return;
-        const wk = new Date(d); wk.setDate(d.getDate() - d.getDay());
-        const key = wk.toISOString().slice(0, 10);
-        buckets[key] = (buckets[key] || 0) + 1;
-      });
-      const labels = Object.keys(buckets).sort(), data = labels.map(k => buckets[k]);
-      if (!labels.length) return;
-      if (dbCharts[canvasId]) { dbCharts[canvasId].destroy(); delete dbCharts[canvasId]; }
-      dbCharts[canvasId] = new Chart(canvas.getContext('2d'), {
-        type: 'bar',
-        data: { labels: labels.map(l => l.slice(5)), datasets: [{ label: 'Releases', data, backgroundColor: '#3b82f6aa', borderColor: '#1d4ed8', borderWidth: 1 }] },
-        options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 8 }, maxRotation: 45 } }, y: { ticks: { font: { size: 8 }, stepSize: 1 }, beginAtZero: true, grid: { color: '#f3f4f6' } } } }
-      });
-    }
-
-    function dbDrawRiskTrend(canvasId, compName, redditData, startDate, refDate) {
-      const canvas = document.getElementById(canvasId);
-      if (!canvas || typeof Chart === 'undefined') return;
-      const name = String(compName || '').toLowerCase();
-      const rdArr = Array.isArray(redditData) ? redditData : [];
-      const days = {};
-      let cur = dbParseDate(startDate);
-      const endD = dbParseDate(refDate);
-      while (cur <= endD) { days[dbFmtDate(cur)] = 0; cur.setDate(cur.getDate() + 1); }
-      rdArr.forEach(doc => {
-        const dk = dbDayKey(doc.created_utc);
-        if (dk && dk in days) {
-          const t = (doc.title || '').toLowerCase() + (doc.selftext || '').toLowerCase();
-          if (t.includes(name)) days[dk]++;
-        }
-      });
-      const keys = Object.keys(days).sort(), data = keys.map(k => days[k]);
-      if (!keys.length || data.every(v => v === 0)) return;
-      if (dbCharts[canvasId]) { dbCharts[canvasId].destroy(); delete dbCharts[canvasId]; }
-      dbCharts[canvasId] = new Chart(canvas.getContext('2d'), {
-        type: 'line',
-        data: { labels: keys.map(k => k.slice(4,6)+'-'+k.slice(6,8)), datasets: [{ label: 'Mentions', data, borderColor: '#7c3aed', backgroundColor: '#7c3aed20', fill: true, tension: 0.35, pointRadius: 0, borderWidth: 1.5 }] },
-        options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 8 }, maxRotation: 45 } }, y: { ticks: { font: { size: 8 }, stepSize: 1 }, beginAtZero: true, grid: { color: '#f3f4f6' } } } }
-      });
-    }
-
-    function dbWireEvents() {
-      document.getElementById('db-timeline-window').addEventListener('change', dbLoadDashboard);
-      document.getElementById('db-date-input').addEventListener('change', dbLoadDashboard);
-    }
-
-    function dbInitPage() {
-      if (DB_INIT) { dbLoadDashboard(); return; }
-      DB_INIT = true;
-      const dateInput = document.getElementById('db-date-input');
-      if (dateInput&&!dateInput.value) dateInput.value = dbFmtDateInput(new Date());
-      dbWireEvents();
-      if (typeof Chart === 'undefined') {
-        const s = document.createElement('script');
-        s.src = 'https://cdn.jsdelivr.net/npm/chart.js';
-        s.onload = dbLoadDashboard;
-        document.head.appendChild(s);
-      } else { dbLoadDashboard(); }
+      document.getElementById("ri-body-ver").innerHTML = verHtml;
     }
 
     function activateDashboard() {
@@ -6648,11 +5899,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       document.getElementById("dashboardControls").style.display = "";
       document.getElementById("feedSidebarSections").style.display = "none";
       EL.dashboardLink.classList.add("nav-active");
-      if (EL.components) {
-        const mainComps = EL.components.value.split(',').map(s=>s.trim()).filter(Boolean);
-        dbSetCompsLabel(mainComps);
-      }
-      dbInitPage();
+      riSyncFromSearch();
+      const comp = (document.getElementById("ri-comp-input")?.value || "").trim().toLowerCase();
+      riPopulateVersions(comp);
     }
 
     function deactivateDashboard() {
@@ -6669,6 +5918,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       e.preventDefault();
       if (DB_ACTIVE) { deactivateDashboard(); return; }
       activateDashboard();
+    });
+
+    document.getElementById("ri-analyze-btn").addEventListener("click", riAnalyze);
+    document.getElementById("ri-comp-input").addEventListener("change", () => {
+      const comp = (document.getElementById("ri-comp-input")?.value || "").trim().toLowerCase();
+      riPopulateVersions(comp);
     });
 
     /************************* USER ACCOUNT MANAGEMENT *************************/
