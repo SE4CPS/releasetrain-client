@@ -41,6 +41,8 @@
       --risk-bg: #fffbeb;
       --new: #059669;
       --new-bg: #ecfdf5;
+      --llm: #7c3aed;
+      --llm-bg: #f5f3ff;
 
       --shadow-sm: 0 1px 3px rgba(0,0,0,.06);
       --shadow-md: 0 4px 16px rgba(0,0,0,.1);
@@ -282,6 +284,7 @@
     .toggle[data-key="minor"]             .count { background: #64748b; }
     .toggle[data-key="patch"]             .count { background: #94a3b8; }
     .toggle[data-key="cve"]               .count { background: #dc2626; }
+    .toggle[data-key="llm"]               .count { background: #7c3aed; }
     .toggle[data-key="potential-cve"]     .count { background: #d97706; }
     .toggle[data-key="reddit"]            .count { background: #ff4500; }
     .toggle[data-key="reddit-risk"]       .count { background: #d97706; }
@@ -405,6 +408,8 @@
     .li.kind-stackoverflow { border-left-color: #f59e0b; background: #fefdf7; }
     .li.kind-stackoverflow.risk { border-left-color: var(--risk); }
     .li.is-new { border-left-color: var(--new); }
+    .li.kind-llm { border-left-color: var(--llm); background: var(--llm-bg); }
+    .li.kind-llm:hover { background: #ede9fe; }
 
     @media (max-width: 600px) {
       .li { grid-template-columns: 28px 1fr; grid-template-rows: auto auto; }
@@ -445,6 +450,7 @@
     .chip.warn { background: var(--risk-bg); border-color: #fcd34d; color: var(--risk); }
     .chip.ok { background: var(--new-bg); border-color: #6ee7b7; color: var(--new); }
     .chip.reddit { background: #fff7ed; border-color: #fed7aa; color: #c2410c; }
+    .chip.llm { background: var(--llm-bg); border-color: #c4b5fd; color: var(--llm); }
     .chip.soft { opacity: .8; }
     .chip.link a { color: var(--brand); text-decoration: underline; text-underline-offset: 2px; }
     .chip.link a:hover { color: #1d4ed8; }
@@ -1333,6 +1339,10 @@
               <button class="toggle" data-key="minor" aria-pressed="false" type="button"><span class="lbl">🔹 Minor</span><span id="btn-minor" class="count">0</span></button>
               <button class="toggle" data-key="patch" aria-pressed="false" type="button"><span class="lbl">🩹 Patch</span><span id="btn-patch" class="count">0</span></button>
               <button class="toggle" data-key="cve" aria-pressed="false" type="button"><span class="lbl">🔴 CVE</span><span id="btn-cve" class="count">0</span></button>
+              <button class="toggle" data-key="llm" aria-pressed="false" type="button"
+                title="AI model releases (LLM, embedding, multimodal) vs. regular software">
+                <span class="lbl">🤖 LLM</span><span id="btn-llm" class="count">0</span>
+              </button>
               <button class="toggle" data-key="potential-cve" aria-pressed="false" type="button"
                 title="Versions with Reddit discussions mentioning both latest update and CVE">
                 <span class="lbl">⚠️ Pot. CVE</span><span id="btn-potential-cve" class="count">0</span>
@@ -1382,6 +1392,7 @@
               <div class="kpi">📦 Groups <em id="kpi-page">0</em></div>
               <div class="kpi">🧩 Components <em id="kpi-uniq">0</em></div>
               <div class="kpi">💬 Reddit <em id="kpi-reddit">0</em></div>
+              <div class="kpi">🤖 AI Models <em id="kpi-llm">0</em></div>
               <div class="kpi" id="kpi-range">📅 Range: <em>—</em></div>
             </div>
           </div>
@@ -1410,9 +1421,10 @@
         </details>
 
         <details class="sb-details" open>
-          <summary>Activity (7 days)</summary>
+          <summary>Activity (4 weeks)</summary>
           <div class="sidebar-section" style="padding-bottom:10px">
-            <div style="position:relative;height:90px"><canvas id="home-activity-chart"></canvas></div>
+            <div style="position:relative;height:118px"><canvas id="home-activity-chart"></canvas></div>
+            <p style="margin:2px 0 0;font-size:10px;color:var(--muted)">Click a label to show/hide that line.</p>
             <div style="display:flex;gap:10px;justify-content:center;font-size:10px;color:var(--muted);margin-top:4px">
               <span><span style="color:#6366f1;font-size:12px">●</span> Versions</span>
               <span><span style="color:#ef4444;font-size:12px">●</span> CVE</span>
@@ -2716,6 +2728,31 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
           <div class="cl-release">
             <div class="cl-date-col">
+              <div class="cl-date">2026-08-18</div>
+              <div class="cl-ver cl-ver-minor">v3.22.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>LLM as its own category: feed, filter, KPI, chart, and search</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>AI model releases highlighted in the feed</strong>: entries whose <code>versionProductType</code> is <code>LLM</code>, <code>Embedding Model</code>, or <code>Multimodal Model</code> (the <code>ai_model.py</code> bot's values) now get a violet left-border/background and a 🤖 LLM chip, distinguishing them from regular software releases at a glance.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>LLM quick-filter</strong>: a new 🤖 LLM toggle in the sidebar filters the feed to just AI model releases, combining with the existing Major/Minor/Patch/CVE toggles the same way they combine with each other.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>AI Models KPI</strong>: a new 🤖 AI Models tile in the sidebar Stats block, alongside Groups/Components/Reddit, giving LLM releases equal billing as their own top-level count rather than being buried in the generic type-filter list.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <strong>AI Models KPI/toggle badge showed 0 even when real data existed</strong>: both were computed only from the windowed feed (<code>STATE.rawVersions</code>), which almost never contains an LLM doc since AI model releases are sparse enough in time to rarely land inside the lookback window. Added <code>ensureLlmVersionsLoaded()</code> — a dedicated background fetch (mirrors <code>ensureRedditLoaded()</code>) that pulls the full, date-window-independent LLM dataset via <code>Api.llmVersions()</code>, filtered client-side to real <code>versionProductType</code> matches. The badge/KPI now shows this true total once loaded.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <strong><code>Api.llmVersions()</code> initially found only 3 of ~560 real documents</strong>: the server's <code>q</code> search matches near-exact <code>versionProductName</code>, not substring "contains" (confirmed empirically — <code>q=Claude</code> only finds the doc named exactly "Claude", not "Claude 2" or "Claude 3.5 Sonnet"), so a handful of generic brand keywords like "mistral"/"openai" mostly missed. Added <code>KNOWN_LLM_PRODUCT_NAMES</code>, an exact-match anchor list (~390 terms) generated from <code>ai_model.py</code>'s actual scraped catalog — Ollama library slugs plus every OpenAI/Anthropic/Mistral/xAI/DeepSeek/Meta/Gemini Wikipedia table entry. Queried as CSV OR terms, chunked into parallel requests to keep each query string a reasonable size. Now finds ~524 of the ~564 real documents (verified live). Needs periodic regeneration as <code>ai_model.py</code> scrapes new models; stale entries are harmless, they just stop matching anything.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>LLM toggle now actually surfaces full history</strong>: clicking 🤖 LLM merges <code>STATE.llmVersions</code> into the candidate pool and bypasses the recency window for the merged items (same mechanism as an active search), so old AI model releases become visible in the feed instead of the toggle just showing an accurate count with nothing to click into.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Activity chart legend enabled, labeled, and clickable</strong>: the legend was previously hidden entirely (<code>display: false</code>), so the LLM line added earlier had no visible label. Now shown at the bottom in a compact style; clicking a label toggles that line's visibility, using Chart.js's built-in legend behavior. Chart height bumped slightly to fit the legend row, with a small "Click a label to show/hide that line" hint underneath. The LLM line itself now sources from <code>STATE.llmVersions</code> (the full dataset) rather than the windowed feed, for the same reason as the KPI fix above.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Search couldn't find components outside the feed window</strong>: searching for a named component (e.g. "Mistral", "Ollama") previously came up empty whenever that component's releases were all older than the lookback window, even though the server correctly returned them. The recency cutoff now only applies to the default recent-activity feed; an explicit component search (or the LLM toggle) shows full history instead. New <code>withinFeedWindow(v, comps, bypassRecency)</code> helper shared by <code>applyFilters()</code> and <code>filterVersions()</code>.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Autocomplete now suggests components beyond the current feed window</strong>: previously the search box only suggested names/tags already present in <code>STATE.rawVersions</code>, so a component with no recent release (like most AI model brands right now) never appeared while typing. The suggestion pool is now seeded from the full <code>/api/c/names</code> list on page load, merged with what's currently loaded.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Range KPI now reflects what's actually shown</strong> instead of always claiming the fixed lookback window — computed from the min/max release date of the currently filtered items, so it stays honest when a search surfaces older results.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Feed description text no longer shows a bare URL</strong>: several bots (<code>python.py</code>, <code>java.py</code>, <code>eclipse.py</code>, <code>ai_model.py</code>) store a URL in <code>versionReleaseNotes</code> rather than prose. The card description now detects that case and shows <code>versionReleaseComments</code> instead — the URL was already the clickable title link, so nothing is lost.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Lookback window widened from 7 days to 4 weeks</strong>: feed, activity chart, and Reddit/StackOverflow matching all now cover the last 28 days instead of 7. Renamed <code>SEVEN_DAYS_MS</code>/<code>SEVEN_DAYS_AGO</code> to <code>LOOKBACK_MS</code>/<code>LOOKBACK_AGO</code> (backed by a single <code>LOOKBACK_DAYS = 28</code> constant) so the window can be tuned in one place going forward.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Shareable <code>?type=llm</code> link</strong>: <code>releasetrain.io/?type=llm</code> now loads with the 🤖 LLM toggle already active. Client-only — confirmed via the API docs that there's no server-side <code>versionProductType</code> filter param (<code>/api/v/search</code> only supports <code>q</code>, <code>channel</code>, <code>isCve</code>, <code>start</code>/<code>end</code>, <code>fields</code>, <code>showCount</code>). Round-trips both ways: clicking the toggle updates the URL via <code>setTypeParam()</code>, and "Clear all" removes it again.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
               <div class="cl-date">2026-05-22</div>
               <div class="cl-ver cl-ver-patch">v3.21.1</div>
             </div>
@@ -3216,7 +3253,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
       <section class="panel" id="feedPanel" aria-label="Updates feed">
         <header class="panel-header">
-          <h2>📋 Recent Updates <small>(last 7 days)</small></h2>
+          <h2>📋 Recent Updates <small>(last 4 weeks)</small></h2>
           <button class="btn btn-ghost" type="button" id="expandAllBtn"
             title="Expand or collapse all groups">Expand all</button>
           <div id="status" class="status" aria-live="polite">Idle</div>
@@ -3306,13 +3343,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     /* ── Constants ────────────────────────────────────────────── */
     const API_BASE = "https://releasetrain.io/api/";
     const GROUPS_BATCH = 6, PAGE_LIMIT = 150, TOP_TYPES = 10, REDDIT_LIMIT = 400, MAX_VER_DESC = 220;
-    const SEVEN_DAYS_MS = 1000 * 60 * 60 * 24 * 7;
-    const SEVEN_DAYS_AGO = Date.now() - SEVEN_DAYS_MS;
+    const LOOKBACK_DAYS = 28; // feed/chart window: last 4 weeks (was 2 weeks, was 7 days)
+    const LOOKBACK_MS = 1000 * 60 * 60 * 24 * LOOKBACK_DAYS;
+    const LOOKBACK_AGO = Date.now() - LOOKBACK_MS;
 
     /* ── DOM cache ────────────────────────────────────────────── */
     const EL = {};
-    ["feed", "sentinel", "status", "navLoader", "kpi-page", "kpi-range", "kpi-uniq", "kpi-reddit",
-      "btn-major", "btn-minor", "btn-patch", "btn-cve", "btn-potential-cve", "btn-reddit",
+    ["feed", "sentinel", "status", "navLoader", "kpi-page", "kpi-range", "kpi-uniq", "kpi-reddit", "kpi-llm",
+      "btn-major", "btn-minor", "btn-patch", "btn-cve", "btn-llm", "btn-potential-cve", "btn-reddit",
       "btn-reddit-risk", "btn-reddit-risk-latest", "btn-reddit-risk-cve", "btn-so-risk", "btn-so",
       "filterForm", "components", "clearBtn", "fixedToggles", "typeToggles",
       "homeLink", "graphLink", "archLink", "cveLink", "dashboardLink", "docsLink", "changelogLink", "ackLink", "usersLink", "networkLink", "expandAllBtn", "activeFilters", "afTags", "afClearAll", "emptyState"
@@ -3358,6 +3396,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     const truncate = (str, n = MAX_VER_DESC) => str && str.length > n ? str.slice(0, n - 1) + "…" : (str || "");
     const norm = s => String(s || "").toLowerCase().trim();
     const normKey = s => norm(s).replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
+    // AI model releases (ai_model.py) vs. regular software — versionProductType is
+    // one of these three exact values only for AI-model bot entries.
+    const LLM_PRODUCT_TYPES = new Set(["LLM", "Embedding Model", "Multimodal Model"]);
+    const isLLMVersion = v => !!v && LLM_PRODUCT_TYPES.has(v.versionProductType);
     const titleCase = s => s ? s.replace(/\w\S*/g, w => w[0].toUpperCase() + w.slice(1)) : s;
     const tokens = s => uniq(String(s || "").split(",").map(t => norm(t)).filter(Boolean));
 
@@ -3428,6 +3470,17 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     function setLinksHref() {
       /* archLink is now in-page (#); no href update needed */
+    }
+
+    // Round-trips a sidebar quick-filter toggle (currently just "llm") to a ?type=
+    // URL param, so e.g. releasetrain.io/?type=llm loads with that filter already
+    // active and is shareable/bookmarkable as a plain link. This is a client-only
+    // convenience — there's no server-side "filter by versionProductType" param.
+    function setTypeParam(type) {
+      const url = new URL(location.href);
+      if (type) url.searchParams.set("type", type);
+      else url.searchParams.delete("type");
+      history.replaceState({}, "", url.toString().replace(/%2C/gi, ","));
     }
 
     /* ── Graph Module (vis-network) ─────────────────────────────── */
@@ -4393,13 +4446,25 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     const getUpdateScore = p => typeof p?.metadata?.predicted?.positiveScore === "number" ? p.metadata.predicted.positiveScore : null;
     const isRisk = p => isUpdateRelatedBoolean(p) || ((getUpdateScore(p) ?? -1) > 0.5);
 
+    // Exact-match anchor names for AI model releases. The server's `q` search matches
+    // near-exact versionProductName (confirmed empirically: q=Claude finds only the
+    // single doc named exactly "Claude", not "Claude 2" or "Claude 3.5 Sonnet"; a
+    // handful of generic brand keywords like "mistral"/"openai" only turns up a
+    // couple of real hits this way). This list is ai_model.py's actual scraped
+    // catalog (Ollama library slugs + the OpenAI/Anthropic/Mistral/xAI/DeepSeek/
+    // Meta/Gemini Wikipedia tables) as of 2026-08-18 — it's what makes the LLM
+    // dataset fetch below actually complete instead of finding 3 of ~560 real docs.
+    // Needs periodic regeneration from ai_model.py's fetchers as new models appear;
+    // stale entries are harmless (they just stop matching anything).
+    const KNOWN_LLM_PRODUCT_NAMES = ["1","1.0 Nano","1.0 Pro","1.0 Ultra","1.5","1.5 Flash","1.5 Pro","2","2.0 Flash","2.0 Flash-Lite","2.0 Pro","2.5 Flash","2.5 Flash Image (Nano Banana)","2.5 Flash-Lite","2.5 Pro","2mini","3","3 Deep Think","3 Flash","3 Pro","3 Pro Image (Nano Banana Pro)","3.1 Flash Image(Nano Banana 2)","3.1 Flash-Lite","3.1 Flash-Lite Image(Nano Banana 2 Lite)","3.1 Pro","3.5 Flash","3.5 Flash-Lite","3.6 Flash","3.7 Flash","3mini","4","4.1","4.1Fast","4.1Thinking","4.20","4.3","4.5","4.6","4Fast","4Heavy","Claude","Claude 2","Claude 2.1","Claude 3 Haiku","Claude 3 Opus","Claude 3 Sonnet","Claude 3.5 Haiku","Claude 3.5 Sonnet","Claude 3.5 Sonnet (new)","Claude 3.7 Sonnet","Claude Fable 5","Claude Haiku 4.5","Claude Instant 1.2","Claude Mythos 5","Claude Mythos Preview","Claude Opus 4","Claude Opus 4.1","Claude Opus 4.5","Claude Opus 4.6","Claude Opus 4.7","Claude Opus 4.8","Claude Opus 5","Claude Sonnet 4","Claude Sonnet 4.5","Claude Sonnet 4.6","Claude Sonnet 5","Code Fast1","Code Llama","Codestral 22B","Codestral Mamba 7B","Codestral25.01","Codestral25.08","DeepSeek-Coder","DeepSeek-LLM","DeepSeek-Math","DeepSeek-Math-V2","DeepSeek-MoE","DeepSeek-Prover-V2","DeepSeek-R1","DeepSeek-V2","DeepSeek-V3","DeepSeek-V3.1","DeepSeek-V3.2","DeepSeek-V4","DeepSeek-VL2","Devstral 2","Devstral Medium 1.0","Devstral Small 1.125.07","Devstral Small 2","Devstral Small25.05","GPT-3.5","GPT-4","GPT-4.1","GPT-4.5","GPT-4o","GPT-5","GPT-5.1","GPT-5.2","GPT-5.3","GPT-5.4","GPT-5.5","GPT-5.6","Llama","Llama 2","Llama 3","Llama 3.1","Llama 3.2","Llama 3.3","Llama 4","Magistral Medium","Magistral Medium 1.225.09","Magistral Small","Magistral Small 1.225.09","Mathstral 7B","Medium 3.5","Ministral 3","Ministral 3B24.10","Ministral 8B24.10","Mistral 7B","Mistral Large 224.07","Mistral Large 224.11","Mistral Large 3","Mistral Large24.02","Mistral Medium","Mistral Medium 3.125.08","Mistral Medium 325.05","Mistral Small","Mistral Small 3.125.03","Mistral Small 3.225.06","Mistral Small 325.01","Mistral Small 4","Mixtral 8x22B","Mixtral 8x7B","Pixtral Large24.11","Pixtral24.09","Voxtral Mini","Voxtral Mini Transcribe V2","Voxtral Realtime","Voxtral Small","Voxtral TTS","alfred","all-minilm","athene-v2","aya","aya-expanse","bakllava","bespoke-minicheck","bge-large","bge-m3","codebooga","codegeex4","codegemma","codellama","codeqwen","codestral","codeup","cogito","cogito-2.1","command-a","command-r","command-r-plus","command-r7b","command-r7b-arabic","dbrx","deepcoder","deepscaler","deepseek-coder","deepseek-coder-v2","deepseek-llm","deepseek-ocr","deepseek-r1","deepseek-v2","deepseek-v2.5","deepseek-v3","deepseek-v3.1","deepseek-v4-flash","deepseek-v4-pro","devstral","devstral-2","devstral-small-2","dolphin-llama3","dolphin-mistral","dolphin-mixtral","dolphin-phi","dolphin3","dolphincoder","duckdb-nsql","embeddinggemma","everythinglm","exaone-deep","exaone3.5","falcon","falcon2","falcon3","firefunction-v2","functiongemma","gemma","gemma2","gemma3","gemma3n","gemma4","glm-4.7-flash","glm-5.1","glm-5.2","glm-ocr","glm4","goliath","gpt-oss","gpt-oss-safeguard","granite-code","granite-embedding","granite3-dense","granite3-guardian","granite3-moe","granite3.1-dense","granite3.1-moe","granite3.2","granite3.2-vision","granite3.3","granite4","granite4.1","granite4.1-guardian","hermes3","internlm2","kimi-k2.6","kimi-k2.7-code","kimi-k3","laguna-s-2.1","laguna-xs-2.1","laguna-xs.2","lfm2","lfm2.5","lfm2.5-thinking","llama-guard3","llama-pro","llama2","llama2-chinese","llama2-uncensored","llama3","llama3-chatqa","llama3-gradient","llama3-groq-tool-use","llama3.1","llama3.2","llama3.2-vision","llama3.3","llama4","llava","llava-llama3","llava-phi3","magicoder","magistral","marco-o1","mathstral","medgemma","medgemma1.5","meditron","medllama2","megadolphin","minicpm-v","minicpm-v4.5","minicpm-v4.6","minimax-m2.7","minimax-m3","ministral-3","mistral","mistral-large","mistral-large-3","mistral-medium-3.5","mistral-nemo","mistral-openorca","mistral-small","mistral-small3.1","mistral-small3.2","mistrallite","mixtral","moondream","muse-glimmer","mxbai-embed-large","nemotron","nemotron-3-nano","nemotron-3-super","nemotron-3-ultra","nemotron-3.5-lightning","nemotron-cascade-2","nemotron-mini","nemotron3","neural-chat","nexusraven","nomic-embed-text","nomic-embed-text-v2-moe","north-mini-code-1.0","notus","notux","nous-hermes","nous-hermes2","nous-hermes2-mixtral","nuextract","o1","o3","olmo-3","olmo-3.1","olmo2","open-orca-platypus2","openchat","opencoder","openhermes","openthinker","orca-mini","orca2","ornith","paraphrase-multilingual","phi","phi3","phi3.5","phi4","phi4-mini","phi4-mini-reasoning","phi4-reasoning","phind-codellama","qwen","qwen2","qwen2-math","qwen2.5","qwen2.5-coder","qwen2.5vl","qwen3","qwen3-coder","qwen3-coder-next","qwen3-embedding","qwen3-next","qwen3-vl","qwen3.5","qwen3.6","qwen3.8","qwq","r1-1776","reader-lm","reflection","rnj-1","sailor2","samantha-mistral","shieldgemma","smallthinker","smollm","smollm2","snowflake-arctic-embed","snowflake-arctic-embed2","solar","solar-pro","sqlcoder","stable-beluga","stable-code","stablelm-zephyr","stablelm2","starcoder","starcoder2","starling-lm","tinydolphin","tinyllama","translategemma","tulu3","vicuna","wizard-math","wizard-vicuna","wizard-vicuna-uncensored","wizardcoder","wizardlm","wizardlm-uncensored","wizardlm2","xwinlm","yarn-llama2","yarn-mistral","yi","yi-coder","zephyr"];
+
     /* ── API ──────────────────────────────────────────────────── */
     const Api = {
       async versions(qCsv, cursor) {
         const params = new URLSearchParams({ limit: String(PAGE_LIMIT) });
         if (qCsv) params.set("q", encodeCsvKeepCommas(qCsv));
         if (cursor) params.set("cursor", cursor);
-        // No start — server uses its 2-year rolling window; client filters to 7 days.
+        // No start — server uses its 2-year rolling window; client filters to LOOKBACK_DAYS days.
         // Cap end at today so future-dated docs are never fetched.
         const today = new Date(); today.setHours(23,59,59,999);
         params.set("end", today.toISOString().slice(0,10).replace(/-/g,''));
@@ -4408,6 +4473,30 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
         const json = await res.json();
         return { versions: json.data || [], nextCursor: json.nextCursor || null };
+      },
+      // Dedicated, date-window-independent fetch for the LLM category. There's no
+      // server-side "filter by versionProductType" endpoint, so this leans on
+      // KNOWN_LLM_PRODUCT_NAMES's exact-match terms (plus a few generic brand
+      // keywords as a cheap catch-all) run as CSV OR queries over the full 2-year
+      // window, chunked to keep each request's query string a reasonable size and
+      // run in parallel. The caller-facing filter to real versionProductType values
+      // discards any incidental noise a term might also match.
+      async llmVersions() {
+        const brandTerms = ["ollama","openai","anthropic","mistral","xai","deepseek","meta","google","gpt","claude","llama","gemini","grok"];
+        const allTerms = uniq([...brandTerms, ...KNOWN_LLM_PRODUCT_NAMES]);
+        const CHUNK = 60;
+        const chunks = [];
+        for (let i = 0; i < allTerms.length; i += CHUNK) chunks.push(allTerms.slice(i, i + CHUNK));
+        const results = await Promise.all(chunks.map(async terms => {
+          try {
+            const params = new URLSearchParams({ q: encodeCsvKeepCommas(terms.join(",")), limit: "300" });
+            const res = await fetch(`${API_BASE}v/search?${params}`, { headers: { Accept: "application/json" } });
+            if (!res.ok) return [];
+            const json = await res.json();
+            return json.data || [];
+          } catch (_) { return []; }
+        }));
+        return dedupeByVersionId(results).filter(isLLMVersion);
       },
       async reddit() {
         // Fetch all recent posts sorted by date; positiveScore filter was too strict
@@ -4446,6 +4535,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     let _rTodayApi = null, _rYestApi = null; // per-day community counts from aggregate API
     let _activityChart = null;   // Chart.js instance for sidebar activity chart
     let _chartJsLoading = false; // prevents duplicate CDN injections
+    let _activityDayStrs = null; // YYYYMMDD strings for the chart's LOOKBACK_DAYS window (LLM line refresh)
 
     /* ── State ────────────────────────────────────────────────── */
     const STATE = {
@@ -4458,8 +4548,25 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       candidates: [],
       redditReady: null,   // promise — set once, never re-fetched
       nextCursor: null,    // server cursor for the next versions page
-      fetchingPage: false  // prevents concurrent server page fetches
+      fetchingPage: false, // prevents concurrent server page fetches
+      llmVersions: [],        // full, date-window-independent AI model dataset (see ensureLlmVersionsLoaded)
+      llmVersionsLoaded: false,
+      llmReady: null          // promise — set once, never re-fetched
     };
+
+    // Merges arrays of raw version docs, dropping duplicates by versionId (falling
+    // back to _id). Used when combining the windowed feed with the full LLM dataset.
+    function dedupeByVersionId(arrays) {
+      const seen = new Set(), out = [];
+      for (const arr of arrays) {
+        for (const v of arr) {
+          const key = v.versionId || v._id;
+          if (key) { if (seen.has(key)) continue; seen.add(key); }
+          out.push(v);
+        }
+      }
+      return out;
+    }
 
     /* ── Reddit indexing ──────────────────────────────────────── */
     function getSourceCounts() {
@@ -4516,7 +4623,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const arr = postsForComponent(name), out = [];
       for (const p of arr) {
         if (getPostSource(p) !== "reddit") continue;
-        if (redditTime(p) < SEVEN_DAYS_AGO) continue;
+        if (redditTime(p) < LOOKBACK_AGO) continue;
         if (onlyRisks && !isRisk(p)) continue;
         out.push(p); if (out.length >= limit) break;
       }
@@ -4528,7 +4635,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const arr = postsForComponent(name), out = [];
       for (const p of arr) {
         if (getPostSource(p) !== "stackoverflow") continue;
-        if (redditTime(p) < SEVEN_DAYS_AGO) continue;
+        if (redditTime(p) < LOOKBACK_AGO) continue;
         if (onlyRisks && !isRisk(p)) continue;
         out.push(p); if (out.length >= limit) break;
       }
@@ -4551,13 +4658,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     /* ── Aggregates ───────────────────────────────────────────── */
     function computeAggregates(list) {
-      let major = 0, minor = 0, patch = 0, cve = 0; const uniqComps = new Set(), typeCounts = new Map();
+      let major = 0, minor = 0, patch = 0, cve = 0, llm = 0; const uniqComps = new Set(), typeCounts = new Map();
       const rIds = new Set(), rRiskIds = new Set(), rRiskLatIds = new Set(), rRiskCveIds = new Set(), soIds = new Set(), soRiskIds = new Set();
       let potentialCve = 0;
       for (const it of list) {
         const ch = norm(it.versionReleaseChannel);
         if (ch === "major") major++; else if (ch === "minor") minor++; else if (ch === "patch") patch++;
         if (it.isCve) cve++;
+        if (isLLMVersion(it)) llm++;
         for (const p of redditMatchesForVersionBase(it, REDDIT_LIMIT, false)) if (getPostSource(p) === "reddit") rIds.add(getPostId(p));
         for (const p of redditMatchesForVersionBase(it, REDDIT_LIMIT, true)) if (getPostSource(p) === "reddit") {
           const id = getPostId(p); rRiskIds.add(id);
@@ -4576,7 +4684,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         }
       }
       return {
-        major, minor, patch, cve, reddit: rIds.size, redditRisk: rRiskIds.size,
+        major, minor, patch, cve, llm, reddit: rIds.size, redditRisk: rRiskIds.size,
         redditRiskLatest: rRiskLatIds.size, redditRiskCve: rRiskCveIds.size,
         so: soIds.size, soRisk: soRiskIds.size, potentialCve, uniq: uniqComps.size, typeCounts
       };
@@ -4587,6 +4695,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       EL["btn-minor"].textContent = a.minor;
       EL["btn-patch"].textContent = a.patch;
       EL["btn-cve"].textContent = a.cve;
+      // Once the full LLM dataset has loaded, show its true total rather than the
+      // windowed count — AI model releases are sparse enough in time that the
+      // windowed count is misleadingly 0 far more often than not (see
+      // ensureLlmVersionsLoaded).
+      const llmCount = STATE.llmVersionsLoaded ? STATE.llmVersions.length : a.llm;
+      EL["btn-llm"].textContent = llmCount;
+      EL["kpi-llm"].textContent = llmCount;
       EL["btn-potential-cve"].textContent = a.potentialCve;
       EL["btn-reddit"].textContent = a.reddit;
       EL["btn-reddit-risk"].textContent = a.redditRisk;
@@ -4634,7 +4749,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const compTypes = (v.classification?.componentType || []).map(norm);
       const truth = {
         major: channel === "major", minor: channel === "minor", patch: channel === "patch",
-        cve: !!v.isCve, reddit: rc > 0,
+        cve: !!v.isCve, llm: isLLMVersion(v), reddit: rc > 0,
         "reddit-risk": rRiskCount > 0, "reddit-risk-latest": rRiskLatestCount > 0,
         "reddit-risk-cve": rRiskCveCount > 0, so: soCount > 0, "so-risk": soRiskCount > 0,
         "potential-cve": hasPotentialCve
@@ -4648,20 +4763,41 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     /* ── Range KPI helper ────────────────────────────────────── */
     function updateRangeKpi(items) {
-      if (!items || !items.length) { EL["kpi-range"].innerHTML = `📅 Range: <em>—</em>`; return; }
       const fmt = d => d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
-      EL["kpi-range"].innerHTML = `📅 Range: <em>${fmt(new Date(SEVEN_DAYS_AGO))} – ${fmt(new Date())}</em>`;
+      // Reflects what's actually displayed, not a fixed assumed window — a named
+      // search can surface releases far older than LOOKBACK_DAYS (see withinFeedWindow).
+      const times = (items || []).map(versionTime).filter(Boolean);
+      if (!times.length) { EL["kpi-range"].innerHTML = `📅 Range: <em>—</em>`; return; }
+      const min = Math.min(...times), max = Math.max(...times);
+      EL["kpi-range"].innerHTML = `📅 Range: <em>${fmt(new Date(min))} – ${fmt(new Date(max))}</em>`;
+    }
+
+    // Recency window applies to the default "recent activity" feed only. An explicit
+    // named search, or the LLM toggle, should surface full history instead of just
+    // what's recent — searching "Mistral" (or clicking 🤖 LLM) should still find
+    // matches even if the last tracked release was a year ago, as long as the server
+    // returned it. AI model releases in particular are sparse enough in time that
+    // they're essentially never inside the default window.
+    function withinFeedWindow(v, comps, bypassRecency) {
+      const ts = versionTime(v);
+      if (!ts) return false;
+      if (!comps.length && !bypassRecency && ts < LOOKBACK_AGO) return false;
+      if (ts > Date.now() && !v.isVendorPublished) return false;
+      return true;
     }
 
     /* ── Apply filters ────────────────────────────────────────── */
     function applyFilters() {
       buildSuggestionPool();
       const comps = STATE.filters.components;
-      const NOW = Date.now();
-      const candidates = STATE.rawVersions.filter(v => {
-        const ts = versionTime(v);
-        if (!ts || ts < SEVEN_DAYS_AGO) return false;
-        if (ts > NOW && !v.isVendorPublished) return false;
+      const llmActive = STATE.filters.toggles.has("llm");
+      // Extend the windowed feed with the full LLM dataset whenever it's relevant —
+      // otherwise those docs are usually invisible (see withinFeedWindow above).
+      const pool = (llmActive || comps.length)
+        ? dedupeByVersionId([STATE.rawVersions, STATE.llmVersions])
+        : STATE.rawVersions;
+      const candidates = pool.filter(v => {
+        if (!withinFeedWindow(v, comps, llmActive)) return false;
         if (!comps.length) return true;
         const name = norm(v.versionProductName);
         const tags = (Array.isArray(v.versionSearchTags) ? v.versionSearchTags.join(",") : "").toLowerCase();
@@ -4697,7 +4833,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const existingKeys = new Set(STATE.groupsFiltered.map(g => g.key));
         for (const term of STATE.filters.components) {
           const posts = postsForComponent(term);
-          const recent = posts.filter(p => getPostSource(p) === "reddit" && redditTime(p) >= SEVEN_DAYS_AGO);
+          const recent = posts.filter(p => getPostSource(p) === "reddit" && redditTime(p) >= LOOKBACK_AGO);
           if (!recent.length) continue;
           const c = canonComponentName({ versionProductName: term });
           if (existingKeys.has(c.key)) continue;
@@ -4801,6 +4937,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         else if (it.kind === "reddit") liClass += " kind-reddit" + (isRisk(it.raw) ? " risk" : "");
         else if (it.kind === "stackoverflow") liClass += " kind-stackoverflow" + (isRisk(it.raw) ? " risk" : "");
         else if (it.kind === "update" && it.channel) liClass += ` kind-update ${it.channel}`;
+        if (isLLMVersion(it.raw)) liClass += " kind-llm";
         if (isNew) liClass += " is-new";
         li.className = liClass;
 
@@ -4867,6 +5004,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           const ch = it.channel || "other";
           const chLabel = ch === "major" ? "🔖 major" : ch === "patch" ? "🩹 patch" : ch === "minor" ? "🔹 minor" : ch;
           chipsEl.insertAdjacentHTML("beforeend", chip(chLabel, ch === "major" ? "ok" : "soft"));
+          if (isLLMVersion(it.raw)) chipsEl.insertAdjacentHTML("beforeend", chip("🤖 LLM", "llm"));
         }
 
         if (it.kind !== "reddit" && it.kind !== "stackoverflow" && it.raw) {
@@ -4888,7 +5026,16 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         titleRow.appendChild(a);
         body.appendChild(titleRow);
 
-        const descTxt = truncate(safe(it.raw?.versionReleaseNotes, "")) || safe(it.raw?.versionReleaseComments, "");
+        // versionReleaseNotes is a human-readable summary for some bots (e.g. GitHub
+        // commit messages) but a bare URL for others (python.py, java.py, eclipse.py,
+        // ai_model.py). A URL there is already the clickable title link above — showing
+        // it again as body text is just clutter, so prefer versionReleaseComments in
+        // that case instead of dumping the raw link into the description.
+        const notesRaw = safe(it.raw?.versionReleaseNotes, "");
+        const notesIsUrl = notesRaw.startsWith("http");
+        const descTxt = notesIsUrl
+          ? safe(it.raw?.versionReleaseComments, "")
+          : (truncate(notesRaw) || safe(it.raw?.versionReleaseComments, ""));
         if (descTxt) {
           const d = document.createElement("div"); d.className = "meta";
           let inner = "";
@@ -4925,11 +5072,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // Apply current component + toggle filters to a list of versions (used for incoming pages)
     function filterVersions(vers) {
       const comps = STATE.filters.components;
-      const NOW = Date.now();
+      const llmActive = STATE.filters.toggles.has("llm");
       const candidates = vers.filter(v => {
-        const ts = versionTime(v);
-        if (!ts || ts < SEVEN_DAYS_AGO) return false;
-        if (ts > NOW && !v.isVendorPublished) return false;
+        if (!withinFeedWindow(v, comps, llmActive)) return false;
         if (!comps.length) return true;
         const name = norm(v.versionProductName);
         const tags = (Array.isArray(v.versionSearchTags) ? v.versionSearchTags.join(",") : "").toLowerCase();
@@ -5055,6 +5200,25 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       return STATE.redditReady;
     }
 
+    // Loads the full, date-window-independent LLM dataset in the background — AI
+    // model releases are sparse enough in time that the default LOOKBACK_DAYS feed
+    // essentially never contains any, so the "AI Models" KPI/toggle count would
+    // otherwise show 0 even when real data exists (as it currently does).
+    function ensureLlmVersionsLoaded() {
+      if (!STATE.llmReady) {
+        STATE.llmReady = Api.llmVersions().catch(() => []).then(list => {
+          STATE.llmVersions = dedupeByVersionId([list]);
+          STATE.llmVersionsLoaded = true;
+          EL["btn-llm"].textContent = STATE.llmVersions.length;
+          EL["kpi-llm"].textContent = STATE.llmVersions.length;
+          refreshActivityChartLlmLine();
+          // If the LLM toggle is already active, re-render now that data has landed.
+          if (STATE.filters.toggles.has("llm")) applyFilters();
+        });
+      }
+      return STATE.llmReady;
+    }
+
     async function boot() {
       EL.status.textContent = "Loading…";
       EL.navLoader.classList.add("active");
@@ -5069,6 +5233,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         EL.components.value = rawQ;
         STATE.filters.components = tokens(rawQ);
         setLinksHref();
+
+        // Restore a quick-filter toggle from the URL, e.g. ?type=llm — lets a link
+        // like releasetrain.io/?type=llm land with that filter already active.
+        const typeParam = (new URL(location.href).searchParams.get("type") || "").toLowerCase().trim();
+        if (typeParam) {
+          const btn = document.querySelector(`#fixedToggles .toggle[data-key="${CSS.escape(typeParam)}"]`);
+          if (btn && !btn.classList.contains("disabled")) {
+            STATE.filters.toggles.add(typeParam);
+            btn.setAttribute("aria-pressed", "true");
+            refreshActiveFilters();
+          }
+        }
 
         // First page only — renders immediately, more loaded lazily as user scrolls
         trackSearch(rawQ);
@@ -5086,8 +5262,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         STATE.rawVersions = vers;
         applyFilters();
 
-        // Reddit loads in background — never blocks feed
+        // Reddit and LLM datasets load in background — never block the feed
         ensureRedditLoaded();
+        ensureLlmVersionsLoaded();
       } catch (e) {
         console.error(e);
         EL.feed.innerHTML = `<p class="meta" style="padding:14px;color:var(--cve)">⚠️ Error: ${e.message}</p>`;
@@ -5143,6 +5320,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const key = btn.dataset.key, on = btn.getAttribute("aria-pressed") === "true";
       btn.setAttribute("aria-pressed", on ? "false" : "true");
       on ? STATE.filters.toggles.delete(key) : STATE.filters.toggles.add(key);
+      // Only "llm" round-trips to the URL for now (see setTypeParam) — shareable
+      // ?type=llm links, not a general mechanism for every quick-filter toggle.
+      if (key === "llm") setTypeParam(on ? null : "llm");
       refreshActiveFilters();
       applyFilters();
     });
@@ -5150,6 +5330,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     EL.afClearAll.addEventListener("click", () => {
       STATE.filters.toggles.clear();
       $$("#fixedToggles .toggle, #typeToggles .toggle").forEach(b => b.setAttribute("aria-pressed", "false"));
+      setTypeParam(null);
       refreshActiveFilters();
       applyFilters();
     });
@@ -5159,9 +5340,24 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     let acActiveIdx = -1;
     const suggestEl = document.getElementById("suggestions");
 
+    // Full distinct-component-name list from the server (not just what's currently
+    // loaded in the feed). Without this, searching for e.g. "Mistral" or "Ollama"
+    // wouldn't even suggest the name unless one of their releases happened to fall
+    // inside the current LOOKBACK_DAYS window and had already been paginated in.
+    let _allComponentNames = null;
+    let _allComponentNamesPromise = null;
+    function ensureAllComponentNames() {
+      if (_allComponentNamesPromise) return _allComponentNamesPromise;
+      _allComponentNamesPromise = fetch(API_BASE + "c/names")
+        .then(r => r.ok ? r.json() : [])
+        .then(arr => { _allComponentNames = (Array.isArray(arr) ? arr : []).map(norm).filter(Boolean); })
+        .catch(() => { _allComponentNames = _allComponentNames || []; });
+      return _allComponentNamesPromise;
+    }
+
     function buildSuggestionPool() {
       hideSuggestions();
-      const names = new Set();
+      const names = new Set(_allComponentNames || []);
       for (const v of STATE.rawVersions) {
         const n = norm(v.versionProductName);
         if (n) names.add(n);
@@ -5269,9 +5465,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     }
 
     /* ── Sidebar activity chart ── only loadHomeStats calls this ── */
-    function updateActivityChart(labels, vData, cveData, rData) {
+    // llmData is best-effort: there's no server-side "LLM releases per day" aggregate
+    // endpoint, so it's computed client-side from whatever's in STATE.rawVersions at
+    // render time (see refreshActivityChartLlmLine, called once boot() has loaded data).
+    function updateActivityChart(labels, vData, cveData, rData, llmData) {
       const canvas = document.getElementById('home-activity-chart');
       if (!canvas) return;
+      _activityDays = labels;
       const doRender = () => {
         try {
           if (_activityChart) { try { _activityChart.destroy(); } catch (_) {} _activityChart = null; }
@@ -5281,10 +5481,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               { label: 'Versions',  data: vData,   borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.10)', tension: 0.3, pointRadius: 2, borderWidth: 1.5, fill: true },
               { label: 'CVE',       data: cveData, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.07)',   tension: 0.3, pointRadius: 2, borderWidth: 1.5, fill: false },
               { label: 'Community', data: rData,   borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.07)',  tension: 0.3, pointRadius: 2, borderWidth: 1.5, fill: true },
+              { label: 'LLM',       data: llmData || labels.map(() => 0), borderColor: '#7c3aed', backgroundColor: 'rgba(124,58,237,0.08)', tension: 0.3, pointRadius: 2, borderWidth: 1.5, fill: false },
             ]},
             options: {
               responsive: true, maintainAspectRatio: false, animation: false,
-              plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false, bodyFont: { size: 10 }, titleFont: { size: 10 } } },
+              plugins: {
+                // Labeled and clickable — Chart.js's default legend behavior toggles a
+                // line's visibility on click, which is exactly the enable/disable ask.
+                legend: {
+                  display: true, position: 'bottom',
+                  labels: { boxWidth: 8, boxHeight: 8, font: { size: 9 }, color: '#6b7280', padding: 6, usePointStyle: true }
+                },
+                tooltip: { mode: 'index', intersect: false, bodyFont: { size: 10 }, titleFont: { size: 10 } }
+              },
               scales: {
                 x: { grid: { display: false }, ticks: { font: { size: 9 }, color: '#9ca3af', maxRotation: 0 } },
                 y: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { font: { size: 9 }, color: '#9ca3af', maxTicksLimit: 3 }, beginAtZero: true }
@@ -5302,6 +5511,40 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         document.head.appendChild(s);
       }
     }
+
+    // Best-effort LLM-per-day counts from whatever's currently in STATE.rawVersions
+    // (no server-side aggregate endpoint for this yet, unlike the other three lines).
+    function computeLlmDailyFromRaw(dayStrs) {
+      const counts = Object.fromEntries(dayStrs.map(s => [s, 0]));
+      // Source of truth is STATE.llmVersions (full, date-window-independent dataset,
+      // see ensureLlmVersionsLoaded) once it's loaded — STATE.rawVersions alone almost
+      // never has any LLM docs, since AI model releases are sparse enough in time that
+      // they rarely fall inside the default feed window. Falls back to rawVersions
+      // before that dataset has landed so the chart still renders something on first paint.
+      const source = STATE.llmVersionsLoaded ? STATE.llmVersions : STATE.rawVersions;
+      for (const v of source) {
+        if (!isLLMVersion(v)) continue;
+        const d = String(v.versionReleaseDate || '').trim().replace(/-/g, '');
+        if (Object.prototype.hasOwnProperty.call(counts, d)) counts[d]++;
+      }
+      return dayStrs.map(s => counts[s]);
+    }
+
+    // Re-paints just the LLM dataset once boot()/ensureLlmVersionsLoaded() has actually
+    // populated real data (loadHomeStats renders the chart independently/earlier, so
+    // the LLM line starts flat).
+    function refreshActivityChartLlmLine() {
+      if (!_activityChart || !_activityDayStrs) return;
+      const ds = _activityChart.data?.datasets?.find(d => d.label === 'LLM');
+      if (!ds) return;
+      ds.data = computeLlmDailyFromRaw(_activityDayStrs);
+      try { _activityChart.update('none'); } catch (_) {}
+    }
+
+    // Load the full component name list in the background so autocomplete can suggest
+    // e.g. "Mistral" or "Ollama" even before/without any of their releases being loaded
+    // into the current feed window. Rebuild the pool once it lands.
+    ensureAllComponentNames().then(() => buildSuggestionPool());
 
     // Fetch live collection stats for home sidebar on page load
     (async function loadTopSearches() {
@@ -5343,13 +5586,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const color = pct > 0 ? '#16a34a' : pct < 0 ? '#dc2626' : '#6b7280';
         return `, <span style="color:${color};font-weight:700">${sign}${pct}%</span>`;
       };
-      // Build 7-day date array (oldest → today)
-      const days = Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(today); d.setDate(today.getDate() - (6 - i));
+      // Build LOOKBACK_DAYS-day date array (oldest → today)
+      const days = Array.from({ length: LOOKBACK_DAYS }, (_, i) => {
+        const d = new Date(today); d.setDate(today.getDate() - (LOOKBACK_DAYS - 1 - i));
         return { str: fmtDate(d), label: d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) };
       });
       try {
-        const startStr = days[0].str, endStr = days[6].str;
+        const startStr = days[0].str, endStr = days[LOOKBACK_DAYS - 1].str;
         const [vData, rData, vByDay, cveByDay, rByDay] = await Promise.all([
           fetch('https://releasetrain.io/api/v/count').then(r => r.json()).catch(() => null),
           fetch('https://releasetrain.io/api/reddit/count').then(r => r.json()).catch(() => null),
@@ -5357,15 +5600,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           fetch(`https://releasetrain.io/api/aggregate/v/cveCountByDay?start=${startStr}&end=${endStr}`).then(r => r.json()).catch(() => null),
           fetch(`https://releasetrain.io/api/aggregate/reddit/countByDay?start=${startStr}&end=${endStr}`).then(r => r.json()).catch(() => null),
         ]);
-        // Map sparse per-day results (only dates with data) to the full 7-day array
+        // Map sparse per-day results (only dates with data) to the full LOOKBACK_DAYS-day array
         const vMap   = Object.fromEntries((vByDay?.days   ?? []).map(d => [d._id, d.count]));
         const cveMap = Object.fromEntries((cveByDay?.days ?? []).map(d => [d._id, d.count]));
         const rMap   = Object.fromEntries((rByDay?.days   ?? []).map(d => [d._id, d.count]));
         const vDaily   = days.map(d => vMap[d.str]   ?? 0);
         const cveDaily = days.map(d => cveMap[d.str] ?? 0);
         const rDaily   = days.map(d => rMap[d.str]   ?? 0);
-        const vTodayN = vDaily[6], vYestN = vDaily[5];
-        _rTodayApi = rDaily[6]; _rYestApi = rDaily[5];
+        const vTodayN = vDaily[LOOKBACK_DAYS - 1], vYestN = vDaily[LOOKBACK_DAYS - 2];
+        _rTodayApi = rDaily[LOOKBACK_DAYS - 1]; _rYestApi = rDaily[LOOKBACK_DAYS - 2];
         if (vData) {
           const vTotal = vData.totalVersions, vCve = vData.cveCount ?? 0, vNon = vData.nonCveCount ?? (vTotal - vCve);
           const vBracket = vTodayN > 0 ? ` [${fmt(vTodayN)} today${colorDelta(vTodayN, vYestN)}]` : '';
@@ -5389,12 +5632,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           setText('dsb-r-size', fmtSize(_homeRTotalNum * 2000) + ' / 5 MB');
           updateCommunityBracket();
         }
-        updateActivityChart(days.map(d => d.label), vDaily, cveDaily, rDaily);
+        _activityDayStrs = days.map(d => d.str);
+        updateActivityChart(days.map(d => d.label), vDaily, cveDaily, rDaily, computeLlmDailyFromRaw(_activityDayStrs));
       } catch (_) { /* stats are non-critical */ }
     })();
 
     setupObserver();
     boot().then(async () => {
+      refreshActivityChartLlmLine(); // STATE.rawVersions is populated now — repaint the LLM line for real
       const view = new URL(location.href).searchParams.get("view");
       if (view === "graph") {
         activateGraph();
