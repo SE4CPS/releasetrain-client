@@ -1,157 +1,92 @@
 # Releasetrain Client
 
-Releasetrain Client is an open source front end and REST API for tracking 
-software version updates, component activity, Reddit discussions, and CVE-related entries.
+Static browser client for Releasetrain. It renders software release activity,
+CVE advisories, and Reddit and Stack Overflow discussion signals from the
+Releasetrain REST API. The API itself lives in a separate repository
+(releasetrain-server); this repository contains only the front end.
 
-## Prerequisites
+## Architecture
 
-* Node.js (LTS recommended)
-* MongoDB database (Atlas or self-hosted)
+The entire application is a single self contained file, `src/index.html`, with
+inline CSS and JavaScript and no build time framework. The build step is a
+straight copy of `src/` to `dist/` performed by Grunt. `dist/` is committed but
+is regenerated on every Docker build, so treat `src/` as the source of truth.
 
-## Installation
+Runtime dependencies (Chart.js, vis-network, pako) are loaded from a CDN on
+demand. The API base URL is hardcoded in `src/index.html` as `API_BASE`
+(`https://releasetrain.io/api/`).
+
+## Requirements
+
+* Node.js LTS
+
+## Install
 
 ```bash
-git clone https://github.com/antrunner/releasetrain-client.git
+git clone https://github.com/SE4CPS/releasetrain-client.git
 cd releasetrain-client
 npm install
 ```
 
-## Running the App
+## Scripts
 
-```bash
-npm run dev
-```
+| Script          | Action                                                        |
+| --------------- | ------------------------------------------------------------ |
+| `npm run dev`   | Serve `src/` on `http://127.0.0.1:8080` with caching off.   |
+| `npm run build` | Copy `src/` to `dist/` (Grunt `default` task).              |
+| `npm start`     | Serve the built `dist/` on `http://127.0.0.1:8080`.         |
+| `npm run prod`  | `build` then `start`.                                       |
+| `npm test`      | Jest.                                                       |
+| `npm run lint`  | ESLint with `--fix`.                                        |
 
-**Front End:**
-[http://127.0.0.1:8080](http://127.0.0.1:8080)
+## Views
 
-**API Backend:**
-[http://localhost:3000](http://localhost:3000)
+The feed is the default view. Every other view is reachable from the top
+navigation and by a `view` query parameter.
+
+| View        | URL                  | Contents                                                        |
+| ----------- | -------------------- | ------------------------------------------------------------- |
+| Feed        | `/`                  | Grouped release cards, quick filters, sidebar activity chart.  |
+| Graph       | `/?view=graph`       | vis-network graph of components with their releases and posts. |
+| Arch        | `/?view=arch`        | PlantUML stack diagram, layered hypervisor then OS then application. |
+| CVE         | `/?view=cve`         | CVE timeline with NVD pipeline status.                         |
+| Risk Report | `/?view=risk`        | Community risk summary.                                        |
+| Docs        | `/?view=docs`        | API reference and system architecture diagrams.               |
+| Changelog   | `/?view=changelog`   | Client change history.                                         |
+| Release     | `/?view=release`     | Release outcome reports.                                       |
+| Credits     | `/?view=credits`     | Acknowledgements.                                              |
+| Account     | `/?view=account`     | Local inventory and saved searches.                            |
+
+Filter state is shareable through the URL, for example `/?q=chrome,firefox`,
+`/?type=llm`, and `/?type=hv`.
 
 ## Configuration
 
-Set environment variables or edit constants in the server file.
+To point the client at a different API, edit `API_BASE` in `src/index.html`.
+There are no environment variables and no server side configuration.
 
-| Variable      | Description                             |
-| ------------- | --------------------------------------- |
-| `MONGODB_URI` | MongoDB connection string               |
-| `DB_NAME`     | Database name (default: `releasetrain`) |
-| `PORT`        | Server port (default: `3000`)           |
-
-## API Overview
-
-All endpoints return JSON.
-
-Groups:
-
-* Versions — `/api/v`
-* Components — `/api/c`
-* Reddit — `/api/reddit`
-* Aggregates — `/api/aggregate`
-* Test Utilities — `/api/test`
-
-Base URLs:
-
-* Local: `http://localhost:3000`
-* Prod: `https://releasetrain.io/api`
-
-## Versions (GET)
-
-| Endpoint                                 | Example                                                                  | Description                                          |
-| ---------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------- |
-| `/api/v`                                 | `/api/v?q=chrome,firefox`                                                | Recent versions for given components (last 2 years). |
-| `/api/v/count`                           | `/api/v/count`                                                           | Total versions in last 2 years.                      |
-| `/api/v/fc`                              | `/api/v/fc?q=mongodb`                                                    | Forecast next release date for a component.          |
-| `/api/v/fcc`                             | `/api/v/fcc?q=chrome,firefox`                                            | Predict coincide release dates.                      |
-| `/api/v/:id`                             | `/api/v/66fd52eaf1f36a17ad1e59c9`                                        | Version by MongoDB `_id`.                            |
-| `/api/v/versionId/:versionId`            | `/api/v/versionId/20250217lobe-chat1.60.2`                               | Version by `versionId`.                              |
-| `/api/v/aggregate/byDate`                | `/api/v/aggregate/byDate?date=20250715`                                  | Count releases on a specific date.                   |
-| `/api/aggregate/v/updateTypeCount`       | `/api/aggregate/v/updateTypeCount?timestamp=20250715`                    | Count by update type (major/minor/patch).            |
-| `/api/aggregate/v/componentTypeCount`    | `/api/aggregate/v/componentTypeCount?timestamp=20250715`                 | Count by classification type.                        |
-| `/api/aggregate/v/versionCountByDay`     | `/api/aggregate/v/versionCountByDay?start=20250701&end=20250730`         | Total releases per day in a range.                   |
-| `/api/aggregate/v/missingFields`         | `/api/aggregate/v/missingFields?field=versionNumber`                     | Docs missing a field (sample).                       |
-| `/api/aggregate/v/sourceCountByType`     | `/api/aggregate/v/sourceCountByType?sourceType=patch&timestamp=20250715` | Count by source type (e.g., CVE, patch).             |
-| `/api/aggregate/v/classificationSummary` | `/api/aggregate/v/classificationSummary?timestamp=20250715`              | Summary of security/breaking tags.                   |
-| `/api/aggregate/v/oldestTimestamp`       | `/api/aggregate/v/oldestTimestamp?count=1000`                            | Oldest release date among last N.                    |
-
-## Components (GET)
-
-| Endpoint                                     | Example                    | Description                                          |
-| -------------------------------------------- | -------------------------- | ---------------------------------------------------- |
-| `/api/component/`                            | `/api/component/?q=linux`  | Components with optional text filter (last 2 years). |
-| `/api/c/name/:componentName/:versionNumber?` | `/api/c/name/linux/6.10.5` | Versions for a component (optional exact version).   |
-| `/api/c/os`                                  | `/api/c/os`                | OS components in last 2 years.                       |
-| `/api/c/count`                               | `/api/c/count`             | Distinct component count (last 2 years).             |
-| `/api/c/names`                               | `/api/c/names`             | Distinct component names (last 2 years).             |
-| `/api/c/frequency`                           | `/api/c/frequency`         | High-frequency components and those updated today.   |
-
-## Reddit (GET)
-
-| Endpoint                     | Example                                          | Description                                              |
-| ---------------------------- | ------------------------------------------------ | -------------------------------------------------------- |
-| `/api/reddit`                | `/api/reddit?limit=100&page=1`                   | Reddit posts with pagination and filters.                |
-| `/api/reddit/:redditId`      | `/api/reddit/1nq0h33`                            | Single post by `redditId` or `_id`.                      |
-| `/api/reddit/by-subreddit`   | `/api/reddit/by-subreddit?q=firefox&minScore=50` | Posts for subreddit(s), optional score/comments filters. |
-| `/api/reddit/query/positive` | `/api/reddit/query/positive`                     | Posts with positive predicted score > 0.5.               |
-| `/api/reddit/count`          | `/api/reddit/count`                              | Total posts in last 2 years.                             |
-
-## Test & Discovery (GET)
-
-| Endpoint                   | Example                    | Description                         |
-| -------------------------- | -------------------------- | ----------------------------------- |
-| `/api/test/endpoints`      | `/api/test/endpoints`      | List all routes.                    |
-| `/api/test/endpoints/html` | `/api/test/endpoints/html` | HTML table of routes with examples. |
-| `/api/test/all`            | `/api/test/all`            | Run GET checks across endpoints.    |
-
-## Common Query Parameters
-
-| Param                     | Description                                          |
-| ------------------------- | ---------------------------------------------------- |
-| `q`                       | Comma-separated components (e.g., `chrome,firefox`). |
-| `limit`, `page`           | Pagination controls.                                 |
-| `cursor`                  | Base64 cursor for Reddit pagination.                 |
-| `start`, `end`            | Date range `YYYYMMDD`.                               |
-| `timestamp`, `date`       | Single date `YYYYMMDD`.                              |
-| `fields`                  | CSV of fields to include (Reddit endpoints).         |
-| `minScore`, `minComments` | Numeric Reddit filters.                              |
-
-## Example
+## Docker
 
 ```bash
-curl "http://localhost:3000/api/v?q=chrome,firefox"
+docker build -t releasetrain-client .
+docker run --rm -p 8080:8080 releasetrain-client
 ```
 
-```json
-{
-  "versions": [
-    {
-      "versionProductName": "Chrome",
-      "versionNumber": "126.0.0",
-      "versionReleaseDate": "20240612"
-    },
-    {
-      "versionProductName": "Firefox",
-      "versionNumber": "127.0.0",
-      "versionReleaseDate": "20240611"
-    }
-  ]
-}
-```
+The image runs `npm install`, `npm test`, and `npm run build`, then serves
+`dist/` on port 8080.
+
+## API
+
+Endpoint documentation is available in the running app under the Docs view, and
+live at `https://releasetrain.io/api`.
 
 ## Contributing
 
-Pull requests are welcome. Keep PRs focused, include tests or reproducible steps, and follow project conventions.
+Keep pull requests focused. Edit `src/index.html` only; do not hand edit
+`dist/`. Run `npm run build` before committing so `dist/` stays in sync.
 
-Issues: [https://github.com/antrunner/releasetrain-client/issues](https://github.com/antrunner/releasetrain-client/issues)
+Issues: https://github.com/SE4CPS/releasetrain-client/issues
 
 ## License
 
-See `LICENSE` in the repository.
-
-## Contact
-
-[sei40e@gmail.com](mailto:sei40e@gmail.com)
-
----
-
-If you paste this directly into `README.md`, GitHub will render it correctly.
+ISC. See `LICENSE`.
