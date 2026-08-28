@@ -1544,6 +1544,14 @@
           <button id="g-refreshBtn" class="btn btn-ghost" style="width:100%;font-size:12px">↺ Refresh graph</button>
         </div>
 
+        <details class="sb-details" id="g-isolatedWrap">
+          <summary>Isolated nodes <span class="g-iso-count" style="margin-left:auto;font:inherit;color:var(--muted)"></span></summary>
+          <div class="sidebar-section" style="font-size:11px;line-height:1.6;padding-bottom:8px">
+            <div style="color:var(--muted);margin-bottom:4px">Nodes with zero edges — hidden from the canvas.</div>
+            <div id="g-isolatedList" style="color:var(--muted)">—</div>
+          </div>
+        </details>
+
         <div class="sidebar-section" style="font-size:11px;color:var(--muted)">
           <div id="g-statsLine">—</div>
         </div>
@@ -3608,6 +3616,36 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (G_NETWORK) { try { G_NETWORK.destroy(); } catch(e) {} G_NETWORK = null; }
     }
 
+    // Sidebar list of nodes that were dropped from the canvas for having no edge.
+    function gRenderIsolated(list) {
+      const box = document.getElementById("g-isolatedList");
+      const wrap = document.getElementById("g-isolatedWrap");
+      if (!box) return;
+      list = Array.isArray(list) ? list : [];
+      if (wrap) {
+        if (list.length) wrap.setAttribute("open", "");
+        else wrap.removeAttribute("open");
+        const c = wrap.querySelector(".g-iso-count");
+        if (c) c.textContent = list.length ? String(list.length) : "";
+      }
+      if (!list.length) {
+        box.innerHTML = `<div style="color:var(--muted)">None — every node has at least one edge.</div>`;
+        return;
+      }
+      const kindOf = id =>
+        id.startsWith("comp:") ? "component" :
+        id.startsWith("ver:")  ? "version" :
+        id.startsWith("post:") ? "post" : "node";
+      const rows = list
+        .map(n => ({ label: n.label || n.id, kind: kindOf(String(n.id)) }))
+        .sort((a, b) => a.kind.localeCompare(b.kind) || a.label.localeCompare(b.label));
+      box.innerHTML = rows.map(r =>
+        `<div style="display:flex;justify-content:space-between;gap:8px;padding:2px 0;border-bottom:1px solid var(--border)">` +
+        `<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${aEsc(r.label)}">${aEsc(r.label)}</span>` +
+        `<span style="color:var(--muted);flex-shrink:0">${r.kind}</span></div>`
+      ).join("");
+    }
+
     function gChannelOf(v) {
       return v.versionReleaseChannel || (v.isCve ? "cve" : "patch");
     }
@@ -3776,11 +3814,25 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         container.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;padding:24px;text-align:center"><div style="font-size:13px;color:var(--muted)">Search for a component in the feed to populate the graph, or pick a suggestion:</div><div style="max-width:420px">${chips}</div></div>`;
         if (badge) badge.textContent = "No data";
         if (statsEl) statsEl.textContent = "No data. Search for a component first.";
+        gRenderIsolated(nodes.get());  // every seeded hub is edgeless here
         return;
       }
       container.innerHTML = "";
-      if (badge) badge.textContent = nodes.length + " nodes · " + edges.length + " edges";
-      if (statsEl) statsEl.textContent = compSet.size + " component" + (compSet.size !== 1 ? "s" : "") + " · " + nodes.length + " nodes · " + edges.length + " edges";
+
+      /* Canvas shows only connected nodes. Anything with zero edges (typically a
+         searched component with no releases/posts inside the current window) is
+         pulled off the canvas and listed in the sidebar instead. */
+      const gConnected = new Set();
+      edges.get().forEach(e => { gConnected.add(e.from); gConnected.add(e.to); });
+      const gIsolated = nodes.get().filter(n => !gConnected.has(n.id));
+      if (gIsolated.length) nodes.remove(gIsolated.map(n => n.id));
+      gRenderIsolated(gIsolated);
+
+      const gCompLeft = nodes.get().filter(n => n.group === "component").length;
+      if (badge) badge.textContent = nodes.length + " nodes · " + edges.length + " edges"
+        + (gIsolated.length ? " · " + gIsolated.length + " isolated" : "");
+      if (statsEl) statsEl.textContent = gCompLeft + " component" + (gCompLeft !== 1 ? "s" : "") + " · " + nodes.length + " nodes · " + edges.length + " edges"
+        + (gIsolated.length ? " · " + gIsolated.length + " isolated (see sidebar)" : "");
 
       G_NETWORK = new vis.Network(container, { nodes, edges }, {
         physics: {
