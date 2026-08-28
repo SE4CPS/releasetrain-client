@@ -262,6 +262,20 @@
     /* ── Toggles (shields.io flat-badge style) ─────────────── */
     .toggles { display: flex; gap: 5px; flex-wrap: wrap; }
 
+    /* Secondary quick-filters, tucked away by default */
+    .toggle-more { flex: 1 0 100%; margin-top: 2px; }
+    .toggle-more > summary {
+      list-style: none; cursor: pointer; user-select: none;
+      font: 600 10px/1.4 var(--mono); color: var(--muted);
+      text-transform: uppercase; letter-spacing: .4px;
+      padding: 2px 0; display: inline-flex; align-items: center; gap: 4px;
+    }
+    .toggle-more > summary::-webkit-details-marker { display: none; }
+    .toggle-more > summary::before { content: '›'; display: inline-block; transition: transform .15s; }
+    .toggle-more[open] > summary::before { transform: rotate(90deg); }
+    .toggle-more > summary:hover { color: var(--text); }
+    .toggle-more > .toggles { margin-top: 5px; }
+
     .toggle {
       display: inline-flex; align-items: stretch;
       border-radius: var(--radius-sm); overflow: hidden;
@@ -898,9 +912,9 @@
     .d-toc a:hover { background: var(--brand-light); }
     .d-toc a.d-active { background: var(--brand-light); font-weight: 700; }
     /* Sidebar live stats widget */
-    .sb-stat-group { border: 1px solid var(--border); border-radius: 7px; overflow: hidden; margin-bottom: 6px; }
+    .sb-stat-group { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 6px; }
     .sb-stat-group:last-child { margin-bottom: 0; }
-    .sb-stat-head { list-style: none; display: flex; align-items: center; gap: 5px; padding: 6px 9px; cursor: pointer; font-size: 11px; font-weight: 700; color: #0f172a; background: #f1f5f9; border-bottom: 1px solid transparent; }
+    .sb-stat-head { list-style: none; display: flex; align-items: center; gap: 5px; padding: 5px 9px; cursor: pointer; font: 700 10px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .4px; color: var(--muted); background: var(--chip-bg); border-bottom: 1px solid transparent; }
     .sb-stat-group[open] > .sb-stat-head { border-bottom-color: var(--border); }
     .sb-stat-head::-webkit-details-marker { display: none; }
     .sb-stat-head::before { content: '›'; font-size: 12px; display: inline-block; transition: transform .13s; }
@@ -908,8 +922,8 @@
     .sb-stat-body { padding: 5px 8px 7px; }
     .sb-stat-row { display: flex; justify-content: space-between; align-items: center; padding: 2px 0; font-size: 11px; color: #0f172a; border-bottom: 1px solid #f1f5f9; }
     .sb-stat-row:last-child { border-bottom: none; }
-    .sb-stat-row span:first-child { color: #64748b; }
-    .sb-stat-row span:last-child { font-weight: 700; color: #2563eb; }
+    .sb-stat-row span:first-child { color: var(--muted); }
+    .sb-stat-row span:last-child { font-weight: 700; color: var(--text); font-family: var(--mono); }
     .sb-stat-row.size-row span:last-child { color: #475569; font-size: 10px; }
     .sb-stat-divider { border: none; border-top: 1px dashed #e2e8f0; margin: 4px 0; }
 
@@ -1318,7 +1332,7 @@
   <!-- ── Topbar: brand + nav only ── -->
   <header class="topbar" role="banner" id="topbar">
     <div class="topbar-main">
-      <a class="brand" href="/" aria-label="Releasetrain home">Releasetrain <em>v3.23.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home">Releasetrain <em>v3.24.0</em></a>
       <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
       <div class="topbar-spacer"></div>
       <button class="nav-toggle" type="button" id="navToggle"
@@ -1366,7 +1380,7 @@
 
       <div id="feedSidebarSections">
 
-        <details class="sb-details">
+        <details class="sb-details" open>
           <summary>Filters</summary>
           <div class="sidebar-section" style="padding-bottom:12px">
             <div class="toggles" id="fixedToggles" role="group" aria-label="Quick filters">
@@ -1382,31 +1396,37 @@
                 title="Hypervisor / virtualization-platform releases (VMware, VirtualBox, Xen, Proxmox, XCP-ng)">
                 <span class="lbl">🖥️ Hypervisor</span><span id="btn-hv" class="count">0</span>
               </button>
-              <button class="toggle" data-key="potential-cve" aria-pressed="false" type="button"
-                title="Versions with Reddit discussions mentioning both latest update and CVE">
-                <span class="lbl">⚠️ Pot. CVE</span><span id="btn-potential-cve" class="count">0</span>
-              </button>
-              <button class="toggle" data-key="reddit" aria-pressed="false" type="button"><span class="lbl">💬 Reddit</span><span id="btn-reddit" class="count">0</span></button>
-              <button class="toggle" data-key="reddit-risk" aria-pressed="false" type="button"
-                title="AI-detected isUpdateRelated or score > 0.5">
-                <span class="lbl">⚠️ Reddit Risk</span><span id="btn-reddit-risk" class="count">0</span>
-              </button>
-              <button class="toggle" data-key="reddit-risk-latest" aria-pressed="false" type="button"
-                title="Risky Reddit posts about latest updates">
-                <span class="lbl">⚠️ Risk Latest</span><span id="btn-reddit-risk-latest" class="count">0</span>
-              </button>
-              <button class="toggle" data-key="reddit-risk-cve" aria-pressed="false" type="button"
-                title="Risky Reddit posts about security/CVE">
-                <span class="lbl">🔐 Risk Security</span><span id="btn-reddit-risk-cve" class="count">0</span>
-              </button>
-              <button class="toggle" data-key="so-risk" aria-pressed="false" type="button"
-                title="AI-detected isUpdateRelated or score > 0.5 (StackOverflow)">
-                <span class="lbl">⚠️ SO Risk</span><span id="btn-so-risk" class="count">0</span>
-              </button>
-              <button class="toggle" data-key="so" aria-pressed="false" type="button"
-                title="All Stack Overflow posts matched to this component">
-                <span class="lbl">🟧 SO</span><span id="btn-so" class="count">0</span>
-              </button>
+
+              <details class="toggle-more">
+                <summary>community &amp; risk filters</summary>
+                <div class="toggles">
+                  <button class="toggle" data-key="potential-cve" aria-pressed="false" type="button"
+                    title="Versions with Reddit discussions mentioning both latest update and CVE">
+                    <span class="lbl">⚠️ Pot. CVE</span><span id="btn-potential-cve" class="count">0</span>
+                  </button>
+                  <button class="toggle" data-key="reddit" aria-pressed="false" type="button"><span class="lbl">💬 Reddit</span><span id="btn-reddit" class="count">0</span></button>
+                  <button class="toggle" data-key="reddit-risk" aria-pressed="false" type="button"
+                    title="AI-detected isUpdateRelated or score > 0.5">
+                    <span class="lbl">⚠️ Reddit Risk</span><span id="btn-reddit-risk" class="count">0</span>
+                  </button>
+                  <button class="toggle" data-key="reddit-risk-latest" aria-pressed="false" type="button"
+                    title="Risky Reddit posts about latest updates">
+                    <span class="lbl">⚠️ Risk Latest</span><span id="btn-reddit-risk-latest" class="count">0</span>
+                  </button>
+                  <button class="toggle" data-key="reddit-risk-cve" aria-pressed="false" type="button"
+                    title="Risky Reddit posts about security/CVE">
+                    <span class="lbl">🔐 Risk Security</span><span id="btn-reddit-risk-cve" class="count">0</span>
+                  </button>
+                  <button class="toggle" data-key="so-risk" aria-pressed="false" type="button"
+                    title="AI-detected isUpdateRelated or score > 0.5 (StackOverflow)">
+                    <span class="lbl">⚠️ SO Risk</span><span id="btn-so-risk" class="count">0</span>
+                  </button>
+                  <button class="toggle" data-key="so" aria-pressed="false" type="button"
+                    title="All Stack Overflow posts matched to this component">
+                    <span class="lbl">🟧 SO</span><span id="btn-so" class="count">0</span>
+                  </button>
+                </div>
+              </details>
             </div>
           </div>
         </details>
@@ -1435,24 +1455,13 @@
               <div class="kpi">🖥️ Hypervisors <em id="kpi-hv">0</em></div>
               <div class="kpi" id="kpi-range">📅 Range: <em>—</em></div>
             </div>
-          </div>
-        </details>
-
-        <details class="sb-details">
-          <summary>Live Collection Stats</summary>
-          <div class="sidebar-section" style="padding-bottom:12px">
-            <details class="sb-stat-group" open>
-              <summary class="sb-stat-head">📦 Versions</summary>
+            <details class="sb-stat-group" style="margin-top:8px">
+              <summary class="sb-stat-head">Collection totals</summary>
               <div class="sb-stat-body">
-                <div class="sb-stat-row"><span>Total</span><span id="home-v-total">…</span></div>
+                <div class="sb-stat-row"><span>Versions</span><span id="home-v-total">…</span></div>
                 <div class="sb-stat-row"><span>CVE advisories</span><span id="home-v-cve">…</span></div>
                 <div class="sb-stat-row"><span>Release notes</span><span id="home-v-noncve">…</span></div>
-              </div>
-            </details>
-            <details class="sb-stat-group" open>
-              <summary class="sb-stat-head">💬 Community</summary>
-              <div class="sb-stat-body">
-                <div class="sb-stat-row"><span>Total</span><span id="home-r-total">…</span></div>
+                <div class="sb-stat-row"><span>Community total</span><span id="home-r-total">…</span></div>
                 <div class="sb-stat-row"><span>Reddit posts</span><span id="home-r-reddit">…</span></div>
                 <div class="sb-stat-row"><span>Stack Overflow</span><span id="home-r-so">…</span></div>
               </div>
@@ -1460,7 +1469,7 @@
           </div>
         </details>
 
-        <details class="sb-details" open>
+        <details class="sb-details">
           <summary>Activity (4 weeks)</summary>
           <div class="sidebar-section" style="padding-bottom:10px">
             <div style="position:relative;height:118px"><canvas id="home-activity-chart"></canvas></div>
@@ -1475,7 +1484,7 @@
           </div>
         </details>
 
-        <details class="sb-details" id="top-searches-details" open>
+        <details class="sb-details" id="top-searches-details">
           <summary>Top searches (24h)</summary>
           <div class="sidebar-section" style="padding-bottom:12px">
             <div id="top-searches-list" style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
@@ -2790,6 +2799,23 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-08-28</div>
+              <div class="cl-ver cl-ver-minor">v3.24.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Denser, quieter UI</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> <strong>Compact / technical restyle</strong>: 13px base, 3px radius, flat hairline borders instead of shadows, monospace for numbers/versions/dates. Palette cut to two meaningful hues (CVE, risk) plus one interactive blue; LLM/hypervisor/"new" markers are now neutral slate, meaning carried by the chip label. Tightened topbar, sidebar, feed rows, chips and buttons.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> <strong>Fewer quick-filters up front</strong>: the five community/risk toggles (Pot. CVE, Reddit, Reddit Risk, Risk Latest, Risk Security, SO Risk, SO) now live in a collapsed "community &amp; risk filters" disclosure inside Filters. The six primary toggles (Major/Minor/Patch/CVE/LLM/Hypervisor) stay visible.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> <strong>Sidebar sections collapsed by default</strong> except Filters. "Stats" and "Live Collection Stats" merged into one section — KPIs on top, all-time collection totals in a nested "Collection totals" disclosure.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> <strong>Fewer chips per feed row</strong>: dropped the license and component-type chips (repetitive — every row in a group carried the same values). Security-type and breaking-change chips stay, since they flag something actionable.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Graph view</strong>: nodes with zero edges are hidden from the canvas and listed in a new "Isolated nodes" sidebar section; physics tightened and the view auto-zooms in closer after stabilization.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5631,9 +5657,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
         if (it.kind !== "reddit" && it.kind !== "stackoverflow" && it.raw) {
           const r = it.raw;
-          if (r.versionProductLicense) chipsEl.insertAdjacentHTML("beforeend", chip(String(r.versionProductLicense).toLowerCase(), "soft"));
-          (r.classification?.componentType || []).filter(x => x && x !== "UNKNOWN").slice(0, 1)
-            .forEach(t => chipsEl.insertAdjacentHTML("beforeend", chip(String(t).toLowerCase(), "soft")));
+          // Only the chips that flag something actionable stay on the row by
+          // default: a security classification or a breaking-change classification.
+          // License and component-type were repetitive noise (every row in a
+          // group carries the same values) — dropped.
           (r.classification?.securityType || []).filter(x => x && x !== "UNKNOWN").slice(0, 1)
             .forEach(t => chipsEl.insertAdjacentHTML("beforeend", chip(String(t).toLowerCase(), "bad")));
           (r.classification?.breakingType || []).filter(x => x && x !== "UNKNOWN").slice(0, 1)
