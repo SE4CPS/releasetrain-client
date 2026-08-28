@@ -3839,17 +3839,34 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           enabled: true,
           solver: "barnesHut",
           barnesHut: {
-            gravitationalConstant: -3000,
-            centralGravity: 0.25,
-            springLength: 120,
-            springConstant: 0.03,
-            damping: 0.12,
+            // Tighter than before: less repulsion + stronger pull to centre so
+            // disconnected hub/satellite pairs cluster instead of scattering to
+            // the corners, which kept the auto-fit zoomed way out.
+            gravitationalConstant: -1200,
+            centralGravity: 0.7,
+            springLength: 85,
+            springConstant: 0.05,
+            damping: 0.15,
+            avoidOverlap: 0.15,
           },
-          stabilization: { enabled: true, iterations: 200, updateInterval: 30 },
+          stabilization: { enabled: true, iterations: 220, updateInterval: 30 },
         },
         interaction: { hover: true, tooltipDelay: 150, zoomView: true, dragView: true },
         nodes: { borderWidth: 1, borderWidthSelected: 2 },
         edges: { smooth: { type: "continuous", roundness: 0.15 }, arrows: { to: false } },
+      });
+
+      /* Auto-fit, then nudge in a bit further — fit() alone tends to leave a lot
+         of empty margin, especially with few nodes. */
+      G_NETWORK.once("stabilizationIterationsDone", () => {
+        try {
+          G_NETWORK.fit({ animation: false });
+          const s = G_NETWORK.getScale();
+          const target = Math.min(s * 1.6, 1.4);
+          if (target > s + 0.02) {
+            G_NETWORK.moveTo({ scale: target, animation: { duration: 350, easingFunction: "easeInOutQuad" } });
+          }
+        } catch (_) {}
       });
 
       /* ── Node click: show info panel ── */
