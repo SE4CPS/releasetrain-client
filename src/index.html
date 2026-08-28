@@ -1854,7 +1854,7 @@
         <div id="a-empty" style="display:none">
           <div class="a-empty-head">
             <h3>Choose a stack to visualize</h3>
-            <p>Render a live architecture diagram for any technology stack. Every component is annotated with its installed vs. latest version, update severity, and any known CVEs. Pick a sample stack below, or add your own components from the sidebar.</p>
+            <p>Render a live architecture diagram for any technology stack, stacked in tiers — hypervisor base layer, then OS, then applications. Every component is annotated with its installed vs. latest version, update severity, and any known CVEs. Pick a sample stack below, or add your own components from the sidebar.</p>
           </div>
           <div id="a-stackGrid" class="a-stack-grid"></div>
           <div class="a-empty-foot">
@@ -2077,7 +2077,7 @@ graph LR
 
 <details class="arch-view">
 <summary class="d-arch-view-sum">Architecture View</summary>
-<div class="arch-view-body">PlantUML diagram viewer rendered client-side via <code>plantuml-decoder.min.js</code> and the bundled WASM core. Displays system architecture diagrams defined in PlantUML DSL without any server round-trip.</div>
+<div class="arch-view-body">PlantUML diagram viewer rendered client-side via <code>plantuml-decoder.min.js</code> and the bundled WASM core. Components are arranged in stacked tiers — hypervisor base layer (<code>versionProductType === "Hypervisor"</code>), then OS, then applications — with an "Upgrade now" cluster hoisted out for anything carrying a CVE or a major-version gap.</div>
 </details>
 
 <details class="arch-view">
@@ -2808,6 +2808,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                 <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Dedicated background dataset</strong>: <code>ensureHvVersionsLoaded()</code> / <code>Api.hypervisorVersions()</code> pull the full, date-window-independent hypervisor dataset (anchored on <code>KNOWN_HV_PRODUCT_NAMES</code>), so the KPI/toggle show the true total and the toggle surfaces full history rather than just what's inside the 4-week feed window — hypervisor releases are as sparse in time as AI-model releases.</li>
                 <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Activity chart gains a Hypervisor line</strong>: the sidebar activity chart now plots a fifth (teal) series for hypervisor releases per day, computed client-side from the full dataset via <code>computeHvDailyFromRaw()</code> / <code>refreshActivityChartHvLine()</code>. The static mini-legend under the chart now lists all five series.</li>
                 <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Shareable <code>?type=hv</code> link</strong>: <code>releasetrain.io/?type=hv</code> loads with the 🖥️ Hypervisor toggle already active; <code>setTypeParam()</code> now round-trips <code>llm</code> and <code>hv</code>.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Arch view (<code>?view=arch</code>) now stacks in three tiers</strong>: hypervisor base layer → OS → applications, nested as PlantUML packages. New <code>aIsHypervisorComponent()</code> (feed <code>versionProductType === "Hypervisor"</code>, or the <code>A_HYPERVISOR</code> name fallback) partitions components; each tier is optional and collapses out when empty. Added a <strong>VIRT</strong> sample stack (xen · debian · nginx) that exercises all three layers.</li>
               </ul>
             </div>
           </div>
@@ -3997,6 +3998,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       return arr.slice().sort((a, b) =>
         (aIsOsComponent(b) ? 1 : 0) - (aIsOsComponent(a) ? 1 : 0));
     }
+    // Fallback hypervisor names — only consulted when the feed record carries no
+    // usable "Hypervisor" productType of its own (hypervisor.py sets it). A
+    // hypervisor is the base layer: everything else (OS, apps) runs on top of it.
+    const A_HYPERVISOR = new Set(["vmware esxi","vmware workstation","vmware fusion",
+      "oracle virtualbox","virtualbox","xen","xcp-ng","proxmox ve","proxmox",
+      "hyper-v","kvm","qemu","bhyve","nutanix ahv"]);
+    function aIsHypervisorComponent(v) {
+      const lv = v.latestVersion || v.currentVersion || {};
+      if (String(lv.versionProductType || "").trim().toLowerCase() === "hypervisor") return true;
+      const ct = (lv.classification && lv.classification.componentType) || [];
+      if (Array.isArray(ct) && ct.map(x => String(x).toUpperCase()).includes("HYPERVISOR")) return true;
+      return A_HYPERVISOR.has((v.name || "").toLowerCase());
+    }
     const A_STACKS = [
       { name:"LAMP",   components:["apache","mysql","php","linux"] },
       { name:"LEMP",   components:["nginx","mysql","php","linux"] },
@@ -4008,6 +4022,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       { name:"CRP",    components:["centos","rails","postgresql"] },
       { name:"DDS",    components:["debian","django","sqlite"] },
       { name:"USP",    components:["ubuntu","prisma","svelte"] },
+      { name:"VIRT",   components:["xen","debian","nginx"] },
     ];
     function aGetStack(list) {
       const stacks = A_STACKS;
@@ -4265,8 +4280,32 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       };
       const urgent = sorted.filter(isUrgent).sort((a, b) => aDaysBehind(b) - aDaysBehind(a));
       const rest = sorted.filter(v => !isUrgent(v));
-      const osVers = rest.filter(aIsOsComponent);
-      const appVers = rest.filter(v => !aIsOsComponent(v));
+      // Three stacked tiers, base first: hypervisor -> OS -> application. Each is
+      // mutually exclusive (a hypervisor never also counts as OS) and each is
+      // optional — an empty tier is skipped and the tier above bubbles up.
+      const hvVers  = rest.filter(aIsHypervisorComponent);
+      const osVers  = rest.filter(v => !aIsHypervisorComponent(v) && aIsOsComponent(v));
+      const appVers = rest.filter(v => !aIsHypervisorComponent(v) && !aIsOsComponent(v));
+
+      // OS layer wrapping the application layer (the arrangement used when there
+      // is no hypervisor tier, and reused nested inside the hypervisor tier).
+      const osBlock = (pad) => {
+        let out = "";
+        if (osVers.length) {
+          const osLabel = osVers.length === 1 ? `${aSanitize(osVers[0].name)} - OS layer` : "OS layer";
+          out += `${pad}package "${osLabel}" #transparent {\n`;
+          osVers.forEach(v => { out += `${pad}  ${aComponentLine(v, fills)}\n`; });
+          if (appVers.length) {
+            out += `${pad}  package "Application layer" #transparent {\n`;
+            out += renderGroups(`${pad}    `, appVers);
+            out += `${pad}  }\n`;
+          }
+          out += `${pad}}\n`;
+        } else if (appVers.length) {
+          out += renderGroups(pad, appVers);
+        }
+        return out;
+      };
 
       uml += `package "Ecosystem" #transparent {\n`;
       if (urgent.length) {
@@ -4274,17 +4313,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         urgent.forEach(v => { uml += `    ${aComponentLine(v, fills)}\n`; });
         uml += `  }\n`;
       }
-      if (osVers.length) {
-        // One outer layer carrying the OS, one nested layer for everything above it.
-        const osLabel = osVers.length === 1 ? `${aSanitize(osVers[0].name)} - OS layer` : "OS layer";
-        uml += `  package "${osLabel}" #transparent {\n`;
-        osVers.forEach(v => { uml += `    ${aComponentLine(v, fills)}\n`; });
-        uml += `    package "Application layer (no OS)" #transparent {\n`;
-        uml += renderGroups("      ", appVers);
-        uml += `    }\n`;
+      if (hvVers.length) {
+        // Hypervisor is the base layer — OS + apps nest inside it.
+        const hvLabel = hvVers.length === 1 ? `${aSanitize(hvVers[0].name)} - Hypervisor layer` : "Hypervisor layer";
+        uml += `  package "${hvLabel}" #transparent {\n`;
+        hvVers.forEach(v => { uml += `    ${aComponentLine(v, fills)}\n`; });
+        uml += osBlock("    ");
         uml += `  }\n`;
-      } else if (appVers.length) {
-        uml += renderGroups("  ", appVers);
+      } else {
+        uml += osBlock("  ");
       }
       uml += `}\n@enduml\n`;
       return uml;
