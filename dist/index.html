@@ -34,15 +34,25 @@
       --brand-light: #eff6ff;
       --focus: #2563eb;
 
-      /* High-contrast ONLY for risk / CVE / new */
+      /* Three accents only. Everything else is neutral; meaning is carried by
+         labels and layout, not colour.
+           brand  = interactive (links, active nav, primary buttons)
+           cve    = danger / security — act now
+           risk   = warning / behind — needs attention */
       --cve: #dc2626;
       --cve-bg: #fef2f2;
-      --risk: #d97706;
+      --risk: #b45309;
       --risk-bg: #fffbeb;
-      --new: #059669;
-      --new-bg: #ecfdf5;
-      --llm: #7c3aed;
-      --llm-bg: #f5f3ff;
+      /* "new" and "llm" no longer have their own colour — kept as aliases so
+         existing rules still resolve, now pointing at neutral ink / surface. */
+      --new: #475569;
+      --new-bg: #f1f5f9;
+      --llm: #475569;
+      --llm-bg: #f1f5f9;
+      /* hypervisor / virtualization releases (hypervisor.py) — teal, to read
+         distinctly from the neutral LLM slate. */
+      --hv: #0f766e;
+      --hv-bg: #f0fdfa;
 
       --shadow-sm: 0 1px 3px rgba(0,0,0,.06);
       --shadow-md: 0 4px 16px rgba(0,0,0,.1);
@@ -132,7 +142,7 @@
     #navLoader.active { display: block; }
     #navLoader::after {
       content: ""; display: block; width: 40%; height: 100%;
-      background: linear-gradient(90deg, var(--brand), #93c5fd, var(--brand));
+      background: linear-gradient(90deg, var(--brand), #bfdbfe, var(--brand));
       animation: slide 1s linear infinite;
     }
     @keyframes slide { from { margin-left: -40%; } to { margin-left: 100%; } }
@@ -269,7 +279,7 @@
       padding: 4px 7px; background: #4b5563; color: #fff;
       display: inline-flex; align-items: center; gap: 3px;
     }
-    .toggle[aria-pressed="true"] .lbl { background: #1e3a5f; }
+    .toggle[aria-pressed="true"] .lbl { background: #1d4ed8; }
     .toggle[aria-pressed="true"] .lbl::before {
       content: "✓"; font-size: 10px; font-weight: 900; margin-right: 1px;
     }
@@ -284,14 +294,15 @@
     .toggle[data-key="minor"]             .count { background: #64748b; }
     .toggle[data-key="patch"]             .count { background: #94a3b8; }
     .toggle[data-key="cve"]               .count { background: #dc2626; }
-    .toggle[data-key="llm"]               .count { background: #7c3aed; }
-    .toggle[data-key="potential-cve"]     .count { background: #d97706; }
-    .toggle[data-key="reddit"]            .count { background: #ff4500; }
-    .toggle[data-key="reddit-risk"]       .count { background: #d97706; }
+    .toggle[data-key="llm"]               .count { background: #475569; }
+    .toggle[data-key="hv"]                .count { background: #0f766e; }
+    .toggle[data-key="potential-cve"]     .count { background: #b45309; }
+    .toggle[data-key="reddit"]            .count { background: #64748b; }
+    .toggle[data-key="reddit-risk"]       .count { background: #b45309; }
     .toggle[data-key="reddit-risk-latest"].count { background: #b45309; }
     .toggle[data-key="reddit-risk-cve"]   .count { background: #dc2626; }
-    .toggle[data-key="so-risk"]           .count { background: #d97706; }
-    .toggle[data-key="so"]               .count { background: #f59e0b; }
+    .toggle[data-key="so-risk"]           .count { background: #b45309; }
+    .toggle[data-key="so"]               .count { background: #b45309; }
     .toggle[data-key^="type:"]            .count { background: #2563eb; }
     .toggle[aria-pressed="true"] .count { filter: brightness(1.12); }
 
@@ -397,19 +408,21 @@
       border-left: 3px solid transparent; align-items: start;
       transition: background .1s;
     }
-    .li:hover { background: #fafbfc; }
+    .li:hover { background: #f8fafc; }
     .li:last-child { border-bottom: none; }
 
     .li.kind-cve { border-left-color: var(--cve); background: var(--cve-bg); }
-    .li.kind-cve:hover { background: #fee2e2; }
-    .li.kind-reddit { border-left-color: #fb923c; background: #fffbf7; }
-    .li.kind-reddit:hover { background: #fff7ed; }
+    .li.kind-cve:hover { background: #fef2f2; }
+    .li.kind-reddit { border-left-color: #b45309; background: #fffbeb; }
+    .li.kind-reddit:hover { background: #fffbeb; }
     .li.kind-reddit.risk { border-left-color: var(--risk); background: var(--risk-bg); }
-    .li.kind-stackoverflow { border-left-color: #f59e0b; background: #fefdf7; }
+    .li.kind-stackoverflow { border-left-color: #b45309; background: #fffbeb; }
     .li.kind-stackoverflow.risk { border-left-color: var(--risk); }
     .li.is-new { border-left-color: var(--new); }
     .li.kind-llm { border-left-color: var(--llm); background: var(--llm-bg); }
     .li.kind-llm:hover { background: #ede9fe; }
+    .li.kind-hv { border-left-color: var(--hv); background: var(--hv-bg); }
+    .li.kind-hv:hover { background: #ccfbf1; }
 
     @media (max-width: 600px) {
       .li { grid-template-columns: 28px 1fr; grid-template-rows: auto auto; }
@@ -433,7 +446,7 @@
       border: 1px solid var(--border); object-fit: cover;
       background: var(--chip-bg); margin-top: 2px;
     }
-    .redditIcon { border-color: #fed7aa; background: #fff7ed; }
+    .redditIcon { border-color: #fde68a; background: #fffbeb; }
     .redditIcon.risky { border-color: var(--risk); background: var(--risk-bg); }
     .soIcon { border-color: var(--border); background: var(--chip-bg); }
     .soIcon.risky { border-color: var(--risk); background: var(--risk-bg); }
@@ -448,9 +461,10 @@
     }
     .chip.bad { background: var(--cve-bg); border-color: #fca5a5; color: var(--cve); }
     .chip.warn { background: var(--risk-bg); border-color: #fcd34d; color: var(--risk); }
-    .chip.ok { background: var(--new-bg); border-color: #6ee7b7; color: var(--new); }
-    .chip.reddit { background: #fff7ed; border-color: #fed7aa; color: #c2410c; }
-    .chip.llm { background: var(--llm-bg); border-color: #c4b5fd; color: var(--llm); }
+    .chip.ok { background: var(--new-bg); border-color: #e2e8f0; color: var(--new); }
+    .chip.reddit { background: #fffbeb; border-color: #fde68a; color: #b45309; }
+    .chip.llm { background: var(--llm-bg); border-color: #cbd5e1; color: var(--llm); }
+    .chip.hv { background: var(--hv-bg); border-color: #99f6e4; color: var(--hv); }
     .chip.soft { opacity: .8; }
     .chip.link a { color: var(--brand); text-decoration: underline; text-underline-offset: 2px; }
     .chip.link a:hover { color: #1d4ed8; }
@@ -527,8 +541,8 @@
     /* ── Arch view ──────────────────────────────────────────── */
     #archView {
       position: sticky;
-      top: calc(var(--topbar-h) + 16px);
-      height: calc(100vh - var(--topbar-h) - 32px);
+      top: calc(var(--topbar-h) + 8px);
+      height: calc(100vh - var(--topbar-h) - 16px);
       display: flex; flex-direction: column;
       background: var(--surface);
       border: 1px solid var(--border);
@@ -536,15 +550,10 @@
       overflow: hidden;
       box-shadow: var(--shadow-sm);
     }
-    @media (max-width: 640px) { #archView { position: static; height: 70vh; } }
-    .a-head {
-      flex: 0 0 auto; display: flex; align-items: center; gap: 10px;
-      padding: 8px 12px; border-bottom: 1px solid var(--border);
-      background: var(--chip-bg); font-size: 12px; flex-wrap: wrap;
-    }
-    .a-head strong { font-size: 13px; font-weight: 700; flex: 1; min-width: 0; }
+    @media (max-width: 640px) { #archView { position: static; height: 82vh; } }
     #a-loader {
-      width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
+      position: absolute; top: 10px; right: 10px; z-index: 2;
+      width: 16px; height: 16px; border-radius: 50%;
       border: 2px solid var(--border); border-top-color: var(--brand);
       animation: a-spin 1s linear infinite; display: none;
     }
@@ -552,14 +561,52 @@
     .a-canvas {
       flex: 1 1 auto; min-height: 0;
       display: flex; align-items: center; justify-content: center;
-      background: #fff; overflow: auto; padding: 8px;
+      background: #fff; overflow: auto; padding: 2px;
     }
-    #a-ecosysImage { max-width: 100%; max-height: 100%; display: block; object-fit: contain; }
+    #a-ecosysImage { width: 100%; height: 100%; overflow: auto; }
+    #a-ecosysImage svg { max-width: 100%; height: auto; display: block; margin: auto; }
+    #a-ecosysImage a text { text-decoration: underline; }
+    /* Arch view: drift table mode */
+    #a-table { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 12px 14px; background: var(--surface); }
+    .a-score { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+    .a-score b { color: var(--text); font-size: 13px; }
+    table.a-drift { width: 100%; border-collapse: collapse; font-size: 12px; }
+    table.a-drift th, table.a-drift td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    table.a-drift th { position: sticky; top: 0; background: var(--chip-bg); font-weight: 700; color: var(--text); }
+    table.a-drift tr:hover td { background: var(--bg); }
+    table.a-drift td.mono { font-family: Consolas, Monaco, monospace; }
+    .a-chip-t { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; color: #0f172a; border: 1px solid rgba(0,0,0,.12); }
+    .a-muted-note { color: var(--muted); font-size: 12px; }
     .a-stack-select {
       padding: 5px 8px; border: 1px solid var(--border); border-radius: var(--radius);
       background: var(--bg); color: var(--text); font: inherit; font-size: 12px;
       cursor: pointer; width: 100%;
     }
+    /* Arch view: default landing state (no component picked) */
+    #a-empty { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 32px 24px; background: var(--bg); }
+    .a-empty-head { max-width: 780px; margin: 0 auto 22px; text-align: center; }
+    .a-empty-head h3 { margin: 0 0 6px; font-size: 16px; font-weight: 800; color: var(--text); }
+    .a-empty-head p { margin: 0 auto; max-width: 620px; font-size: 12.5px; line-height: 1.6; color: var(--muted); }
+    .a-stack-grid {
+      max-width: 780px; margin: 0 auto;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px;
+    }
+    .a-stack-card {
+      display: flex; flex-direction: column; gap: 9px; align-items: flex-start;
+      padding: 14px; border: 1px solid var(--border); border-radius: 12px;
+      background: var(--surface); box-shadow: var(--shadow-sm); cursor: pointer;
+      text-align: left; font: inherit; color: inherit;
+      transition: border-color .15s, box-shadow .15s, transform .15s;
+    }
+    .a-stack-card:hover { border-color: var(--brand); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+    .a-stack-card:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+    .a-stack-card-name { font-size: 13px; font-weight: 800; letter-spacing: .03em; color: var(--brand); }
+    .a-stack-card-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+    .a-stack-card .a-chip {
+      font-size: 10.5px; font-weight: 600; padding: 2px 7px; border-radius: 999px;
+      background: var(--chip-bg); color: var(--chip-text); border: 1px solid var(--border);
+    }
+    .a-empty-foot { max-width: 780px; margin: 22px auto 0; text-align: center; }
 
     /* ── Credits / Ack view ─────────────────────────────────── */
     #ackView {
@@ -606,7 +653,7 @@
       font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px;
       background: var(--brand-light); color: var(--brand); margin-top: 4px; white-space: nowrap;
     }
-    .cl-ver.cl-ver-minor { background: #f0fdf4; color: #16a34a; }
+    .cl-ver.cl-ver-minor { background: #f1f5f9; color: #475569; }
     .cl-ver.cl-ver-patch { background: #f8fafc; color: var(--muted); border: 1px solid var(--border); }
     .cl-content h3 { margin: 0 0 6px; font-size: 13px; font-weight: 700; }
     .cl-content ul { margin: 0; padding: 0 0 0 16px; display: flex; flex-direction: column; gap: 3px; }
@@ -616,11 +663,11 @@
       display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 6px;
       border-radius: 4px; margin-right: 4px; vertical-align: middle;
     }
-    .cl-tag-feat { background: #dbeafe; color: #1d4ed8; }
-    .cl-tag-fix  { background: #dcfce7; color: #15803d; }
-    .cl-tag-ux   { background: #fef3c7; color: #b45309; }
-    .cl-tag-perf { background: #f3e8ff; color: #7c3aed; }
-    .cl-tag-docs { background: #e0f2fe; color: #0369a1; }
+    .cl-tag-feat { background: #eff6ff; color: #1d4ed8; }
+    .cl-tag-fix  { background: #f1f5f9; color: #475569; }
+    .cl-tag-ux   { background: #fffbeb; color: #b45309; }
+    .cl-tag-perf { background: #f1f5f9; color: #475569; }
+    .cl-tag-docs { background: #eff6ff; color: #1d4ed8; }
 
     /* ── Phone: graph sidebar collapses to bottom overlay ─── */
     @media (max-width: 640px) {
@@ -693,7 +740,7 @@
       font-size: 12px; margin-bottom: 12px; line-height: 1.5;
     }
     .ua-msg-error { background: var(--cve-bg); color: var(--cve); border: 1px solid #fca5a5; }
-    .ua-msg-ok    { background: var(--new-bg); color: var(--new); border: 1px solid #6ee7b7; }
+    .ua-msg-ok    { background: var(--new-bg); color: var(--new); border: 1px solid #e2e8f0; }
     .ua-badge {
       display: inline-block; padding: 2px 10px; border-radius: var(--radius-full);
       font: 700 11px/1.4 inherit; text-transform: uppercase; letter-spacing: .4px;
@@ -738,7 +785,7 @@
       border: 1px solid #bfdbfe; border-radius: var(--radius-full);
       padding: 3px 10px; cursor: pointer; flex-shrink: 0;
     }
-    .ua-topbar-chip:hover { background: #dbeafe; }
+    .ua-topbar-chip:hover { background: #eff6ff; }
     .ua-bm-list { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
     .ua-bm-item {
       display: flex; align-items: center; gap: 8px; padding: 8px 10px;
@@ -774,86 +821,86 @@
     #docsView summary::before { display: none !important; content: none !important; }
     #docsView details[open] > summary { background: transparent !important; color: inherit !important; }
     /* Docs content: scoped */
-    #docsView { font-size: 13px; line-height: 1.6; color: #1b1f23; }
+    #docsView { font-size: 13px; line-height: 1.6; color: #0f172a; }
     #docsView .d-wrap { padding: 10px 16px 20px; }
-    #docsView h2 { font-size: 1rem; font-weight: 700; margin: 0 0 .35rem; color: #1b1f23; }
-    #docsView h3 { font-size: .9rem; font-weight: 700; margin: .4rem 0 .25rem; color: #1b1f23; }
-    #docsView h4 { font-size: .85rem; font-weight: 700; margin: 0 0 .2rem; color: #1b1f23; }
-    #docsView p { margin: .28rem 0; font-size: 13px; color: #1b1f23; }
+    #docsView h2 { font-size: 1rem; font-weight: 700; margin: 0 0 .35rem; color: #0f172a; }
+    #docsView h3 { font-size: .9rem; font-weight: 700; margin: .4rem 0 .25rem; color: #0f172a; }
+    #docsView h4 { font-size: .85rem; font-weight: 700; margin: 0 0 .2rem; color: #0f172a; }
+    #docsView p { margin: .28rem 0; font-size: 13px; color: #0f172a; }
     #docsView ul, #docsView ol { margin: .28rem 0; font-size: 13px; padding-left: 1.2em; }
-    #docsView a { color: #0366d6; text-decoration: none; }
+    #docsView a { color: #2563eb; text-decoration: none; }
     #docsView a:hover { text-decoration: underline; }
-    #docsView .muted { color: #59636e; }
+    #docsView .muted { color: #64748b; }
     #docsView .small { font-size: .85rem; }
-    #docsView section.block { border: 1px solid #d0d7de; border-radius: 10px; background: #fff; padding: .72rem .78rem; margin-bottom: .72rem; }
-    #docsView .section-sort-note { color: #59636e; font-size: .84rem; margin: .15rem 0 .45rem; }
-    #docsView .callout { border: 1px solid #d0d7de; border-radius: 8px; background: #fbfcfe; padding: .55rem .7rem; margin: .45rem 0; }
+    #docsView section.block { border: 1px solid #e2e8f0; border-radius: 10px; background: #fff; padding: .72rem .78rem; margin-bottom: .72rem; }
+    #docsView .section-sort-note { color: #64748b; font-size: .84rem; margin: .15rem 0 .45rem; }
+    #docsView .callout { border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; padding: .55rem .7rem; margin: .45rem 0; }
     #docsView .api-grid { display: block; margin-top: .45rem; }
     #docsView .endpoint { width: 100%; box-sizing: border-box; border: 1px solid #d9dee3; border-left-width: 6px; border-radius: 6px; margin: 0 0 8px; overflow: hidden; background: #fff; padding: 0; }
     #docsView details.endpoint > summary { list-style: none; }
     #docsView details.endpoint > summary::-webkit-details-marker { display: none; }
     #docsView .endpoint summary.endpoint-head { display: flex !important; align-items: center !important; gap: .55rem !important; flex-wrap: wrap !important; margin: 0 !important; padding: 7px 10px !important; cursor: pointer !important; border-bottom: 1px solid transparent !important; font-size: 13px !important; }
-    #docsView details.endpoint[open] summary.endpoint-head { border-bottom-color: #e8edf2 !important; }
+    #docsView details.endpoint[open] summary.endpoint-head { border-bottom-color: #e2e8f0 !important; }
     #docsView .endpoint-body { padding: 7px 10px 10px; }
-    #docsView .endpoint.method-get { border-left-color: #61affe; }
-    #docsView .endpoint.method-post { border-left-color: #49cc90; }
-    #docsView .endpoint.method-put { border-left-color: #fca130; }
+    #docsView .endpoint.method-get { border-left-color: #2563eb; }
+    #docsView .endpoint.method-post { border-left-color: #64748b; }
+    #docsView .endpoint.method-put { border-left-color: #b45309; }
     #docsView .endpoint.method-get summary.endpoint-head { background: rgba(97,175,254,.10) !important; }
     #docsView .endpoint.method-post summary.endpoint-head { background: rgba(73,204,144,.10) !important; }
     #docsView .endpoint.method-put summary.endpoint-head { background: rgba(252,161,48,.10) !important; }
-    #docsView details.endpoint[open] summary.endpoint-head { color: #1b1f23 !important; }
+    #docsView details.endpoint[open] summary.endpoint-head { color: #0f172a !important; }
     #docsView .method { display: inline-block; min-width: 44px; text-align: center; padding: .2rem .45rem; border-radius: 4px; font-size: .76rem; font-weight: 700; color: #fff !important; border: none; line-height: 1.4; }
-    #docsView .method.get { background: #61affe; }
-    #docsView .method.post { background: #49cc90; }
-    #docsView .method.put { background: #fca130; }
-    #docsView .path { font-family: Consolas, Monaco, "SFMono-Regular", Menlo, monospace; font-size: .9rem; font-weight: 700; overflow-wrap: anywhere; color: #1b1f23; }
-    #docsView .tag { display: inline-block; padding: .1rem .35rem; border: 1px solid #d0d7de; border-radius: 999px; font-size: .72rem; background: #fff; margin-right: .3rem; margin-top: .2rem; color: #59636e; }
+    #docsView .method.get { background: #2563eb; }
+    #docsView .method.post { background: #64748b; }
+    #docsView .method.put { background: #b45309; }
+    #docsView .path { font-family: Consolas, Monaco, "SFMono-Regular", Menlo, monospace; font-size: .9rem; font-weight: 700; overflow-wrap: anywhere; color: #0f172a; }
+    #docsView .tag { display: inline-block; padding: .1rem .35rem; border: 1px solid #e2e8f0; border-radius: 999px; font-size: .72rem; background: #fff; margin-right: .3rem; margin-top: .2rem; color: #64748b; }
     #docsView table { width: 100%; border-collapse: collapse; margin: .45rem 0 .7rem; table-layout: fixed; font-size: 12px; }
-    #docsView th, #docsView td { border: 1px solid #d0d7de; padding: .42rem .5rem; text-align: left; vertical-align: top; word-break: break-word; overflow-wrap: anywhere; color: #1b1f23; }
-    #docsView thead th { background: #f4f6f8; }
-    #docsView code { font-family: Consolas, Monaco, "SFMono-Regular", Menlo, monospace; font-size: 12px; color: #1b1f23; }
+    #docsView th, #docsView td { border: 1px solid #e2e8f0; padding: .42rem .5rem; text-align: left; vertical-align: top; word-break: break-word; overflow-wrap: anywhere; color: #0f172a; }
+    #docsView thead th { background: #f1f5f9; }
+    #docsView code { font-family: Consolas, Monaco, "SFMono-Regular", Menlo, monospace; font-size: 12px; color: #0f172a; }
     #docsView pre { margin: .3rem 0 0; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; }
-    #docsView pre code { display: block; background: #f6f8fa; border: 1px solid #d0d7de; border-radius: 6px; padding: .5rem .6rem; font-size: 12px; }
-    #docsView code.inline { padding: .06rem .25rem; border: 1px solid #d0d7de; border-radius: 4px; background: #f6f8fa; font-size: 12px; }
-    #docsView .status { display: inline-block; font-size: .76rem; padding: .16rem .45rem; border-radius: 999px; border: 1px solid #d0d7de; vertical-align: middle; }
-    #docsView .status.ok   { background: #dff4e4; color: #1f6f3d; border-color: #9cd6ae; }
-    #docsView .status.warn { background: #fff5cc; color: #7a5d00; border-color: #ead171; }
-    #docsView .status.err  { background: #fde7e9; color: #8b1e2d; border-color: #f1abb5; }
-    #docsView .note { border-left: 4px solid #9fb9d9; padding-left: .75rem; margin-top: .5rem; color: #59636e; }
-    #docsView .toplink { display: inline-block; margin-top: .3rem; font-size: .85rem; color: #0366d6; }
+    #docsView pre code { display: block; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px; padding: .5rem .6rem; font-size: 12px; }
+    #docsView code.inline { padding: .06rem .25rem; border: 1px solid #e2e8f0; border-radius: 4px; background: #f1f5f9; font-size: 12px; }
+    #docsView .status { display: inline-block; font-size: .76rem; padding: .16rem .45rem; border-radius: 999px; border: 1px solid #e2e8f0; vertical-align: middle; }
+    #docsView .status.ok   { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
+    #docsView .status.warn { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+    #docsView .status.err  { background: #fef2f2; color: #b91c1c; border-color: #fca5a5; }
+    #docsView .note { border-left: 4px solid #cbd5e1; padding-left: .75rem; margin-top: .5rem; color: #64748b; }
+    #docsView .toplink { display: inline-block; margin-top: .3rem; font-size: .85rem; color: #2563eb; }
     #docsView .mermaid { text-align: center; margin: .8rem 0 1.2rem; overflow-x: auto; }
     /* arch-sub: collapsible details blocks inside #d-architecture */
-    #docsView details.arch-sub { border: 1px solid #d0d7de; border-radius: 8px; background: #fff; margin-top: .6rem; overflow: hidden; }
-    #docsView summary.d-arch-sum { list-style: none; display: flex !important; align-items: center !important; gap: .45rem !important; padding: .58rem .8rem !important; cursor: pointer; font-size: .88rem !important; font-weight: 700 !important; color: #1b1f23 !important; background: #f6f8fa !important; border-bottom: 1px solid transparent; transition: background .12s !important; }
-    #docsView details.arch-sub[open] > summary.d-arch-sum { border-bottom-color: #d0d7de !important; }
-    #docsView summary.d-arch-sum:hover { background: #edf0f4 !important; }
+    #docsView details.arch-sub { border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; margin-top: .6rem; overflow: hidden; }
+    #docsView summary.d-arch-sum { list-style: none; display: flex !important; align-items: center !important; gap: .45rem !important; padding: .58rem .8rem !important; cursor: pointer; font-size: .88rem !important; font-weight: 700 !important; color: #0f172a !important; background: #f1f5f9 !important; border-bottom: 1px solid transparent; transition: background .12s !important; }
+    #docsView details.arch-sub[open] > summary.d-arch-sum { border-bottom-color: #e2e8f0 !important; }
+    #docsView summary.d-arch-sum:hover { background: #f1f5f9 !important; }
     #docsView summary.d-arch-sum::-webkit-details-marker { display: none !important; }
     #docsView summary.d-arch-sum::before { content: '\203A' !important; display: inline-block !important; font-size: 15px !important; line-height: 1 !important; transition: transform .15s !important; }
     #docsView details.arch-sub[open] > summary.d-arch-sum::before { transform: rotate(90deg) !important; }
     #docsView .arch-sub-body { padding: .55rem .8rem .8rem; }
     /* arch-view: nested frontend-view details inside arch-sub */
-    #docsView details.arch-view { border: 1px solid #e8edf2; border-radius: 6px; margin: .28rem 0; background: #fafbfd; overflow: hidden; }
-    #docsView summary.d-arch-view-sum { list-style: none; display: flex !important; align-items: center !important; gap: .4rem !important; padding: .38rem .6rem !important; cursor: pointer; font-size: .82rem !important; font-weight: 600 !important; color: #1b1f23 !important; background: transparent !important; transition: background .12s !important; }
-    #docsView details.arch-view[open] > summary.d-arch-view-sum { background: #f0f3f6 !important; border-bottom: 1px solid #e8edf2 !important; }
-    #docsView summary.d-arch-view-sum:hover { background: #edf0f4 !important; }
+    #docsView details.arch-view { border: 1px solid #e2e8f0; border-radius: 6px; margin: .28rem 0; background: #f8fafc; overflow: hidden; }
+    #docsView summary.d-arch-view-sum { list-style: none; display: flex !important; align-items: center !important; gap: .4rem !important; padding: .38rem .6rem !important; cursor: pointer; font-size: .82rem !important; font-weight: 600 !important; color: #0f172a !important; background: transparent !important; transition: background .12s !important; }
+    #docsView details.arch-view[open] > summary.d-arch-view-sum { background: #f1f5f9 !important; border-bottom: 1px solid #e2e8f0 !important; }
+    #docsView summary.d-arch-view-sum:hover { background: #f1f5f9 !important; }
     #docsView summary.d-arch-view-sum::-webkit-details-marker { display: none !important; }
     #docsView summary.d-arch-view-sum::before { content: '\203A' !important; display: inline-block !important; font-size: 13px !important; line-height: 1 !important; transition: transform .15s !important; }
     #docsView details.arch-view[open] > summary.d-arch-view-sum::before { transform: rotate(90deg) !important; }
     #docsView .arch-view-body { padding: .35rem .62rem .5rem; font-size: .82rem; color: #44505c; line-height: 1.55; }
-    #docsView .arch-view-body code { font-family: Consolas,Monaco,monospace; font-size: 11px; background: #f0f3f6; border: 1px solid #d0d7de; border-radius: 3px; padding: .05rem .25rem; }
+    #docsView .arch-view-body code { font-family: Consolas,Monaco,monospace; font-size: 11px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 3px; padding: .05rem .25rem; }
     #docsView .endpoint-actions { display: flex; flex-wrap: wrap; gap: .45rem; margin: 0 0 6px; }
-    #docsView .test-link { display: inline-flex; align-items: center; padding: .26rem .55rem; border: 1px solid #b9c2cc; border-radius: 5px; background: #fff; color: #1f2937; font-size: .8rem; font-weight: 600; text-decoration: none; }
-    #docsView .test-link:hover { background: #f6f8fa; text-decoration: none; }
+    #docsView .test-link { display: inline-flex; align-items: center; padding: .26rem .55rem; border: 1px solid #94a3b8; border-radius: 5px; background: #fff; color: #1f2937; font-size: .8rem; font-weight: 600; text-decoration: none; }
+    #docsView .test-link:hover { background: #f1f5f9; text-decoration: none; }
     #docsView .sample-url { display: none; }
     #docsView .copy-wrap { position: relative; margin-top: 4px; }
     #docsView .copy-wrap .copy-btn { position: absolute; top: 6px; right: 6px; }
     #docsView .copy-wrap pre { margin: 0; }
-    #docsView .copy-btn, #docsView .copy-api-btn, #docsView .d-copy-btn { display: inline-flex; align-items: center; padding: .22rem .5rem; font-size: .76rem; border: 1px solid #b9c2cc; border-radius: 5px; background: #fff; color: #1f2937; cursor: pointer; }
+    #docsView .copy-btn, #docsView .copy-api-btn, #docsView .d-copy-btn { display: inline-flex; align-items: center; padding: .22rem .5rem; font-size: .76rem; border: 1px solid #94a3b8; border-radius: 5px; background: #fff; color: #1f2937; cursor: pointer; }
     #docsView .d-copy-btn { position: absolute; top: 6px; right: 6px; padding: 3px 8px; }
     #docsView .d-copylink-btn { font-size: .75rem; padding: 2px 7px; border: 1px solid #cbd5e1; border-radius: 4px; background: #f1f5f9; cursor: pointer; margin-left: 8px; }
     #docsView .d-test-link { font-size: .78rem; margin-left: 8px; color: var(--brand); text-decoration: none; }
     #docsView .d-test-link:hover { text-decoration: underline; }
-    #docsView .copy-btn:hover, #docsView .copy-api-btn:hover { background: #f6f8fa; }
+    #docsView .copy-btn:hover, #docsView .copy-api-btn:hover { background: #f1f5f9; }
     #docsView .copy-api-btn { margin-left: auto; font-size: 11px; }
     #docsView .kv { margin: .35rem 0 0; padding-left: 1rem; }
     #docsView .kv li { margin: .15rem 0; font-size: 12px; }
@@ -865,18 +912,18 @@
     /* Sidebar live stats widget */
     .sb-stat-group { border: 1px solid var(--border); border-radius: 7px; overflow: hidden; margin-bottom: 6px; }
     .sb-stat-group:last-child { margin-bottom: 0; }
-    .sb-stat-head { list-style: none; display: flex; align-items: center; gap: 5px; padding: 6px 9px; cursor: pointer; font-size: 11px; font-weight: 700; color: #1b1f23; background: #f6f8fa; border-bottom: 1px solid transparent; }
+    .sb-stat-head { list-style: none; display: flex; align-items: center; gap: 5px; padding: 6px 9px; cursor: pointer; font-size: 11px; font-weight: 700; color: #0f172a; background: #f1f5f9; border-bottom: 1px solid transparent; }
     .sb-stat-group[open] > .sb-stat-head { border-bottom-color: var(--border); }
     .sb-stat-head::-webkit-details-marker { display: none; }
     .sb-stat-head::before { content: '›'; font-size: 12px; display: inline-block; transition: transform .13s; }
     .sb-stat-group[open] > .sb-stat-head::before { transform: rotate(90deg); }
     .sb-stat-body { padding: 5px 8px 7px; }
-    .sb-stat-row { display: flex; justify-content: space-between; align-items: center; padding: 2px 0; font-size: 11px; color: #1b1f23; border-bottom: 1px solid #f0f3f6; }
+    .sb-stat-row { display: flex; justify-content: space-between; align-items: center; padding: 2px 0; font-size: 11px; color: #0f172a; border-bottom: 1px solid #f1f5f9; }
     .sb-stat-row:last-child { border-bottom: none; }
-    .sb-stat-row span:first-child { color: #59636e; }
-    .sb-stat-row span:last-child { font-weight: 700; color: #0366d6; }
-    .sb-stat-row.size-row span:last-child { color: #1a7f37; font-size: 10px; }
-    .sb-stat-divider { border: none; border-top: 1px dashed #e0e4ea; margin: 4px 0; }
+    .sb-stat-row span:first-child { color: #64748b; }
+    .sb-stat-row span:last-child { font-weight: 700; color: #2563eb; }
+    .sb-stat-row.size-row span:last-child { color: #475569; font-size: 10px; }
+    .sb-stat-divider { border: none; border-top: 1px dashed #e2e8f0; margin: 4px 0; }
 
     /* ── Back to top FAB ────────────────────────────────────── */
     #backToTop {
@@ -893,36 +940,36 @@
 
     /* ── CVE controls sidebar (aggregates) ─────────────────── */
     #cveControls {
-      --bad:    #b91c1c;  --bad-bg:  #fff0f0;
-      --warn:   #c2410c;  --warn-bg: #fff7ed;
-      --ok:     #166534;  --ok-bg:   #edfdf4;
-      --info:   #0369a1;  --info-bg: #eef6ff;
-      --reddit: #d9460f;  --reddit-bg: #fff3ee;
-      --purple: #6d28d9;
-      --chip:   #e8f0fe;  --chipText: #334155;
-      --line:   #dde6f5;  --panel:    #ffffff;
+      --bad:    #b91c1c;  --bad-bg:  #fef2f2;
+      --warn:   #b45309;  --warn-bg: #fffbeb;
+      --ok:     #475569;  --ok-bg:   #f1f5f9;
+      --info:   #475569;  --info-bg: #f1f5f9;
+      --reddit: #475569;  --reddit-bg: #f1f5f9;
+      --purple: #475569;
+      --chip:   #eff6ff;  --chipText: #334155;
+      --line:   #e2e8f0;  --panel:    #ffffff;
       --rad:    10px;
     }
 
     /* ── CVE view (scoped) ──────────────────────────────────── */
     #cveView {
       /* light-theme token overrides */
-      --bg:       #f0f5ff;
+      --bg:       #f8fafc;
       --panel:    #ffffff;
       --text:     #1e293b;
       --muted:    #64748b;
       --brand:    #2563eb;
       --brand-fg: #ffffff;
-      --line:     #dde6f5;
-      --chip:     #e8f0fe;
+      --line:     #e2e8f0;
+      --chip:     #eff6ff;
       --chipText: #334155;
       --focus:    #2563eb;
-      --bad:    #b91c1c;  --bad-bg:  #fff0f0;
-      --warn:   #c2410c;  --warn-bg: #fff7ed;
-      --ok:     #166534;  --ok-bg:   #edfdf4;
-      --info:   #0369a1;  --info-bg: #eef6ff;
-      --reddit: #d9460f;  --reddit-bg: #fff3ee;
-      --purple: #6d28d9;  --purple-bg: #f3f0ff;
+      --bad:    #b91c1c;  --bad-bg:  #fef2f2;
+      --warn:   #b45309;  --warn-bg: #fffbeb;
+      --ok:     #475569;  --ok-bg:   #f1f5f9;
+      --info:   #475569;  --info-bg: #f1f5f9;
+      --reddit: #475569;  --reddit-bg: #f1f5f9;
+      --purple: #475569;  --purple-bg: #f1f5f9;
       --link:   #1d4ed8;
       --shadow: 0 1px 5px rgba(37,99,235,.07), 0 2px 12px rgba(0,0,0,.05);
       --rad:    10px;
@@ -932,7 +979,7 @@
       top: calc(var(--topbar-h) + 16px);
       height: calc(100vh - var(--topbar-h) - 32px);
       overflow: hidden;
-      border: 1px solid #dde6f5;
+      border: 1px solid #e2e8f0;
       border-radius: 12px;
       box-shadow: var(--shadow-sm);
       display: flex;
@@ -1168,10 +1215,10 @@
     #dashboardView .ri-card-body a { color: var(--brand); text-decoration: none; }
     #dashboardView .ri-card-body a:hover { text-decoration: underline; }
     #dashboardView .ri-pill { display: inline-block; font-size: 10px; font-weight: 600; padding: 1px 7px; border-radius: 999px; margin: 2px 2px 0 0; }
-    #dashboardView .ri-pill-red    { background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; }
-    #dashboardView .ri-pill-amber  { background:#fef3c7; color:#b45309; border:1px solid #fcd34d; }
-    #dashboardView .ri-pill-green  { background:#dcfce7; color:#16a34a; border:1px solid #86efac; }
-    #dashboardView .ri-pill-blue   { background:#dbeafe; color:#1d4ed8; border:1px solid #93c5fd; }
+    #dashboardView .ri-pill-red    { background:#fef2f2; color:#b91c1c; border:1px solid #fca5a5; }
+    #dashboardView .ri-pill-amber  { background:#fffbeb; color:#b45309; border:1px solid #fcd34d; }
+    #dashboardView .ri-pill-green  { background:#f1f5f9; color:#475569; border:1px solid #e2e8f0; }
+    #dashboardView .ri-pill-blue   { background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; }
     #dashboardView .ri-pill-gray   { background:#f3f4f6; color:#374151; border:1px solid #d1d5db; }
     #dashboardView .ri-post-item { font-size:11px; margin-bottom:4px; border-bottom:1px solid var(--border); padding-bottom:4px; }
     #dashboardView .ri-post-item:last-child { border-bottom:none; margin-bottom:0; padding-bottom:0; }
@@ -1217,8 +1264,8 @@
       padding: 8px 12px; border-radius: var(--radius-sm);
       font-size: 12px; margin-bottom: 6px; line-height: 1.5;
     }
-    #networkView .nk-msg-error { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
-    #networkView .nk-msg-ok    { background: #dcfce7; color: #16a34a; border: 1px solid #86efac; }
+    #networkView .nk-msg-error { background: #fef2f2; color: #b91c1c; border: 1px solid #fca5a5; }
+    #networkView .nk-msg-ok    { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
     #networkView .nk-release-list { display: flex; flex-direction: column; gap: 8px; }
     #networkView .nk-release-card {
       border: 1px solid var(--border); border-radius: var(--radius);
@@ -1242,7 +1289,7 @@
       padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px;
     }
     #networkView .nk-report-item:last-child { border-bottom: none; padding-bottom: 0; }
-    #networkView .nk-outcome-ok      { color: #16a34a; font-weight: 600; }
+    #networkView .nk-outcome-ok      { color: #475569; font-weight: 600; }
     #networkView .nk-outcome-issue   { color: #b91c1c; font-weight: 600; }
     #networkView .nk-outcome-upgrade { color: #1d4ed8; font-weight: 600; }
     #networkView .nk-empty { color: var(--muted); font-size: 12px; text-align: center; padding: 24px 0; }
@@ -1283,7 +1330,7 @@
   <!-- ── Topbar: brand + nav only ── -->
   <header class="topbar" role="banner" id="topbar">
     <div class="topbar-main">
-      <a class="brand" href="/" aria-label="Releasetrain home">Releasetrain <em>v3.21.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home">Releasetrain <em>v3.23.0</em></a>
       <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
       <div class="topbar-spacer"></div>
       <button class="nav-toggle" type="button" id="navToggle"
@@ -1343,6 +1390,10 @@
                 title="AI model releases (LLM, embedding, multimodal) vs. regular software">
                 <span class="lbl">🤖 LLM</span><span id="btn-llm" class="count">0</span>
               </button>
+              <button class="toggle" data-key="hv" aria-pressed="false" type="button"
+                title="Hypervisor / virtualization-platform releases (VMware, VirtualBox, Xen, Proxmox, XCP-ng)">
+                <span class="lbl">🖥️ Hypervisor</span><span id="btn-hv" class="count">0</span>
+              </button>
               <button class="toggle" data-key="potential-cve" aria-pressed="false" type="button"
                 title="Versions with Reddit discussions mentioning both latest update and CVE">
                 <span class="lbl">⚠️ Pot. CVE</span><span id="btn-potential-cve" class="count">0</span>
@@ -1393,6 +1444,7 @@
               <div class="kpi">🧩 Components <em id="kpi-uniq">0</em></div>
               <div class="kpi">💬 Reddit <em id="kpi-reddit">0</em></div>
               <div class="kpi">🤖 AI Models <em id="kpi-llm">0</em></div>
+              <div class="kpi">🖥️ Hypervisors <em id="kpi-hv">0</em></div>
               <div class="kpi" id="kpi-range">📅 Range: <em>—</em></div>
             </div>
           </div>
@@ -1425,10 +1477,12 @@
           <div class="sidebar-section" style="padding-bottom:10px">
             <div style="position:relative;height:118px"><canvas id="home-activity-chart"></canvas></div>
             <p style="margin:2px 0 0;font-size:10px;color:var(--muted)">Click a label to show/hide that line.</p>
-            <div style="display:flex;gap:10px;justify-content:center;font-size:10px;color:var(--muted);margin-top:4px">
-              <span><span style="color:#6366f1;font-size:12px">●</span> Versions</span>
-              <span><span style="color:#ef4444;font-size:12px">●</span> CVE</span>
-              <span><span style="color:#22c55e;font-size:12px">●</span> Community</span>
+            <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;font-size:10px;color:var(--muted);margin-top:4px">
+              <span><span style="color:#2563eb;font-size:12px">●</span> Versions</span>
+              <span><span style="color:#dc2626;font-size:12px">●</span> CVE</span>
+              <span><span style="color:#64748b;font-size:12px">●</span> Community</span>
+              <span><span style="color:#475569;font-size:12px">●</span> LLM</span>
+              <span><span style="color:#0f766e;font-size:12px">●</span> Hypervisor</span>
             </div>
           </div>
         </details>
@@ -1453,8 +1507,8 @@
             <div style="display:flex;flex-direction:column;gap:7px">
               <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="g-show-versions" checked style="accent-color:var(--brand)"> <span class="g-legend-dot" style="background:#64748b"></span>Versions</label>
               <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="g-show-cve" checked style="accent-color:var(--brand)"> <span class="g-legend-dot" style="background:#dc2626"></span>CVE versions</label>
-              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="g-show-reddit" checked style="accent-color:var(--brand)"> <span class="g-legend-dot" style="background:#a855f7"></span>Reddit posts</label>
-              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="g-show-so" checked style="accent-color:var(--brand)"> <span class="g-legend-dot" style="background:#3b82f6"></span>StackOverflow</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="g-show-reddit" checked style="accent-color:var(--brand)"> <span class="g-legend-dot" style="background:#64748b"></span>Reddit posts</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="g-show-so" checked style="accent-color:var(--brand)"> <span class="g-legend-dot" style="background:#2563eb"></span>StackOverflow</label>
             </div>
           </div>
         </details>
@@ -1464,7 +1518,7 @@
           <div class="sidebar-section" style="padding-bottom:10px">
             <div style="display:flex;flex-direction:column;gap:7px">
               <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="g-risk-only" style="accent-color:var(--brand)"> High-risk posts only</label>
-              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="g-cve-posts" style="accent-color:var(--brand)"> <span class="g-legend-dot" style="background:#fb7185"></span>CVE-mentioning posts</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="g-cve-posts" style="accent-color:var(--brand)"> <span class="g-legend-dot" style="background:#94a3b8"></span>CVE-mentioning posts</label>
             </div>
           </div>
         </details>
@@ -1488,13 +1542,13 @@
           <summary>Legend</summary>
           <div class="sidebar-section" style="font-size:11px;color:var(--muted);line-height:2;padding-bottom:8px">
             <div><span class="g-legend-dot" style="background:#2563eb;width:13px;height:13px"></span> Component hub</div>
-            <div><span class="g-legend-dot" style="background:#059669"></span> Minor release</div>
-            <div><span class="g-legend-dot" style="background:#c2410c"></span> Major release</div>
+            <div><span class="g-legend-dot" style="background:#475569"></span> Minor release</div>
+            <div><span class="g-legend-dot" style="background:#b45309"></span> Major release</div>
             <div><span class="g-legend-dot" style="background:#64748b"></span> Patch release</div>
             <div><span class="g-legend-dot" style="background:#dc2626"></span> CVE version</div>
-            <div><span class="g-legend-dot" style="background:#a855f7"></span> Reddit post</div>
-            <div><span class="g-legend-dot" style="background:#fb7185"></span> Reddit (CVE mention)</div>
-            <div><span class="g-legend-dot" style="background:#3b82f6"></span> StackOverflow</div>
+            <div><span class="g-legend-dot" style="background:#64748b"></span> Reddit post</div>
+            <div><span class="g-legend-dot" style="background:#94a3b8"></span> Reddit (CVE mention)</div>
+            <div><span class="g-legend-dot" style="background:#2563eb"></span> StackOverflow</div>
           </div>
         </details>
 
@@ -1510,6 +1564,13 @@
 
       <!-- ── Arch controls (shown only in arch view) ── -->
       <div id="archControls" style="display:none">
+
+        <div class="sidebar-section" style="padding-bottom:10px">
+          <div style="display:flex;gap:6px">
+            <button id="a-viewDiagram" class="btn btn-primary" type="button" style="flex:1;font-size:12px;padding:5px 0">Diagram</button>
+            <button id="a-viewTable" class="btn btn-ghost" type="button" style="flex:1;font-size:12px;padding:5px 0">Table</button>
+          </div>
+        </div>
 
         <details class="sb-details">
           <summary>Stacks</summary>
@@ -1734,9 +1795,9 @@
         <div class="sidebar-section" style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px">
           <div class="ri-ctrl-label" style="margin-bottom:6px">Score legend</div>
           <div style="font-size:11px;line-height:1.8">
-            <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#16a34a;margin-right:5px;vertical-align:middle"></span><strong>0–24 Low:</strong> No blocking advisories</div>
+            <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#475569;margin-right:5px;vertical-align:middle"></span><strong>0–24 Low:</strong> No blocking advisories</div>
             <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#b45309;margin-right:5px;vertical-align:middle"></span><strong>25–49 Medium:</strong> Review before deploying</div>
-            <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#c2410c;margin-right:5px;vertical-align:middle"></span><strong>50–74 High:</strong> Staged rollout required</div>
+            <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#b45309;margin-right:5px;vertical-align:middle"></span><strong>50–74 High:</strong> Staged rollout required</div>
             <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#b91c1c;margin-right:5px;vertical-align:middle"></span><strong>75–100 Critical:</strong> Defer deployment</div>
           </div>
           <div class="ri-ctrl-label" style="margin-top:8px;margin-bottom:4px">Scoring factors</div>
@@ -1784,13 +1845,21 @@
 
       <!-- Arch canvas (shown only in arch view) -->
       <div id="archView" style="display:none">
-        <div class="a-head">
-          <strong>🏗 Ecosystem Architecture</strong>
-          <div id="a-loader"></div>
-          <span id="a-title" style="color:var(--muted);font-size:11px">—</span>
-        </div>
+        <div id="a-loader"></div>
+        <span id="a-title" hidden></span>
         <div class="a-canvas">
-          <img id="a-ecosysImage" alt="Ecosystem architecture diagram" />
+          <div id="a-ecosysImage" role="img" aria-label="Ecosystem architecture diagram"></div>
+        </div>
+        <div id="a-table" style="display:none"></div>
+        <div id="a-empty" style="display:none">
+          <div class="a-empty-head">
+            <h3>Choose a stack to visualize</h3>
+            <p>Render a live architecture diagram for any technology stack. Every component is annotated with its installed vs. latest version, update severity, and any known CVEs. Pick a sample stack below, or add your own components from the sidebar.</p>
+          </div>
+          <div id="a-stackGrid" class="a-stack-grid"></div>
+          <div class="a-empty-foot">
+            <button id="a-todayBtn" class="btn btn-ghost" type="button" style="font-size:12px">📅 Show components updated today</button>
+          </div>
         </div>
       </div>
 
@@ -1849,12 +1918,12 @@ graph TB
     RT_V --> UI_FEED & UI_CVE & UI_GRAPH
     RT_R --> UI_FEED
     COL_V & COL_R --> CHAT_EMB --> CHAT_LLM --> CHAT_UI
-    classDef ext  fill:#eef6ff,stroke:#9fb9d9,color:#1b1f23
-    classDef bot  fill:#fff7ea,stroke:#ead171,color:#1b1f23
-    classDef db   fill:#eefbf0,stroke:#9cd6ae,color:#1b1f23
-    classDef api  fill:#f4f6f8,stroke:#d0d7de,color:#1b1f23
-    classDef ui   fill:#fbfcfe,stroke:#d0d7de,color:#1b1f23
-    classDef chat fill:#fde7e9,stroke:#f1abb5,color:#1b1f23
+    classDef ext  fill:#eff6ff,stroke:#cbd5e1,color:#0f172a
+    classDef bot  fill:#fffbeb,stroke:#fde68a,color:#0f172a
+    classDef db   fill:#f1f5f9,stroke:#e2e8f0,color:#0f172a
+    classDef api  fill:#f1f5f9,stroke:#e2e8f0,color:#0f172a
+    classDef ui   fill:#f8fafc,stroke:#e2e8f0,color:#0f172a
+    classDef chat fill:#fef2f2,stroke:#fca5a5,color:#0f172a
     class SRC1,SRC2,SRC3,SRC4 ext
     class BOT_V,BOT_R,BOT_ML bot
     class COL_V,COL_R db
@@ -1909,7 +1978,7 @@ flowchart LR
     BROWS --> DB_V
     RUN   --> DB_V
     COMM  --> DB_R
-    classDef db fill:#eefbf0,stroke:#9cd6ae,color:#1b1f23
+    classDef db fill:#f1f5f9,stroke:#e2e8f0,color:#0f172a
     class DB_V,DB_R db
 </div>
 </div>
@@ -1942,7 +2011,7 @@ flowchart LR
     end
     C1 --> N2 --> E3 --> E4 --> S1
     C2 --> N1 --> E1 --> E2 --> S2
-    classDef db fill:#eefbf0,stroke:#9cd6ae,color:#1b1f23
+    classDef db fill:#f1f5f9,stroke:#e2e8f0,color:#0f172a
     class S1,S2 db
 </div>
 </div>
@@ -1979,7 +2048,7 @@ graph LR
     VER --> DB_V
     AGG --> DB_V
     RED --> DB_R
-    classDef db fill:#eefbf0,stroke:#9cd6ae,color:#1b1f23
+    classDef db fill:#f1f5f9,stroke:#e2e8f0,color:#0f172a
     class DB_V,DB_R db
 </div>
 </div>
@@ -2072,26 +2141,26 @@ flowchart TD
     USER --> Q --> RET
     DB_V & DB_R --> IDX
     IDX --> RET --> RANK --> AUG --> LLM --> ANS(["Grounded answer<br/>with source citations"])
-    classDef db   fill:#eefbf0,stroke:#9cd6ae,color:#1b1f23
-    classDef chat fill:#fde7e9,stroke:#f1abb5,color:#1b1f23
+    classDef db   fill:#f1f5f9,stroke:#e2e8f0,color:#0f172a
+    classDef chat fill:#fef2f2,stroke:#fca5a5,color:#0f172a
     class DB_V,DB_R,IDX db
     class Q,RET,RANK,AUG,LLM chat
 </div>
 <div style="margin-top:.55rem;display:grid;grid-template-columns:1fr 1fr;gap:.4rem">
   <div class="callout" style="padding:.45rem .6rem">
-    <p class="small" style="font-weight:700;margin:0 0 .18rem;color:#1b1f23">Embedding model</p>
+    <p class="small" style="font-weight:700;margin:0 0 .18rem;color:#0f172a">Embedding model</p>
     <p class="small muted" style="margin:0">sentence-transformers all-MiniLM-L6-v2 or OpenAI text-embedding-3-small. Encodes release notes and Reddit posts into dense 384 or 1536 dimensional vectors indexed in FAISS.</p>
   </div>
   <div class="callout" style="padding:.45rem .6rem">
-    <p class="small" style="font-weight:700;margin:0 0 .18rem;color:#1b1f23">LLM</p>
+    <p class="small" style="font-weight:700;margin:0 0 .18rem;color:#0f172a">LLM</p>
     <p class="small muted" style="margin:0">Served via DigitalOcean GenAI Platform. Llama 3 70B or Mistral 7B receives an augmented prompt containing retrieved release context and returns a grounded, cited answer.</p>
   </div>
   <div class="callout" style="padding:.45rem .6rem">
-    <p class="small" style="font-weight:700;margin:0 0 .18rem;color:#1b1f23">Vector store</p>
+    <p class="small" style="font-weight:700;margin:0 0 .18rem;color:#0f172a">Vector store</p>
     <p class="small muted" style="margin:0">FAISS in memory index rebuilt at startup from both collections. Top k cosine similarity retrieval with configurable k (default 10 documents per query).</p>
   </div>
   <div class="callout" style="padding:.45rem .6rem">
-    <p class="small" style="font-weight:700;margin:0 0 .18rem;color:#1b1f23">Retrieval strategy</p>
+    <p class="small" style="font-weight:700;margin:0 0 .18rem;color:#0f172a">Retrieval strategy</p>
     <p class="small muted" style="margin:0">Hybrid: dense vector search over embeddings plus sparse BM25 keyword match over version IDs and CVE strings. Results merged and reranked before prompt injection.</p>
   </div>
 </div>
@@ -2200,7 +2269,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
 <h2>Aggregation endpoints</h2><p class="section-sort-note">Endpoints collapsed by default, ordered method-first then route.</p>
 <p class="small muted">Measure volume, gaps, and classification counts across both collections. All date params use <code class="inline">YYYYMMDD</code> format. Range-based endpoints default to the rolling 2-year window when <code class="inline">start</code>/<code class="inline">end</code> are omitted.</p>
 
-<h3 style="margin:.7rem 0 .3rem;font-size:.88rem;color:#59636e;text-transform:uppercase;letter-spacing:.04em">Versions · <code style="font-size:.8rem;text-transform:none">/api/aggregate/v/*</code></h3>
+<h3 style="margin:.7rem 0 .3rem;font-size:.88rem;color:#64748b;text-transform:uppercase;letter-spacing:.04em">Versions · <code style="font-size:.8rem;text-transform:none">/api/aggregate/v/*</code></h3>
 <div class="api-grid">
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/v/typeBreakdown</span></summary><div class="endpoint-body"><p>CVE vs release-note split plus per-channel breakdown for a date range. Omit <code class="inline">start</code>/<code class="inline">end</code> to use the rolling 2-year window.</p><div><span class="tag">start optional</span><span class="tag">end optional</span></div><pre><code>curl "https://releasetrain.io/api/aggregate/v/typeBreakdown?start=20250101&end=20251231"</code></pre><pre><code>{
   "range": { "start": "20250101", "end": "20251231" },
@@ -2218,7 +2287,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/v/versionCountByDay</span></summary><div class="endpoint-body"><p>Day-by-day version counts over an explicit date range.</p><div><span class="tag">start=YYYYMMDD required</span><span class="tag">end=YYYYMMDD required</span></div><pre><code>curl "https://releasetrain.io/api/aggregate/v/versionCountByDay?start=20250701&amp;end=20250730"</code></pre><pre><code>{ "range": { "start": "20250701", "end": "20250730" }, "days": [{ "_id": "20250701", "count": 12 }] }</code></pre></div></details>
 </div>
 
-<h3 style="margin:.9rem 0 .3rem;font-size:.88rem;color:#59636e;text-transform:uppercase;letter-spacing:.04em">Community · <code style="font-size:.8rem;text-transform:none">/api/aggregate/reddit/*</code></h3>
+<h3 style="margin:.9rem 0 .3rem;font-size:.88rem;color:#64748b;text-transform:uppercase;letter-spacing:.04em">Community · <code style="font-size:.8rem;text-transform:none">/api/aggregate/reddit/*</code></h3>
 <div class="api-grid">
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/reddit/summary</span></summary><div class="endpoint-body"><p>Full overview in one call: totals, Reddit vs Stack Overflow split, top subreddits/components, and score stats. Omit <code class="inline">start</code>/<code class="inline">end</code> for the rolling 2-year window.</p><div><span class="tag">start optional</span><span class="tag">end optional</span><span class="tag">topN optional · default 10</span></div><pre><code>curl "https://releasetrain.io/api/aggregate/reddit/summary?topN=5"</code></pre><pre><code>{
   "range": { "start": "20240518", "end": "20260518" },
@@ -2584,26 +2653,26 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
   <!-- Versions card -->
   <div class="callout" style="padding:.6rem .7rem">
-    <p style="font-weight:700;margin:0 0 .35rem;color:#1b1f23;font-size:.88rem">📦 Versions</p>
+    <p style="font-weight:700;margin:0 0 .35rem;color:#0f172a;font-size:.88rem">📦 Versions</p>
     <table style="margin:0;font-size:12px;border:none">
       <tbody>
-        <tr><td style="border:none;padding:2px 0;color:#59636e;width:58%">Total</td><td style="border:none;padding:2px 0;font-weight:800;color:#0366d6;font-size:1.1rem" id="d-stat-versions">…</td></tr>
-        <tr><td style="border:none;padding:2px 0;color:#59636e">CVE advisories</td><td style="border:none;padding:2px 0;font-weight:700;color:#cf222e" id="d-stat-v-cve">…</td></tr>
-        <tr><td style="border:none;padding:2px 0;color:#59636e">Release notes</td><td style="border:none;padding:2px 0;font-weight:700;color:#1a7f37" id="d-stat-v-noncve">…</td></tr>
-        <tr><td style="border:none;padding:3px 0 0;color:#59636e">Est. size</td><td style="border:none;padding:3px 0 0;font-weight:600;color:#6e40c9;font-size:11px" id="d-stat-v-size">…</td></tr>
+        <tr><td style="border:none;padding:2px 0;color:#64748b;width:58%">Total</td><td style="border:none;padding:2px 0;font-weight:800;color:#2563eb;font-size:1.1rem" id="d-stat-versions">…</td></tr>
+        <tr><td style="border:none;padding:2px 0;color:#64748b">CVE advisories</td><td style="border:none;padding:2px 0;font-weight:700;color:#dc2626" id="d-stat-v-cve">…</td></tr>
+        <tr><td style="border:none;padding:2px 0;color:#64748b">Release notes</td><td style="border:none;padding:2px 0;font-weight:700;color:#475569" id="d-stat-v-noncve">…</td></tr>
+        <tr><td style="border:none;padding:3px 0 0;color:#64748b">Est. size</td><td style="border:none;padding:3px 0 0;font-weight:600;color:#475569;font-size:11px" id="d-stat-v-size">…</td></tr>
       </tbody>
     </table>
   </div>
 
   <!-- Community card -->
   <div class="callout" style="padding:.6rem .7rem">
-    <p style="font-weight:700;margin:0 0 .35rem;color:#1b1f23;font-size:.88rem">💬 Community</p>
+    <p style="font-weight:700;margin:0 0 .35rem;color:#0f172a;font-size:.88rem">💬 Community</p>
     <table style="margin:0;font-size:12px;border:none">
       <tbody>
-        <tr><td style="border:none;padding:2px 0;color:#59636e;width:58%">Total</td><td style="border:none;padding:2px 0;font-weight:800;color:#0366d6;font-size:1.1rem" id="d-stat-reddit">…</td></tr>
-        <tr><td style="border:none;padding:2px 0;color:#59636e">Reddit posts</td><td style="border:none;padding:2px 0;font-weight:700;color:#ff4500" id="d-stat-r-reddit">…</td></tr>
-        <tr><td style="border:none;padding:2px 0;color:#59636e">Stack Overflow</td><td style="border:none;padding:2px 0;font-weight:700;color:#f48024" id="d-stat-r-so">…</td></tr>
-        <tr><td style="border:none;padding:3px 0 0;color:#59636e">Est. size</td><td style="border:none;padding:3px 0 0;font-weight:600;color:#6e40c9;font-size:11px" id="d-stat-r-size">…</td></tr>
+        <tr><td style="border:none;padding:2px 0;color:#64748b;width:58%">Total</td><td style="border:none;padding:2px 0;font-weight:800;color:#2563eb;font-size:1.1rem" id="d-stat-reddit">…</td></tr>
+        <tr><td style="border:none;padding:2px 0;color:#64748b">Reddit posts</td><td style="border:none;padding:2px 0;font-weight:700;color:#64748b" id="d-stat-r-reddit">…</td></tr>
+        <tr><td style="border:none;padding:2px 0;color:#64748b">Stack Overflow</td><td style="border:none;padding:2px 0;font-weight:700;color:#64748b" id="d-stat-r-so">…</td></tr>
+        <tr><td style="border:none;padding:3px 0 0;color:#64748b">Est. size</td><td style="border:none;padding:3px 0 0;font-weight:600;color:#475569;font-size:11px" id="d-stat-r-size">…</td></tr>
       </tbody>
     </table>
   </div>
@@ -2725,6 +2794,23 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-08-28</div>
+              <div class="cl-ver cl-ver-minor">v3.23.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Hypervisor as its own category: feed, filter, KPI, chart</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Hypervisor releases highlighted in the feed</strong>: entries whose <code>versionProductType</code> is <code>Hypervisor</code> (the new <code>hypervisor.py</code> bot's value — VMware ESXi / Workstation / Fusion, Oracle VirtualBox, Xen, Proxmox VE, XCP-ng) get a teal left-border/background and a 🖥️ Hypervisor chip. Mirrors the LLM treatment added in v3.22.0 via a parallel <code>isHypervisorVersion()</code> predicate.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Hypervisor quick-filter + KPI</strong>: a 🖥️ Hypervisor sidebar toggle and a 🖥️ Hypervisors tile in the Stats block, alongside 🤖 AI Models. Combines with the other quick-filter toggles the same way.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Dedicated background dataset</strong>: <code>ensureHvVersionsLoaded()</code> / <code>Api.hypervisorVersions()</code> pull the full, date-window-independent hypervisor dataset (anchored on <code>KNOWN_HV_PRODUCT_NAMES</code>), so the KPI/toggle show the true total and the toggle surfaces full history rather than just what's inside the 4-week feed window — hypervisor releases are as sparse in time as AI-model releases.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Activity chart gains a Hypervisor line</strong>: the sidebar activity chart now plots a fifth (teal) series for hypervisor releases per day, computed client-side from the full dataset via <code>computeHvDailyFromRaw()</code> / <code>refreshActivityChartHvLine()</code>. The static mini-legend under the chart now lists all five series.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Shareable <code>?type=hv</code> link</strong>: <code>releasetrain.io/?type=hv</code> loads with the 🖥️ Hypervisor toggle already active; <code>setTypeParam()</code> now round-trips <code>llm</code> and <code>hv</code>.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -3159,6 +3245,34 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <div id="ua-bm-empty" class="ua-muted" style="font-size:12px;display:none">No bookmarks yet.</div>
             <div id="ua-bm-list" class="ua-bm-list"></div>
           </div>
+          <!-- Installed versions -->
+          <div class="ua-card" style="margin-bottom:14px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              <span style="font-weight:700;font-size:13px">Installed versions</span>
+              <span id="ua-inv-count" class="ua-muted" style="font-size:12px"></span>
+              <button id="ua-inv-refresh" class="btn btn-ghost" style="font-size:12px;padding:4px 10px;margin-left:auto">Refresh</button>
+            </div>
+            <p class="ua-muted" style="font-size:12px;margin:0 0 8px">Record the versions you actually run. The Arch view compares them against the latest release to show how far each component has drifted. <span style="opacity:.8">Saved on this device.</span></p>
+            <div id="ua-inv-msg" class="ua-msg" style="display:none"></div>
+            <form id="ua-inv-add-form" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+              <input id="ua-inv-comp" list="ua-comp-names" class="search-input" placeholder="component (e.g. apache)" maxlength="64" autocomplete="off" required style="flex:1 1 150px;min-width:0" />
+              <input id="ua-inv-ver" class="search-input" placeholder="version (e.g. 2.4.58)" maxlength="32" autocomplete="off" required style="flex:0 1 130px;min-width:0" />
+              <button class="btn btn-primary" type="submit" style="font-size:12px">Add</button>
+            </form>
+            <datalist id="ua-comp-names"></datalist>
+            <details style="margin-bottom:8px">
+              <summary style="cursor:pointer;font-size:12px;color:var(--muted);list-style:none;display:flex;align-items:center;gap:4px">
+                <span style="font-size:10px">›</span> Paste a list
+              </summary>
+              <div style="margin-top:8px">
+                <p class="ua-muted" style="font-size:11px;margin:0 0 6px">One per line: <code>component@version</code>, <code>component version</code>, or <code>component,version</code>. Existing entries are updated.</p>
+                <textarea id="ua-inv-bulk" class="search-input" rows="5" placeholder="apache@2.4.58&#10;php 8.1.0&#10;nginx,1.27.2" style="width:100%;box-sizing:border-box;font:12px/1.5 Consolas,Monaco,monospace;resize:vertical"></textarea>
+                <button id="ua-inv-bulk-btn" class="btn btn-ghost" type="button" style="font-size:12px;margin-top:6px">Import</button>
+              </div>
+            </details>
+            <div id="ua-inv-empty" class="ua-muted" style="font-size:12px;display:none">No versions recorded yet.</div>
+            <div id="ua-inv-list" class="ua-bm-list"></div>
+          </div>
           <!-- Admin: all users -->
           <div id="ua-admin-section" style="display:none">
             <div class="ua-admin-header">
@@ -3287,11 +3401,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     <div style="display:flex;flex-wrap:wrap;gap:8px;font-size:13px">
       <div style="padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg)">Total <strong id="a-totalComponents">0</strong></div>
       <div style="padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg)">Stacks <strong id="a-stackCount">0</strong></div>
-      <div style="padding:6px 12px;border:1px solid #fca5a5;border-radius:8px;background:#fef2f2;color:#dc2626">CVE <strong id="a-cveCount">0</strong></div>
-      <div style="padding:6px 12px;border:1px solid #fdba74;border-radius:8px;background:#fff7ed;color:#c2410c">Major <strong id="a-majorCount">0</strong></div>
-      <div style="padding:6px 12px;border:1px solid #6ee7b7;border-radius:8px;background:#ecfdf5;color:#059669">Minor <strong id="a-minorCount">0</strong></div>
-      <div style="padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg)">Patch <strong id="a-patchCount">0</strong></div>
-      <div style="padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg)">Up-to-date <strong id="a-okCount">0</strong></div>
+      <div style="padding:6px 12px;border:1px solid #fca5a5;border-radius:8px;background:#fef2f2;color:#b91c1c">CVE <strong id="a-cveCount">0</strong></div>
+      <div style="padding:6px 12px;border:1px solid #fcd34d;border-radius:8px;background:#fffbeb;color:#b45309">Behind <strong id="a-behindCount">0</strong></div>
+      <div style="padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg)">On latest <strong id="a-currentCount">0</strong></div>
+      <div style="padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg)">Version unknown <strong id="a-unknownCount">0</strong></div>
     </div>
   </dialog>
 
@@ -3349,8 +3462,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     /* ── DOM cache ────────────────────────────────────────────── */
     const EL = {};
-    ["feed", "sentinel", "status", "navLoader", "kpi-page", "kpi-range", "kpi-uniq", "kpi-reddit", "kpi-llm",
-      "btn-major", "btn-minor", "btn-patch", "btn-cve", "btn-llm", "btn-potential-cve", "btn-reddit",
+    ["feed", "sentinel", "status", "navLoader", "kpi-page", "kpi-range", "kpi-uniq", "kpi-reddit", "kpi-llm", "kpi-hv",
+      "btn-major", "btn-minor", "btn-patch", "btn-cve", "btn-llm", "btn-hv", "btn-potential-cve", "btn-reddit",
       "btn-reddit-risk", "btn-reddit-risk-latest", "btn-reddit-risk-cve", "btn-so-risk", "btn-so",
       "filterForm", "components", "clearBtn", "fixedToggles", "typeToggles",
       "homeLink", "graphLink", "archLink", "cveLink", "dashboardLink", "docsLink", "changelogLink", "ackLink", "usersLink", "networkLink", "expandAllBtn", "activeFilters", "afTags", "afClearAll", "emptyState"
@@ -3400,6 +3513,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // one of these three exact values only for AI-model bot entries.
     const LLM_PRODUCT_TYPES = new Set(["LLM", "Embedding Model", "Multimodal Model"]);
     const isLLMVersion = v => !!v && LLM_PRODUCT_TYPES.has(v.versionProductType);
+    // Hypervisor / virtualization-platform releases (hypervisor.py) — versionProductType
+    // is exactly "Hypervisor" only for that bot's entries.
+    const HV_PRODUCT_TYPES = new Set(["Hypervisor"]);
+    const isHypervisorVersion = v => !!v && HV_PRODUCT_TYPES.has(v.versionProductType);
     const titleCase = s => s ? s.replace(/\w\S*/g, w => w[0].toUpperCase() + w.slice(1)) : s;
     const tokens = s => uniq(String(s || "").split(",").map(t => norm(t)).filter(Boolean));
 
@@ -3472,10 +3589,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       /* archLink is now in-page (#); no href update needed */
     }
 
-    // Round-trips a sidebar quick-filter toggle (currently just "llm") to a ?type=
-    // URL param, so e.g. releasetrain.io/?type=llm loads with that filter already
-    // active and is shareable/bookmarkable as a plain link. This is a client-only
-    // convenience — there's no server-side "filter by versionProductType" param.
+    // Round-trips a sidebar quick-filter toggle ("llm" or "hv") to a ?type= URL
+    // param, so e.g. releasetrain.io/?type=llm or ?type=hv loads with that filter
+    // already active and is shareable/bookmarkable as a plain link. This is a
+    // client-only convenience — there's no server-side "filter by
+    // versionProductType" param.
     function setTypeParam(type) {
       const url = new URL(location.href);
       if (type) url.searchParams.set("type", type);
@@ -3545,7 +3663,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           shape: "ellipse",
           size: 28,
           mass: 6,
-          color: { background: "#2563eb", border: "#1d4ed8", highlight: { background: "#1d4ed8", border: "#1e40af" } },
+          color: { background: "#2563eb", border: "#1d4ed8", highlight: { background: "#1d4ed8", border: "#1d4ed8" } },
           font: { color: "#fff", size: 13, face: "system-ui,sans-serif", bold: true },
           title: "Component: " + (label || key),
         });
@@ -3587,7 +3705,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         seenVer.add(nodeId);
         const daysSince = ep > 0 ? Math.max(0, (Date.now() - ep) / 86400000) : windowDays / 2;
         const edgeLen = Math.round(80 + (daysSince / windowDays) * 280);
-        const color = isCve ? "#dc2626" : ch === "major" ? "#c2410c" : ch === "minor" ? "#059669" : "#64748b";
+        const color = isCve ? "#dc2626" : ch === "major" ? "#b45309" : ch === "minor" ? "#475569" : "#64748b";
         const verSourceUrl = (v.versionUrl && v.versionUrl.startsWith("http")) ? v.versionUrl
           : (v.versionReleaseNotes && v.versionReleaseNotes.startsWith("http")) ? v.versionReleaseNotes : null;
         nodes.add({
@@ -3632,7 +3750,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const daysSince = ep > 0 ? Math.max(0, (Date.now() - ep) / 86400000) : windowDays / 2;
         const nodeId = "post:" + (p.redditId || p._id || p.id || Math.random().toString(36).slice(2));
         const edgeLen = Math.round(80 + (daysSince / windowDays) * 280);
-        const color = hasCve ? "#fb7185" : isSO ? "#3b82f6" : risk ? "#e879f9" : "#a855f7";
+        const color = hasCve ? "#94a3b8" : isSO ? "#2563eb" : risk ? "#94a3b8" : "#64748b";
         nodes.add({
           id: nodeId,
           label: (p.title || "").slice(0, 28) + ((p.title || "").length > 28 ? "…" : ""),
@@ -3828,11 +3946,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
 
     /* ── Arch Module ──────────────────────────────────────────── */
+    // Fallback OS names for aIsOsComponent() — only consulted when the feed record
+    // carries no usable OS classification of its own.
     const A_OS = new Set(["linux","windows","macos","ubuntu","centos","debian","redhat","fedora","arch","suse",
       "mint","mac","solaris","freebsd","opensuse","gentoo","slackware","manjaro","android","ios",
       "raspbian","kali-linux","zorin","popos"]);
     let A_ACTIVE = false, A_LOADED = false;
-    let A_PLANTUML_SERVER = "https://www.plantuml.com/plantuml/png/";
+    let A_PLANTUML_SERVER = "https://www.plantuml.com/plantuml/svg/";
     let A_PLANTUML_URL = "", A_VERSIONS = [], A_UML_CODE = "";
     const aEl = id => document.getElementById("a-" + id);
 
@@ -3863,9 +3983,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const rel = diff === 0 ? "(Today)" : diff === 1 ? "(Yesterday)" : diff < 7 ? "(This week)" : diff < 30 ? "(This month)" : "";
       return `${base} ${rel}`.trim();
     }
+    // Is this component an operating system? Prefer the feed's own classification;
+    // fall back to A_OS only for OSes the data leaves unclassified (linux, macos, …).
+    function aIsOsComponent(v) {
+      const lv = v.latestVersion || v.currentVersion || {};
+      if (String(lv.versionProductType || "").trim().toUpperCase() === "OS") return true;
+      const ct = (lv.classification && lv.classification.componentType) || [];
+      // Sole "OS" tag only — e.g. chrome carries ["OS","MOBILE","BROWSER"] and is not an OS.
+      if (Array.isArray(ct) && ct.length === 1 && String(ct[0]).toUpperCase() === "OS") return true;
+      return A_OS.has((v.name || "").toLowerCase());
+    }
     function aSortByOS(arr) {
       return arr.slice().sort((a, b) =>
-        (A_OS.has((b.name || "").toLowerCase()) ? 1 : 0) - (A_OS.has((a.name || "").toLowerCase()) ? 1 : 0));
+        (aIsOsComponent(b) ? 1 : 0) - (aIsOsComponent(a) ? 1 : 0));
     }
     const A_STACKS = [
       { name:"LAMP",   components:["apache","mysql","php","linux"] },
@@ -3899,17 +4029,74 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (lM === cM && lm === cm && lp > cp) return "patch";
       return "none";
     }
+    /* ── Drift helpers: installed vs latest ───────────────────── */
+    function aDateMs(yyyymmdd) {
+      const s = String(yyyymmdd || "").replace(/-/g, "");
+      if (!/^\d{8}$/.test(s)) return 0;
+      return +new Date(s.slice(0, 4) + "-" + s.slice(4, 6) + "-" + s.slice(6, 8) + "T12:00:00Z");
+    }
+    // Per-position step counts from installed → latest, plus the dominant tier.
+    function aVerGap(cur, lat) {
+      const P = v => String(v || "").split(/[^\d]+/).filter(x => x !== "").map(n => parseInt(n, 10));
+      const c = P(cur), l = P(lat), d = i => (l[i] || 0) - (c[i] || 0);
+      const M = d(0), m = d(1), p = d(2);
+      let tier = "none";
+      if (M > 0) tier = "major";
+      else if (M === 0 && m > 0) tier = "minor";
+      else if (M === 0 && m === 0 && p > 0) tier = "patch";
+      return { tier, major: Math.max(0, M), minor: Math.max(0, m), patch: Math.max(0, p) };
+    }
+    // How long the current latest has been available while you're not on it (staleness proxy).
+    function aDaysBehind(version) {
+      const cur = version.currentVersion || {}, lat = version.latestVersion || {};
+      if (aVersionDelta(cur.versionNumber, lat.versionNumber) === "none") return 0;
+      const ld = aDateMs(lat.versionReleaseDate);
+      return ld ? Math.max(0, Math.round((Date.now() - ld) / 86400000)) : 0;
+    }
+    function aGapLabel(g) {
+      if (!g || g.tier === "none") return "";
+      const bits = [];
+      if (g.major) bits.push(g.major + " major");
+      if (g.minor) bits.push(g.minor + " minor");
+      if (g.patch && g.tier === "patch") bits.push(g.patch + " patch");
+      return bits.join(" +") || (g.tier + " update");
+    }
+    // 10-cell ASCII magnitude bar, full near ~1 year behind.
+    function aLagBar(days) {
+      const f = Math.max(0, Math.min(10, Math.round(days / 36.5)));
+      return "[" + "#".repeat(f) + "-".repeat(10 - f) + "]";
+    }
+    // Rank for sorting: worst first.
+    const A_COLOR_RANK = { cve: 0, behind: 1, unknown: 2, current: 3 };
+    // Ecosystem freshness score + headline counts for the scorecard.
+    function aScore(vers) {
+      const pts = { current: 100, unknown: 70, behind: 55, cve: 15 };
+      let sum = 0, behind = 0, current = 0, cve = 0, unknown = 0;
+      const lags = [];
+      vers.forEach(v => {
+        const k = aColorKey(v);
+        sum += pts[k];
+        if (k === "cve") cve++;
+        else if (k === "behind") behind++;
+        else if (k === "unknown") unknown++;
+        else current++;
+        const d = aDaysBehind(v); if (d > 0) lags.push(d);
+      });
+      lags.sort((a, b) => a - b);
+      return {
+        score: vers.length ? Math.round(sum / vers.length) : 100,
+        behind, current, cve, unknown,
+        medianLag: lags.length ? lags[Math.floor(lags.length / 2)] : 0,
+      };
+    }
+    /* One component = one bucket, matching aColorKey(). */
     function aSummarize(arr) {
-      const out = { cve: 0, major: 0, minor: 0, patch: 0, ok: 0 };
+      const out = { cve: 0, behind: 0, current: 0, unknown: 0 };
       arr.forEach(v => {
         const cur = v.currentVersion || v.latestVersion, lat = v.latestVersion;
         if (!cur || !lat) return;
-        if (v.latestCveVersion) out.cve++;
-        const d = aVersionDelta(cur.versionNumber, lat.versionNumber);
-        if (d === "major") out.major++;
-        else if (d === "minor") out.minor++;
-        else if (d === "patch") out.patch++;
-        else out.ok++;
+        const k = aColorKey(v);
+        out[k] = (out[k] || 0) + 1;
       });
       return out;
     }
@@ -3919,52 +4106,185 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const dt = new Date(rd.slice(0, 4), rd.slice(4, 6) - 1, rd.slice(6, 8));
       return (Date.now() - dt) / 86400000 <= 7;
     }
+    // CVE affecting this component, from the per-component aggregate or the
+    // secondary isCve lookup (aAttachCve) — the aggregate misses some, e.g. the
+    // 2026-08 Chrome advisories whose brand differs from the release feed.
+    function aCveOf(version) {
+      if (version.latestCveVersion) {
+        return { code: aExtractCveCode(version.latestCveVersion.versionUrl), url: version.latestCveVersion.versionUrl };
+      }
+      if (version._cve) return version._cve;
+      return null;
+    }
+    /* The only colour axis: act-now / behind / current / no-data.
+       Everything finer (how far behind, community chatter, freshly released)
+       is carried by the text label, not by more colours. */
+    function aColorKey(version) {
+      const cur = version.currentVersion || version.latestVersion, lat = version.latestVersion;
+      if (!cur || !lat) return "current";
+      if (aCveOf(version)) return "cve";
+      const behind = aVerGap(cur.versionNumber, lat.versionNumber).tier !== "none";
+      if (behind || (version._risk || 0) > 0) return "behind";
+      if (!version._hasInstalled) return "unknown";
+      return "current";
+    }
     function aComponentLine(version, fills) {
       const cur = version.currentVersion || version.latestVersion, lat = version.latestVersion;
       if (!cur || !lat) return `component "${aSanitize(version.name)}"`;
-      const diff = aVersionDelta(cur.versionNumber, lat.versionNumber);
-      const hasCve = !!version.latestCveVersion;
-      const recent = aIsRecent(version);
-      const fill = hasCve ? fills.cveFill
-        : diff === "major" ? fills.majorFill
-        : diff === "minor" ? fills.minorFill
-        : diff === "patch" ? fills.patchFill
-        : fills.okFill;
+      const fill = fills[aColorKey(version)] || fills.current;
       const name = aSanitize(cur.versionProductName || version.name);
-      const ver = aSanitize(cur.versionNumber), rdate = aFormatDate(cur.versionReleaseDate);
-      const lver = aSanitize(lat.versionNumber), lr = aFormatDate(lat.versionReleaseDate);
-      const updateText = diff === "none"
-        ? (recent ? "Recently released ✓" : "Up-to-date ✓")
-        : `Needs ${diff.toUpperCase()} update`;
-      const cveText = hasCve ? `\\nCVE: ${aExtractCveCode(version.latestCveVersion.versionUrl)}` : "";
-      const recentTag = recent && diff !== "none" ? " ★ New" : "";
-      return `component "${name}@${ver}${recentTag} \\nInstalled: ${ver} (${rdate}) \\nLatest: ${lver} (${lr}) \\nStatus: ${updateText}${cveText}" #${fill.replace("#", "")}`;
+      const cv = aSanitize(cur.versionNumber), lv = aSanitize(lat.versionNumber);
+      const gap = aVerGap(cur.versionNumber, lat.versionNumber);
+      const days = aDaysBehind(version);
+      let headline;
+      if (gap.tier !== "none") {
+        // installed → latest, magnitude bar, semver distance, staleness
+        headline = `${name}  ${cv} -> ${lv} \\n${aLagBar(days)} ${aGapLabel(gap)} - ${days}d behind`;
+      } else if (!version._hasInstalled) {
+        headline = `${name}  ${lv} \\ninstalled version unknown`;
+      } else {
+        headline = `${name}  ${cv} \\non latest${aIsRecent(version) ? " [NEW]" : " [OK]"}`;
+      }
+      const cve = aCveOf(version);
+      const cveText = cve ? `\\nCVE: ${cve.code}${cve.date ? " (" + aFormatDate(cve.date) + ")" : ""}` : "";
+      const rp = (version._riskPosts || [])[0];
+      const riskText = rp
+        ? `\\ncommunity: ${rp.url ? `[[${rp.url} u/${rp.handle}]]` : `u/${rp.handle}`}`
+        : `\\ncommunity: no risk posts (${A_RISK_DAYS}d)`;
+      return `component "${headline}${cveText}${riskText}" #${fill.replace("#", "")}`;
     }
+    /* Two colours, used only where something needs attention. A calm component
+       (on latest, or version unknown) gets no fill at all. */
+    const A_FILLS = {
+      cve:     "#fca5a5",  /* red   : security advisory — act now      */
+      behind:  "#fcd34d",  /* amber : an update is available           */
+      current: "#ffffff",  /* none                                     */
+      unknown: "#ffffff",  /* none                                     */
+    };
+    const A_RISK_DAYS = 10;  // community-risk lookback for the arch view
+    // Recent high-risk community (Reddit) posts for a component, newest first.
+    function aRiskPostsFor(name) {
+      const n = norm(name);
+      if (n.length < 3 || !STATE.redditBySub) return [];
+      const cutoff = Date.now() - A_RISK_DAYS * 86400000;
+      const hits = [];
+      for (const p of postsForComponent(n)) {
+        if (getPostSource(p) !== "reddit") continue;
+        if (redditTime(p) < cutoff) continue;
+        if (!isRisk(p)) continue;
+        hits.push(p);
+      }
+      hits.sort((a, b) => redditTime(b) - redditTime(a) || (b.score || 0) - (a.score || 0));
+      return hits.map(p => ({
+        handle: String(p.author || "").replace(/^u\//i, "") || "unknown",
+        // the source discussion thread, not any external link the post points at
+        url: p.redditId ? `https://reddit.com/comments/${p.redditId}` : (p.url || ""),
+        sub: p.subreddit || "",
+      }));
+    }
+    function aAttachRisk(vers) {
+      vers.forEach(v => {
+        const posts = aRiskPostsFor(v.name);
+        v._risk = posts.length;
+        v._riskPosts = posts.slice(0, 1);  // just the latest
+      });
+      return vers;
+    }
+
+    // Secondary CVE lookup: /v/d/versionsByComponent's `latestCveVersion` misses
+    // advisories whose product brand differs from the release feed, so pull recent
+    // isCve versions by name and attach the newest per component as v._cve.
+    async function aAttachCve(vers) {
+      const names = Array.from(new Set(vers.map(v => v.name).filter(Boolean)));
+      if (!names.length) return vers;
+      const start = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10).replace(/-/g, "");
+      try {
+        const url = `${API_BASE}v/search?q=${encodeURIComponent(names.join(","))}`
+          + `&isCve=true&start=${start}&limit=400`
+          + `&fields=versionProductName,versionProductBrand,versionReleaseDate,versionUrl,isCve`;
+        const res = await fetch(url, { headers: { Accept: "application/json" } });
+        if (!res.ok) return vers;
+        const body = await res.json();
+        const list = Array.isArray(body) ? body : (body.data || []);
+        const byName = new Map();
+        for (const r of list) {
+          if (!r.isCve) continue;
+          const t = aDateMs(r.versionReleaseDate);
+          for (const k of [norm(r.versionProductName), norm(r.versionProductBrand)]) {
+            if (!k) continue;
+            const prev = byName.get(k);
+            if (!prev || t > prev._t) {
+              byName.set(k, { _t: t, code: aExtractCveCode(r.versionUrl), url: r.versionUrl, date: r.versionReleaseDate });
+            }
+          }
+        }
+        vers.forEach(v => { const hit = byName.get(norm(v.name)); if (hit) v._cve = hit; });
+      } catch { /* best-effort */ }
+      return vers;
+    }
+
     function aBuildUml(vers) {
       const sorted = aSortByOS(vers), names = sorted.map(v => v.name);
-      const { groupedStacks, extraComponents } = aGetStack(names);
+      const { groupedStacks } = aGetStack(names);
       const ts = new Date().toLocaleString("en-US", { weekday:"short", year:"numeric", month:"short", day:"numeric", hour:"numeric", minute:"numeric", second:"numeric", hour12:false, timeZoneName:"short" });
-      const fills = {
-        cveFill:   "#fecaca",  /* light red   : CVE / security     */
-        majorFill: "#fed7aa",  /* light orange: breaking / major   */
-        minorFill: "#fef9c3",  /* light yellow: minor update       */
-        patchFill: "#dbeafe",  /* light blue  : patch available    */
-        okFill:    "#dcfce7",  /* light green : up to date        */
-      };
-      let uml = `@startuml\nskinparam BackgroundColor #ffffff\nskinparam DefaultTextAlignment left\nskinparam Shadowing false\nskinparam PackageBorderColor #cbd5e1\nskinparam PackageBackgroundColor #ffffff\nskinparam ComponentBorderColor #94a3b8\nskinparam ComponentBackgroundColor #ffffff\nskinparam ArrowColor #111827\nskinparam FontColor #111827\ntitle "Software Ecosystem: ${ts}"\nlegend right\n  |= Legend |= <#fecaca> CVE | <#fed7aa> Breaking | <#fef9c3> Minor | <#dbeafe> Patch | <#dcfce7> OK |\nendlegend\n`;
-      uml += `package "Ecosystem" #transparent {\n`;
-      if (groupedStacks.length) {
+      const fills = A_FILLS;
+      const legend =
+        `legend bottom left\n` +
+        `|= Key ` +
+        `|= <${A_FILLS.cve}> CVE - act now ` +
+        `| <${A_FILLS.behind}> Update available |\n` +
+        `endlegend\n`;
+      // Scorecard: one-line overview across the whole set.
+      const sc = aScore(sorted);
+      const scorecard = `header Freshness ${sc.score}/100  |  ${sc.behind} behind  |  ${sc.current} current  |  ${sc.cve} CVE  |  ${sc.unknown} version unknown  |  median lag ${sc.medianLag}d\n`;
+      let uml = `@startuml\nskinparam BackgroundColor #ffffff\nskinparam DefaultTextAlignment left\nskinparam Shadowing false\nskinparam PackageBorderColor #cbd5e1\nskinparam PackageBackgroundColor #ffffff\nskinparam ComponentBorderColor #94a3b8\nskinparam ComponentBackgroundColor #ffffff\nskinparam ArrowColor #111827\nskinparam FontColor #111827\n${scorecard}left footer Software Ecosystem: ${ts}\n${legend}`;
+      // Renders the stack groups + leftover components for a given subset of versions.
+      const groupedNames = new Set();
+      groupedStacks.forEach(s => s.matchedComponents.forEach(c => groupedNames.add(c)));
+      const renderGroups = (pad, list) => {
+        let out = "";
         groupedStacks.forEach(s => {
-          uml += `  package "${s.stackName} stack" #transparent {\n`;
-          sorted.filter(v => s.matchedComponents.includes(v.name)).forEach(v => { uml += `    ${aComponentLine(v, fills)}\n`; });
-          uml += `  }\n`;
+          const members = list.filter(v => s.matchedComponents.includes(v.name));
+          if (!members.length) return;
+          out += `${pad}package "${s.stackName} stack" #transparent {\n`;
+          members.forEach(v => { out += `${pad}  ${aComponentLine(v, fills)}\n`; });
+          out += `${pad}}\n`;
         });
-      }
-      const extraSubset = sorted.filter(v => extraComponents.some(e => e.component === v.name));
-      if (extraSubset.length) {
-        uml += `  package "Extra components" #transparent {\n`;
-        extraSubset.forEach(v => { uml += `    ${aComponentLine(v, fills)}\n`; });
+        // Components not part of any detected stack render on their own, labelled by name.
+        list.filter(v => !groupedNames.has(v.name))
+            .forEach(v => { out += `${pad}${aComponentLine(v, fills)}\n`; });
+        return out;
+      };
+
+      // #4 — hoist everything that needs action into one cluster at the top,
+      // worst (most days behind) first. These are pulled OUT of the normal layout.
+      // Urgent = a CVE, or a major-version gap.
+      const isUrgent = v => {
+        const cur = v.currentVersion || v.latestVersion, lat = v.latestVersion;
+        return !!aCveOf(v) || (cur && lat && aVerGap(cur.versionNumber, lat.versionNumber).tier === "major");
+      };
+      const urgent = sorted.filter(isUrgent).sort((a, b) => aDaysBehind(b) - aDaysBehind(a));
+      const rest = sorted.filter(v => !isUrgent(v));
+      const osVers = rest.filter(aIsOsComponent);
+      const appVers = rest.filter(v => !aIsOsComponent(v));
+
+      uml += `package "Ecosystem" #transparent {\n`;
+      if (urgent.length) {
+        uml += `  package "Upgrade now (${urgent.length})" #${A_FILLS.cve.replace("#", "")} {\n`;
+        urgent.forEach(v => { uml += `    ${aComponentLine(v, fills)}\n`; });
         uml += `  }\n`;
+      }
+      if (osVers.length) {
+        // One outer layer carrying the OS, one nested layer for everything above it.
+        const osLabel = osVers.length === 1 ? `${aSanitize(osVers[0].name)} - OS layer` : "OS layer";
+        uml += `  package "${osLabel}" #transparent {\n`;
+        osVers.forEach(v => { uml += `    ${aComponentLine(v, fills)}\n`; });
+        uml += `    package "Application layer (no OS)" #transparent {\n`;
+        uml += renderGroups("      ", appVers);
+        uml += `    }\n`;
+        uml += `  }\n`;
+      } else if (appVers.length) {
+        uml += renderGroups("  ", appVers);
       }
       uml += `}\n@enduml\n`;
       return uml;
@@ -3995,9 +4315,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     function aRenderDiagram(uml) {
       A_UML_CODE = uml;
       A_PLANTUML_URL = A_PLANTUML_SERVER + aEncodePlantUML(uml);
-      const img = aEl("ecosysImage");
-      img.onload = img.onerror = () => { aEl("loader").style.display = "none"; };
-      img.src = A_PLANTUML_URL;
+      const host = aEl("ecosysImage"), loader = aEl("loader");
+      const done = () => { if (loader) loader.style.display = "none"; };
+      // Inline the SVG so diagram links (community post handles) are clickable.
+      fetch(A_PLANTUML_URL)
+        .then(r => r.ok ? r.text() : Promise.reject(r.status))
+        .then(svg => {
+          host.innerHTML = svg;
+          const s = host.querySelector("svg");
+          if (s) { s.removeAttribute("width"); s.removeAttribute("height"); s.style.maxWidth = "100%"; s.style.height = "auto"; }
+          host.querySelectorAll("a").forEach(a => { a.setAttribute("target", "_blank"); a.setAttribute("rel", "noopener noreferrer"); });
+        })
+        .catch(() => { host.innerHTML = `<p class="a-muted-note">Could not render diagram.</p>`; })
+        .finally(done);
       const codeEl = aEl("plantumlCode");
       if (codeEl) codeEl.textContent = uml;
     }
@@ -4008,50 +4338,196 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       set("totalComponents", vers.length);
       set("stackCount", groupedStacks.length);
       set("cveCount", sum.cve);
-      set("majorCount", sum.major);
-      set("minorCount", sum.minor);
-      set("patchCount", sum.patch);
-      set("okCount", sum.ok);
+      set("behindCount", sum.behind);
+      set("currentCount", sum.current);
+      set("unknownCount", sum.unknown);
       const detC = aEl("detComponents"), detS = aEl("detStacks");
       if (detC) detC.innerHTML = vers.map(v => `• ${v.name}`).join("<br>");
       if (detS) detS.innerHTML = groupedStacks.length ? groupedStacks.map(s => `• ${s.stackName}: ${s.matchedComponents.join(", ")}`).join("<br>") : "None";
     }
+    function aMapVers(data) {
+      return (Array.isArray(data) ? data : []).map(c => ({
+        name: c.name, latestVersion: c.latestVersion,
+        currentVersion: c.currentVersion || c.latestVersion, latestCveVersion: c.latestCveVersion,
+        _hasInstalled: false
+      }));
+    }
+    // Installed versions the user recorded on the Account page (device-local).
+    function aInventoryMap() {
+      let list = [];
+      try {
+        const u = (typeof uaUser === "function") ? uaUser() : null;
+        if (u && Array.isArray(u.inventory)) list = u.inventory;
+        else list = JSON.parse(localStorage.getItem("rt_inventory") || "[]");
+      } catch { list = []; }
+      const m = new Map();
+      (Array.isArray(list) ? list : []).forEach(e => {
+        if (e && e.component && e.version) m.set(String(e.component).toLowerCase(), String(e.version));
+      });
+      return m;
+    }
+    // Overlay recorded installed versions onto each component as currentVersion.
+    function aApplyInventory(vers) {
+      const inv = aInventoryMap();
+      vers.forEach(v => {
+        const iv = inv.get(String(v.name).toLowerCase());
+        if (iv && v.latestVersion) {
+          v.currentVersion = {
+            versionNumber: iv,
+            versionReleaseDate: "",
+            versionProductName: v.latestVersion.versionProductName
+          };
+          v._hasInstalled = true;
+        } else {
+          v._hasInstalled = false;
+        }
+      });
+      return vers;
+    }
+
+    let A_EMPTY_BUILT = false;
+    let A_MODE = (localStorage.getItem("rt_arch_mode") === "table") ? "table" : "diagram";
+
+    const aCanvasEl = () => document.querySelector("#archView .a-canvas");
+
+    // Show the result area (canvas or table per A_MODE), hide the empty state.
+    function aShowResult() {
+      const e = aEl("empty"); if (e) e.style.display = "none";
+      const c = aCanvasEl(), t = aEl("table");
+      if (c) c.style.display = (A_MODE === "table") ? "none" : "";
+      if (t) t.style.display = (A_MODE === "table") ? "" : "none";
+    }
+    function aSetMode(mode) {
+      A_MODE = (mode === "table") ? "table" : "diagram";
+      try { localStorage.setItem("rt_arch_mode", A_MODE); } catch {}
+      const dg = document.getElementById("a-viewDiagram"), tb = document.getElementById("a-viewTable");
+      if (dg) dg.className = "btn" + (A_MODE === "diagram" ? " btn-primary" : " btn-ghost");
+      if (tb) tb.className = "btn" + (A_MODE === "table" ? " btn-primary" : " btn-ghost");
+      const e = aEl("empty");
+      if (e && e.style.display !== "none") return;  // empty state stays put
+      aShowResult();
+      if (A_MODE === "table") aRenderTable();
+    }
+    function aEsc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+    // #5b — dense sortable drift table, most-behind first.
+    function aRenderTable() {
+      const el = aEl("table"); if (!el) return;
+      const vers = Array.isArray(A_VERSIONS) ? A_VERSIONS : [];
+      if (!vers.length) { el.innerHTML = `<p class="a-muted-note">No components.</p>`; return; }
+      const sc = aScore(vers);
+      const rows = vers.map(v => {
+        const cur = v.currentVersion || v.latestVersion || {}, lat = v.latestVersion || {};
+        return { v, cur, lat, key: aColorKey(v), gap: aVerGap(cur.versionNumber, lat.versionNumber), days: aDaysBehind(v) };
+      }).sort((a, b) => b.days - a.days || (A_COLOR_RANK[a.key] - A_COLOR_RANK[b.key]) || a.v.name.localeCompare(b.v.name));
+      el.innerHTML =
+        `<div class="a-score">Freshness <b>${sc.score}/100</b> &nbsp;·&nbsp; ${sc.behind} behind &nbsp;·&nbsp; ${sc.current} current &nbsp;·&nbsp; ${sc.cve} CVE &nbsp;·&nbsp; ${sc.unknown} version unknown &nbsp;·&nbsp; median lag ${sc.medianLag}d</div>` +
+        `<table class="a-drift"><thead><tr>` +
+        `<th>Component</th><th>Installed</th><th>Latest</th><th>Change</th><th>Behind</th><th>CVE</th><th>Community</th>` +
+        `</tr></thead><tbody>` +
+        rows.map(r => {
+          // Colour only marks a problem. Calm rows stay plain.
+          const chip = r.gap.tier !== "none"
+            ? `<span class="a-chip-t" style="background:${A_FILLS.behind}">${aEsc(aGapLabel(r.gap))}</span>`
+            : `<span class="a-muted-note">${r.key === "unknown" ? "version ?" : "on latest"}</span>`;
+          return `<tr>` +
+            `<td>${aEsc(r.v.name)}</td>` +
+            `<td class="mono">${r.v._hasInstalled ? aEsc(r.cur.versionNumber) : '<span class="a-muted-note">?</span>'}</td>` +
+            `<td class="mono">${aEsc(r.lat.versionNumber || "-")}</td>` +
+            `<td>${chip}</td>` +
+            `<td class="mono">${r.days ? r.days + "d" : "-"}</td>` +
+            `<td>${(() => { const c = aCveOf(r.v); return c ? `<span class="a-chip-t" style="background:${A_FILLS.cve}">${aEsc(c.code)}</span>` : "-"; })()}</td>` +
+            `<td>${(() => {
+              const p = (r.v._riskPosts || [])[0];
+              if (!p) return `<span class="a-muted-note">no risk posts (${A_RISK_DAYS}d)</span>`;
+              return p.url
+                ? `<a href="${aEsc(p.url)}" target="_blank" rel="noopener noreferrer">u/${aEsc(p.handle)}</a>`
+                : `u/${aEsc(p.handle)}`;
+            })()}</td>` +
+            `</tr>`;
+        }).join("") +
+        `</tbody></table>`;
+    }
+    function aBuildEmptyState() {
+      if (A_EMPTY_BUILT) return; A_EMPTY_BUILT = true;
+      const grid = aEl("stackGrid"); if (!grid) return;
+      grid.innerHTML = A_STACKS.map(s => `
+        <button type="button" class="a-stack-card" data-comps="${s.components.join(",")}">
+          <span class="a-stack-card-name">${s.name}</span>
+          <span class="a-stack-card-chips">${s.components.map(c => `<span class="a-chip">${c}</span>`).join("")}</span>
+        </button>`).join("");
+      grid.querySelectorAll(".a-stack-card").forEach(btn => {
+        btn.addEventListener("click", () => {
+          EL.components.value = btn.dataset.comps.split(",").join(", ");
+          aLoadAndRender();
+        });
+      });
+    }
+    function aShowEmptyState() {
+      const loader = aEl("loader"), titleEl = aEl("title");
+      if (loader) loader.style.display = "none";
+      if (titleEl) titleEl.textContent = "Pick a stack to begin";
+      const c = aCanvasEl(); if (c) c.style.display = "none";
+      const t = aEl("table"); if (t) t.style.display = "none";
+      const e = aEl("empty"); if (e) e.style.display = "block";
+      aBuildEmptyState();
+    }
+
+    async function aLoadUpdatedToday() {
+      const loader = aEl("loader"), titleEl = aEl("title");
+      aShowResult();
+      if (loader) loader.style.display = "block";
+      try {
+        const res = await fetch(`${API_BASE}v/d/updatedToday`, { headers: { Accept: "application/json" } });
+        if (!res.ok) throw new Error(`${res.status}`);
+        const data = await res.json();
+        await ensureRedditLoaded().catch(() => {});  // risk posts need the reddit index
+        const vers = aApplyInventory(aAttachRisk(aMapVers(data)));
+        if (titleEl) titleEl.textContent = "Today's updated components";
+        A_VERSIONS = vers;
+        if (!vers.length) {
+          if (titleEl) titleEl.textContent = "No components updated today";
+          if (loader) loader.style.display = "none";
+          return;
+        }
+        await aAttachCve(vers);
+        aRenderDiagram(aBuildUml(vers));
+        aUpdateMetrics(vers);
+        if (A_MODE === "table") aRenderTable();
+      } catch (e) {
+        console.error("Arch load error:", e);
+        if (loader) loader.style.display = "none";
+      }
+    }
+
     async function aLoadAndRender() {
       const compsCsv = (EL.components.value || "").trim();
       const names = compsCsv ? compsCsv.split(",").map(s => s.trim()).filter(Boolean) : [];
+      if (!names.length) { aShowEmptyState(); return; }
       const loader = aEl("loader"), titleEl = aEl("title");
+      aShowResult();
       if (loader) loader.style.display = "block";
       try {
-        let vers;
-        if (names.length) {
-          const query = names.map(n => `component=name:${encodeURIComponent(n)}`).join("&");
-          const res = await fetch(`${API_BASE}v/d/versionsByComponent?${query}`, { headers: { Accept: "application/json" } });
-          if (!res.ok) throw new Error(`${res.status}`);
-          const data = await res.json();
-          vers = (Array.isArray(data) ? data : []).map(c => ({
-            name: c.name, latestVersion: c.latestVersion,
-            currentVersion: c.currentVersion || c.latestVersion, latestCveVersion: c.latestCveVersion
-          }));
-          if (titleEl) titleEl.textContent = names.join(", ");
-        } else {
-          const res = await fetch(`${API_BASE}v/d/updatedToday`, { headers: { Accept: "application/json" } });
-          if (!res.ok) throw new Error(`${res.status}`);
-          const data = await res.json();
-          vers = (Array.isArray(data) ? data : []).map(c => ({
-            name: c.name, latestVersion: c.latestVersion,
-            currentVersion: c.currentVersion || c.latestVersion, latestCveVersion: c.latestCveVersion
-          }));
-          if (titleEl) titleEl.textContent = "Today's updated components";
-        }
+        const query = names.map(n => `component=name:${encodeURIComponent(n)}`).join("&");
+        const res = await fetch(`${API_BASE}v/d/versionsByComponent?${query}`, { headers: { Accept: "application/json" } });
+        if (!res.ok) throw new Error(`${res.status}`);
+        const data = await res.json();
+        await ensureRedditLoaded().catch(() => {});  // risk posts need the reddit index
+        const vers = aApplyInventory(aAttachRisk(aMapVers(data)));
+        if (titleEl) titleEl.textContent = names.join(", ");
         A_VERSIONS = vers;
         if (!vers.length) {
           if (titleEl) titleEl.textContent = "No data";
           if (loader) loader.style.display = "none";
           return;
         }
+        await aAttachCve(vers);
         const uml = aBuildUml(vers);
         aRenderDiagram(uml);
         aUpdateMetrics(vers);
+        if (A_MODE === "table") aRenderTable();
       } catch (e) {
         console.error("Arch load error:", e);
         if (loader) loader.style.display = "none";
@@ -4075,6 +4551,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       document.getElementById("archControls").style.display = "";
       document.getElementById("feedSidebarSections").style.display = "none";
       EL.archLink.classList.add("nav-active");
+      aSetMode(A_MODE);  // sync the Diagram / Table toggle buttons
     }
     function deactivateArch() {
       A_ACTIVE = false;
@@ -4106,6 +4583,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       sel.value = "";
       if (A_ACTIVE) aLoadAndRender();
     });
+
+    document.getElementById("a-todayBtn").addEventListener("click", () => {
+      EL.components.value = "";
+      aLoadUpdatedToday();
+    });
+
+    document.getElementById("a-viewDiagram").addEventListener("click", () => aSetMode("diagram"));
+    document.getElementById("a-viewTable").addEventListener("click", () => aSetMode("table"));
 
     document.getElementById("a-metricsBtn").addEventListener("click", () => document.getElementById("a-metricsDialog").showModal());
     document.getElementById("a-codeBtn").addEventListener("click", () => document.getElementById("a-codeDialog").showModal());
@@ -4458,6 +4943,16 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // stale entries are harmless (they just stop matching anything).
     const KNOWN_LLM_PRODUCT_NAMES = ["1","1.0 Nano","1.0 Pro","1.0 Ultra","1.5","1.5 Flash","1.5 Pro","2","2.0 Flash","2.0 Flash-Lite","2.0 Pro","2.5 Flash","2.5 Flash Image (Nano Banana)","2.5 Flash-Lite","2.5 Pro","2mini","3","3 Deep Think","3 Flash","3 Pro","3 Pro Image (Nano Banana Pro)","3.1 Flash Image(Nano Banana 2)","3.1 Flash-Lite","3.1 Flash-Lite Image(Nano Banana 2 Lite)","3.1 Pro","3.5 Flash","3.5 Flash-Lite","3.6 Flash","3.7 Flash","3mini","4","4.1","4.1Fast","4.1Thinking","4.20","4.3","4.5","4.6","4Fast","4Heavy","Claude","Claude 2","Claude 2.1","Claude 3 Haiku","Claude 3 Opus","Claude 3 Sonnet","Claude 3.5 Haiku","Claude 3.5 Sonnet","Claude 3.5 Sonnet (new)","Claude 3.7 Sonnet","Claude Fable 5","Claude Haiku 4.5","Claude Instant 1.2","Claude Mythos 5","Claude Mythos Preview","Claude Opus 4","Claude Opus 4.1","Claude Opus 4.5","Claude Opus 4.6","Claude Opus 4.7","Claude Opus 4.8","Claude Opus 5","Claude Sonnet 4","Claude Sonnet 4.5","Claude Sonnet 4.6","Claude Sonnet 5","Code Fast1","Code Llama","Codestral 22B","Codestral Mamba 7B","Codestral25.01","Codestral25.08","DeepSeek-Coder","DeepSeek-LLM","DeepSeek-Math","DeepSeek-Math-V2","DeepSeek-MoE","DeepSeek-Prover-V2","DeepSeek-R1","DeepSeek-V2","DeepSeek-V3","DeepSeek-V3.1","DeepSeek-V3.2","DeepSeek-V4","DeepSeek-VL2","Devstral 2","Devstral Medium 1.0","Devstral Small 1.125.07","Devstral Small 2","Devstral Small25.05","GPT-3.5","GPT-4","GPT-4.1","GPT-4.5","GPT-4o","GPT-5","GPT-5.1","GPT-5.2","GPT-5.3","GPT-5.4","GPT-5.5","GPT-5.6","Llama","Llama 2","Llama 3","Llama 3.1","Llama 3.2","Llama 3.3","Llama 4","Magistral Medium","Magistral Medium 1.225.09","Magistral Small","Magistral Small 1.225.09","Mathstral 7B","Medium 3.5","Ministral 3","Ministral 3B24.10","Ministral 8B24.10","Mistral 7B","Mistral Large 224.07","Mistral Large 224.11","Mistral Large 3","Mistral Large24.02","Mistral Medium","Mistral Medium 3.125.08","Mistral Medium 325.05","Mistral Small","Mistral Small 3.125.03","Mistral Small 3.225.06","Mistral Small 325.01","Mistral Small 4","Mixtral 8x22B","Mixtral 8x7B","Pixtral Large24.11","Pixtral24.09","Voxtral Mini","Voxtral Mini Transcribe V2","Voxtral Realtime","Voxtral Small","Voxtral TTS","alfred","all-minilm","athene-v2","aya","aya-expanse","bakllava","bespoke-minicheck","bge-large","bge-m3","codebooga","codegeex4","codegemma","codellama","codeqwen","codestral","codeup","cogito","cogito-2.1","command-a","command-r","command-r-plus","command-r7b","command-r7b-arabic","dbrx","deepcoder","deepscaler","deepseek-coder","deepseek-coder-v2","deepseek-llm","deepseek-ocr","deepseek-r1","deepseek-v2","deepseek-v2.5","deepseek-v3","deepseek-v3.1","deepseek-v4-flash","deepseek-v4-pro","devstral","devstral-2","devstral-small-2","dolphin-llama3","dolphin-mistral","dolphin-mixtral","dolphin-phi","dolphin3","dolphincoder","duckdb-nsql","embeddinggemma","everythinglm","exaone-deep","exaone3.5","falcon","falcon2","falcon3","firefunction-v2","functiongemma","gemma","gemma2","gemma3","gemma3n","gemma4","glm-4.7-flash","glm-5.1","glm-5.2","glm-ocr","glm4","goliath","gpt-oss","gpt-oss-safeguard","granite-code","granite-embedding","granite3-dense","granite3-guardian","granite3-moe","granite3.1-dense","granite3.1-moe","granite3.2","granite3.2-vision","granite3.3","granite4","granite4.1","granite4.1-guardian","hermes3","internlm2","kimi-k2.6","kimi-k2.7-code","kimi-k3","laguna-s-2.1","laguna-xs-2.1","laguna-xs.2","lfm2","lfm2.5","lfm2.5-thinking","llama-guard3","llama-pro","llama2","llama2-chinese","llama2-uncensored","llama3","llama3-chatqa","llama3-gradient","llama3-groq-tool-use","llama3.1","llama3.2","llama3.2-vision","llama3.3","llama4","llava","llava-llama3","llava-phi3","magicoder","magistral","marco-o1","mathstral","medgemma","medgemma1.5","meditron","medllama2","megadolphin","minicpm-v","minicpm-v4.5","minicpm-v4.6","minimax-m2.7","minimax-m3","ministral-3","mistral","mistral-large","mistral-large-3","mistral-medium-3.5","mistral-nemo","mistral-openorca","mistral-small","mistral-small3.1","mistral-small3.2","mistrallite","mixtral","moondream","muse-glimmer","mxbai-embed-large","nemotron","nemotron-3-nano","nemotron-3-super","nemotron-3-ultra","nemotron-3.5-lightning","nemotron-cascade-2","nemotron-mini","nemotron3","neural-chat","nexusraven","nomic-embed-text","nomic-embed-text-v2-moe","north-mini-code-1.0","notus","notux","nous-hermes","nous-hermes2","nous-hermes2-mixtral","nuextract","o1","o3","olmo-3","olmo-3.1","olmo2","open-orca-platypus2","openchat","opencoder","openhermes","openthinker","orca-mini","orca2","ornith","paraphrase-multilingual","phi","phi3","phi3.5","phi4","phi4-mini","phi4-mini-reasoning","phi4-reasoning","phind-codellama","qwen","qwen2","qwen2-math","qwen2.5","qwen2.5-coder","qwen2.5vl","qwen3","qwen3-coder","qwen3-coder-next","qwen3-embedding","qwen3-next","qwen3-vl","qwen3.5","qwen3.6","qwen3.8","qwq","r1-1776","reader-lm","reflection","rnj-1","sailor2","samantha-mistral","shieldgemma","smallthinker","smollm","smollm2","snowflake-arctic-embed","snowflake-arctic-embed2","solar","solar-pro","sqlcoder","stable-beluga","stable-code","stablelm-zephyr","stablelm2","starcoder","starcoder2","starling-lm","tinydolphin","tinyllama","translategemma","tulu3","vicuna","wizard-math","wizard-vicuna","wizard-vicuna-uncensored","wizardcoder","wizardlm","wizardlm-uncensored","wizardlm2","xwinlm","yarn-llama2","yarn-mistral","yi","yi-coder","zephyr"];
 
+    // Exact-match anchor names for hypervisor releases, same rationale as
+    // KNOWN_LLM_PRODUCT_NAMES above (server `q` matches near-exact
+    // versionProductName). This is hypervisor.py's full catalog — small and
+    // stable, so it rarely needs regeneration.
+    const KNOWN_HV_PRODUCT_NAMES = [
+      "VMware ESXi", "VMware Workstation", "VMware Fusion",
+      "Oracle VirtualBox", "VirtualBox", "Xen", "XCP-ng",
+      "Proxmox VE", "Proxmox Virtual Environment"
+    ];
+
     /* ── API ──────────────────────────────────────────────────── */
     const Api = {
       async versions(qCsv, cursor) {
@@ -4498,6 +4993,26 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         }));
         return dedupeByVersionId(results).filter(isLLMVersion);
       },
+      // Same shape as llmVersions() — a date-window-independent fetch for the
+      // Hypervisor category, since hypervisor releases (like AI models) are
+      // sparse enough in time to almost never fall inside the default feed window.
+      async hypervisorVersions() {
+        const brandTerms = ["hypervisor", "virtualization", "vmware", "virtualbox", "esxi", "xen", "proxmox", "xcp-ng"];
+        const allTerms = uniq([...brandTerms, ...KNOWN_HV_PRODUCT_NAMES]);
+        const CHUNK = 60;
+        const chunks = [];
+        for (let i = 0; i < allTerms.length; i += CHUNK) chunks.push(allTerms.slice(i, i + CHUNK));
+        const results = await Promise.all(chunks.map(async terms => {
+          try {
+            const params = new URLSearchParams({ q: encodeCsvKeepCommas(terms.join(",")), limit: "300" });
+            const res = await fetch(`${API_BASE}v/search?${params}`, { headers: { Accept: "application/json" } });
+            if (!res.ok) return [];
+            const json = await res.json();
+            return json.data || [];
+          } catch (_) { return []; }
+        }));
+        return dedupeByVersionId(results).filter(isHypervisorVersion);
+      },
       async reddit() {
         // Fetch all recent posts sorted by date; positiveScore filter was too strict
         const res = await fetch(`${API_BASE}reddit?limit=${REDDIT_LIMIT}`, { headers: { Accept: "application/json" } });
@@ -4516,6 +5031,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           return {
             redditId: p.redditId || p._id || p.id,
             title: p.title, subreddit: p.subreddit, url: p.url,
+            author: p.author,
             created_utc,
             num_comments: p.num_comments, score: p.score,
             metadata: p.metadata, source: p.source,
@@ -4551,7 +5067,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       fetchingPage: false, // prevents concurrent server page fetches
       llmVersions: [],        // full, date-window-independent AI model dataset (see ensureLlmVersionsLoaded)
       llmVersionsLoaded: false,
-      llmReady: null          // promise — set once, never re-fetched
+      llmReady: null,         // promise — set once, never re-fetched
+      hvVersions: [],         // full, date-window-independent hypervisor dataset (see ensureHvVersionsLoaded)
+      hvVersionsLoaded: false,
+      hvReady: null           // promise — set once, never re-fetched
     };
 
     // Merges arrays of raw version docs, dropping duplicates by versionId (falling
@@ -4658,7 +5177,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     /* ── Aggregates ───────────────────────────────────────────── */
     function computeAggregates(list) {
-      let major = 0, minor = 0, patch = 0, cve = 0, llm = 0; const uniqComps = new Set(), typeCounts = new Map();
+      let major = 0, minor = 0, patch = 0, cve = 0, llm = 0, hv = 0; const uniqComps = new Set(), typeCounts = new Map();
       const rIds = new Set(), rRiskIds = new Set(), rRiskLatIds = new Set(), rRiskCveIds = new Set(), soIds = new Set(), soRiskIds = new Set();
       let potentialCve = 0;
       for (const it of list) {
@@ -4666,6 +5185,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         if (ch === "major") major++; else if (ch === "minor") minor++; else if (ch === "patch") patch++;
         if (it.isCve) cve++;
         if (isLLMVersion(it)) llm++;
+        if (isHypervisorVersion(it)) hv++;
         for (const p of redditMatchesForVersionBase(it, REDDIT_LIMIT, false)) if (getPostSource(p) === "reddit") rIds.add(getPostId(p));
         for (const p of redditMatchesForVersionBase(it, REDDIT_LIMIT, true)) if (getPostSource(p) === "reddit") {
           const id = getPostId(p); rRiskIds.add(id);
@@ -4684,7 +5204,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         }
       }
       return {
-        major, minor, patch, cve, llm, reddit: rIds.size, redditRisk: rRiskIds.size,
+        major, minor, patch, cve, llm, hv, reddit: rIds.size, redditRisk: rRiskIds.size,
         redditRiskLatest: rRiskLatIds.size, redditRiskCve: rRiskCveIds.size,
         so: soIds.size, soRisk: soRiskIds.size, potentialCve, uniq: uniqComps.size, typeCounts
       };
@@ -4702,6 +5222,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const llmCount = STATE.llmVersionsLoaded ? STATE.llmVersions.length : a.llm;
       EL["btn-llm"].textContent = llmCount;
       EL["kpi-llm"].textContent = llmCount;
+      // Same treatment as LLM — prefer the full dataset's true total once loaded.
+      const hvCount = STATE.hvVersionsLoaded ? STATE.hvVersions.length : a.hv;
+      EL["btn-hv"].textContent = hvCount;
+      EL["kpi-hv"].textContent = hvCount;
       EL["btn-potential-cve"].textContent = a.potentialCve;
       EL["btn-reddit"].textContent = a.reddit;
       EL["btn-reddit-risk"].textContent = a.redditRisk;
@@ -4749,7 +5273,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const compTypes = (v.classification?.componentType || []).map(norm);
       const truth = {
         major: channel === "major", minor: channel === "minor", patch: channel === "patch",
-        cve: !!v.isCve, llm: isLLMVersion(v), reddit: rc > 0,
+        cve: !!v.isCve, llm: isLLMVersion(v), hv: isHypervisorVersion(v), reddit: rc > 0,
         "reddit-risk": rRiskCount > 0, "reddit-risk-latest": rRiskLatestCount > 0,
         "reddit-risk-cve": rRiskCveCount > 0, so: soCount > 0, "so-risk": soRiskCount > 0,
         "potential-cve": hasPotentialCve
@@ -4791,13 +5315,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       buildSuggestionPool();
       const comps = STATE.filters.components;
       const llmActive = STATE.filters.toggles.has("llm");
-      // Extend the windowed feed with the full LLM dataset whenever it's relevant —
-      // otherwise those docs are usually invisible (see withinFeedWindow above).
-      const pool = (llmActive || comps.length)
-        ? dedupeByVersionId([STATE.rawVersions, STATE.llmVersions])
+      const hvActive = STATE.filters.toggles.has("hv");
+      // Extend the windowed feed with the full LLM / hypervisor datasets whenever
+      // they're relevant — otherwise those docs are usually invisible (see
+      // withinFeedWindow above).
+      const pool = (llmActive || hvActive || comps.length)
+        ? dedupeByVersionId([STATE.rawVersions, STATE.llmVersions, STATE.hvVersions])
         : STATE.rawVersions;
       const candidates = pool.filter(v => {
-        if (!withinFeedWindow(v, comps, llmActive)) return false;
+        if (!withinFeedWindow(v, comps, llmActive || hvActive)) return false;
         if (!comps.length) return true;
         const name = norm(v.versionProductName);
         const tags = (Array.isArray(v.versionSearchTags) ? v.versionSearchTags.join(",") : "").toLowerCase();
@@ -4938,6 +5464,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         else if (it.kind === "stackoverflow") liClass += " kind-stackoverflow" + (isRisk(it.raw) ? " risk" : "");
         else if (it.kind === "update" && it.channel) liClass += ` kind-update ${it.channel}`;
         if (isLLMVersion(it.raw)) liClass += " kind-llm";
+        if (isHypervisorVersion(it.raw)) liClass += " kind-hv";
         if (isNew) liClass += " is-new";
         li.className = liClass;
 
@@ -5005,6 +5532,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           const chLabel = ch === "major" ? "🔖 major" : ch === "patch" ? "🩹 patch" : ch === "minor" ? "🔹 minor" : ch;
           chipsEl.insertAdjacentHTML("beforeend", chip(chLabel, ch === "major" ? "ok" : "soft"));
           if (isLLMVersion(it.raw)) chipsEl.insertAdjacentHTML("beforeend", chip("🤖 LLM", "llm"));
+          if (isHypervisorVersion(it.raw)) chipsEl.insertAdjacentHTML("beforeend", chip("🖥️ Hypervisor", "hv"));
         }
 
         if (it.kind !== "reddit" && it.kind !== "stackoverflow" && it.raw) {
@@ -5073,8 +5601,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     function filterVersions(vers) {
       const comps = STATE.filters.components;
       const llmActive = STATE.filters.toggles.has("llm");
+      const hvActive = STATE.filters.toggles.has("hv");
       const candidates = vers.filter(v => {
-        if (!withinFeedWindow(v, comps, llmActive)) return false;
+        if (!withinFeedWindow(v, comps, llmActive || hvActive)) return false;
         if (!comps.length) return true;
         const name = norm(v.versionProductName);
         const tags = (Array.isArray(v.versionSearchTags) ? v.versionSearchTags.join(",") : "").toLowerCase();
@@ -5219,6 +5748,23 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       return STATE.llmReady;
     }
 
+    // Hypervisor counterpart of ensureLlmVersionsLoaded() — hypervisor releases are
+    // sparse enough in time that the default feed window essentially never contains
+    // any, so the "Hypervisors" KPI/toggle would otherwise sit at 0.
+    function ensureHvVersionsLoaded() {
+      if (!STATE.hvReady) {
+        STATE.hvReady = Api.hypervisorVersions().catch(() => []).then(list => {
+          STATE.hvVersions = dedupeByVersionId([list]);
+          STATE.hvVersionsLoaded = true;
+          EL["btn-hv"].textContent = STATE.hvVersions.length;
+          EL["kpi-hv"].textContent = STATE.hvVersions.length;
+          refreshActivityChartHvLine();
+          if (STATE.filters.toggles.has("hv")) applyFilters();
+        });
+      }
+      return STATE.hvReady;
+    }
+
     async function boot() {
       EL.status.textContent = "Loading…";
       EL.navLoader.classList.add("active");
@@ -5262,9 +5808,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         STATE.rawVersions = vers;
         applyFilters();
 
-        // Reddit and LLM datasets load in background — never block the feed
+        // Reddit, LLM and hypervisor datasets load in background — never block the feed
         ensureRedditLoaded();
         ensureLlmVersionsLoaded();
+        ensureHvVersionsLoaded();
       } catch (e) {
         console.error(e);
         EL.feed.innerHTML = `<p class="meta" style="padding:14px;color:var(--cve)">⚠️ Error: ${e.message}</p>`;
@@ -5320,9 +5867,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const key = btn.dataset.key, on = btn.getAttribute("aria-pressed") === "true";
       btn.setAttribute("aria-pressed", on ? "false" : "true");
       on ? STATE.filters.toggles.delete(key) : STATE.filters.toggles.add(key);
-      // Only "llm" round-trips to the URL for now (see setTypeParam) — shareable
-      // ?type=llm links, not a general mechanism for every quick-filter toggle.
-      if (key === "llm") setTypeParam(on ? null : "llm");
+      // Only "llm" / "hv" round-trip to the URL (see setTypeParam) — shareable
+      // ?type=llm / ?type=hv links, not a general mechanism for every toggle.
+      if (key === "llm" || key === "hv") setTypeParam(on ? null : key);
       refreshActiveFilters();
       applyFilters();
     });
@@ -5458,17 +6005,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const fmtN = n => n.toLocaleString();
       const pct = yestN ? Math.round((todayN - yestN) / yestN * 100) : null;
       const deltaHtml = pct != null
-        ? `, <span style="color:${pct > 0 ? '#16a34a' : pct < 0 ? '#dc2626' : '#6b7280'};font-weight:700">${pct >= 0 ? '+' : ''}${pct}%</span>`
+        ? `, <span style="color:${pct > 0 ? '#475569' : pct < 0 ? '#dc2626' : '#6b7280'};font-weight:700">${pct >= 0 ? '+' : ''}${pct}%</span>`
         : '';
       const el = document.getElementById('home-r-total');
       if (el) el.innerHTML = fmtN(_homeRTotalNum) + ` [${fmtN(todayN)} today${deltaHtml}]`;
     }
 
     /* ── Sidebar activity chart ── only loadHomeStats calls this ── */
-    // llmData is best-effort: there's no server-side "LLM releases per day" aggregate
-    // endpoint, so it's computed client-side from whatever's in STATE.rawVersions at
-    // render time (see refreshActivityChartLlmLine, called once boot() has loaded data).
-    function updateActivityChart(labels, vData, cveData, rData, llmData) {
+    // llmData / hvData are best-effort: there's no server-side "X releases per day"
+    // aggregate endpoint for either, so they're computed client-side from the full
+    // LLM / hypervisor datasets at render time (see refreshActivityChart*Line,
+    // called once boot() / the background fetches have loaded data).
+    function updateActivityChart(labels, vData, cveData, rData, llmData, hvData) {
       const canvas = document.getElementById('home-activity-chart');
       if (!canvas) return;
       _activityDays = labels;
@@ -5478,10 +6026,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           _activityChart = new Chart(canvas.getContext('2d'), {
             type: 'line',
             data: { labels, datasets: [
-              { label: 'Versions',  data: vData,   borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.10)', tension: 0.3, pointRadius: 2, borderWidth: 1.5, fill: true },
-              { label: 'CVE',       data: cveData, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.07)',   tension: 0.3, pointRadius: 2, borderWidth: 1.5, fill: false },
-              { label: 'Community', data: rData,   borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.07)',  tension: 0.3, pointRadius: 2, borderWidth: 1.5, fill: true },
-              { label: 'LLM',       data: llmData || labels.map(() => 0), borderColor: '#7c3aed', backgroundColor: 'rgba(124,58,237,0.08)', tension: 0.3, pointRadius: 2, borderWidth: 1.5, fill: false },
+              { label: 'Versions',  data: vData,   borderColor: '#2563eb', backgroundColor: 'rgba(99,102,241,0.10)', tension: 0.3, pointRadius: 2, borderWidth: 1.5, fill: true },
+              { label: 'CVE',       data: cveData, borderColor: '#dc2626', backgroundColor: 'rgba(239,68,68,0.07)',   tension: 0.3, pointRadius: 2, borderWidth: 1.5, fill: false },
+              { label: 'Community', data: rData,   borderColor: '#64748b', backgroundColor: 'rgba(34,197,94,0.07)',  tension: 0.3, pointRadius: 2, borderWidth: 1.5, fill: true },
+              { label: 'LLM',       data: llmData || labels.map(() => 0), borderColor: '#475569', backgroundColor: 'rgba(124,58,237,0.08)', tension: 0.3, pointRadius: 2, borderWidth: 1.5, fill: false },
+              { label: 'Hypervisor', data: hvData || labels.map(() => 0), borderColor: '#0f766e', backgroundColor: 'rgba(15,118,110,0.08)', tension: 0.3, pointRadius: 2, borderWidth: 1.5, fill: false },
             ]},
             options: {
               responsive: true, maintainAspectRatio: false, animation: false,
@@ -5541,6 +6090,26 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       try { _activityChart.update('none'); } catch (_) {}
     }
 
+    // Hypervisor counterpart of computeLlmDailyFromRaw — same fallback logic.
+    function computeHvDailyFromRaw(dayStrs) {
+      const counts = Object.fromEntries(dayStrs.map(s => [s, 0]));
+      const source = STATE.hvVersionsLoaded ? STATE.hvVersions : STATE.rawVersions;
+      for (const v of source) {
+        if (!isHypervisorVersion(v)) continue;
+        const d = String(v.versionReleaseDate || '').trim().replace(/-/g, '');
+        if (Object.prototype.hasOwnProperty.call(counts, d)) counts[d]++;
+      }
+      return dayStrs.map(s => counts[s]);
+    }
+
+    function refreshActivityChartHvLine() {
+      if (!_activityChart || !_activityDayStrs) return;
+      const ds = _activityChart.data?.datasets?.find(d => d.label === 'Hypervisor');
+      if (!ds) return;
+      ds.data = computeHvDailyFromRaw(_activityDayStrs);
+      try { _activityChart.update('none'); } catch (_) {}
+    }
+
     // Load the full component name list in the background so autocomplete can suggest
     // e.g. "Mistral" or "Ollama" even before/without any of their releases being loaded
     // into the current feed window. Rebuild the pool once it lands.
@@ -5583,7 +6152,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         if (!yestN || !todayN) return '';
         const pct = Math.round((todayN - yestN) / yestN * 100);
         const sign = pct >= 0 ? '+' : '';
-        const color = pct > 0 ? '#16a34a' : pct < 0 ? '#dc2626' : '#6b7280';
+        const color = pct > 0 ? '#475569' : pct < 0 ? '#dc2626' : '#6b7280';
         return `, <span style="color:${color};font-weight:700">${sign}${pct}%</span>`;
       };
       // Build LOOKBACK_DAYS-day date array (oldest → today)
@@ -5633,13 +6202,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           updateCommunityBracket();
         }
         _activityDayStrs = days.map(d => d.str);
-        updateActivityChart(days.map(d => d.label), vDaily, cveDaily, rDaily, computeLlmDailyFromRaw(_activityDayStrs));
+        updateActivityChart(days.map(d => d.label), vDaily, cveDaily, rDaily, computeLlmDailyFromRaw(_activityDayStrs), computeHvDailyFromRaw(_activityDayStrs));
       } catch (_) { /* stats are non-critical */ }
     })();
 
     setupObserver();
     boot().then(async () => {
       refreshActivityChartLlmLine(); // STATE.rawVersions is populated now — repaint the LLM line for real
+      refreshActivityChartHvLine();
       const view = new URL(location.href).searchParams.get("view");
       if (view === "graph") {
         activateGraph();
@@ -6379,7 +6949,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       score = Math.min(score, 100);
 
       const level      = score >= 75 ? "Critical" : score >= 50 ? "High" : score >= 25 ? "Medium" : "Low";
-      const scoreColor = score >= 75 ? "#b91c1c"  : score >= 50 ? "#c2410c" : score >= 25 ? "#b45309" : "#16a34a";
+      const scoreColor = score >= 75 ? "#b91c1c"  : score >= 50 ? "#b45309" : score >= 25 ? "#b45309" : "#475569";
       const rec =
         score >= 75 ? "Defer deployment. Review all CVE advisories and test in an isolated environment before production." :
         score >= 50 ? "Test thoroughly in staging. Review breaking changes and CVE details before production deployment." :
@@ -6472,7 +7042,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           + (ep ? '<tr><td style="color:var(--muted);padding:2px 4px 2px 0">Released</td><td>' + new Date(ep).toLocaleDateString() + '</td></tr>' : '')
           + (url ? '<tr><td style="color:var(--muted);padding:2px 4px 2px 0">Notes</td><td><a href="' + riEsc(url) + '" target="_blank" rel="noopener" style="color:var(--brand)">Release notes</a></td></tr>' : '')
           + '</table>';
-        if (channel === "major") verHtml += '<div style="margin-top:8px;padding:6px 8px;background:#fef3c7;border-radius:4px;font-size:10px;color:#92400e">Major version update. Review migration guides and test all integrations before deploying.</div>';
+        if (channel === "major") verHtml += '<div style="margin-top:8px;padding:6px 8px;background:#fffbeb;border-radius:4px;font-size:10px;color:#b45309">Major version update. Review migration guides and test all integrations before deploying.</div>';
       }
       document.getElementById("ri-body-ver").innerHTML = verHtml;
     }
@@ -6662,7 +7232,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             body: JSON.stringify({ outcome, fromVersion, description })
           });
           if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || res.status);
-          msgEl.style.color = "#16a34a";
+          msgEl.style.color = "#475569";
           msgEl.textContent = "Thank you for your report.";
           setTimeout(() => { wrap.remove(); nkLoadReleases(document.getElementById("nk-search").value); }, 1200);
         } catch (err) {
@@ -6867,6 +7437,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           adminSection.style.display = "none";
         }
         uaLoadBookmarks();
+        uaRenderInventory();
       }
       uaUpdateSidebar();
     }
@@ -7025,6 +7596,214 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const stored = uaUser();
       if (stored) { stored.orgs = orgs; localStorage.setItem("rt_user", JSON.stringify(stored)); }
       uaShowMsg("ua-org-ok", "Namespaces saved.");
+    });
+
+    /* ── Installed versions (account inventory) ───────────────── */
+    // Shape: [{ component: string, version: string }]. Persisted on the user
+    // document via PUT users/:id and mirrored to localStorage so the Arch view
+    // (and offline reloads) can read it without a round-trip.
+    const RT_INV_KEY = "rt_inventory";
+
+    function uaInvGet() {
+      const u = uaUser();
+      if (u && Array.isArray(u.inventory)) return uaInvNormalize(u.inventory);
+      try { return uaInvNormalize(JSON.parse(localStorage.getItem(RT_INV_KEY) || "[]")); }
+      catch { return []; }
+    }
+    function uaInvNormalize(arr) {
+      const seen = new Set(), out = [];
+      for (const raw of (Array.isArray(arr) ? arr : [])) {
+        const component = String(raw && raw.component || "").trim().slice(0, 64);
+        const version = String(raw && raw.version || "").trim().slice(0, 32);
+        if (!component || !version) continue;
+        const key = component.toLowerCase();
+        if (seen.has(key)) { out[out.findIndex(e => e.component.toLowerCase() === key)] = { component, version }; continue; }
+        seen.add(key); out.push({ component, version });
+      }
+      out.sort((a, b) => a.component.toLowerCase().localeCompare(b.component.toLowerCase()));
+      return out;
+    }
+    function uaInvValidVersion(v) { return /^[a-zA-Z0-9][a-zA-Z0-9 ._+:-]*$/.test(v); }
+
+    async function uaInvPersist(arr) {
+      const next = uaInvNormalize(arr);
+      // Stored per-browser. The user model does not yet accept an `inventory`
+      // field on PUT /api/users/:id (server whitelists name/password/orgs/role),
+      // so there is no server round-trip until that lands. We still mirror onto
+      // the local user object so it travels with the session on this device.
+      localStorage.setItem(RT_INV_KEY, JSON.stringify(next));
+      const stored = uaUser();
+      if (stored) { stored.inventory = next; localStorage.setItem("rt_user", JSON.stringify(stored)); }
+      return { list: next, serverOk: true, serverErr: "" };
+    }
+
+    function uaInvMsg(text, kind) {
+      const el = document.getElementById("ua-inv-msg");
+      if (!el) return;
+      el.textContent = text || "";
+      el.className = "ua-msg " + (kind === "error" ? "ua-msg-error" : "ua-msg-ok");
+      el.style.display = text ? "" : "none";
+      if (text) setTimeout(() => { el.style.display = "none"; }, 4000);
+    }
+
+    let uaInvNamesLoaded = false;
+    async function uaInvEnsureNames() {
+      if (uaInvNamesLoaded) return;
+      uaInvNamesLoaded = true;
+      try {
+        const res = await fetch(API_BASE + "c/names");
+        if (!res.ok) return;
+        const names = await res.json();
+        const dl = document.getElementById("ua-comp-names");
+        if (!dl || !Array.isArray(names)) return;
+        dl.innerHTML = names.slice(0, 6000).map(n => `<option value="${uaEsc(n)}"></option>`).join("");
+      } catch { /* autocomplete is best-effort */ }
+    }
+
+    async function uaInvApply(arr, okText) {
+      const { list } = await uaInvPersist(arr);
+      uaRenderInventory(list);
+      uaInvMsg(okText || "Saved.", "ok");
+    }
+
+    function uaRenderInventory(list) {
+      const listEl = document.getElementById("ua-inv-list");
+      const emptyEl = document.getElementById("ua-inv-empty");
+      const countEl = document.getElementById("ua-inv-count");
+      if (!listEl) return;
+      uaInvEnsureNames();
+      const inv = Array.isArray(list) ? list : uaInvGet();
+      if (countEl) countEl.textContent = inv.length ? "(" + inv.length + ")" : "";
+      if (!inv.length) {
+        listEl.innerHTML = "";
+        if (emptyEl) emptyEl.style.display = "";
+        return;
+      }
+      if (emptyEl) emptyEl.style.display = "none";
+      listEl.innerHTML = inv.map(e => `<div class="ua-bm-item" data-comp="${uaEsc(e.component)}">
+        <div style="flex:1;min-width:0">
+          <span class="ua-bm-name" title="${uaEsc(e.component)}">${uaEsc(e.component)}</span>
+          <span class="ua-org-chip" style="font-family:Consolas,Monaco,monospace">${uaEsc(e.version)}</span>
+          <span class="ua-inv-drift ua-muted" style="display:block;margin-top:3px;font-size:11px">checking latest…</span>
+        </div>
+        <div class="ua-bm-actions">
+          <button class="btn btn-ghost ua-inv-edit-btn" data-comp="${uaEsc(e.component)}" data-ver="${uaEsc(e.version)}" style="font-size:12px;padding:4px 8px">Edit</button>
+          <button class="btn btn-ghost ua-inv-del-btn" data-comp="${uaEsc(e.component)}" style="font-size:12px;padding:4px 8px;color:var(--cve);border-color:#fca5a5">Delete</button>
+        </div>
+      </div>`).join("");
+      uaInvAnnotate(inv);
+
+      listEl.querySelectorAll(".ua-inv-del-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const comp = btn.dataset.comp;
+          await uaInvApply(uaInvGet().filter(e => e.component !== comp), "Removed " + comp + ".");
+        });
+      });
+      listEl.querySelectorAll(".ua-inv-edit-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const comp = btn.dataset.comp;
+          const next = prompt("Version for " + comp + ":", btn.dataset.ver);
+          if (next === null) return;
+          const v = next.trim();
+          if (!v || !uaInvValidVersion(v)) { uaInvMsg("Invalid version string.", "error"); return; }
+          const cur = uaInvGet();
+          const i = cur.findIndex(e => e.component === comp);
+          if (i >= 0) cur[i] = { component: comp, version: v };
+          await uaInvApply(cur, "Updated " + comp + ".");
+        });
+      });
+    }
+
+    // Live installed-vs-latest comparison (+ recent CVE flag) for each recorded row.
+    async function uaInvAnnotate(inv) {
+      const rows = Array.isArray(inv) ? inv : uaInvGet();
+      if (!rows.length) return;
+      const q = rows.map(e => "component=name:" + encodeURIComponent(e.component)).join("&");
+      const names = rows.map(e => e.component);
+      const start = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10).replace(/-/g, "");
+      let data, cves = [];
+      try {
+        const [rLatest, rCve] = await Promise.all([
+          fetch(API_BASE + "v/d/versionsByComponent?" + q, { headers: { Accept: "application/json" } }),
+          fetch(API_BASE + "v/search?q=" + encodeURIComponent(names.join(",")) + "&isCve=true&start=" + start
+            + "&limit=400&fields=versionProductName,versionProductBrand,versionReleaseDate,versionUrl,isCve",
+            { headers: { Accept: "application/json" } }).catch(() => null),
+        ]);
+        if (!rLatest.ok) throw 0;
+        data = await rLatest.json();
+        if (rCve && rCve.ok) { const b = await rCve.json(); cves = Array.isArray(b) ? b : (b.data || []); }
+      } catch {
+        document.querySelectorAll("#ua-inv-list .ua-inv-drift").forEach(s => { s.textContent = ""; });
+        return;
+      }
+      const byName = new Map((Array.isArray(data) ? data : []).map(c => [String(c.name).toLowerCase(), c]));
+      const cveByName = new Map();
+      for (const r of cves) {
+        if (!r.isCve) continue;
+        const t = aDateMs(r.versionReleaseDate);
+        for (const k of [String(r.versionProductName || "").toLowerCase(), String(r.versionProductBrand || "").toLowerCase()]) {
+          if (!k) continue;
+          const prev = cveByName.get(k);
+          if (!prev || t > prev._t) cveByName.set(k, { _t: t, code: aExtractCveCode(r.versionUrl), date: r.versionReleaseDate });
+        }
+      }
+      document.querySelectorAll("#ua-inv-list .ua-bm-item").forEach(row => {
+        const comp = row.dataset.comp;
+        const slot = row.querySelector(".ua-inv-drift");
+        const entry = rows.find(e => e.component === comp);
+        if (!slot || !entry) return;
+        const rec = byName.get(String(comp).toLowerCase());
+        const lv = rec && rec.latestVersion && rec.latestVersion.versionNumber;
+        const cve = (rec && rec.latestCveVersion)
+          ? { code: aExtractCveCode(rec.latestCveVersion.versionUrl) }
+          : cveByName.get(String(comp).toLowerCase());
+        const cveHtml = cve ? ` <span style="color:var(--cve)">· ${uaEsc(cve.code)}${cve.date ? " (" + cve.date.slice(4, 6) + "/" + cve.date.slice(6, 8) + ")" : ""}</span>` : "";
+        if (!lv) { slot.innerHTML = "no release data" + cveHtml; return; }
+        const gap = aVerGap(entry.version, lv);
+        if (gap.tier === "none") {
+          slot.innerHTML = `<span class="ua-muted">on latest (${uaEsc(lv)})</span>` + cveHtml;
+          return;
+        }
+        const color = A_FILLS.behind;
+        slot.innerHTML =
+          `<span class="ua-org-chip" style="background:${color};color:#0f172a">→ ${uaEsc(lv)}</span> `
+          + `<span class="ua-muted">${uaEsc(aGapLabel(gap))} behind</span>` + cveHtml;
+      });
+    }
+
+    document.getElementById("ua-inv-refresh").addEventListener("click", () => uaRenderInventory());
+
+    document.getElementById("ua-inv-add-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      const compEl = document.getElementById("ua-inv-comp");
+      const verEl = document.getElementById("ua-inv-ver");
+      const component = compEl.value.trim();
+      const version = verEl.value.trim();
+      if (!component || !version) return;
+      if (!uaInvValidVersion(version)) { uaInvMsg("Version must start alphanumeric; letters, digits, . _ + : - only.", "error"); return; }
+      await uaInvApply([...uaInvGet(), { component, version }], "Added " + component + ".");
+      compEl.value = ""; verEl.value = ""; compEl.focus();
+    });
+
+    document.getElementById("ua-inv-bulk-btn").addEventListener("click", async () => {
+      const ta = document.getElementById("ua-inv-bulk");
+      const rows = ta.value.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      if (!rows.length) return;
+      const merged = uaInvGet();
+      let added = 0, skipped = 0;
+      for (const line of rows) {
+        const m = line.match(/^(.+?)\s*(?:@|,|\s)\s*([^\s,@]+)\s*$/);
+        if (!m) { skipped++; continue; }
+        const component = m[1].trim().slice(0, 64);
+        const version = m[2].trim().slice(0, 32);
+        if (!component || !version || !uaInvValidVersion(version)) { skipped++; continue; }
+        const i = merged.findIndex(e => e.component.toLowerCase() === component.toLowerCase());
+        if (i >= 0) merged[i] = { component, version }; else merged.push({ component, version });
+        added++;
+      }
+      if (!added) { uaInvMsg("No valid lines found.", "error"); return; }
+      await uaInvApply(merged, added + " imported" + (skipped ? ", " + skipped + " skipped." : "."));
+      ta.value = "";
     });
 
     document.getElementById("ua-refresh-users").addEventListener("click", uaLoadUsers);
