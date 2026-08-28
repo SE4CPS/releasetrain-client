@@ -1334,7 +1334,7 @@
   <!-- ── Topbar: brand + nav only ── -->
   <header class="topbar" role="banner" id="topbar">
     <div class="topbar-main">
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.24.0">Releasetrain <em>v3.24.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.25.0">Releasetrain <em>v3.25.0</em></a>
       <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
       <div class="topbar-spacer"></div>
       <button class="nav-toggle" type="button" id="navToggle"
@@ -2065,61 +2065,46 @@ graph LR
 <details class="arch-sub">
 <summary class="d-arch-sum">Frontend Views: releasetrain-client</summary>
 <div class="arch-sub-body">
-<p class="small muted" style="margin:.25rem 0 .5rem">All views served as static HTML and JS from a single Nginx or http-server process. Click a view to expand details.</p>
+<p class="small muted" style="margin:.25rem 0 .5rem">One self-contained <code>index.html</code> served as a static file. Views switch client-side via a <code>?view=</code> parameter; no per-view page loads. Click a view to expand details.</p>
 
 <details class="arch-view">
-<summary class="d-arch-view-sum">Feed and Dashboard</summary>
-<div class="arch-view-body">Real-time release feed with version cards, component filters, CVE badges and channel breakdown charts. Consumes <code>/api/v/search</code> and <code>/api/reddit</code>. Built with jQuery and Chart.js.</div>
+<summary class="d-arch-view-sum">Feed</summary>
+<div class="arch-view-body">Default view. Release cards grouped by component, quick filters, and a sidebar activity chart. Consumes <code>/api/v/search</code>, <code>/api/reddit</code> and the <code>/api/aggregate/*</code> per-day endpoints. Vanilla JS; Chart.js is lazy-loaded from a CDN for the activity chart.</div>
 </details>
 
 <details class="arch-view">
 <summary class="d-arch-view-sum">CVE View</summary>
-<div class="arch-view-body">CVE post timeline with NVD pipeline banner showing post distribution across CVE lifecycle stages (Reserved, Awaiting Analysis, Analyzed, Published). Filters by source, date range and CVE ID pattern.</div>
+<div class="arch-view-body">CVE post timeline with an NVD pipeline banner showing distribution across CVE lifecycle stages (Reserved, Awaiting Analysis, Analyzed, Published). Filters by source, date range and CVE ID pattern.</div>
 </details>
 
 <details class="arch-view">
-<summary class="d-arch-view-sum">Component Graph</summary>
-<div class="arch-view-body">Interactive network graph rendered with Sigma.js. Nodes are software components; edges represent co-release or dependency relationships. Data served from <code>/src/data/graph.json</code>.</div>
+<summary class="d-arch-view-sum">Graph View</summary>
+<div class="arch-view-body">Force-directed graph (vis-network, lazy-loaded from a CDN). Component hub nodes with their releases and Reddit / Stack Overflow posts as satellites; edge length encodes recency. Edgeless nodes are dropped from the canvas and listed in the sidebar.</div>
 </details>
 
 <details class="arch-view">
-<summary class="d-arch-view-sum">Architecture View</summary>
-<div class="arch-view-body">PlantUML diagram viewer rendered client-side via <code>plantuml-decoder.min.js</code> and the bundled WASM core. Components are arranged in stacked tiers — hypervisor base layer (<code>versionProductType === "Hypervisor"</code>), then OS, then applications — with an "Upgrade now" cluster hoisted out for anything carrying a CVE or a major-version gap.</div>
+<summary class="d-arch-view-sum">Arch View</summary>
+<div class="arch-view-body">PlantUML diagram, encoded client-side (pako) and rendered as SVG by the public plantuml.com server. Components are stacked in tiers — hypervisor base layer (<code>versionProductType === "Hypervisor"</code>), then OS, then applications — with an "Upgrade now" cluster hoisted out for anything carrying a CVE or a major-version gap. A table mode lists the same data as a drift report.</div>
 </details>
 
 <details class="arch-view">
-<summary class="d-arch-view-sum">Docs and API Explorer</summary>
-<div class="arch-view-body">Full API reference with collapsible Swagger-style endpoint cards, curl copy buttons and live test links. System architecture rendered via Mermaid v10 (this section).</div>
+<summary class="d-arch-view-sum">Risk Report</summary>
+<div class="arch-view-body">Community risk summary: components ranked by recent high-risk Reddit and Stack Overflow discussion, with per-component release context.</div>
 </details>
 
 <details class="arch-view">
-<summary class="d-arch-view-sum">Reddit View</summary>
-<div class="arch-view-body">Browsable interface over the reddit collection. Filters by subreddit, date, update-related label and predicted positive score. Consumes <code>/api/reddit</code> and all query sub-routes.</div>
+<summary class="d-arch-view-sum">Docs</summary>
+<div class="arch-view-body">Full API reference with collapsible endpoint cards, curl copy buttons and live test links. System architecture diagrams rendered via Mermaid v10, lazy-loaded from a CDN (this section).</div>
 </details>
 
 <details class="arch-view">
-<summary class="d-arch-view-sum">Label View</summary>
-<div class="arch-view-body">Human-in-the-loop labelling interface for the <code>isUpdateRelated</code> classifier. Displays one Reddit post at a time and writes the label back via <code>PUT /api/reddit/:id</code>.</div>
-</details>
-
-<details class="arch-view">
-<summary class="d-arch-view-sum">EDI40-2023 View</summary>
-<div class="arch-view-body">Tracks EDI 4.0 2023 specification adoption and version history across LAMP, MEAN, MERN, MEVN and WAMP stacks.</div>
-</details>
-
-<details class="arch-view">
-<summary class="d-arch-view-sum">JUSPN View</summary>
-<div class="arch-view-body">Japanese specification release tracking with a stack-by-stack version matrix matching the EDI40-2023 use-case structure.</div>
-</details>
-
-<details class="arch-view">
-<summary class="d-arch-view-sum">MLTL View</summary>
-<div class="arch-view-body">Multi-language temporal logic module tracking version timelines and release cadences across programming language ecosystems.</div>
+<summary class="d-arch-view-sum">Account</summary>
+<div class="arch-view-body">Device-local inventory of installed versions and saved searches, stored in <code>localStorage</code>. Feeds the Arch view's installed-vs-latest drift annotations.</div>
 </details>
 
 <details class="arch-view">
 <summary class="d-arch-view-sum">Changelog</summary>
-<div class="arch-view-body">Semantic version history of releasetrain-client following the semver convention.</div>
+<div class="arch-view-body">Client change history. The version is single-sourced from <code>package.json</code> and stamped into the page at build time.</div>
 </details>
 
 </div>
@@ -2801,6 +2786,25 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-08-28</div>
+              <div class="cl-ver cl-ver-minor">v3.25.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Tooling, tests, and cleanup</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>CI and smoke tests</strong>: GitHub Actions runs build, Biome lint, and a Playwright suite on every push and PR. The suite stubs the API and loads every view, failing on any uncaught JavaScript error.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Configurable API endpoint</strong>: resolves from <code>?api=</code>, then <code>&lt;meta name="api-base"&gt;</code>, then the built-in default. No more editing a source constant to run against a local server.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Global fault banner</strong>: an uncaught error or rejected promise now shows one dismissible banner instead of leaving an empty UI with no signal.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Single-sourced version</strong>: <code>package.json</code> is authoritative; the build stamps it into the page.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Pinned the lazily-loaded CDN libraries</strong> (Chart.js, mermaid, vis-network, pako) to exact versions with <code>crossorigin</code>.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Removed the build stack</strong>: Grunt, Jest, Babel and ESLint (all unconfigured or unused) are gone; <code>npm run build</code> is now a plain <code>src/</code> to <code>dist/</code> copy. Dependency count dropped from ~640 packages to ~55.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Deleted legacy standalone pages and assets</strong> no longer reachable from the app: <code>/reddit</code>, <code>/label</code>, <code>/mltl</code>, <code>/juspn</code>, <code>/edi40-2023</code>, plus <code>src/lib</code>, <code>src/app.js</code>, <code>src/plantuml*</code> and the two orphaned stylesheets. <code>src/</code> is now <code>index.html</code>, <code>img/</code> and <code>data/graph.json</code>.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
