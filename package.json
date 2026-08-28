@@ -5,7 +5,7 @@
   "main": "src/app.js",
   "scripts": {
     "build": "grunt",
-    "dev": "http-server . --log-ip --verbose",
+    "dev": "http-server src -c-1 --log-ip --verbose",
     "prod": "npm run build && npm start",
     "test": "jest --runInBand --detectOpenHandles --verbose",
     "start": "http-server dist --log-ip --verbose",
