@@ -8,6 +8,13 @@ updates:
     groups:
       dev-dependencies:
         dependency-type: development
+    ignore:
+      # Biome only lints one small test file; a major/minor bump means a
+      # config migration for little gain. Patch updates only.
+      - dependency-name: "@biomejs/biome"
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
