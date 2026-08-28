@@ -19,8 +19,8 @@ npm run dev      # serves src/ on http://127.0.0.1:8080
 | Command          | What it does                                          |
 | ---------------- | ---------------------------------------------------- |
 | `npm run build`  | Copy `src/` to `dist/` and stamp the version.        |
-| `npm run lint`   | Biome lint on `scripts/` and `tests/`.              |
-| `npm run format` | Biome format (writes) on `scripts/` and `tests/`.   |
+| `npm run lint`   | Biome lint on `tests/`.              |
+| `npm run format` | Biome format (writes) on `tests/`.   |
 | `npm test`       | Playwright smoke tests against the built `dist/`.    |
 | `npm run check`  | `build` then `lint` then `test`.                    |
 

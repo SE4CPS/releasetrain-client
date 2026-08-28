@@ -42,8 +42,8 @@ npm install
 | `npm run build`  | Copy `src/` to `dist/` and stamp the version.            |
 | `npm start`      | Serve `dist/` on `http://127.0.0.1:8080`, caching off.   |
 | `npm run prod`   | `build` then `start`.                                    |
-| `npm run lint`   | Biome check on `scripts/` and `tests/`.                  |
-| `npm run format` | Biome check with `--write` on `scripts/` and `tests/`.   |
+| `npm run lint`   | Biome check on `tests/`.                                 |
+| `npm run format` | Biome check with `--write` on `tests/`.                  |
 | `npm test`       | `build` then Playwright smoke tests against `dist/`.     |
 | `npm run check`  | `build`, `lint`, and Playwright tests. CI runs this.     |
 
