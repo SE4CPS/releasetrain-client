@@ -7,18 +7,22 @@ Releasetrain REST API. The API itself lives in a separate repository
 
 ## Architecture
 
-The entire application is a single self contained file, `src/index.html`, with
-inline CSS and JavaScript and no build time framework. The build step is a
-straight copy of `src/` to `dist/` performed by Grunt. `dist/` is committed but
-is regenerated on every Docker build, so treat `src/` as the source of truth.
+The application is one self contained file, `src/index.html`, with inline CSS
+and JavaScript and no build time framework. Everything under `src/` is a static
+asset. Third party runtime libraries (Chart.js, vis-network, pako) load from a
+CDN on demand.
 
-Runtime dependencies (Chart.js, vis-network, pako) are loaded from a CDN on
-demand. The API base URL is hardcoded in `src/index.html` as `API_BASE`
-(`https://releasetrain.io/api/`).
+`npm run build` copies `src/` to `dist/` via `scripts/build.js`. `dist/` is a
+generated directory, git ignored, and only exists so a plain file server has a
+single root to serve. `src/` is the source of truth.
+
+The API base URL is set in `src/index.html` as the `API_BASE` constant
+(`https://releasetrain.io/api/`). There is no server side code in this
+repository; the API lives in `releasetrain-server`.
 
 ## Requirements
 
-* Node.js LTS
+* Node.js 18 or newer
 
 ## Install
 
@@ -30,14 +34,12 @@ npm install
 
 ## Scripts
 
-| Script          | Action                                                        |
-| --------------- | ------------------------------------------------------------ |
-| `npm run dev`   | Serve `src/` on `http://127.0.0.1:8080` with caching off.   |
-| `npm run build` | Copy `src/` to `dist/` (Grunt `default` task).              |
-| `npm start`     | Serve the built `dist/` on `http://127.0.0.1:8080`.         |
-| `npm run prod`  | `build` then `start`.                                       |
-| `npm test`      | Jest.                                                       |
-| `npm run lint`  | ESLint with `--fix`.                                        |
+| Script          | Action                                                     |
+| --------------- | -------------------------------------------------------- |
+| `npm run dev`   | Serve `src/` on `http://127.0.0.1:8080`, caching off.   |
+| `npm run build` | Copy `src/` to `dist/`.                                 |
+| `npm start`     | Serve `dist/` on `http://127.0.0.1:8080`, caching off.  |
+| `npm run prod`  | `build` then `start`.                                   |
 
 ## Views
 
@@ -72,18 +74,18 @@ docker build -t releasetrain-client .
 docker run --rm -p 8080:8080 releasetrain-client
 ```
 
-The image runs `npm install`, `npm test`, and `npm run build`, then serves
-`dist/` on port 8080.
+The image runs `npm ci --omit=dev` and `npm run build`, then serves `dist/` on
+port 8080.
 
 ## API
 
-Endpoint documentation is available in the running app under the Docs view, and
-live at `https://releasetrain.io/api`.
+Endpoint documentation is in the running app under the Docs view, and live at
+`https://releasetrain.io/api`.
 
 ## Contributing
 
-Keep pull requests focused. Edit `src/index.html` only; do not hand edit
-`dist/`. Run `npm run build` before committing so `dist/` stays in sync.
+Edit files under `src/` only. `dist/` is generated; do not commit it. Keep pull
+requests focused.
 
 Issues: https://github.com/SE4CPS/releasetrain-client/issues
 

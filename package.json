@@ -1,20 +1,23 @@
 {
-  "name": "releasetrain",
+  "name": "releasetrain-client",
   "version": "3.24.0",
-  "description": "Client for managing release tracking",
-  "main": "src/app.js",
+  "description": "Static browser client for Releasetrain",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
-    "build": "grunt",
-    "dev": "http-server src -c-1 --log-ip --verbose",
-    "prod": "npm run build && npm start",
-    "test": "jest --runInBand --detectOpenHandles --verbose",
-    "start": "http-server dist --log-ip --verbose",
-    "debug": "node --inspect-brk src/app.js",
-    "lint": "eslint . --fix"
+    "dev": "http-server src -c-1 --log-ip",
+    "build": "node scripts/build.js",
+    "start": "http-server dist -c-1 --log-ip",
+    "prod": "npm run build && npm start"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/antrunner/releasetrain-client.git"
+    "url": "git+https://github.com/SE4CPS/releasetrain-client.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SE4CPS/releasetrain-client/issues"
   },
   "keywords": [
     "release",
@@ -24,20 +27,7 @@
   ],
   "author": "berhes",
   "license": "ISC",
-  "devDependencies": {
-    "@babel/core": "^7.24.4",
-    "@babel/preset-env": "^7.24.4",
-    "babel-jest": "^29.7.0",
-    "grunt": "^1.6.1",
-    "grunt-contrib-copy": "^1.0.0",
-    "grunt-contrib-uglify-es": "^3.3.0",
-    "grunt-minify-html": "^3.0.0",
-    "http-server": "^0.12.3",
-    "jest": "^29.7.0",
-    "eslint": "^8.56.0"
-  },
   "dependencies": {
-    "@sakirtemel/plantuml.js": "^1.0.1",
-    "plantuml": "^0.0.2"
+    "http-server": "^14.1.1"
   }
 }
