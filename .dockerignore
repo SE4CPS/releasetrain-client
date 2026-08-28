@@ -1,6 +1,13 @@
 .git
+.github
 node_modules
 dist
+tests
+playwright.config.js
+playwright-report
+test-results
+biome.json
+.editorconfig
 Makefile
 Dockerfile
 *.md

@@ -10,7 +10,11 @@
     "dev": "http-server src -c-1 --log-ip",
     "build": "node scripts/build.js",
     "start": "http-server dist -c-1 --log-ip",
-    "prod": "npm run build && npm start"
+    "prod": "npm run build && npm start",
+    "lint": "biome check scripts tests",
+    "format": "biome check --write scripts tests",
+    "test": "npm run build && playwright test",
+    "check": "npm run build && npm run lint && playwright test"
   },
   "repository": {
     "type": "git",
@@ -29,5 +33,9 @@
   "license": "ISC",
   "dependencies": {
     "http-server": "^14.1.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@playwright/test": "^1.48.0"
   }
 }

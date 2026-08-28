@@ -9,16 +9,18 @@ Releasetrain REST API. The API itself lives in a separate repository
 
 The application is one self contained file, `src/index.html`, with inline CSS
 and JavaScript and no build time framework. Everything under `src/` is a static
-asset. Third party runtime libraries (Chart.js, vis-network, pako) load from a
-CDN on demand.
+asset. Third party runtime libraries (Chart.js, vis-network, mermaid, pako) load
+from a CDN on demand at pinned versions.
 
-`npm run build` copies `src/` to `dist/` via `scripts/build.js`. `dist/` is a
-generated directory, git ignored, and only exists so a plain file server has a
-single root to serve. `src/` is the source of truth.
+`npm run build` copies `src/` to `dist/` via `scripts/build.js` and stamps the
+`package.json` version into the page. `dist/` is generated, git ignored, and
+only exists so a plain file server has a single root to serve. `src/` is the
+source of truth.
 
-The API base URL is set in `src/index.html` as the `API_BASE` constant
-(`https://releasetrain.io/api/`). There is no server side code in this
-repository; the API lives in `releasetrain-server`.
+The API base URL resolves from, in order: a `?api=` query parameter, the
+`<meta name="api-base">` tag in `src/index.html`, then the built in default
+`https://releasetrain.io/api/`. There is no server side code here; the API
+lives in `releasetrain-server`.
 
 ## Requirements
 
@@ -34,12 +36,28 @@ npm install
 
 ## Scripts
 
-| Script          | Action                                                     |
-| --------------- | -------------------------------------------------------- |
-| `npm run dev`   | Serve `src/` on `http://127.0.0.1:8080`, caching off.   |
-| `npm run build` | Copy `src/` to `dist/`.                                 |
-| `npm start`     | Serve `dist/` on `http://127.0.0.1:8080`, caching off.  |
-| `npm run prod`  | `build` then `start`.                                   |
+| Script           | Action                                                        |
+| ---------------- | ---------------------------------------------------------- |
+| `npm run dev`    | Serve `src/` on `http://127.0.0.1:8080`, caching off.    |
+| `npm run build`  | Copy `src/` to `dist/` and stamp the version.            |
+| `npm start`      | Serve `dist/` on `http://127.0.0.1:8080`, caching off.   |
+| `npm run prod`   | `build` then `start`.                                    |
+| `npm run lint`   | Biome check on `scripts/` and `tests/`.                  |
+| `npm run format` | Biome check with `--write` on `scripts/` and `tests/`.   |
+| `npm test`       | `build` then Playwright smoke tests against `dist/`.     |
+| `npm run check`  | `build`, `lint`, and Playwright tests. CI runs this.     |
+
+Playwright needs browser binaries once: `npx playwright install chromium`.
+
+## Testing
+
+`tests/smoke.spec.js` loads the built page, visits every top level view, and
+fails on any uncaught JavaScript error. It also checks that a shareable filter
+parameter is applied on load. This is deliberately shallow; it stands in for a
+real unit layer until `src/index.html` is split into modules.
+
+CI (`.github/workflows/ci.yml`) runs `build`, `lint`, and the Playwright suite
+on every push and pull request.
 
 ## Views
 

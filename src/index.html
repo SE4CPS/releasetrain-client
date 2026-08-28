@@ -7,6 +7,8 @@
   <meta name="description" content="Release updates grouped by component: last 6 months" />
   <meta name="theme-color" content="#2563eb" />
   <meta name="color-scheme" content="light" />
+  <!-- API endpoint. Override per environment by editing this, or at runtime with ?api=... -->
+  <meta name="api-base" content="https://releasetrain.io/api/" />
 
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>" />
   <link rel="apple-touch-icon" href="./img/rt-512x512.png" />
@@ -1332,7 +1334,7 @@
   <!-- ── Topbar: brand + nav only ── -->
   <header class="topbar" role="banner" id="topbar">
     <div class="topbar-main">
-      <a class="brand" href="/" aria-label="Releasetrain home">Releasetrain <em>v3.24.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.24.0">Releasetrain <em>v3.24.0</em></a>
       <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
       <div class="topbar-spacer"></div>
       <button class="nav-toggle" type="button" id="navToggle"
@@ -3477,8 +3479,42 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
   <script>
     /* ── Constants ────────────────────────────────────────────── */
-    const API_BASE = "https://releasetrain.io/api/";
+    // Resolution order: ?api= query override, then <meta name="api-base">, then default.
+    // Always normalised to a single trailing slash.
+    const API_BASE = (() => {
+      const fromQuery = new URLSearchParams(location.search).get("api");
+      const fromMeta = document.querySelector('meta[name="api-base"]')?.content;
+      const raw = (fromQuery || fromMeta || "https://releasetrain.io/api/").trim();
+      return raw.replace(/\/+$/, "") + "/";
+    })();
     const GROUPS_BATCH = 6, PAGE_LIMIT = 150, TOP_TYPES = 10, REDDIT_LIMIT = 400, MAX_VER_DESC = 220;
+
+    /* ── Global fault surface ─────────────────────────────────── */
+    // Uncaught errors and rejected promises otherwise fail silently, leaving an
+    // empty UI with no signal. Show one dismissible banner instead.
+    (function installErrorBanner() {
+      let shown = false;
+      const show = (detail) => {
+        console.error("[unhandled]", detail);
+        if (shown) return;
+        shown = true;
+        const bar = document.createElement("div");
+        bar.setAttribute("role", "alert");
+        bar.style.cssText = "position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:99999;"
+          + "max-width:min(92vw,560px);display:flex;gap:10px;align-items:center;"
+          + "padding:8px 12px;border:1px solid var(--cve,#b91c1c);border-radius:3px;"
+          + "background:var(--surface,#fff);color:var(--text,#0f172a);font:13px/1.4 system-ui,sans-serif;"
+          + "box-shadow:0 2px 8px rgba(15,23,42,.12)";
+        bar.innerHTML = '<span style="flex:1">Something went wrong loading part of this page. '
+          + 'A reload may help; if it persists the API may be unavailable.</span>'
+          + '<button type="button" style="border:1px solid var(--border,#e2e8f0);background:none;'
+          + 'border-radius:3px;padding:2px 8px;cursor:pointer;font:inherit">Dismiss</button>';
+        bar.querySelector("button").addEventListener("click", () => { bar.remove(); shown = false; });
+        (document.body || document.documentElement).appendChild(bar);
+      };
+      window.addEventListener("error", (e) => show(e.error || e.message));
+      window.addEventListener("unhandledrejection", (e) => show(e.reason));
+    })();
     const LOOKBACK_DAYS = 28; // feed/chart window: last 4 weeks (was 2 weeks, was 7 days)
     const LOOKBACK_MS = 1000 * 60 * 60 * 24 * LOOKBACK_DAYS;
     const LOOKBACK_AGO = Date.now() - LOOKBACK_MS;
@@ -3632,6 +3668,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       return new Promise((res, rej) => {
         const s = document.createElement("script");
         s.src = "https://cdn.jsdelivr.net/npm/vis-network@9.1.9/standalone/umd/vis-network.min.js";
+        s.crossOrigin = "anonymous";
         s.onload = () => { G_VIS_LOADED = true; res(); };
         s.onerror = rej;
         document.head.appendChild(s);
@@ -4045,6 +4082,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       return new Promise((res, rej) => {
         const s = document.createElement("script");
         s.src = "https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js";
+        s.crossOrigin = "anonymous";
         s.onload = () => { A_LOADED = true; res(); };
         s.onerror = rej;
         document.head.appendChild(s);
@@ -4843,7 +4881,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         runMermaid();
       } else {
         const s = document.createElement("script");
-        s.src = "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js";
+        s.src = "https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js";
+        s.crossOrigin = "anonymous";
         s.onload = () => { window.mermaid.initialize({ startOnLoad: false, securityLevel: "loose" }); runMermaid(); };
         document.head.appendChild(s);
       }
@@ -6176,7 +6215,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       else if (!_chartJsLoading) {
         _chartJsLoading = true;
         const s = document.createElement('script');
-        s.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+        s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js';
+        s.crossOrigin = 'anonymous';
         s.onload = () => { _chartJsLoading = false; doRender(); };
         document.head.appendChild(s);
       }
@@ -6362,7 +6402,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     /* ── CVE Module ──────────────────────────────────────────── */
     let CV_ACTIVE = false, CV_INIT = false;
 
-    const CV_API_BASE = 'https://releasetrain.io/api';
+    const CV_API_BASE = API_BASE.replace(/\/$/, ''); // same endpoint, no trailing slash
     const CV_BATCH    = 250;
 
     const CV_NVD_STATUSES = [
