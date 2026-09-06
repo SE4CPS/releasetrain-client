@@ -371,6 +371,18 @@
     .panel-header h2 { margin: 0; font-size: 13px; font-weight: 700; flex: 1; }
     .panel-header h2 small { font-weight: 400; color: var(--muted); font-size: 11px; }
     #status { color: var(--muted); font-size: 12px; }
+    /* Per-source breakdown of what's in the current "Recent Updates" window,
+       right below the panel header — CVE/Reddit/StackOverflow always shown
+       since those are dense enough to always be worth a count; LLM/Hypervisor
+       only shown when nonzero since they're sparse enough in time that they'd
+       otherwise sit at 0 in this specific "last N weeks" window most of the time. */
+    .feed-source-summary {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+      padding: 6px 14px; font-size: 11px; color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+    .feed-source-summary strong { color: var(--text); font-weight: 700; }
+    .feed-source-summary:empty { display: none; }
 
     /* ── Empty state ────────────────────────────────────────── */
     #emptyState { display: none; padding: 48px 20px; text-align: center; color: var(--muted); }
@@ -1334,7 +1346,7 @@
   <!-- ── Topbar: brand + nav only ── -->
   <header class="topbar" role="banner" id="topbar">
     <div class="topbar-main">
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.25.0">Releasetrain <em>v3.25.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.26.0">Releasetrain <em>v3.26.0</em></a>
       <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
       <div class="topbar-spacer"></div>
       <button class="nav-toggle" type="button" id="navToggle"
@@ -2789,6 +2801,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
           <div class="cl-release">
             <div class="cl-date-col">
+              <div class="cl-date">2026-09-06</div>
+              <div class="cl-ver cl-ver-minor">v3.26.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Per-source breakdown on the Recent Updates header</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Source breakdown line under "Recent Updates"</strong>: shows how many of the current (last 4 weeks) results are 🔴 CVE, 💬 Reddit, and 🟧 StackOverflow, with 🤖 LLM / 🖥 Hypervisor appended when nonzero. Scoped to the same window as the header itself, not the sidebar's all-time totals, so it stays honest about what's actually in view.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
               <div class="cl-date">2026-08-28</div>
               <div class="cl-ver cl-ver-minor">v3.25.0</div>
             </div>
@@ -3401,6 +3426,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             title="Expand or collapse all groups">Expand all</button>
           <div id="status" class="status" aria-live="polite">Idle</div>
         </header>
+        <div id="feedSourceSummary" class="feed-source-summary" aria-live="polite"></div>
 
         <div id="emptyState">
           <div style="font-size:32px">🔍</div>
@@ -3525,7 +3551,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     /* ── DOM cache ────────────────────────────────────────────── */
     const EL = {};
-    ["feed", "sentinel", "status", "navLoader", "kpi-page", "kpi-range", "kpi-uniq", "kpi-reddit", "kpi-llm", "kpi-hv",
+    ["feed", "sentinel", "status", "navLoader", "feedSourceSummary", "kpi-page", "kpi-range", "kpi-uniq", "kpi-reddit", "kpi-llm", "kpi-hv",
       "btn-major", "btn-minor", "btn-patch", "btn-cve", "btn-llm", "btn-hv", "btn-potential-cve", "btn-reddit",
       "btn-reddit-risk", "btn-reddit-risk-latest", "btn-reddit-risk-cve", "btn-so-risk", "btn-so",
       "filterForm", "components", "clearBtn", "fixedToggles", "typeToggles",
@@ -5397,6 +5423,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       EL["btn-so"].textContent = a.so;
       EL["btn-so-risk"].textContent = a.soRisk;
       EL["kpi-uniq"].textContent = a.uniq;
+
+      // Per-source breakdown for the current "Recent Updates" window (not the
+      // sidebar's "true total" figures — this deliberately reflects only
+      // what's actually in view right now, same scope as the header's own
+      // "(last 4 weeks)" label).
+      const nf = n => n.toLocaleString();
+      const parts = [
+        `🔴 CVE <strong>${nf(a.cve)}</strong>`,
+        `💬 Reddit <strong>${nf(a.reddit)}</strong>`,
+        `🟧 StackOverflow <strong>${nf(a.so)}</strong>`,
+      ];
+      if (a.llm) parts.push(`🤖 LLM <strong>${nf(a.llm)}</strong>`);
+      if (a.hv) parts.push(`🖥 Hypervisor <strong>${nf(a.hv)}</strong>`);
+      EL.feedSourceSummary.innerHTML = parts.map(p => `<span>${p}</span>`).join("");
     }
 
     /* ── Active filter display ────────────────────────────────── */
