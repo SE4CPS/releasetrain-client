@@ -228,12 +228,67 @@
        contents centered with a generous max-width so it reads as one
        wide bar rather than a cramped sidebar field. */
     .topbar-search {
-      display: flex; justify-content: center;
-      padding: 0 14px 9px; border-top: 1px solid var(--border);
+      display: flex; flex-direction: column; align-items: center;
+      padding: 6px 14px 9px; border-top: 1px solid var(--border);
     }
-    #filterForm {
+    .ask-mode-toggle { display: flex; gap: 2px; margin-bottom: 6px; }
+    .ask-mode-btn {
+      padding: 4px 12px; border: 1px solid var(--border); border-radius: var(--radius-full);
+      background: var(--bg); color: var(--muted); font: 600 11px/1 inherit; cursor: pointer;
+    }
+    .ask-mode-btn.ask-mode-active { background: var(--brand); color: #fff; border-color: var(--brand); }
+    #filterForm, #askForm {
       display: flex; align-items: center; gap: 8px;
-      width: 100%; padding-top: 9px;
+      width: 100%; padding-top: 3px;
+    }
+    .ask-preset-select {
+      padding: 6px 8px; border: 1px solid var(--border); border-radius: var(--radius);
+      background: var(--surface); color: var(--text); font: 12px/1 inherit; cursor: pointer; flex-shrink: 0;
+    }
+
+    /* ── Ask answer modal ───────────────────────────────────────── */
+    #askOverlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(15, 23, 42, .45); z-index: 1450;
+    }
+    #askOverlay.open { display: block; }
+    #askModal {
+      display: none; position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: min(720px, 92vw); max-height: 82vh; overflow-y: auto;
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      box-shadow: var(--shadow-md); z-index: 1500; padding: 16px;
+    }
+    #askModal.open { display: block; }
+    #askModal.ask-compare-mode { width: min(1080px, 94vw); }
+    .ask-modal-header {
+      display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px;
+      padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    }
+    .ask-modal-header strong { flex: 1; font-size: 14px; line-height: 1.4; }
+    .ask-compare-grid { display: flex; flex-wrap: wrap; gap: 12px; }
+    .ask-compare-grid .ask-answer-card { flex: 1 1 300px; min-width: 0; }
+    .ask-answer-card {
+      background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 12px;
+    }
+    .ask-answer-label {
+      font: 700 10px/1 inherit; text-transform: uppercase; letter-spacing: .4px;
+      color: var(--brand); margin-bottom: 6px;
+    }
+    .ask-answer-summary { font-size: 13px; line-height: 1.6; margin: 0 0 10px; }
+    .ask-sources { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+    .ask-sources li { font-size: 12px; line-height: 1.4; }
+    .ask-sources a { color: var(--text); text-decoration: none; }
+    .ask-sources a:hover { text-decoration: underline; color: var(--brand); }
+    .ask-rate-row { display: flex; align-items: center; gap: 6px; }
+    .ask-rate-btn { font-size: 11px; padding: 4px 8px; }
+    .ask-rate-btn.ask-rate-chosen { background: var(--brand-light); color: var(--brand); border-color: var(--brand); }
+    .ask-error { color: var(--cve); font-size: 13px; }
+    .ask-muted { color: var(--muted); font-size: 12px; }
+    @media (max-width: 640px) {
+      #askForm { flex-wrap: wrap; }
+      .search-wrap:has(#askQuestion) { flex-basis: 100%; }
     }
     @media (max-width: 560px) { #filterForm { flex-wrap: wrap; } }
 
@@ -1408,7 +1463,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.30.0">Releasetrain <em>v3.30.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.31.0">Releasetrain <em>v3.31.0</em></a>
       <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
       <div class="topbar-spacer"></div>
     </div>
@@ -1416,6 +1471,10 @@
          header width, and centers its contents - kept out of the ☰ drawer
          so search is reachable without opening the menu. -->
     <div class="topbar-search">
+      <div class="ask-mode-toggle" role="group" aria-label="Search mode">
+        <button type="button" class="ask-mode-btn ask-mode-active" data-mode="search">🔍 Search</button>
+        <button type="button" class="ask-mode-btn" data-mode="ask">💬 Ask</button>
+      </div>
       <form id="filterForm" aria-label="Component search">
         <div class="search-wrap">
           <span class="search-icon" aria-hidden="true">🔍</span>
@@ -1430,6 +1489,25 @@
           <button class="btn btn-ghost" type="button" id="ua-bm-save-btn" style="display:none" title="Save current search as a bookmark">🔖</button>
         </div>
       </form>
+      <!-- Ask mode: same bar, a natural-language question instead of a
+           component filter. Hidden by default; toggled by .ask-mode-btn.
+           Requires sign-in (POST /api/ask costs a real Claude call). -->
+      <form id="askForm" aria-label="Ask a question" style="display:none">
+        <div class="search-wrap">
+          <span class="search-icon" aria-hidden="true">💬</span>
+          <input id="askQuestion" class="search-input" type="text" maxlength="500" autocomplete="off"
+            placeholder="e.g. Are there known Firefox issues after the latest update?" aria-label="Ask a question" />
+        </div>
+        <div class="search-actions">
+          <select id="askPreset" class="ask-preset-select" aria-label="Which pipeline to ask">
+            <option value="multi_agent_fixed">Multi-agent (fixed)</option>
+            <option value="single_agent">Single-agent</option>
+            <option value="multi_agent_buggy">Multi-agent (buggy)</option>
+            <option value="compare">Compare all 3</option>
+          </select>
+          <button class="btn btn-primary" type="submit" id="askSubmitBtn">Ask</button>
+        </div>
+      </form>
     </div>
   </header>
 
@@ -1437,6 +1515,18 @@
 
   <!-- Backdrop shown behind the menu drawer while it's open; click to close -->
   <div id="sidebarOverlay"></div>
+
+  <!-- Ask answer modal: shows the summary + sources for one config, or
+       one card per config in Compare mode. Sources are always shown
+       alongside the answer, never as a separate step. -->
+  <div id="askOverlay"></div>
+  <div id="askModal" role="dialog" aria-modal="true" aria-label="Answer">
+    <div class="ask-modal-header">
+      <strong id="askModalQuestion"></strong>
+      <button type="button" id="askModalClose" class="btn btn-ghost" aria-label="Close">✕</button>
+    </div>
+    <div id="askModalBody"></div>
+  </div>
 
   <div class="layout">
 
@@ -2868,6 +2958,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-07</div>
+              <div class="cl-ver cl-ver-minor">v3.31.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Ask a question, not just search for a component</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Ask mode</strong>: a toggle next to the search bar swaps component search for a natural-language question, answered by Claude with tool access to the same release-note, CVE, and Reddit sources the feed indexes (backed by releasetrain-server's new <code>POST /api/ask</code>). Every answer is a short summary with its sources always attached below it, never just prose on its own.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Pick which pipeline answers</strong>: Single-agent, Multi-agent (buggy - reproduces this project's own documented rewrite-replaces-query failure on purpose), Multi-agent (fixed - union fetch + BM25 rerank), or Compare all 3 side by side in one modal. Each answer gets a 👍/👎 so real usage builds up exactly the kind of judged comparison data a bespoke score can't provide on its own.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Requires sign-in - each question is a real model call, not a free local search.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-07</div>
               <div class="cl-ver cl-ver-minor">v3.30.0</div>
             </div>
             <div class="cl-content">
@@ -3739,6 +3844,132 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // visible instead of staying hidden behind it.
     document.getElementById("navLinks").addEventListener("click", e => {
       if (e.target.closest(".nav-link")) setSidebarOpen(false);
+    });
+
+    /* ── Ask (config-driven Q&A over the same sources the feed indexes) ──
+       Same search bar, a mode toggle swaps the component-search form for
+       a question form. Answers always come back with their sources
+       attached (never a bare summary) and, per config, either as one
+       card or - in Compare mode - one card per pipeline side by side,
+       for judging which one actually answers better. See
+       releasetrain-server's src/ask.js for the pipeline itself. */
+    const ASK_PRESET_LABELS = {
+      single_agent: "Single-agent",
+      multi_agent_buggy: "Multi-agent (buggy)",
+      multi_agent_fixed: "Multi-agent (fixed)",
+    };
+
+    document.querySelectorAll(".ask-mode-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".ask-mode-btn").forEach(b => b.classList.remove("ask-mode-active"));
+        btn.classList.add("ask-mode-active");
+        const isAsk = btn.dataset.mode === "ask";
+        document.getElementById("filterForm").style.display = isAsk ? "none" : "";
+        document.getElementById("askForm").style.display = isAsk ? "" : "none";
+      });
+    });
+
+    const askOverlayEl = document.getElementById("askOverlay");
+    const askModalEl = document.getElementById("askModal");
+    function askCloseModal() {
+      askOverlayEl.classList.remove("open");
+      askModalEl.classList.remove("open");
+    }
+    askOverlayEl.addEventListener("click", askCloseModal);
+    document.getElementById("askModalClose").addEventListener("click", askCloseModal);
+    document.addEventListener("keydown", e => { if (e.key === "Escape") askCloseModal(); });
+
+    function askRenderSources(sources) {
+      if (!sources || !sources.length) {
+        return '<p class="ask-muted">No sources were found for this question.</p>';
+      }
+      const icon = k => k === "cve" ? "🔴" : k === "reddit" ? "💬" : "📦";
+      return '<ul class="ask-sources">' + sources.map(s => {
+        const dateStr = s.date ? String(s.date) : "";
+        const label = `${icon(s.kind)} <strong>${uaEsc(s.title)}</strong>${dateStr ? " · " + uaEsc(dateStr) : ""}`;
+        return `<li>${s.url ? `<a href="${uaEsc(s.url)}" target="_blank" rel="noopener">${label}</a>` : label}</li>`;
+      }).join("") + "</ul>";
+    }
+
+    function askRenderCard(label, res) {
+      if (res.error) {
+        return `<div class="ask-answer-card">
+          <div class="ask-answer-label">${uaEsc(label)}</div>
+          <p class="ask-error">${uaEsc(res.error)}</p>
+        </div>`;
+      }
+      return `<div class="ask-answer-card" data-run-id="${uaEsc(res.runId || "")}">
+        <div class="ask-answer-label">${uaEsc(label)}</div>
+        <p class="ask-answer-summary">${uaEsc(res.answer)}</p>
+        ${askRenderSources(res.sources)}
+        <div class="ask-rate-row">
+          <button type="button" class="btn btn-ghost ask-rate-btn" data-rating="1" ${!res.runId ? "disabled" : ""}>👍 Helpful</button>
+          <button type="button" class="btn btn-ghost ask-rate-btn" data-rating="-1" ${!res.runId ? "disabled" : ""}>👎 Not helpful</button>
+          <span class="ask-muted" style="margin-left:auto">${res.latencyMs ? Math.round(res.latencyMs / 1000) + "s" : ""}</span>
+        </div>
+      </div>`;
+    }
+
+    function askWireRateButtons(root) {
+      root.querySelectorAll(".ask-rate-btn").forEach(rb => {
+        rb.addEventListener("click", async () => {
+          const card = rb.closest(".ask-answer-card");
+          const runId = card && card.dataset.runId;
+          if (!runId) return;
+          rb.disabled = true;
+          try {
+            await uaRequest(`ask/${runId}/rate`, { method: "POST", body: JSON.stringify({ rating: Number(rb.dataset.rating) }) });
+            card.querySelectorAll(".ask-rate-btn").forEach(b => b.disabled = true);
+            rb.classList.add("ask-rate-chosen");
+          } catch { rb.disabled = false; }
+        });
+      });
+    }
+
+    document.getElementById("askForm").addEventListener("submit", async e => {
+      e.preventDefault();
+      const question = document.getElementById("askQuestion").value.trim();
+      if (!question) return;
+      if (!uaToken()) {
+        alert("Sign in (Account view) to ask questions - each answer runs a real query against the model.");
+        return;
+      }
+      const preset = document.getElementById("askPreset").value;
+      const isCompare = preset === "compare";
+      const btn = document.getElementById("askSubmitBtn");
+      btn.disabled = true;
+      const prevLabel = btn.textContent;
+      btn.textContent = "Asking…";
+
+      document.getElementById("askModalQuestion").textContent = question;
+      document.getElementById("askModalBody").innerHTML = '<p class="ask-muted">Thinking…</p>';
+      askModalEl.classList.toggle("ask-compare-mode", isCompare);
+      askOverlayEl.classList.add("open");
+      askModalEl.classList.add("open");
+
+      try {
+        if (isCompare) {
+          const params = new URLSearchParams({ question, presets: "single_agent,multi_agent_buggy,multi_agent_fixed" });
+          const res = await uaRequest("ask/compare?" + params.toString());
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Request failed.");
+          document.getElementById("askModalBody").innerHTML =
+            '<div class="ask-compare-grid">' +
+            data.runs.map(r => askRenderCard(ASK_PRESET_LABELS[r.preset] || r.preset, r)).join("") +
+            "</div>";
+        } else {
+          const res = await uaRequest("ask", { method: "POST", body: JSON.stringify({ question, config: { preset } }) });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Request failed.");
+          document.getElementById("askModalBody").innerHTML = askRenderCard(ASK_PRESET_LABELS[preset] || preset, data);
+        }
+        askWireRateButtons(document.getElementById("askModalBody"));
+      } catch (err) {
+        document.getElementById("askModalBody").innerHTML = `<p class="ask-error">${uaEsc(err.message || "Something went wrong.")}</p>`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = prevLabel;
+      }
     });
 
     /* ── Back to top ──────────────────────────────────────────── */
