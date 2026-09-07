@@ -23,17 +23,23 @@
   </script>
 
   <style>
-    /* ── Tokens (light only) ────────────────────────────────── */
+    /* ── Tokens (gray theme, light) ─────────────────────────────
+       Neutral chrome is genuinely gray (not off-white-with-white-cards):
+       page background a visible mid gray, cards a lighter gray for
+       contrast against it, borders a step darker again. The brand accent
+       (interactive elements) stays blue on purpose - "gray theme" is
+       about the neutral chrome, not removing the one hue that signals
+       "this is clickable". */
     :root {
-      --bg: #f4f5f7;
-      --surface: #ffffff;
-      --text: #0f172a;
-      --muted: #64748b;
-      --border: #e2e8f0;
-      --chip-bg: #f1f5f9;
-      --chip-text: #475569;
+      --bg: #e2e5e9;
+      --surface: #f4f5f6;
+      --text: #1e2329;
+      --muted: #5b6472;
+      --border: #c7ccd3;
+      --chip-bg: #e7e9ec;
+      --chip-text: #454c56;
       --brand: #2563eb;
-      --brand-light: #f1f5f9;
+      --brand-light: #e6ecf7;
       --focus: #2563eb;
 
       /* Two accents carry meaning; everything else is neutral ink on neutral
@@ -217,16 +223,28 @@
     }
     .sidebar-divider { border: none; border-top: 1px solid var(--border); margin: 0; }
 
-    /* ── Search form ────────────────────────────────────────── */
-    #filterForm { display: flex; flex-direction: column; gap: 8px; }
+    /* ── Search bar ──────────────────────────────────────────────
+       Lives in the fixed topbar (always on top), full width, its
+       contents centered with a generous max-width so it reads as one
+       wide bar rather than a cramped sidebar field. */
+    .topbar-search {
+      display: flex; justify-content: center;
+      padding: 0 14px 9px; border-top: 1px solid var(--border);
+    }
+    #filterForm {
+      display: flex; align-items: center; gap: 8px;
+      width: 100%; padding-top: 9px;
+    }
+    @media (max-width: 560px) { #filterForm { flex-wrap: wrap; } }
 
-    .search-wrap { position: relative; }
+    .search-wrap { position: relative; flex: 1; min-width: 0; }
+    @media (max-width: 560px) { .search-wrap { flex-basis: 100%; } }
     .search-icon {
       position: absolute; left: 9px; top: 50%; transform: translateY(-50%);
       color: var(--muted); pointer-events: none; font-size: 13px;
     }
     .search-input {
-      width: 100%; padding: 6px 10px 6px 28px;
+      width: 100%; padding: 7px 10px 7px 28px;
       border: 1px solid var(--border); border-radius: var(--radius);
       background: var(--surface); color: var(--text); font: 13px/1 var(--mono);
       transition: border-color .15s, box-shadow .15s;
@@ -235,8 +253,8 @@
       outline: none; border-color: var(--text);
       box-shadow: 0 0 0 2px rgba(15,23,42,.10);
     }
-    .search-actions { display: flex; gap: 6px; }
-    .search-actions .btn { flex: 1; text-align: center; }
+    .search-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .search-actions .btn { text-align: center; white-space: nowrap; }
 
     /* ── Buttons ────────────────────────────────────────────── */
     .btn {
@@ -1385,14 +1403,33 @@
 
   <a class="skip-link" href="#main-content">Skip to main content</a>
 
-  <!-- ── Topbar: brand + nav only ── -->
+  <!-- ── Topbar: brand + nav, plus an always-visible search bar ── -->
   <header class="topbar" role="banner" id="topbar">
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.29.0">Releasetrain <em>v3.29.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.30.0">Releasetrain <em>v3.30.0</em></a>
       <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
       <div class="topbar-spacer"></div>
+    </div>
+    <!-- Stays pinned with the rest of the header (fixed), spans the full
+         header width, and centers its contents - kept out of the ☰ drawer
+         so search is reachable without opening the menu. -->
+    <div class="topbar-search">
+      <form id="filterForm" aria-label="Component search">
+        <div class="search-wrap">
+          <span class="search-icon" aria-hidden="true">🔍</span>
+          <input id="components" name="components" class="search-input" type="text"
+            placeholder="aws, chrome, linux…" autocomplete="off" spellcheck="false"
+            aria-label="Search components" aria-autocomplete="list" aria-controls="suggestions" />
+          <ul id="suggestions" role="listbox" aria-label="Component suggestions"></ul>
+        </div>
+        <div class="search-actions">
+          <button class="btn btn-primary" type="submit">Search</button>
+          <button class="btn btn-ghost" type="button" id="clearBtn">Clear</button>
+          <button class="btn btn-ghost" type="button" id="ua-bm-save-btn" style="display:none" title="Save current search as a bookmark">🔖</button>
+        </div>
+      </form>
     </div>
   </header>
 
@@ -1420,23 +1457,6 @@
         <a class="nav-link" href="https://github.com/SE4CPS/releasetrain-client"
           target="_blank" rel="noopener noreferrer">⭐ GitHub</a>
       </nav>
-
-      <div class="sidebar-section">
-        <form id="filterForm" aria-label="Component search">
-          <div class="search-wrap">
-            <span class="search-icon" aria-hidden="true">🔍</span>
-            <input id="components" name="components" class="search-input" type="text"
-              placeholder="aws, chrome, linux…" autocomplete="off" spellcheck="false"
-              aria-label="Search components" aria-autocomplete="list" aria-controls="suggestions" />
-            <ul id="suggestions" role="listbox" aria-label="Component suggestions"></ul>
-          </div>
-          <div class="search-actions">
-            <button class="btn btn-primary" type="submit">Search</button>
-            <button class="btn btn-ghost" type="button" id="clearBtn">Clear</button>
-            <button class="btn btn-ghost" type="button" id="ua-bm-save-btn" style="display:none" title="Save current search as a bookmark">🔖</button>
-          </div>
-        </form>
-      </div>
 
       <div id="feedSidebarSections">
 
@@ -2844,6 +2864,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-07</div>
+              <div class="cl-ver cl-ver-minor">v3.30.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Search bar pinned to the top, full width; gray theme</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Search is always visible</strong>: pulled the component search bar back out of the ☰ drawer into the fixed topbar itself, so it stays on screen (and reachable without opening the menu) while scrolling. It now spans the full width of the page instead of a narrow sidebar column.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Gray theme</strong>: page background and card surfaces are now genuinely gray (previously a near-white surface on an almost-white background), with borders darkened to match. The blue brand accent is unchanged - it's the one color that still needs to read as "interactive."</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
