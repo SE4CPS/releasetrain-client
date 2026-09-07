@@ -111,36 +111,30 @@
 
     .topbar-spacer { flex: 1; }
 
-    /* Nav */
+    /* Nav — now lives inside the sidebar drawer (see below) as a vertical
+       list of views, rather than an inline row in the topbar. */
     .nav-links {
-      display: flex; gap: 2px; align-items: center;
+      display: flex; flex-direction: column; gap: 1px;
+      padding: 6px; border-bottom: 1px solid var(--border);
     }
     .nav-link {
-      display: inline-flex; align-items: center; gap: 4px; padding: 5px 8px;
-      border-radius: var(--radius); color: var(--muted);
-      font: 600 12px/1 inherit; text-decoration: none;
-      transition: background .15s, color .15s; white-space: nowrap;
+      display: flex; align-items: center; gap: 7px; padding: 8px 10px;
+      border-radius: var(--radius); color: var(--text);
+      font: 600 13px/1 inherit; text-decoration: none;
+      transition: background .15s, color .15s;
     }
-    .nav-link:hover { background: var(--chip-bg); color: var(--text); }
+    .nav-link:hover { background: var(--chip-bg); }
     .nav-link:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
-    /* Hamburger (mobile) */
+    /* Hamburger — the single control that opens the whole menu drawer
+       (views + search/filters), at every screen width. */
     .nav-toggle {
-      display: none; padding: 7px 9px;
+      display: flex; align-items: center; justify-content: center;
+      padding: 7px 9px;
       background: none; border: 1px solid var(--border); border-radius: var(--radius);
       cursor: pointer; color: var(--text); font-size: 16px; line-height: 1; flex-shrink: 0;
     }
-    @media (max-width: 560px) {
-      .nav-toggle { display: flex; align-items: center; }
-      .nav-links {
-        display: none; flex-direction: column; align-items: stretch;
-        position: absolute; top: 100%; left: 0; right: 0;
-        background: var(--surface); border-bottom: 1px solid var(--border);
-        padding: 8px 16px 12px; gap: 2px; box-shadow: var(--shadow-md); z-index: 999;
-      }
-      .nav-links.open { display: flex; }
-      .nav-link { padding: 10px 12px; font-size: 14px; }
-    }
+    .nav-toggle:hover { background: var(--chip-bg); }
 
     /* ── Nav loader ─────────────────────────────────────────── */
     #navLoader {
@@ -155,36 +149,48 @@
     }
     @keyframes slide { from { margin-left: -40%; } to { margin-left: 100%; } }
 
-    /* ── Two-column layout ──────────────────────────────────── */
+    /* ── Layout ─────────────────────────────────────────────── */
+    /* Everything (views + search/filters) now lives in the off-canvas
+       .sidebar drawer below, so the visible layout is a single column:
+       just the feed (or whichever view is active) at full width. */
     .layout {
-      display: grid;
-      grid-template-columns: 256px 1fr;
-      gap: 12px;
-      max-width: 1380px;
+      max-width: 1100px;
       margin: 0 auto;
       padding: calc(var(--topbar-h) + 12px) 12px 28px;
-      align-items: start;
     }
-    @media (max-width: 900px) { .layout { grid-template-columns: 230px 1fr; } }
     @media (max-width: 640px) {
       html, body { overflow: auto; height: auto; }
-      .layout { grid-template-columns: 1fr; padding: calc(var(--topbar-h) + 12px) 12px 32px; }
+      .layout { padding: calc(var(--topbar-h) + 12px) 12px 32px; }
     }
 
-    /* ── Sidebar ─────────────────────────────────────────────── */
+    /* ── Sidebar (menu drawer) ──────────────────────────────────
+       Off-canvas at every width, not just mobile — this is the single
+       "everything else" panel behind the ☰ toggle: views on top, then
+       search/filters/stats. Slides in from the left over the feed. */
     .sidebar {
-      position: sticky;
-      top: calc(var(--topbar-h) + 12px);
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      width: min(300px, 86vw);
       background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-sm);
+      border-right: 1px solid var(--border);
+      box-shadow: var(--shadow-md);
       overflow-x: hidden;
       overflow-y: auto;
-      max-height: calc(100vh - var(--topbar-h) - 24px);
       min-width: 0;
+      padding-top: var(--topbar-h);
+      transform: translateX(-100%);
+      transition: transform .22s ease;
+      z-index: 1300;
     }
-    @media (max-width: 640px) { .sidebar { position: static; max-height: none; } }
+    .sidebar.open { transform: translateX(0); }
+
+    #sidebarOverlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(15, 23, 42, .45);
+      z-index: 1250;
+    }
+    #sidebarOverlay.open { display: block; }
 
     .sidebar-section { padding: 8px; }
     .sidebar-section:last-child { padding-bottom: 12px; }
@@ -1382,11 +1388,24 @@
   <!-- ── Topbar: brand + nav only ── -->
   <header class="topbar" role="banner" id="topbar">
     <div class="topbar-main">
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.28.0">Releasetrain <em>v3.28.0</em></a>
+      <button class="nav-toggle" type="button" id="navToggle"
+        aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.29.0">Releasetrain <em>v3.29.0</em></a>
       <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
       <div class="topbar-spacer"></div>
-      <button class="nav-toggle" type="button" id="navToggle"
-        aria-label="Toggle navigation" aria-expanded="false" aria-controls="navLinks">☰</button>
+    </div>
+  </header>
+
+  <div id="navLoader" role="progressbar" aria-label="Loading" aria-hidden="true"></div>
+
+  <!-- Backdrop shown behind the menu drawer while it's open; click to close -->
+  <div id="sidebarOverlay"></div>
+
+  <div class="layout">
+
+    <!-- ── Menu drawer: views + search/filters, opened via the ☰ button ── -->
+    <aside class="sidebar" id="sidebar" aria-label="Menu">
+
       <nav class="nav-links" id="navLinks" aria-label="Views">
         <a id="homeLink" class="nav-link" href="#" title="Return to feed">🏠 Home</a>
         <a id="graphLink" class="nav-link" href="#" title="Show component graph (in-page)">📊 Graph</a>
@@ -1401,15 +1420,6 @@
         <a class="nav-link" href="https://github.com/SE4CPS/releasetrain-client"
           target="_blank" rel="noopener noreferrer">⭐ GitHub</a>
       </nav>
-    </div>
-  </header>
-
-  <div id="navLoader" role="progressbar" aria-label="Loading" aria-hidden="true"></div>
-
-  <div class="layout">
-
-    <!-- ── Left: Sidebar ── -->
-    <aside class="sidebar" aria-label="Search and filters">
 
       <div class="sidebar-section">
         <form id="filterForm" aria-label="Component search">
@@ -2838,6 +2848,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-07</div>
+              <div class="cl-ver cl-ver-minor">v3.29.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Everything but the feed moves behind the ☰ menu</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>One menu drawer, one card feed</strong>: the always-visible sidebar (search, filters, stats, activity chart, top searches) and the topbar's row of view links (Graph, Arch, CVE, Risk Report, Docs, Changelog, Credits, Account, Release) are now both inside a single off-canvas drawer opened with the ☰ button, at every screen width, not just on mobile. The default page is just the topbar and the card feed, full width.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Picking a view from the drawer closes it automatically; clicking the backdrop or pressing Escape also closes it. No filter/search/stat functionality was removed, only relocated.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-07</div>
               <div class="cl-ver cl-ver-minor">v3.28.0</div>
             </div>
             <div class="cl-content">
@@ -3656,20 +3680,31 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       topbarEl.classList.toggle("scrolled", window.scrollY > 4);
     }, { passive: true });
 
-    /* ── Mobile hamburger ─────────────────────────────────────── */
+    /* ── Menu drawer (☰) ──────────────────────────────────────────
+       One toggle opens everything that isn't the feed itself: the view
+       switcher (nav-links) and the search/filters/stats sidebar, both
+       nested inside #sidebar. Off-canvas at every width, not just mobile. */
     const navToggleBtn = document.getElementById("navToggle");
-    const navLinksEl = document.getElementById("navLinks");
-    navToggleBtn.addEventListener("click", () => {
-      const open = navLinksEl.classList.toggle("open");
+    const sidebarEl = document.getElementById("sidebar");
+    const sidebarOverlayEl = document.getElementById("sidebarOverlay");
+
+    function setSidebarOpen(open) {
+      sidebarEl.classList.toggle("open", open);
+      sidebarOverlayEl.classList.toggle("open", open);
       navToggleBtn.setAttribute("aria-expanded", String(open));
       navToggleBtn.textContent = open ? "✕" : "☰";
+    }
+    navToggleBtn.addEventListener("click", () => {
+      setSidebarOpen(!sidebarEl.classList.contains("open"));
     });
-    document.addEventListener("click", e => {
-      if (!topbarEl.contains(e.target)) {
-        navLinksEl.classList.remove("open");
-        navToggleBtn.setAttribute("aria-expanded", "false");
-        navToggleBtn.textContent = "☰";
-      }
+    sidebarOverlayEl.addEventListener("click", () => setSidebarOpen(false));
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape") setSidebarOpen(false);
+    });
+    // Picking a view closes the drawer so the chosen view is immediately
+    // visible instead of staying hidden behind it.
+    document.getElementById("navLinks").addEventListener("click", e => {
+      if (e.target.closest(".nav-link")) setSidebarOpen(false);
     });
 
     /* ── Back to top ──────────────────────────────────────────── */
