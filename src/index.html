@@ -1346,7 +1346,7 @@
   <!-- ── Topbar: brand + nav only ── -->
   <header class="topbar" role="banner" id="topbar">
     <div class="topbar-main">
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.26.1">Releasetrain <em>v3.26.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.27.0">Releasetrain <em>v3.27.0</em></a>
       <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
       <div class="topbar-spacer"></div>
       <button class="nav-toggle" type="button" id="navToggle"
@@ -2798,6 +2798,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-06</div>
+              <div class="cl-ver cl-ver-minor">v3.27.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Breakdown is now by bot, not by type</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>One number per bot, not per type</strong>: the 📦 chips in the Recent Updates breakdown now key off the real <code>sourceBot</code> field (backfilled by releasetrain-bot's new maintainer.py source-attribution pass) instead of <code>versionProductType</code>. Grouping by type conflated multiple bots into one bucket ("Browser" = chrome.py + firefox.py + safari.py) and fragmented one bot into many (github.py's per-repo product names each got their own type). "unknown" covers documents from before the backfill, or that the inference genuinely couldn't place.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5382,10 +5395,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     function computeAggregates(list) {
       let major = 0, minor = 0, patch = 0, cve = 0, llm = 0, hv = 0; const uniqComps = new Set(), typeCounts = new Map();
       const rIds = new Set(), rRiskIds = new Set(), rRiskLatIds = new Set(), rRiskCveIds = new Set(), soIds = new Set(), soRiskIds = new Set();
-      // Every other bot source (browsers, OSes, databases, languages, etc.)
-      // that isn't already broken out as its own CVE/LLM/Hypervisor category
-      // — otherwise those sources are invisible in the feed summary entirely.
-      const otherTypeCounts = new Map();
+      // One number per bot for everything not already broken out as its own
+      // CVE/LLM/Hypervisor category — otherwise those sources (chrome.py,
+      // github.py, firefox.py, etc.) are invisible in the feed summary
+      // entirely. Keyed on the real sourceBot field (backfilled by
+      // maintainer.py's source-attribution pass), not an approximation from
+      // versionProductType/versionProductName — those conflate multiple bots
+      // under one type ("browser" = chrome+firefox+safari) or fragment one
+      // bot into many buckets (github.py's per-repo product names).
+      const otherBotCounts = new Map();
       let potentialCve = 0;
       for (const it of list) {
         const ch = norm(it.versionReleaseChannel);
@@ -5395,17 +5413,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         if (isLlm) llm++;
         if (isHv) hv++;
         if (!it.isCve && !isLlm && !isHv) {
-          const t = (it.versionProductType || "").trim();
-          if (t) {
-            // Group by lowercase (bots disagree on casing for the same type —
-            // "browser" vs "Browser") but keep whichever original casing was
-            // seen first as the display label, e.g. "TypeScript" / "OS" / "C++"
-            // rather than mangling it with a naive title-case transform.
-            const key = t.toLowerCase();
-            const entry = otherTypeCounts.get(key) || { label: t, count: 0 };
-            entry.count++;
-            otherTypeCounts.set(key, entry);
-          }
+          // Pre-backfill (or a bot the inference genuinely couldn't place)
+          // both land in one honest "unknown" bucket rather than being
+          // silently dropped from the summary.
+          const bot = (it.sourceBot || "unknown").trim() || "unknown";
+          otherBotCounts.set(bot, (otherBotCounts.get(bot) || 0) + 1);
         }
         for (const p of redditMatchesForVersionBase(it, REDDIT_LIMIT, false)) if (getPostSource(p) === "reddit") rIds.add(getPostId(p));
         for (const p of redditMatchesForVersionBase(it, REDDIT_LIMIT, true)) if (getPostSource(p) === "reddit") {
@@ -5428,7 +5440,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         major, minor, patch, cve, llm, hv, reddit: rIds.size, redditRisk: rRiskIds.size,
         redditRiskLatest: rRiskLatIds.size, redditRiskCve: rRiskCveIds.size,
         so: soIds.size, soRisk: soRiskIds.size, potentialCve, uniq: uniqComps.size, typeCounts,
-        otherTypeCounts
+        otherBotCounts
       };
     }
 
@@ -5469,11 +5481,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       ];
       if (a.llm) parts.push(`🤖 LLM <strong>${nf(a.llm)}</strong>`);
       if (a.hv) parts.push(`🖥 Hypervisor <strong>${nf(a.hv)}</strong>`);
-      // Every other bot source (browser, OS, database, language, etc.) by its
-      // own versionProductType, highest count first, so nothing is left
-      // invisible just for not having a dedicated category above.
-      for (const { label, count } of [...a.otherTypeCounts.values()].sort((x, y) => y.count - x.count)) {
-        parts.push(`📦 ${label} <strong>${nf(count)}</strong>`);
+      // One chip per remaining bot (chrome.py, github.py, firefox.py, etc.),
+      // highest count first, so nothing is left invisible just for not
+      // having a dedicated category above. "unknown" covers pre-backfill
+      // documents and anything the inference genuinely couldn't place.
+      for (const [bot, count] of [...a.otherBotCounts.entries()].sort((x, y) => y[1] - x[1])) {
+        parts.push(`📦 ${bot} <strong>${nf(count)}</strong>`);
       }
       EL.feedSourceSummary.innerHTML = parts.map(p => `<span>${p}</span>`).join("");
     }
