@@ -181,7 +181,12 @@
       overflow-x: hidden;
       overflow-y: auto;
       min-width: 0;
-      padding-top: var(--topbar-h);
+      /* Not var(--topbar-h): the drawer's own z-index (1300) already sits
+         above the topbar (1000), so it covers rather than needs to clear
+         it - the old full-topbar-height padding just pushed "Home" down
+         by however tall the topbar happened to be (more when Ask mode's
+         extra checkbox row was showing), for no visual reason. */
+      padding-top: 10px;
       transform: translateX(-100%);
       transition: transform .22s ease;
       z-index: 1300;
@@ -227,9 +232,10 @@
        (#filterForm or #askForm) just flexes to take whatever width is
        left, and the whole row wraps on narrow screens instead of the
        form wrapping internally against a fixed-width row. */
-    .ask-mode-toggle { display: flex; gap: 2px; flex-shrink: 0; }
+    .ask-mode-toggle { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
     .ask-mode-btn {
-      padding: 4px 12px; border: 1px solid var(--border); border-radius: var(--radius-full);
+      height: 32px; box-sizing: border-box; padding: 0 12px;
+      border: 1px solid var(--border); border-radius: var(--radius-full);
       background: var(--bg); color: var(--muted); font: 600 11px/1 inherit; cursor: pointer;
     }
     .ask-mode-btn.ask-mode-active { background: var(--brand); color: #fff; border-color: var(--brand); }
@@ -237,8 +243,18 @@
       display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
       flex: 1 1 260px; min-width: 0;
     }
+    /* Every control on this row shares one height, so the bar reads as
+       one aligned strip instead of inputs/buttons/select sitting at
+       slightly different sizes next to each other. */
+    .topbar-form .search-input,
+    .topbar-form .btn,
     .ask-preset-select {
-      padding: 6px 8px; border: 1px solid var(--border); border-radius: var(--radius);
+      height: 32px; box-sizing: border-box;
+    }
+    .topbar-form .btn { display: inline-flex; align-items: center; justify-content: center; }
+    .btn-icon { padding: 0 10px; font-size: 14px; }
+    .ask-preset-select {
+      padding: 0 8px; border: 1px solid var(--border); border-radius: var(--radius);
       background: var(--surface); color: var(--text); font: 12px/1 inherit; cursor: pointer; flex-shrink: 0;
     }
     .ask-toggles {
@@ -252,6 +268,10 @@
       font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: var(--radius-full);
       background: var(--brand-light); color: var(--brand); white-space: nowrap; pointer-events: none;
     }
+    .ask-query-preview {
+      padding: 0 14px 8px; font-size: 11px; color: var(--muted); font-family: var(--mono);
+    }
+    .ask-query-preview strong { color: var(--text); font-weight: 600; }
 
     /* ── Ask answer modal ───────────────────────────────────────── */
     #askOverlay {
@@ -1501,12 +1521,8 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.32.0">Releasetrain <em>v3.32.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.33.0">Releasetrain <em>v3.33.0</em></a>
       <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
-      <div class="ask-mode-toggle" role="group" aria-label="Search mode">
-        <button type="button" class="ask-mode-btn ask-mode-active" data-mode="search">🔍 Search</button>
-        <button type="button" class="ask-mode-btn" data-mode="ask">💬 Ask</button>
-      </div>
       <form id="filterForm" class="topbar-form" aria-label="Component search">
         <div class="search-wrap">
           <span class="search-icon" aria-hidden="true">🔍</span>
@@ -1516,9 +1532,9 @@
           <ul id="suggestions" role="listbox" aria-label="Component suggestions"></ul>
         </div>
         <div class="search-actions">
-          <button class="btn btn-primary" type="submit">Search</button>
           <button class="btn btn-ghost" type="button" id="clearBtn">Clear</button>
           <button class="btn btn-ghost" type="button" id="ua-bm-save-btn" style="display:none" title="Save current search as a bookmark">🔖</button>
+          <button class="btn btn-icon" type="submit" aria-label="Search">🔍</button>
         </div>
       </form>
       <!-- Ask mode: same bar, a natural-language question instead of a
@@ -1546,7 +1562,23 @@
           <button class="btn btn-primary" type="submit" id="askSubmitBtn">Ask</button>
         </div>
       </form>
+      <!-- Moved after both forms on purpose: renders at the right edge of
+           the row (next to whichever form's own action buttons are
+           showing) rather than crowding the left side next to the brand. -->
+      <div class="ask-mode-toggle" role="group" aria-label="Search mode">
+        <button type="button" class="ask-mode-btn ask-mode-active" data-mode="search">🔍 Search</button>
+        <button type="button" class="ask-mode-btn" data-mode="ask">💬 Ask</button>
+      </div>
     </div>
+    <!-- Deterministic, client-only preview of which words will actually
+         drive the search match (same generic-word filtering
+         releasetrain-server's ask.js applies before querying) - computed
+         and shown before any API call is made, so it's visible
+         regardless of whether the configured key has credit. This is an
+         approximation of what will be searched, not the model's own
+         eventual tool-call query, which can still add vendor synonyms
+         the model knows and this simple filter doesn't. -->
+    <div id="askQueryPreview" class="ask-query-preview" hidden></div>
   </header>
 
   <div id="navLoader" role="progressbar" aria-label="Loading" aria-hidden="true"></div>
@@ -2996,6 +3028,23 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-07</div>
+              <div class="cl-ver cl-ver-minor">v3.33.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Topbar polish, and a search-term preview before you even ask</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>"Will search for: ..." preview</strong> appears below the Ask input as you type - a deterministic, client-only preview of which words will actually drive the match, computed before any API call, so it's visible even if the configured key has no credit yet. It's an approximation (the model can still add vendor synonyms this simple filter doesn't know), not the model's own eventual query.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Removed the redundant "Search" submit button next to the "🔍 Search" mode pill (same label shown twice); it's now a plain icon button, still fully clickable and still the Enter-key default.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Moved the Search/Ask mode toggle to the right end of the topbar row, after the active form's own input and buttons, instead of crowding the left edge next to the brand.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The ☰ menu drawer no longer pads its content down by the topbar's full height before "Home" - that padding existed for a clearance the drawer doesn't actually need (it already renders above the topbar), and made the gap grow whenever Ask mode's extra checkbox row made the topbar taller.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Aligned the height of every control on the Search/Ask row (input, buttons, preset select, mode toggle) so the bar reads as one consistent strip.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-07</div>
               <div class="cl-ver cl-ver-minor">v3.32.0</div>
             </div>
             <div class="cl-content">
@@ -3934,8 +3983,41 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       }
       return null; // "general" isn't worth badging - nothing distinctive to show
     }
+    // Client-side mirror of releasetrain-server's src/ask.js
+    // GENERIC_QUERY_STOPLIST/buildTermRegex: a deterministic preview of
+    // which words will actually drive the search match, computed and
+    // shown before any API call - so it's visible even when the
+    // configured Anthropic key has no credit, unlike the real search
+    // calls (which only exist after a successful model round-trip and
+    // are shown in each answer's "Show internals" section). This is an
+    // approximation, not the model's own eventual query: the model can
+    // still add vendor synonyms this plain filter doesn't know about.
+    const ASK_GENERIC_STOPLIST = new Set([
+      "version", "versions", "update", "updates", "updated", "updating",
+      "issue", "issues", "problem", "problems", "latest", "new", "newest",
+      "release", "released", "releases", "patch", "patches", "patched",
+      "fix", "fixed", "fixes", "bug", "bugs", "error", "errors", "help",
+      "security", "vulnerability", "vulnerabilities", "known", "after",
+      "following", "there", "have", "does", "with", "what", "when", "why",
+      "how", "about", "still", "again", "working", "broken",
+      "the", "a", "an", "is", "are", "was", "were", "be", "been", "being",
+      "to", "of", "in", "on", "for", "and", "or", "but", "this", "that",
+      "these", "those", "it", "its", "do", "did", "can", "could", "will",
+      "would", "should", "my", "your", "i", "you", "we", "they", "any", "all",
+    ]);
+    // Strips leading/trailing punctuation ("update?" -> "update") before
+    // matching, same as ask.js's stripPunctuation - without this a
+    // trailing "?" hid an otherwise-generic word from the stoplist.
+    const askStripPunctuation = t => t.replace(/^[^a-z0-9]+|[^a-z0-9]+$/gi, "");
+    function previewSearchTerms(question) {
+      const allTerms = String(question || "").trim().split(/\s+/).map(askStripPunctuation).filter(t => t.length > 1);
+      const specific = allTerms.filter(t => !ASK_GENERIC_STOPLIST.has(t.toLowerCase()));
+      return (specific.length ? specific : allTerms).slice(0, 6);
+    }
+
     const askQuestionEl = document.getElementById("askQuestion");
     const askIntentBadgeEl = document.getElementById("askIntentBadge");
+    const askQueryPreviewEl = document.getElementById("askQueryPreview");
     askQuestionEl.addEventListener("input", () => {
       const intent = classifyIntentClient(askQuestionEl.value);
       if (intent) {
@@ -3943,6 +4025,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         askIntentBadgeEl.hidden = false;
       } else {
         askIntentBadgeEl.hidden = true;
+      }
+
+      const terms = previewSearchTerms(askQuestionEl.value);
+      if (terms.length) {
+        askQueryPreviewEl.innerHTML = `Will search for: <strong>${uaEsc(terms.join(", "))}</strong>`;
+        askQueryPreviewEl.hidden = false;
+      } else {
+        askQueryPreviewEl.hidden = true;
       }
     });
 
@@ -3953,6 +4043,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const isAsk = btn.dataset.mode === "ask";
         document.getElementById("filterForm").style.display = isAsk ? "none" : "";
         document.getElementById("askForm").style.display = isAsk ? "" : "none";
+        // The preview only makes sense for a natural-language question.
+        if (!isAsk) askQueryPreviewEl.hidden = true;
+        else askQuestionEl.dispatchEvent(new Event("input"));
       });
     });
 
