@@ -23,21 +23,21 @@
   </script>
 
   <style>
-    /* ── Tokens (gray theme, light) ─────────────────────────────
-       Neutral chrome is genuinely gray (not off-white-with-white-cards):
-       page background a visible mid gray, cards a lighter gray for
-       contrast against it, borders a step darker again. The brand accent
-       (interactive elements) stays blue on purpose - "gray theme" is
-       about the neutral chrome, not removing the one hue that signals
-       "this is clickable". */
+    /* ── Tokens (light green theme) ─────────────────────────────
+       Neutral chrome carries a soft green tint instead of gray/off-white:
+       page background a light green, cards a paler green-white for
+       contrast against it, borders a step darker green-gray. The brand
+       accent (interactive elements) stays blue on purpose, same as the
+       prior gray theme - the accent that signals "this is clickable"
+       isn't part of the background palette swap. */
     :root {
-      --bg: #e2e5e9;
-      --surface: #f4f5f6;
-      --text: #1e2329;
-      --muted: #5b6472;
-      --border: #c7ccd3;
-      --chip-bg: #e7e9ec;
-      --chip-text: #454c56;
+      --bg: #e4efe2;
+      --surface: #f3f9f1;
+      --text: #1f2b1f;
+      --muted: #5c6e59;
+      --border: #c3d8c0;
+      --chip-bg: #e2eede;
+      --chip-text: #47593f;
       --brand: #2563eb;
       --brand-light: #e6ecf7;
       --focus: #2563eb;
@@ -105,8 +105,8 @@
     .topbar.scrolled { box-shadow: var(--shadow-md); }
 
     .topbar-main {
-      display: flex; align-items: center; gap: 8px;
-      padding: 7px 14px;
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      padding: 8px 14px;
     }
 
     .brand {
@@ -114,8 +114,6 @@
       flex-shrink: 0; text-decoration: none; color: var(--text);
     }
     .brand em { color: var(--brand); font-style: normal; }
-
-    .topbar-spacer { flex: 1; }
 
     /* Nav — now lives inside the sidebar drawer (see below) as a vertical
        list of views, rather than an inline row in the topbar. */
@@ -224,26 +222,35 @@
     .sidebar-divider { border: none; border-top: 1px solid var(--border); margin: 0; }
 
     /* ── Search bar ──────────────────────────────────────────────
-       Lives in the fixed topbar (always on top), full width, its
-       contents centered with a generous max-width so it reads as one
-       wide bar rather than a cramped sidebar field. */
-    .topbar-search {
-      display: flex; flex-direction: column; align-items: center;
-      padding: 6px 14px 9px; border-top: 1px solid var(--border);
-    }
-    .ask-mode-toggle { display: flex; gap: 2px; margin-bottom: 6px; }
+       One row with everything else in the topbar (brand, hamburger,
+       mode toggle) rather than a second line - the active form
+       (#filterForm or #askForm) just flexes to take whatever width is
+       left, and the whole row wraps on narrow screens instead of the
+       form wrapping internally against a fixed-width row. */
+    .ask-mode-toggle { display: flex; gap: 2px; flex-shrink: 0; }
     .ask-mode-btn {
       padding: 4px 12px; border: 1px solid var(--border); border-radius: var(--radius-full);
       background: var(--bg); color: var(--muted); font: 600 11px/1 inherit; cursor: pointer;
     }
     .ask-mode-btn.ask-mode-active { background: var(--brand); color: #fff; border-color: var(--brand); }
-    #filterForm, #askForm {
-      display: flex; align-items: center; gap: 8px;
-      width: 100%; padding-top: 3px;
+    .topbar-form {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      flex: 1 1 260px; min-width: 0;
     }
     .ask-preset-select {
       padding: 6px 8px; border: 1px solid var(--border); border-radius: var(--radius);
       background: var(--surface); color: var(--text); font: 12px/1 inherit; cursor: pointer; flex-shrink: 0;
+    }
+    .ask-toggles {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      font-size: 11px; color: var(--muted); flex-shrink: 0;
+    }
+    .ask-toggles label { display: flex; align-items: center; gap: 4px; cursor: pointer; white-space: nowrap; }
+    .ask-toggles input[type="checkbox"] { accent-color: var(--brand); cursor: pointer; }
+    .ask-intent-badge {
+      position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+      font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: var(--radius-full);
+      background: var(--brand-light); color: var(--brand); white-space: nowrap; pointer-events: none;
     }
 
     /* ── Ask answer modal ───────────────────────────────────────── */
@@ -286,11 +293,33 @@
     .ask-rate-btn.ask-rate-chosen { background: var(--brand-light); color: var(--brand); border-color: var(--brand); }
     .ask-error { color: var(--cve); font-size: 13px; }
     .ask-muted { color: var(--muted); font-size: 12px; }
+    .ask-answer-abstained { border-color: var(--cve); background: var(--cve-bg); }
+    .ask-abstain-badge {
+      display: inline-block; margin-left: 8px; font-size: 10px; font-weight: 700;
+      color: var(--cve); text-transform: none; letter-spacing: 0;
+    }
+    .ask-meta-chips { display: flex; flex-wrap: wrap; gap: 5px; margin: -2px 0 8px; }
+    .ask-meta-chip {
+      font-size: 10px; padding: 2px 7px; border-radius: var(--radius-full);
+      background: var(--chip-bg); color: var(--chip-text);
+    }
+    .ask-details { margin-top: 8px; font-size: 11px; }
+    .ask-details summary { cursor: pointer; color: var(--muted); }
+    .ask-details summary:hover { color: var(--text); }
+    .ask-calls { margin: 6px 0; padding-left: 18px; }
+    .ask-calls li { margin-bottom: 3px; }
+    .ask-calls code { font-size: 10px; }
+    .ask-system-prompt {
+      white-space: pre-wrap; word-break: break-word; margin: 6px 0 0;
+      padding: 8px; background: var(--bg); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); font-size: 10px; line-height: 1.5; color: var(--muted);
+    }
+    /* .topbar-form already wraps at every width; on narrow screens the
+       question input additionally claims a full row of its own so
+       typing isn't cramped next to the toggles/preset select. */
     @media (max-width: 640px) {
-      #askForm { flex-wrap: wrap; }
       .search-wrap:has(#askQuestion) { flex-basis: 100%; }
     }
-    @media (max-width: 560px) { #filterForm { flex-wrap: wrap; } }
 
     .search-wrap { position: relative; flex: 1; min-width: 0; }
     @media (max-width: 560px) { .search-wrap { flex-basis: 100%; } }
@@ -441,6 +470,11 @@
       max-height: calc(100vh - var(--topbar-h) - 32px);
       overflow-y: auto;
       overscroll-behavior: contain;
+      /* No card boundary here on purpose: the feed reads as part of the
+         page itself, not a separate panel floating on top of it. */
+      background: transparent;
+      border: none;
+      box-shadow: none;
     }
     @media (max-width: 640px) { #feedPanel { position: static; max-height: 70vh; overflow-y: auto; } }
     .panel-header {
@@ -1459,23 +1493,21 @@
   <a class="skip-link" href="#main-content">Skip to main content</a>
 
   <!-- ── Topbar: brand + nav, plus an always-visible search bar ── -->
+  <!-- Everything lives in one row: hamburger, brand, mode toggle, and
+       whichever form (Search or Ask) is active, which flexes to fill the
+       rest of the width. Kept out of the ☰ drawer so search/ask stays
+       reachable without opening the menu. -->
   <header class="topbar" role="banner" id="topbar">
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.31.0">Releasetrain <em>v3.31.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.32.0">Releasetrain <em>v3.32.0</em></a>
       <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
-      <div class="topbar-spacer"></div>
-    </div>
-    <!-- Stays pinned with the rest of the header (fixed), spans the full
-         header width, and centers its contents - kept out of the ☰ drawer
-         so search is reachable without opening the menu. -->
-    <div class="topbar-search">
       <div class="ask-mode-toggle" role="group" aria-label="Search mode">
         <button type="button" class="ask-mode-btn ask-mode-active" data-mode="search">🔍 Search</button>
         <button type="button" class="ask-mode-btn" data-mode="ask">💬 Ask</button>
       </div>
-      <form id="filterForm" aria-label="Component search">
+      <form id="filterForm" class="topbar-form" aria-label="Component search">
         <div class="search-wrap">
           <span class="search-icon" aria-hidden="true">🔍</span>
           <input id="components" name="components" class="search-input" type="text"
@@ -1492,11 +1524,17 @@
       <!-- Ask mode: same bar, a natural-language question instead of a
            component filter. Hidden by default; toggled by .ask-mode-btn.
            Requires sign-in (POST /api/ask costs a real Claude call). -->
-      <form id="askForm" aria-label="Ask a question" style="display:none">
+      <form id="askForm" class="topbar-form" aria-label="Ask a question" style="display:none">
         <div class="search-wrap">
           <span class="search-icon" aria-hidden="true">💬</span>
           <input id="askQuestion" class="search-input" type="text" maxlength="500" autocomplete="off"
             placeholder="e.g. Are there known Firefox issues after the latest update?" aria-label="Ask a question" />
+          <span id="askIntentBadge" class="ask-intent-badge" hidden></span>
+        </div>
+        <div class="ask-toggles">
+          <label><input type="checkbox" id="askVendorCheck" /> Vendor check</label>
+          <label><input type="checkbox" id="askTemporalFilter" /> Temporal filter</label>
+          <label><input type="checkbox" id="askIntentFilter" /> Intent filter</label>
         </div>
         <div class="search-actions">
           <select id="askPreset" class="ask-preset-select" aria-label="Which pipeline to ask">
@@ -2958,6 +2996,23 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-07</div>
+              <div class="cl-ver cl-ver-minor">v3.32.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Evidence-gated Ask, merged topbar, light green theme</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Vendor check / Temporal filter / Intent filter</strong> checkboxes on the Ask form, backed by releasetrain-server's new abstention-first gates: a question with no resolvable vendor or an opinion-shaped question (e.g. "what IT task is always a nightmare") now declines outright instead of guessing, and a dated question ("as of Jan 2026") is answered against what was true then rather than the latest release overall.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> A live "detected intent" badge appears next to the Ask input as you type (client-side preview only - the full question is always sent to the server unchanged, since date/intent detection there needs the complete wording).</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Each answer card now shows vendor/intent/temporal chips when set, an "Abstained" badge when the question was declined, and a collapsible "Show internals" section with the actual search calls made and the system prompt used.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Topbar merged into a single row (hamburger, brand, mode toggle, and the active Search/Ask form all share one line and wrap together on narrow screens, instead of stacking as separate rows).</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Light green theme, replacing the prior gray one; the card feed no longer has its own bordered panel boundary, so it reads as part of the page rather than a separate box floating on it.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-07</div>
               <div class="cl-ver cl-ver-minor">v3.31.0</div>
             </div>
             <div class="cl-content">
@@ -3859,6 +3914,38 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       multi_agent_fixed: "Multi-agent (fixed)",
     };
 
+    // Client-side mirror of releasetrain-server's src/ask.js classifyIntent()
+    // - kept in sync by hand. This is a live UI preview only (shown next to
+    // the input as the user types); the actual question text sent to the
+    // server is never altered, and the server does its own independent
+    // classification for real. Keep this list identical to the server's
+    // INTENT_KEYWORDS if either changes.
+    const ASK_INTENT_KEYWORDS = {
+      cve: ["cve", "vulnerability", "vulnerabilities", "exploit", "advisory", "attack", "breach", "rce", "zero-day"],
+      patch: ["patch", "patched", "hotfix", "fix", "fixed", "bugfix"],
+      version: ["version", "release", "released", "changelog", "upgrade", "downgrade"],
+      opinion: ["nightmare", "best", "worst", "should i", "recommend", "opinion", "prefer", "versus", " vs ", "better than", "worth it", "favorite", "favourite", "hate", "love", "annoying", "say goodbye"],
+    };
+    const ASK_INTENT_BADGE_LABELS = { cve: "CVE question", patch: "Patch question", version: "Version question", opinion: "Opinion (will decline)" };
+    function classifyIntentClient(question) {
+      const text = String(question || "").toLowerCase();
+      for (const intent of ["cve", "patch", "version", "opinion"]) {
+        if (ASK_INTENT_KEYWORDS[intent].some(kw => text.indexOf(kw) !== -1)) return intent;
+      }
+      return null; // "general" isn't worth badging - nothing distinctive to show
+    }
+    const askQuestionEl = document.getElementById("askQuestion");
+    const askIntentBadgeEl = document.getElementById("askIntentBadge");
+    askQuestionEl.addEventListener("input", () => {
+      const intent = classifyIntentClient(askQuestionEl.value);
+      if (intent) {
+        askIntentBadgeEl.textContent = ASK_INTENT_BADGE_LABELS[intent];
+        askIntentBadgeEl.hidden = false;
+      } else {
+        askIntentBadgeEl.hidden = true;
+      }
+    });
+
     document.querySelectorAll(".ask-mode-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".ask-mode-btn").forEach(b => b.classList.remove("ask-mode-active"));
@@ -3891,6 +3978,35 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       }).join("") + "</ul>";
     }
 
+    // Meta chips (vendor/intent/temporal) plus a collapsible technical
+    // detail section (system prompt + the actual search calls made) - the
+    // evidence-gating checkboxes only matter if their effect is visible,
+    // not just trusted blindly.
+    function askRenderMetaChips(res) {
+      const chips = [];
+      if (res.vendor) chips.push(`vendor: ${uaEsc(res.vendor)}`);
+      if (res.intent) chips.push(`intent: ${uaEsc(res.intent)}`);
+      if (res.temporalConstraint) {
+        const tc = res.temporalConstraint;
+        const iso = `${tc.date.slice(0,4)}-${tc.date.slice(4,6)}-${tc.date.slice(6,8)}`;
+        chips.push(tc.type === "as_of" ? `as of ${iso}` : `since ${iso}`);
+      }
+      if (!chips.length) return "";
+      return `<div class="ask-meta-chips">${chips.map(c => `<span class="ask-meta-chip">${c}</span>`).join("")}</div>`;
+    }
+
+    function askRenderDetails(res) {
+      if (!res.systemPrompt && !(res.searchCalls && res.searchCalls.length)) return "";
+      const calls = (res.searchCalls || []).map(c =>
+        `<li><code>${uaEsc(c.tool)}</code>(<code>${uaEsc((c.input && c.input.query) || "")}</code>) → ${c.resultCount} result${c.resultCount === 1 ? "" : "s"}</li>`
+      ).join("");
+      return `<details class="ask-details">
+        <summary>Show internals (search calls, system prompt)</summary>
+        ${calls ? `<ol class="ask-calls">${calls}</ol>` : '<p class="ask-muted">No search calls were made.</p>'}
+        ${res.systemPrompt ? `<pre class="ask-system-prompt">${uaEsc(res.systemPrompt)}</pre>` : ""}
+      </details>`;
+    }
+
     function askRenderCard(label, res) {
       if (res.error) {
         return `<div class="ask-answer-card">
@@ -3898,10 +4014,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p class="ask-error">${uaEsc(res.error)}</p>
         </div>`;
       }
-      return `<div class="ask-answer-card" data-run-id="${uaEsc(res.runId || "")}">
-        <div class="ask-answer-label">${uaEsc(label)}</div>
+      return `<div class="ask-answer-card${res.abstained ? " ask-answer-abstained" : ""}" data-run-id="${uaEsc(res.runId || "")}">
+        <div class="ask-answer-label">${uaEsc(label)}${res.abstained ? '<span class="ask-abstain-badge">⛔ Abstained</span>' : ""}</div>
         <p class="ask-answer-summary">${uaEsc(res.answer)}</p>
+        ${askRenderMetaChips(res)}
         ${askRenderSources(res.sources)}
+        ${askRenderDetails(res)}
         <div class="ask-rate-row">
           <button type="button" class="btn btn-ghost ask-rate-btn" data-rating="1" ${!res.runId ? "disabled" : ""}>👍 Helpful</button>
           <button type="button" class="btn btn-ghost ask-rate-btn" data-rating="-1" ${!res.runId ? "disabled" : ""}>👎 Not helpful</button>
@@ -3936,6 +4054,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       }
       const preset = document.getElementById("askPreset").value;
       const isCompare = preset === "compare";
+      const vendorCheck = document.getElementById("askVendorCheck").checked;
+      const temporalFilter = document.getElementById("askTemporalFilter").checked;
+      const intentFilter = document.getElementById("askIntentFilter").checked;
       const btn = document.getElementById("askSubmitBtn");
       btn.disabled = true;
       const prevLabel = btn.textContent;
@@ -3949,7 +4070,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
       try {
         if (isCompare) {
-          const params = new URLSearchParams({ question, presets: "single_agent,multi_agent_buggy,multi_agent_fixed" });
+          const params = new URLSearchParams({
+            question, presets: "single_agent,multi_agent_buggy,multi_agent_fixed",
+            vendorCheck: String(vendorCheck), temporalFilter: String(temporalFilter), intentFilter: String(intentFilter),
+          });
           const res = await uaRequest("ask/compare?" + params.toString());
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || "Request failed.");
@@ -3958,7 +4082,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             data.runs.map(r => askRenderCard(ASK_PRESET_LABELS[r.preset] || r.preset, r)).join("") +
             "</div>";
         } else {
-          const res = await uaRequest("ask", { method: "POST", body: JSON.stringify({ question, config: { preset } }) });
+          const config = { preset, vendorCheck, temporalFilter, intentFilter };
+          const res = await uaRequest("ask", { method: "POST", body: JSON.stringify({ question, config }) });
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || "Request failed.");
           document.getElementById("askModalBody").innerHTML = askRenderCard(ASK_PRESET_LABELS[preset] || preset, data);
