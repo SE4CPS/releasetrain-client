@@ -241,7 +241,12 @@
     .ask-mode-btn.ask-mode-active { background: var(--brand); color: #fff; border-color: var(--brand); }
     .topbar-form {
       display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-      flex: 1 1 260px; min-width: 0;
+      /* Always its own full-width row below the hamburger/brand/mode-toggle
+         line, never sharing a flex line with them - a sibling that wraps
+         internally to 2-3 lines can't safely share a row with another
+         item in the same flex container (the other item can end up
+         overlapping wherever the wrapped content lands). */
+      flex: 1 1 100%; min-width: 0;
     }
     /* Every control on this row shares one height, so the bar reads as
        one aligned strip instead of inputs/buttons/select sitting at
@@ -257,6 +262,12 @@
       padding: 0 8px; border: 1px solid var(--border); border-radius: var(--radius);
       background: var(--surface); color: var(--text); font: 12px/1 inherit; cursor: pointer; flex-shrink: 0;
     }
+    /* The input (.search-wrap) is the only thing that grows; the badge and
+       everything in this group are a fixed-size cluster on the right that
+       moves as one block rather than each piece wrapping independently. */
+    .ask-controls-group {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex-shrink: 0;
+    }
     .ask-toggles {
       display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
       font-size: 11px; color: var(--muted); flex-shrink: 0;
@@ -264,9 +275,9 @@
     .ask-toggles label { display: flex; align-items: center; gap: 4px; cursor: pointer; white-space: nowrap; }
     .ask-toggles input[type="checkbox"] { accent-color: var(--brand); cursor: pointer; }
     .ask-intent-badge {
-      position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
-      font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: var(--radius-full);
-      background: var(--brand-light); color: var(--brand); white-space: nowrap; pointer-events: none;
+      flex-shrink: 0; align-self: center;
+      font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: var(--radius-full);
+      background: var(--brand-light); color: var(--brand); white-space: nowrap;
     }
     .ask-query-preview {
       padding: 0 14px 8px; font-size: 11px; color: var(--muted); font-family: var(--mono);
@@ -341,8 +352,8 @@
       .search-wrap:has(#askQuestion) { flex-basis: 100%; }
     }
 
-    .search-wrap { position: relative; flex: 1; min-width: 0; }
-    @media (max-width: 560px) { .search-wrap { flex-basis: 100%; } }
+    .search-wrap { position: relative; flex: 1 1 160px; min-width: 160px; }
+    @media (max-width: 560px) { .search-wrap { flex-basis: 100%; min-width: 0; } }
     .search-icon {
       position: absolute; left: 9px; top: 50%; transform: translateY(-50%);
       color: var(--muted); pointer-events: none; font-size: 13px;
@@ -1521,8 +1532,17 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.33.0">Releasetrain <em>v3.33.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.34.0">Releasetrain <em>v3.34.0</em></a>
       <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
+      <!-- Kept with the compact identity controls (not after the forms):
+           the active form always gets its own full-width row below this
+           one (see .topbar-form's flex-basis:100%), and a sibling that
+           tall can't share a flex line predictably - it was overlapping
+           the form's wrapped checkbox/select row on narrow screens. -->
+      <div class="ask-mode-toggle" role="group" aria-label="Search mode">
+        <button type="button" class="ask-mode-btn ask-mode-active" data-mode="search">🔍 Search</button>
+        <button type="button" class="ask-mode-btn" data-mode="ask">💬 Ask</button>
+      </div>
       <form id="filterForm" class="topbar-form" aria-label="Component search">
         <div class="search-wrap">
           <span class="search-icon" aria-hidden="true">🔍</span>
@@ -1541,34 +1561,32 @@
            component filter. Hidden by default; toggled by .ask-mode-btn.
            Requires sign-in (POST /api/ask costs a real Claude call). -->
       <form id="askForm" class="topbar-form" aria-label="Ask a question" style="display:none">
+        <!-- Input stays flexible on the left; everything else (checkboxes,
+             preset, submit) is one static cluster on the right that moves
+             together as a block rather than each piece wrapping on its own. -->
         <div class="search-wrap">
           <span class="search-icon" aria-hidden="true">💬</span>
           <input id="askQuestion" class="search-input" type="text" maxlength="500" autocomplete="off"
             placeholder="e.g. Are there known Firefox issues after the latest update?" aria-label="Ask a question" />
-          <span id="askIntentBadge" class="ask-intent-badge" hidden></span>
         </div>
-        <div class="ask-toggles">
-          <label><input type="checkbox" id="askVendorCheck" /> Vendor check</label>
-          <label><input type="checkbox" id="askTemporalFilter" /> Temporal filter</label>
-          <label><input type="checkbox" id="askIntentFilter" /> Intent filter</label>
-        </div>
-        <div class="search-actions">
-          <select id="askPreset" class="ask-preset-select" aria-label="Which pipeline to ask">
-            <option value="multi_agent_fixed">Multi-agent (fixed)</option>
-            <option value="single_agent">Single-agent</option>
-            <option value="multi_agent_buggy">Multi-agent (buggy)</option>
-            <option value="compare">Compare all 3</option>
-          </select>
-          <button class="btn btn-primary" type="submit" id="askSubmitBtn">Ask</button>
+        <span id="askIntentBadge" class="ask-intent-badge" hidden></span>
+        <div class="ask-controls-group">
+          <div class="ask-toggles">
+            <label><input type="checkbox" id="askVendorCheck" /> Vendor check</label>
+            <label><input type="checkbox" id="askTemporalFilter" /> Temporal filter</label>
+            <label><input type="checkbox" id="askIntentFilter" /> Intent filter</label>
+          </div>
+          <div class="search-actions">
+            <select id="askPreset" class="ask-preset-select" aria-label="Which pipeline to ask">
+              <option value="multi_agent_fixed">Multi-agent (fixed)</option>
+              <option value="single_agent">Single-agent</option>
+              <option value="multi_agent_buggy">Multi-agent (buggy)</option>
+              <option value="compare">Compare all 3</option>
+            </select>
+            <button class="btn btn-icon" type="submit" id="askSubmitBtn" aria-label="Ask">➤</button>
+          </div>
         </div>
       </form>
-      <!-- Moved after both forms on purpose: renders at the right edge of
-           the row (next to whichever form's own action buttons are
-           showing) rather than crowding the left side next to the brand. -->
-      <div class="ask-mode-toggle" role="group" aria-label="Search mode">
-        <button type="button" class="ask-mode-btn ask-mode-active" data-mode="search">🔍 Search</button>
-        <button type="button" class="ask-mode-btn" data-mode="ask">💬 Ask</button>
-      </div>
     </div>
     <!-- Deterministic, client-only preview of which words will actually
          drive the search match (same generic-word filtering
@@ -3028,6 +3046,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-07</div>
+              <div class="cl-ver cl-ver-minor">v3.34.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Ask row restructured: input left, controls right, one Ask button</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The Ask submit button said "Ask" right next to the "💬 Ask" mode pill - same duplicate-label problem as the earlier Search fix. It's now an icon-only button (➤), matching Search's icon-only submit.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Question input stays on the left and grows; the checkboxes, preset select, and submit button are now one grouped block on the right that moves together rather than each control wrapping independently - was reading as cluttered with all three checkboxes, the select, and the button loose on one line.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The "Will ..." preview line now also reflects the checkboxes as you toggle them: <code>time-box to last 3 days</code> when Temporal filter is on (or the exact date if one's named in the question), <code>tag intent:version-question</code> when Intent filter is on, and a note when Vendor check is on - all computed client-side, matching what the server will actually do.</li>
+                <li>Confirmed the question text was never being cleared on submit (verified, no code touches it) - closing the answer modal or asking again keeps exactly what you typed.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-07</div>
               <div class="cl-ver cl-ver-minor">v3.33.0</div>
             </div>
             <div class="cl-content">
@@ -4015,11 +4049,59 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       return (specific.length ? specific : allTerms).slice(0, 6);
     }
 
+    // Client-side mirror of releasetrain-server's src/ask.js
+    // extractDateConstraint/computeTemporalConstraint - same three date
+    // shapes plus the 3-day fallback. Deliberately does NOT (yet) special-
+    // case "latest" the way it arguably should (asking for "the latest X"
+    // and time-boxing to only the last 3 days can miss the real latest
+    // release if it's older than that) - that needs a matching server
+    // change, tracked separately, so this preview stays honest about what
+    // the server actually does right now rather than showing a fixed
+    // behavior the backend doesn't implement yet.
+    const ASK_MONTH_NAMES = {
+      january: 1, jan: 1, february: 2, feb: 2, march: 3, mar: 3, april: 4, apr: 4,
+      may: 5, june: 6, jun: 6, july: 7, jul: 7, august: 8, aug: 8,
+      september: 9, sep: 9, sept: 9, october: 10, oct: 10, november: 11, nov: 11,
+      december: 12, dec: 12,
+    };
+    const askPad2 = n => String(n).padStart(2, "0");
+    function extractDateConstraintClient(question) {
+      const text = String(question || "");
+      let m = text.match(/\b(20\d{2})[-/](\d{1,2})[-/](\d{1,2})\b/);
+      if (m) return `${m[1]}${askPad2(m[2])}${askPad2(m[3])}`;
+      m = text.match(/\b([A-Za-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(20\d{2})\b/);
+      if (m && ASK_MONTH_NAMES[m[1].toLowerCase()]) return `${m[3]}${askPad2(ASK_MONTH_NAMES[m[1].toLowerCase()])}${askPad2(m[2])}`;
+      m = text.match(/\b(\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?([A-Za-z]+)\s+(20\d{2})\b/);
+      if (m && ASK_MONTH_NAMES[m[2].toLowerCase()]) return `${m[3]}${askPad2(ASK_MONTH_NAMES[m[2].toLowerCase()])}${askPad2(m[1])}`;
+      m = text.match(/\b(?:as of|in|during|by)\s+(20\d{2})\b/i);
+      if (m) return `${m[1]}1231`;
+      return null;
+    }
+    const ASK_RECENT_WINDOW_DAYS = 3;
+    function previewTemporalConstraint(question) {
+      const explicit = extractDateConstraintClient(question);
+      if (explicit) return { type: "as_of", date: explicit };
+      const cutoff = new Date();
+      cutoff.setUTCDate(cutoff.getUTCDate() - ASK_RECENT_WINDOW_DAYS);
+      const date = `${cutoff.getUTCFullYear()}${askPad2(cutoff.getUTCMonth() + 1)}${askPad2(cutoff.getUTCDate())}`;
+      return { type: "recent", date };
+    }
+    function formatTemporalConstraint(tc) {
+      const iso = `${tc.date.slice(0, 4)}-${tc.date.slice(4, 6)}-${tc.date.slice(6, 8)}`;
+      return tc.type === "as_of" ? `as of ${iso}` : `last ${ASK_RECENT_WINDOW_DAYS} days, since ${iso}`;
+    }
+    const ASK_INTENT_TAGS = { cve: "cve-question", patch: "patch-question", version: "version-question", general: "general-question", opinion: "opinion" };
+
     const askQuestionEl = document.getElementById("askQuestion");
     const askIntentBadgeEl = document.getElementById("askIntentBadge");
     const askQueryPreviewEl = document.getElementById("askQueryPreview");
-    askQuestionEl.addEventListener("input", () => {
-      const intent = classifyIntentClient(askQuestionEl.value);
+    const askVendorCheckEl = document.getElementById("askVendorCheck");
+    const askTemporalFilterEl = document.getElementById("askTemporalFilter");
+    const askIntentFilterEl = document.getElementById("askIntentFilter");
+
+    function updateAskPreview() {
+      const question = askQuestionEl.value;
+      const intent = classifyIntentClient(question);
       if (intent) {
         askIntentBadgeEl.textContent = ASK_INTENT_BADGE_LABELS[intent];
         askIntentBadgeEl.hidden = false;
@@ -4027,14 +4109,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         askIntentBadgeEl.hidden = true;
       }
 
-      const terms = previewSearchTerms(askQuestionEl.value);
-      if (terms.length) {
-        askQueryPreviewEl.innerHTML = `Will search for: <strong>${uaEsc(terms.join(", "))}</strong>`;
+      const terms = previewSearchTerms(question);
+      const parts = [];
+      if (terms.length) parts.push(`search for <strong>${uaEsc(terms.join(", "))}</strong>`);
+      if (askTemporalFilterEl.checked) parts.push(`time-box to ${uaEsc(formatTemporalConstraint(previewTemporalConstraint(question)))}`);
+      if (askIntentFilterEl.checked) parts.push(`tag <strong>intent:${uaEsc(ASK_INTENT_TAGS[intent || "general"])}</strong>`);
+      if (askVendorCheckEl.checked) parts.push("require a resolvable vendor");
+
+      if (parts.length) {
+        askQueryPreviewEl.innerHTML = "Will " + parts.join(" · ");
         askQueryPreviewEl.hidden = false;
       } else {
         askQueryPreviewEl.hidden = true;
       }
-    });
+    }
+    askQuestionEl.addEventListener("input", updateAskPreview);
+    [askVendorCheckEl, askTemporalFilterEl, askIntentFilterEl].forEach(el => el.addEventListener("change", updateAskPreview));
 
     document.querySelectorAll(".ask-mode-btn").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -4045,7 +4135,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         document.getElementById("askForm").style.display = isAsk ? "" : "none";
         // The preview only makes sense for a natural-language question.
         if (!isAsk) askQueryPreviewEl.hidden = true;
-        else askQuestionEl.dispatchEvent(new Event("input"));
+        else updateAskPreview();
       });
     });
 
@@ -4152,9 +4242,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const intentFilter = document.getElementById("askIntentFilter").checked;
       const btn = document.getElementById("askSubmitBtn");
       btn.disabled = true;
-      const prevLabel = btn.textContent;
-      btn.textContent = "Asking…";
+      const prevIcon = btn.textContent;
+      btn.textContent = "⏳";
 
+      // The question itself is left exactly as typed - closing/reopening
+      // the answer modal, or asking again, should never require retyping it.
       document.getElementById("askModalQuestion").textContent = question;
       document.getElementById("askModalBody").innerHTML = '<p class="ask-muted">Thinking…</p>';
       askModalEl.classList.toggle("ask-compare-mode", isCompare);
@@ -4186,7 +4278,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         document.getElementById("askModalBody").innerHTML = `<p class="ask-error">${uaEsc(err.message || "Something went wrong.")}</p>`;
       } finally {
         btn.disabled = false;
-        btn.textContent = prevLabel;
+        btn.textContent = prevIcon;
       }
     });
 
