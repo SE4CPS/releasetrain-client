@@ -271,42 +271,25 @@
       padding: 0 8px; border: 1px solid var(--border); border-radius: var(--radius);
       background: var(--surface); color: var(--text); font: 12px/1 inherit; cursor: pointer; flex-shrink: 0;
     }
-    /* The input (.search-wrap) is the only thing that grows; the badge and
-       everything in this group are a fixed-size cluster on the right that
-       moves as one block rather than each piece wrapping independently. */
-    .ask-controls-group {
-      display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex-shrink: 0;
-    }
-    .ask-toggles {
+    /* Ask form: input is its own full-width row on top (.ask-input-row),
+       every option (model, size, pipeline, the three toggles, usage,
+       submit) is always visible in one row below it (.ask-options-row) -
+       no gear button, no popover to click open first. Stacked vertically
+       via flex-direction:column, overriding .topbar-form's default
+       row-wrap behavior for just this form. */
+    .ask-form-stacked { flex-direction: column; align-items: stretch; flex-wrap: nowrap; gap: 6px; }
+    .ask-input-row { display: flex; align-items: center; gap: 8px; }
+    .ask-options-row {
       display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-      font-size: 11px; color: var(--muted); flex-shrink: 0;
+      font-size: 11px; color: var(--muted);
     }
-    .ask-toggles label { display: flex; align-items: center; gap: 4px; cursor: pointer; white-space: nowrap; }
-    .ask-toggles input[type="checkbox"] { accent-color: var(--brand); cursor: pointer; }
-    /* Options popover: everything that used to sit directly on the ask
-       bar (model/pipeline selects, the three toggles) now lives here,
-       off the gear button, so the bar itself is just input + 2 buttons. */
-    .ask-options-panel {
-      position: absolute; top: calc(100% + 6px); right: 0; z-index: 60;
-      display: flex; flex-direction: column; gap: 8px;
-      min-width: 200px; max-width: calc(100vw - 20px); padding: 10px;
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); box-shadow: var(--shadow-md);
-    }
-    /* BUG FIX: the browser's own [hidden]{display:none} default is a
-       UA-origin rule, which loses to ANY author-origin display
-       declaration at equal specificity - including .ask-options-panel's
-       own `display: flex` above. Without this, the `hidden` attribute
-       toggled by JS did nothing at all: the panel rendered open on every
-       page load, unclicked, which went unnoticed until a screenshot was
-       taken without first clicking to open it. This selector's higher
-       specificity (class + attribute) is what actually wins. */
-    .ask-options-panel[hidden] { display: none; }
-    .ask-options-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 11px; color: var(--muted); }
-    .ask-options-row .ask-preset-select { flex: 1 1 auto; min-width: 0; }
-    .ask-options-divider { border: none; border-top: 1px solid var(--border); margin: 0; }
-    .ask-toggles-stacked { flex-direction: column; align-items: flex-start; gap: 6px; }
-    .ask-quota-line { font-size: 10px; color: var(--muted); line-height: 1.5; }
+    .ask-toggle-inline { display: flex; align-items: center; gap: 4px; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+    .ask-toggle-inline input[type="checkbox"] { accent-color: var(--brand); cursor: pointer; }
+    /* A plain vertical rule (no text) separating the selects from the
+       toggles, so the row still reads as two groups even with nothing
+       to wrap onto a line of its own. */
+    .ask-options-sep { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
+    .ask-quota-line { font-size: 10px; color: var(--muted); white-space: nowrap; margin-left: auto; }
     .ask-quota-line strong { color: var(--text); font-weight: 600; }
     .ask-intent-badge {
       flex-shrink: 0; align-self: center;
@@ -1579,7 +1562,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.40.0">Releasetrain <em>v3.40.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.41.0">Releasetrain <em>v3.41.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child - the
            chip is display:none when signed out, and a non-participating
@@ -1614,57 +1597,42 @@
       <!-- Ask mode: same bar, a natural-language question instead of a
            component filter. Hidden by default; toggled by .ask-mode-btn.
            Requires sign-in (POST /api/ask costs a real Claude call). -->
-      <form id="askForm" class="topbar-form" aria-label="Ask a question" style="display:none;position:relative">
-        <!-- Input stays flexible on the left; everything else is just two
-             buttons on the right (Options, Ask) - the model/pipeline
-             selects and the three toggles live in a popover off the
-             Options button instead of cluttering the bar itself. -->
-        <div class="search-wrap">
-          <span class="search-icon" aria-hidden="true">💬</span>
-          <input id="askQuestion" class="search-input" type="text" maxlength="500" autocomplete="off"
-            placeholder="e.g. Are there known Firefox issues after the latest update?" aria-label="Ask a question" />
-        </div>
-        <span id="askIntentBadge" class="ask-intent-badge" hidden></span>
-        <div class="search-actions">
-          <button class="btn btn-ghost btn-icon" type="button" id="askOptionsBtn"
-            aria-haspopup="true" aria-expanded="false" aria-controls="askOptionsPanel" title="Options" aria-label="Ask options">⚙️</button>
-          <div id="askOptionsPanel" class="ask-options-panel" hidden>
-            <label class="ask-options-row">
-              <span>Model</span>
-              <!-- Options populated live from GET /api/ask/providers (see
-                   askLoadProviders below) rather than hardcoded here - the
-                   server is the single source of truth for which
-                   providers/sizes actually exist. These two <option>s are
-                   just a same-render fallback in case that fetch hasn't
-                   completed yet. -->
-              <select id="askProvider" class="ask-preset-select" aria-label="Which model answers">
-                <option value="anthropic">Claude (Anthropic)</option>
-                <option value="groq">Groq (free tier)</option>
-                <option value="ollama">Ollama Cloud (free tier)</option>
-              </select>
-            </label>
-            <label class="ask-options-row">
-              <span>Size</span>
-              <select id="askSize" class="ask-preset-select" aria-label="Model size"></select>
-            </label>
-            <label class="ask-options-row">
-              <span>Pipeline</span>
-              <select id="askPreset" class="ask-preset-select" aria-label="Which pipeline to ask">
-                <option value="multi_agent_fixed">Multi-agent (fixed)</option>
-                <option value="single_agent">Single-agent</option>
-                <option value="multi_agent_buggy">Multi-agent (buggy)</option>
-                <option value="compare">Compare all 3</option>
-              </select>
-            </label>
-            <hr class="ask-options-divider" />
-            <div class="ask-toggles ask-toggles-stacked">
-              <label><input type="checkbox" id="askVendorCheck" /> Vendor check</label>
-              <label><input type="checkbox" id="askTemporalFilter" /> Temporal filter</label>
-              <label><input type="checkbox" id="askIntentFilter" /> Intent filter</label>
-            </div>
-            <hr class="ask-options-divider" />
-            <div id="askQuotaLine" class="ask-quota-line">Usage: &#8212;</div>
+      <form id="askForm" class="topbar-form ask-form-stacked" aria-label="Ask a question" style="display:none">
+        <!-- Input is its own full-width row on top; every option (model,
+             size, pipeline, the three toggles) is always visible in one
+             row below it - no gear button, no popover to open first. -->
+        <div class="ask-input-row">
+          <div class="search-wrap">
+            <span class="search-icon" aria-hidden="true">💬</span>
+            <input id="askQuestion" class="search-input" type="text" maxlength="500" autocomplete="off"
+              placeholder="e.g. Are there known Firefox issues after the latest update?" aria-label="Ask a question" />
           </div>
+          <span id="askIntentBadge" class="ask-intent-badge" hidden></span>
+        </div>
+        <div class="ask-options-row">
+          <!-- Options populated live from GET /api/ask/providers (see
+               askLoadProviders below) rather than hardcoded here - the
+               server is the single source of truth for which providers/
+               sizes actually exist. These two <option>s are just a
+               same-render fallback in case that fetch hasn't completed
+               yet. -->
+          <select id="askProvider" class="ask-preset-select" aria-label="Which model answers" title="Model">
+            <option value="anthropic">Claude (Anthropic)</option>
+            <option value="groq">Groq (free tier)</option>
+            <option value="ollama">Ollama Cloud (free tier)</option>
+          </select>
+          <select id="askSize" class="ask-preset-select" aria-label="Model size" title="Size"></select>
+          <select id="askPreset" class="ask-preset-select" aria-label="Which pipeline to ask" title="Pipeline">
+            <option value="multi_agent_fixed">Multi-agent (fixed)</option>
+            <option value="single_agent">Single-agent</option>
+            <option value="multi_agent_buggy">Multi-agent (buggy)</option>
+            <option value="compare">Compare all 3</option>
+          </select>
+          <span class="ask-options-sep" aria-hidden="true"></span>
+          <label class="ask-toggle-inline"><input type="checkbox" id="askVendorCheck" /> Vendor check</label>
+          <label class="ask-toggle-inline"><input type="checkbox" id="askTemporalFilter" /> Temporal filter</label>
+          <label class="ask-toggle-inline"><input type="checkbox" id="askIntentFilter" /> Intent filter</label>
+          <span id="askQuotaLine" class="ask-quota-line">Usage: &#8212;</span>
           <button class="btn btn-icon" type="submit" id="askSubmitBtn" aria-label="Ask">➤</button>
         </div>
       </form>
@@ -3133,6 +3101,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-09</div>
+              <div class="cl-ver cl-ver-minor">v3.41.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Ask options are always visible now, no popover to open</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Reworked the Ask form back to two always-visible rows: the question input on top, and every option (Model, Size, Pipeline, the three toggles, Usage, and the Ask button) in one row below it. Removed the Options (⚙️) button and its popover from v3.35-3.40 - feedback was that hiding the controls behind a click made them easy to miss and needed an extra step just to see what's selected.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Usage now refreshes on Ask-mode activation, on a Model change, and after every ask attempt, instead of only while the (now-removed) popover happened to be open.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-09</div>
               <div class="cl-ver cl-ver-minor">v3.40.0</div>
             </div>
             <div class="cl-content">
@@ -4341,18 +4323,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     document.getElementById("askProvider").addEventListener("change", askPopulateSizeOptions);
     askLoadProviders();
 
-    // Options popover (model/pipeline selects + toggles), off the gear
-    // button - closes on outside click, Escape, or picking "Search" mode.
-    const askOptionsBtnEl = document.getElementById("askOptionsBtn");
-    const askOptionsPanelEl = document.getElementById("askOptionsPanel");
-    function askCloseOptions() {
-      askOptionsPanelEl.hidden = true;
-      askOptionsBtnEl.setAttribute("aria-expanded", "false");
-    }
     // Usage line: a snapshot of the provider's own last-seen rate-limit
     // headers, as reported by the server (it never spends a call just to
-    // go check quota - see GET /api/ask/quota in ask.js). Refetched each
-    // time the popover opens, not polled continuously.
+    // go check quota - see GET /api/ask/quota in ask.js). Options are
+    // always visible now (no popover to gate this on opening), so it
+    // refreshes on Ask-mode activation, on a Model change, and again
+    // after every ask attempt.
     const askQuotaLineEl = document.getElementById("askQuotaLine");
     async function askRefreshQuota() {
       askQuotaLineEl.textContent = "Usage: loading…";
@@ -4382,16 +4358,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         askQuotaLineEl.textContent = "Usage: unavailable";
       }
     }
-    askOptionsBtnEl.addEventListener("click", e => {
-      e.stopPropagation();
-      const willOpen = askOptionsPanelEl.hidden;
-      askOptionsPanelEl.hidden = !willOpen;
-      askOptionsBtnEl.setAttribute("aria-expanded", String(willOpen));
-      if (willOpen) askRefreshQuota();
-    });
-    document.getElementById("askProvider").addEventListener("change", () => {
-      if (!askOptionsPanelEl.hidden) askRefreshQuota();
-    });
+    document.getElementById("askProvider").addEventListener("change", askRefreshQuota);
 
     // Reddit yes/no community poll: delegated so it works for every
     // .poll-btn regardless of which timeline group re-renders it. Results
@@ -4442,10 +4409,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         setTimeout(() => { btn.textContent = prevText; btn.classList.remove("chip-err"); }, 3000);
       }
     });
-    askOptionsPanelEl.addEventListener("click", e => e.stopPropagation());
-    document.addEventListener("click", askCloseOptions);
-    document.addEventListener("keydown", e => { if (e.key === "Escape") askCloseOptions(); });
-
     document.querySelectorAll(".ask-mode-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".ask-mode-btn").forEach(b => b.classList.remove("ask-mode-active"));
@@ -4454,8 +4417,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         document.getElementById("filterForm").style.display = isAsk ? "none" : "";
         document.getElementById("askForm").style.display = isAsk ? "" : "none";
         // The preview only makes sense for a natural-language question.
-        if (!isAsk) { askQueryPreviewEl.hidden = true; askCloseOptions(); }
-        else updateAskPreview();
+        if (!isAsk) { askQueryPreviewEl.hidden = true; }
+        else { updateAskPreview(); askRefreshQuota(); }
       });
     });
 
@@ -4604,9 +4567,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         btn.textContent = prevIcon;
         // Every ask attempt (success, abstain, or a rate-limit error like
         // "TPM: Limit 8000, Used 7333...") updates the provider's quota -
-        // refresh the Usage line immediately if it's already visible,
-        // rather than only on the next time Options is opened.
-        if (!askOptionsPanelEl.hidden) askRefreshQuota();
+        // options are always visible now, so just refresh unconditionally.
+        askRefreshQuota();
       }
     });
 
