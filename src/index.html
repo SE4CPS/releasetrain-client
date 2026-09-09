@@ -1638,7 +1638,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.48.0">Releasetrain <em>v3.48.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.49.0">Releasetrain <em>v3.49.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child - the
            chip is display:none when signed out, and a non-participating
@@ -1683,9 +1683,10 @@
            below the input - no gear button, no popover to open first. -->
       <form id="askForm" class="topbar-form ask-form-stacked" aria-label="Search or ask a question">
         <!-- Shown only while a real question is in flight (see
-             startAskPipelineStatus) - an approximate "which phase is this"
-             ticker, each step's own elapsed time real and live-updating,
-             frozen once that step ends. Hidden the rest of the time. -->
+             startAskPipelineLog). A live "which phase is this" ticker
+             built from real progress events the server sends, each
+             step's own elapsed time real and live-updating, frozen once
+             that step ends. Hidden the rest of the time. -->
         <div id="askPipelineStatus" class="ask-pipeline-status" hidden aria-live="polite"></div>
         <div class="ask-input-row">
           <div class="search-wrap">
@@ -3198,6 +3199,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-09</div>
+              <div class="cl-ver cl-ver-minor">v3.49.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>The progress ticker is now real, not approximated</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> A real question's answer now streams as it happens. The "which phase is this" ticker above the input follows actual server sent events instead of guessed timing: Resolving vendor, Searching (with the real tool name, e.g. "release notes" or "CVE records"), Widening search window on the one automatic retry, and Generating answer. Each entry's elapsed time is genuine and live, freezing the moment the next real event arrives.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> On a multi-agent pipeline (Multi-agent buggy or fixed), each step is also labeled with the paper's own role name (Rewriter, Retriever, Evaluator, Orchestrator), matching this platform's own architecture story. Single-agent shows the same phases without the role names, since that baseline has none.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The model can no longer answer with a bare bracketed citation like "[source]" or "【source】" that points at nothing. The system prompt now asks for a real named source or no citation at all.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-09</div>
               <div class="cl-ver cl-ver-minor">v3.48.0</div>
             </div>
             <div class="cl-content">
@@ -4464,60 +4480,68 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     const askTemporalFilterEl = document.getElementById("askTemporalFilter");
     const askIntentFilterEl = document.getElementById("askIntentFilter");
 
-    // A small "which pipeline step is this" ticker above the input while a
-    // real question is in flight. There's no live signal from the server
-    // for this (one request, one response - runAsk doesn't stream its own
-    // progress), so the step boundaries are a client-side approximation,
-    // not a literal trace - but the labels are the same three phases the
-    // pipeline actually always goes through (resolve a vendor, search for
-    // evidence, have the model write the answer), and each step's own
-    // clock is real: it starts counting the moment that step becomes
-    // current and freezes at whatever it actually reached the moment the
-    // next step starts (or, for the last step, the moment the real answer
-    // comes back) - only the *boundary timing* for the first two steps is
-    // a guess, never the elapsed numbers themselves.
-    const ASK_PIPELINE_STEPS = [
-      { label: "Resolving vendor", guessMs: 900 },
-      { label: "Searching sources", guessMs: 2200 },
-      { label: "Generating answer", guessMs: null }, // runs until the real response arrives
-    ];
-    let askPipelineTimer = null;
-    let askPipelineState = null; // { stepIndex, stepStartedAt, doneMs: [] }
-    function renderAskPipelineStatus() {
+    // A "which pipeline step is this" ticker above the input while a real
+    // question is in flight, built from actual progress events the server
+    // sends over the response stream (see the fetch/SSE handling in the
+    // submit handler below), not a guess at timing. Each entry's elapsed
+    // time counts up live while it is current and freezes at whatever it
+    // actually reached the moment the next event arrives.
+    //
+    // Tool names get a short, plain label; a multi-agent preset also gets
+    // the paper's own role name prefixed onto each phase (Rewriter for
+    // vendor resolution, Retriever for searching, Evaluator for a widened
+    // retry, Orchestrator for generating the final answer), matching how
+    // this deck's own architecture diagrams already describe those roles.
+    // Single-agent shows the same phases with no role framing, since that
+    // preset represents the one-pipeline baseline the roles do not apply to.
+    const ASK_TOOL_LABELS = {
+      search_release_notes: "release notes",
+      search_cve: "CVE records",
+      search_community: "Reddit and StackOverflow",
+      search_reddit_questions: "similar questions",
+      search_web: "the web",
+    };
+    function askPhaseLabel(phase, detail, preset) {
+      const isMultiAgent = preset === "multi_agent_buggy" || preset === "multi_agent_fixed";
+      const role = (name) => isMultiAgent ? `${name}: ` : "";
+      if (phase === "resolving_vendor") return `${role("Rewriter")}Resolving vendor`;
+      if (phase === "searching") return `${role("Retriever")}Searching ${ASK_TOOL_LABELS[detail] || detail || "sources"}`;
+      if (phase === "widening") return `${role("Evaluator")}Widening search window`;
+      if (phase === "generating") return `${role("Orchestrator")}Generating answer`;
+      return phase;
+    }
+    let askPipelineLog = null; // array of { label, startedAt, doneMs }
+    let askPipelineTickTimer = null;
+    function renderAskPipelineLog() {
       const el = document.getElementById("askPipelineStatus");
-      if (!askPipelineState) { el.hidden = true; return; }
+      if (!askPipelineLog || !askPipelineLog.length) { el.hidden = true; return; }
       el.hidden = false;
       const now = Date.now();
-      el.innerHTML = ASK_PIPELINE_STEPS.map((step, i) => {
-        if (i < askPipelineState.stepIndex) {
-          return `<span class="ask-pipeline-step ask-pipeline-done">✓ ${uaEsc(step.label)} <em>${(askPipelineState.doneMs[i] / 1000).toFixed(1)}s</em></span>`;
-        }
-        if (i === askPipelineState.stepIndex) {
-          const secs = ((now - askPipelineState.stepStartedAt) / 1000).toFixed(1);
-          return `<span class="ask-pipeline-step ask-pipeline-active">${uaEsc(step.label)}&hellip; <em>${secs}s</em></span>`;
-        }
-        return `<span class="ask-pipeline-step ask-pipeline-pending">${uaEsc(step.label)}</span>`;
+      el.innerHTML = askPipelineLog.map((entry, i) => {
+        const isLast = i === askPipelineLog.length - 1;
+        const secs = ((isLast ? now - entry.startedAt : entry.doneMs) / 1000).toFixed(1);
+        return isLast
+          ? `<span class="ask-pipeline-step ask-pipeline-active">${uaEsc(entry.label)}&hellip; <em>${secs}s</em></span>`
+          : `<span class="ask-pipeline-step ask-pipeline-done">&check; ${uaEsc(entry.label)} <em>${secs}s</em></span>`;
       }).join('<span class="ask-pipeline-arrow" aria-hidden="true">&rarr;</span>');
     }
-    function startAskPipelineStatus() {
-      askPipelineState = { stepIndex: 0, stepStartedAt: Date.now(), doneMs: [] };
-      renderAskPipelineStatus();
-      askPipelineTimer = setInterval(() => {
-        const step = ASK_PIPELINE_STEPS[askPipelineState.stepIndex];
-        const elapsed = Date.now() - askPipelineState.stepStartedAt;
-        const isLast = askPipelineState.stepIndex === ASK_PIPELINE_STEPS.length - 1;
-        if (!isLast && step.guessMs != null && elapsed >= step.guessMs) {
-          askPipelineState.doneMs[askPipelineState.stepIndex] = elapsed;
-          askPipelineState.stepIndex++;
-          askPipelineState.stepStartedAt = Date.now();
-        }
-        renderAskPipelineStatus();
-      }, 100);
+    function startAskPipelineLog() {
+      askPipelineLog = [];
+      renderAskPipelineLog();
+      askPipelineTickTimer = setInterval(renderAskPipelineLog, 100);
     }
-    function stopAskPipelineStatus() {
-      if (askPipelineTimer) { clearInterval(askPipelineTimer); askPipelineTimer = null; }
-      askPipelineState = null;
-      renderAskPipelineStatus();
+    function pushAskPipelinePhase(phase, detail, preset) {
+      if (!askPipelineLog) return;
+      const now = Date.now();
+      const prev = askPipelineLog[askPipelineLog.length - 1];
+      if (prev) prev.doneMs = now - prev.startedAt;
+      askPipelineLog.push({ label: askPhaseLabel(phase, detail, preset), startedAt: now, doneMs: null });
+      renderAskPipelineLog();
+    }
+    function stopAskPipelineLog() {
+      if (askPipelineTickTimer) { clearInterval(askPipelineTickTimer); askPipelineTickTimer = null; }
+      askPipelineLog = null;
+      renderAskPipelineLog();
     }
 
     function updateAskPreview() {
@@ -4998,6 +5022,40 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       else clearVendorFeedFilter();
     }
 
+    // Reads a text/event-stream response body one "data: {...}\n\n" event
+    // at a time. A 'progress' event updates the pipeline ticker live; a
+    // 'result' event is the final answer, in the same shape the plain
+    // JSON response used before this endpoint could stream; an 'error'
+    // event is thrown as a normal Error so the caller's own catch block
+    // handles it the same way a failed fetch always has.
+    async function consumeAskEventStream(res, preset) {
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let finalResult = null;
+      let errorMessage = null;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let idx;
+        while ((idx = buffer.indexOf("\n\n")) !== -1) {
+          const rawEvent = buffer.slice(0, idx);
+          buffer = buffer.slice(idx + 2);
+          const dataLine = rawEvent.split("\n").find(l => l.startsWith("data:"));
+          if (!dataLine) continue;
+          let evt;
+          try { evt = JSON.parse(dataLine.slice(5).trim()); } catch { continue; }
+          if (evt.type === "progress") pushAskPipelinePhase(evt.phase, evt.detail, preset);
+          else if (evt.type === "result") finalResult = evt;
+          else if (evt.type === "error") errorMessage = evt.error || "Request failed.";
+        }
+      }
+      if (errorMessage) throw new Error(errorMessage);
+      if (!finalResult) throw new Error("Connection closed before an answer arrived.");
+      return finalResult;
+    }
+
     document.getElementById("askForm").addEventListener("submit", async e => {
       e.preventDefault();
       const question = document.getElementById("askQuestion").value.trim();
@@ -5027,7 +5085,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const prevIcon = btn.textContent;
       btn.textContent = "⏳";
       btn.classList.add("ask-btn-loading");
-      startAskPipelineStatus();
+      startAskPipelineLog();
       let refreshQuotaAfter = true;
 
       try {
@@ -5073,8 +5131,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           alert("Sign in (Account view) to ask a real question - a plain vendor/category search doesn't need it, but a full answer runs a real query against the model.");
           return;
         }
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Request failed.");
+        // The fast paths (a plain lookup, a bad request) answer with a
+        // normal JSON body; a real question streams progress first and
+        // ends with one result (or error) event over the response body -
+        // see consumeAskEventStream. Told apart by content type, since
+        // the client cannot know in advance which one a given question
+        // will turn out to be.
+        const contentType = res.headers.get("content-type") || "";
+        let data;
+        if (contentType.includes("text/event-stream")) {
+          data = await consumeAskEventStream(res, preset);
+        } else {
+          data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Request failed.");
+        }
 
         if (data.intent === "documents") {
           // A bare vendor/category name, not a question - resolved
@@ -5116,7 +5186,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         btn.disabled = false;
         btn.textContent = prevIcon;
         btn.classList.remove("ask-btn-loading");
-        stopAskPipelineStatus();
+        stopAskPipelineLog();
         // Every real ask attempt (success, abstain, or a rate-limit error
         // like "TPM: Limit 8000, Used 7333...") updates the provider's
         // quota - a plain document lookup or an unauthenticated attempt
