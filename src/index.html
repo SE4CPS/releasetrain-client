@@ -117,7 +117,7 @@
     .brand em { color: var(--brand); font-style: normal; }
 
     /* Line 1's right-aligned cluster (account chip + Search/Ask mode
-       toggle) - pushed to the row's far edge via margin-left:auto on
+       toggle), pushed to the row's far edge via margin-left:auto on
        this wrapper, so brand/title stays flush left with everything
        else flush right, no matter how wide the viewport is. */
     .topbar-right {
@@ -173,7 +173,7 @@
       /* + var(--preview-h): the "Will search for..." strip is a fixed
          overlay below the header (see .ask-query-preview), not part of
          normal document flow, so nothing pushes the page's own content
-         down for it automatically - without this, its height (0 when
+         down for it automatically. Without this, its height (0 when
          hidden, its real rendered height when shown, which itself varies
          as the text wraps to more/fewer lines) has to be added to the
          layout's own top padding by hand, or the top of the page's real
@@ -187,12 +187,12 @@
 
     /* ── Inline answer rail ──────────────────────────────────────
        A real question's answer beside the feed instead of in the popup
-       modal - only when there's room for a second column (see the
+       modal, only when there's room for a second column (see the
        min-width below, kept in sync with ASK_RAIL_MIN_WIDTH in the
        script). .layout widens on its own (rather than the feed column
        getting narrower) so browsing isn't cramped just because an
        answer happens to be showing. Below the breakpoint, or in Compare
-       mode, the modal is used instead - see the submit handler. */
+       mode, the modal is used instead; see the submit handler. */
     .layout.has-ask-rail { max-width: 1500px; }
     .ask-answer-rail { display: none; }
     @media (min-width: 900px) {
@@ -270,11 +270,11 @@
 
     /* ── Search bar ──────────────────────────────────────────────
        One row with everything else in the topbar (brand, hamburger)
-       rather than a second line - #askForm just flexes to take whatever
+       rather than a second line. #askForm just flexes to take whatever
        width is left, and the whole row wraps on narrow screens instead
        of the form wrapping internally against a fixed-width row.
        Search and Ask used to be two separate forms toggled by a mode
-       switch; they're now one form (#askForm) - a bare vendor/category
+       switch; they're now one form (#askForm). A bare vendor/category
        lookup and a real question both go through the same box, and
        /api/ask itself decides which one it is (see the submit handler
        and classifyAskLookup on the server). #filterForm still exists,
@@ -283,7 +283,7 @@
     .topbar-form {
       display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
       /* Always its own full-width row below the hamburger/brand line,
-         never sharing a flex line with them - a sibling that wraps
+         never sharing a flex line with them, since a sibling that wraps
          internally to 2-3 lines can't safely share a row with another
          item in the same flex container (the other item can end up
          overlapping wherever the wrapped content lands). */
@@ -299,7 +299,7 @@
     }
     .topbar-form .btn { display: inline-flex; align-items: center; justify-content: center; }
     .btn-icon { padding: 0 10px; font-size: 14px; }
-    /* Obviously working, not just disabled - a static hourglass reads as
+    /* Obviously working, not just disabled. A static hourglass reads as
        "stuck", not "in progress". */
     @keyframes askSpin { to { transform: rotate(360deg); } }
     #askSubmitBtn.ask-btn-loading { animation: askSpin .9s linear infinite; }
@@ -1638,9 +1638,9 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.49.0">Releasetrain <em>v3.49.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.49.1">Releasetrain <em>v3.49.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
-           (margin-left:auto on the wrapper, not on either child - the
+           (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
            flex item can't carry the row's own push-right margin) so line
            1 stays brand-left, controls-right regardless of sign-in state.
@@ -1653,7 +1653,7 @@
         <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
       </div>
       <!-- Kept in the DOM as the internal versions-fetch/pagination
-           engine only - never shown. A plain vendor/category lookup
+           engine only, never shown. A plain vendor/category lookup
            typed into #askQuestion below is resolved server-side (see
            classifyAskLookup in ask.js) and then replayed here by setting
            #components and dispatching this form's submit event, so the
@@ -1675,12 +1675,12 @@
       </form>
       <!-- The single search/ask box: a bare vendor or category name
            ("chrome", "any sql updates recently") is a document lookup -
-           free, no sign-in - and a real question runs the full Ask/LLM
-           pipeline - sign-in required, since that's a real model call.
+           free, no sign-in, and a real question runs the full Ask/LLM
+           pipeline. Sign-in is required there, since that's a real model call.
            /api/ask decides which one a given query is; the submit
            handler below branches on its response. Every option (model,
            size, pipeline, the three toggles) stays visible in one row
-           below the input - no gear button, no popover to open first. -->
+           below the input. No gear button, no popover to open first. -->
       <form id="askForm" class="topbar-form ask-form-stacked" aria-label="Search or ask a question">
         <!-- Shown only while a real question is in flight (see
              startAskPipelineLog). A live "which phase is this" ticker
@@ -1706,12 +1706,12 @@
         </div>
         <div class="ask-options-row">
           <!-- Options populated live from GET /api/ask/providers (see
-               askLoadProviders below) rather than hardcoded here - the
+               askLoadProviders below) rather than hardcoded here. The
                server is the single source of truth for which providers/
                sizes actually exist. These two <option>s are just a
                same-render fallback in case that fetch hasn't completed
                yet. Only apply once a query turns out to be a real
-               question - a plain vendor/category lookup ignores them. -->
+               question; a plain vendor/category lookup ignores them. -->
           <select id="askProvider" class="ask-preset-select" aria-label="Which model answers" title="Model (for real questions only)">
             <option value="anthropic">Claude (Anthropic)</option>
             <option value="groq">Groq (free tier)</option>
@@ -1738,7 +1738,7 @@
   </header>
   <!-- Deterministic, client-only preview of which words will actually
        drive the search match (same generic-word filtering
-       releasetrain-server's ask.js applies before querying) - computed
+       releasetrain-server's ask.js applies before querying), computed
        and shown before any API call is made, so it's visible regardless
        of whether the configured key has credit. This is an approximation
        of what will be searched, not the model's own eventual tool-call
@@ -3199,6 +3199,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-09</div>
+              <div class="cl-ver cl-ver-minor">v3.49.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Keep the progress ticker after the answer arrives</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The pipeline ticker used to clear the moment an answer arrived. It now stays on screen, with each step's final time frozen, until the next question is asked, so the full timing breakdown is there to review.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-09</div>
               <div class="cl-ver cl-ver-minor">v3.49.0</div>
             </div>
             <div class="cl-content">
@@ -3219,9 +3232,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <div class="cl-content">
               <h3>Visible progress while a question runs</h3>
               <ul>
-                <li><span class="cl-tag cl-tag-feat">feat</span> A real question now shows a "which phase is this" ticker above the input (Resolving vendor &rarr; Searching sources &rarr; Generating answer), each step's own elapsed time counting up live and freezing once that step ends. There's no live signal from the server for this yet, so step *boundaries* are an approximation - but each step's own timer is real, and the last step (Generating answer) just runs until the actual response arrives rather than guessing at it.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> A real question now shows a "which phase is this" ticker above the input (Resolving vendor &rarr; Searching sources &rarr; Generating answer), each step's own elapsed time counting up live and freezing once that step ends. There's no live signal from the server for this yet, so step *boundaries* are an approximation. Each step's own timer is real, though, and the last step (Generating answer) just runs until the actual response arrives rather than guessing at it.</li>
                 <li><span class="cl-tag cl-tag-ux">ux</span> The submit button's hourglass now visibly spins while waiting, instead of sitting static.</li>
-                <li><span class="cl-tag cl-tag-feat">feat</span> The 🔴 CVE chip in the Recent Updates breakdown is now one chip per source bot (sourceBot-keyed, same convention as every other 📦 bot chip), not one opaque combined total - CVE isn't one bot's output, it's an <code>isCve</code> flag several different product bots each set on their own documents.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The 🔴 CVE chip in the Recent Updates breakdown is now one chip per source bot (sourceBot-keyed, same convention as every other 📦 bot chip), not one opaque combined total. CVE isn't one bot's output, it's an <code>isCve</code> flag several different product bots each set on their own documents.</li>
               </ul>
             </div>
           </div>
@@ -3235,7 +3248,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               <h3>The feed follows the question</h3>
               <ul>
                 <li><span class="cl-tag cl-tag-feat">feat</span> Asking a real question that resolves a vendor or category (Vendor check on) now also filters the feed to it, so the answer and its full browsable history sit side by side. A question that doesn't resolve one goes back to showing everything, instead of leaving an unrelated filter in place.</li>
-                <li><span class="cl-tag cl-tag-ux">ux</span> Simplified the "Why create an account?" list in the sign-in view - each reason is now one short, user-facing line instead of a longer technical description.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Simplified the "Why create an account?" list in the sign-in view. Each reason is now one short, user-facing line instead of a longer technical description.</li>
               </ul>
             </div>
           </div>
@@ -3248,7 +3261,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <div class="cl-content">
               <h3>Answers show inline, beside the feed</h3>
               <ul>
-                <li><span class="cl-tag cl-tag-feat">feat</span> On a screen with room for it (laptop width and up), asking a real question no longer opens a popup - the answer renders in a sticky right-hand rail next to the feed instead, trimmed to a compact length with a "Show full answer" button and its sources shown as inline links. Narrower screens and "Compare all 3" still use the popup, since three side-by-side cards need the width.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> On a screen with room for it (laptop width and up), asking a real question no longer opens a popup. The answer renders in a sticky right-hand rail next to the feed instead, trimmed to a compact length with a "Show full answer" button and its sources shown as inline links. Narrower screens and "Compare all 3" still use the popup, since three side-by-side cards need the width.</li>
                 <li><span class="cl-tag cl-tag-feat">feat</span> Default Ask options changed: Model defaults to Ollama Cloud (free tier), Pipeline defaults to Single-agent, and Vendor check / Temporal filter / Intent filter are now checked by default.</li>
               </ul>
             </div>
@@ -3262,8 +3275,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <div class="cl-content">
               <h3>Search and Ask are one box now</h3>
               <ul>
-                <li><span class="cl-tag cl-tag-feat">feat</span> The Search/Ask mode toggle is gone - there's one box. Type a plain vendor or category name ("chrome", "any sql updates recently") and it lists matching versions/CVEs, same as Search always did, still free and signed-out. Type a real question and it runs the full Ask pipeline as before (sign-in required, a real model call). <code>/api/ask</code> itself tells them apart before ever touching the model, using the same vendor/category resolution the Rewriter already does - a plain lookup never costs a call or needs sign-in, and a real question is unaffected.</li>
-                <li><span class="cl-tag cl-tag-fix">fix</span> Signing in is now only asked for when it's actually needed (a real question, or Compare all 3) - previously the Ask form required sign-in up front for every submission, including what would have been a free lookup.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The Search/Ask mode toggle is gone. There's one box. Type a plain vendor or category name ("chrome", "any sql updates recently") and it lists matching versions/CVEs, same as Search always did, still free and signed-out. Type a real question and it runs the full Ask pipeline as before (sign-in required, a real model call). <code>/api/ask</code> itself tells them apart before ever touching the model, using the same vendor/category resolution the Rewriter already does. A plain lookup never costs a call or needs sign-in, and a real question is unaffected.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Signing in is now only asked for when it's actually needed (a real question, or Compare all 3). Previously, the Ask form required sign-in up front for every submission, including what would have been a free lookup.</li>
               </ul>
             </div>
           </div>
@@ -3276,7 +3289,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <div class="cl-content">
               <h3>Ask suggests real past community questions as you type</h3>
               <ul>
-                <li><span class="cl-tag cl-tag-feat">feat</span> Typing 3+ characters into Ask now shows a dropdown of real, similar past community questions (each &le;15 words, ranked by relevance to what's typed) - not a static "recent questions" list, and not client-side filtering over the public API (which has no free-text search and returns 3,240+ heavy documents by default). Picking one fills the input; the subreddit it came from shows alongside each suggestion. Public, no sign-in needed - it only reads existing Reddit data, no model call.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Typing 3+ characters into Ask now shows a dropdown of real, similar past community questions (each &le;15 words, ranked by relevance to what's typed), not a static "recent questions" list, and not client-side filtering over the public API (which has no free-text search and returns 3,240+ heavy documents by default). Picking one fills the input; the subreddit it came from shows alongside each suggestion. Public, no sign-in needed: it only reads existing Reddit data, no model call.</li>
               </ul>
             </div>
           </div>
@@ -3289,7 +3302,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <div class="cl-content">
               <h3>Rate-limited providers show as unavailable, not clickable</h3>
               <ul>
-                <li><span class="cl-tag cl-tag-ux">ux</span> When a provider is currently rate-limited, its Model option now shows "(rate limited)" and can't be selected, instead of letting you pick it and then hitting an error - checked on page load, on every Model change, and after every ask attempt.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> When a provider is currently rate-limited, its Model option now shows "(rate limited)" and can't be selected, instead of letting you pick it and then hitting an error. Checked on page load, on every Model change, and after every ask attempt.</li>
               </ul>
             </div>
           </div>
@@ -3302,9 +3315,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <div class="cl-content">
               <h3>Source breakdown cleanup, and readable Ask answers</h3>
               <ul>
-                <li><span class="cl-tag cl-tag-fix">fix</span> The "Will search for..." preview strip was overlapping the "Recent Updates" heading right below it - it's a fixed overlay, not part of normal page flow, so nothing reserved space for it. Added a live-measured <code>--preview-h</code> offset (same pattern as the header's own <code>--topbar-h</code>) to the page's top padding.</li>
-                <li><span class="cl-tag cl-tag-ux">ux</span> <strong>Recent Updates source breakdown</strong>: sources with 0 results this window (e.g. StackOverflow) no longer show at all, and every source (CVE, community sources, and each bot) is now sorted together by count, highest first - not CVE/Reddit/StackOverflow-first regardless of size. Reddit and StackOverflow now show their real bot filenames, <code>reddit.py</code> and <code>stackoverflow.py</code> (confirmed against releasetrain-bot's actual scripts), matching every other bot chip's naming convention; CVE stays a plain label since it isn't one bot's output.</li>
-                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Ask answers render lightly formatted</strong> instead of as one plain-escaped block of text: <code>**bold**</code> and <code>`code`</code> render as real <code>&lt;strong&gt;</code>/<code>&lt;code&gt;</code>, bullet and numbered lists render as real lists, and blank lines become paragraph breaks. Still escapes the model's raw text first and only recognizes this fixed set of markdown syntax on top of that - nothing in the answer can inject real HTML.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The "Will search for..." preview strip was overlapping the "Recent Updates" heading right below it. It's a fixed overlay, not part of normal page flow, so nothing reserved space for it. Added a live-measured <code>--preview-h</code> offset (same pattern as the header's own <code>--topbar-h</code>) to the page's top padding.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> <strong>Recent Updates source breakdown</strong>: sources with 0 results this window (e.g. StackOverflow) no longer show at all, and every source (CVE, community sources, and each bot) is now sorted together by count, highest first, not CVE/Reddit/StackOverflow-first regardless of size. Reddit and StackOverflow now show their real bot filenames, <code>reddit.py</code> and <code>stackoverflow.py</code> (confirmed against releasetrain-bot's actual scripts), matching every other bot chip's naming convention; CVE stays a plain label since it isn't one bot's output.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Ask answers render lightly formatted</strong> instead of as one plain-escaped block of text: <code>**bold**</code> and <code>`code`</code> render as real <code>&lt;strong&gt;</code>/<code>&lt;code&gt;</code>, bullet and numbered lists render as real lists, and blank lines become paragraph breaks. Still escapes the model's raw text first and only recognizes this fixed set of markdown syntax on top of that. Nothing in the answer can inject real HTML.</li>
               </ul>
             </div>
           </div>
@@ -3317,7 +3330,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <div class="cl-content">
               <h3>Ask options are always visible now, no popover to open</h3>
               <ul>
-                <li><span class="cl-tag cl-tag-ux">ux</span> Reworked the Ask form back to two always-visible rows: the question input on top, and every option (Model, Size, Pipeline, the three toggles, Usage, and the Ask button) in one row below it. Removed the Options (⚙️) button and its popover from v3.35-3.40 - feedback was that hiding the controls behind a click made them easy to miss and needed an extra step just to see what's selected.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Reworked the Ask form back to two always-visible rows: the question input on top, and every option (Model, Size, Pipeline, the three toggles, Usage, and the Ask button) in one row below it. Removed the Options (⚙️) button and its popover from v3.35-3.40. Feedback was that hiding the controls behind a click made them easy to miss and needed an extra step just to see what's selected.</li>
                 <li><span class="cl-tag cl-tag-fix">fix</span> Usage now refreshes on Ask-mode activation, on a Model change, and after every ask attempt, instead of only while the (now-removed) popover happened to be open.</li>
               </ul>
             </div>
@@ -3331,9 +3344,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <div class="cl-content">
               <h3>Topbar: strictly two lines, controls right-aligned</h3>
               <ul>
-                <li><span class="cl-tag cl-tag-ux">ux</span> Line 1 is now brand/title on the left, Search/Ask mode toggle (and the account chip, when signed in) pushed flush to the right - previously they sat clustered right after the title with a lot of dead space beside them. Line 2 stays the active form (input + its own right-aligned buttons), same as before.</li>
-                <li><span class="cl-tag cl-tag-fix">fix</span> The "Will search for..." preview line no longer counts as a 3rd header row - it's now a thin floating strip anchored just below the header, so the header itself is a strict two rows regardless of whether a preview is showing.</li>
-                <li><span class="cl-tag cl-tag-fix">fix</span> <strong>The Ask Options popover was rendering open by default</strong>, every page load, before ever being clicked - a CSS specificity bug (its own <code>display: flex</code> silently beat the browser's default <code>[hidden]</code> handling). Caught while checking this change on mobile. Also fixed the popover overflowing off the left edge of the screen on narrow viewports (it was anchored to the small gear-button cluster, which sits near the left edge once the input wraps to its own row on mobile; now anchored to the full-width form instead).</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Line 1 is now brand/title on the left, Search/Ask mode toggle (and the account chip, when signed in) pushed flush to the right. Previously they sat clustered right after the title with a lot of dead space beside them. Line 2 stays the active form (input + its own right-aligned buttons), same as before.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The "Will search for..." preview line no longer counts as a 3rd header row. It's now a thin floating strip anchored just below the header, so the header itself is a strict two rows regardless of whether a preview is showing.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <strong>The Ask Options popover was rendering open by default</strong>, every page load, before ever being clicked, due to a CSS specificity bug (its own <code>display: flex</code> silently beat the browser's default <code>[hidden]</code> handling). Caught while checking this change on mobile. Also fixed the popover overflowing off the left edge of the screen on narrow viewports (it was anchored to the small gear-button cluster, which sits near the left edge once the input wraps to its own row on mobile; now anchored to the full-width form instead).</li>
               </ul>
             </div>
           </div>
@@ -4200,9 +4213,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     <!-- Inline answer rail: a real question's answer, shown beside the
          feed instead of the popup modal, on a screen with room for it
-         (see ASK_RAIL_MIN_WIDTH's own comment in the script - keep it in
+         (see ASK_RAIL_MIN_WIDTH's own comment in the script; keep it in
          sync with this media query's width). Only #layout's
-         .has-ask-rail class shows it (see the CSS) - never given the
+         .has-ask-rail class shows it (see the CSS). It is never given the
          `hidden` attribute itself, so there's exactly one place
          controlling its visibility, not two competing ones. Narrower
          screens, and Compare mode, keep using the modal. -->
@@ -4517,14 +4530,17 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (!askPipelineLog || !askPipelineLog.length) { el.hidden = true; return; }
       el.hidden = false;
       const now = Date.now();
-      el.innerHTML = askPipelineLog.map((entry, i) => {
-        const isLast = i === askPipelineLog.length - 1;
-        const secs = ((isLast ? now - entry.startedAt : entry.doneMs) / 1000).toFixed(1);
-        return isLast
+      el.innerHTML = askPipelineLog.map((entry) => {
+        const running = entry.doneMs == null;
+        const secs = ((running ? now - entry.startedAt : entry.doneMs) / 1000).toFixed(1);
+        return running
           ? `<span class="ask-pipeline-step ask-pipeline-active">${uaEsc(entry.label)}&hellip; <em>${secs}s</em></span>`
           : `<span class="ask-pipeline-step ask-pipeline-done">&check; ${uaEsc(entry.label)} <em>${secs}s</em></span>`;
       }).join('<span class="ask-pipeline-arrow" aria-hidden="true">&rarr;</span>');
     }
+    // Starts a fresh log for a new question. The previous question's
+    // finished log is kept on screen for reference until this runs
+    // again, not cleared when that question's answer arrives.
     function startAskPipelineLog() {
       askPipelineLog = [];
       renderAskPipelineLog();
@@ -4538,9 +4554,16 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       askPipelineLog.push({ label: askPhaseLabel(phase, detail, preset), startedAt: now, doneMs: null });
       renderAskPipelineLog();
     }
-    function stopAskPipelineLog() {
+    // Called once the request is done, success or failure. Freezes the
+    // last entry's own elapsed time and stops the live tick, but leaves
+    // the finished log visible for reference (useful for evaluation)
+    // until the next question starts a new one.
+    function finishAskPipelineLog() {
       if (askPipelineTickTimer) { clearInterval(askPipelineTickTimer); askPipelineTickTimer = null; }
-      askPipelineLog = null;
+      if (askPipelineLog && askPipelineLog.length) {
+        const last = askPipelineLog[askPipelineLog.length - 1];
+        if (last.doneMs == null) last.doneMs = Date.now() - last.startedAt;
+      }
       renderAskPipelineLog();
     }
 
@@ -4572,12 +4595,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     [askVendorCheckEl, askTemporalFilterEl, askIntentFilterEl].forEach(el => el.addEventListener("change", updateAskPreview));
 
     // Typeahead over real past community questions (GET /api/reddit/
-    // query/questions/suggest) - public, no sign-in/LLM-call needed,
+    // query/questions/suggest), public, no sign-in/LLM-call needed,
     // since it only reads already-public Reddit data through a real
     // relevance ranking server-side. Picking one may mean the question
     // (or something close to it) has already been asked and discussed.
     // A local debounce timer rather than the shared debounce() helper
-    // further down this file - that's a `const`, and this code executes
+    // further down this file. That's a `const`, and this code executes
     // well before its declaration is reached, so referencing it here
     // would throw (temporal dead zone), not silently do nothing.
     const askSuggestionsEl = document.getElementById("askSuggestions");
@@ -4616,7 +4639,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           if (seq !== askSuggestSeq) return; // a newer keystroke already fired its own request
           if (!data.results || !data.results.length) { hideAskSuggestions(); return; }
           showAskSuggestions(data.results);
-        } catch { /* best-effort - typeahead failing silently beats blocking on it */ }
+        } catch { /* best-effort: typeahead failing silently beats blocking on it */ }
       }, 250);
     });
     askQuestionEl.addEventListener("keydown", e => {
@@ -4691,17 +4714,17 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     // Usage line: a snapshot of the provider's own last-seen rate-limit
     // headers, as reported by the server (it never spends a call just to
-    // go check quota - see GET /api/ask/quota in ask.js). Options are
+    // go check quota, see GET /api/ask/quota in ask.js). Options are
     // always visible now (no popover to gate this on opening), so it
     // refreshes on Ask-mode activation, on a Model change, and again
     // after every ask attempt.
     const askQuotaLineEl = document.getElementById("askQuotaLine");
     // Rather than silently falling back to a different provider when one
-    // is rate-limited (surprising - "I picked Claude but got a Groq
+    // is rate-limited (surprising: "I picked Claude but got a Groq
     // answer"), disable that option in the Model select so it can be
     // seen but not picked, and let the user explicitly choose a working
-    // one. Doesn't touch an already-selected option's value - only new
-    // selections are blocked - so a provider that becomes rate-limited
+    // one. Doesn't touch an already-selected option's value. Only new
+    // selections are blocked, so a provider that becomes rate-limited
     // mid-use doesn't get silently swapped out from under an open answer.
     function askUpdateProviderOptions(quotaData) {
       Array.from(document.getElementById("askProvider").options).forEach(opt => {
@@ -4793,7 +4816,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       }
     });
     // Search and Ask used to be two separate forms, switched by a mode
-    // toggle - #askForm is now the only visible box (see the submit
+    // toggle. #askForm is now the only visible box (see the submit
     // handler below for how it branches between the two), so there's no
     // toggle left to wire up here.
 
@@ -4850,13 +4873,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     // Light markdown rendering for the model's own answer text: escape
     // first (uaEsc), THEN apply markdown on the already-escaped string,
-    // so nothing in the model's output can inject real HTML - only the
+    // so nothing in the model's output can inject real HTML. Only the
     // markdown syntax this function itself recognizes turns into tags.
     // Covers what the model's answers actually use: **bold**, `code`,
     // "- "/"* " bullet lists, "1. " numbered lists, blank-line-separated
     // paragraphs (a single newline inside a paragraph becomes <br>), and
     // a leading "#"..."######" on its own line (rendered as bold text,
-    // not a real heading tag - keeps the compact answer card's type
+    // not a real heading tag. Keeps the compact answer card's type
     // scale consistent rather than introducing a much bigger heading
     // mid-card).
     function mdLite(text) {
@@ -4864,7 +4887,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         .replace(/\*\*([^\n*]+?)\*\*/g, "<strong>$1</strong>")
         .replace(/`([^`\n]+?)`/g, "<code>$1</code>");
       // Line-by-line, not "does this whole blank-line-separated block
-      // uniformly look like a list" - a first version required every
+      // uniformly look like a list". A first version required every
       // line in a block to match the bullet pattern, which silently
       // dropped list formatting whenever a plain lead-in line preceded
       // the list items ("Root causes:\n- Missing initramfs\n- ...") -
@@ -4898,7 +4921,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     }
 
     // opts.trimAnswer: cap the answer text to N chars (a "Show full
-    // answer" button appears when it actually got cut) - used by the
+    // answer" button appears when it actually got cut), used by the
     // right-side rail so a long answer doesn't dominate the sidebar;
     // omitted (or falsy) renders the complete answer, as the modal
     // always has. opts.hideDetails: skip the "Show internals" section -
@@ -4948,17 +4971,17 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     // ── Inline answer rail ──────────────────────────────────────
     // A real question's answer shown beside the feed instead of in the
-    // popup modal, when there's room for it - "Compare all 3" and
+    // popup modal, when there's room for it. "Compare all 3" and
     // narrow screens still use the modal (see the submit handler).
     // ASK_RAIL_MIN_WIDTH must match the media query in the CSS above
-    // (.layout.has-ask-rail) - two numbers, not one shared constant,
+    // (.layout.has-ask-rail), two numbers, not one shared constant,
     // since CSS can't read a JS value; kept in sync by this comment.
     const ASK_RAIL_MIN_WIDTH = 900;
-    const ASK_RAIL_ANSWER_TRIM = 480; // chars - short enough for a ~360px column, long enough to be useful
+    const ASK_RAIL_ANSWER_TRIM = 480; // chars: short enough for a ~360px column, long enough to be useful
     function canUseAskRail() {
       return window.matchMedia(`(min-width: ${ASK_RAIL_MIN_WIDTH}px)`).matches;
     }
-    let askRailData = null; // { label, res } backing "Show full answer" - re-renders untrimmed from the same data, no second request
+    let askRailData = null; // { label, res } backing "Show full answer": re-renders untrimmed from the same data, no second request
     function wireAskRailBody(body) {
       askWireRateButtons(body);
       const fullBtn = body.querySelector(".ask-view-full-btn");
@@ -4985,12 +5008,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // runAsk's own vendor-check gate with Vendor check on) is replayed
     // through whichever existing mechanism already browses that data.
     // /api/v/search has no versionProductType filter, only an exact
-    // versionProductName match - fine for a category small enough for
+    // versionProductName match. Fine for a category small enough for
     // the Rewriter to enumerate (categoryMembers), but "LLM" (300+ real
     // models) or "Hypervisor" have no single matching product name to
     // search for. Those two already have a dedicated, date-window-
     // independent dataset behind the existing LLM/Hypervisor toggles
-    // (see ensureLlmVersionsLoaded/ensureHvVersionsLoaded above) - so
+    // (see ensureLlmVersionsLoaded/ensureHvVersionsLoaded above), so
     // route to that instead of a components search that would just come
     // back empty. Any other large category falls back to searching the
     // bare vendor/category label itself: the same best-effort result a
@@ -5006,7 +5029,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       document.getElementById("components").value = term;
       document.getElementById("filterForm").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     }
-    // Back to a plain, unfiltered feed - used both for a lookup with no
+    // Back to a plain, unfiltered feed. Used both for a lookup with no
     // resolvable vendor and for a real question that didn't resolve one
     // either (Vendor check off, or genuinely nothing matched).
     function clearVendorFeedFilter() {
@@ -5014,7 +5037,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       document.getElementById("filterForm").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     }
     function runDocumentsLookup(data) {
-      // Back to browsing - a lingering answer from an earlier question
+      // Back to browsing. A lingering answer from an earlier question
       // doesn't belong beside unrelated results, and the feed gets its
       // full width back.
       hideAskRail();
@@ -5072,11 +5095,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // there's no plain-lookup shortcut for it, so it keeps the old
       // up-front sign-in gate. Everything else goes through /api/ask
       // itself, which decides whether the query is a bare vendor/
-      // category lookup (free, no sign-in - classifyAskLookup on the
+      // category lookup (free, no sign-in; classifyAskLookup on the
       // server) or a real question (sign-in required, a real model call)
-      // - see the branches below.
+      // See the branches below.
       if (isCompare && !uaToken()) {
-        alert("Sign in (Account view) to ask questions - each answer runs a real query against the model.");
+        alert("Sign in (Account view) to ask questions. Each answer runs a real query against the model.");
         return;
       }
 
@@ -5094,7 +5117,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           // always used here, even if a rail answer happened to be open
           // from an earlier question.
           hideAskRail();
-          // The question itself is left exactly as typed - closing/
+          // The question itself is left exactly as typed. Closing/
           // reopening the answer modal, or asking again, should never
           // require retyping it.
           document.getElementById("askModalQuestion").textContent = question;
@@ -5128,7 +5151,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const res = await uaRequest("ask", { method: "POST", body: JSON.stringify({ question, config }) });
         if (res.status === 401) {
           refreshQuotaAfter = false;
-          alert("Sign in (Account view) to ask a real question - a plain vendor/category search doesn't need it, but a full answer runs a real query against the model.");
+          alert("Sign in (Account view) to ask a real question. A plain vendor/category search doesn't need it, but a full answer runs a real query against the model.");
           return;
         }
         // The fast paths (a plain lookup, a bad request) answer with a
@@ -5147,7 +5170,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         }
 
         if (data.intent === "documents") {
-          // A bare vendor/category name, not a question - resolved
+          // A bare vendor/category name, not a question. Resolved
           // server-side, then replayed through whichever existing
           // mechanism already browses that data (see runDocumentsLookup
           // above). No modal, no model call.
@@ -5186,10 +5209,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         btn.disabled = false;
         btn.textContent = prevIcon;
         btn.classList.remove("ask-btn-loading");
-        stopAskPipelineLog();
+        finishAskPipelineLog();
         // Every real ask attempt (success, abstain, or a rate-limit error
         // like "TPM: Limit 8000, Used 7333...") updates the provider's
-        // quota - a plain document lookup or an unauthenticated attempt
+        // quota. A plain document lookup or an unauthenticated attempt
         // never touched it, so skip the refresh for those.
         if (refreshQuotaAfter) askRefreshQuota();
       }
@@ -5259,7 +5282,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       document.documentElement.style.setProperty("--topbar-h", (tb ? tb.offsetHeight : 0) + "px");
       // Same live-measurement pattern for the "Will search for..." strip:
       // 0 when hidden ([hidden] is display:none, so offsetHeight is
-      // already 0 - no need to special-case it), its real rendered height
+      // already 0, no need to special-case it), its real rendered height
       // when shown, which itself changes as the text wraps to more or
       // fewer lines. Without this, the strip (a fixed overlay, not part
       // of normal document flow) sits on top of the page's own content
@@ -7001,7 +7024,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const otherBotCounts = new Map();
       // CVE is every product bot's own isCve flag, not one bot's output
       // (firefoxCve.py, win_cve.py, etc. each set it on their own product's
-      // documents) - same sourceBot-keyed breakdown as otherBotCounts,
+      // documents), same sourceBot-keyed breakdown as otherBotCounts,
       // just scoped to isCve documents, so "which bot found how many CVEs"
       // is visible instead of one opaque combined total.
       const cveBotCounts = new Map();
@@ -7079,15 +7102,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // what's actually in view right now, same scope as the header's own
       // "(last 4 weeks)" label). One flat list, every entry with count 0
       // dropped and the rest sorted by count (highest first) rather than
-      // a fixed CVE/Reddit/StackOverflow-first order - a source with 0
+      // a fixed CVE/Reddit/StackOverflow-first order. A source with 0
       // results this window is just noise, and the largest sources should
       // read first regardless of which category they happen to be.
       // Reddit and StackOverflow get their real bot filenames (reddit.py,
-      // stackoverflow.py - confirmed against releasetrain-bot's actual
+      // stackoverflow.py, confirmed against releasetrain-bot's actual
       // scripts), the same naming convention as every other bot chip here.
       // CVE is the same idea, just one level deeper: it isn't one bot's
       // output, it's an isCve flag several different product bots each set
-      // on their own documents (firefoxCve.py, win_cve.py, etc.) - so it
+      // on their own documents (firefoxCve.py, win_cve.py, etc.), so it
       // gets one 🔴 chip per bot (sourceBot-keyed, see cveBotCounts) rather
       // than a single opaque combined total.
       const nf = n => n.toLocaleString();
@@ -7734,7 +7757,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     EL.clearBtn.addEventListener("click", () => {
       EL.components.value = "";
       // #components is the hidden internal-only mirror now (see
-      // #filterForm's own comment) - #askQuestion is what the user
+      // #filterForm's own comment). #askQuestion is what the user
       // actually typed into and sees, so Clear needs to reset that too.
       const askQ = document.getElementById("askQuestion");
       if (askQ) askQ.value = "";
