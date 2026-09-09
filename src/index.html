@@ -245,22 +245,21 @@
     .sidebar-divider { border: none; border-top: 1px solid var(--border); margin: 0; }
 
     /* ── Search bar ──────────────────────────────────────────────
-       One row with everything else in the topbar (brand, hamburger,
-       mode toggle) rather than a second line - the active form
-       (#filterForm or #askForm) just flexes to take whatever width is
-       left, and the whole row wraps on narrow screens instead of the
-       form wrapping internally against a fixed-width row. */
-    .ask-mode-toggle { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
-    .ask-mode-btn {
-      height: 32px; box-sizing: border-box; padding: 0 12px;
-      border: 1px solid var(--border); border-radius: var(--radius-full);
-      background: var(--bg); color: var(--muted); font: 600 11px/1 inherit; cursor: pointer;
-    }
-    .ask-mode-btn.ask-mode-active { background: var(--brand); color: #fff; border-color: var(--brand); }
+       One row with everything else in the topbar (brand, hamburger)
+       rather than a second line - #askForm just flexes to take whatever
+       width is left, and the whole row wraps on narrow screens instead
+       of the form wrapping internally against a fixed-width row.
+       Search and Ask used to be two separate forms toggled by a mode
+       switch; they're now one form (#askForm) - a bare vendor/category
+       lookup and a real question both go through the same box, and
+       /api/ask itself decides which one it is (see the submit handler
+       and classifyAskLookup on the server). #filterForm still exists,
+       but only as the internal versions-fetch/pagination engine, driven
+       programmatically, never shown. */
     .topbar-form {
       display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-      /* Always its own full-width row below the hamburger/brand/mode-toggle
-         line, never sharing a flex line with them - a sibling that wraps
+      /* Always its own full-width row below the hamburger/brand line,
+         never sharing a flex line with them - a sibling that wraps
          internally to 2-3 lines can't safely share a row with another
          item in the same flex container (the other item can end up
          overlapping wherever the wrapped content lands). */
@@ -1600,7 +1599,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.44.0">Releasetrain <em>v3.44.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.45.0">Releasetrain <em>v3.45.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child - the
            chip is display:none when signed out, and a non-participating
@@ -1613,37 +1612,42 @@
            the form's wrapped checkbox/select row on narrow screens. -->
       <div class="topbar-right">
         <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
-        <div class="ask-mode-toggle" role="group" aria-label="Search mode">
-          <button type="button" class="ask-mode-btn ask-mode-active" data-mode="search">🔍 Search</button>
-          <button type="button" class="ask-mode-btn" data-mode="ask">💬 Ask</button>
-        </div>
       </div>
-      <form id="filterForm" class="topbar-form" aria-label="Component search">
+      <!-- Kept in the DOM as the internal versions-fetch/pagination
+           engine only - never shown. A plain vendor/category lookup
+           typed into #askQuestion below is resolved server-side (see
+           classifyAskLookup in ask.js) and then replayed here by setting
+           #components and dispatching this form's submit event, so the
+           main feed's existing fetch/sort/cursor-pagination code runs
+           completely unchanged. Search and Ask used to be two separate,
+           user-toggled forms; now there's one box, and /api/ask itself
+           decides which of these two paths a query takes. -->
+      <form id="filterForm" class="topbar-form" aria-label="Component search" style="display:none" aria-hidden="true">
         <div class="search-wrap">
           <span class="search-icon" aria-hidden="true">🔍</span>
           <input id="components" name="components" class="search-input" type="text"
             placeholder="aws, chrome, linux…" autocomplete="off" spellcheck="false"
-            aria-label="Search components" aria-autocomplete="list" aria-controls="suggestions" />
+            aria-label="Search components" aria-autocomplete="list" aria-controls="suggestions" tabindex="-1" />
           <ul id="suggestions" role="listbox" aria-label="Component suggestions"></ul>
         </div>
         <div class="search-actions">
-          <button class="btn btn-ghost" type="button" id="clearBtn">Clear</button>
-          <button class="btn btn-ghost" type="button" id="ua-bm-save-btn" style="display:none" title="Save current search as a bookmark">🔖</button>
-          <button class="btn btn-icon" type="submit" aria-label="Search">🔍</button>
+          <button class="btn btn-icon" type="submit" aria-label="Search" tabindex="-1">🔍</button>
         </div>
       </form>
-      <!-- Ask mode: same bar, a natural-language question instead of a
-           component filter. Hidden by default; toggled by .ask-mode-btn.
-           Requires sign-in (POST /api/ask costs a real Claude call). -->
-      <form id="askForm" class="topbar-form ask-form-stacked" aria-label="Ask a question" style="display:none">
-        <!-- Input is its own full-width row on top; every option (model,
-             size, pipeline, the three toggles) is always visible in one
-             row below it - no gear button, no popover to open first. -->
+      <!-- The single search/ask box: a bare vendor or category name
+           ("chrome", "any sql updates recently") is a document lookup -
+           free, no sign-in - and a real question runs the full Ask/LLM
+           pipeline - sign-in required, since that's a real model call.
+           /api/ask decides which one a given query is; the submit
+           handler below branches on its response. Every option (model,
+           size, pipeline, the three toggles) stays visible in one row
+           below the input - no gear button, no popover to open first. -->
+      <form id="askForm" class="topbar-form ask-form-stacked" aria-label="Search or ask a question">
         <div class="ask-input-row">
           <div class="search-wrap">
-            <span class="search-icon" aria-hidden="true">💬</span>
+            <span class="search-icon" aria-hidden="true">🔍</span>
             <input id="askQuestion" class="search-input" type="text" maxlength="500" autocomplete="off"
-              placeholder="e.g. Are there known Firefox issues after the latest update?" aria-label="Ask a question"
+              placeholder="aws, chrome, linux… or a real question, e.g. Are there known Firefox issues after the latest update?" aria-label="Search components or ask a question"
               aria-autocomplete="list" aria-controls="askSuggestions" />
             <!-- Real past community questions, ranked by relevance to
                  what's typed (GET /api/reddit/query/questions/suggest) -
@@ -1661,8 +1665,9 @@
                server is the single source of truth for which providers/
                sizes actually exist. These two <option>s are just a
                same-render fallback in case that fetch hasn't completed
-               yet. -->
-          <select id="askProvider" class="ask-preset-select" aria-label="Which model answers" title="Model">
+               yet. Only apply once a query turns out to be a real
+               question - a plain vendor/category lookup ignores them. -->
+          <select id="askProvider" class="ask-preset-select" aria-label="Which model answers" title="Model (for real questions only)">
             <option value="anthropic">Claude (Anthropic)</option>
             <option value="groq">Groq (free tier)</option>
             <option value="ollama">Ollama Cloud (free tier)</option>
@@ -1679,7 +1684,9 @@
           <label class="ask-toggle-inline"><input type="checkbox" id="askTemporalFilter" /> Temporal filter</label>
           <label class="ask-toggle-inline"><input type="checkbox" id="askIntentFilter" /> Intent filter</label>
           <span id="askQuotaLine" class="ask-quota-line">Usage: &#8212;</span>
-          <button class="btn btn-icon" type="submit" id="askSubmitBtn" aria-label="Ask">➤</button>
+          <button class="btn btn-ghost" type="button" id="clearBtn">Clear</button>
+          <button class="btn btn-ghost" type="button" id="ua-bm-save-btn" style="display:none" title="Save current search as a bookmark">🔖</button>
+          <button class="btn btn-icon" type="submit" id="askSubmitBtn" aria-label="Search or ask">➤</button>
         </div>
       </form>
     </div>
@@ -3147,6 +3154,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-09</div>
+              <div class="cl-ver cl-ver-minor">v3.45.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Search and Ask are one box now</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The Search/Ask mode toggle is gone - there's one box. Type a plain vendor or category name ("chrome", "any sql updates recently") and it lists matching versions/CVEs, same as Search always did, still free and signed-out. Type a real question and it runs the full Ask pipeline as before (sign-in required, a real model call). <code>/api/ask</code> itself tells them apart before ever touching the model, using the same vendor/category resolution the Rewriter already does - a plain lookup never costs a call or needs sign-in, and a real question is unaffected.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Signing in is now only asked for when it's actually needed (a real question, or Compare all 3) - previously the Ask form required sign-in up front for every submission, including what would have been a free lookup.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-09</div>
               <div class="cl-ver cl-ver-minor">v3.44.0</div>
             </div>
             <div class="cl-content">
@@ -4588,18 +4609,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         setTimeout(() => { btn.textContent = prevText; btn.classList.remove("chip-err"); }, 3000);
       }
     });
-    document.querySelectorAll(".ask-mode-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll(".ask-mode-btn").forEach(b => b.classList.remove("ask-mode-active"));
-        btn.classList.add("ask-mode-active");
-        const isAsk = btn.dataset.mode === "ask";
-        document.getElementById("filterForm").style.display = isAsk ? "none" : "";
-        document.getElementById("askForm").style.display = isAsk ? "" : "none";
-        // The preview only makes sense for a natural-language question.
-        if (!isAsk) { askQueryPreviewEl.hidden = true; }
-        else { updateAskPreview(); askRefreshQuota(); }
-      });
-    });
+    // Search and Ask used to be two separate forms, switched by a mode
+    // toggle - #askForm is now the only visible box (see the submit
+    // handler below for how it branches between the two), so there's no
+    // toggle left to wire up here.
 
     const askOverlayEl = document.getElementById("askOverlay");
     const askModalEl = document.getElementById("askModal");
@@ -4738,14 +4751,35 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       });
     }
 
+    // A vendor/category lookup resolved server-side (classifyAskLookup in
+    // ask.js) is replayed through whichever existing mechanism already
+    // browses that data. /api/v/search has no versionProductType filter,
+    // only an exact versionProductName match - fine for a category small
+    // enough for the Rewriter to enumerate (categoryMembers), but "LLM"
+    // (300+ real models) or "Hypervisor" have no single matching product
+    // name to search for. Those two already have a dedicated, date-
+    // window-independent dataset behind the existing LLM/Hypervisor
+    // toggles (see ensureLlmVersionsLoaded/ensureHvVersionsLoaded above) -
+    // so route to that instead of a components search that would just
+    // come back empty. Any other large category falls back to searching
+    // the bare vendor/category label itself: the same best-effort result
+    // a user typing that label into the old Search box would have gotten.
+    function runDocumentsLookup(data) {
+      const toggleKey = data.categoryType === "LLM" ? "llm" : data.categoryType === "Hypervisor" ? "hv" : null;
+      if (toggleKey) {
+        const btn = document.querySelector(`#fixedToggles [data-key="${toggleKey}"]`);
+        if (btn && btn.getAttribute("aria-pressed") !== "true") btn.click();
+        return;
+      }
+      const term = (data.categoryMembers && data.categoryMembers.length) ? data.categoryMembers.join(",") : (data.vendor || "");
+      document.getElementById("components").value = term;
+      document.getElementById("filterForm").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    }
+
     document.getElementById("askForm").addEventListener("submit", async e => {
       e.preventDefault();
       const question = document.getElementById("askQuestion").value.trim();
       if (!question) return;
-      if (!uaToken()) {
-        alert("Sign in (Account view) to ask questions - each answer runs a real query against the model.");
-        return;
-      }
       const preset = document.getElementById("askPreset").value;
       const provider = document.getElementById("askProvider").value;
       const size = document.getElementById("askSize").value;
@@ -4753,21 +4787,35 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const vendorCheck = document.getElementById("askVendorCheck").checked;
       const temporalFilter = document.getElementById("askTemporalFilter").checked;
       const intentFilter = document.getElementById("askIntentFilter").checked;
+
+      // "Compare all 3" always runs three real model calls side by side -
+      // there's no plain-lookup shortcut for it, so it keeps the old
+      // up-front sign-in gate. Everything else goes through /api/ask
+      // itself, which decides whether the query is a bare vendor/
+      // category lookup (free, no sign-in - classifyAskLookup on the
+      // server) or a real question (sign-in required, a real model call)
+      // - see the branches below.
+      if (isCompare && !uaToken()) {
+        alert("Sign in (Account view) to ask questions - each answer runs a real query against the model.");
+        return;
+      }
+
       const btn = document.getElementById("askSubmitBtn");
       btn.disabled = true;
       const prevIcon = btn.textContent;
       btn.textContent = "⏳";
-
-      // The question itself is left exactly as typed - closing/reopening
-      // the answer modal, or asking again, should never require retyping it.
-      document.getElementById("askModalQuestion").textContent = question;
-      document.getElementById("askModalBody").innerHTML = '<p class="ask-muted">Thinking…</p>';
-      askModalEl.classList.toggle("ask-compare-mode", isCompare);
-      askOverlayEl.classList.add("open");
-      askModalEl.classList.add("open");
+      let refreshQuotaAfter = true;
 
       try {
         if (isCompare) {
+          // The question itself is left exactly as typed - closing/
+          // reopening the answer modal, or asking again, should never
+          // require retyping it.
+          document.getElementById("askModalQuestion").textContent = question;
+          document.getElementById("askModalBody").innerHTML = '<p class="ask-muted">Thinking…</p>';
+          askModalEl.classList.add("ask-compare-mode");
+          askOverlayEl.classList.add("open");
+          askModalEl.classList.add("open");
           const params = new URLSearchParams({
             question, presets: "single_agent,multi_agent_buggy,multi_agent_fixed",
             vendorCheck: String(vendorCheck), temporalFilter: String(temporalFilter), intentFilter: String(intentFilter),
@@ -4780,23 +4828,49 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             '<div class="ask-compare-grid">' +
             data.runs.map(r => askRenderCard(ASK_PRESET_LABELS[r.preset] || r.preset, r)).join("") +
             "</div>";
-        } else {
-          const config = { preset, vendorCheck, temporalFilter, intentFilter, provider, size };
-          const res = await uaRequest("ask", { method: "POST", body: JSON.stringify({ question, config }) });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.error || "Request failed.");
-          document.getElementById("askModalBody").innerHTML = askRenderCard(ASK_PRESET_LABELS[preset] || preset, data);
+          askWireRateButtons(document.getElementById("askModalBody"));
+          return;
         }
+
+        const config = { preset, vendorCheck, temporalFilter, intentFilter, provider, size };
+        const res = await uaRequest("ask", { method: "POST", body: JSON.stringify({ question, config }) });
+        if (res.status === 401) {
+          refreshQuotaAfter = false;
+          alert("Sign in (Account view) to ask a real question - a plain vendor/category search doesn't need it, but a full answer runs a real query against the model.");
+          return;
+        }
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Request failed.");
+
+        if (data.intent === "documents") {
+          // A bare vendor/category name, not a question - resolved
+          // server-side, then replayed through whichever existing
+          // mechanism already browses that data (see runDocumentsLookup
+          // above). No modal, no model call.
+          refreshQuotaAfter = false;
+          runDocumentsLookup(data);
+          return;
+        }
+
+        document.getElementById("askModalQuestion").textContent = question;
+        document.getElementById("askModalBody").innerHTML = askRenderCard(ASK_PRESET_LABELS[preset] || preset, data);
+        askModalEl.classList.remove("ask-compare-mode");
+        askOverlayEl.classList.add("open");
+        askModalEl.classList.add("open");
         askWireRateButtons(document.getElementById("askModalBody"));
       } catch (err) {
+        document.getElementById("askModalQuestion").textContent = question;
         document.getElementById("askModalBody").innerHTML = `<p class="ask-error">${uaEsc(err.message || "Something went wrong.")}</p>`;
+        askOverlayEl.classList.add("open");
+        askModalEl.classList.add("open");
       } finally {
         btn.disabled = false;
         btn.textContent = prevIcon;
-        // Every ask attempt (success, abstain, or a rate-limit error like
-        // "TPM: Limit 8000, Used 7333...") updates the provider's quota -
-        // options are always visible now, so just refresh unconditionally.
-        askRefreshQuota();
+        // Every real ask attempt (success, abstain, or a rate-limit error
+        // like "TPM: Limit 8000, Used 7333...") updates the provider's
+        // quota - a plain document lookup or an unauthenticated attempt
+        // never touched it, so skip the refresh for those.
+        if (refreshQuotaAfter) askRefreshQuota();
       }
     });
 
@@ -7326,6 +7400,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     EL.clearBtn.addEventListener("click", () => {
       EL.components.value = "";
+      // #components is the hidden internal-only mirror now (see
+      // #filterForm's own comment) - #askQuestion is what the user
+      // actually typed into and sees, so Clear needs to reset that too.
+      const askQ = document.getElementById("askQuestion");
+      if (askQ) askQ.value = "";
       STATE.filters.components = [];
       STATE.filters.toggles.clear();
       history.replaceState({}, "", buildHrefWithQ(location.pathname, ""));
