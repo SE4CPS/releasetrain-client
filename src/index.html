@@ -115,6 +115,15 @@
     }
     .brand em { color: var(--brand); font-style: normal; }
 
+    /* Line 1's right-aligned cluster (account chip + Search/Ask mode
+       toggle) - pushed to the row's far edge via margin-left:auto on
+       this wrapper, so brand/title stays flush left with everything
+       else flush right, no matter how wide the viewport is. */
+    .topbar-right {
+      display: flex; align-items: center; gap: 8px;
+      margin-left: auto; flex-shrink: 0;
+    }
+
     /* Nav — now lives inside the sidebar drawer (see below) as a vertical
        list of views, rather than an inline row in the topbar. */
     .nav-links {
@@ -280,10 +289,19 @@
     .ask-options-panel {
       position: absolute; top: calc(100% + 6px); right: 0; z-index: 60;
       display: flex; flex-direction: column; gap: 8px;
-      min-width: 200px; padding: 10px;
+      min-width: 200px; max-width: calc(100vw - 20px); padding: 10px;
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius); box-shadow: var(--shadow-md);
     }
+    /* BUG FIX: the browser's own [hidden]{display:none} default is a
+       UA-origin rule, which loses to ANY author-origin display
+       declaration at equal specificity - including .ask-options-panel's
+       own `display: flex` above. Without this, the `hidden` attribute
+       toggled by JS did nothing at all: the panel rendered open on every
+       page load, unclicked, which went unnoticed until a screenshot was
+       taken without first clicking to open it. This selector's higher
+       specificity (class + attribute) is what actually wins. */
+    .ask-options-panel[hidden] { display: none; }
     .ask-options-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 11px; color: var(--muted); }
     .ask-options-row .ask-preset-select { flex: 1 1 auto; min-width: 0; }
     .ask-options-divider { border: none; border-top: 1px solid var(--border); margin: 0; }
@@ -296,7 +314,9 @@
       background: var(--brand-light); color: var(--brand); white-space: nowrap;
     }
     .ask-query-preview {
-      padding: 0 14px 8px; font-size: 11px; color: var(--muted); font-family: var(--mono);
+      position: fixed; top: var(--topbar-h); left: 0; right: 0; z-index: 999;
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 5px 14px; font-size: 11px; color: var(--muted); font-family: var(--mono);
     }
     .ask-query-preview strong { color: var(--text); font-weight: 600; }
 
@@ -1559,16 +1579,23 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.39.0">Releasetrain <em>v3.39.0</em></a>
-      <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
-      <!-- Kept with the compact identity controls (not after the forms):
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.40.0">Releasetrain <em>v3.40.0</em></a>
+      <!-- Everything identity/mode-related is one right-aligned cluster
+           (margin-left:auto on the wrapper, not on either child - the
+           chip is display:none when signed out, and a non-participating
+           flex item can't carry the row's own push-right margin) so line
+           1 stays brand-left, controls-right regardless of sign-in state.
+           Kept with the compact identity controls (not after the forms):
            the active form always gets its own full-width row below this
            one (see .topbar-form's flex-basis:100%), and a sibling that
            tall can't share a flex line predictably - it was overlapping
            the form's wrapped checkbox/select row on narrow screens. -->
-      <div class="ask-mode-toggle" role="group" aria-label="Search mode">
-        <button type="button" class="ask-mode-btn ask-mode-active" data-mode="search">🔍 Search</button>
-        <button type="button" class="ask-mode-btn" data-mode="ask">💬 Ask</button>
+      <div class="topbar-right">
+        <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
+        <div class="ask-mode-toggle" role="group" aria-label="Search mode">
+          <button type="button" class="ask-mode-btn ask-mode-active" data-mode="search">🔍 Search</button>
+          <button type="button" class="ask-mode-btn" data-mode="ask">💬 Ask</button>
+        </div>
       </div>
       <form id="filterForm" class="topbar-form" aria-label="Component search">
         <div class="search-wrap">
@@ -1587,7 +1614,7 @@
       <!-- Ask mode: same bar, a natural-language question instead of a
            component filter. Hidden by default; toggled by .ask-mode-btn.
            Requires sign-in (POST /api/ask costs a real Claude call). -->
-      <form id="askForm" class="topbar-form" aria-label="Ask a question" style="display:none">
+      <form id="askForm" class="topbar-form" aria-label="Ask a question" style="display:none;position:relative">
         <!-- Input stays flexible on the left; everything else is just two
              buttons on the right (Options, Ask) - the model/pipeline
              selects and the three toggles live in a popover off the
@@ -1598,7 +1625,7 @@
             placeholder="e.g. Are there known Firefox issues after the latest update?" aria-label="Ask a question" />
         </div>
         <span id="askIntentBadge" class="ask-intent-badge" hidden></span>
-        <div class="search-actions" style="position:relative">
+        <div class="search-actions">
           <button class="btn btn-ghost btn-icon" type="button" id="askOptionsBtn"
             aria-haspopup="true" aria-expanded="false" aria-controls="askOptionsPanel" title="Options" aria-label="Ask options">⚙️</button>
           <div id="askOptionsPanel" class="ask-options-panel" hidden>
@@ -1642,16 +1669,22 @@
         </div>
       </form>
     </div>
-    <!-- Deterministic, client-only preview of which words will actually
-         drive the search match (same generic-word filtering
-         releasetrain-server's ask.js applies before querying) - computed
-         and shown before any API call is made, so it's visible
-         regardless of whether the configured key has credit. This is an
-         approximation of what will be searched, not the model's own
-         eventual tool-call query, which can still add vendor synonyms
-         the model knows and this simple filter doesn't. -->
-    <div id="askQueryPreview" class="ask-query-preview" hidden></div>
   </header>
+  <!-- Deterministic, client-only preview of which words will actually
+       drive the search match (same generic-word filtering
+       releasetrain-server's ask.js applies before querying) - computed
+       and shown before any API call is made, so it's visible regardless
+       of whether the configured key has credit. This is an approximation
+       of what will be searched, not the model's own eventual tool-call
+       query, which can still add vendor synonyms the model knows and
+       this simple filter doesn't.
+       Deliberately a sibling of <header>, not a child of it: the header
+       itself is capped at exactly two rows (identity/mode line, then the
+       active form); this floats as its own fixed strip right below it
+       (top: var(--topbar-h), the same live-measured offset every other
+       fixed panel in this page already anchors to) so a long preview
+       line never grows the header past that two-row budget. -->
+  <div id="askQueryPreview" class="ask-query-preview" hidden></div>
 
   <div id="navLoader" role="progressbar" aria-label="Loading" aria-hidden="true"></div>
 
@@ -3096,6 +3129,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-09</div>
+              <div class="cl-ver cl-ver-minor">v3.40.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Topbar: strictly two lines, controls right-aligned</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Line 1 is now brand/title on the left, Search/Ask mode toggle (and the account chip, when signed in) pushed flush to the right - previously they sat clustered right after the title with a lot of dead space beside them. Line 2 stays the active form (input + its own right-aligned buttons), same as before.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The "Will search for..." preview line no longer counts as a 3rd header row - it's now a thin floating strip anchored just below the header, so the header itself is a strict two rows regardless of whether a preview is showing.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <strong>The Ask Options popover was rendering open by default</strong>, every page load, before ever being clicked - a CSS specificity bug (its own <code>display: flex</code> silently beat the browser's default <code>[hidden]</code> handling). Caught while checking this change on mobile. Also fixed the popover overflowing off the left edge of the screen on narrow viewports (it was anchored to the small gear-button cluster, which sits near the left edge once the input wraps to its own row on mobile; now anchored to the full-width form instead).</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
