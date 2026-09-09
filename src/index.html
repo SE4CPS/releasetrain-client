@@ -1559,7 +1559,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.38.0">Releasetrain <em>v3.38.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.39.0">Releasetrain <em>v3.39.0</em></a>
       <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
       <!-- Kept with the compact identity controls (not after the forms):
            the active form always gets its own full-width row below this
@@ -3100,6 +3100,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-09</div>
+              <div class="cl-ver cl-ver-minor">v3.39.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Ask can now find answers on the open web, not just Reddit</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The Ask agent now has a <code>search_web</code> tool: when release notes, CVE records, and Reddit turn up nothing, it searches the open web and actually reads the top results (official vendor forums, bug trackers, GitHub issues - anything this platform doesn't scrape into its own data) before answering. Sources found this way show a 🌐 icon.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Temporal filter bug</strong> - a mismatched variable name meant the "only search the last N days" setting silently never reached any search tool. Caught from a real answer that cited a 6-month-old community post as "in the past 24 hours." Fixed and verified live.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-09</div>
               <div class="cl-ver cl-ver-minor">v3.38.0</div>
             </div>
             <div class="cl-content">
@@ -4411,7 +4425,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (!sources || !sources.length) {
         return '<p class="ask-muted">No sources were found for this question.</p>';
       }
-      const icon = k => k === "cve" ? "🔴" : k === "reddit" ? "💬" : "📦";
+      const icon = k => k === "cve" ? "🔴" : k === "reddit" ? "💬" : k === "web" ? "🌐" : "📦";
       return '<ul class="ask-sources">' + sources.map(s => {
         const dateStr = s.date ? String(s.date) : "";
         const label = `${icon(s.kind)} <strong>${uaEsc(s.title)}</strong>${dateStr ? " · " + uaEsc(dateStr) : ""}`;
