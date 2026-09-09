@@ -70,6 +70,7 @@
       --radius-sm: 2px;
       --radius-full: 999px;
       --topbar-h: 0px;
+      --preview-h: 0px;
     }
 
     /* ── Reset ──────────────────────────────────────────────── */
@@ -169,11 +170,19 @@
     .layout {
       max-width: 1100px;
       margin: 0 auto;
-      padding: calc(var(--topbar-h) + 12px) 12px 28px;
+      /* + var(--preview-h): the "Will search for..." strip is a fixed
+         overlay below the header (see .ask-query-preview), not part of
+         normal document flow, so nothing pushes the page's own content
+         down for it automatically - without this, its height (0 when
+         hidden, its real rendered height when shown, which itself varies
+         as the text wraps to more/fewer lines) has to be added to the
+         layout's own top padding by hand, or the top of the page's real
+         content sits underneath it. */
+      padding: calc(var(--topbar-h) + var(--preview-h) + 12px) 12px 28px;
     }
     @media (max-width: 640px) {
       html, body { overflow: auto; height: auto; }
-      .layout { padding: calc(var(--topbar-h) + 12px) 12px 32px; }
+      .layout { padding: calc(var(--topbar-h) + var(--preview-h) + 12px) 12px 32px; }
     }
 
     /* ── Sidebar (menu drawer) ──────────────────────────────────
@@ -334,6 +343,14 @@
       color: var(--brand); margin-bottom: 6px;
     }
     .ask-answer-summary { font-size: 13px; line-height: 1.6; margin: 0 0 10px; }
+    .ask-answer-summary p { margin: 0 0 8px; }
+    .ask-answer-summary p:last-child { margin-bottom: 0; }
+    .ask-answer-summary ul, .ask-answer-summary ol { margin: 0 0 8px; padding-left: 20px; }
+    .ask-answer-summary li { margin-bottom: 3px; }
+    .ask-answer-summary code {
+      font-family: var(--mono); font-size: 12px; background: var(--chip-bg);
+      color: var(--chip-text); padding: 1px 4px; border-radius: var(--radius-sm);
+    }
     .ask-sources { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-direction: column; gap: 5px; }
     .ask-sources li { font-size: 12px; line-height: 1.4; }
     .ask-sources a { color: var(--text); text-decoration: none; }
@@ -1562,7 +1579,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.41.0">Releasetrain <em>v3.41.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.42.0">Releasetrain <em>v3.42.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child - the
            chip is display:none when signed out, and a non-participating
@@ -3101,6 +3118,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-09</div>
+              <div class="cl-ver cl-ver-minor">v3.42.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Source breakdown cleanup, and readable Ask answers</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The "Will search for..." preview strip was overlapping the "Recent Updates" heading right below it - it's a fixed overlay, not part of normal page flow, so nothing reserved space for it. Added a live-measured <code>--preview-h</code> offset (same pattern as the header's own <code>--topbar-h</code>) to the page's top padding.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> <strong>Recent Updates source breakdown</strong>: sources with 0 results this window (e.g. StackOverflow) no longer show at all, and every source (CVE, community sources, and each bot) is now sorted together by count, highest first - not CVE/Reddit/StackOverflow-first regardless of size. Reddit and StackOverflow now show their real bot filenames, <code>reddit.py</code> and <code>stackoverflow.py</code> (confirmed against releasetrain-bot's actual scripts), matching every other bot chip's naming convention; CVE stays a plain label since it isn't one bot's output.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Ask answers render lightly formatted</strong> instead of as one plain-escaped block of text: <code>**bold**</code> and <code>`code`</code> render as real <code>&lt;strong&gt;</code>/<code>&lt;code&gt;</code>, bullet and numbered lists render as real lists, and blank lines become paragraph breaks. Still escapes the model's raw text first and only recognizes this fixed set of markdown syntax on top of that - nothing in the answer can inject real HTML.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-09</div>
               <div class="cl-ver cl-ver-minor">v3.41.0</div>
             </div>
             <div class="cl-content">
@@ -4473,6 +4505,55 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       </details>`;
     }
 
+    // Light markdown rendering for the model's own answer text: escape
+    // first (uaEsc), THEN apply markdown on the already-escaped string,
+    // so nothing in the model's output can inject real HTML - only the
+    // markdown syntax this function itself recognizes turns into tags.
+    // Covers what the model's answers actually use: **bold**, `code`,
+    // "- "/"* " bullet lists, "1. " numbered lists, blank-line-separated
+    // paragraphs (a single newline inside a paragraph becomes <br>), and
+    // a leading "#"..."######" on its own line (rendered as bold text,
+    // not a real heading tag - keeps the compact answer card's type
+    // scale consistent rather than introducing a much bigger heading
+    // mid-card).
+    function mdLite(text) {
+      const escaped = uaEsc(text)
+        .replace(/\*\*([^\n*]+?)\*\*/g, "<strong>$1</strong>")
+        .replace(/`([^`\n]+?)`/g, "<code>$1</code>");
+      // Line-by-line, not "does this whole blank-line-separated block
+      // uniformly look like a list" - a first version required every
+      // line in a block to match the bullet pattern, which silently
+      // dropped list formatting whenever a plain lead-in line preceded
+      // the list items ("Root causes:\n- Missing initramfs\n- ...") -
+      // a common real shape in these answers, not an edge case.
+      const lines = escaped.split("\n");
+      const out = [];
+      let list = null; // { type: 'ul'|'ol', items: [] }
+      let para = [];
+      const flushPara = () => { if (para.length) { out.push("<p>" + para.join("<br>") + "</p>"); para = []; } };
+      const flushList = () => { if (list) { out.push(`<${list.type}>` + list.items.map(i => `<li>${i}</li>`).join("") + `</${list.type}>`); list = null; } };
+      for (const raw of lines) {
+        const line = raw.trim();
+        if (!line) { flushPara(); flushList(); continue; }
+        const bullet = line.match(/^[-*]\s+(.*)$/);
+        const numbered = line.match(/^\d+\.\s+(.*)$/);
+        if (bullet) {
+          flushPara();
+          if (!list || list.type !== "ul") { flushList(); list = { type: "ul", items: [] }; }
+          list.items.push(bullet[1]);
+        } else if (numbered) {
+          flushPara();
+          if (!list || list.type !== "ol") { flushList(); list = { type: "ol", items: [] }; }
+          list.items.push(numbered[1]);
+        } else {
+          flushList();
+          para.push(line.replace(/^#{1,6}\s+(.*)$/, "<strong>$1</strong>"));
+        }
+      }
+      flushPara(); flushList();
+      return out.join("");
+    }
+
     function askRenderCard(label, res) {
       if (res.error) {
         return `<div class="ask-answer-card">
@@ -4482,7 +4563,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       }
       return `<div class="ask-answer-card${res.abstained ? " ask-answer-abstained" : ""}" data-run-id="${uaEsc(res.runId || "")}">
         <div class="ask-answer-label">${uaEsc(label)}${res.abstained ? '<span class="ask-abstain-badge">⛔ Abstained</span>' : ""}</div>
-        <p class="ask-answer-summary">${uaEsc(res.answer)}</p>
+        <div class="ask-answer-summary">${mdLite(res.answer)}</div>
         ${askRenderMetaChips(res)}
         ${askRenderSources(res.sources)}
         ${askRenderDetails(res)}
@@ -4634,10 +4715,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     function updateOffsets() {
       const tb = $(".topbar");
       document.documentElement.style.setProperty("--topbar-h", (tb ? tb.offsetHeight : 0) + "px");
+      // Same live-measurement pattern for the "Will search for..." strip:
+      // 0 when hidden ([hidden] is display:none, so offsetHeight is
+      // already 0 - no need to special-case it), its real rendered height
+      // when shown, which itself changes as the text wraps to more or
+      // fewer lines. Without this, the strip (a fixed overlay, not part
+      // of normal document flow) sits on top of the page's own content
+      // instead of the content starting below it.
+      const preview = $("#askQueryPreview");
+      document.documentElement.style.setProperty("--preview-h", (preview ? preview.offsetHeight : 0) + "px");
     }
     window.addEventListener("load", updateOffsets);
     window.addEventListener("resize", updateOffsets);
     new ResizeObserver(updateOffsets).observe($(".topbar"));
+    new ResizeObserver(updateOffsets).observe($("#askQueryPreview"));
 
     const normalizeQuery = q => String(q || "").split(",").map(t => t.trim()).filter(Boolean).join(",");
     const encodeCsvKeepCommas = csv => {
@@ -6434,22 +6525,30 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // Per-source breakdown for the current "Recent Updates" window (not the
       // sidebar's "true total" figures — this deliberately reflects only
       // what's actually in view right now, same scope as the header's own
-      // "(last 4 weeks)" label).
+      // "(last 4 weeks)" label). One flat list, every entry with count 0
+      // dropped and the rest sorted by count (highest first) rather than
+      // a fixed CVE/Reddit/StackOverflow-first order - a source with 0
+      // results this window is just noise, and the largest sources should
+      // read first regardless of which category they happen to be.
+      // Reddit and StackOverflow get their real bot filenames (reddit.py,
+      // stackoverflow.py - confirmed against releasetrain-bot's actual
+      // scripts), the same naming convention as every other 📦 bot chip
+      // here. CVE stays a plain classification label, not a bot name: it
+      // isn't one dedicated bot's output, it's an isCve flag set by
+      // several different product bots (firefoxCve.py, win_cve.py, etc.).
       const nf = n => n.toLocaleString();
-      const parts = [
-        `🔴 CVE <strong>${nf(a.cve)}</strong>`,
-        `💬 Reddit <strong>${nf(a.reddit)}</strong>`,
-        `🟧 StackOverflow <strong>${nf(a.so)}</strong>`,
+      const entries = [
+        { icon: '🔴', label: 'CVE', count: a.cve },
+        { icon: '💬', label: 'reddit.py', count: a.reddit },
+        { icon: '🟧', label: 'stackoverflow.py', count: a.so },
+        { icon: '🤖', label: 'LLM', count: a.llm },
+        { icon: '🖥', label: 'Hypervisor', count: a.hv },
+        ...[...a.otherBotCounts.entries()].map(([bot, count]) => ({ icon: '📦', label: bot, count })),
       ];
-      if (a.llm) parts.push(`🤖 LLM <strong>${nf(a.llm)}</strong>`);
-      if (a.hv) parts.push(`🖥 Hypervisor <strong>${nf(a.hv)}</strong>`);
-      // One chip per remaining bot (chrome.py, github.py, firefox.py, etc.),
-      // highest count first, so nothing is left invisible just for not
-      // having a dedicated category above. "unknown" covers pre-backfill
-      // documents and anything the inference genuinely couldn't place.
-      for (const [bot, count] of [...a.otherBotCounts.entries()].sort((x, y) => y[1] - x[1])) {
-        parts.push(`📦 ${bot} <strong>${nf(count)}</strong>`);
-      }
+      const parts = entries
+        .filter(e => e.count > 0)
+        .sort((x, y) => y.count - x.count)
+        .map(e => `${e.icon} ${e.label} <strong>${nf(e.count)}</strong>`);
       EL.feedSourceSummary.innerHTML = parts.map(p => `<span>${p}</span>`).join("");
     }
 
