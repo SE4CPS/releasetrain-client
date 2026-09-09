@@ -1559,7 +1559,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.37.0">Releasetrain <em>v3.37.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.38.0">Releasetrain <em>v3.38.0</em></a>
       <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
       <!-- Kept with the compact identity controls (not after the forms):
            the active form always gets its own full-width row below this
@@ -1604,10 +1604,21 @@
           <div id="askOptionsPanel" class="ask-options-panel" hidden>
             <label class="ask-options-row">
               <span>Model</span>
+              <!-- Options populated live from GET /api/ask/providers (see
+                   askLoadProviders below) rather than hardcoded here - the
+                   server is the single source of truth for which
+                   providers/sizes actually exist. These two <option>s are
+                   just a same-render fallback in case that fetch hasn't
+                   completed yet. -->
               <select id="askProvider" class="ask-preset-select" aria-label="Which model answers">
                 <option value="anthropic">Claude (Anthropic)</option>
                 <option value="groq">Groq (free tier)</option>
+                <option value="ollama">Ollama Cloud (free tier)</option>
               </select>
+            </label>
+            <label class="ask-options-row">
+              <span>Size</span>
+              <select id="askSize" class="ask-preset-select" aria-label="Model size"></select>
             </label>
             <label class="ask-options-row">
               <span>Pipeline</span>
@@ -3089,6 +3100,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-09</div>
+              <div class="cl-ver cl-ver-minor">v3.38.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Ollama Cloud added as a third model, and a Size picker</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Ollama Cloud</strong> is now a third Model option alongside Claude and Groq - a hosted API call (not a local install), so it works the same way on the production server as Groq does. Free tier.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Size picker</strong> - each Model now offers Small/Medium/Large, sized by whatever unit that provider actually publishes (parameter count for Groq/Ollama, Anthropic's own Haiku/Sonnet/Opus naming). The Model and Size lists are both fetched live from the server rather than hardcoded, so they always match what's actually configured and runnable.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Every model offered was verified to actually support tool calling before being listed - a couple of plausible-looking "smallest" picks (a 7B Groq model, several larger Ollama Cloud models) turned out to either reject tool calls outright or require a paid plan, so they were swapped for ones confirmed working live.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-09</div>
               <div class="cl-ver cl-ver-minor">v3.37.0</div>
             </div>
             <div class="cl-content">
@@ -4210,6 +4236,49 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     askQuestionEl.addEventListener("input", updateAskPreview);
     [askVendorCheckEl, askTemporalFilterEl, askIntentFilterEl].forEach(el => el.addEventListener("change", updateAskPreview));
 
+    // Provider + size lists come from the server (GET /api/ask/providers),
+    // not hardcoded here - each provider offers its own 3 model sizes
+    // (small/medium/large), with its own labels (e.g. Groq's "Small
+    // (20B)" vs Ollama's "Small (~14GB)"), so the Size <select>'s options
+    // depend on whichever Model is currently picked. Fetched once and
+    // cached; the two <option>s already in the Model <select>'s markup
+    // are just a same-render fallback for the brief window before this
+    // resolves.
+    let ASK_PROVIDER_DATA = null;
+    function askPopulateSizeOptions() {
+      const sizeEl = document.getElementById("askSize");
+      if (!ASK_PROVIDER_DATA) return;
+      const providerId = document.getElementById("askProvider").value;
+      const provider = ASK_PROVIDER_DATA.find(p => p.id === providerId);
+      const sizes = (provider && provider.sizes) || [];
+      const prevValue = sizeEl.value;
+      sizeEl.innerHTML = sizes.map(s => `<option value="${uaEsc(s.id)}">${uaEsc(s.label)}</option>`).join("");
+      // Keep the same size tier (e.g. stay on "large") across a provider
+      // switch when the new provider has one by that id; default to
+      // medium otherwise rather than whatever the browser picks first.
+      if (sizes.some(s => s.id === prevValue)) sizeEl.value = prevValue;
+      else if (sizes.some(s => s.id === "medium")) sizeEl.value = "medium";
+    }
+    async function askLoadProviders() {
+      try {
+        const res = await uaRequest("ask/providers");
+        const data = await res.json();
+        ASK_PROVIDER_DATA = data.providers || [];
+        const providerEl = document.getElementById("askProvider");
+        const prevValue = providerEl.value;
+        providerEl.innerHTML = ASK_PROVIDER_DATA.map(p => `<option value="${uaEsc(p.id)}">${uaEsc(p.label)}</option>`).join("");
+        if (ASK_PROVIDER_DATA.some(p => p.id === prevValue)) providerEl.value = prevValue;
+        askPopulateSizeOptions();
+      } catch {
+        // Leave the two hardcoded fallback <option>s in place; Size stays
+        // empty in this case (no live provider/size data to build it
+        // from), same "degrade, don't crash" spirit as everywhere else
+        // in this form.
+      }
+    }
+    document.getElementById("askProvider").addEventListener("change", askPopulateSizeOptions);
+    askLoadProviders();
+
     // Options popover (model/pipeline selects + toggles), off the gear
     // button - closes on outside click, Escape, or picking "Search" mode.
     const askOptionsBtnEl = document.getElementById("askOptionsBtn");
@@ -4426,6 +4495,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       }
       const preset = document.getElementById("askPreset").value;
       const provider = document.getElementById("askProvider").value;
+      const size = document.getElementById("askSize").value;
       const isCompare = preset === "compare";
       const vendorCheck = document.getElementById("askVendorCheck").checked;
       const temporalFilter = document.getElementById("askTemporalFilter").checked;
@@ -4448,7 +4518,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           const params = new URLSearchParams({
             question, presets: "single_agent,multi_agent_buggy,multi_agent_fixed",
             vendorCheck: String(vendorCheck), temporalFilter: String(temporalFilter), intentFilter: String(intentFilter),
-            provider,
+            provider, size,
           });
           const res = await uaRequest("ask/compare?" + params.toString());
           const data = await res.json();
@@ -4458,7 +4528,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             data.runs.map(r => askRenderCard(ASK_PRESET_LABELS[r.preset] || r.preset, r)).join("") +
             "</div>";
         } else {
-          const config = { preset, vendorCheck, temporalFilter, intentFilter, provider };
+          const config = { preset, vendorCheck, temporalFilter, intentFilter, provider, size };
           const res = await uaRequest("ask", { method: "POST", body: JSON.stringify({ question, config }) });
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || "Request failed.");
