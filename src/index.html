@@ -299,6 +299,10 @@
     }
     .topbar-form .btn { display: inline-flex; align-items: center; justify-content: center; }
     .btn-icon { padding: 0 10px; font-size: 14px; }
+    /* Obviously working, not just disabled - a static hourglass reads as
+       "stuck", not "in progress". */
+    @keyframes askSpin { to { transform: rotate(360deg); } }
+    #askSubmitBtn.ask-btn-loading { animation: askSpin .9s linear infinite; }
     .ask-preset-select {
       padding: 0 8px; border: 1px solid var(--border); border-radius: var(--radius);
       background: var(--surface); color: var(--text); font: 12px/1 inherit; cursor: pointer; flex-shrink: 0;
@@ -311,6 +315,17 @@
        row-wrap behavior for just this form. */
     .ask-form-stacked { flex-direction: column; align-items: stretch; flex-wrap: nowrap; gap: 6px; }
     .ask-input-row { display: flex; align-items: center; gap: 8px; }
+    /* Same [hidden]-vs-author-display specificity fix as .ask-options-panel
+       elsewhere in this file: [hidden] alone is a UA-origin rule and loses
+       to a plain author `display: flex` at equal specificity regardless of
+       source order, so the override has to be spelled out explicitly. */
+    .ask-pipeline-status { display: flex; flex-wrap: wrap; gap: 4px 8px; font-size: 11px; }
+    .ask-pipeline-status[hidden] { display: none; }
+    .ask-pipeline-step { white-space: nowrap; color: var(--muted); }
+    .ask-pipeline-step em { font-style: normal; font-variant-numeric: tabular-nums; font-weight: 600; }
+    .ask-pipeline-step.ask-pipeline-active { color: var(--brand); font-weight: 600; }
+    .ask-pipeline-step.ask-pipeline-pending { opacity: .5; }
+    .ask-pipeline-arrow { color: var(--border); }
     .ask-options-row {
       display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
       font-size: 11px; color: var(--muted);
@@ -1623,7 +1638,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.47.0">Releasetrain <em>v3.47.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.48.0">Releasetrain <em>v3.48.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child - the
            chip is display:none when signed out, and a non-participating
@@ -1667,6 +1682,11 @@
            size, pipeline, the three toggles) stays visible in one row
            below the input - no gear button, no popover to open first. -->
       <form id="askForm" class="topbar-form ask-form-stacked" aria-label="Search or ask a question">
+        <!-- Shown only while a real question is in flight (see
+             startAskPipelineStatus) - an approximate "which phase is this"
+             ticker, each step's own elapsed time real and live-updating,
+             frozen once that step ends. Hidden the rest of the time. -->
+        <div id="askPipelineStatus" class="ask-pipeline-status" hidden aria-live="polite"></div>
         <div class="ask-input-row">
           <div class="search-wrap">
             <span class="search-icon" aria-hidden="true">🔍</span>
@@ -3178,6 +3198,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-09</div>
+              <div class="cl-ver cl-ver-minor">v3.48.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Visible progress while a question runs</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> A real question now shows a "which phase is this" ticker above the input (Resolving vendor &rarr; Searching sources &rarr; Generating answer), each step's own elapsed time counting up live and freezing once that step ends. There's no live signal from the server for this yet, so step *boundaries* are an approximation - but each step's own timer is real, and the last step (Generating answer) just runs until the actual response arrives rather than guessing at it.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The submit button's hourglass now visibly spins while waiting, instead of sitting static.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The 🔴 CVE chip in the Recent Updates breakdown is now one chip per source bot (sourceBot-keyed, same convention as every other 📦 bot chip), not one opaque combined total - CVE isn't one bot's output, it's an <code>isCve</code> flag several different product bots each set on their own documents.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-09</div>
               <div class="cl-ver cl-ver-minor">v3.47.0</div>
             </div>
             <div class="cl-content">
@@ -4429,6 +4464,62 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     const askTemporalFilterEl = document.getElementById("askTemporalFilter");
     const askIntentFilterEl = document.getElementById("askIntentFilter");
 
+    // A small "which pipeline step is this" ticker above the input while a
+    // real question is in flight. There's no live signal from the server
+    // for this (one request, one response - runAsk doesn't stream its own
+    // progress), so the step boundaries are a client-side approximation,
+    // not a literal trace - but the labels are the same three phases the
+    // pipeline actually always goes through (resolve a vendor, search for
+    // evidence, have the model write the answer), and each step's own
+    // clock is real: it starts counting the moment that step becomes
+    // current and freezes at whatever it actually reached the moment the
+    // next step starts (or, for the last step, the moment the real answer
+    // comes back) - only the *boundary timing* for the first two steps is
+    // a guess, never the elapsed numbers themselves.
+    const ASK_PIPELINE_STEPS = [
+      { label: "Resolving vendor", guessMs: 900 },
+      { label: "Searching sources", guessMs: 2200 },
+      { label: "Generating answer", guessMs: null }, // runs until the real response arrives
+    ];
+    let askPipelineTimer = null;
+    let askPipelineState = null; // { stepIndex, stepStartedAt, doneMs: [] }
+    function renderAskPipelineStatus() {
+      const el = document.getElementById("askPipelineStatus");
+      if (!askPipelineState) { el.hidden = true; return; }
+      el.hidden = false;
+      const now = Date.now();
+      el.innerHTML = ASK_PIPELINE_STEPS.map((step, i) => {
+        if (i < askPipelineState.stepIndex) {
+          return `<span class="ask-pipeline-step ask-pipeline-done">✓ ${uaEsc(step.label)} <em>${(askPipelineState.doneMs[i] / 1000).toFixed(1)}s</em></span>`;
+        }
+        if (i === askPipelineState.stepIndex) {
+          const secs = ((now - askPipelineState.stepStartedAt) / 1000).toFixed(1);
+          return `<span class="ask-pipeline-step ask-pipeline-active">${uaEsc(step.label)}&hellip; <em>${secs}s</em></span>`;
+        }
+        return `<span class="ask-pipeline-step ask-pipeline-pending">${uaEsc(step.label)}</span>`;
+      }).join('<span class="ask-pipeline-arrow" aria-hidden="true">&rarr;</span>');
+    }
+    function startAskPipelineStatus() {
+      askPipelineState = { stepIndex: 0, stepStartedAt: Date.now(), doneMs: [] };
+      renderAskPipelineStatus();
+      askPipelineTimer = setInterval(() => {
+        const step = ASK_PIPELINE_STEPS[askPipelineState.stepIndex];
+        const elapsed = Date.now() - askPipelineState.stepStartedAt;
+        const isLast = askPipelineState.stepIndex === ASK_PIPELINE_STEPS.length - 1;
+        if (!isLast && step.guessMs != null && elapsed >= step.guessMs) {
+          askPipelineState.doneMs[askPipelineState.stepIndex] = elapsed;
+          askPipelineState.stepIndex++;
+          askPipelineState.stepStartedAt = Date.now();
+        }
+        renderAskPipelineStatus();
+      }, 100);
+    }
+    function stopAskPipelineStatus() {
+      if (askPipelineTimer) { clearInterval(askPipelineTimer); askPipelineTimer = null; }
+      askPipelineState = null;
+      renderAskPipelineStatus();
+    }
+
     function updateAskPreview() {
       const question = askQuestionEl.value;
       const intent = classifyIntentClient(question);
@@ -4935,6 +5026,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       btn.disabled = true;
       const prevIcon = btn.textContent;
       btn.textContent = "⏳";
+      btn.classList.add("ask-btn-loading");
+      startAskPipelineStatus();
       let refreshQuotaAfter = true;
 
       try {
@@ -5022,6 +5115,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       } finally {
         btn.disabled = false;
         btn.textContent = prevIcon;
+        btn.classList.remove("ask-btn-loading");
+        stopAskPipelineStatus();
         // Every real ask attempt (success, abstain, or a rate-limit error
         // like "TPM: Limit 8000, Used 7333...") updates the provider's
         // quota - a plain document lookup or an unauthenticated attempt
@@ -6826,7 +6921,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       let major = 0, minor = 0, patch = 0, cve = 0, llm = 0, hv = 0; const uniqComps = new Set(), typeCounts = new Map();
       const rIds = new Set(), rRiskIds = new Set(), rRiskLatIds = new Set(), rRiskCveIds = new Set(), soIds = new Set(), soRiskIds = new Set();
       // One number per bot for everything not already broken out as its own
-      // CVE/LLM/Hypervisor category — otherwise those sources (chrome.py,
+      // LLM/Hypervisor category — otherwise those sources (chrome.py,
       // github.py, firefox.py, etc.) are invisible in the feed summary
       // entirely. Keyed on the real sourceBot field (backfilled by
       // maintainer.py's source-attribution pass), not an approximation from
@@ -6834,12 +6929,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // under one type ("browser" = chrome+firefox+safari) or fragment one
       // bot into many buckets (github.py's per-repo product names).
       const otherBotCounts = new Map();
+      // CVE is every product bot's own isCve flag, not one bot's output
+      // (firefoxCve.py, win_cve.py, etc. each set it on their own product's
+      // documents) - same sourceBot-keyed breakdown as otherBotCounts,
+      // just scoped to isCve documents, so "which bot found how many CVEs"
+      // is visible instead of one opaque combined total.
+      const cveBotCounts = new Map();
       let potentialCve = 0;
       for (const it of list) {
         const ch = norm(it.versionReleaseChannel);
         if (ch === "major") major++; else if (ch === "minor") minor++; else if (ch === "patch") patch++;
-        if (it.isCve) cve++;
         const isLlm = isLLMVersion(it), isHv = isHypervisorVersion(it);
+        if (it.isCve) {
+          cve++;
+          const bot = (it.sourceBot || "unknown").trim() || "unknown";
+          cveBotCounts.set(bot, (cveBotCounts.get(bot) || 0) + 1);
+        }
         if (isLlm) llm++;
         if (isHv) hv++;
         if (!it.isCve && !isLlm && !isHv) {
@@ -6870,7 +6975,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         major, minor, patch, cve, llm, hv, reddit: rIds.size, redditRisk: rRiskIds.size,
         redditRiskLatest: rRiskLatIds.size, redditRiskCve: rRiskCveIds.size,
         so: soIds.size, soRisk: soRiskIds.size, potentialCve, uniq: uniqComps.size, typeCounts,
-        otherBotCounts
+        otherBotCounts, cveBotCounts
       };
     }
 
@@ -6909,13 +7014,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // read first regardless of which category they happen to be.
       // Reddit and StackOverflow get their real bot filenames (reddit.py,
       // stackoverflow.py - confirmed against releasetrain-bot's actual
-      // scripts), the same naming convention as every other 📦 bot chip
-      // here. CVE stays a plain classification label, not a bot name: it
-      // isn't one dedicated bot's output, it's an isCve flag set by
-      // several different product bots (firefoxCve.py, win_cve.py, etc.).
+      // scripts), the same naming convention as every other bot chip here.
+      // CVE is the same idea, just one level deeper: it isn't one bot's
+      // output, it's an isCve flag several different product bots each set
+      // on their own documents (firefoxCve.py, win_cve.py, etc.) - so it
+      // gets one 🔴 chip per bot (sourceBot-keyed, see cveBotCounts) rather
+      // than a single opaque combined total.
       const nf = n => n.toLocaleString();
       const entries = [
-        { icon: '🔴', label: 'CVE', count: a.cve },
+        ...[...a.cveBotCounts.entries()].map(([bot, count]) => ({ icon: '🔴', label: bot, count })),
         { icon: '💬', label: 'reddit.py', count: a.reddit },
         { icon: '🟧', label: 'stackoverflow.py', count: a.so },
         { icon: '🤖', label: 'LLM', count: a.llm },
