@@ -1650,7 +1650,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.50.0">Releasetrain <em>v3.50.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.50.1">Releasetrain <em>v3.50.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3207,6 +3207,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-09</div>
+              <div class="cl-ver cl-ver-minor">v3.50.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Fixed: Reddit poll always failing</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The 📊 Poll button never sent which model provider to use, so the server always defaulted to Anthropic regardless of what is actually selected and working in the Ask box. If Anthropic's account is out of credit or otherwise unavailable, that made every single poll fail, while Ask itself looked fine since it lets you pick a different provider. Poll now sends whichever provider is currently selected there, and caches its result per provider so switching providers and polling again does not show a stale answer from a different one.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -4795,8 +4808,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     // Reddit yes/no community poll: delegated so it works for every
     // .poll-btn regardless of which timeline group re-renders it. Results
-    // are memoized per redditId for the life of the page (a second click
-    // just re-shows the same tally rather than re-spending a call).
+    // are memoized per redditId+provider for the life of the page (a
+    // second click just re-shows the same tally rather than re-spending
+    // a call).
     const pollResultCache = new Map();
     function renderPollResult(btn, data) {
       delete btn.dataset.state;
@@ -4818,21 +4832,32 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       e.preventDefault();
       if (btn.dataset.state === "loading" || btn.disabled) return;
       if (!uaToken()) {
-        alert("Sign in (Account view) to run a poll - it runs a real query against the model.");
+        alert("Sign in (Account view) to run a poll. It runs a real query against the model.");
         return;
       }
       const redditId = btn.dataset.redditId;
       if (!redditId) return;
-      const cached = pollResultCache.get(redditId);
+      // Without sending this, the server defaults to Anthropic regardless
+      // of what is actually selected/working in the Ask box. If that
+      // provider's account is out of credit or otherwise down, every
+      // single poll fails while Ask itself looks fine, since Ask lets the
+      // user pick a different, working provider. Send whichever provider
+      // is currently selected there instead, and key the cache on it too,
+      // so switching provider and polling again is not silently served a
+      // stale result from a different one.
+      const provider = document.getElementById("askProvider")?.value || "";
+      const cacheKey = redditId + ":" + provider;
+      const cached = pollResultCache.get(cacheKey);
       if (cached) { renderPollResult(btn, cached); return; }
       btn.dataset.state = "loading";
       const prevText = btn.textContent;
       btn.textContent = "⏳ Poll";
       try {
-        const res = await uaRequest(`reddit/${encodeURIComponent(redditId)}/poll`);
+        const qs = provider ? `?provider=${encodeURIComponent(provider)}` : "";
+        const res = await uaRequest(`reddit/${encodeURIComponent(redditId)}/poll${qs}`);
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Request failed.");
-        pollResultCache.set(redditId, data);
+        pollResultCache.set(cacheKey, data);
         renderPollResult(btn, data);
       } catch (err) {
         delete btn.dataset.state;
