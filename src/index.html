@@ -1623,7 +1623,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.46.0">Releasetrain <em>v3.46.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.47.0">Releasetrain <em>v3.47.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child - the
            chip is display:none when signed out, and a non-participating
@@ -3178,6 +3178,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-09</div>
+              <div class="cl-ver cl-ver-minor">v3.47.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>The feed follows the question</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Asking a real question that resolves a vendor or category (Vendor check on) now also filters the feed to it, so the answer and its full browsable history sit side by side. A question that doesn't resolve one goes back to showing everything, instead of leaving an unrelated filter in place.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Simplified the "Why create an account?" list in the sign-in view - each reason is now one short, user-facing line instead of a longer technical description.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-09</div>
               <div class="cl-ver cl-ver-minor">v3.46.0</div>
             </div>
             <div class="cl-content">
@@ -3908,12 +3922,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <span style="font-size:10px">›</span> Why create an account?
           </summary>
           <ul class="ua-why-list">
-            <li><span>🔖</span>Save named searches and restore them across devices via server-side bookmark storage.</li>
-            <li><span>🔗</span>Generate public share links for any component search so collaborators can open the exact same view.</li>
-            <li><span>🔐</span>JWT-based session persists across tabs and survives page reloads without re-authenticating.</li>
-            <li><span>🛡</span>Admin role grants access to user management: view all accounts, change roles, remove users.</li>
-            <li><span>📌</span>Bookmark list is user-specific: each account holds its own saved searches, isolated from other users.</li>
-            <li><span>🏷</span>Add up to 2 org namespaces to your profile. They are embedded in every share link you generate as <code>?org=name&amp;share=…</code> so recipients know the source.</li>
+            <li><span>🔖</span>Save a search once, reopen it from any device.</li>
+            <li><span>🔗</span>Share a link and recipients see your exact filtered view.</li>
+            <li><span>🔐</span>Stay signed in across tabs and reloads &mdash; no re-entering credentials.</li>
+            <li><span>📌</span>Your saved searches are private to your account.</li>
+            <li><span>🛡</span>Admins can view, edit, and remove any user account.</li>
+            <li><span>🏷</span>Add up to 2 org names to brand your share links (<code>?org=…</code>).</li>
           </ul>
         </details>
         </div>
@@ -4852,33 +4866,45 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     }
     document.getElementById("askRailClose").addEventListener("click", hideAskRail);
 
-    // A vendor/category lookup resolved server-side (classifyAskLookup in
-    // ask.js) is replayed through whichever existing mechanism already
-    // browses that data. /api/v/search has no versionProductType filter,
-    // only an exact versionProductName match - fine for a category small
-    // enough for the Rewriter to enumerate (categoryMembers), but "LLM"
-    // (300+ real models) or "Hypervisor" have no single matching product
-    // name to search for. Those two already have a dedicated, date-
-    // window-independent dataset behind the existing LLM/Hypervisor
-    // toggles (see ensureLlmVersionsLoaded/ensureHvVersionsLoaded above) -
-    // so route to that instead of a components search that would just
-    // come back empty. Any other large category falls back to searching
-    // the bare vendor/category label itself: the same best-effort result
-    // a user typing that label into the old Search box would have gotten.
-    function runDocumentsLookup(data) {
-      // Back to browsing - a lingering answer from an earlier question
-      // doesn't belong beside unrelated results, and the feed gets its
-      // full width back.
-      hideAskRail();
-      const toggleKey = data.categoryType === "LLM" ? "llm" : data.categoryType === "Hypervisor" ? "hv" : null;
+    // A vendor/category resolved server-side (classifyAskLookup, or
+    // runAsk's own vendor-check gate with Vendor check on) is replayed
+    // through whichever existing mechanism already browses that data.
+    // /api/v/search has no versionProductType filter, only an exact
+    // versionProductName match - fine for a category small enough for
+    // the Rewriter to enumerate (categoryMembers), but "LLM" (300+ real
+    // models) or "Hypervisor" have no single matching product name to
+    // search for. Those two already have a dedicated, date-window-
+    // independent dataset behind the existing LLM/Hypervisor toggles
+    // (see ensureLlmVersionsLoaded/ensureHvVersionsLoaded above) - so
+    // route to that instead of a components search that would just come
+    // back empty. Any other large category falls back to searching the
+    // bare vendor/category label itself: the same best-effort result a
+    // user typing that label into the old Search box would have gotten.
+    function applyVendorFeedFilter(vendor, categoryType, categoryMembers) {
+      const toggleKey = categoryType === "LLM" ? "llm" : categoryType === "Hypervisor" ? "hv" : null;
       if (toggleKey) {
         const btn = document.querySelector(`#fixedToggles [data-key="${toggleKey}"]`);
         if (btn && btn.getAttribute("aria-pressed") !== "true") btn.click();
         return;
       }
-      const term = (data.categoryMembers && data.categoryMembers.length) ? data.categoryMembers.join(",") : (data.vendor || "");
+      const term = (categoryMembers && categoryMembers.length) ? categoryMembers.join(",") : (vendor || "");
       document.getElementById("components").value = term;
       document.getElementById("filterForm").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    }
+    // Back to a plain, unfiltered feed - used both for a lookup with no
+    // resolvable vendor and for a real question that didn't resolve one
+    // either (Vendor check off, or genuinely nothing matched).
+    function clearVendorFeedFilter() {
+      document.getElementById("components").value = "";
+      document.getElementById("filterForm").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    }
+    function runDocumentsLookup(data) {
+      // Back to browsing - a lingering answer from an earlier question
+      // doesn't belong beside unrelated results, and the feed gets its
+      // full width back.
+      hideAskRail();
+      if (data.vendor) applyVendorFeedFilter(data.vendor, data.categoryType, data.categoryMembers);
+      else clearVendorFeedFilter();
     }
 
     document.getElementById("askForm").addEventListener("submit", async e => {
@@ -4938,6 +4964,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             data.runs.map(r => askRenderCard(ASK_PRESET_LABELS[r.preset] || r.preset, r)).join("") +
             "</div>";
           askWireRateButtons(document.getElementById("askModalBody"));
+          // Every preset resolves the same vendor from the same catalog,
+          // Vendor check being the one config that actually varies here -
+          // the first successful run stands in for all three.
+          const firstRun = data.runs.find(r => !r.error);
+          if (firstRun && firstRun.vendor) applyVendorFeedFilter(firstRun.vendor, firstRun.categoryType, firstRun.categoryMembers);
+          else clearVendorFeedFilter();
           return;
         }
 
@@ -4974,6 +5006,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           askModalEl.classList.add("open");
           askWireRateButtons(document.getElementById("askModalBody"));
         }
+        // The feed follows the question: a resolved vendor/category (only
+        // set when Vendor check is on) filters it to that vendor's own
+        // versions/CVEs, so the answer and the browsable history sit side
+        // by side; no vendor resolved (Vendor check off, or genuinely
+        // nothing matched) goes back to showing everything, rather than
+        // leaving a stale unrelated filter in place.
+        if (data.vendor) applyVendorFeedFilter(data.vendor, data.categoryType, data.categoryMembers);
+        else clearVendorFeedFilter();
       } catch (err) {
         document.getElementById("askModalQuestion").textContent = question;
         document.getElementById("askModalBody").innerHTML = `<p class="ask-error">${uaEsc(err.message || "Something went wrong.")}</p>`;
