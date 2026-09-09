@@ -288,6 +288,8 @@
     .ask-options-row .ask-preset-select { flex: 1 1 auto; min-width: 0; }
     .ask-options-divider { border: none; border-top: 1px solid var(--border); margin: 0; }
     .ask-toggles-stacked { flex-direction: column; align-items: flex-start; gap: 6px; }
+    .ask-quota-line { font-size: 10px; color: var(--muted); line-height: 1.5; }
+    .ask-quota-line strong { color: var(--text); font-weight: 600; }
     .ask-intent-badge {
       flex-shrink: 0; align-self: center;
       font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: var(--radius-full);
@@ -645,6 +647,17 @@
     .chip.soft { opacity: .75; }
     .chip.link a { color: var(--brand); text-decoration: underline; text-underline-offset: 2px; }
     .chip.link a:hover { color: var(--text); }
+    /* Yes/No community poll button - a real <button>, not a <span>, so it
+       can carry a click handler; visually just another chip until clicked. */
+    button.chip.poll-btn {
+      font-family: inherit; cursor: pointer; border-color: var(--brand); color: var(--brand);
+      background: var(--brand-light);
+    }
+    button.chip.poll-btn:hover { background: var(--brand); color: #fff; }
+    button.chip.poll-btn:disabled { cursor: default; }
+    button.chip.poll-btn.chip-done { border-color: var(--border); color: var(--chip-text); background: var(--chip-bg); }
+    button.chip.poll-btn.chip-done:hover { background: var(--chip-bg); color: var(--chip-text); }
+    button.chip.poll-btn.chip-err { border-color: var(--cve); color: var(--cve); background: var(--cve-bg); }
     .chip.potentialCveBadge { margin-right: 2px; }
     .potentialCveChips { margin-top: 3px; gap: 3px; }
     .chip.potentialCveChip { background: var(--surface); border-color: var(--risk); color: var(--risk); }
@@ -1546,7 +1559,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.35.0">Releasetrain <em>v3.35.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.36.0">Releasetrain <em>v3.36.0</em></a>
       <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
       <!-- Kept with the compact identity controls (not after the forms):
            the active form always gets its own full-width row below this
@@ -1611,6 +1624,8 @@
               <label><input type="checkbox" id="askTemporalFilter" /> Temporal filter</label>
               <label><input type="checkbox" id="askIntentFilter" /> Intent filter</label>
             </div>
+            <hr class="ask-options-divider" />
+            <div id="askQuotaLine" class="ask-quota-line">Usage: &#8212;</div>
           </div>
           <button class="btn btn-icon" type="submit" id="askSubmitBtn" aria-label="Ask">➤</button>
         </div>
@@ -3074,6 +3089,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-08</div>
+              <div class="cl-ver cl-ver-minor">v3.36.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Provider quota, and a Yes/No poll for Reddit questions</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Usage line in Ask Options</strong> - shows how many calls have been made today and how much of the provider's own rate limit (requests and tokens) remains, sourced from the real headers the provider returned on its last call. Refreshes when the Options popover opens or the Model select changes.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Reddit Yes/No poll</strong> - a 📊 Poll chip now appears on any Reddit item in the feed whose title/self-text looks like a question (contains "?") and has at least one comment. Clicking it classifies each top-level, non-author comment as Yes/No/Unclear against the post's own question in a single batched model call, and shows the tally (e.g. "No 2 · Unclear 2"). Hover the chip afterward to see the per-comment breakdown. Requires sign-in, same as Ask.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-08</div>
               <div class="cl-ver cl-ver-minor">v3.35.0</div>
             </div>
             <div class="cl-content">
@@ -4176,11 +4205,90 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       askOptionsPanelEl.hidden = true;
       askOptionsBtnEl.setAttribute("aria-expanded", "false");
     }
+    // Usage line: a snapshot of the provider's own last-seen rate-limit
+    // headers, as reported by the server (it never spends a call just to
+    // go check quota - see GET /api/ask/quota in ask.js). Refetched each
+    // time the popover opens, not polled continuously.
+    const askQuotaLineEl = document.getElementById("askQuotaLine");
+    async function askRefreshQuota() {
+      askQuotaLineEl.textContent = "Usage: loading…";
+      try {
+        const res = await uaRequest("ask/quota");
+        if (!res.ok) throw new Error("quota fetch failed");
+        const data = await res.json();
+        const provider = document.getElementById("askProvider").value;
+        const q = data[provider];
+        if (!q || !q.limits) {
+          askQuotaLineEl.innerHTML = `Usage: <strong>${q ? q.callsToday : 0}</strong> call(s) today &middot; limits unknown until a request succeeds`;
+          return;
+        }
+        const { remainingRequests, limitRequests, remainingTokens, limitTokens } = q.limits;
+        askQuotaLineEl.innerHTML = `Usage today: <strong>${q.callsToday}</strong> call(s) &middot; `
+          + `<strong>${uaEsc(remainingRequests)}</strong>/${uaEsc(limitRequests)} requests left &middot; `
+          + `<strong>${uaEsc(remainingTokens)}</strong>/${uaEsc(limitTokens)} tokens left`;
+      } catch {
+        askQuotaLineEl.textContent = "Usage: unavailable";
+      }
+    }
     askOptionsBtnEl.addEventListener("click", e => {
       e.stopPropagation();
       const willOpen = askOptionsPanelEl.hidden;
       askOptionsPanelEl.hidden = !willOpen;
       askOptionsBtnEl.setAttribute("aria-expanded", String(willOpen));
+      if (willOpen) askRefreshQuota();
+    });
+    document.getElementById("askProvider").addEventListener("change", () => {
+      if (!askOptionsPanelEl.hidden) askRefreshQuota();
+    });
+
+    // Reddit yes/no community poll: delegated so it works for every
+    // .poll-btn regardless of which timeline group re-renders it. Results
+    // are memoized per redditId for the life of the page (a second click
+    // just re-shows the same tally rather than re-spending a call).
+    const pollResultCache = new Map();
+    function renderPollResult(btn, data) {
+      delete btn.dataset.state;
+      btn.disabled = true;
+      btn.classList.add("chip-done");
+      const parts = [];
+      if (data.no) parts.push(`No ${data.no}`);
+      if (data.yes) parts.push(`Yes ${data.yes}`);
+      if (data.unclear) parts.push(`Unclear ${data.unclear}`);
+      btn.textContent = "📊 " + (parts.length ? parts.join(" · ") : "no clear answers");
+      const details = data.breakdown && data.breakdown.length
+        ? data.breakdown.map(b => `${b.verdict.toUpperCase()}: ${b.author} - "${b.body}"`).join("\n")
+        : "";
+      if (details) btn.title = details;
+    }
+    document.addEventListener("click", async e => {
+      const btn = e.target.closest(".poll-btn");
+      if (!btn) return;
+      e.preventDefault();
+      if (btn.dataset.state === "loading" || btn.disabled) return;
+      if (!uaToken()) {
+        alert("Sign in (Account view) to run a poll - it runs a real query against the model.");
+        return;
+      }
+      const redditId = btn.dataset.redditId;
+      if (!redditId) return;
+      const cached = pollResultCache.get(redditId);
+      if (cached) { renderPollResult(btn, cached); return; }
+      btn.dataset.state = "loading";
+      const prevText = btn.textContent;
+      btn.textContent = "⏳ Poll";
+      try {
+        const res = await uaRequest(`reddit/${encodeURIComponent(redditId)}/poll`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Request failed.");
+        pollResultCache.set(redditId, data);
+        renderPollResult(btn, data);
+      } catch (err) {
+        delete btn.dataset.state;
+        btn.textContent = "⚠️ poll failed";
+        btn.classList.add("chip-err");
+        btn.title = (err && err.message) || "Request failed.";
+        setTimeout(() => { btn.textContent = prevText; btn.classList.remove("chip-err"); }, 3000);
+      }
     });
     askOptionsPanelEl.addEventListener("click", e => e.stopPropagation());
     document.addEventListener("click", askCloseOptions);
@@ -6507,6 +6615,17 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           if (flags.isAboutCve) chipsEl.insertAdjacentHTML("beforeend", chip("🔐 security", "bad"));
           const comments = typeof flags.num_comments === "number" ? flags.num_comments : null;
           if (comments != null) chipsEl.insertAdjacentHTML("beforeend", chip(`💬 ${comments}`, "soft"));
+          // Yes/No poll: only offered when the post reads like it's asking
+          // something (has a "?") and has at least one comment to poll -
+          // otherwise there's nothing for the classifier to work with.
+          const questionText = flags.author_description || flags.title || "";
+          if (questionText.includes("?") && comments) {
+            const rid = getPostId(flags);
+            if (rid) {
+              chipsEl.insertAdjacentHTML("beforeend",
+                `<button type="button" class="chip poll-btn" data-reddit-id="${uaEsc(rid)}" title="Classify comments as Yes/No answers to this question">📊 Poll</button>`);
+            }
+          }
         } else if (it.kind === "stackoverflow") {
           chipsEl.insertAdjacentHTML("beforeend", chip("🟧 stackoverflow", "soft"));
           const scorePred = it.raw?.metadata?.predicted?.positiveScore;
