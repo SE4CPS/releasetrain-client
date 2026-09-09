@@ -185,6 +185,30 @@
       .layout { padding: calc(var(--topbar-h) + var(--preview-h) + 12px) 12px 32px; }
     }
 
+    /* ── Inline answer rail ──────────────────────────────────────
+       A real question's answer beside the feed instead of in the popup
+       modal - only when there's room for a second column (see the
+       min-width below, kept in sync with ASK_RAIL_MIN_WIDTH in the
+       script). .layout widens on its own (rather than the feed column
+       getting narrower) so browsing isn't cramped just because an
+       answer happens to be showing. Below the breakpoint, or in Compare
+       mode, the modal is used instead - see the submit handler. */
+    .layout.has-ask-rail { max-width: 1500px; }
+    .ask-answer-rail { display: none; }
+    @media (min-width: 900px) {
+      .layout.has-ask-rail { display: flex; align-items: flex-start; gap: 20px; }
+      .layout.has-ask-rail > .feed-main { flex: 1 1 480px; min-width: 0; }
+      .layout.has-ask-rail .ask-answer-rail {
+        display: block; flex: 0 0 360px; max-width: 360px;
+        position: sticky;
+        top: calc(var(--topbar-h) + var(--preview-h) + 12px);
+        max-height: calc(100vh - var(--topbar-h) - var(--preview-h) - 24px);
+        overflow-y: auto;
+      }
+    }
+    .ask-rail-header { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
+    .ask-rail-header strong { flex: 1; font-size: 13px; line-height: 1.4; color: var(--text); }
+
     /* ── Sidebar (menu drawer) ──────────────────────────────────
        Off-canvas at every width, not just mobile — this is the single
        "everything else" panel behind the ☰ toggle: views on top, then
@@ -1599,7 +1623,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.45.0">Releasetrain <em>v3.45.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.46.0">Releasetrain <em>v3.46.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child - the
            chip is display:none when signed out, and a non-participating
@@ -1670,19 +1694,19 @@
           <select id="askProvider" class="ask-preset-select" aria-label="Which model answers" title="Model (for real questions only)">
             <option value="anthropic">Claude (Anthropic)</option>
             <option value="groq">Groq (free tier)</option>
-            <option value="ollama">Ollama Cloud (free tier)</option>
+            <option value="ollama" selected>Ollama Cloud (free tier)</option>
           </select>
           <select id="askSize" class="ask-preset-select" aria-label="Model size" title="Size"></select>
           <select id="askPreset" class="ask-preset-select" aria-label="Which pipeline to ask" title="Pipeline">
             <option value="multi_agent_fixed">Multi-agent (fixed)</option>
-            <option value="single_agent">Single-agent</option>
+            <option value="single_agent" selected>Single-agent</option>
             <option value="multi_agent_buggy">Multi-agent (buggy)</option>
             <option value="compare">Compare all 3</option>
           </select>
           <span class="ask-options-sep" aria-hidden="true"></span>
-          <label class="ask-toggle-inline"><input type="checkbox" id="askVendorCheck" /> Vendor check</label>
-          <label class="ask-toggle-inline"><input type="checkbox" id="askTemporalFilter" /> Temporal filter</label>
-          <label class="ask-toggle-inline"><input type="checkbox" id="askIntentFilter" /> Intent filter</label>
+          <label class="ask-toggle-inline"><input type="checkbox" id="askVendorCheck" checked /> Vendor check</label>
+          <label class="ask-toggle-inline"><input type="checkbox" id="askTemporalFilter" checked /> Temporal filter</label>
+          <label class="ask-toggle-inline"><input type="checkbox" id="askIntentFilter" checked /> Intent filter</label>
           <span id="askQuotaLine" class="ask-quota-line">Usage: &#8212;</span>
           <button class="btn btn-ghost" type="button" id="clearBtn">Clear</button>
           <button class="btn btn-ghost" type="button" id="ua-bm-save-btn" style="display:none" title="Save current search as a bookmark">🔖</button>
@@ -3154,6 +3178,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-09</div>
+              <div class="cl-ver cl-ver-minor">v3.46.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Answers show inline, beside the feed</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> On a screen with room for it (laptop width and up), asking a real question no longer opens a popup - the answer renders in a sticky right-hand rail next to the feed instead, trimmed to a compact length with a "Show full answer" button and its sources shown as inline links. Narrower screens and "Compare all 3" still use the popup, since three side-by-side cards need the width.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Default Ask options changed: Model defaults to Ollama Cloud (free tier), Pipeline defaults to Single-agent, and Vendor check / Temporal filter / Intent filter are now checked by default.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-09</div>
               <div class="cl-ver cl-ver-minor">v3.45.0</div>
             </div>
             <div class="cl-content">
@@ -4095,6 +4133,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       </section>
     </main>
 
+    <!-- Inline answer rail: a real question's answer, shown beside the
+         feed instead of the popup modal, on a screen with room for it
+         (see ASK_RAIL_MIN_WIDTH's own comment in the script - keep it in
+         sync with this media query's width). Only #layout's
+         .has-ask-rail class shows it (see the CSS) - never given the
+         `hidden` attribute itself, so there's exactly one place
+         controlling its visibility, not two competing ones. Narrower
+         screens, and Compare mode, keep using the modal. -->
+    <aside id="askAnswerRail" class="ask-answer-rail" aria-label="Answer">
+      <div class="ask-rail-header">
+        <strong id="askRailQuestion"></strong>
+        <button type="button" id="askRailClose" class="btn btn-ghost" aria-label="Close answer" style="padding:2px 8px">✕</button>
+      </div>
+      <div id="askRailBody"></div>
+    </aside>
+
   </div><!-- /.layout -->
 
   <button id="backToTop" aria-label="Back to top" title="Back to top">↑</button>
@@ -4714,19 +4768,31 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       return out.join("");
     }
 
-    function askRenderCard(label, res) {
+    // opts.trimAnswer: cap the answer text to N chars (a "Show full
+    // answer" button appears when it actually got cut) - used by the
+    // right-side rail so a long answer doesn't dominate the sidebar;
+    // omitted (or falsy) renders the complete answer, as the modal
+    // always has. opts.hideDetails: skip the "Show internals" section -
+    // also rail-only, since its own collapsed-by-default <details> still
+    // adds visual weight a compact sidebar card doesn't need.
+    function askRenderCard(label, res, opts) {
+      opts = opts || {};
       if (res.error) {
         return `<div class="ask-answer-card">
           <div class="ask-answer-label">${uaEsc(label)}</div>
           <p class="ask-error">${uaEsc(res.error)}</p>
         </div>`;
       }
+      const fullAnswer = res.answer || "";
+      const wasTrimmed = !!opts.trimAnswer && fullAnswer.length > opts.trimAnswer;
+      const shownAnswer = wasTrimmed ? truncate(fullAnswer, opts.trimAnswer) : fullAnswer;
       return `<div class="ask-answer-card${res.abstained ? " ask-answer-abstained" : ""}" data-run-id="${uaEsc(res.runId || "")}">
         <div class="ask-answer-label">${uaEsc(label)}${res.abstained ? '<span class="ask-abstain-badge">⛔ Abstained</span>' : ""}</div>
-        <div class="ask-answer-summary">${mdLite(res.answer)}</div>
+        <div class="ask-answer-summary">${mdLite(shownAnswer)}</div>
+        ${wasTrimmed ? '<button type="button" class="btn btn-ghost ask-view-full-btn" style="font-size:11px;padding:3px 8px;margin:-4px 0 8px">Show full answer</button>' : ""}
         ${askRenderMetaChips(res)}
         ${askRenderSources(res.sources)}
-        ${askRenderDetails(res)}
+        ${opts.hideDetails ? "" : askRenderDetails(res)}
         <div class="ask-rate-row">
           <button type="button" class="btn btn-ghost ask-rate-btn" data-rating="1" ${!res.runId ? "disabled" : ""}>👍 Helpful</button>
           <button type="button" class="btn btn-ghost ask-rate-btn" data-rating="-1" ${!res.runId ? "disabled" : ""}>👎 Not helpful</button>
@@ -4751,6 +4817,41 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       });
     }
 
+    // ── Inline answer rail ──────────────────────────────────────
+    // A real question's answer shown beside the feed instead of in the
+    // popup modal, when there's room for it - "Compare all 3" and
+    // narrow screens still use the modal (see the submit handler).
+    // ASK_RAIL_MIN_WIDTH must match the media query in the CSS above
+    // (.layout.has-ask-rail) - two numbers, not one shared constant,
+    // since CSS can't read a JS value; kept in sync by this comment.
+    const ASK_RAIL_MIN_WIDTH = 900;
+    const ASK_RAIL_ANSWER_TRIM = 480; // chars - short enough for a ~360px column, long enough to be useful
+    function canUseAskRail() {
+      return window.matchMedia(`(min-width: ${ASK_RAIL_MIN_WIDTH}px)`).matches;
+    }
+    let askRailData = null; // { label, res } backing "Show full answer" - re-renders untrimmed from the same data, no second request
+    function wireAskRailBody(body) {
+      askWireRateButtons(body);
+      const fullBtn = body.querySelector(".ask-view-full-btn");
+      if (fullBtn) fullBtn.addEventListener("click", () => {
+        body.innerHTML = askRenderCard(askRailData.label, askRailData.res, {});
+        wireAskRailBody(body);
+      });
+    }
+    function showAskRail(question, label, res) {
+      askRailData = { label, res };
+      document.getElementById("askRailQuestion").textContent = question;
+      const body = document.getElementById("askRailBody");
+      body.innerHTML = askRenderCard(label, res, { trimAnswer: ASK_RAIL_ANSWER_TRIM, hideDetails: true });
+      wireAskRailBody(body);
+      $(".layout").classList.add("has-ask-rail");
+    }
+    function hideAskRail() {
+      $(".layout").classList.remove("has-ask-rail");
+      askRailData = null;
+    }
+    document.getElementById("askRailClose").addEventListener("click", hideAskRail);
+
     // A vendor/category lookup resolved server-side (classifyAskLookup in
     // ask.js) is replayed through whichever existing mechanism already
     // browses that data. /api/v/search has no versionProductType filter,
@@ -4765,6 +4866,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // the bare vendor/category label itself: the same best-effort result
     // a user typing that label into the old Search box would have gotten.
     function runDocumentsLookup(data) {
+      // Back to browsing - a lingering answer from an earlier question
+      // doesn't belong beside unrelated results, and the feed gets its
+      // full width back.
+      hideAskRail();
       const toggleKey = data.categoryType === "LLM" ? "llm" : data.categoryType === "Hypervisor" ? "hv" : null;
       if (toggleKey) {
         const btn = document.querySelector(`#fixedToggles [data-key="${toggleKey}"]`);
@@ -4808,6 +4913,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
       try {
         if (isCompare) {
+          // Three cards side by side genuinely need the modal's width -
+          // always used here, even if a rail answer happened to be open
+          // from an earlier question.
+          hideAskRail();
           // The question itself is left exactly as typed - closing/
           // reopening the answer modal, or asking again, should never
           // require retyping it.
@@ -4852,12 +4961,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           return;
         }
 
-        document.getElementById("askModalQuestion").textContent = question;
-        document.getElementById("askModalBody").innerHTML = askRenderCard(ASK_PRESET_LABELS[preset] || preset, data);
-        askModalEl.classList.remove("ask-compare-mode");
-        askOverlayEl.classList.add("open");
-        askModalEl.classList.add("open");
-        askWireRateButtons(document.getElementById("askModalBody"));
+        // A real answer: shown inline beside the feed when there's room
+        // for it, the popup modal otherwise (a narrow window, or a
+        // laptop split half-screen with a chat window, say).
+        if (canUseAskRail()) {
+          showAskRail(question, ASK_PRESET_LABELS[preset] || preset, data);
+        } else {
+          document.getElementById("askModalQuestion").textContent = question;
+          document.getElementById("askModalBody").innerHTML = askRenderCard(ASK_PRESET_LABELS[preset] || preset, data);
+          askModalEl.classList.remove("ask-compare-mode");
+          askOverlayEl.classList.add("open");
+          askModalEl.classList.add("open");
+          askWireRateButtons(document.getElementById("askModalBody"));
+        }
       } catch (err) {
         document.getElementById("askModalQuestion").textContent = question;
         document.getElementById("askModalBody").innerHTML = `<p class="ask-error">${uaEsc(err.message || "Something went wrong.")}</p>`;
@@ -7405,6 +7521,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // actually typed into and sees, so Clear needs to reset that too.
       const askQ = document.getElementById("askQuestion");
       if (askQ) askQ.value = "";
+      hideAskRail();
       STATE.filters.components = [];
       STATE.filters.toggles.clear();
       history.replaceState({}, "", buildHrefWithQ(location.pathname, ""));
