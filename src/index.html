@@ -1650,7 +1650,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.50.1">Releasetrain <em>v3.50.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.51.0">Releasetrain <em>v3.51.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3211,6 +3211,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-09</div>
+              <div class="cl-ver cl-ver-minor">v3.51.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Component autosuggest is back; a few more fixes</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The single search/ask box now suggests real component names as you type again (the old Search box's own autocomplete), alongside real past community questions in the same dropdown. Picking a component fills just the current comma-separated term; picking a question fills the whole box.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> An abstained answer now says why: "No vendor matched", "No evidence found", or "Opinion question" instead of a plain, unexplained "Abstained" badge.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Recent Updates groups are now sorted alphabetically by component name instead of by whichever one happens to have the most recent item, so a component is easy to find by scanning. Each group's own entries still sort newest first.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-09</div>
               <div class="cl-ver cl-ver-minor">v3.50.1</div>
             </div>
             <div class="cl-content">
@@ -4431,6 +4446,16 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       multi_agent_fixed: "Multi-agent (fixed)",
     };
 
+    // Shown on the abstain badge instead of a plain, unexplained
+    // "Abstained". See runAsk's own abstainReason values in ask.js.
+    // "No vendor matched" specifically answers "why did this decline",
+    // which the generic label alone did not.
+    const ASK_ABSTAIN_REASON_LABELS = {
+      no_vendor_detected: "No vendor matched",
+      no_evidence: "No evidence found",
+      opinion_question: "Opinion question",
+    };
+
     // Client-side mirror of releasetrain-server's src/ask.js classifyIntent()
     // - kept in sync by hand. This is a live UI preview only (shown next to
     // the input as the user types); the actual question text sent to the
@@ -4634,11 +4659,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     askQuestionEl.addEventListener("input", updateAskPreview);
     [askVendorCheckEl, askTemporalFilterEl, askIntentFilterEl].forEach(el => el.addEventListener("change", updateAskPreview));
 
-    // Typeahead over real past community questions (GET /api/reddit/
-    // query/questions/suggest), public, no sign-in/LLM-call needed,
-    // since it only reads already-public Reddit data through a real
-    // relevance ranking server-side. Picking one may mean the question
-    // (or something close to it) has already been asked and discussed.
+    // One combined dropdown, two sources: real component names (the
+    // old Search box's own autocomplete, instant/local; see
+    // suggestionPool/getCurrentToken/replaceCurrentToken/highlightMatch
+    // further down this file) and real past community questions (GET
+    // /api/reddit/query/questions/suggest, public, no sign-in/LLM-call
+    // needed, a real relevance ranking server-side). Component matches
+    // show immediately since they cost nothing; question matches are
+    // appended once that request returns, without discarding whichever
+    // component matches are already on screen. Picking a question fills
+    // the whole input (it may already be answered); picking a component
+    // replaces just the current comma-separated token, so "chrome, fire"
+    // style multi-component entry still works.
     // A local debounce timer rather than the shared debounce() helper
     // further down this file. That's a `const`, and this code executes
     // well before its declaration is reached, so referencing it here
@@ -4653,23 +4685,52 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       askSuggestionsEl.innerHTML = "";
       askSuggestActiveIdx = -1;
     }
+    // suggestionPool/getCurrentToken/highlightMatch are declared later in
+    // this file but only ever called from here at runtime (an input
+    // event, long after the whole script has run once), so referencing
+    // them here ahead of their own declaration is safe.
+    function computeComponentMatches(val) {
+      const token = getCurrentToken(val).trim().toLowerCase();
+      if (!token) return [];
+      return suggestionPool.filter(n => n.includes(token)).slice(0, 5)
+        .map(n => ({ kind: "component", value: n, html: highlightMatch(n, token) }));
+    }
     function showAskSuggestions(items) {
       askSuggestActiveIdx = -1;
-      askSuggestionsEl.innerHTML = items.map(it => `<li role="option" data-question="${uaEsc(it.question)}" data-url="${uaEsc(it.url || "")}">
-        <span class="ask-suggestion-text">💬 ${uaEsc(it.question)}</span>
-        ${it.subreddit ? `<span class="ask-suggestion-sub">r/${uaEsc(it.subreddit)}</span>` : ""}
-      </li>`).join("");
+      askSuggestionsEl.innerHTML = items.map(it => it.kind === "component"
+        ? `<li role="option" data-kind="component" data-val="${uaEsc(it.value)}">
+             <span class="ask-suggestion-text">🧩 ${it.html}</span>
+           </li>`
+        : `<li role="option" data-kind="question" data-question="${uaEsc(it.question)}" data-url="${uaEsc(it.url || "")}">
+             <span class="ask-suggestion-text">💬 ${uaEsc(it.question)}</span>
+             ${it.subreddit ? `<span class="ask-suggestion-sub">r/${uaEsc(it.subreddit)}</span>` : ""}
+           </li>`
+      ).join("");
       askSuggestionsEl.classList.add("open");
     }
     function pickAskSuggestion(li) {
-      askQuestionEl.value = li.dataset.question;
+      if (li.dataset.kind === "component") {
+        askQuestionEl.value = replaceCurrentToken(askQuestionEl.value, li.dataset.val);
+      } else {
+        askQuestionEl.value = li.dataset.question;
+      }
       hideAskSuggestions();
       updateAskPreview();
+      askQuestionEl.focus();
     }
     askQuestionEl.addEventListener("input", () => {
       clearTimeout(askSuggestTimer);
-      const q = askQuestionEl.value.trim();
-      if (q.length < 3) { hideAskSuggestions(); return; }
+      const raw = askQuestionEl.value;
+      const q = raw.trim();
+      const componentMatches = computeComponentMatches(raw);
+      if (q.length < 3) {
+        // Too short for a real-question search, so show component
+        // matches alone if there are any, since those cost nothing to compute.
+        if (componentMatches.length) showAskSuggestions(componentMatches);
+        else hideAskSuggestions();
+        return;
+      }
+      if (componentMatches.length) showAskSuggestions(componentMatches);
       askSuggestTimer = setTimeout(async () => {
         const seq = ++askSuggestSeq;
         try {
@@ -4677,8 +4738,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           if (!res.ok) return;
           const data = await res.json();
           if (seq !== askSuggestSeq) return; // a newer keystroke already fired its own request
-          if (!data.results || !data.results.length) { hideAskSuggestions(); return; }
-          showAskSuggestions(data.results);
+          const questionMatches = (data.results || []).map(it => ({ kind: "question", ...it }));
+          const combined = componentMatches.concat(questionMatches);
+          if (!combined.length) { hideAskSuggestions(); return; }
+          showAskSuggestions(combined);
         } catch { /* best-effort: typeahead failing silently beats blocking on it */ }
       }, 250);
     });
@@ -5002,7 +5065,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const wasTrimmed = !!opts.trimAnswer && fullAnswer.length > opts.trimAnswer;
       const shownAnswer = wasTrimmed ? truncate(fullAnswer, opts.trimAnswer) : fullAnswer;
       return `<div class="ask-answer-card${res.abstained ? " ask-answer-abstained" : ""}" data-run-id="${uaEsc(res.runId || "")}">
-        <div class="ask-answer-label">${uaEsc(label)}${res.abstained ? '<span class="ask-abstain-badge">⛔ Abstained</span>' : ""}</div>
+        <div class="ask-answer-label">${uaEsc(label)}${res.abstained ? `<span class="ask-abstain-badge">⛔ ${uaEsc(ASK_ABSTAIN_REASON_LABELS[res.abstainReason] || "Abstained")}</span>` : ""}</div>
         <div class="ask-answer-summary">${mdLite(shownAnswer)}</div>
         ${wasTrimmed ? '<button type="button" class="btn btn-ghost ask-view-full-btn" style="font-size:11px;padding:3px 8px;margin:-4px 0 8px">Show full answer</button>' : ""}
         ${askRenderMetaChips(res)}
@@ -7068,7 +7131,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       }
       const arr = Array.from(map.values());
       arr.forEach(g => g.items.sort((a, b) => versionTime(b) - versionTime(a)));
-      arr.sort((a, b) => versionTime(b.items[0]) - versionTime(a.items[0]));
+      // Groups (component names) sorted alphabetically, not by whichever
+      // one happens to have the most recent item. Makes a component
+      // easy to find by scanning, rather than jumping around by
+      // recency. Each group's own items still sort newest first.
+      arr.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
       return arr;
     }
 
@@ -7862,9 +7929,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     });
 
     /* ── Autocomplete ─────────────────────────────────────────── */
+    // #components/#suggestions (this pool's original home) are hidden,
+    // internal-only now that Search and Ask are one box. See the merged
+    // askQuestion typeahead above, which is the real consumer of
+    // suggestionPool/getCurrentToken/replaceCurrentToken/highlightMatch.
     let suggestionPool = [];
-    let acActiveIdx = -1;
-    const suggestEl = document.getElementById("suggestions");
 
     // Full distinct-component-name list from the server (not just what's currently
     // loaded in the feed). Without this, searching for e.g. "Mistral" or "Ollama"
@@ -7882,7 +7951,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     }
 
     function buildSuggestionPool() {
-      hideSuggestions();
       const names = new Set(_allComponentNames || []);
       for (const v of STATE.rawVersions) {
         const n = norm(v.versionProductName);
@@ -7910,59 +7978,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (idx === -1) return str;
       return str.slice(0, idx) + `<strong>${str.slice(idx, idx + query.length)}</strong>` + str.slice(idx + query.length);
     }
-
-    function hideSuggestions() {
-      suggestEl.classList.remove("open");
-      acActiveIdx = -1;
-    }
-
-    function showSuggestions(matches, token) {
-      acActiveIdx = -1;
-      suggestEl.innerHTML = matches
-        .map(m => `<li role="option" data-val="${m}">🧩 ${highlightMatch(m, token)}</li>`)
-        .join("");
-      suggestEl.classList.add("open");
-    }
-
-    EL.components.addEventListener("input", debounce(() => {
-      const token = getCurrentToken(EL.components.value);
-      if (token.length < 1) { hideSuggestions(); return; }
-      const matches = suggestionPool.filter(n => n.includes(token.toLowerCase())).slice(0, 8);
-      if (!matches.length) { hideSuggestions(); return; }
-      showSuggestions(matches, token);
-    }, 80));
-
-    EL.components.addEventListener("keydown", e => {
-      if (!suggestEl.classList.contains("open")) return;
-      const items = suggestEl.querySelectorAll("li");
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        acActiveIdx = Math.min(acActiveIdx + 1, items.length - 1);
-        items.forEach((li, i) => li.classList.toggle("active", i === acActiveIdx));
-        if (items[acActiveIdx]) items[acActiveIdx].scrollIntoView({ block: "nearest" });
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        acActiveIdx = Math.max(acActiveIdx - 1, -1);
-        items.forEach((li, i) => li.classList.toggle("active", i === acActiveIdx));
-      } else if ((e.key === "Enter" || e.key === "Tab") && acActiveIdx >= 0) {
-        e.preventDefault();
-        EL.components.value = replaceCurrentToken(EL.components.value, items[acActiveIdx].dataset.val);
-        hideSuggestions();
-      } else if (e.key === "Escape") {
-        hideSuggestions();
-      }
-    });
-
-    suggestEl.addEventListener("mousedown", e => {
-      const li = e.target.closest("li");
-      if (!li) return;
-      e.preventDefault();
-      EL.components.value = replaceCurrentToken(EL.components.value, li.dataset.val);
-      hideSuggestions();
-      EL.components.focus();
-    });
-
-    EL.components.addEventListener("blur", () => setTimeout(hideSuggestions, 150));
 
     /* ── Community bracket ── uses aggregate API counts when available ── */
     function updateCommunityBracket() {
