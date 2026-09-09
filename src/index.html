@@ -364,14 +364,35 @@
       box-shadow: var(--shadow-md); z-index: 1500; padding: 16px;
     }
     #askModal.open { display: block; }
-    #askModal.ask-compare-mode { width: min(1080px, 94vw); }
+    #askModal.ask-compare-mode { width: min(1320px, 96vw); }
     .ask-modal-header {
       display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px;
       padding-bottom: 10px; border-bottom: 1px solid var(--border);
     }
     .ask-modal-header strong { flex: 1; font-size: 14px; line-height: 1.4; }
     .ask-compare-grid { display: flex; flex-wrap: wrap; gap: 12px; }
-    .ask-compare-grid .ask-answer-card { flex: 1 1 300px; min-width: 0; }
+    .ask-compare-grid .ask-answer-card { flex: 1 1 240px; min-width: 0; }
+    /* The "what they do/don't do" legend shown above the 5 cards in
+       Compare mode; see askCompareLegendHTML(). Kept compact and
+       scrollable on its own axis (a 6-column technical table is wider
+       than most screens) rather than letting it force the whole modal
+       wider or wrap awkwardly. */
+    .ask-compare-legend-wrap { overflow-x: auto; margin-bottom: 14px; }
+    .ask-compare-legend {
+      width: 100%; min-width: 760px; border-collapse: collapse; font-size: 11.5px;
+    }
+    .ask-compare-legend th, .ask-compare-legend td {
+      border: 1px solid var(--border); padding: 6px 8px; text-align: left;
+      vertical-align: top; line-height: 1.45;
+    }
+    .ask-compare-legend th {
+      background: var(--chip-bg); font-weight: 700; font-size: 10.5px;
+      text-transform: uppercase; letter-spacing: .3px;
+    }
+    .ask-compare-legend td:first-child { font-weight: 700; white-space: nowrap; }
+    .ask-compare-legend td.ask-cy { color: var(--ok); }
+    .ask-compare-legend td.ask-cn { color: var(--muted); }
+    .ask-compare-legend td.ask-ex { font-family: var(--mono); font-size: 10.5px; }
     .ask-answer-card {
       background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
       padding: 14px;
@@ -1650,7 +1671,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.52.0">Releasetrain <em>v3.52.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.53.0">Releasetrain <em>v3.53.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -1739,7 +1760,7 @@
             <option value="multi_agent_buggy">Multi-agent (buggy)</option>
             <option value="multi_agent">Multi-agent (delegated)</option>
             <option value="multi_agent_feedback">Multi-agent (feedback loop)</option>
-            <option value="compare">Compare all 3</option>
+            <option value="compare">Compare all 5</option>
           </select>
           <span class="ask-options-sep" aria-hidden="true"></span>
           <label class="ask-toggle-inline" title="Checked: requires a resolvable vendor/product, declines outright if none is found.&#10;&#10;Unchecked: answers without that requirement.">
@@ -3237,6 +3258,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-09</div>
+              <div class="cl-ver cl-ver-minor">v3.53.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Compare all 5, agent identifiers, a legend table</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Compare</strong> now runs all 5 pipelines side by side (was 3): Single-agent, Multi-agent buggy/fixed, and the two new delegated presets. A technical legend table now sits above the 5 answer cards, listing what each pipeline does and doesn't do (rewrites the query, searches the union of original + rewrite, real agent delegation, feedback loop retry) with a short concrete example per row.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> On Multi-agent (delegated) and Multi-agent (feedback loop), when the feedback loop actually triggers a second Retriever/Evaluator round, the progress ticker now tags each entry <code>#1</code>/<code>#2</code> (e.g. "Retriever #2: Searching the web") so two agent calls no longer look like the same step repeating.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-09</div>
               <div class="cl-ver cl-ver-minor">v3.52.0</div>
             </div>
             <div class="cl-content">
@@ -4647,10 +4682,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       search_reddit_questions: "similar questions",
       search_web: "the web",
     };
-    function askPhaseLabel(phase, detail, preset) {
+    function askPhaseLabel(phase, detail, preset, meta) {
       const isMultiAgent = preset === "multi_agent_buggy" || preset === "multi_agent_fixed"
         || preset === "multi_agent" || preset === "multi_agent_feedback";
-      const role = (name) => isMultiAgent ? `${name}: ` : "";
+      // meta.attempt (1 or 2) identifies which Retriever/Evaluator call
+      // this event belongs to, on the two presets whose feedback loop can
+      // genuinely run those roles twice for one question. Shown as a
+      // "#1"/"#2" tag on the role name so two "Searching..." or "judging
+      // evidence" entries in a row read as two distinct agent calls
+      // rather than the same step repeating.
+      const hasAttempt = isMultiAgent && meta && Number.isInteger(meta.attempt);
+      const tag = (name) => hasAttempt ? `${name} #${meta.attempt}` : name;
+      const role = (name) => isMultiAgent ? `${tag(name)}: ` : "";
       if (phase === "resolving_vendor") return `${role("Rewriter")}Resolving vendor`;
       // "rewriting"/"evaluating"/"retrying" only ever fire on multi_agent/
       // multi_agent_feedback (see runDelegatedAsk on the server), where
@@ -4658,8 +4701,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // phase of one loop. The role prefix is not optional for these.
       if (phase === "rewriting") return "Rewriter: choosing search terms";
       if (phase === "searching") return `${role("Retriever")}Searching ${ASK_TOOL_LABELS[detail] || detail || "sources"}`;
-      if (phase === "evaluating") return "Evaluator: judging evidence";
-      if (phase === "retrying") return "Evaluator: requesting another search pass";
+      if (phase === "evaluating") return `${tag("Evaluator")}: judging evidence`;
+      if (phase === "retrying") return `${tag("Evaluator")}: requesting another search pass`;
       if (phase === "widening") return `${role("Evaluator")}Widening search window`;
       if (phase === "generating") return `${role("Orchestrator")}Generating answer`;
       return phase;
@@ -4687,12 +4730,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       renderAskPipelineLog();
       askPipelineTickTimer = setInterval(renderAskPipelineLog, 100);
     }
-    function pushAskPipelinePhase(phase, detail, preset) {
+    function pushAskPipelinePhase(phase, detail, preset, meta) {
       if (!askPipelineLog) return;
       const now = Date.now();
       const prev = askPipelineLog[askPipelineLog.length - 1];
       if (prev) prev.doneMs = now - prev.startedAt;
-      askPipelineLog.push({ label: askPhaseLabel(phase, detail, preset), startedAt: now, doneMs: null });
+      askPipelineLog.push({ label: askPhaseLabel(phase, detail, preset, meta), startedAt: now, doneMs: null });
       renderAskPipelineLog();
     }
     // Called once the request is done, success or failure. Freezes the
@@ -5122,6 +5165,58 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       return out.join("");
     }
 
+    // A fixed, hand-written technical summary of what each of the 5
+    // presets does and doesn't do, shown once above the 5 answer cards
+    // in Compare mode. Static rather than derived from PRESETS/config
+    // flags on purpose: the point is a plain-language "what's actually
+    // different here" reference a reader can check the 5 live answers
+    // against, not a dump of internal field names. Update this by hand
+    // if a preset's own behavior changes (see PRESETS in ask.js).
+    const ASK_COMPARE_LEGEND_ROWS = [
+      {
+        name: "Single-agent", rewrite: false, union: false, delegated: false, feedback: false,
+        example: "Q: \"latest mysql ver\" → searches with that exact wording only. A typo or vague phrasing is never corrected, so a real match can be missed.",
+      },
+      {
+        name: "Multi-agent (buggy)", rewrite: true, union: false, delegated: false, feedback: false,
+        example: "Q: \"latest mysql ver\" → rewritten to \"MySQL LTS release schedule\", then searches ONLY that rewrite. If the rewrite drifts, the original wording is gone.",
+      },
+      {
+        name: "Multi-agent (fixed)", rewrite: true, union: true, delegated: false, feedback: false,
+        example: "Same rewrite as above, but searches the union of the original wording AND the rewrite, so \"mysql ver\" still matches even if the rewrite drifts.",
+      },
+      {
+        name: "Multi-agent (delegated)", rewrite: true, union: true, delegated: true, feedback: false,
+        example: "A separate Rewriter call picks search terms, a separate Retriever call searches, a separate Evaluator call judges the evidence, before an Orchestrator call writes the answer. One pass only.",
+      },
+      {
+        name: "Multi-agent (feedback loop)", rewrite: true, union: true, delegated: true, feedback: true,
+        example: "Same 4 separate calls as delegated, but if the Evaluator judges the first pass insufficient, it sends the Retriever back for one more, targeted search before answering.",
+      },
+    ];
+    function askCompareLegendHTML() {
+      const cell = (yes) => yes
+        ? '<td class="ask-cy">&check; yes</td>'
+        : '<td class="ask-cn">&mdash; no</td>';
+      const rows = ASK_COMPARE_LEGEND_ROWS.map((r) => (
+        "<tr>" +
+        `<td>${uaEsc(r.name)}</td>` +
+        cell(r.rewrite) + cell(r.union) + cell(r.delegated) + cell(r.feedback) +
+        `<td class="ask-ex">${uaEsc(r.example)}</td>` +
+        "</tr>"
+      )).join("");
+      return (
+        '<div class="ask-compare-legend-wrap">' +
+        '<table class="ask-compare-legend">' +
+        "<thead><tr>" +
+        "<th>Pipeline</th><th>Rewrites query</th><th>Searches union of original + rewrite</th>" +
+        "<th>Real agent delegation</th><th>Feedback loop retry</th><th>Example</th>" +
+        "</tr></thead>" +
+        `<tbody>${rows}</tbody>` +
+        "</table></div>"
+      );
+    }
+
     // opts.trimAnswer: cap the answer text to N chars (a "Show full
     // answer" button appears when it actually got cut), used by the
     // right-side rail so a long answer doesn't dominate the sidebar;
@@ -5271,7 +5366,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           if (!dataLine) continue;
           let evt;
           try { evt = JSON.parse(dataLine.slice(5).trim()); } catch { continue; }
-          if (evt.type === "progress") pushAskPipelinePhase(evt.phase, evt.detail, preset);
+          if (evt.type === "progress") pushAskPipelinePhase(evt.phase, evt.detail, preset, evt.meta);
           else if (evt.type === "result") finalResult = evt;
           else if (evt.type === "error") errorMessage = evt.error || "Request failed.";
         }
@@ -5293,7 +5388,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const temporalFilter = document.getElementById("askTemporalFilter").checked;
       const intentFilter = document.getElementById("askIntentFilter").checked;
 
-      // "Compare all 3" always runs three real model calls side by side -
+      // "Compare all 5" always runs five real model calls side by side -
       // there's no plain-lookup shortcut for it, so it keeps the old
       // up-front sign-in gate. Everything else goes through /api/ask
       // itself, which decides whether the query is a bare vendor/
@@ -5315,7 +5410,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
       try {
         if (isCompare) {
-          // Three cards side by side genuinely need the modal's width -
+          // Five cards side by side genuinely need the modal's width -
           // always used here, even if a rail answer happened to be open
           // from an earlier question.
           hideAskRail();
@@ -5328,7 +5423,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           askOverlayEl.classList.add("open");
           askModalEl.classList.add("open");
           const params = new URLSearchParams({
-            question, presets: "single_agent,multi_agent_buggy,multi_agent_fixed",
+            question, presets: "single_agent,multi_agent_buggy,multi_agent_fixed,multi_agent,multi_agent_feedback",
             vendorCheck: String(vendorCheck), temporalFilter: String(temporalFilter), intentFilter: String(intentFilter),
             provider, size,
           });
@@ -5336,6 +5431,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || "Request failed.");
           document.getElementById("askModalBody").innerHTML =
+            askCompareLegendHTML() +
             '<div class="ask-compare-grid">' +
             data.runs.map(r => askRenderCard(ASK_PRESET_LABELS[r.preset] || r.preset, r)).join("") +
             "</div>";
