@@ -436,6 +436,27 @@
     }
     #suggestions li strong { font-weight: 700; }
 
+    /* Same dropdown treatment as #suggestions, plus a small subreddit tag
+       per row so a picked question's real source is visible before
+       clicking it, not just after. */
+    #askSuggestions {
+      position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 500;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow-md);
+      padding: 4px 0; max-height: 240px; overflow-y: auto;
+      list-style: none; margin: 0; display: none;
+    }
+    #askSuggestions.open { display: block; }
+    #askSuggestions li {
+      padding: 7px 12px; cursor: pointer; font-size: 13px; color: var(--text);
+      display: flex; align-items: baseline; gap: 6px;
+    }
+    #askSuggestions li:hover, #askSuggestions li.active {
+      background: var(--brand-light); color: var(--brand);
+    }
+    #askSuggestions .ask-suggestion-text { flex: 1; min-width: 0; }
+    #askSuggestions .ask-suggestion-sub { font-size: 10px; color: var(--muted); flex-shrink: 0; white-space: nowrap; }
+
     /* ── Toggles (shields.io flat-badge style) ─────────────── */
     .toggles { display: flex; gap: 5px; flex-wrap: wrap; }
 
@@ -1579,7 +1600,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.43.0">Releasetrain <em>v3.43.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.44.0">Releasetrain <em>v3.44.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child - the
            chip is display:none when signed out, and a non-participating
@@ -1622,7 +1643,15 @@
           <div class="search-wrap">
             <span class="search-icon" aria-hidden="true">💬</span>
             <input id="askQuestion" class="search-input" type="text" maxlength="500" autocomplete="off"
-              placeholder="e.g. Are there known Firefox issues after the latest update?" aria-label="Ask a question" />
+              placeholder="e.g. Are there known Firefox issues after the latest update?" aria-label="Ask a question"
+              aria-autocomplete="list" aria-controls="askSuggestions" />
+            <!-- Real past community questions, ranked by relevance to
+                 what's typed (GET /api/reddit/query/questions/suggest) -
+                 not a static "recent questions" list. Public, no
+                 sign-in/LLM-call needed, since it just reads existing
+                 Reddit data. Picking one may mean the question (or a
+                 close match) has already been discussed. -->
+            <ul id="askSuggestions" role="listbox" aria-label="Similar existing questions"></ul>
           </div>
           <span id="askIntentBadge" class="ask-intent-badge" hidden></span>
         </div>
@@ -3118,6 +3147,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-09</div>
+              <div class="cl-ver cl-ver-minor">v3.44.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Ask suggests real past community questions as you type</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Typing 3+ characters into Ask now shows a dropdown of real, similar past community questions (each &le;15 words, ranked by relevance to what's typed) - not a static "recent questions" list, and not client-side filtering over the public API (which has no free-text search and returns 3,240+ heavy documents by default). Picking one fills the input; the subreddit it came from shows alongside each suggestion. Public, no sign-in needed - it only reads existing Reddit data, no model call.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-09</div>
               <div class="cl-ver cl-ver-minor">v3.43.0</div>
             </div>
             <div class="cl-content">
@@ -4324,6 +4366,81 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     }
     askQuestionEl.addEventListener("input", updateAskPreview);
     [askVendorCheckEl, askTemporalFilterEl, askIntentFilterEl].forEach(el => el.addEventListener("change", updateAskPreview));
+
+    // Typeahead over real past community questions (GET /api/reddit/
+    // query/questions/suggest) - public, no sign-in/LLM-call needed,
+    // since it only reads already-public Reddit data through a real
+    // relevance ranking server-side. Picking one may mean the question
+    // (or something close to it) has already been asked and discussed.
+    // A local debounce timer rather than the shared debounce() helper
+    // further down this file - that's a `const`, and this code executes
+    // well before its declaration is reached, so referencing it here
+    // would throw (temporal dead zone), not silently do nothing.
+    const askSuggestionsEl = document.getElementById("askSuggestions");
+    let askSuggestTimer = null;
+    let askSuggestActiveIdx = -1;
+    let askSuggestSeq = 0; // guards against an earlier, slower request overwriting a later one
+
+    function hideAskSuggestions() {
+      askSuggestionsEl.classList.remove("open");
+      askSuggestionsEl.innerHTML = "";
+      askSuggestActiveIdx = -1;
+    }
+    function showAskSuggestions(items) {
+      askSuggestActiveIdx = -1;
+      askSuggestionsEl.innerHTML = items.map(it => `<li role="option" data-question="${uaEsc(it.question)}" data-url="${uaEsc(it.url || "")}">
+        <span class="ask-suggestion-text">💬 ${uaEsc(it.question)}</span>
+        ${it.subreddit ? `<span class="ask-suggestion-sub">r/${uaEsc(it.subreddit)}</span>` : ""}
+      </li>`).join("");
+      askSuggestionsEl.classList.add("open");
+    }
+    function pickAskSuggestion(li) {
+      askQuestionEl.value = li.dataset.question;
+      hideAskSuggestions();
+      updateAskPreview();
+    }
+    askQuestionEl.addEventListener("input", () => {
+      clearTimeout(askSuggestTimer);
+      const q = askQuestionEl.value.trim();
+      if (q.length < 3) { hideAskSuggestions(); return; }
+      askSuggestTimer = setTimeout(async () => {
+        const seq = ++askSuggestSeq;
+        try {
+          const res = await fetch(`${API_BASE}reddit/query/questions/suggest?q=${encodeURIComponent(q)}&limit=6`);
+          if (!res.ok) return;
+          const data = await res.json();
+          if (seq !== askSuggestSeq) return; // a newer keystroke already fired its own request
+          if (!data.results || !data.results.length) { hideAskSuggestions(); return; }
+          showAskSuggestions(data.results);
+        } catch { /* best-effort - typeahead failing silently beats blocking on it */ }
+      }, 250);
+    });
+    askQuestionEl.addEventListener("keydown", e => {
+      if (!askSuggestionsEl.classList.contains("open")) return;
+      const items = askSuggestionsEl.querySelectorAll("li");
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        askSuggestActiveIdx = Math.min(askSuggestActiveIdx + 1, items.length - 1);
+        items.forEach((li, i) => li.classList.toggle("active", i === askSuggestActiveIdx));
+        if (items[askSuggestActiveIdx]) items[askSuggestActiveIdx].scrollIntoView({ block: "nearest" });
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        askSuggestActiveIdx = Math.max(askSuggestActiveIdx - 1, -1);
+        items.forEach((li, i) => li.classList.toggle("active", i === askSuggestActiveIdx));
+      } else if (e.key === "Enter" && askSuggestActiveIdx >= 0) {
+        e.preventDefault();
+        pickAskSuggestion(items[askSuggestActiveIdx]);
+      } else if (e.key === "Escape") {
+        hideAskSuggestions();
+      }
+    });
+    askSuggestionsEl.addEventListener("mousedown", e => {
+      const li = e.target.closest("li");
+      if (!li) return;
+      e.preventDefault();
+      pickAskSuggestion(li);
+    });
+    askQuestionEl.addEventListener("blur", () => setTimeout(hideAskSuggestions, 150));
 
     // Provider + size lists come from the server (GET /api/ask/providers),
     // not hardcoded here - each provider offers its own 3 model sizes
