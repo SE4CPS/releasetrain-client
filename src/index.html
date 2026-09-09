@@ -274,6 +274,20 @@
     }
     .ask-toggles label { display: flex; align-items: center; gap: 4px; cursor: pointer; white-space: nowrap; }
     .ask-toggles input[type="checkbox"] { accent-color: var(--brand); cursor: pointer; }
+    /* Options popover: everything that used to sit directly on the ask
+       bar (model/pipeline selects, the three toggles) now lives here,
+       off the gear button, so the bar itself is just input + 2 buttons. */
+    .ask-options-panel {
+      position: absolute; top: calc(100% + 6px); right: 0; z-index: 60;
+      display: flex; flex-direction: column; gap: 8px;
+      min-width: 200px; padding: 10px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow-md);
+    }
+    .ask-options-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 11px; color: var(--muted); }
+    .ask-options-row .ask-preset-select { flex: 1 1 auto; min-width: 0; }
+    .ask-options-divider { border: none; border-top: 1px solid var(--border); margin: 0; }
+    .ask-toggles-stacked { flex-direction: column; align-items: flex-start; gap: 6px; }
     .ask-intent-badge {
       flex-shrink: 0; align-self: center;
       font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: var(--radius-full);
@@ -1532,7 +1546,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.34.0">Releasetrain <em>v3.34.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.35.0">Releasetrain <em>v3.35.0</em></a>
       <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
       <!-- Kept with the compact identity controls (not after the forms):
            the active form always gets its own full-width row below this
@@ -1561,30 +1575,44 @@
            component filter. Hidden by default; toggled by .ask-mode-btn.
            Requires sign-in (POST /api/ask costs a real Claude call). -->
       <form id="askForm" class="topbar-form" aria-label="Ask a question" style="display:none">
-        <!-- Input stays flexible on the left; everything else (checkboxes,
-             preset, submit) is one static cluster on the right that moves
-             together as a block rather than each piece wrapping on its own. -->
+        <!-- Input stays flexible on the left; everything else is just two
+             buttons on the right (Options, Ask) - the model/pipeline
+             selects and the three toggles live in a popover off the
+             Options button instead of cluttering the bar itself. -->
         <div class="search-wrap">
           <span class="search-icon" aria-hidden="true">💬</span>
           <input id="askQuestion" class="search-input" type="text" maxlength="500" autocomplete="off"
             placeholder="e.g. Are there known Firefox issues after the latest update?" aria-label="Ask a question" />
         </div>
         <span id="askIntentBadge" class="ask-intent-badge" hidden></span>
-        <div class="ask-controls-group">
-          <div class="ask-toggles">
-            <label><input type="checkbox" id="askVendorCheck" /> Vendor check</label>
-            <label><input type="checkbox" id="askTemporalFilter" /> Temporal filter</label>
-            <label><input type="checkbox" id="askIntentFilter" /> Intent filter</label>
+        <div class="search-actions" style="position:relative">
+          <button class="btn btn-ghost btn-icon" type="button" id="askOptionsBtn"
+            aria-haspopup="true" aria-expanded="false" aria-controls="askOptionsPanel" title="Options" aria-label="Ask options">⚙️</button>
+          <div id="askOptionsPanel" class="ask-options-panel" hidden>
+            <label class="ask-options-row">
+              <span>Model</span>
+              <select id="askProvider" class="ask-preset-select" aria-label="Which model answers">
+                <option value="anthropic">Claude (Anthropic)</option>
+                <option value="groq">Groq (free tier)</option>
+              </select>
+            </label>
+            <label class="ask-options-row">
+              <span>Pipeline</span>
+              <select id="askPreset" class="ask-preset-select" aria-label="Which pipeline to ask">
+                <option value="multi_agent_fixed">Multi-agent (fixed)</option>
+                <option value="single_agent">Single-agent</option>
+                <option value="multi_agent_buggy">Multi-agent (buggy)</option>
+                <option value="compare">Compare all 3</option>
+              </select>
+            </label>
+            <hr class="ask-options-divider" />
+            <div class="ask-toggles ask-toggles-stacked">
+              <label><input type="checkbox" id="askVendorCheck" /> Vendor check</label>
+              <label><input type="checkbox" id="askTemporalFilter" /> Temporal filter</label>
+              <label><input type="checkbox" id="askIntentFilter" /> Intent filter</label>
+            </div>
           </div>
-          <div class="search-actions">
-            <select id="askPreset" class="ask-preset-select" aria-label="Which pipeline to ask">
-              <option value="multi_agent_fixed">Multi-agent (fixed)</option>
-              <option value="single_agent">Single-agent</option>
-              <option value="multi_agent_buggy">Multi-agent (buggy)</option>
-              <option value="compare">Compare all 3</option>
-            </select>
-            <button class="btn btn-icon" type="submit" id="askSubmitBtn" aria-label="Ask">➤</button>
-          </div>
+          <button class="btn btn-icon" type="submit" id="askSubmitBtn" aria-label="Ask">➤</button>
         </div>
       </form>
     </div>
@@ -3045,6 +3073,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
           <div class="cl-release">
             <div class="cl-date-col">
+              <div class="cl-date">2026-09-08</div>
+              <div class="cl-ver cl-ver-minor">v3.35.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Pick your model, and a simpler Ask bar</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Model picker</strong> - choose which model answers your question: Claude (Anthropic) or Groq (free tier). Selecting Groq is useful when the Anthropic key is out of credit or rate-limited. The answer's model is now returned by the server and available for display.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> <strong>Simplified the Ask bar</strong> - it was down to input, three checkboxes, two selects, and a submit button, all visible at once. The model select, pipeline select, and the three toggles (Vendor check, Temporal filter, Intent filter) now live in a popover off a single ⚙️ Options button; the bar itself is just the question input plus Options and Ask (➤). Closes on outside click, Escape, or switching back to Search mode.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
               <div class="cl-date">2026-09-07</div>
               <div class="cl-ver cl-ver-minor">v3.34.0</div>
             </div>
@@ -4126,6 +4168,24 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     askQuestionEl.addEventListener("input", updateAskPreview);
     [askVendorCheckEl, askTemporalFilterEl, askIntentFilterEl].forEach(el => el.addEventListener("change", updateAskPreview));
 
+    // Options popover (model/pipeline selects + toggles), off the gear
+    // button - closes on outside click, Escape, or picking "Search" mode.
+    const askOptionsBtnEl = document.getElementById("askOptionsBtn");
+    const askOptionsPanelEl = document.getElementById("askOptionsPanel");
+    function askCloseOptions() {
+      askOptionsPanelEl.hidden = true;
+      askOptionsBtnEl.setAttribute("aria-expanded", "false");
+    }
+    askOptionsBtnEl.addEventListener("click", e => {
+      e.stopPropagation();
+      const willOpen = askOptionsPanelEl.hidden;
+      askOptionsPanelEl.hidden = !willOpen;
+      askOptionsBtnEl.setAttribute("aria-expanded", String(willOpen));
+    });
+    askOptionsPanelEl.addEventListener("click", e => e.stopPropagation());
+    document.addEventListener("click", askCloseOptions);
+    document.addEventListener("keydown", e => { if (e.key === "Escape") askCloseOptions(); });
+
     document.querySelectorAll(".ask-mode-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".ask-mode-btn").forEach(b => b.classList.remove("ask-mode-active"));
@@ -4134,7 +4194,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         document.getElementById("filterForm").style.display = isAsk ? "none" : "";
         document.getElementById("askForm").style.display = isAsk ? "" : "none";
         // The preview only makes sense for a natural-language question.
-        if (!isAsk) askQueryPreviewEl.hidden = true;
+        if (!isAsk) { askQueryPreviewEl.hidden = true; askCloseOptions(); }
         else updateAskPreview();
       });
     });
@@ -4236,6 +4296,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         return;
       }
       const preset = document.getElementById("askPreset").value;
+      const provider = document.getElementById("askProvider").value;
       const isCompare = preset === "compare";
       const vendorCheck = document.getElementById("askVendorCheck").checked;
       const temporalFilter = document.getElementById("askTemporalFilter").checked;
@@ -4258,6 +4319,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           const params = new URLSearchParams({
             question, presets: "single_agent,multi_agent_buggy,multi_agent_fixed",
             vendorCheck: String(vendorCheck), temporalFilter: String(temporalFilter), intentFilter: String(intentFilter),
+            provider,
           });
           const res = await uaRequest("ask/compare?" + params.toString());
           const data = await res.json();
@@ -4267,7 +4329,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             data.runs.map(r => askRenderCard(ASK_PRESET_LABELS[r.preset] || r.preset, r)).join("") +
             "</div>";
         } else {
-          const config = { preset, vendorCheck, temporalFilter, intentFilter };
+          const config = { preset, vendorCheck, temporalFilter, intentFilter, provider };
           const res = await uaRequest("ask", { method: "POST", body: JSON.stringify({ question, config }) });
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || "Request failed.");
