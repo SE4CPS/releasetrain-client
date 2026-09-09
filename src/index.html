@@ -1579,7 +1579,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.42.0">Releasetrain <em>v3.42.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.43.0">Releasetrain <em>v3.43.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child - the
            chip is display:none when signed out, and a non-participating
@@ -3118,6 +3118,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-09</div>
+              <div class="cl-ver cl-ver-minor">v3.43.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Rate-limited providers show as unavailable, not clickable</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> When a provider is currently rate-limited, its Model option now shows "(rate limited)" and can't be selected, instead of letting you pick it and then hitting an error - checked on page load, on every Model change, and after every ask attempt.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-09</div>
               <div class="cl-ver cl-ver-minor">v3.42.0</div>
             </div>
             <div class="cl-content">
@@ -4353,7 +4366,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       }
     }
     document.getElementById("askProvider").addEventListener("change", askPopulateSizeOptions);
-    askLoadProviders();
+    askLoadProviders().then(() => askRefreshQuota());
 
     // Usage line: a snapshot of the provider's own last-seen rate-limit
     // headers, as reported by the server (it never spends a call just to
@@ -4362,12 +4375,29 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // refreshes on Ask-mode activation, on a Model change, and again
     // after every ask attempt.
     const askQuotaLineEl = document.getElementById("askQuotaLine");
+    // Rather than silently falling back to a different provider when one
+    // is rate-limited (surprising - "I picked Claude but got a Groq
+    // answer"), disable that option in the Model select so it can be
+    // seen but not picked, and let the user explicitly choose a working
+    // one. Doesn't touch an already-selected option's value - only new
+    // selections are blocked - so a provider that becomes rate-limited
+    // mid-use doesn't get silently swapped out from under an open answer.
+    function askUpdateProviderOptions(quotaData) {
+      Array.from(document.getElementById("askProvider").options).forEach(opt => {
+        const q = quotaData[opt.value];
+        const limited = !!(q && q.rateLimitedSecondsLeft);
+        opt.disabled = limited;
+        const baseLabel = opt.textContent.replace(/ \(rate limited\)$/, "");
+        opt.textContent = limited ? `${baseLabel} (rate limited)` : baseLabel;
+      });
+    }
     async function askRefreshQuota() {
       askQuotaLineEl.textContent = "Usage: loading…";
       try {
         const res = await uaRequest("ask/quota");
         if (!res.ok) throw new Error("quota fetch failed");
         const data = await res.json();
+        askUpdateProviderOptions(data);
         const provider = document.getElementById("askProvider").value;
         const q = data[provider];
         if (!q || !q.limits) {
