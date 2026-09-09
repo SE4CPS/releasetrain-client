@@ -374,7 +374,7 @@
     .ask-compare-grid .ask-answer-card { flex: 1 1 300px; min-width: 0; }
     .ask-answer-card {
       background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
-      padding: 12px;
+      padding: 14px;
     }
     .ask-answer-label {
       font: 700 10px/1 inherit; text-transform: uppercase; letter-spacing: .4px;
@@ -389,10 +389,19 @@
       font-family: var(--mono); font-size: 12px; background: var(--chip-bg);
       color: var(--chip-text); padding: 1px 4px; border-radius: var(--radius-sm);
     }
-    .ask-sources { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-direction: column; gap: 5px; }
-    .ask-sources li { font-size: 12px; line-height: 1.4; }
+    .ask-sources { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+    .ask-sources li { font-size: 12px; line-height: 1.5; }
     .ask-sources a { color: var(--text); text-decoration: none; }
     .ask-sources a:hover { text-decoration: underline; color: var(--brand); }
+    /* Groups the answer's actual documented evidence (release notes, CVE)
+       apart from community/web discussion, so the two read as separate
+       things instead of one flat, undifferentiated list. */
+    .ask-source-group { margin: 0 0 12px; }
+    .ask-source-group:last-child { margin-bottom: 10px; }
+    .ask-source-heading {
+      font: 700 10px/1 inherit; text-transform: uppercase; letter-spacing: .4px;
+      color: var(--muted); margin-bottom: 6px;
+    }
     .ask-rate-row { display: flex; align-items: center; gap: 6px; }
     .ask-rate-btn { font-size: 11px; padding: 4px 8px; }
     .ask-rate-btn.ask-rate-chosen { background: var(--brand-light); color: var(--brand); border-color: var(--brand); }
@@ -664,7 +673,7 @@
 
     .li {
       display: grid; grid-template-columns: 92px 22px 1fr;
-      column-gap: 10px; padding: 6px 0 6px 8px;
+      column-gap: 10px; padding: 10px 0 10px 8px;
       border-bottom: 1px solid var(--border);
       border-left: 2px solid transparent; align-items: start;
       transition: background .1s;
@@ -681,6 +690,9 @@
     .li.is-new { border-left-color: var(--text); }
     .li.kind-llm { border-left-color: var(--text); }
     .li.kind-hv { border-left-color: var(--text); }
+    /* Stands in for the removed per-row "major" text chip: the one
+       channel with no icon of its own, so it keeps some visual cue. */
+    .li.kind-update.major { border-left-color: var(--ok); }
 
     @media (max-width: 600px) {
       .li { grid-template-columns: 28px 1fr; grid-template-rows: auto auto; }
@@ -710,10 +722,10 @@
     .soIcon.risky { border-color: var(--risk); background: var(--risk-bg); }
 
     /* ── Chips ──────────────────────────────────────────────── */
-    .chips { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 3px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 5px; }
     .chip {
-      display: inline-flex; align-items: center; padding: 1px 6px;
-      font: 600 9px/1.4 inherit; border-radius: var(--radius-sm);
+      display: inline-flex; align-items: center; padding: 2px 7px;
+      font: 600 10px/1.4 inherit; border-radius: var(--radius-sm);
       border: 1px solid var(--border); background: var(--chip-bg);
       color: var(--chip-text); white-space: nowrap;
     }
@@ -1638,7 +1650,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.49.1">Releasetrain <em>v3.49.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.50.0">Releasetrain <em>v3.50.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3195,6 +3207,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-09</div>
+              <div class="cl-ver cl-ver-minor">v3.50.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Less clutter in the feed and the answer rail</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The answer rail's sources are now split into two labeled groups, Documented (release notes, CVE) and Discussion (Reddit, the web), instead of one flat list mixing both kinds together.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Dropped the per-row "reddit"/"stackoverflow"/"CVE"/"patch" text chips from the feed. Each row's own icon and colored left border already say what kind it is, and the group header already totals each kind, so repeating it on every single row was pure noise. The one channel with no icon of its own (major) keeps a colored left border in its place.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> More breathing room throughout: taller feed rows, bigger chips with more padding, and a roomier answer card.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -4830,16 +4857,27 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     document.getElementById("askModalClose").addEventListener("click", askCloseModal);
     document.addEventListener("keydown", e => { if (e.key === "Escape") askCloseModal(); });
 
+    // Two groups, not one flat list: release notes/CVE are this system's
+    // own documented evidence, everything else (reddit, the web) is
+    // community discussion the model also drew on. Splitting them makes
+    // it obvious at a glance which kind of source a given claim rests on,
+    // instead of the two reading as one undifferentiated pile.
     function askRenderSources(sources) {
       if (!sources || !sources.length) {
         return '<p class="ask-muted">No sources were found for this question.</p>';
       }
       const icon = k => k === "cve" ? "🔴" : k === "reddit" ? "💬" : k === "web" ? "🌐" : "📦";
-      return '<ul class="ask-sources">' + sources.map(s => {
+      const renderItem = s => {
         const dateStr = s.date ? String(s.date) : "";
         const label = `${icon(s.kind)} <strong>${uaEsc(s.title)}</strong>${dateStr ? " · " + uaEsc(dateStr) : ""}`;
         return `<li>${s.url ? `<a href="${uaEsc(s.url)}" target="_blank" rel="noopener">${label}</a>` : label}</li>`;
-      }).join("") + "</ul>";
+      };
+      const documented = sources.filter(s => s.kind === "cve" || s.kind === "release");
+      const discussion = sources.filter(s => s.kind !== "cve" && s.kind !== "release");
+      const group = (label, list) => list.length
+        ? `<div class="ask-source-group"><div class="ask-source-heading">${label}</div><ul class="ask-sources">${list.map(renderItem).join("")}</ul></div>`
+        : "";
+      return group("Documented", documented) + group("Discussion", discussion);
     }
 
     // Meta chips (vendor/intent/temporal) plus a collapsible technical
@@ -7396,7 +7434,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const chipsEl = document.createElement("div"); chipsEl.className = "chips";
 
         if (it.kind === "reddit") {
-          chipsEl.insertAdjacentHTML("beforeend", chip("💬 reddit", "reddit"));
+          // The reddit/StackOverflow icon already sits to the left of every
+          // row (and the group header already totals each source), so a
+          // repeated "reddit"/"stackoverflow" text chip on every single row
+          // is pure noise, not new information.
           if (it.raw?.subreddit) chipsEl.insertAdjacentHTML("beforeend", chip(`r/${it.raw.subreddit}`, "soft"));
           const scorePred = it.raw?.metadata?.predicted?.positiveScore;
           const scoreField = typeof it.raw?.score === "number" ? it.raw.score : null;
@@ -7423,18 +7464,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             }
           }
         } else if (it.kind === "stackoverflow") {
-          chipsEl.insertAdjacentHTML("beforeend", chip("🟧 stackoverflow", "soft"));
           const scorePred = it.raw?.metadata?.predicted?.positiveScore;
           const scoreVal = typeof scorePred === "number" ? scorePred : (typeof it.raw?.score === "number" ? it.raw.score : null);
           if (isRisk(it.raw)) chipsEl.insertAdjacentHTML("beforeend", chip(scoreVal != null ? `⚠️ RISK ${Number(scoreVal).toFixed(2)}` : "⚠️ RISK", "warn"));
         } else if (it.kind === "cve") {
-          chipsEl.insertAdjacentHTML("beforeend", chip("🔴 CVE", "bad"));
+          // Its own red icon + red-tinted row (.kind-cve) already say "CVE" -
+          // no need to say it a third time after the group header's own count.
           const cveHref = (it.url && it.url.startsWith("http")) ? it.url : (it.raw?._id ? `https://releasetrain.io/api/v/${it.raw._id}` : null);
           if (cveHref) chipsEl.insertAdjacentHTML("beforeend", `<span class="chip link"><a href="${cveHref}" target="_blank" rel="noopener">open ↗</a></span>`);
         } else {
-          const ch = it.channel || "other";
-          const chLabel = ch === "major" ? "🔖 major" : ch === "patch" ? "🩹 patch" : ch === "minor" ? "🔹 minor" : ch;
-          chipsEl.insertAdjacentHTML("beforeend", chip(chLabel, ch === "major" ? "ok" : "soft"));
+          // Channel (major/minor/patch) is the one row-level distinction with
+          // no icon of its own, so it keeps a visual cue (the row's own
+          // left-border color, see .li.kind-update.major) even though the
+          // repeated text chip, already totalled in the group header, is
+          // gone.
           if (isLLMVersion(it.raw)) chipsEl.insertAdjacentHTML("beforeend", chip("🤖 LLM", "llm"));
           if (isHypervisorVersion(it.raw)) chipsEl.insertAdjacentHTML("beforeend", chip("🖥️ Hypervisor", "hv"));
         }
