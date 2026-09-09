@@ -1559,7 +1559,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.36.0">Releasetrain <em>v3.36.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.37.0">Releasetrain <em>v3.37.0</em></a>
       <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
       <!-- Kept with the compact identity controls (not after the forms):
            the active form always gets its own full-width row below this
@@ -3088,6 +3088,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
           <div class="cl-release">
             <div class="cl-date-col">
+              <div class="cl-date">2026-09-09</div>
+              <div class="cl-ver cl-ver-minor">v3.37.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Rate-limit hits now show up in Usage, not just as an error</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> When a provider actually rate-limits a request (e.g. Groq's "TPM: Limit 8000, Used 7333... try again in 21s"), that shows up in the Ask Options Usage line too - "&#9888;&#65039; rate limited &mdash; retry in ~21s" - not only as the one-off error banner on the answer that failed. Refreshes automatically right after every ask attempt when Options is already open.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
               <div class="cl-date">2026-09-08</div>
               <div class="cl-ver cl-ver-minor">v3.36.0</div>
             </div>
@@ -4223,9 +4236,17 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           return;
         }
         const { remainingRequests, limitRequests, remainingTokens, limitTokens } = q.limits;
-        askQuotaLineEl.innerHTML = `Usage today: <strong>${q.callsToday}</strong> call(s) &middot; `
+        let html = `Usage today: <strong>${q.callsToday}</strong> call(s) &middot; `
           + `<strong>${uaEsc(remainingRequests)}</strong>/${uaEsc(limitRequests)} requests left &middot; `
           + `<strong>${uaEsc(remainingTokens)}</strong>/${uaEsc(limitTokens)} tokens left`;
+        // Surfaces the exact same rate-limit hit a failed call would show
+        // as an error banner (e.g. "TPM: Limit 8000, Used 7333... try
+        // again in 21s") in this same usage line, so it's visible even
+        // without having just triggered the error yourself.
+        if (q.rateLimitedSecondsLeft) {
+          html += `<br><span style="color:var(--cve)">&#9888;&#65039; rate limited &mdash; retry in ~${q.rateLimitedSecondsLeft}s</span>`;
+        }
+        askQuotaLineEl.innerHTML = html;
       } catch {
         askQuotaLineEl.textContent = "Usage: unavailable";
       }
@@ -4449,6 +4470,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       } finally {
         btn.disabled = false;
         btn.textContent = prevIcon;
+        // Every ask attempt (success, abstain, or a rate-limit error like
+        // "TPM: Limit 8000, Used 7333...") updates the provider's quota -
+        // refresh the Usage line immediately if it's already visible,
+        // rather than only on the next time Options is opened.
+        if (!askOptionsPanelEl.hidden) askRefreshQuota();
       }
     });
 
