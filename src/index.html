@@ -1650,7 +1650,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.51.1">Releasetrain <em>v3.51.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.51.2">Releasetrain <em>v3.51.2</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -1740,13 +1740,13 @@
             <option value="compare">Compare all 3</option>
           </select>
           <span class="ask-options-sep" aria-hidden="true"></span>
-          <label class="ask-toggle-inline" title="Checked: the question must resolve a real vendor/product, or the answer declines outright rather than guessing. Unchecked: answers without that requirement.">
+          <label class="ask-toggle-inline" title="Checked: requires a resolvable vendor/product, declines outright if none is found.&#10;&#10;Unchecked: answers without that requirement.">
             <input type="checkbox" id="askVendorCheck" checked /> Vendor check
           </label>
-          <label class="ask-toggle-inline" title="Checked: results are time-boxed to a recent window, or a date named in the question. Unchecked: searches all-time, no date restriction.">
+          <label class="ask-toggle-inline" title="Checked: time-boxed to a recent window, or a date named in the question.&#10;&#10;Unchecked: searches all-time, no date restriction.">
             <input type="checkbox" id="askTemporalFilter" checked /> Temporal filter
           </label>
-          <label class="ask-toggle-inline" title="Checked: the question is classified (CVE/patch/version/general/opinion) and only the matching search tools are used. Unchecked: every tool is available regardless of classification.">
+          <label class="ask-toggle-inline" title="Checked: classifies the question (CVE/patch/version/general/opinion), only matching tools are used.&#10;&#10;Unchecked: every tool is available regardless of classification.">
             <input type="checkbox" id="askIntentFilter" checked /> Intent filter
           </label>
           <span id="askQuotaLine" class="ask-quota-line">Usage: &#8212;</span>
@@ -3231,6 +3231,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-09</div>
+              <div class="cl-ver cl-ver-minor">v3.51.2</div>
+            </div>
+            <div class="cl-content">
+              <h3>Readable checked/unchecked tooltips</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The Vendor check / Temporal filter / Intent filter tooltips now put the checked and unchecked case each on their own line, with a blank line between, instead of one run-on sentence.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
