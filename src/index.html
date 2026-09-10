@@ -542,6 +542,7 @@
     }
     #askSuggestions .ask-suggestion-text { flex: 1; min-width: 0; }
     #askSuggestions .ask-suggestion-sub { font-size: 10px; color: var(--muted); flex-shrink: 0; white-space: nowrap; }
+    #askSuggestions .ask-suggestion-ver { font-size: 10px; color: var(--muted); white-space: nowrap; }
 
     /* ── Toggles (shields.io flat-badge style) ─────────────── */
     .toggles { display: flex; gap: 5px; flex-wrap: wrap; }
@@ -1689,7 +1690,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.56.0">Releasetrain <em>v3.56.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.57.0">Releasetrain <em>v3.57.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3272,6 +3273,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-09</div>
+              <div class="cl-ver cl-ver-minor">v3.57.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Component suggestions show their latest version</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Typing a component name into Ask now shows its own latest version next to it in the suggestion list (e.g. "Android (latest: 17.0.0)"), fetched lazily per suggestion and cached so it never re-fetches the same name twice. Skips any CVE record when picking "the latest version", since a component's own most-recently-touched document can be a CVE rather than a real release.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -4905,6 +4919,40 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     let askSuggestTimer = null;
     let askSuggestActiveIdx = -1;
     let askSuggestSeq = 0; // guards against an earlier, slower request overwriting a later one
+    // A component suggestion's own latest-version bracket (e.g. "Android
+    // (latest: 17.0.0)") is fetched lazily, one component name at a time,
+    // and cached here (value null once a name is known to have nothing)
+    // so retyping/backspacing over an already-seen name never refetches
+    // it. askSuggestRenderGen guards the DOM update the fetch eventually
+    // makes: by the time it resolves, the dropdown may already be
+    // showing a completely different query's results, and this must not
+    // stamp a version onto whatever unrelated row happens to occupy that
+    // position now.
+    const componentLatestVersionCache = new Map();
+    let askSuggestRenderGen = 0;
+    async function fetchLatestVersionFor(name) {
+      const key = name.toLowerCase();
+      if (componentLatestVersionCache.has(key)) return componentLatestVersionCache.get(key);
+      let version = null;
+      try {
+        const res = await fetch(`${API_BASE}c/name/${encodeURIComponent(name)}`);
+        if (res.ok) {
+          const data = await res.json();
+          const list = Object.values(data)[0];
+          // /api/c/name/:name is sorted by most-recently-touched, not by
+          // "is this actually a product release". A CVE record can be
+          // the most recently updated document for a name (verified
+          // live: "Android"'s own top result was a Samsung CVE patch
+          // version, "20.1.00", not any real Android OS version) and
+          // would otherwise show as if it were the product's own latest
+          // version. The first non-CVE entry is the real release.
+          const real = Array.isArray(list) ? list.find(v => !v.isCve) : null;
+          version = (real && real.versionNumber) || null;
+        }
+      } catch { /* leave version null; a missing bracket beats a broken dropdown */ }
+      componentLatestVersionCache.set(key, version);
+      return version;
+    }
 
     function hideAskSuggestions() {
       askSuggestionsEl.classList.remove("open");
@@ -4923,9 +4971,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     }
     function showAskSuggestions(items) {
       askSuggestActiveIdx = -1;
-      askSuggestionsEl.innerHTML = items.map(it => it.kind === "component"
+      const gen = ++askSuggestRenderGen;
+      askSuggestionsEl.innerHTML = items.map((it, i) => it.kind === "component"
         ? `<li role="option" data-kind="component" data-val="${uaEsc(it.value)}">
              <span class="ask-suggestion-text">🧩 ${it.html}</span>
+             <span class="ask-suggestion-ver" data-ver-slot="${i}"></span>
            </li>`
         : `<li role="option" data-kind="question" data-question="${uaEsc(it.question)}" data-url="${uaEsc(it.url || "")}">
              <span class="ask-suggestion-text">💬 ${uaEsc(it.question)}</span>
@@ -4933,6 +4983,16 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
            </li>`
       ).join("");
       askSuggestionsEl.classList.add("open");
+      // Shown always, for every component row, once it resolves; not
+      // conditional on anything beyond "this row is still on screen".
+      items.forEach((it, i) => {
+        if (it.kind !== "component") return;
+        fetchLatestVersionFor(it.value).then(version => {
+          if (gen !== askSuggestRenderGen || !version) return;
+          const slot = askSuggestionsEl.querySelector(`[data-ver-slot="${i}"]`);
+          if (slot) slot.textContent = `(latest: ${version})`;
+        });
+      });
     }
     function pickAskSuggestion(li) {
       if (li.dataset.kind === "component") {
