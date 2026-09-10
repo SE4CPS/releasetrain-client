@@ -1691,7 +1691,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.58.0">Releasetrain <em>v3.58.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.59.0">Releasetrain <em>v3.59.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3274,6 +3274,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-09</div>
+              <div class="cl-ver cl-ver-minor">v3.59.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Feed groups collapsed by default; version bracket fetched live</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Every feed group now starts collapsed, including the first one. It used to default open, which read as one arbitrarily-expanded group sitting above an otherwise all-collapsed list.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> A group's "(latest: X)" bracket (added in v3.58.0) is now fetched live by name, the same call and cache the Ask suggestion dropdown already uses, instead of being computed only from whatever items the feed happens to have loaded right now. Verified live: a group showing "Patch 1"/"Minor 2" chips could still have zero non-CVE items loaded in view (those chips count a CVE record's own versionReleaseChannel field too), leaving the bracket blank even though the real latest release exists, just older than the feed's current window.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -4933,15 +4947,17 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     let askSuggestTimer = null;
     let askSuggestActiveIdx = -1;
     let askSuggestSeq = 0; // guards against an earlier, slower request overwriting a later one
-    // A component suggestion's own latest-version bracket (e.g. "Android
-    // (latest: 17.0.0)") is fetched lazily, one component name at a time,
-    // and cached here (value null once a name is known to have nothing)
-    // so retyping/backspacing over an already-seen name never refetches
-    // it. askSuggestRenderGen guards the DOM update the fetch eventually
-    // makes: by the time it resolves, the dropdown may already be
-    // showing a completely different query's results, and this must not
-    // stamp a version onto whatever unrelated row happens to occupy that
-    // position now.
+    // A component's own latest-version bracket (e.g. "Android (latest:
+    // 17.0.0)"), shown both here in the Ask suggestion dropdown and on
+    // each feed group's own header (see renderComponentNode further
+    // down), is fetched lazily, one component name at a time, and
+    // cached here (value null once a name is known to have nothing) so
+    // re-showing an already-seen name never refetches it.
+    // askSuggestRenderGen (used by this dropdown only) guards the DOM
+    // update the fetch eventually makes: by the time it resolves, the
+    // dropdown may already be showing a completely different query's
+    // results, and this must not stamp a version onto whatever
+    // unrelated row happens to occupy that position now.
     const componentLatestVersionCache = new Map();
     let askSuggestRenderGen = 0;
     async function fetchLatestVersionFor(name) {
@@ -7791,18 +7807,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // Merge two already-sorted-desc arrays into one sorted timeline
       vEntries.sort((a, b) => b.t - a.t);
       rEntries.sort((a, b) => b.t - a.t);
-      // The group header's own "(latest: X)" is the newest real release
-      // (kind "update") in this group, specifically excluding CVE
-      // records and Reddit/StackOverflow posts, since a CVE's own affected-
-      // version field is not the product's own latest release, and it
-      // can be more recently touched than any real release (verified
-      // live: "Android"'s own most-recently-updated document elsewhere
-      // in this app was a Samsung CVE patch version, not any real
-      // Android OS version).
-      const latestRelease = vEntries.find(e => e.kind === "update");
-      const latestVersionHtml = (latestRelease && latestRelease.raw && latestRelease.raw.versionNumber)
-        ? ` <span class="group-latest-ver">(latest: ${safe(latestRelease.raw.versionNumber, "")})</span>`
-        : "";
       const timeline = [];
       let vi = 0, ri = 0;
       while (vi < vEntries.length && ri < rEntries.length) {
@@ -7829,13 +7833,32 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
       const det = document.createElement("details");
       det.className = "feedGroup";
-      det.open = groupIndex === 0;
+      // Every group starts collapsed, including the first one. It used
+      // to default open, which read as one arbitrarily-expanded group
+      // sitting above an otherwise all-collapsed list.
+      det.open = false;
       det.dataset.component = group.name;
       det.dataset.itemCount = String(timeline.length);
 
       const sum = document.createElement("summary");
-      sum.innerHTML = `${safe(group.name, "")}${latestVersionHtml}<span class="summaryRight">${summaryChips}</span>`;
+      sum.innerHTML = `${safe(group.name, "")}<span class="group-latest-ver"></span><span class="summaryRight">${summaryChips}</span>`;
       det.appendChild(sum);
+      // Fetched live (fetchLatestVersionFor, shared with the Ask
+      // suggestion dropdown's own version bracket, cached the same way)
+      // rather than derived from this group's own vEntries above.
+      // Verified live: a group's currently-loaded items (bounded by
+      // whatever date window/filters the feed is showing right now) can
+      // genuinely have no real release in view at all. A component
+      // showing "Patch 1"/"Minor 2" chips can still have zero non-CVE
+      // items loaded, because those chips count a CVE record's own
+      // versionReleaseChannel field too, not only real releases, while
+      // the real latest release exists but is simply older than the
+      // feed's current window. A live fetch by name isn't limited to
+      // what happens to be loaded right now.
+      const verSlot = sum.querySelector(".group-latest-ver");
+      fetchLatestVersionFor(group.name).then(version => {
+        if (version) verSlot.textContent = ` (latest: ${version})`;
+      });
 
       const wrap = document.createElement("div"); wrap.className = "updates";
       const list = document.createElement("div"); list.className = "list";
