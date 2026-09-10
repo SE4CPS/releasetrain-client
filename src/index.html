@@ -197,9 +197,12 @@
     .ask-answer-rail { display: none; }
     @media (min-width: 900px) {
       .layout.has-ask-rail { display: flex; align-items: flex-start; gap: 20px; }
-      .layout.has-ask-rail > .feed-main { flex: 1 1 480px; min-width: 0; }
+      /* Even 50/50 split (was 1fr feed vs. a fixed 360px rail, so the
+         feed took up most of the width regardless of screen size) -
+         both sides get the same flex-basis and grow equally. */
+      .layout.has-ask-rail > .feed-main { flex: 1 1 0; min-width: 0; }
       .layout.has-ask-rail .ask-answer-rail {
-        display: block; flex: 0 0 360px; max-width: 360px;
+        display: block; flex: 1 1 0; min-width: 0; max-width: none;
         position: sticky;
         top: calc(var(--topbar-h) + var(--preview-h) + 12px);
         max-height: calc(100vh - var(--topbar-h) - var(--preview-h) - 24px);
@@ -1671,7 +1674,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.54.1">Releasetrain <em>v3.54.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.55.0">Releasetrain <em>v3.55.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3254,6 +3257,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-09</div>
+              <div class="cl-ver cl-ver-minor">v3.55.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Even 50/50 split between feed and answer</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The feed and the inline answer rail now split the available width evenly (50/50). Previously the rail stayed a fixed 360px regardless of screen size, so the feed took up most of the width on anything wider than a laptop.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
