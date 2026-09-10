@@ -178,39 +178,54 @@
          as the text wraps to more/fewer lines) has to be added to the
          layout's own top padding by hand, or the top of the page's real
          content sits underneath it. */
-      padding: calc(var(--topbar-h) + var(--preview-h) + 12px) 12px 28px;
+      padding: calc(var(--topbar-h) + var(--preview-h) + 12px) 8px 28px;
     }
     @media (max-width: 640px) {
       html, body { overflow: auto; height: auto; }
-      .layout { padding: calc(var(--topbar-h) + var(--preview-h) + 12px) 12px 32px; }
+      .layout { padding: calc(var(--topbar-h) + var(--preview-h) + 12px) 8px 32px; }
     }
 
-    /* ── Inline answer rail ──────────────────────────────────────
-       A real question's answer beside the feed instead of in the popup
-       modal, only when there's room for a second column (see the
-       min-width below, kept in sync with ASK_RAIL_MIN_WIDTH in the
-       script). .layout widens on its own (rather than the feed column
-       getting narrower) so browsing isn't cramped just because an
-       answer happens to be showing. Below the breakpoint, or in Compare
-       mode, the modal is used instead; see the submit handler. */
-    .layout.has-ask-rail { max-width: 1500px; }
-    .ask-answer-rail { display: none; }
+    /* ── Inline answer rail / Ask intro panel ─────────────────────
+       The right column is always there on a screen with room for it
+       (see the min-width below, kept in sync with ASK_RAIL_MIN_WIDTH
+       in the script), not only once a real answer exists. It shows
+       #askIntroPanel (what Ask does, with sample questions) until a
+       real question is asked, then swaps to #askAnswerRail. Below the
+       breakpoint, or in Compare mode, the popup modal is used instead
+       for a real answer, and the intro panel doesn't show at all (no
+       spare width to give it). */
+    .ask-answer-rail, .ask-intro-panel { display: none; }
     @media (min-width: 900px) {
-      .layout.has-ask-rail { display: flex; align-items: flex-start; gap: 20px; }
-      /* Even 50/50 split (was 1fr feed vs. a fixed 360px rail, so the
-         feed took up most of the width regardless of screen size) -
-         both sides get the same flex-basis and grow equally. */
-      .layout.has-ask-rail > .feed-main { flex: 1 1 0; min-width: 0; }
-      .layout.has-ask-rail .ask-answer-rail {
-        display: block; flex: 1 1 0; min-width: 0; max-width: none;
+      .layout { display: flex; align-items: flex-start; gap: 20px; max-width: 1700px; }
+      .layout > .feed-main { flex: 1 1 0; min-width: 0; }
+      .layout .ask-answer-rail, .layout .ask-intro-panel {
+        flex: 1 1 0; min-width: 0;
         position: sticky;
         top: calc(var(--topbar-h) + var(--preview-h) + 12px);
         max-height: calc(100vh - var(--topbar-h) - var(--preview-h) - 24px);
         overflow-y: auto;
       }
+      .layout .ask-intro-panel { display: block; }
+      .layout.has-ask-rail .ask-intro-panel { display: none; }
+      .layout.has-ask-rail .ask-answer-rail { display: block; }
     }
     .ask-rail-header { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
     .ask-rail-header strong { flex: 1; font-size: 13px; line-height: 1.4; color: var(--text); }
+    /* Plain, technical copy. No marketing language, no imagery beyond
+       a small heading. .ask-sample-btn reuses the feed's own muted
+       chip-like styling so the samples read as inline, clickable
+       example text rather than a separate call-to-action. */
+    .ask-intro-panel { font-size: 12px; line-height: 1.6; color: var(--muted); }
+    .ask-intro-panel h3 { font-size: 13px; color: var(--text); margin: 0 0 8px; }
+    .ask-intro-panel p { margin: 0 0 10px; }
+    .ask-intro-panel h4 { font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); margin: 14px 0 6px; }
+    .ask-intro-panel ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+    .ask-sample-btn {
+      display: block; width: 100%; text-align: left; font: inherit; font-size: 12px;
+      background: var(--chip-bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+      color: var(--text); padding: 6px 9px; cursor: pointer;
+    }
+    .ask-sample-btn:hover { border-color: var(--brand); }
 
     /* ── Sidebar (menu drawer) ──────────────────────────────────
        Off-canvas at every width, not just mobile — this is the single
@@ -1674,7 +1689,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.55.0">Releasetrain <em>v3.55.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.56.0">Releasetrain <em>v3.56.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3261,6 +3276,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-09</div>
+              <div class="cl-ver cl-ver-minor">v3.56.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>The right column is always there now, not just on demand</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> On a screen with room for it, the right column now shows an Ask intro panel (what it does, technically, plus clickable sample questions) whenever no answer is currently showing, instead of sitting empty until the first question. Swaps to the real answer the moment one exists.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The two-column layout is no longer conditional on an answer existing; it's always on at the same width it used to only switch to for an answer. The overall page's left/right padding was also trimmed slightly.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-09</div>
               <div class="cl-ver cl-ver-minor">v3.55.0</div>
             </div>
             <div class="cl-content">
@@ -4426,6 +4455,27 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       <div id="askRailBody"></div>
     </aside>
 
+    <!-- Shown in the same column slot as #askAnswerRail until a real
+         question is asked (see the CSS: .layout.has-ask-rail swaps
+         which of the two is visible). Plain technical description of
+         what Ask actually does, plus clickable sample questions that
+         fill the input without submitting it (a real question runs an
+         actual model call and, for most questions, requires sign-in). -->
+    <aside id="askIntroPanel" class="ask-intro-panel" aria-label="About Ask">
+      <h3>Ask</h3>
+      <p>Runs the typed question against a real model call, with tool access to this platform's own release notes, CVE records, and Reddit/StackOverflow data, plus a live web search fallback when the internal data doesn't cover it.</p>
+      <p>A bare vendor or category name (e.g. "mysql", "llm") is resolved and browsed directly with no model call. A real question requires sign-in (Account view); resolving a name does not.</p>
+      <h4>Pipeline</h4>
+      <p>The Pipeline dropdown picks how the question is answered: a single continuous tool-use loop (Single-agent, Multi-agent buggy/fixed) or genuine role delegation (Multi-agent delegated, with an optional feedback loop). "Compare all 5" runs every pipeline on the same question side by side.</p>
+      <h4>Try asking</h4>
+      <ul>
+        <li><button type="button" class="ask-sample-btn" data-ask-sample="What's the latest PHP version?">What's the latest PHP version?</button></li>
+        <li><button type="button" class="ask-sample-btn" data-ask-sample="Are there any recent CVEs affecting MySQL?">Are there any recent CVEs affecting MySQL?</button></li>
+        <li><button type="button" class="ask-sample-btn" data-ask-sample="Did the latest Chrome update break WebView?">Did the latest Chrome update break WebView?</button></li>
+        <li><button type="button" class="ask-sample-btn" data-ask-sample="What changed in the newest Firefox release?">What changed in the newest Firefox release?</button></li>
+      </ul>
+    </aside>
+
   </div><!-- /.layout -->
 
   <button id="backToTop" aria-label="Back to top" title="Back to top">↑</button>
@@ -4698,6 +4748,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     const ASK_INTENT_TAGS = { cve: "cve-question", patch: "patch-question", version: "version-question", general: "general-question", opinion: "opinion" };
 
     const askQuestionEl = document.getElementById("askQuestion");
+    // #askIntroPanel's sample buttons fill the input and focus it; they
+    // never submit on their own, since a real question runs an actual
+    // model call (and, for most questions, requires sign-in) rather
+    // than something safe to trigger from a single click on a static
+    // example. updateAskPreview is defined further below in this same
+    // script, so this listener is wired after it exists (DOM events
+    // fire well after the whole script has run).
+    document.getElementById("askIntroPanel")?.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-ask-sample]");
+      if (!btn) return;
+      askQuestionEl.value = btn.dataset.askSample;
+      askQuestionEl.focus();
+      updateAskPreview();
+    });
     const askIntentBadgeEl = document.getElementById("askIntentBadge");
     const askQueryPreviewEl = document.getElementById("askQueryPreview");
     const askVendorCheckEl = document.getElementById("askVendorCheck");
