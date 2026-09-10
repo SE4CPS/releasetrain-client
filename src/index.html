@@ -706,6 +706,7 @@
     .summaryRight {
       display: flex; gap: 4px; margin-left: auto; flex-wrap: wrap; align-items: center;
     }
+    .group-latest-ver { font-weight: 400; font-size: 10px; color: var(--muted); }
 
     /* ── Timeline items ─────────────────────────────────────── */
     .updates { padding: 2px 12px 2px; }
@@ -1690,7 +1691,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.57.0">Releasetrain <em>v3.57.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.58.0">Releasetrain <em>v3.58.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3273,6 +3274,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-09</div>
+              <div class="cl-ver cl-ver-minor">v3.58.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Feed group headers show their latest version</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Each collapsed feed group's header now shows "(latest: X)" next to the component name, computed from the group's own already-loaded items, not a separate fetch. Only counts a real release (excludes CVE records and Reddit/StackOverflow posts), so a component whose most-recently-touched document happens to be a CVE still shows its actual latest version, not the CVE's own affected-version number.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -7777,6 +7791,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // Merge two already-sorted-desc arrays into one sorted timeline
       vEntries.sort((a, b) => b.t - a.t);
       rEntries.sort((a, b) => b.t - a.t);
+      // The group header's own "(latest: X)" is the newest real release
+      // (kind "update") in this group, specifically excluding CVE
+      // records and Reddit/StackOverflow posts, since a CVE's own affected-
+      // version field is not the product's own latest release, and it
+      // can be more recently touched than any real release (verified
+      // live: "Android"'s own most-recently-updated document elsewhere
+      // in this app was a Samsung CVE patch version, not any real
+      // Android OS version).
+      const latestRelease = vEntries.find(e => e.kind === "update");
+      const latestVersionHtml = (latestRelease && latestRelease.raw && latestRelease.raw.versionNumber)
+        ? ` <span class="group-latest-ver">(latest: ${safe(latestRelease.raw.versionNumber, "")})</span>`
+        : "";
       const timeline = [];
       let vi = 0, ri = 0;
       while (vi < vEntries.length && ri < rEntries.length) {
@@ -7808,7 +7834,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       det.dataset.itemCount = String(timeline.length);
 
       const sum = document.createElement("summary");
-      sum.innerHTML = `${group.name}<span class="summaryRight">${summaryChips}</span>`;
+      sum.innerHTML = `${safe(group.name, "")}${latestVersionHtml}<span class="summaryRight">${summaryChips}</span>`;
       det.appendChild(sum);
 
       const wrap = document.createElement("div"); wrap.className = "updates";
