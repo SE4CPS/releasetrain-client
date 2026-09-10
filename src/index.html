@@ -421,6 +421,17 @@
       color: var(--brand); margin-bottom: 6px;
     }
     .ask-answer-summary { font-size: 13px; line-height: 1.6; margin: 0 0 10px; }
+    /* The one substring (a version number, so far) that most directly
+       answers the question, per the server's own highlightTerm (see
+       ask.js's highestVersionSource). Never a client-side guess at
+       what looks important. A translucent green wash, like a
+       highlighter pen, rather than a solid background + explicit text
+       color: the existing background and font color underneath show
+       through unchanged, so this reads correctly regardless of which
+       ancestor card/rail styling it's sitting inside. */
+    .ask-answer-summary mark.ask-answer-mark {
+      background: rgba(74, 222, 128, .45); color: inherit; border-radius: 3px; padding: 0 2px;
+    }
     .ask-answer-summary p { margin: 0 0 8px; }
     .ask-answer-summary p:last-child { margin-bottom: 0; }
     .ask-answer-summary ul, .ask-answer-summary ol { margin: 0 0 8px; padding-left: 20px; }
@@ -1704,7 +1715,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.60.1">Releasetrain <em>v3.60.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.61.0">Releasetrain <em>v3.61.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3287,6 +3298,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-09</div>
+              <div class="cl-ver cl-ver-minor">v3.61.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>The direct answer is highlighted in the response</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The exact substring that most directly answers a version question (e.g. "8.5.10") is now highlighted in green in the answer text, wherever it appears. Comes from the server's own <code>highlightTerm</code>, the same deterministically-verified version number ask.js already checks the answer against, so this never guesses at what looks important, only ever marks a value already confirmed correct.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5384,6 +5408,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // not a real heading tag. Keeps the compact answer card's type
     // scale consistent rather than introducing a much bigger heading
     // mid-card).
+    // Wraps every occurrence of `term` (res.highlightTerm from the
+    // server, e.g. "8.5.10") in a <mark> after mdLite has already run,
+    // not before. Applying it to the rendered HTML string rather than
+    // the raw markdown means it can't land inside an already-open tag,
+    // since a version number never appears as part of mdLite's own
+    // markup (just <strong>/<code>/list tags). `term` is never a guess:
+    // see highlightTerm's own comment in ask.js for why the server only
+    // ever sends a value it already deterministically verified.
+    function highlightAnswerTerm(html, term) {
+      if (!term) return html;
+      const rx = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g");
+      return html.replace(rx, (m) => `<mark class="ask-answer-mark">${m}</mark>`);
+    }
     function mdLite(text) {
       const escaped = uaEsc(text)
         .replace(/\*\*([^\n*]+?)\*\*/g, "<strong>$1</strong>")
@@ -5494,7 +5531,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const shownAnswer = wasTrimmed ? truncate(fullAnswer, opts.trimAnswer) : fullAnswer;
       return `<div class="ask-answer-card${res.abstained ? " ask-answer-abstained" : ""}" data-run-id="${uaEsc(res.runId || "")}">
         <div class="ask-answer-label">${uaEsc(label)}${res.abstained ? `<span class="ask-abstain-badge">⛔ ${uaEsc(ASK_ABSTAIN_REASON_LABELS[res.abstainReason] || "Abstained")}</span>` : ""}</div>
-        <div class="ask-answer-summary">${mdLite(shownAnswer)}</div>
+        <div class="ask-answer-summary">${highlightAnswerTerm(mdLite(shownAnswer), res.highlightTerm)}</div>
         ${wasTrimmed ? '<button type="button" class="btn btn-ghost ask-view-full-btn" style="font-size:11px;padding:3px 8px;margin:-4px 0 8px">Show full answer</button>' : ""}
         ${askRenderMetaChips(res)}
         ${askRenderSources(res.sources)}
