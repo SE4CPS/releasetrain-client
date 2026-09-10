@@ -429,21 +429,22 @@
       font-family: var(--mono); font-size: 12px; background: var(--chip-bg);
       color: var(--chip-text); padding: 1px 4px; border-radius: var(--radius-sm);
     }
-    .ask-sources { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
-    .ask-sources li { font-size: 12px; line-height: 1.5; }
+    /* Sources flow left to right as compact chips, wrapping to a new
+       line only once a row genuinely runs out of width, not one
+       source per line. Avoids a tall, scrollable stack of one-per-line
+       sources for a question with many citations; each chip is sized
+       to its own content, so short titles pack several per line. */
+    .ask-sources { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+    .ask-sources li { font-size: 12px; line-height: 1.4; }
     .ask-sources a { color: var(--text); text-decoration: none; }
     .ask-sources a:hover { text-decoration: underline; color: var(--brand); }
-    /* Icon, title, and date each in their own fixed-width grid column so
-       every row's date lines up at the same x position, instead of
-       trailing right after each row's own differently-long title. Fixed
-       px widths (not 1fr) are what actually make this align: each <li>
-       is its own independent grid, so a flexible column's width would
-       be computed per-row and never line up across rows the way a
-       shared, literal pixel width does. */
-    .ask-source-row { display: grid; grid-template-columns: 18px 150px auto; column-gap: 6px; align-items: baseline; }
-    .ask-source-icon { text-align: center; }
+    .ask-source-row {
+      display: inline-flex; align-items: baseline; gap: 4px; max-width: 100%;
+      padding: 3px 8px; border-radius: var(--radius-sm); border: 1px solid var(--border);
+      background: var(--chip-bg);
+    }
     .ask-source-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .ask-source-date { color: var(--muted); white-space: nowrap; }
+    .ask-source-date { color: var(--muted); font-size: 11px; white-space: nowrap; }
     /* Groups the answer's actual documented evidence (release notes, CVE)
        apart from community/web discussion, so the two read as separate
        things instead of one flat, undifferentiated list. */
@@ -1703,7 +1704,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.60.0">Releasetrain <em>v3.60.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.60.1">Releasetrain <em>v3.60.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3286,6 +3287,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-09</div>
+              <div class="cl-ver cl-ver-patch">v3.60.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Sources flow left to right instead of one per line</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> v3.60.0's column-aligned, one-per-line source list is replaced with a wrapping row of compact chips: sources flow left to right and only drop to a new line once a row runs out of width, instead of every source taking its own line regardless of how short it is.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
