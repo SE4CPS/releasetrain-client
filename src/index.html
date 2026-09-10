@@ -446,7 +446,7 @@
        sources for a question with many citations; each chip is sized
        to its own content, so short titles pack several per line. */
     .ask-sources { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
-    .ask-sources li { font-size: 12px; line-height: 1.4; }
+    .ask-sources li { font-size: 12px; line-height: 1.4; min-width: 0; max-width: 100%; }
     .ask-sources a { color: var(--text); text-decoration: none; }
     .ask-sources a:hover { text-decoration: underline; color: var(--brand); }
     .ask-source-row {
@@ -454,8 +454,12 @@
       padding: 3px 8px; border-radius: var(--radius-sm); border: 1px solid var(--border);
       background: var(--chip-bg);
     }
-    .ask-source-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .ask-source-date { color: var(--muted); font-size: 11px; white-space: nowrap; }
+    .ask-source-icon { flex: 0 0 auto; }
+    /* min-width:0 lets this flex child shrink below its content so a long
+       title wraps inside the chip instead of forcing the whole card to
+       scroll sideways; overflow-wrap breaks a giant unbroken token too. */
+    .ask-source-title { min-width: 0; overflow-wrap: anywhere; }
+    .ask-source-date { flex: 0 0 auto; color: var(--muted); font-size: 11px; white-space: nowrap; }
     /* Groups the answer's actual documented evidence (release notes, CVE)
        apart from community/web discussion, so the two read as separate
        things instead of one flat, undifferentiated list. */
@@ -1715,7 +1719,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.61.0">Releasetrain <em>v3.61.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.61.1">Releasetrain <em>v3.61.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3298,6 +3302,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-10</div>
+              <div class="cl-ver cl-ver-patch">v3.61.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Long source titles wrap instead of scrolling sideways</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> A long Reddit/discussion title in an answer's Sources list forced a horizontal scrollbar on the answer card. Titles now wrap inside their chip.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
