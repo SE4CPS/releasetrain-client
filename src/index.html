@@ -216,6 +216,7 @@
        chip-like styling so the samples read as inline, clickable
        example text rather than a separate call-to-action. */
     .ask-intro-panel { font-size: 12px; line-height: 1.6; color: var(--muted); }
+    .ask-intro-panel a { color: var(--brand); text-decoration: underline; }
     .ask-intro-panel h3 { font-size: 13px; color: var(--text); margin: 0 0 8px; }
     .ask-intro-panel p { margin: 0 0 10px; }
     .ask-intro-panel h4 { font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); margin: 14px 0 6px; }
@@ -432,6 +433,17 @@
     .ask-sources li { font-size: 12px; line-height: 1.5; }
     .ask-sources a { color: var(--text); text-decoration: none; }
     .ask-sources a:hover { text-decoration: underline; color: var(--brand); }
+    /* Icon, title, and date each in their own fixed-width grid column so
+       every row's date lines up at the same x position, instead of
+       trailing right after each row's own differently-long title. Fixed
+       px widths (not 1fr) are what actually make this align: each <li>
+       is its own independent grid, so a flexible column's width would
+       be computed per-row and never line up across rows the way a
+       shared, literal pixel width does. */
+    .ask-source-row { display: grid; grid-template-columns: 18px 150px auto; column-gap: 6px; align-items: baseline; }
+    .ask-source-icon { text-align: center; }
+    .ask-source-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ask-source-date { color: var(--muted); white-space: nowrap; }
     /* Groups the answer's actual documented evidence (release notes, CVE)
        apart from community/web discussion, so the two read as separate
        things instead of one flat, undifferentiated list. */
@@ -1691,7 +1703,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.59.0">Releasetrain <em>v3.59.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.60.0">Releasetrain <em>v3.60.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3278,6 +3290,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-09</div>
+              <div class="cl-ver cl-ver-minor">v3.60.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Source list columns line up; sign-in link in the Ask panel</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Each Documented/Discussion source row's icon, title, and date now sit in fixed grid columns, so every row's date lines up at the same position instead of trailing right after that row's own differently-long title.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The Ask intro panel's "requires sign-in" text is now a real link straight to the Account view, instead of only naming it in prose.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-09</div>
               <div class="cl-ver cl-ver-minor">v3.59.0</div>
             </div>
             <div class="cl-content">
@@ -4506,7 +4532,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     <aside id="askIntroPanel" class="ask-intro-panel" aria-label="About Ask">
       <h3>Ask</h3>
       <p>Runs the typed question against a real model call, with tool access to this platform's own release notes, CVE records, and Reddit/StackOverflow data, plus a live web search fallback when the internal data doesn't cover it.</p>
-      <p>A bare vendor or category name (e.g. "mysql", "llm") is resolved and browsed directly with no model call. A real question requires sign-in (Account view); resolving a name does not.</p>
+      <p>A bare vendor or category name (e.g. "mysql", "llm") is resolved and browsed directly with no model call. A real question requires <a href="#" id="askIntroSignInLink" target="_self">sign-in</a>; resolving a name does not.</p>
       <h4>Pipeline</h4>
       <p>The Pipeline dropdown picks how the question is answered: a single continuous tool-use loop (Single-agent, Multi-agent buggy/fixed) or genuine role delegation (Multi-agent delegated, with an optional feedback loop). "Compare all 5" runs every pipeline on the same question side by side.</p>
       <h4>Try asking</h4>
@@ -4799,10 +4825,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // fire well after the whole script has run).
     document.getElementById("askIntroPanel")?.addEventListener("click", (e) => {
       const btn = e.target.closest("[data-ask-sample]");
-      if (!btn) return;
-      askQuestionEl.value = btn.dataset.askSample;
-      askQuestionEl.focus();
-      updateAskPreview();
+      if (btn) {
+        askQuestionEl.value = btn.dataset.askSample;
+        askQuestionEl.focus();
+        updateAskPreview();
+        return;
+      }
+      // "sign-in" link in the intro panel's own copy. Opens the same
+      // Account view the sidebar's own 👤 Account link does
+      // (activateUsers, defined further below in this same script;
+      // safe to reference here since function declarations are hoisted
+      // and this only actually runs on a later click, not at wiring
+      // time). Not a second, separate sign-in flow.
+      if (e.target.closest("#askIntroSignInLink")) {
+        e.preventDefault();
+        activateUsers();
+      }
     });
     const askIntentBadgeEl = document.getElementById("askIntentBadge");
     const askQueryPreviewEl = document.getElementById("askQueryPreview");
@@ -5271,10 +5309,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         return '<p class="ask-muted">No sources were found for this question.</p>';
       }
       const icon = k => k === "cve" ? "🔴" : k === "reddit" ? "💬" : k === "web" ? "🌐" : "📦";
+      // Icon/title/date each their own grid cell (see .ask-source-row's
+      // own CSS comment) so every row's date lines up in the same
+      // column, instead of trailing right after each row's own
+      // differently-long title.
       const renderItem = s => {
         const dateStr = s.date ? String(s.date) : "";
-        const label = `${icon(s.kind)} <strong>${uaEsc(s.title)}</strong>${dateStr ? " · " + uaEsc(dateStr) : ""}`;
-        return `<li>${s.url ? `<a href="${uaEsc(s.url)}" target="_blank" rel="noopener">${label}</a>` : label}</li>`;
+        const cells = `<span class="ask-source-icon">${icon(s.kind)}</span>` +
+          `<span class="ask-source-title"><strong>${uaEsc(s.title)}</strong></span>` +
+          `<span class="ask-source-date">${dateStr ? "· " + uaEsc(dateStr) : ""}</span>`;
+        return `<li>${s.url
+          ? `<a class="ask-source-row" href="${uaEsc(s.url)}" target="_blank" rel="noopener">${cells}</a>`
+          : `<span class="ask-source-row">${cells}</span>`}</li>`;
       };
       const documented = sources.filter(s => s.kind === "cve" || s.kind === "release");
       const discussion = sources.filter(s => s.kind !== "cve" && s.kind !== "release");
