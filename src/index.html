@@ -319,13 +319,18 @@
        elsewhere in this file: [hidden] alone is a UA-origin rule and loses
        to a plain author `display: flex` at equal specificity regardless of
        source order, so the override has to be spelled out explicitly. */
-    .ask-pipeline-status { display: flex; flex-wrap: wrap; gap: 4px 8px; font-size: 11px; }
+    /* One step per row (was a wrapped horizontal line with arrows crammed
+       between entries). With several rounds of Retriever/Orchestrator on
+       a multi-agent preset, a single wrapped line reads as a run-on blur;
+       a step per row plus its own small arrow underneath reads as an
+       actual sequence. */
+    .ask-pipeline-status { display: flex; flex-direction: column; gap: 2px; font-size: 11px; }
     .ask-pipeline-status[hidden] { display: none; }
-    .ask-pipeline-step { white-space: nowrap; color: var(--muted); }
+    .ask-pipeline-step { display: block; white-space: normal; color: var(--muted); }
     .ask-pipeline-step em { font-style: normal; font-variant-numeric: tabular-nums; font-weight: 600; }
     .ask-pipeline-step.ask-pipeline-active { color: var(--brand); font-weight: 600; }
     .ask-pipeline-step.ask-pipeline-pending { opacity: .5; }
-    .ask-pipeline-arrow { color: var(--border); }
+    .ask-pipeline-arrow { display: block; color: var(--border); line-height: 1; }
     .ask-options-row {
       display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
       font-size: 11px; color: var(--muted);
@@ -1671,7 +1676,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.53.0">Releasetrain <em>v3.53.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.54.0">Releasetrain <em>v3.54.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3254,6 +3259,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-09</div>
+              <div class="cl-ver cl-ver-minor">v3.54.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Every round of a multi-agent pipeline is now numbered</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> On Multi-agent (buggy) and Multi-agent (fixed), a repeated Retriever/Orchestrator round now shows a number (e.g. "Retriever #2: Searching the web", "Orchestrator #2: Generating answer") instead of the same two labels appearing over and over with no way to tell one round apart from another. Matches the #1/#2 tagging the delegated presets already got.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The pipeline ticker now shows one step per row instead of a single wrapped line with arrows crammed between entries. A question with several rounds reads as an actual sequence now, not a run-on blur.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
