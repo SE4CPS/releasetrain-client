@@ -793,7 +793,10 @@
       display: grid; grid-template-columns: 92px 22px 1fr;
       column-gap: 10px; padding: 10px 0 10px 8px;
       border-bottom: 1px solid var(--border);
-      border-left: 2px solid transparent; align-items: start;
+      /* Rounded on the left-border side only, so a colored indicator
+         reads as a soft accent instead of a hard rectangular bar. */
+      border-left: 2px solid transparent; border-radius: 0 4px 4px 0;
+      align-items: start;
       transition: background .1s;
     }
     .li:hover { background: var(--bg); }
@@ -805,9 +808,13 @@
     .li.kind-reddit.risk { border-left-color: var(--risk); background: var(--risk-bg); }
     .li.kind-stackoverflow { border-left-color: var(--muted); }
     .li.kind-stackoverflow.risk { border-left-color: var(--risk); background: var(--risk-bg); }
-    .li.is-new { border-left-color: var(--text); }
-    .li.kind-llm { border-left-color: var(--text); }
-    .li.kind-hv { border-left-color: var(--text); }
+    /* var(--text) (near-black) read as too heavy/dominant for a plain
+       "posted today" indicator. These three already have their own
+       (currently-unused) softer neutral tokens defined for exactly
+       this purpose; use them instead of the page's darkest ink color. */
+    .li.is-new { border-left-color: var(--new); }
+    .li.kind-llm { border-left-color: var(--llm); }
+    .li.kind-hv { border-left-color: var(--hv); }
     /* Stands in for the removed per-row "major" text chip: the one
        channel with no icon of its own, so it keeps some visual cue. */
     .li.kind-update.major { border-left-color: var(--ok); }
@@ -1785,7 +1792,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.18">Releasetrain <em>v3.62.18</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.19">Releasetrain <em>v3.62.19</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2032,7 +2039,7 @@
           <summary>Stats</summary>
           <div class="sidebar-section" style="padding-bottom:12px">
             <div class="kpis" role="status" aria-live="polite" aria-label="Summary statistics">
-              <div class="kpi">📦 Groups <em id="kpi-page">0</em></div>
+              <div class="kpi">📦 Components <em id="kpi-page">0</em></div>
               <div class="kpi">🧩 Components <em id="kpi-uniq">0</em></div>
               <div class="kpi">💬 Reddit <em id="kpi-reddit">0</em></div>
               <div class="kpi">🤖 AI Models <em id="kpi-llm">0</em></div>
@@ -3368,6 +3375,23 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-11</div>
+              <div class="cl-ver cl-ver-patch">v3.62.19</div>
+            </div>
+            <div class="cl-content">
+              <h3>Components, not groups; softer accents; a Major/Minor/Patch fix</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> A CVE record carries its own release channel too (a CVE affecting 6.31.1 reads channel "patch"), which was double-counting it into both the 🔴 CVE chip and the Major/Minor/Patch chips. Those three now only count real, non-CVE release-notes entries.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Renamed "Groups" to "Components" throughout the feed panel (sidebar KPI, "Expand all" button title, the header's own count): "group" was this app's internal grouping mechanism, "component" is what a reader actually thinks of each entry as.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Removed the "N groups" text that repeated on the right side of the header, now that the header's own "(last 2 weeks, N components)" label already states it.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Dropped the ".py" from each component's "Source: chrome, github" line. The real sourceBot value keeps it (for consistency with releasetrain-bot's own naming); only the display drops it.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The "posted today" row indicator (and the LLM/Hypervisor ones) used the page's darkest near-black ink color, which read as too heavy a bar. Switched to the softer neutral tokens already defined for exactly this purpose, and every row's left-border accent is now rounded instead of a hard rectangular edge.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -4905,7 +4929,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <option value="activity">Sort: Most activity</option>
           </select>
           <button class="btn btn-ghost" type="button" id="expandAllBtn"
-            title="Expand or collapse all groups">Expand all</button>
+            title="Expand or collapse all components">Expand all</button>
           <div id="status" class="status" aria-live="polite">Idle</div>
         </header>
 
@@ -8246,17 +8270,17 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     }
 
     /* ── Range KPI helper ────────────────────────────────────── */
-    // "Recent Updates (last N weeks)" also states how many groups that
-    // window currently holds, so the header itself answers "how much is
-    // actually in here" without having to read the separate #status text
-    // below it. Weeks computed from LOOKBACK_DAYS rather than hardcoded,
-    // same reasoning as everywhere else this constant is the single
-    // source of truth for the window's length.
+    // "Recent Updates (last N weeks)" also states how many components
+    // that window currently holds, so the header itself answers "how
+    // much is actually in here": the separate #status text used to
+    // repeat this same count on the right, which was just redundant.
+    // Weeks computed from LOOKBACK_DAYS rather than hardcoded, same
+    // reasoning as everywhere else this constant is the source of truth.
     function updateFeedWindowLabel() {
       if (!EL.feedWindowLabel) return;
       const weeks = Math.round(LOOKBACK_DAYS / 7);
       const n = STATE.groupsFiltered.length;
-      EL.feedWindowLabel.textContent = `(last ${weeks} week${weeks !== 1 ? "s" : ""}, ${n.toLocaleString()} group${n !== 1 ? "s" : ""})`;
+      EL.feedWindowLabel.textContent = `(last ${weeks} week${weeks !== 1 ? "s" : ""}, ${n.toLocaleString()} component${n !== 1 ? "s" : ""})`;
     }
 
     function updateRangeKpi(items) {
@@ -8345,7 +8369,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       EL["kpi-page"].textContent = STATE.groupsFiltered.length;
       EL.sentinel.textContent = STATE.groupsFiltered.length ? "Loading more…" : "No results";
       EL.emptyState.classList.toggle("show", !STATE.groupsFiltered.length);
-      EL.status.textContent = `${STATE.groupsFiltered.length} group${STATE.groupsFiltered.length !== 1 ? "s" : ""}`;
+      // The header's own "(last N weeks, M components)" label now states
+      // this same count. #status stays reserved for transient messages
+      // (Loading…, Filtering…, error states) elsewhere in this file, not
+      // a steady-state repeat of a number already shown above the feed.
+      EL.status.textContent = "";
       updateFeedWindowLabel();
       appendNextGroups();
 
@@ -8400,9 +8428,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const cveCount = timeline.filter(x => x.kind === "cve").length;
       const redditCount = timeline.filter(x => x.kind === "reddit").length;
       const soCount = timeline.filter(x => x.kind === "stackoverflow").length;
-      const majorCount = timeline.filter(x => x.channel === "major").length;
-      const minorCount = timeline.filter(x => x.channel === "minor").length;
-      const patchCount = timeline.filter(x => x.channel === "patch").length;
+      // A CVE record carries its own versionReleaseChannel too (e.g. a CVE
+      // affecting 6.31.1 reads channel "patch"), which double-counted it
+      // into both the CVE chip and the Major/Minor/Patch chips. These are
+      // meant to read as real release-notes activity, so only count
+      // kind==="update" entries here, never a CVE's own channel value.
+      const majorCount = timeline.filter(x => x.kind === "update" && x.channel === "major").length;
+      const minorCount = timeline.filter(x => x.kind === "update" && x.channel === "minor").length;
+      const patchCount = timeline.filter(x => x.kind === "update" && x.channel === "patch").length;
 
       const summaryChips = [
         cveCount ? chip(`🔴 CVE ${cveCount}`, "bad") : "",
@@ -8413,7 +8446,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         patchCount ? chip(`🩹 Patch ${patchCount}`, "soft") : "",
       ].filter(Boolean).join("");
 
-      // Which bot(s) actually produced this component's own content -
+      // Which bot(s) actually produced this component's own content:
       // replaces the old global, deck-wide "Recent Updates" source
       // breakdown (which just listed raw totals with no way to tell
       // which component each count belonged to). Reddit/StackOverflow
@@ -8428,8 +8461,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (redditCount) botSet.add("reddit.py");
       if (soCount) botSet.add("stackoverflow.py");
       const bots = [...botSet].sort((a, b) => (a === "unknown") - (b === "unknown") || a.localeCompare(b));
+      // ".py" is an implementation detail (the actual script filename,
+      // kept as the real sourceBot value so it stays consistent with
+      // maintainer.py's own naming), not something a reader needs to see.
+      const botLabel = b => b === "unknown" ? "unknown" : b.replace(/\.py$/, "");
       const sourceLine = bots.length
-        ? `<div class="groupSource">📦 ${bots.length > 1 ? "Sources" : "Source"}: ${bots.map(uaEsc).join(", ")}</div>`
+        ? `<div class="groupSource">📦 ${bots.length > 1 ? "Sources" : "Source"}: ${bots.map(b => uaEsc(botLabel(b))).join(", ")}</div>`
         : "";
 
       const det = document.createElement("details");
