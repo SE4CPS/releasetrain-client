@@ -1824,7 +1824,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.63.1">Releasetrain <em>v3.63.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.63.2">Releasetrain <em>v3.63.2</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3401,6 +3401,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-11</div>
+              <div class="cl-ver cl-ver-patch">v3.63.2</div>
+            </div>
+            <div class="cl-content">
+              <h3>Workflow diagram redraws live, each box shows its own seconds</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> A fast-completing role (a comparison question's Retriever calls are plain DB lookups, often well under 100ms) could finish before its own "active" render ever painted, since the next phase's render raced past it: the diagram would sit at its very first idle frame for the whole request and only ever show the final state. Now redrawn every 250ms while a request is running, not just on each phase event, so even a very short-lived active state gets at least one real frame on screen.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Each box now shows its own elapsed seconds under its name (e.g. "Retriever, 0.4s"), live-updating while that role is active and frozen once it's done, instead of one combined caption line below the whole diagram.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5504,6 +5518,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // Replaces the old top-of-page text ticker (#askPipelineStatus):
     // this lives in the answer rail instead, next to the answer itself.
     let askWorkflowState = null;      // { rewriter, retriever, evaluator, orchestrator } -> idle|active|done
+    let askWorkflowTiming = null;     // { rewriter, retriever, evaluator, orchestrator } -> { startedAt, doneMs } | null
     let askWorkflowLabel = "";        // current phase's own label (askPhaseLabel), shown under the diagram
     let askWorkflowStartedAt = null;  // for the caption's live elapsed-seconds tick
     let askWorkflowTickTimer = null;
@@ -5531,18 +5546,32 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       return _askMermaidLoadPromise;
     }
     // Flat fills, no gradient/shadow, kept legible at this diagram's
-    // small size. Short single-word node labels so mermaid's own
-    // auto-sizing never has to cram text against a box edge.
+    // small size. Short single-word node labels (plus a second line for
+    // elapsed seconds, once a node has any) so mermaid's own auto-sizing
+    // never has to cram text against a box edge.
     const ASK_WORKFLOW_NODE_STYLE = {
       idle: "fill:#e2eede,stroke:#c3d8c0,color:#5c6e59",
       active: "fill:#2563eb,stroke:#2563eb,color:#fff",
       done: "fill:#16a34a,stroke:#16a34a,color:#fff",
     };
+    // A node that completed in well under a second still deserves a
+    // real, honest reading rather than "0.0s". One decimal place is
+    // the finest granularity worth showing a reader here.
+    function askWorkflowNodeSeconds(node) {
+      const t = askWorkflowTiming && askWorkflowTiming[node];
+      if (!t) return null;
+      const ms = t.doneMs != null ? t.doneMs : Date.now() - t.startedAt;
+      return (ms / 1000).toFixed(1) + "s";
+    }
     function askWorkflowMermaidSource(state) {
       const style = k => ASK_WORKFLOW_NODE_STYLE[state[k] || "idle"];
+      const label = (k, name) => {
+        const secs = askWorkflowNodeSeconds(k);
+        return secs ? `${name}<br/>${secs}` : name;
+      };
       return [
         "flowchart LR",
-        "  RW(Rewriter) --> RT(Retriever) --> EV(Evaluator) --> OR(Orchestrator)",
+        `  RW("${label("rewriter", "Rewriter")}") --> RT("${label("retriever", "Retriever")}") --> EV("${label("evaluator", "Evaluator")}") --> OR("${label("orchestrator", "Orchestrator")}")`,
         "  EV -. retry .-> RT",
         `  style RW ${style("rewriter")}`,
         `  style RT ${style("retriever")}`,
@@ -5573,38 +5602,69 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // Starts fresh state for a new question. The previous question's
     // finished diagram/caption are kept on screen for reference until
     // this runs again, not cleared when that question's answer arrives.
+    // The tick redraws the whole diagram, not just the caption. A
+    // comparison question's Retriever calls are plain DB lookups that
+    // can complete in well under 100ms, faster than a single phase
+    // event could otherwise be seen at all; a redraw every 250ms means
+    // the currently-active node's own seconds count is visibly ticking
+    // up in real time, and even a very short-lived state still gets at
+    // least one real frame on screen instead of being silently skipped
+    // by the next phase's render racing past it (see renderAskWorkflowDiagram's
+    // own askWorkflowRenderSeq guard).
     function startAskWorkflow() {
       askWorkflowState = { rewriter: "idle", retriever: "idle", evaluator: "idle", orchestrator: "idle" };
+      askWorkflowTiming = { rewriter: null, retriever: null, evaluator: null, orchestrator: null };
       askWorkflowLabel = ""; askWorkflowStartedAt = null;
       if (askWorkflowTickTimer) clearInterval(askWorkflowTickTimer);
-      askWorkflowTickTimer = setInterval(renderAskWorkflowCaption, 100);
+      askWorkflowTickTimer = setInterval(() => { renderAskWorkflowCaption(); renderAskWorkflowDiagram(); }, 250);
+    }
+    // Freezes doneMs on whichever node(s) are currently "active" (their
+    // own elapsed time stops growing) right before the state itself
+    // flips to "done". Shared by both a normal phase transition and
+    // the end-of-request finish, so a node's frozen time always matches
+    // the moment it actually stopped being active.
+    function freezeActiveAskWorkflowTiming(now) {
+      for (const k of Object.keys(askWorkflowState)) {
+        if (askWorkflowState[k] !== "active") continue;
+        const t = askWorkflowTiming[k];
+        if (t && t.doneMs == null) t.doneMs = now - t.startedAt;
+      }
     }
     function pushAskWorkflowPhase(phase, detail, preset, meta) {
       if (!askWorkflowState) return;
+      const now = Date.now();
       askWorkflowLabel = askPhaseLabel(phase, detail, preset, meta);
-      askWorkflowStartedAt = Date.now();
+      askWorkflowStartedAt = now;
       const node = ASK_WORKFLOW_PHASE_NODE[phase];
       if (node) {
+        freezeActiveAskWorkflowTiming(now);
         for (const k of Object.keys(askWorkflowState)) {
           if (askWorkflowState[k] === "active") askWorkflowState[k] = "done";
         }
         askWorkflowState[node] = "active";
+        askWorkflowTiming[node] = { startedAt: now, doneMs: null };
         // "retrying" means the Evaluator is sending the Retriever back
         // for another pass. The Retriever lighting up again (not
-        // staying "done" from its first pass) is the whole point here.
-        if (phase === "retrying") askWorkflowState.retriever = "active";
+        // staying "done" from its first pass, with a fresh timer for
+        // this second pass) is the whole point here.
+        if (phase === "retrying") {
+          askWorkflowState.retriever = "active";
+          askWorkflowTiming.retriever = { startedAt: now, doneMs: null };
+        }
       }
       renderAskWorkflowCaption();
       renderAskWorkflowDiagram();
     }
     // Called once the request is done, success or failure. Freezes the
     // caption's elapsed time and stops the live tick, marks whichever
-    // node was still active as done, but leaves the diagram/caption
-    // visible for reference (useful for evaluation) until the next
-    // question starts a new one.
+    // node was still active as done (and freezes its own elapsed time),
+    // but leaves the diagram/caption visible for reference (useful for
+    // evaluation) until the next question starts a new one.
     function finishAskWorkflow() {
       if (askWorkflowTickTimer) { clearInterval(askWorkflowTickTimer); askWorkflowTickTimer = null; }
       if (!askWorkflowState) return;
+      const now = Date.now();
+      freezeActiveAskWorkflowTiming(now);
       for (const k of Object.keys(askWorkflowState)) {
         if (askWorkflowState[k] === "active") askWorkflowState[k] = "done";
       }
