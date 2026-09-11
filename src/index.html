@@ -742,24 +742,37 @@
 
     summary {
       cursor: pointer; list-style: none; user-select: none;
-      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      display: flex; flex-direction: column; gap: 5px;
       padding: 7px 12px; font-weight: 600; font-size: 12px;
       background: var(--chip-bg); transition: background .15s;
     }
     summary:hover { background: #e6eaef; }
     summary:focus-visible { outline: 3px solid var(--focus); outline-offset: -2px; }
     summary::-webkit-details-marker { display: none; }
-    summary::before {
+    /* Name + latest-version share one row; the arrow lives on THIS row
+       (.groupHead), not on <summary> itself. A group with any summary
+       chips renders a second row below it, and a bare arrow on
+       <summary>'s own ::before would sit on its own line above
+       everything else once <summary> switched to a column layout. */
+    .groupHead {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .groupHead::before {
       content: "▶"; font-size: 8px; color: var(--muted);
       flex-shrink: 0; transition: transform .18s ease;
     }
-    details[open] > summary::before { transform: rotate(90deg); }
+    details[open] > summary .groupHead::before { transform: rotate(90deg); }
     details[open] > summary { background: var(--chip-bg); color: var(--text); border-bottom: 1px solid var(--border); }
 
-    .summaryRight {
-      display: flex; gap: 4px; margin-left: auto; flex-wrap: wrap; align-items: center;
+    /* The group's own CVE/Reddit/SO/Major/Minor/Patch total chips get
+       their own row below the name, indented to roughly line up under
+       the name text (past the arrow + its gap above), instead of
+       crowding onto the same line as the name and version bracket. */
+    .groupChips {
+      display: flex; gap: 4px; flex-wrap: wrap; align-items: center;
+      padding-left: 16px;
     }
-    .group-latest-ver { font-weight: 400; font-size: 10px; color: var(--muted); }
+    .group-latest-ver { font-weight: 400; font-size: 10px; color: var(--muted); margin-left: auto; }
 
     /* ── Timeline items ─────────────────────────────────────── */
     .updates { padding: 2px 12px 2px; }
@@ -817,9 +830,13 @@
 
     /* ── Chips ──────────────────────────────────────────────── */
     .chips { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 5px; }
+    /* Rounder + bolder than this UI's other flat chrome (radius-sm is
+       2px elsewhere), closer to a GitHub/shields.io badge's silhouette -
+       but kept to this same muted, pastel palette rather than picking
+       up their loud solid-fill colors, per "like GitHub, but subtle". */
     .chip {
-      display: inline-flex; align-items: center; padding: 2px 7px;
-      font: 600 10px/1.4 inherit; border-radius: var(--radius-sm);
+      display: inline-flex; align-items: center; padding: 2px 8px;
+      font: 700 10px/1.4 inherit; letter-spacing: .1px; border-radius: 4px;
       border: 1px solid var(--border); background: var(--chip-bg);
       color: var(--chip-text); white-space: nowrap;
     }
@@ -1757,7 +1774,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.15">Releasetrain <em>v3.62.15</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.16">Releasetrain <em>v3.62.16</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3340,6 +3357,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-11</div>
+              <div class="cl-ver cl-ver-patch">v3.62.16</div>
+            </div>
+            <div class="cl-content">
+              <h3>Feed group header: chips on their own row, badge-styled</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Each component's CVE/Reddit/SO/Major/Minor/Patch total chips now sit on their own row below the component name, instead of crowding onto the same line; the latest-version bracket moved to the far right of the name's own row.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Chips (feed group totals and per-row chips alike) are rounder and bolder, closer to a GitHub/shields.io badge, while keeping this site's existing muted color palette rather than picking up their louder solid-fill colors.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -8397,7 +8428,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       det.dataset.itemCount = String(timeline.length);
 
       const sum = document.createElement("summary");
-      sum.innerHTML = `${safe(group.name, "")}<span class="group-latest-ver"></span><span class="summaryRight">${summaryChips}</span>`;
+      // Name + latest-version bracket share one row (version pushed to
+      // the far right via .group-latest-ver's own margin-left:auto);
+      // the CVE/Reddit/SO/Major/Minor/Patch total chips get their own
+      // row below rather than competing for space on the name's line.
+      sum.innerHTML = `<span class="groupHead">${safe(group.name, "")}<span class="group-latest-ver"></span></span>` +
+        (summaryChips ? `<div class="groupChips">${summaryChips}</div>` : "");
       det.appendChild(sum);
       // Fetched live (fetchLatestVersionFor, shared with the Ask
       // suggestion dropdown's own version bracket, cached the same way)
