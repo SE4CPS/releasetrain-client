@@ -1753,7 +1753,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.11">Releasetrain <em>v3.62.11</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.12">Releasetrain <em>v3.62.12</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2022,7 +2022,7 @@
         </details>
 
         <details class="sb-details">
-          <summary>Activity (4 weeks)</summary>
+          <summary>Activity (2 weeks)</summary>
           <div class="sidebar-section" style="padding-bottom:10px">
             <div style="position:relative;height:118px"><canvas id="home-activity-chart"></canvas></div>
             <p style="margin:2px 0 0;font-size:10px;color:var(--muted)">Click a label to show/hide that line.</p>
@@ -3336,6 +3336,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-11</div>
+              <div class="cl-ver cl-ver-patch">v3.62.12</div>
+            </div>
+            <div class="cl-content">
+              <h3>Feed sorts by recency, window back to 2 weeks</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Feed groups now sort by recency (whichever component was most recently updated leads) instead of alphabetically. This is a "Recent Updates" feed, so surfacing what actually just changed matters more than a stable, predictable position, and finding one specific component by name is already better served by the search/filter box than by scanning an alphabetized list.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Lookback window back down to 2 weeks (was 4). "Recent Updates <small>(last 2 weeks)</small>", the activity chart, and Reddit/StackOverflow matching all follow the same single <code>LOOKBACK_DAYS</code> constant.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -4768,7 +4782,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
       <section class="panel" id="feedPanel" aria-label="Updates feed">
         <header class="panel-header">
-          <h2>📋 Recent Updates <small>(last 4 weeks)</small></h2>
+          <h2>📋 Recent Updates <small>(last 2 weeks)</small></h2>
           <button class="btn btn-ghost" type="button" id="expandAllBtn"
             title="Expand or collapse all groups">Expand all</button>
           <div id="status" class="status" aria-live="polite">Idle</div>
@@ -4946,7 +4960,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       window.addEventListener("error", (e) => show(e.error || e.message));
       window.addEventListener("unhandledrejection", (e) => show(e.reason));
     })();
-    const LOOKBACK_DAYS = 28; // feed/chart window: last 4 weeks (was 2 weeks, was 7 days)
+    const LOOKBACK_DAYS = 14; // feed/chart window: last 2 weeks (was 4 weeks, was 2 weeks, was 7 days)
     const LOOKBACK_MS = 1000 * 60 * 60 * 24 * LOOKBACK_DAYS;
     const LOOKBACK_AGO = Date.now() - LOOKBACK_MS;
 
@@ -7935,11 +7949,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       }
       const arr = Array.from(map.values());
       arr.forEach(g => g.items.sort((a, b) => versionTime(b) - versionTime(a)));
-      // Groups (component names) sorted alphabetically, not by whichever
-      // one happens to have the most recent item. Makes a component
-      // easy to find by scanning, rather than jumping around by
-      // recency. Each group's own items still sort newest first.
-      arr.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+      // Groups (component names) sorted by recency: whichever group has
+      // the most recently updated item leads. This is a "Recent Updates"
+      // feed, so surfacing what actually just changed matters more than
+      // a stable, alphabetically-predictable position, and finding one
+      // specific component by name is already better served by the
+      // search/filter box than by scanning an alphabetized list. Each
+      // group's own items are already sorted newest first (just above),
+      // so a group's own most recent timestamp is simply its first item's.
+      arr.sort((a, b) => versionTime(b.items[0]) - versionTime(a.items[0]));
       return arr;
     }
 
@@ -8034,7 +8052,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // Per-source breakdown for the current "Recent Updates" window (not the
       // sidebar's "true total" figures — this deliberately reflects only
       // what's actually in view right now, same scope as the header's own
-      // "(last 4 weeks)" label). One flat list, every entry with count 0
+      // "(last 2 weeks)" label). One flat list, every entry with count 0
       // dropped and the rest sorted by count (highest first) rather than
       // a fixed CVE/Reddit/StackOverflow-first order. A source with 0
       // results this window is just noise, and the largest sources should
