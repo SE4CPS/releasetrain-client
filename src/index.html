@@ -1757,7 +1757,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.13">Releasetrain <em>v3.62.13</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.14">Releasetrain <em>v3.62.14</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3344,6 +3344,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-11</div>
+              <div class="cl-ver cl-ver-patch">v3.62.14</div>
+            </div>
+            <div class="cl-content">
+              <h3>A how-to example, without growing the list</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Swapped the plain "What's new in Kubernetes this month?" sample for "How do I roll back a bad Windows update? (General, how-to)": procedural/how-to is a real, well-established question type (this session's own research discussion), and stackoverflow.py now flags it on ingest, but classifyIntent doesn't route it specially yet, so it's labeled honestly as General rather than implying a dedicated intent that doesn't exist. Kept the list at 7 items on purpose, since it was already trimmed once to stop the panel needing a scroll.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-11</div>
               <div class="cl-ver cl-ver-patch">v3.62.13</div>
             </div>
             <div class="cl-content">
@@ -4863,19 +4876,29 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
            intent filter itself, not just a list of things to click.
            Opinion is included on purpose, phrasing set to honestly
            preview that it declines rather than reading like every
-           other example that gets a real answer. The last entry isn't
-           its own intent (it's General, same as the Kubernetes one) -
-           it showcases a distinct capability instead: an experiential
-           "did this happen to other people" question routes to
-           search_reddit_questions (see buildSystemPrompt's own
-           instruction for this exact question shape), which tallies a
-           real Yes/No/Unclear poll from comments on a similar past
-           question rather than reading a release note. -->
+           other example that gets a real answer. Two entries below
+           aren't their own intent, both fall into General, and both
+           are labeled that way honestly rather than implying a
+           dedicated intent that doesn't exist: the how-to one is a
+           real, well-established question type (procedural/how-to)
+           this system's own bots now flag on ingest (stackoverflow.py's
+           isHowTo field) but classifyIntent does not yet route
+           specially; the poll one showcases a distinct capability
+           instead, an experiential "did this happen to other people"
+           question routes to search_reddit_questions (see
+           buildSystemPrompt's own instruction for this exact question
+           shape), which tallies a real Yes/No/Unclear poll from
+           comments on a similar past question rather than reading a
+           release note. Kept at 7 items total on purpose: this list
+           already had to be shrunk once to stop the panel needing a
+           vertical scroll, so a type this system doesn't specially
+           handle replaces one already covered by another example,
+           rather than growing the list further. -->
       <ul>
         <li><button type="button" class="ask-sample-btn" data-ask-sample="What's the latest PHP version?">What's the latest PHP version? (Version)</button></li>
         <li><button type="button" class="ask-sample-btn" data-ask-sample="Are there any recent CVEs affecting MySQL?">Are there any recent CVEs affecting MySQL? (CVE)</button></li>
         <li><button type="button" class="ask-sample-btn" data-ask-sample="Was the WebView bug fixed in a Chrome patch?">Was the WebView bug fixed in a Chrome patch? (Patch)</button></li>
-        <li><button type="button" class="ask-sample-btn" data-ask-sample="What's new in Kubernetes this month?">What's new in Kubernetes this month? (General)</button></li>
+        <li><button type="button" class="ask-sample-btn" data-ask-sample="How do I roll back a bad Windows update?">How do I roll back a bad Windows update? (General, how-to)</button></li>
         <li><button type="button" class="ask-sample-btn" data-ask-sample="Should I use Node or Flask for a new API?">Should I use Node or Flask for a new API? (Comparison)</button></li>
         <li><button type="button" class="ask-sample-btn" data-ask-sample="What's the best programming language?">What's the best programming language? (Opinion, declines)</button></li>
         <li><button type="button" class="ask-sample-btn" data-ask-sample="Did other people lose Wi-Fi after the latest Windows update?">Did other people lose Wi-Fi after the latest Windows update? (General, community poll)</button></li>
