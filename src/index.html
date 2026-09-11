@@ -1732,7 +1732,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.5">Releasetrain <em>v3.62.5</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.6">Releasetrain <em>v3.62.6</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3319,6 +3319,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-10</div>
+              <div class="cl-ver cl-ver-patch">v3.62.6</div>
+            </div>
+            <div class="cl-content">
+              <h3>"Try asking" now has one example per intent</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The Ask intro panel's sample questions now cover every intent the classifier recognizes, each labeled with which one it is: Version, CVE, Patch, General, Comparison, and Opinion, the last one deliberately phrased to preview that it declines rather than reading like the rest.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-10</div>
               <div class="cl-ver cl-ver-patch">v3.62.5</div>
             </div>
             <div class="cl-content">
@@ -4718,11 +4731,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       <h4>Pipeline</h4>
       <p>The Pipeline dropdown picks how the question is answered: a single continuous tool-use loop (Single-agent, Multi-agent buggy/fixed) or genuine role delegation (Multi-agent delegated, with an optional feedback loop). "Compare all 5" runs every pipeline on the same question side by side.</p>
       <h4>Try asking</h4>
+      <!-- One example per intent classifyIntentClient (and the server's
+           own classifyIntent) can actually recognize, the bracketed
+           label naming which one so this doubles as a live demo of the
+           intent filter itself, not just a list of things to click.
+           Opinion is included on purpose, phrasing set to honestly
+           preview that it declines rather than reading like every
+           other example that gets a real answer. -->
       <ul>
-        <li><button type="button" class="ask-sample-btn" data-ask-sample="What's the latest PHP version?">What's the latest PHP version?</button></li>
-        <li><button type="button" class="ask-sample-btn" data-ask-sample="Are there any recent CVEs affecting MySQL?">Are there any recent CVEs affecting MySQL?</button></li>
-        <li><button type="button" class="ask-sample-btn" data-ask-sample="Did the latest Chrome update break WebView?">Did the latest Chrome update break WebView?</button></li>
-        <li><button type="button" class="ask-sample-btn" data-ask-sample="Should I use Node or Flask for a new API?">Should I use Node or Flask for a new API?</button></li>
+        <li><button type="button" class="ask-sample-btn" data-ask-sample="What's the latest PHP version?">What's the latest PHP version? (Version)</button></li>
+        <li><button type="button" class="ask-sample-btn" data-ask-sample="Are there any recent CVEs affecting MySQL?">Are there any recent CVEs affecting MySQL? (CVE)</button></li>
+        <li><button type="button" class="ask-sample-btn" data-ask-sample="Was the WebView bug fixed in a Chrome patch?">Was the WebView bug fixed in a Chrome patch? (Patch)</button></li>
+        <li><button type="button" class="ask-sample-btn" data-ask-sample="What's new in Kubernetes this month?">What's new in Kubernetes this month? (General)</button></li>
+        <li><button type="button" class="ask-sample-btn" data-ask-sample="Should I use Node or Flask for a new API?">Should I use Node or Flask for a new API? (Comparison)</button></li>
+        <li><button type="button" class="ask-sample-btn" data-ask-sample="What's the best programming language?">What's the best programming language? (Opinion, declines)</button></li>
       </ul>
     </aside>
 
