@@ -1757,7 +1757,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.14">Releasetrain <em>v3.62.14</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.15">Releasetrain <em>v3.62.15</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3340,6 +3340,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-11</div>
+              <div class="cl-ver cl-ver-patch">v3.62.15</div>
+            </div>
+            <div class="cl-content">
+              <h3>Stack Overflow citations now labeled as such</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The Ask answer's source list hardcoded every community citation as Reddit ("kind: 'reddit'"), even when the underlying document actually came from Stack Overflow (stackoverflow.py writes into the same shared collection, distinguished only by a "source" field the server ignored). Added a 🟧 icon and a "Stack Overflow: &lt;name&gt;" snippet prefix so a genuine Stack Overflow citation now reads as one, matching the icon the feed already uses for it.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5745,7 +5758,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (!sources || !sources.length) {
         return '<p class="ask-muted">No sources were found for this question.</p>';
       }
-      const icon = k => k === "cve" ? "🔴" : k === "reddit" ? "💬" : k === "web" ? "🌐" : "📦";
+      // "stackoverflow" was previously indistinguishable from "reddit":
+      // the server used to hardcode kind:'reddit' for every doc in the
+      // shared collection regardless of its real source field, so a
+      // genuine Stack Overflow citation had no way to look like one.
+      // 🟧 matches the same emoji the feed's own "SO" summary chip uses.
+      const icon = k => k === "cve" ? "🔴" : k === "reddit" ? "💬" : k === "stackoverflow" ? "🟧" : k === "web" ? "🌐" : "📦";
       // Icon/title/date each their own grid cell (see .ask-source-row's
       // own CSS comment) so every row's date lines up in the same
       // column, instead of trailing right after each row's own
