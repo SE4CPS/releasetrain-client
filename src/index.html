@@ -223,16 +223,22 @@
        a small heading. .ask-sample-btn reuses the feed's own muted
        chip-like styling so the samples read as inline, clickable
        example text rather than a separate call-to-action. */
-    .ask-intro-panel { font-size: 12px; line-height: 1.6; color: var(--muted); }
+    /* Tighter than the panel's own prior spacing on purpose: "Try
+       asking" grew from 4 to 7 examples (one per intent plus the poll
+       showcase), which pushed the whole panel's content past typical
+       viewport height and forced a vertical scroll that wasn't there
+       before, confirmed live. Every margin/padding/gap below is
+       trimmed accordingly, not just for this panel's own sake. */
+    .ask-intro-panel { font-size: 11.5px; line-height: 1.5; color: var(--muted); }
     .ask-intro-panel a { color: var(--brand); text-decoration: underline; }
-    .ask-intro-panel h3 { font-size: 13px; color: var(--text); margin: 0 0 8px; }
-    .ask-intro-panel p { margin: 0 0 10px; }
-    .ask-intro-panel h4 { font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); margin: 14px 0 6px; }
-    .ask-intro-panel ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+    .ask-intro-panel h3 { font-size: 13px; color: var(--text); margin: 0 0 6px; }
+    .ask-intro-panel p { margin: 0 0 7px; }
+    .ask-intro-panel h4 { font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); margin: 10px 0 5px; }
+    .ask-intro-panel ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 3px; }
     .ask-sample-btn {
-      display: block; width: 100%; text-align: left; font: inherit; font-size: 12px;
+      display: block; width: 100%; text-align: left; font: inherit; font-size: 11.5px; line-height: 1.35;
       background: var(--chip-bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
-      color: var(--text); padding: 6px 9px; cursor: pointer;
+      color: var(--text); padding: 5px 8px; cursor: pointer;
     }
     .ask-sample-btn:hover { border-color: var(--brand); }
 
@@ -1747,7 +1753,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.8">Releasetrain <em>v3.62.8</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.9">Releasetrain <em>v3.62.9</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3334,6 +3340,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-10</div>
+              <div class="cl-ver cl-ver-patch">v3.62.9</div>
+            </div>
+            <div class="cl-content">
+              <h3>Ask intro panel no longer needs to scroll</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Growing "Try asking" from 4 to 7 examples pushed the panel's content past the viewport, forcing a vertical scroll that wasn't there before. Tightened spacing throughout (headings, paragraphs, sample buttons) and trimmed the two explanatory paragraphs down to the same facts in fewer words, so the same information fits in noticeably less height.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-10</div>
               <div class="cl-ver cl-ver-patch">v3.62.8</div>
             </div>
             <div class="cl-content">
@@ -4769,10 +4788,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
          actual model call and, for most questions, requires sign-in). -->
     <aside id="askIntroPanel" class="ask-intro-panel" aria-label="About Ask">
       <h3>Ask</h3>
-      <p>Runs the typed question against a real model call, with tool access to this platform's own release notes, CVE records, and Reddit/StackOverflow data, plus a live web search fallback when the internal data doesn't cover it.</p>
-      <p>A bare vendor or category name (e.g. "mysql", "llm") is resolved and browsed directly with no model call. A real question requires <a href="#" id="askIntroSignInLink" target="_self">sign-in</a>; resolving a name does not.</p>
+      <p>Runs your question through a real model call, with tool access to release notes, CVE records, Reddit/StackOverflow, plus a live web search fallback when internal data doesn't cover it.</p>
+      <p>A bare vendor/category name (e.g. "mysql", "llm") browses directly, no model call. A real question needs <a href="#" id="askIntroSignInLink" target="_self">sign-in</a>; a name lookup doesn't.</p>
       <h4>Pipeline</h4>
-      <p>The Pipeline dropdown picks how the question is answered: a single continuous tool-use loop (Single-agent, Multi-agent buggy/fixed) or genuine role delegation (Multi-agent delegated, with an optional feedback loop). "Compare all 5" runs every pipeline on the same question side by side.</p>
+      <p>Picks how the question is answered: one continuous tool-use loop (Single-agent, Multi-agent buggy/fixed) or real role delegation (Multi-agent delegated, optional feedback loop). "Compare all 5" runs all five side by side.</p>
       <h4>Try asking</h4>
       <!-- One example per intent classifyIntentClient (and the server's
            own classifyIntent) can actually recognize, the bracketed
