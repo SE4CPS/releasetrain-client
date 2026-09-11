@@ -1719,7 +1719,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.0">Releasetrain <em>v3.62.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.1">Releasetrain <em>v3.62.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3306,6 +3306,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-10</div>
+              <div class="cl-ver cl-ver-patch">v3.62.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Provider key fields no longer autofill</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Browsers were autofilling the Model provider key inputs with the saved account password. They now opt out of password-manager autofill, so a stray Save can't overwrite a key with your login password.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-10</div>
               <div class="cl-ver cl-ver-minor">v3.62.0</div>
             </div>
             <div class="cl-content">
@@ -4399,21 +4412,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                 <div class="ua-field" style="margin-bottom:10px">
                   <label>Claude (Anthropic) <span id="ua-key-anthropic-status" class="ua-opt" style="font-weight:400"></span></label>
                   <div style="display:flex;gap:6px">
-                    <input id="ua-key-anthropic" type="password" class="search-input" placeholder="sk-ant-…" autocomplete="off" maxlength="400" style="flex:1;min-width:0" />
+                    <input id="ua-key-anthropic" type="password" class="search-input" placeholder="sk-ant-…" autocomplete="one-time-code" name="rt-provider-key-anthropic" data-1p-ignore data-lpignore="true" data-form-type="other" maxlength="400" style="flex:1;min-width:0" />
                     <button class="btn btn-primary" type="button" data-key-save="anthropic">Save</button>
                   </div>
                 </div>
                 <div class="ua-field" style="margin-bottom:10px">
                   <label>Groq <span id="ua-key-groq-status" class="ua-opt" style="font-weight:400"></span></label>
                   <div style="display:flex;gap:6px">
-                    <input id="ua-key-groq" type="password" class="search-input" placeholder="gsk_…" autocomplete="off" maxlength="400" style="flex:1;min-width:0" />
+                    <input id="ua-key-groq" type="password" class="search-input" placeholder="gsk_…" autocomplete="one-time-code" name="rt-provider-key-groq" data-1p-ignore data-lpignore="true" data-form-type="other" maxlength="400" style="flex:1;min-width:0" />
                     <button class="btn btn-primary" type="button" data-key-save="groq">Save</button>
                   </div>
                 </div>
                 <div class="ua-field">
                   <label>Ollama Cloud <span id="ua-key-ollama-status" class="ua-opt" style="font-weight:400"></span></label>
                   <div style="display:flex;gap:6px">
-                    <input id="ua-key-ollama" type="password" class="search-input" placeholder="key…" autocomplete="off" maxlength="400" style="flex:1;min-width:0" />
+                    <input id="ua-key-ollama" type="password" class="search-input" placeholder="key…" autocomplete="one-time-code" name="rt-provider-key-ollama" data-1p-ignore data-lpignore="true" data-form-type="other" maxlength="400" style="flex:1;min-width:0" />
                     <button class="btn btn-primary" type="button" data-key-save="ollama">Save</button>
                   </div>
                 </div>
