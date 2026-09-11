@@ -348,17 +348,35 @@
        row-wrap behavior for just this form. */
     .ask-form-stacked { flex-direction: column; align-items: stretch; flex-wrap: nowrap; gap: 6px; }
     .ask-input-row { display: flex; align-items: center; gap: 8px; }
-    /* Same [hidden]-vs-author-display specificity fix as .ask-options-panel
-       elsewhere in this file: [hidden] alone is a UA-origin rule and loses
-       to a plain author `display: flex` at equal specificity regardless of
-       source order, so the override has to be spelled out explicitly. */
-    .ask-pipeline-status { display: flex; flex-wrap: wrap; gap: 4px 8px; font-size: 11px; }
-    .ask-pipeline-status[hidden] { display: none; }
-    .ask-pipeline-step { white-space: nowrap; color: var(--muted); }
-    .ask-pipeline-step em { font-style: normal; font-variant-numeric: tabular-nums; font-weight: 600; }
-    .ask-pipeline-step.ask-pipeline-active { color: var(--brand); font-weight: 600; }
-    .ask-pipeline-step.ask-pipeline-pending { opacity: .5; }
-    .ask-pipeline-arrow { color: var(--border); }
+
+    /* ── Answer rail tabs (Answer+workflow / Sources) ──────────── */
+    /* Negative margin matches .ask-answer-card's own 14px padding, so
+       the tab strip's border-bottom spans the full card edge to edge
+       while the tab buttons themselves still line up with everything
+       else in the card. */
+    .ask-rail-tabs { display: flex; gap: 2px; margin: -2px -14px 10px; padding: 0 14px; border-bottom: 1px solid var(--border); }
+    .ask-rail-tab {
+      background: transparent; border: none; border-bottom: 2px solid transparent;
+      padding: 7px 6px; margin-bottom: -1px; font: 700 11.5px inherit;
+      color: var(--muted); cursor: pointer;
+    }
+    .ask-rail-tab:hover { color: var(--text); }
+    .ask-rail-tab.active { color: var(--brand); border-bottom-color: var(--brand); }
+    .ask-rail-panel[hidden] { display: none; }
+
+    /* ── Agent workflow diagram (Rewriter/Retriever/Evaluator/
+       Orchestrator) ────────────────────────────────────────────
+       Always the same shape (the real multi-agent-with-feedback
+       architecture) regardless of which pipeline preset is running;
+       only the node states differ, so a preset with no real role
+       delegation (Single-agent) just leaves every node idle instead of
+       hiding or reshaping the diagram itself. */
+    .ask-workflow-diagram { margin: 2px 0 2px; min-height: 60px; }
+    .ask-workflow-diagram svg { width: 100%; height: auto; display: block; }
+    .ask-workflow-caption {
+      font-size: 10.5px; color: var(--muted); min-height: 14px;
+      margin: 0 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
     .ask-options-row {
       display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
       font-size: 11px; color: var(--muted);
@@ -1806,7 +1824,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.20">Releasetrain <em>v3.62.20</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.63.0">Releasetrain <em>v3.63.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -1850,12 +1868,6 @@
            size, pipeline, the three toggles) stays visible in one row
            below the input. No gear button, no popover to open first. -->
       <form id="askForm" class="topbar-form ask-form-stacked" aria-label="Search or ask a question">
-        <!-- Shown only while a real question is in flight (see
-             startAskPipelineLog). A live "which phase is this" ticker
-             built from real progress events the server sends, each
-             step's own elapsed time real and live-updating, frozen once
-             that step ends. Hidden the rest of the time. -->
-        <div id="askPipelineStatus" class="ask-pipeline-status" hidden aria-live="polite"></div>
         <div class="ask-input-row">
           <div class="search-wrap">
             <span class="search-icon" aria-hidden="true">🔍</span>
@@ -3389,6 +3401,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-11</div>
+              <div class="cl-ver cl-ver-minor">v3.63.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Live agent workflow diagram in the answer rail</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The answer rail now opens the moment a real question is submitted, showing a live Mermaid diagram of the four-role architecture (Rewriter → Retriever → Evaluator → Orchestrator, with the feedback loop back to Retriever) as it actually runs: idle by default, blue while a role is active, green once it's done. Always the same full shape regardless of pipeline preset. A preset with no real role delegation (Single-agent, Multi-agent buggy/fixed) just never lights up Rewriter/Evaluator, since those roles genuinely don't exist for it.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The rail is now two tabs: <strong>Answer</strong> (the workflow diagram plus the answer itself) and <strong>Sources</strong> (citations, vendor/intent/temporal chips, and "Show internals"), instead of one long stacked card.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Removed the text-based phase ticker that used to sit above the question input while a request ran; the workflow diagram in the rail replaces it, and it no longer needs its own reserved strip at the top of the page.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5451,48 +5478,124 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (phase === "generating") return `${role("Orchestrator")}Generating answer`;
       return phase;
     }
-    let askPipelineLog = null; // array of { label, startedAt, doneMs }
-    let askPipelineTickTimer = null;
-    function renderAskPipelineLog() {
-      const el = document.getElementById("askPipelineStatus");
-      if (!askPipelineLog || !askPipelineLog.length) { el.hidden = true; return; }
-      el.hidden = false;
-      const now = Date.now();
-      el.innerHTML = askPipelineLog.map((entry) => {
-        const running = entry.doneMs == null;
-        const secs = ((running ? now - entry.startedAt : entry.doneMs) / 1000).toFixed(1);
-        return running
-          ? `<span class="ask-pipeline-step ask-pipeline-active">${uaEsc(entry.label)}&hellip; <em>${secs}s</em></span>`
-          : `<span class="ask-pipeline-step ask-pipeline-done">&check; ${uaEsc(entry.label)} <em>${secs}s</em></span>`;
-      }).join('<span class="ask-pipeline-arrow" aria-hidden="true">&rarr;</span>');
+    // ── Agent workflow diagram (live phase → node highlighting) ─────
+    // Always the same 4-node shape: Rewriter, Retriever, Evaluator,
+    // Orchestrator, with a feedback edge back to Retriever. The real
+    // multi-agent-with-feedback architecture end to end. A preset that
+    // doesn't genuinely delegate to separate roles (Single-agent,
+    // Multi-agent buggy/fixed) never fires the phases that light up
+    // Rewriter/Evaluator, so those two just stay idle the whole run:
+    // "highlight only the roles actually used" falls out naturally from
+    // which phase events actually arrive, no per-preset case needed.
+    // Replaces the old top-of-page text ticker (#askPipelineStatus):
+    // this lives in the answer rail instead, next to the answer itself.
+    let askWorkflowState = null;      // { rewriter, retriever, evaluator, orchestrator } -> idle|active|done
+    let askWorkflowLabel = "";        // current phase's own label (askPhaseLabel), shown under the diagram
+    let askWorkflowStartedAt = null;  // for the caption's live elapsed-seconds tick
+    let askWorkflowTickTimer = null;
+    let askWorkflowRenderSeq = 0;     // guards a slow mermaid render from clobbering a newer one
+
+    const ASK_WORKFLOW_PHASE_NODE = {
+      resolving_vendor: "rewriter", rewriting: "rewriter",
+      searching: "retriever",
+      evaluating: "evaluator", retrying: "evaluator", widening: "evaluator",
+      generating: "orchestrator",
+    };
+
+    let _askMermaidLoadPromise = null;
+    function ensureAskMermaidLoaded() {
+      if (typeof window.mermaid !== "undefined") return Promise.resolve();
+      if (_askMermaidLoadPromise) return _askMermaidLoadPromise;
+      _askMermaidLoadPromise = new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js";
+        s.crossOrigin = "anonymous";
+        s.onload = () => { window.mermaid.initialize({ startOnLoad: false, securityLevel: "loose" }); resolve(); };
+        s.onerror = () => reject(new Error("mermaid failed to load"));
+        document.head.appendChild(s);
+      });
+      return _askMermaidLoadPromise;
     }
-    // Starts a fresh log for a new question. The previous question's
-    // finished log is kept on screen for reference until this runs
-    // again, not cleared when that question's answer arrives.
-    function startAskPipelineLog() {
-      askPipelineLog = [];
-      renderAskPipelineLog();
-      askPipelineTickTimer = setInterval(renderAskPipelineLog, 100);
+    // Flat fills, no gradient/shadow, kept legible at this diagram's
+    // small size. Short single-word node labels so mermaid's own
+    // auto-sizing never has to cram text against a box edge.
+    const ASK_WORKFLOW_NODE_STYLE = {
+      idle: "fill:#e2eede,stroke:#c3d8c0,color:#5c6e59",
+      active: "fill:#2563eb,stroke:#2563eb,color:#fff",
+      done: "fill:#16a34a,stroke:#16a34a,color:#fff",
+    };
+    function askWorkflowMermaidSource(state) {
+      const style = k => ASK_WORKFLOW_NODE_STYLE[state[k] || "idle"];
+      return [
+        "flowchart LR",
+        "  RW(Rewriter) --> RT(Retriever) --> EV(Evaluator) --> OR(Orchestrator)",
+        "  EV -. retry .-> RT",
+        `  style RW ${style("rewriter")}`,
+        `  style RT ${style("retriever")}`,
+        `  style EV ${style("evaluator")}`,
+        `  style OR ${style("orchestrator")}`,
+      ].join("\n");
     }
-    function pushAskPipelinePhase(phase, detail, preset, meta) {
-      if (!askPipelineLog) return;
-      const now = Date.now();
-      const prev = askPipelineLog[askPipelineLog.length - 1];
-      if (prev) prev.doneMs = now - prev.startedAt;
-      askPipelineLog.push({ label: askPhaseLabel(phase, detail, preset, meta), startedAt: now, doneMs: null });
-      renderAskPipelineLog();
+    async function renderAskWorkflowDiagram() {
+      const el = document.getElementById("askWorkflowDiagram");
+      if (!el || !askWorkflowState) return;
+      const mySeq = ++askWorkflowRenderSeq;
+      try {
+        await ensureAskMermaidLoaded();
+        const { svg } = await window.mermaid.render("askWorkflowSvg" + mySeq, askWorkflowMermaidSource(askWorkflowState));
+        if (mySeq !== askWorkflowRenderSeq) return; // a newer render already started
+        el.innerHTML = svg;
+      } catch (e) {
+        console.error("[ASK] workflow diagram failed to render:", e);
+      }
+    }
+    function renderAskWorkflowCaption() {
+      const el = document.getElementById("askWorkflowCaption");
+      if (!el) return;
+      if (!askWorkflowLabel) { el.textContent = ""; return; }
+      const secs = askWorkflowStartedAt ? ((Date.now() - askWorkflowStartedAt) / 1000).toFixed(1) + "s" : "";
+      el.textContent = `${askWorkflowLabel}… ${secs}`;
+    }
+    // Starts fresh state for a new question. The previous question's
+    // finished diagram/caption are kept on screen for reference until
+    // this runs again, not cleared when that question's answer arrives.
+    function startAskWorkflow() {
+      askWorkflowState = { rewriter: "idle", retriever: "idle", evaluator: "idle", orchestrator: "idle" };
+      askWorkflowLabel = ""; askWorkflowStartedAt = null;
+      if (askWorkflowTickTimer) clearInterval(askWorkflowTickTimer);
+      askWorkflowTickTimer = setInterval(renderAskWorkflowCaption, 100);
+    }
+    function pushAskWorkflowPhase(phase, detail, preset, meta) {
+      if (!askWorkflowState) return;
+      askWorkflowLabel = askPhaseLabel(phase, detail, preset, meta);
+      askWorkflowStartedAt = Date.now();
+      const node = ASK_WORKFLOW_PHASE_NODE[phase];
+      if (node) {
+        for (const k of Object.keys(askWorkflowState)) {
+          if (askWorkflowState[k] === "active") askWorkflowState[k] = "done";
+        }
+        askWorkflowState[node] = "active";
+        // "retrying" means the Evaluator is sending the Retriever back
+        // for another pass. The Retriever lighting up again (not
+        // staying "done" from its first pass) is the whole point here.
+        if (phase === "retrying") askWorkflowState.retriever = "active";
+      }
+      renderAskWorkflowCaption();
+      renderAskWorkflowDiagram();
     }
     // Called once the request is done, success or failure. Freezes the
-    // last entry's own elapsed time and stops the live tick, but leaves
-    // the finished log visible for reference (useful for evaluation)
-    // until the next question starts a new one.
-    function finishAskPipelineLog() {
-      if (askPipelineTickTimer) { clearInterval(askPipelineTickTimer); askPipelineTickTimer = null; }
-      if (askPipelineLog && askPipelineLog.length) {
-        const last = askPipelineLog[askPipelineLog.length - 1];
-        if (last.doneMs == null) last.doneMs = Date.now() - last.startedAt;
+    // caption's elapsed time and stops the live tick, marks whichever
+    // node was still active as done, but leaves the diagram/caption
+    // visible for reference (useful for evaluation) until the next
+    // question starts a new one.
+    function finishAskWorkflow() {
+      if (askWorkflowTickTimer) { clearInterval(askWorkflowTickTimer); askWorkflowTickTimer = null; }
+      if (!askWorkflowState) return;
+      for (const k of Object.keys(askWorkflowState)) {
+        if (askWorkflowState[k] === "active") askWorkflowState[k] = "done";
       }
-      renderAskPipelineLog();
+      renderAskWorkflowCaption();
+      renderAskWorkflowDiagram();
     }
 
     function updateAskPreview() {
@@ -6053,9 +6156,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // answer" button appears when it actually got cut), used by the
     // right-side rail so a long answer doesn't dominate the sidebar;
     // omitted (or falsy) renders the complete answer, as the modal
-    // always has. opts.hideDetails: skip the "Show internals" section -
-    // also rail-only, since its own collapsed-by-default <details> still
-    // adds visual weight a compact sidebar card doesn't need.
+    // always has. opts.showWorkflow: rail-only, splits the card into
+    // two tabs (Answer: the workflow diagram + the answer itself,
+    // Sources: citations + meta chips + "Show internals") instead of
+    // one flat stacked card. The modal and Compare grid keep the
+    // plain single-block shape, since neither has a live phase stream
+    // to drive the diagram (Compare fetches all runs at once, not as a
+    // stream; the modal is the narrow-screen/Compare fallback).
     function askRenderCard(label, res, opts) {
       opts = opts || {};
       if (res.error) {
@@ -6067,17 +6174,40 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const fullAnswer = res.answer || "";
       const wasTrimmed = !!opts.trimAnswer && fullAnswer.length > opts.trimAnswer;
       const shownAnswer = wasTrimmed ? truncate(fullAnswer, opts.trimAnswer) : fullAnswer;
-      return `<div class="ask-answer-card${res.abstained ? " ask-answer-abstained" : ""}" data-run-id="${uaEsc(res.runId || "")}">
-        <div class="ask-answer-label">${uaEsc(label)}${res.abstained ? `<span class="ask-abstain-badge">⛔ ${uaEsc(ASK_ABSTAIN_REASON_LABELS[res.abstainReason] || "Abstained")}</span>` : ""}</div>
+      const labelHtml = `<div class="ask-answer-label">${uaEsc(label)}${res.abstained ? `<span class="ask-abstain-badge">⛔ ${uaEsc(ASK_ABSTAIN_REASON_LABELS[res.abstainReason] || "Abstained")}</span>` : ""}</div>`;
+      const answerHtml = `
         <div class="ask-answer-summary">${highlightAnswerTerm(mdLite(shownAnswer), res.highlightTerm)}</div>
         ${wasTrimmed ? '<button type="button" class="btn btn-ghost ask-view-full-btn" style="font-size:11px;padding:3px 8px;margin:-4px 0 8px">Show full answer</button>' : ""}
-        ${askRenderMetaChips(res)}
-        ${askRenderSources(res.sources)}
-        ${opts.hideDetails ? "" : askRenderDetails(res)}
         <div class="ask-rate-row">
           <button type="button" class="btn btn-ghost ask-rate-btn" data-rating="1" ${!res.runId ? "disabled" : ""}>👍 Helpful</button>
           <button type="button" class="btn btn-ghost ask-rate-btn" data-rating="-1" ${!res.runId ? "disabled" : ""}>👎 Not helpful</button>
           <span class="ask-muted" style="margin-left:auto">${res.latencyMs ? Math.round(res.latencyMs / 1000) + "s" : ""}</span>
+        </div>`;
+
+      if (!opts.showWorkflow) {
+        return `<div class="ask-answer-card${res.abstained ? " ask-answer-abstained" : ""}" data-run-id="${uaEsc(res.runId || "")}">
+          ${labelHtml}
+          ${answerHtml}
+          ${askRenderMetaChips(res)}
+          ${askRenderSources(res.sources)}
+          ${askRenderDetails(res)}
+        </div>`;
+      }
+      return `<div class="ask-answer-card${res.abstained ? " ask-answer-abstained" : ""}" data-run-id="${uaEsc(res.runId || "")}">
+        ${labelHtml}
+        <div class="ask-rail-tabs" role="tablist">
+          <button type="button" class="ask-rail-tab active" data-tab="answer" role="tab" aria-selected="true">Answer</button>
+          <button type="button" class="ask-rail-tab" data-tab="sources" role="tab" aria-selected="false">Sources</button>
+        </div>
+        <div class="ask-rail-panel" data-panel="answer">
+          <div id="askWorkflowDiagram" class="ask-workflow-diagram"></div>
+          <div id="askWorkflowCaption" class="ask-workflow-caption"></div>
+          ${answerHtml}
+        </div>
+        <div class="ask-rail-panel" data-panel="sources" hidden>
+          ${askRenderMetaChips(res)}
+          ${askRenderSources(res.sources)}
+          ${askRenderDetails(res)}
         </div>
       </div>`;
     }
@@ -6097,6 +6227,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         });
       });
     }
+    function askWireRailTabs(root) {
+      const tabs = Array.from(root.querySelectorAll(".ask-rail-tab"));
+      tabs.forEach(tab => {
+        tab.addEventListener("click", () => {
+          tabs.forEach(t => {
+            const on = t === tab;
+            t.classList.toggle("active", on);
+            t.setAttribute("aria-selected", on ? "true" : "false");
+          });
+          root.querySelectorAll(".ask-rail-panel").forEach(p => { p.hidden = p.dataset.panel !== tab.dataset.tab; });
+        });
+      });
+    }
 
     // ── Inline answer rail ──────────────────────────────────────
     // A real question's answer shown beside the feed instead of in the
@@ -6113,19 +6256,52 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     let askRailData = null; // { label, res } backing "Show full answer": re-renders untrimmed from the same data, no second request
     function wireAskRailBody(body) {
       askWireRateButtons(body);
+      askWireRailTabs(body);
       const fullBtn = body.querySelector(".ask-view-full-btn");
       if (fullBtn) fullBtn.addEventListener("click", () => {
-        body.innerHTML = askRenderCard(askRailData.label, askRailData.res, {});
+        body.innerHTML = askRenderCard(askRailData.label, askRailData.res, { showWorkflow: true });
         wireAskRailBody(body);
+        renderAskWorkflowDiagram();
       });
+    }
+    // Opened the moment a real question is submitted (see the submit
+    // handler), before any answer exists yet, so the workflow diagram
+    // is visible and animating from the very first phase event rather
+    // than only appearing once the whole request is already done.
+    function showAskRailRunning(question) {
+      askRailData = null;
+      document.getElementById("askRailQuestion").textContent = question;
+      const body = document.getElementById("askRailBody");
+      body.innerHTML = `<div class="ask-answer-card">
+        <div class="ask-rail-tabs" role="tablist">
+          <button type="button" class="ask-rail-tab active" data-tab="answer" role="tab" aria-selected="true">Answer</button>
+          <button type="button" class="ask-rail-tab" data-tab="sources" role="tab" aria-selected="false">Sources</button>
+        </div>
+        <div class="ask-rail-panel" data-panel="answer">
+          <div id="askWorkflowDiagram" class="ask-workflow-diagram"></div>
+          <div id="askWorkflowCaption" class="ask-workflow-caption"></div>
+          <p class="ask-muted">Thinking…</p>
+        </div>
+        <div class="ask-rail-panel" data-panel="sources" hidden>
+          <p class="ask-muted">Waiting for the answer…</p>
+        </div>
+      </div>`;
+      askWireRailTabs(body);
+      $(".layout").classList.add("has-ask-rail");
+      renderAskWorkflowDiagram();
     }
     function showAskRail(question, label, res) {
       askRailData = { label, res };
       document.getElementById("askRailQuestion").textContent = question;
       const body = document.getElementById("askRailBody");
-      body.innerHTML = askRenderCard(label, res, { trimAnswer: ASK_RAIL_ANSWER_TRIM, hideDetails: true });
+      body.innerHTML = askRenderCard(label, res, { trimAnswer: ASK_RAIL_ANSWER_TRIM, showWorkflow: true });
       wireAskRailBody(body);
       $(".layout").classList.add("has-ask-rail");
+      // Paints the diagram into the freshly-built container. finishAskWorkflow
+      // (called right after this, in the submit handler's `finally`) will
+      // render it again once the last active node flips to "done", but this
+      // keeps the container from sitting blank in between.
+      renderAskWorkflowDiagram();
     }
     function hideAskRail() {
       $(".layout").classList.remove("has-ask-rail");
@@ -6198,7 +6374,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           if (!dataLine) continue;
           let evt;
           try { evt = JSON.parse(dataLine.slice(5).trim()); } catch { continue; }
-          if (evt.type === "progress") pushAskPipelinePhase(evt.phase, evt.detail, preset, evt.meta);
+          if (evt.type === "progress") pushAskWorkflowPhase(evt.phase, evt.detail, preset, evt.meta);
           else if (evt.type === "result") finalResult = evt;
           else if (evt.type === "error") errorMessage = evt.error || "Request failed.";
         }
@@ -6237,7 +6413,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const prevIcon = btn.textContent;
       btn.textContent = "⏳";
       btn.classList.add("ask-btn-loading");
-      startAskPipelineLog();
+      startAskWorkflow();
+      // The rail opens immediately with a running skeleton (diagram +
+      // "Thinking…") rather than waiting for the full response, so the
+      // workflow diagram actually animates live as phase events arrive -
+      // showAskRail() below only ever ran once the complete answer was
+      // already in hand. Compare mode and narrow screens keep using the
+      // modal, which has no live workflow view (see the module comment
+      // on askRenderCard's opts.showWorkflow).
+      if (!isCompare && canUseAskRail()) showAskRailRunning(question);
       let refreshQuotaAfter = true;
 
       try {
@@ -6303,8 +6487,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           // A bare vendor/category name, not a question. Resolved
           // server-side, then replayed through whichever existing
           // mechanism already browses that data (see runDocumentsLookup
-          // above). No modal, no model call.
+          // above). No modal, no model call, and no running rail either.
+          // showAskRailRunning already opened one speculatively before
+          // this was known (the server, not the client, decides which
+          // this turns out to be), so close it rather than leaving a
+          // stuck "Thinking…" diagram on screen.
           refreshQuotaAfter = false;
+          hideAskRail();
           runDocumentsLookup(data);
           return;
         }
@@ -6331,6 +6520,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         if (data.vendor) applyVendorFeedFilter(data.vendor, data.categoryType, data.categoryMembers);
         else clearVendorFeedFilter();
       } catch (err) {
+        // Same reasoning as the "documents" branch above: a running rail
+        // may already be open speculatively, and the error is shown in
+        // the modal regardless of screen width, so a stale "Thinking…"
+        // diagram shouldn't linger open behind it.
+        hideAskRail();
         document.getElementById("askModalQuestion").textContent = question;
         document.getElementById("askModalBody").innerHTML = `<p class="ask-error">${uaEsc(err.message || "Something went wrong.")}</p>`;
         askOverlayEl.classList.add("open");
@@ -6339,7 +6533,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         btn.disabled = false;
         btn.textContent = prevIcon;
         btn.classList.remove("ask-btn-loading");
-        finishAskPipelineLog();
+        finishAskWorkflow();
         // Every real ask attempt (success, abstain, or a rate-limit error
         // like "TPM: Limit 8000, Used 7333...") updates the provider's
         // quota. A plain document lookup or an unauthenticated attempt
