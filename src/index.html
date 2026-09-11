@@ -1753,7 +1753,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.9">Releasetrain <em>v3.62.9</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.10">Releasetrain <em>v3.62.10</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3336,6 +3336,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-10</div>
+              <div class="cl-ver cl-ver-patch">v3.62.10</div>
+            </div>
+            <div class="cl-content">
+              <h3>Poll button only offered for a real yes/no question</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The 📊 Poll chip appeared on any Reddit post with a "?" and comments, including a WH-question like "What's the best way to fix this?" or "Why did this happen?", which has no binary answer to poll for in the first place. Now only offered when the question is actually shaped for yes/no. Same fix applied to the server's own search_reddit_questions tool, so Ask's "did other people..." questions don't match a WH-shaped post either.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5069,6 +5082,17 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // are shown in each answer's "Show internals" section). This is an
     // approximation, not the model's own eventual query: the model can
     // still add vendor synonyms this plain filter doesn't know about.
+    // A Yes/No poll only makes sense for a question shaped that way; a
+    // WH-question opener (what/when/why/how/who/which/where) asks for an
+    // explanation, not a binary answer. Checked against the raw title/
+    // self-text field directly (not an extracted sentence, unlike the
+    // server's own copy) since this only ever gates a feed row's own
+    // post, not a longer field with the question buried mid-paragraph.
+    const ASK_WH_QUESTION_RX = /^\s*(?:so|well|ok(?:ay)?)?\s*(what|when|why|how|who|which|where)\b/i;
+    function askLooksLikeYesNoQuestion(text) {
+      const t = String(text || "").trim();
+      return t.includes("?") && !ASK_WH_QUESTION_RX.test(t);
+    }
     const ASK_GENERIC_STOPLIST = new Set([
       "version", "versions", "update", "updates", "updated", "updating",
       "issue", "issues", "problem", "problems", "latest", "new", "newest",
@@ -8338,11 +8362,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           if (flags.isAboutCve) chipsEl.insertAdjacentHTML("beforeend", chip("🔐 security", "bad"));
           const comments = typeof flags.num_comments === "number" ? flags.num_comments : null;
           if (comments != null) chipsEl.insertAdjacentHTML("beforeend", chip(`💬 ${comments}`, "soft"));
-          // Yes/No poll: only offered when the post reads like it's asking
-          // something (has a "?") and has at least one comment to poll -
-          // otherwise there's nothing for the classifier to work with.
+          // Yes/No poll: only offered when the post reads like a question
+          // actually shaped for a binary answer, and has at least one
+          // comment to poll. A WH-question ("What's the best way to fix
+          // this?", "Why did this happen?") asks for an explanation, not
+          // a yes/no, so classifying comments against one is meaningless -
+          // flagged live. Mirrors the server's own isYesNoShapedQuestion
+          // (ask.js), same reasoning, kept in sync by hand.
           const questionText = flags.author_description || flags.title || "";
-          if (questionText.includes("?") && comments) {
+          if (askLooksLikeYesNoQuestion(questionText) && comments) {
             const rid = getPostId(flags);
             if (rid) {
               chipsEl.insertAdjacentHTML("beforeend",
