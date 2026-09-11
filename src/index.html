@@ -1732,7 +1732,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.3">Releasetrain <em>v3.62.3</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.4">Releasetrain <em>v3.62.4</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3319,6 +3319,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-10</div>
+              <div class="cl-ver cl-ver-patch">v3.62.4</div>
+            </div>
+            <div class="cl-content">
+              <h3>Live preview badge learned the comparison intent</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The as-you-type badge above the question box still showed "Opinion (will decline)" for a real comparison question ("should i use zoom or teams for the next video call"), even after the server started answering it for real. This preview is a client-side mirror of the server's own classifier and had fallen out of sync; it now recognizes the same comparison shape and shows "Comparison question" instead.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-10</div>
               <div class="cl-ver cl-ver-patch">v3.62.3</div>
             </div>
             <div class="cl-content">
@@ -4875,19 +4888,57 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     };
 
     // Client-side mirror of releasetrain-server's src/ask.js classifyIntent()
-    // - kept in sync by hand. This is a live UI preview only (shown next to
-    // the input as the user types); the actual question text sent to the
-    // server is never altered, and the server does its own independent
-    // classification for real. Keep this list identical to the server's
-    // INTENT_KEYWORDS if either changes.
+    // and detectComparisonEntities(), kept in sync by hand. This is a live
+    // UI preview only (shown next to the input as the user types); the
+    // actual question text sent to the server is never altered, and the
+    // server does its own independent classification for real. Keep this
+    // in sync with the server's own copy if either changes: this exact
+    // drift (the server learned the 'comparison' intent, this preview did
+    // not) is what showed "Opinion (will decline)" for a real comparison
+    // question ("should i use zoom or teams for the next video call") that
+    // the server itself was already answering correctly.
     const ASK_INTENT_KEYWORDS = {
       cve: ["cve", "vulnerability", "vulnerabilities", "exploit", "advisory", "attack", "breach", "rce", "zero-day"],
       patch: ["patch", "patched", "hotfix", "fix", "fixed", "bugfix"],
       version: ["version", "release", "released", "changelog", "upgrade", "downgrade"],
       opinion: ["nightmare", "best", "worst", "should i", "recommend", "opinion", "prefer", "versus", " vs ", "better than", "worth it", "favorite", "favourite", "hate", "love", "annoying", "say goodbye"],
     };
-    const ASK_INTENT_BADGE_LABELS = { cve: "CVE question", patch: "Patch question", version: "Version question", opinion: "Opinion (will decline)" };
+    const ASK_COMPARISON_SPLIT_RX = /\s+(?:or|vs\.?|versus)\s+/i;
+    const ASK_COMPARISON_LEADIN_RX = /^(?:should\s+(?:i|we)\s+(?:use|go\s+with|pick|choose)|(?:let'?s\s+)?use|using|choose|choosing|pick|picking|go(?:ing)?\s+with|prefer|recommend(?:ing)?)\s+/i;
+    const ASK_COMPARISON_TRAILER_RX = /\s+(?:for|to|when|while|during|tomorrow|today|tonight|this\s+\w+|next\s+\w+)\b.*$/i;
+    const ASK_COMPARISON_DECISION_WORDS = new Set([
+      "upgrade", "upgrading", "downgrade", "downgrading", "update", "updating",
+      "install", "installing", "uninstall", "reinstall", "wait", "waiting",
+      "switch", "switching", "stay", "staying", "continue", "proceed",
+      "restart", "reboot", "disable", "enable", "keep", "keeping", "skip",
+      "retry", "rollback", "repair", "fix", "fixing", "now", "later", "today",
+      "tomorrow", "yet", "again", "it", "this", "that", "mine", "buy", "buying",
+    ]);
+    function askLooksLikeComparisonName(phrase) {
+      return phrase.split(/\s+/).every(w => !ASK_COMPARISON_DECISION_WORDS.has(w.toLowerCase()));
+    }
+    function detectComparisonEntitiesClient(question) {
+      const text = String(question || "").trim().replace(/[?!.]+$/, "");
+      const parts = text.split(ASK_COMPARISON_SPLIT_RX);
+      if (parts.length !== 2) return null; // exactly one connector, not "A, B or C"
+      let [left, right] = parts;
+      if (left.includes(",")) left = left.slice(left.lastIndexOf(",") + 1);
+      left = left.replace(ASK_COMPARISON_LEADIN_RX, "").trim();
+      left = left.split(/\s+/).filter(Boolean).slice(-2).join(" ");
+      right = right.replace(ASK_COMPARISON_TRAILER_RX, "").trim();
+      right = right.split(/\s+/).filter(Boolean).slice(0, 2).join(" ");
+      if (!left || !right) return null;
+      if (!askLooksLikeComparisonName(left) || !askLooksLikeComparisonName(right)) return null;
+      if (ASK_GENERIC_STOPLIST.has(left.toLowerCase()) || ASK_GENERIC_STOPLIST.has(right.toLowerCase())) return null;
+      if (left.toLowerCase() === right.toLowerCase()) return null;
+      return [left, right];
+    }
+    const ASK_INTENT_BADGE_LABELS = {
+      cve: "CVE question", patch: "Patch question", version: "Version question",
+      opinion: "Opinion (will decline)", comparison: "Comparison question",
+    };
     function classifyIntentClient(question) {
+      if (detectComparisonEntitiesClient(question)) return "comparison";
       const text = String(question || "").toLowerCase();
       for (const intent of ["cve", "patch", "version", "opinion"]) {
         if (ASK_INTENT_KEYWORDS[intent].some(kw => text.indexOf(kw) !== -1)) return intent;
