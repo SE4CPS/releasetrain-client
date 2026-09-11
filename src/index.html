@@ -1824,7 +1824,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.63.0">Releasetrain <em>v3.63.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.63.1">Releasetrain <em>v3.63.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3405,6 +3405,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-11</div>
+              <div class="cl-ver cl-ver-patch">v3.63.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Sort by most sources</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> New "Sort: Most sources" option in the feed's sort dropdown, ranking each component by how many distinct bots actually produced its content (the same count its own "Source(s): ..." line shows), most first. "unknown" doesn't count as a real source, so a component with only unattributed documents doesn't out-rank one with a confirmed single source.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-11</div>
               <div class="cl-ver cl-ver-minor">v3.63.0</div>
             </div>
             <div class="cl-content">
@@ -4981,6 +4994,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <option value="cve">Sort: Most CVEs</option>
             <option value="risk">Sort: Highest risk</option>
             <option value="activity">Sort: Most activity</option>
+            <option value="sources">Sort: Most sources</option>
           </select>
           <button class="btn btn-ghost" type="button" id="expandAllBtn"
             title="Expand or collapse all components">Expand all</button>
@@ -8365,6 +8379,27 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         arr.sort((a, b) => (b._riskScore - a._riskScore) || (versionTime(b.items[0]) - versionTime(a.items[0])));
       } else if (mode === "activity") {
         arr.sort((a, b) => (b.items.length - a.items.length) || (versionTime(b.items[0]) - versionTime(a.items[0])));
+      } else if (mode === "sources") {
+        // How many distinct bots actually produced this component's own
+        // content: the same count each group's own "Source(s): ..." line
+        // shows (see renderComponentNode), computed here across every
+        // group up front so the feed can be ordered by it. "unknown"
+        // isn't counted as a real source: a group whose only documents
+        // are unattributed shouldn't out-rank one confirmed genuinely
+        // single-sourced.
+        arr.forEach(g => {
+          const botSet = new Set();
+          for (const v of g.items) {
+            if (v._synthetic) continue;
+            botSet.add((v.sourceBot || "unknown").trim() || "unknown");
+          }
+          const posts = postsForComponent(norm(g.name)).filter(p => redditTime(p) >= LOOKBACK_AGO);
+          if (posts.some(p => getPostSource(p) === "reddit")) botSet.add("reddit.py");
+          if (posts.some(p => getPostSource(p) === "stackoverflow")) botSet.add("stackoverflow.py");
+          botSet.delete("unknown");
+          g._sourceCount = botSet.size;
+        });
+        arr.sort((a, b) => (b._sourceCount - a._sourceCount) || (versionTime(b.items[0]) - versionTime(a.items[0])));
       } else {
         // Groups (component names) sorted by recency: whichever group has
         // the most recently updated item leads. This is a "Recent Updates"
@@ -9035,12 +9070,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           refreshRenderedGroupsWithReddit();
           updateCommunityBracket();
           if (G_ACTIVE && G_VIS_LOADED) gBuildAndRender(gGetVersions(), STATE.redditAll);
-          // "Highest risk" sort reads reddit data that wasn't in yet on
-          // whichever earlier call actually computed the current group
-          // order, same pattern as ensureLlmVersionsLoaded re-running
-          // applyFilters() only when the LLM toggle is the reason its
-          // own data matters right now.
-          if (getFeedSort() === "risk") applyFilters();
+          // "Highest risk" and "Most sources" both read reddit data that
+          // wasn't in yet on whichever earlier call actually computed the
+          // current group order, same pattern as ensureLlmVersionsLoaded
+          // re-running applyFilters() only when the LLM toggle is the
+          // reason its own data matters right now.
+          const fs = getFeedSort();
+          if (fs === "risk" || fs === "sources") applyFilters();
         });
       }
       return STATE.redditReady;
