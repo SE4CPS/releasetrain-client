@@ -707,6 +707,10 @@
     }
     .panel-header h2 { margin: 0; font-size: 13px; font-weight: 700; flex: 1; }
     .panel-header h2 small { font-weight: 400; color: var(--muted); font-size: 11px; }
+    #feedSortSelect {
+      font: inherit; font-size: 12px; padding: 4px 8px; border: 1px solid var(--border);
+      border-radius: var(--radius-sm); background: var(--surface); color: var(--text); cursor: pointer;
+    }
     #status { color: var(--muted); font-size: 12px; }
     /* Per-source breakdown of what's in the current "Recent Updates" window,
        right below the panel header — CVE/Reddit/StackOverflow always shown
@@ -1753,7 +1757,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.12">Releasetrain <em>v3.62.12</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.13">Releasetrain <em>v3.62.13</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3340,6 +3344,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-11</div>
+              <div class="cl-ver cl-ver-patch">v3.62.13</div>
+            </div>
+            <div class="cl-content">
+              <h3>Feed sort is now a choice, not one fixed default</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Added a Sort dropdown next to "Recent Updates": Recent (the default), A-Z, Most CVEs, Highest risk, and Most activity. Remembered across visits. "Highest risk" ranks by the same model-predicted community update-risk score used throughout the rest of the app, and re-sorts itself once Reddit data finishes its background load if that's the active mode.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-11</div>
               <div class="cl-ver cl-ver-patch">v3.62.12</div>
             </div>
             <div class="cl-content">
@@ -4783,6 +4800,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       <section class="panel" id="feedPanel" aria-label="Updates feed">
         <header class="panel-header">
           <h2>📋 Recent Updates <small>(last 2 weeks)</small></h2>
+          <select id="feedSortSelect" title="Sort the feed">
+            <option value="recency">Sort: Recent</option>
+            <option value="alpha">Sort: A-Z</option>
+            <option value="cve">Sort: Most CVEs</option>
+            <option value="risk">Sort: Highest risk</option>
+            <option value="activity">Sort: Most activity</option>
+          </select>
           <button class="btn btn-ghost" type="button" id="expandAllBtn"
             title="Expand or collapse all groups">Expand all</button>
           <div id="status" class="status" aria-live="polite">Idle</div>
@@ -4970,7 +4994,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       "btn-major", "btn-minor", "btn-patch", "btn-cve", "btn-llm", "btn-hv", "btn-potential-cve", "btn-reddit",
       "btn-reddit-risk", "btn-reddit-risk-latest", "btn-reddit-risk-cve", "btn-so-risk", "btn-so",
       "filterForm", "components", "clearBtn", "fixedToggles", "typeToggles",
-      "homeLink", "graphLink", "archLink", "cveLink", "dashboardLink", "docsLink", "changelogLink", "ackLink", "usersLink", "networkLink", "expandAllBtn", "activeFilters", "afTags", "afClearAll", "emptyState"
+      "homeLink", "graphLink", "archLink", "cveLink", "dashboardLink", "docsLink", "changelogLink", "ackLink", "usersLink", "networkLink", "expandAllBtn", "feedSortSelect", "activeFilters", "afTags", "afClearAll", "emptyState"
     ].forEach(id => { EL[id] = document.getElementById(id); });
 
     const $ = s => document.querySelector(s);
@@ -7940,6 +7964,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     }
 
     /* ── Grouping ─────────────────────────────────────────────── */
+    // User-selectable, remembered across visits. "recency" is the
+    // default (see groupByComponentName's own comment for why); the
+    // others are for when a different question matters more than "what
+    // just changed"; alphabetical browsing, or triaging by risk.
+    const FEED_SORT_KEY = "rt_feed_sort";
+    function getFeedSort() {
+      try { return localStorage.getItem(FEED_SORT_KEY) || "recency"; } catch { return "recency"; }
+    }
+    function setFeedSort(mode) {
+      try { localStorage.setItem(FEED_SORT_KEY, mode); } catch { /* best-effort only */ }
+    }
+
     function groupByComponentName(list) {
       const map = new Map();
       for (const v of list) {
@@ -7949,15 +7985,41 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       }
       const arr = Array.from(map.values());
       arr.forEach(g => g.items.sort((a, b) => versionTime(b) - versionTime(a)));
-      // Groups (component names) sorted by recency: whichever group has
-      // the most recently updated item leads. This is a "Recent Updates"
-      // feed, so surfacing what actually just changed matters more than
-      // a stable, alphabetically-predictable position, and finding one
-      // specific component by name is already better served by the
-      // search/filter box than by scanning an alphabetized list. Each
-      // group's own items are already sorted newest first (just above),
-      // so a group's own most recent timestamp is simply its first item's.
-      arr.sort((a, b) => versionTime(b.items[0]) - versionTime(a.items[0]));
+
+      const mode = getFeedSort();
+      if (mode === "alpha") {
+        // Predictable position over recency, the same tradeoff the old
+        // always-alphabetical default used to make, now opt-in.
+        arr.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+      } else if (mode === "cve") {
+        arr.forEach(g => { g._cveCount = g.items.filter(v => v.isCve).length; });
+        arr.sort((a, b) => (b._cveCount - a._cveCount) || (versionTime(b.items[0]) - versionTime(a.items[0])));
+      } else if (mode === "risk") {
+        // Reddit data loads in the background (see ensureRedditLoaded)
+        // and may not be in yet on the very first sort. That callback
+        // re-runs applyFilters() (which calls back in here) once it
+        // lands, specifically when this mode is active, so the order
+        // corrects itself rather than staying wrong until some other
+        // filter change happens to re-trigger it.
+        arr.forEach(g => {
+          const posts = postsForComponent(norm(g.name))
+            .filter(p => getPostSource(p) === "reddit" && redditTime(p) >= LOOKBACK_AGO);
+          g._riskScore = posts.reduce((max, p) => Math.max(max, getUpdateScore(p) ?? 0), 0);
+        });
+        arr.sort((a, b) => (b._riskScore - a._riskScore) || (versionTime(b.items[0]) - versionTime(a.items[0])));
+      } else if (mode === "activity") {
+        arr.sort((a, b) => (b.items.length - a.items.length) || (versionTime(b.items[0]) - versionTime(a.items[0])));
+      } else {
+        // Groups (component names) sorted by recency: whichever group has
+        // the most recently updated item leads. This is a "Recent Updates"
+        // feed, so surfacing what actually just changed matters more than
+        // a stable, alphabetically-predictable position, and finding one
+        // specific component by name is already better served by the
+        // search/filter box than by scanning an alphabetized list. Each
+        // group's own items are already sorted newest first (just above),
+        // so a group's own most recent timestamp is simply its first item's.
+        arr.sort((a, b) => versionTime(b.items[0]) - versionTime(a.items[0]));
+      }
       return arr;
     }
 
@@ -8587,6 +8649,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       EL.expandAllBtn.textContent = STATE.expandedAll ? "Collapse all" : "Expand all";
     });
 
+    /* ── Feed sort ────────────────────────────────────────────── */
+    EL.feedSortSelect.value = getFeedSort();
+    EL.feedSortSelect.addEventListener("change", () => {
+      setFeedSort(EL.feedSortSelect.value);
+      applyFilters();
+    });
+
     /* ── Boot ─────────────────────────────────────────────────── */
     function refreshRenderedGroupsWithReddit() {
       const rendered = Array.from(EL.feed.querySelectorAll(".feedGroup[data-component]"));
@@ -8616,6 +8685,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           refreshRenderedGroupsWithReddit();
           updateCommunityBracket();
           if (G_ACTIVE && G_VIS_LOADED) gBuildAndRender(gGetVersions(), STATE.redditAll);
+          // "Highest risk" sort reads reddit data that wasn't in yet on
+          // whichever earlier call actually computed the current group
+          // order, same pattern as ensureLlmVersionsLoaded re-running
+          // applyFilters() only when the LLM toggle is the reason its
+          // own data matters right now.
+          if (getFeedSort() === "risk") applyFilters();
         });
       }
       return STATE.redditReady;
