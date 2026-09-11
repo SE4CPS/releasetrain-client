@@ -1732,7 +1732,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.4">Releasetrain <em>v3.62.4</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.5">Releasetrain <em>v3.62.5</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3319,6 +3319,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-10</div>
+              <div class="cl-ver cl-ver-patch">v3.62.5</div>
+            </div>
+            <div class="cl-content">
+              <h3>Comparison entity extraction fix, and a freshness stamp on the feed</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> "android or ios which is more secure" resolved to the entities "android" and "ios which": a trailing qualifying clause ("which is...", "that...") wasn't being cut off the second name, so it matched nothing and the feed showed only one side's documents. Fixed in both the server's classifier and this page's own preview copy of it.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Each feed group's header now shows how fresh its latest tracked version actually is, e.g. "(latest: 8.5.10, 12d ago)", not just the bare number.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Swapped one of the Ask intro panel's sample questions for a comparison example: "Should I use Node or Flask for a new API?"</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-10</div>
               <div class="cl-ver cl-ver-patch">v3.62.4</div>
             </div>
             <div class="cl-content">
@@ -4707,7 +4722,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         <li><button type="button" class="ask-sample-btn" data-ask-sample="What's the latest PHP version?">What's the latest PHP version?</button></li>
         <li><button type="button" class="ask-sample-btn" data-ask-sample="Are there any recent CVEs affecting MySQL?">Are there any recent CVEs affecting MySQL?</button></li>
         <li><button type="button" class="ask-sample-btn" data-ask-sample="Did the latest Chrome update break WebView?">Did the latest Chrome update break WebView?</button></li>
-        <li><button type="button" class="ask-sample-btn" data-ask-sample="What changed in the newest Firefox release?">What changed in the newest Firefox release?</button></li>
+        <li><button type="button" class="ask-sample-btn" data-ask-sample="Should I use Node or Flask for a new API?">Should I use Node or Flask for a new API?</button></li>
       </ul>
     </aside>
 
@@ -4905,7 +4920,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     };
     const ASK_COMPARISON_SPLIT_RX = /\s+(?:or|vs\.?|versus)\s+/i;
     const ASK_COMPARISON_LEADIN_RX = /^(?:should\s+(?:i|we)\s+(?:use|go\s+with|pick|choose)|(?:let'?s\s+)?use|using|choose|choosing|pick|picking|go(?:ing)?\s+with|prefer|recommend(?:ing)?)\s+/i;
-    const ASK_COMPARISON_TRAILER_RX = /\s+(?:for|to|when|while|during|tomorrow|today|tonight|this\s+\w+|next\s+\w+)\b.*$/i;
+    const ASK_COMPARISON_TRAILER_RX = /\s+(?:for|to|when|while|during|tomorrow|today|tonight|this\s+\w+|next\s+\w+|which|that|who|whose)\b.*$/i;
     const ASK_COMPARISON_DECISION_WORDS = new Set([
       "upgrade", "upgrading", "downgrade", "downgrading", "update", "updating",
       "install", "installing", "uninstall", "reinstall", "wait", "waiting",
@@ -4913,6 +4928,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       "restart", "reboot", "disable", "enable", "keep", "keeping", "skip",
       "retry", "rollback", "repair", "fix", "fixing", "now", "later", "today",
       "tomorrow", "yet", "again", "it", "this", "that", "mine", "buy", "buying",
+      "which", "who", "whose",
     ]);
     function askLooksLikeComparisonName(phrase) {
       return phrase.split(/\s+/).every(w => !ASK_COMPARISON_DECISION_WORDS.has(w.toLowerCase()));
@@ -4925,8 +4941,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (left.includes(",")) left = left.slice(left.lastIndexOf(",") + 1);
       left = left.replace(ASK_COMPARISON_LEADIN_RX, "").trim();
       left = left.split(/\s+/).filter(Boolean).slice(-2).join(" ");
+      // A qualifying clause on the right ("iOS, which is more secure",
+      // "Android or iOS which has more vulnerabilities") attaches right
+      // after the entity name, comma or not. Cut at the first comma
+      // before the trailer regex runs, same fix as the server's own copy.
+      if (right.includes(",")) right = right.slice(0, right.indexOf(","));
       right = right.replace(ASK_COMPARISON_TRAILER_RX, "").trim();
       right = right.split(/\s+/).filter(Boolean).slice(0, 2).join(" ");
+      left = left.replace(/^[,.:;!?]+|[,.:;!?]+$/g, "");
+      right = right.replace(/^[,.:;!?]+|[,.:;!?]+$/g, "");
       if (!left || !right) return null;
       if (!askLooksLikeComparisonName(left) || !askLooksLikeComparisonName(right)) return null;
       if (ASK_GENERIC_STOPLIST.has(left.toLowerCase()) || ASK_GENERIC_STOPLIST.has(right.toLowerCase())) return null;
@@ -5203,10 +5226,17 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // unrelated row happens to occupy that position now.
     const componentLatestVersionCache = new Map();
     let askSuggestRenderGen = 0;
+    // Returns { version, date } (versionReleaseDate, YYYYMMDD) rather
+    // than a bare version string, so a caller can show how fresh that
+    // "latest" actually is (see renderComponentNode's feed group header)
+    // without a second lookup. `date` is null wherever `version` is,
+    // and every existing caller that only wants the number still works
+    // unchanged since destructuring `{ version }` off a null result is
+    // safe.
     async function fetchLatestVersionFor(name) {
       const key = name.toLowerCase();
       if (componentLatestVersionCache.has(key)) return componentLatestVersionCache.get(key);
-      let version = null;
+      let result = { version: null, date: null };
       try {
         const res = await fetch(`${API_BASE}c/name/${encodeURIComponent(name)}`);
         if (res.ok) {
@@ -5220,11 +5250,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           // would otherwise show as if it were the product's own latest
           // version. The first non-CVE entry is the real release.
           const real = Array.isArray(list) ? list.find(v => !v.isCve) : null;
-          version = (real && real.versionNumber) || null;
+          if (real && real.versionNumber) result = { version: real.versionNumber, date: real.versionReleaseDate || null };
         }
-      } catch { /* leave version null; a missing bracket beats a broken dropdown */ }
-      componentLatestVersionCache.set(key, version);
-      return version;
+      } catch { /* leave result null; a missing bracket beats a broken dropdown */ }
+      componentLatestVersionCache.set(key, result);
+      return result;
     }
 
     function hideAskSuggestions() {
@@ -5260,7 +5290,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // conditional on anything beyond "this row is still on screen".
       items.forEach((it, i) => {
         if (it.kind !== "component") return;
-        fetchLatestVersionFor(it.value).then(version => {
+        fetchLatestVersionFor(it.value).then(({ version }) => {
           if (gen !== askSuggestRenderGen || !version) return;
           const slot = askSuggestionsEl.querySelector(`[data-ver-slot="${i}"]`);
           if (slot) slot.textContent = `(latest: ${version})`;
@@ -8120,8 +8150,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // feed's current window. A live fetch by name isn't limited to
       // what happens to be loaded right now.
       const verSlot = sum.querySelector(".group-latest-ver");
-      fetchLatestVersionFor(group.name).then(version => {
-        if (version) verSlot.textContent = ` (latest: ${version})`;
+      fetchLatestVersionFor(group.name).then(({ version, date }) => {
+        if (!version) return;
+        // How fresh "latest" actually is, right next to the version
+        // number itself, since a version can be genuinely current or a
+        // year stale, and the bare number alone doesn't say which.
+        const ms = date ? aDateMs(date) : 0;
+        const days = ms ? Math.round((Date.now() - ms) / 86400000) : null;
+        const freshness = days == null ? "" : (days <= 0 ? ", today" : `, ${days}d ago`);
+        verSlot.textContent = ` (latest: ${version}${freshness})`;
       });
 
       const wrap = document.createElement("div"); wrap.className = "updates";
