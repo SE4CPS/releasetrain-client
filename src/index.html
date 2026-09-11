@@ -1753,7 +1753,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.10">Releasetrain <em>v3.62.10</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.11">Releasetrain <em>v3.62.11</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3336,6 +3336,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-11</div>
+              <div class="cl-ver cl-ver-patch">v3.62.11</div>
+            </div>
+            <div class="cl-content">
+              <h3>Fixed a stale "latest" version in the feed group header</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> A group header could show an older version as "latest" (e.g. "Zoom (latest: 7.0.0, 171d ago)" while a genuinely newer 7.1.8 sat in the feed below it). The server endpoint this reads was sorted by when a document was last written to the database, not by its actual release date; a bot that posts several historical entries newest-first (the natural order for most release-note pages) ends up writing its oldest entry last, which then looked like the "latest" one. The endpoint now sorts by real release date directly.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5371,13 +5384,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         if (res.ok) {
           const data = await res.json();
           const list = Object.values(data)[0];
-          // /api/c/name/:name is sorted by most-recently-touched, not by
-          // "is this actually a product release". A CVE record can be
-          // the most recently updated document for a name (verified
-          // live: "Android"'s own top result was a Samsung CVE patch
-          // version, "20.1.00", not any real Android OS version) and
-          // would otherwise show as if it were the product's own latest
-          // version. The first non-CVE entry is the real release.
+          // /api/c/name/:name is sorted by versionReleaseDate (real
+          // release date), but a CVE record can share that same date, or
+          // an even more recent one, and still isn't itself a release
+          // (verified live: "Android"'s own top result was a Samsung CVE
+          // patch version, "20.1.00", not any real Android OS version).
+          // The first non-CVE entry in that date order is the real one.
           const real = Array.isArray(list) ? list.find(v => !v.isCve) : null;
           if (real && real.versionNumber) result = { version: real.versionNumber, date: real.versionReleaseDate || null };
         }
