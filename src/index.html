@@ -204,6 +204,14 @@
         top: calc(var(--topbar-h) + var(--preview-h) + 12px);
         max-height: calc(100vh - var(--topbar-h) - var(--preview-h) - 24px);
         overflow-y: auto;
+        /* overflow-y:auto alone silently promotes overflow-x to auto too
+           (same gotcha already fixed on every other scrolling view this
+           session), so any unwrapped token in a generated answer could
+           put a horizontal scrollbar on this rail and clip its own text
+           at the edge. Pinned to hidden; the actual wrapping fixes below
+           (.ask-answer-summary, its code spans) are what keep real
+           content from needing it in the first place. */
+        overflow-x: hidden;
       }
       .layout .ask-intro-panel { display: block; }
       .layout.has-ask-rail .ask-intro-panel { display: none; }
@@ -426,7 +434,7 @@
       font: 700 10px/1 inherit; text-transform: uppercase; letter-spacing: .4px;
       color: var(--brand); margin-bottom: 6px;
     }
-    .ask-answer-summary { font-size: 13px; line-height: 1.6; margin: 0 0 10px; }
+    .ask-answer-summary { font-size: 13px; line-height: 1.6; margin: 0 0 10px; overflow-wrap: anywhere; }
     /* The one substring (a version number, so far) that most directly
        answers the question, per the server's own highlightTerm (see
        ask.js's highestVersionSource). Never a client-side guess at
@@ -445,6 +453,7 @@
     .ask-answer-summary code {
       font-family: var(--mono); font-size: 12px; background: var(--chip-bg);
       color: var(--chip-text); padding: 1px 4px; border-radius: var(--radius-sm);
+      overflow-wrap: anywhere;
     }
     /* Sources flow left to right as compact chips, wrapping to a new
        line only once a row genuinely runs out of width, not one
@@ -1738,7 +1747,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.7">Releasetrain <em>v3.62.7</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.8">Releasetrain <em>v3.62.8</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3321,6 +3330,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-10</div>
+              <div class="cl-ver cl-ver-patch">v3.62.8</div>
+            </div>
+            <div class="cl-content">
+              <h3>Ask answer rail no longer scrolls sideways</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The right-side answer panel was missed in the earlier "no view scrolls sideways" pass: it sets overflow-y:auto, which silently promotes overflow-x to auto too, so an unwrapped token in a generated answer could put a horizontal scrollbar on the rail and clip text at the edge. Pinned to overflow-x:hidden, and added overflow-wrap to the answer text and its inline code spans so real content wraps instead of needing to scroll in the first place.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
