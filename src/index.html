@@ -765,12 +765,23 @@
     details[open] > summary { background: var(--chip-bg); color: var(--text); border-bottom: 1px solid var(--border); }
 
     /* The group's own CVE/Reddit/SO/Major/Minor/Patch total chips get
-       their own row below the name, indented to roughly line up under
-       the name text (past the arrow + its gap above), instead of
-       crowding onto the same line as the name and version bracket. */
+       their own row below the name, flush-left with the arrow on the
+       row above (not indented to the name text), instead of crowding
+       onto the same line as the name and version bracket. */
     .groupChips {
-      display: flex; gap: 4px; flex-wrap: wrap; align-items: center;
-      padding-left: 16px;
+      display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+    }
+    /* Plain icon+label+count here, no pill box: a real .chip (CVE link,
+       RISK, poll button, etc. elsewhere in the feed) still earns its
+       box because it's a single, more consequential flag on one row -
+       six of these sitting together in a group's own summary read as
+       too heavy as boxes, so they're just colored text instead,
+       separated by a plain "|" rather than the box's own edge. */
+    .groupChips .chip {
+      background: transparent; border: none; padding: 0; font-weight: 600;
+    }
+    .groupChips .chip:not(:first-child)::before {
+      content: "|"; margin-right: 10px; color: var(--border); font-weight: 400;
     }
     .group-latest-ver { font-weight: 400; font-size: 10px; color: var(--muted); margin-left: auto; }
 
@@ -1774,7 +1785,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.16">Releasetrain <em>v3.62.16</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.17">Releasetrain <em>v3.62.17</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3357,6 +3368,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-11</div>
+              <div class="cl-ver cl-ver-patch">v3.62.17</div>
+            </div>
+            <div class="cl-content">
+              <h3>Feed group chips: less box, more aligned</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The group header's own CVE/Reddit/SO/Major/Minor/Patch chips lost their box (background and border) and became plain colored icon+label+count text, separated by a "|": six pill boxes together read as too heavy for a per-group summary, especially next to a lone one-count chip like "Patch 1".</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> That chip row now sits flush-left with the expand/collapse arrow on the row above, instead of indented to (approximately) line up under the name text.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
