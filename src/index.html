@@ -1007,7 +1007,7 @@
     .cl-ver.cl-ver-patch { background: #f8fafc; color: var(--muted); border: 1px solid var(--border); }
     .cl-content h3 { margin: 0 0 6px; font-size: 13px; font-weight: 700; }
     .cl-content ul { margin: 0; padding: 0 0 0 16px; display: flex; flex-direction: column; gap: 3px; }
-    .cl-content li { font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .cl-content li { font-size: 12px; color: var(--muted); line-height: 1.5; overflow-wrap: anywhere; }
     .cl-content li strong { color: var(--text); }
     .cl-tag {
       display: inline-block; font: 700 10px/1.5 var(--mono); padding: 0 5px;
@@ -1064,6 +1064,19 @@
       overflow-y: auto; overscroll-behavior: contain;
     }
     @media (max-width: 640px) { #usersView { position: static; height: auto; overflow-y: visible; } }
+
+    /* ── No view scrolls the whole page (or its own panel) sideways ──
+       Each of these containers sets overflow-y:auto, which per the CSS
+       spec silently promotes overflow-x to auto as well, so any child a
+       few px too wide (a long unbreakable token, a wide admin table)
+       drops a horizontal scrollbar across the entire view. Pin
+       overflow-x to hidden on the container; content that genuinely
+       needs the width (the admin search-events table) gets its own
+       overflow-x:auto box so its columns stay reachable by scrolling
+       within that box, not by scrolling the view. */
+    #usersView, #feedPanel, #changelogView, #dashboardView,
+    #networkView, #docsView, #ackView { overflow-x: hidden; }
+    #ua-se-list { overflow-x: auto; overflow-y: hidden; }
     .ua-tabs {
       display: flex; border-bottom: 2px solid var(--border); margin-bottom: 0;
     }
@@ -1719,7 +1732,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.2">Releasetrain <em>v3.62.2</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.3">Releasetrain <em>v3.62.3</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3302,6 +3315,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-10</div>
+              <div class="cl-ver cl-ver-patch">v3.62.3</div>
+            </div>
+            <div class="cl-content">
+              <h3>Views no longer scroll sideways</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The Account view and every other panel could scroll horizontally when a wide child (an admin table, a long token) pushed past the edge. Each view now clips to its own width. The admin search events table, which really is wide, scrolls inside its own box so every column stays reachable.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
