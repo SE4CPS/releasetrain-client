@@ -707,23 +707,18 @@
     }
     .panel-header h2 { margin: 0; font-size: 13px; font-weight: 700; flex: 1; }
     .panel-header h2 small { font-weight: 400; color: var(--muted); font-size: 11px; }
+    /* Native <select> chrome renders taller than a plain .btn at the same
+       font-size (its own UA line-height + dropdown-arrow padding), so an
+       explicit shared height on both is the only reliable way to line
+       them up, matched to whichever is naturally shorter (the button). */
+    #feedSortSelect, #expandAllBtn {
+      height: 26px;
+    }
     #feedSortSelect {
-      font: inherit; font-size: 12px; padding: 4px 8px; border: 1px solid var(--border);
+      font: inherit; font-size: 12px; line-height: 1; padding: 0 8px; border: 1px solid var(--border);
       border-radius: var(--radius-sm); background: var(--surface); color: var(--text); cursor: pointer;
     }
     #status { color: var(--muted); font-size: 12px; }
-    /* Per-source breakdown of what's in the current "Recent Updates" window,
-       right below the panel header — CVE/Reddit/StackOverflow always shown
-       since those are dense enough to always be worth a count; LLM/Hypervisor
-       only shown when nonzero since they're sparse enough in time that they'd
-       otherwise sit at 0 in this specific "last N weeks" window most of the time. */
-    .feed-source-summary {
-      display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
-      padding: 6px 14px; font-size: 11px; color: var(--muted);
-      border-bottom: 1px solid var(--border);
-    }
-    .feed-source-summary strong { color: var(--text); font-weight: 700; }
-    .feed-source-summary:empty { display: none; }
 
     /* ── Empty state ────────────────────────────────────────── */
     #emptyState { display: none; padding: 48px 20px; text-align: center; color: var(--muted); }
@@ -772,17 +767,22 @@
       display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
     }
     /* Plain icon+label+count here, no pill box: a real .chip (CVE link,
-       RISK, poll button, etc. elsewhere in the feed) still earns its
-       box because it's a single, more consequential flag on one row -
-       six of these sitting together in a group's own summary read as
-       too heavy as boxes, so they're just colored text instead,
-       separated by a plain "|" rather than the box's own edge. */
+       RISK, poll button, etc. elsewhere in the feed) still earns its box
+       because it's a single, more consequential flag on one row. Six of
+       these sitting together in a group's own summary read as too heavy
+       as boxes, so they're just colored text instead, separated by a
+       plain "|" rather than the box's own edge. */
     .groupChips .chip {
       background: transparent; border: none; padding: 0; font-weight: 600;
     }
     .groupChips .chip:not(:first-child)::before {
       content: "|"; margin-right: 10px; color: var(--border); font-weight: 400;
     }
+    /* Which bot(s) produced this component's own content: replaces the
+       old global "Recent Updates" source breakdown, which listed raw
+       totals with no way to tell which component each count belonged
+       to. Flush-left with the arrow/chips above it, same convention. */
+    .groupSource { font-size: 10px; color: var(--muted); }
     .group-latest-ver { font-weight: 400; font-size: 10px; color: var(--muted); margin-left: auto; }
 
     /* ── Timeline items ─────────────────────────────────────── */
@@ -1785,7 +1785,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.17">Releasetrain <em>v3.62.17</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.18">Releasetrain <em>v3.62.18</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3372,6 +3372,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-11</div>
+              <div class="cl-ver cl-ver-patch">v3.62.18</div>
+            </div>
+            <div class="cl-content">
+              <h3>Per-component sourcing, header controls line up</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Replaced the global, deck-wide "Recent Updates" source breakdown (raw totals with no way to tell which component each count belonged to, and permanently-stuck "unknown" buckets that should have said "github.py") with a per-component "Source: chrome.py" / "Sources: chrome.py, github.py" line in each group's own summary.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> "Recent Updates <small>(last 2 weeks)</small>" now also states how many groups are currently in that window, e.g. "(last 2 weeks, 214 groups)".</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The Sort dropdown and "Expand all" button now share an explicit height, matched to whichever was naturally shorter (the button): the native select's own UA chrome previously rendered visibly taller.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-11</div>
               <div class="cl-ver cl-ver-patch">v3.62.17</div>
             </div>
             <div class="cl-content">
@@ -4881,7 +4896,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
       <section class="panel" id="feedPanel" aria-label="Updates feed">
         <header class="panel-header">
-          <h2>📋 Recent Updates <small>(last 2 weeks)</small></h2>
+          <h2>📋 Recent Updates <small id="feedWindowLabel">(last 2 weeks)</small></h2>
           <select id="feedSortSelect" title="Sort the feed">
             <option value="recency">Sort: Recent</option>
             <option value="alpha">Sort: A-Z</option>
@@ -4893,7 +4908,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             title="Expand or collapse all groups">Expand all</button>
           <div id="status" class="status" aria-live="polite">Idle</div>
         </header>
-        <div id="feedSourceSummary" class="feed-source-summary" aria-live="polite"></div>
 
         <div id="emptyState">
           <div style="font-size:32px">🔍</div>
@@ -5082,7 +5096,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     /* ── DOM cache ────────────────────────────────────────────── */
     const EL = {};
-    ["feed", "sentinel", "status", "navLoader", "feedSourceSummary", "kpi-page", "kpi-range", "kpi-uniq", "kpi-reddit", "kpi-llm", "kpi-hv",
+    ["feed", "sentinel", "status", "navLoader", "feedWindowLabel", "kpi-page", "kpi-range", "kpi-uniq", "kpi-reddit", "kpi-llm", "kpi-hv",
       "btn-major", "btn-minor", "btn-patch", "btn-cve", "btn-llm", "btn-hv", "btn-potential-cve", "btn-reddit",
       "btn-reddit-risk", "btn-reddit-risk-latest", "btn-reddit-risk-cve", "btn-so-risk", "btn-so",
       "filterForm", "components", "clearBtn", "fixedToggles", "typeToggles",
@@ -8124,40 +8138,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     function computeAggregates(list) {
       let major = 0, minor = 0, patch = 0, cve = 0, llm = 0, hv = 0; const uniqComps = new Set(), typeCounts = new Map();
       const rIds = new Set(), rRiskIds = new Set(), rRiskLatIds = new Set(), rRiskCveIds = new Set(), soIds = new Set(), soRiskIds = new Set();
-      // One number per bot for everything not already broken out as its own
-      // LLM/Hypervisor category — otherwise those sources (chrome.py,
-      // github.py, firefox.py, etc.) are invisible in the feed summary
-      // entirely. Keyed on the real sourceBot field (backfilled by
-      // maintainer.py's source-attribution pass), not an approximation from
-      // versionProductType/versionProductName — those conflate multiple bots
-      // under one type ("browser" = chrome+firefox+safari) or fragment one
-      // bot into many buckets (github.py's per-repo product names).
-      const otherBotCounts = new Map();
-      // CVE is every product bot's own isCve flag, not one bot's output
-      // (firefoxCve.py, win_cve.py, etc. each set it on their own product's
-      // documents), same sourceBot-keyed breakdown as otherBotCounts,
-      // just scoped to isCve documents, so "which bot found how many CVEs"
-      // is visible instead of one opaque combined total.
-      const cveBotCounts = new Map();
       let potentialCve = 0;
       for (const it of list) {
         const ch = norm(it.versionReleaseChannel);
         if (ch === "major") major++; else if (ch === "minor") minor++; else if (ch === "patch") patch++;
         const isLlm = isLLMVersion(it), isHv = isHypervisorVersion(it);
-        if (it.isCve) {
-          cve++;
-          const bot = (it.sourceBot || "unknown").trim() || "unknown";
-          cveBotCounts.set(bot, (cveBotCounts.get(bot) || 0) + 1);
-        }
+        if (it.isCve) cve++;
         if (isLlm) llm++;
         if (isHv) hv++;
-        if (!it.isCve && !isLlm && !isHv) {
-          // Pre-backfill (or a bot the inference genuinely couldn't place)
-          // both land in one honest "unknown" bucket rather than being
-          // silently dropped from the summary.
-          const bot = (it.sourceBot || "unknown").trim() || "unknown";
-          otherBotCounts.set(bot, (otherBotCounts.get(bot) || 0) + 1);
-        }
         for (const p of redditMatchesForVersionBase(it, REDDIT_LIMIT, false)) if (getPostSource(p) === "reddit") rIds.add(getPostId(p));
         for (const p of redditMatchesForVersionBase(it, REDDIT_LIMIT, true)) if (getPostSource(p) === "reddit") {
           const id = getPostId(p); rRiskIds.add(id);
@@ -8178,8 +8166,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       return {
         major, minor, patch, cve, llm, hv, reddit: rIds.size, redditRisk: rRiskIds.size,
         redditRiskLatest: rRiskLatIds.size, redditRiskCve: rRiskCveIds.size,
-        so: soIds.size, soRisk: soRiskIds.size, potentialCve, uniq: uniqComps.size, typeCounts,
-        otherBotCounts, cveBotCounts
+        so: soIds.size, soRisk: soRiskIds.size, potentialCve, uniq: uniqComps.size, typeCounts
       };
     }
 
@@ -8207,37 +8194,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       EL["btn-so"].textContent = a.so;
       EL["btn-so-risk"].textContent = a.soRisk;
       EL["kpi-uniq"].textContent = a.uniq;
-
-      // Per-source breakdown for the current "Recent Updates" window (not the
-      // sidebar's "true total" figures — this deliberately reflects only
-      // what's actually in view right now, same scope as the header's own
-      // "(last 2 weeks)" label). One flat list, every entry with count 0
-      // dropped and the rest sorted by count (highest first) rather than
-      // a fixed CVE/Reddit/StackOverflow-first order. A source with 0
-      // results this window is just noise, and the largest sources should
-      // read first regardless of which category they happen to be.
-      // Reddit and StackOverflow get their real bot filenames (reddit.py,
-      // stackoverflow.py, confirmed against releasetrain-bot's actual
-      // scripts), the same naming convention as every other bot chip here.
-      // CVE is the same idea, just one level deeper: it isn't one bot's
-      // output, it's an isCve flag several different product bots each set
-      // on their own documents (firefoxCve.py, win_cve.py, etc.), so it
-      // gets one 🔴 chip per bot (sourceBot-keyed, see cveBotCounts) rather
-      // than a single opaque combined total.
-      const nf = n => n.toLocaleString();
-      const entries = [
-        ...[...a.cveBotCounts.entries()].map(([bot, count]) => ({ icon: '🔴', label: bot, count })),
-        { icon: '💬', label: 'reddit.py', count: a.reddit },
-        { icon: '🟧', label: 'stackoverflow.py', count: a.so },
-        { icon: '🤖', label: 'LLM', count: a.llm },
-        { icon: '🖥', label: 'Hypervisor', count: a.hv },
-        ...[...a.otherBotCounts.entries()].map(([bot, count]) => ({ icon: '📦', label: bot, count })),
-      ];
-      const parts = entries
-        .filter(e => e.count > 0)
-        .sort((x, y) => y.count - x.count)
-        .map(e => `${e.icon} ${e.label} <strong>${nf(e.count)}</strong>`);
-      EL.feedSourceSummary.innerHTML = parts.map(p => `<span>${p}</span>`).join("");
     }
 
     /* ── Active filter display ────────────────────────────────── */
@@ -8290,6 +8246,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     }
 
     /* ── Range KPI helper ────────────────────────────────────── */
+    // "Recent Updates (last N weeks)" also states how many groups that
+    // window currently holds, so the header itself answers "how much is
+    // actually in here" without having to read the separate #status text
+    // below it. Weeks computed from LOOKBACK_DAYS rather than hardcoded,
+    // same reasoning as everywhere else this constant is the single
+    // source of truth for the window's length.
+    function updateFeedWindowLabel() {
+      if (!EL.feedWindowLabel) return;
+      const weeks = Math.round(LOOKBACK_DAYS / 7);
+      const n = STATE.groupsFiltered.length;
+      EL.feedWindowLabel.textContent = `(last ${weeks} week${weeks !== 1 ? "s" : ""}, ${n.toLocaleString()} group${n !== 1 ? "s" : ""})`;
+    }
+
     function updateRangeKpi(items) {
       const fmt = d => d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
       // Reflects what's actually displayed, not a fixed assumed window — a named
@@ -8377,6 +8346,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       EL.sentinel.textContent = STATE.groupsFiltered.length ? "Loading more…" : "No results";
       EL.emptyState.classList.toggle("show", !STATE.groupsFiltered.length);
       EL.status.textContent = `${STATE.groupsFiltered.length} group${STATE.groupsFiltered.length !== 1 ? "s" : ""}`;
+      updateFeedWindowLabel();
       appendNextGroups();
 
       if (G_ACTIVE && G_VIS_LOADED) gBuildAndRender(gGetVersions(), STATE.redditAll);
@@ -8443,6 +8413,25 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         patchCount ? chip(`🩹 Patch ${patchCount}`, "soft") : "",
       ].filter(Boolean).join("");
 
+      // Which bot(s) actually produced this component's own content -
+      // replaces the old global, deck-wide "Recent Updates" source
+      // breakdown (which just listed raw totals with no way to tell
+      // which component each count belonged to). Reddit/StackOverflow
+      // posts carry no sourceBot field of their own (they're keyed by
+      // "source" instead), but there's only ever one bot that creates
+      // each: reddit.py, stackoverflow.py.
+      const botSet = new Set();
+      for (const v of group.items) {
+        if (v._synthetic) continue;
+        botSet.add((v.sourceBot || "unknown").trim() || "unknown");
+      }
+      if (redditCount) botSet.add("reddit.py");
+      if (soCount) botSet.add("stackoverflow.py");
+      const bots = [...botSet].sort((a, b) => (a === "unknown") - (b === "unknown") || a.localeCompare(b));
+      const sourceLine = bots.length
+        ? `<div class="groupSource">📦 ${bots.length > 1 ? "Sources" : "Source"}: ${bots.map(uaEsc).join(", ")}</div>`
+        : "";
+
       const det = document.createElement("details");
       det.className = "feedGroup";
       // Every group starts collapsed, including the first one. It used
@@ -8458,7 +8447,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // the CVE/Reddit/SO/Major/Minor/Patch total chips get their own
       // row below rather than competing for space on the name's line.
       sum.innerHTML = `<span class="groupHead">${safe(group.name, "")}<span class="group-latest-ver"></span></span>` +
-        (summaryChips ? `<div class="groupChips">${summaryChips}</div>` : "");
+        (summaryChips ? `<div class="groupChips">${summaryChips}</div>` : "") + sourceLine;
       det.appendChild(sum);
       // Fetched live (fetchLatestVersionFor, shared with the Ask
       // suggestion dropdown's own version bracket, cached the same way)
@@ -8721,6 +8710,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           });
           STATE.groupsFiltered = STATE.groupsFiltered.concat(brandNew);
           EL["kpi-page"].textContent = STATE.groupsFiltered.length;
+          updateFeedWindowLabel();
           updateRangeKpi(STATE.groupsFiltered.flatMap(g => g.items));
 
           if (brandNew.length) appendNextGroups();
