@@ -772,7 +772,21 @@
        these sitting together in a group's own summary read as too heavy
        as boxes, so they're just colored text instead, separated by a
        plain "|" rather than the box's own edge. */
-    .groupChips .chip {
+    /* .chip.bad/.warn/etc. below (their own colored background) match
+       .groupChips .chip at equal specificity (two classes each), so
+       whichever is later in the stylesheet was winning regardless of
+       which makes sense: the CVE chip kept its red box even though
+       the plain-text rule right above was clearly meant to win here.
+       .chip.CLASS pins the same specificity these rules already carry,
+       so this box-removal always applies inside .groupChips. */
+    .groupChips .chip,
+    .groupChips .chip.bad,
+    .groupChips .chip.warn,
+    .groupChips .chip.ok,
+    .groupChips .chip.reddit,
+    .groupChips .chip.soft,
+    .groupChips .chip.llm,
+    .groupChips .chip.hv {
       background: transparent; border: none; padding: 0; font-weight: 600;
     }
     .groupChips .chip:not(:first-child)::before {
@@ -1792,7 +1806,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.19">Releasetrain <em>v3.62.19</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.62.20">Releasetrain <em>v3.62.20</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3375,6 +3389,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-11</div>
+              <div class="cl-ver cl-ver-patch">v3.62.20</div>
+            </div>
+            <div class="cl-content">
+              <h3>CVE chip kept its box after the rest lost theirs</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The group header's 🔴 CVE chip still rendered as a red boxed pill after Major/Minor/Patch/Reddit/SO lost theirs: <code>.chip.bad</code>'s own background rule sat later in the stylesheet than <code>.groupChips .chip</code>'s box-removal at equal CSS specificity, so it silently won regardless of which was actually meant to apply. Added matching <code>.groupChips .chip.bad</code> (and every other chip variant) at higher specificity so the box-removal always wins here; CVE keeps its red text, just no more background.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
