@@ -1288,11 +1288,18 @@
     }
     .ua-badge-user  { background: var(--chip-bg); color: var(--chip-text); }
     .ua-badge-admin { background: var(--brand-light); color: var(--brand); }
+    /* Admin's aggregate stats/notice used to sit as their own always-
+       visible lines right above "System overview", easy to miss (blank
+       space, nothing calling attention to it) and inconsistent with
+       everything else being genuinely immediate. Moved inside the
+       profile card itself ("the top box") per explicit request, so it's
+       part of the one thing every visitor already looks at first. */
     .ua-profile-header {
-      display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+      display: flex; flex-direction: column; gap: 10px; padding: 14px 16px;
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius); margin-bottom: 14px;
     }
+    .ua-profile-header-top { display: flex; align-items: center; gap: 12px; }
     .ua-profile-info { display: flex; flex-direction: column; gap: 5px; flex: 1; }
     .ua-profile-name { font: 700 15px/1 inherit; }
     .ua-profile-email { font-size: 12px; color: var(--muted); }
@@ -1300,13 +1307,14 @@
     .ua-reg-notice {
       background: var(--brand-light); color: var(--brand); border: 1px solid var(--brand);
       border-radius: var(--radius-sm); padding: 0.4rem 0.6rem; font-size: 12px;
-      font-weight: 600; margin-bottom: 0.4rem;
+      font-weight: 600;
     }
     .ua-reg-stats {
-      display: flex; flex-wrap: wrap; gap: 2px 14px; font-size: 11px;
-      color: var(--muted); margin-bottom: 0.4rem;
+      display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 11px;
+      color: var(--muted); border-top: 1px solid var(--border); padding-top: 10px;
     }
-    .ua-reg-stats strong { color: var(--text); }
+    .ua-reg-stats strong { font-size: 13px; color: var(--text); }
+    .ua-reg-stats .ua-reg-stat-alert { color: var(--cve); }
     .ua-admin-header {
       /* flex-direction/text-align/justify-content spelled out explicitly:
          the global `summary { flex-direction: column; ... }` rule above
@@ -1334,7 +1342,6 @@
       transition: transform .15s ease;
     }
     details[open] > .ua-admin-header::before { transform: rotate(90deg); }
-    #ua-search-events-section { margin-top: 24px; }
     /* table-layout: fixed + percentage columns, not a content-driven
        auto layout: a per-cell max-width alone only caps how wide ONE
        cell can grow, it doesn't stop the four columns' natural content
@@ -2000,7 +2007,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.70.1">Releasetrain <em>v3.70.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.71.0">Releasetrain <em>v3.71.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3609,6 +3616,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-12</div>
+              <div class="cl-ver cl-ver-minor">v3.71.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Even summary spacing; richer stats in the profile card</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> A stray leftover CSS rule (<code>#ua-search-events-section { margin-top: 24px; }</code>) gave "Search &amp; Ask activity" a visibly larger gap above it than every other admin section. Removed; every collapsible row's spacing now comes from the same source (its own border), so it's consistent everywhere.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The admin registration notice and stat line moved into the profile card itself (name/email/role/Sign out), visible the moment the Account view opens instead of a separate line further down the page. Expanded with more aggregate counts: versions tracked, CVE total, stale bots, and storage used, alongside accounts and queries.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-12</div>
               <div class="cl-ver cl-ver-patch">v3.70.1</div>
             </div>
             <div class="cl-content">
@@ -5197,12 +5218,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         <!-- Authenticated state -->
         <div id="ua-profile-panel" style="display:none">
           <div class="ua-profile-header">
-            <div class="ua-profile-info">
-              <div id="ua-profile-name" class="ua-profile-name"></div>
-              <div id="ua-profile-email" class="ua-profile-email"></div>
-              <span id="ua-profile-role" class="ua-badge"></span>
+            <div class="ua-profile-header-top">
+              <div class="ua-profile-info">
+                <div id="ua-profile-name" class="ua-profile-name"></div>
+                <div id="ua-profile-email" class="ua-profile-email"></div>
+                <span id="ua-profile-role" class="ua-badge"></span>
+              </div>
+              <button id="ua-logout-btn" class="btn btn-ghost">Sign out</button>
             </div>
-            <button id="ua-logout-btn" class="btn btn-ghost">Sign out</button>
+            <!-- Admin-only aggregate stats, populated by uaLoadDashboard
+                 from the same GET /api/admin/overview call the System
+                 overview cards already use (no separate request). Right
+                 in the profile card so they're visible immediately, not
+                 a separate easy-to-miss line elsewhere on the page. -->
+            <div id="ua-reg-notice" class="ua-reg-notice" style="display:none"></div>
+            <div id="ua-reg-stats" class="ua-reg-stats"></div>
           </div>
           <details class="ua-admin-details">
             <summary class="ua-admin-header">
@@ -5313,15 +5343,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           </details>
           <!-- Admin: all users -->
           <div id="ua-admin-section" style="display:none">
-            <!-- Always visible (not inside a closed <details> like the
-                 sections below it): a registration notice is exactly the
-                 kind of thing that should be seen without an extra click,
-                 and the stat line underneath it is cheap, always-useful
-                 context. Populated by uaLoadDashboard from the same
-                 GET /api/admin/overview call the System overview cards
-                 already use, not a separate request. -->
-            <div id="ua-reg-notice" class="ua-reg-notice" style="display:none"></div>
-            <div id="ua-reg-stats" class="ua-reg-stats"></div>
+            <!-- The registration notice/stat line now lives in the
+                 profile card above (#ua-reg-notice/#ua-reg-stats), not
+                 here; see that markup's own comment. -->
             <!-- Each admin section is its own closed-by-default <details>
                  so the panel opens short rather than dumping four
                  sections' worth of content at once. The section's own
@@ -11633,7 +11657,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // flag (newSinceLastLogin > 0); the stat line below it always shows
     // the running totals regardless, since "how many accounts/queries
     // exist" is useful context even on a quiet day.
-    function uaRenderRegistrationNotice(users, queries) {
+    // The notice banner (new registrations) plus a compact row of
+    // aggregate counts, both rendered right in the profile card so
+    // they're visible the moment an admin opens the Account view, not
+    // an easy-to-miss line further down the page. All of it comes from
+    // the one GET /api/admin/overview call uaLoadDashboard already
+    // makes for the System overview cards, no separate request.
+    function uaRenderRegistrationNotice(users, queries, counts, botHealth, storage) {
       const noticeEl = document.getElementById("ua-reg-notice");
       const statsEl = document.getElementById("ua-reg-stats");
       if (!noticeEl || !statsEl || !users) return;
@@ -11645,11 +11675,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         noticeEl.innerHTML = "";
       }
       const q = queries || { total: 0, last7Days: 0 };
-      statsEl.innerHTML =
-        `<span><strong>${users.total}</strong> accounts</span>` +
-        `<span>${users.newLast7Days} new in last 7 days</span>` +
-        `<span><strong>${q.total}</strong> queries</span>` +
-        `<span>${q.last7Days} in last 7 days</span>`;
+      const c = counts || {};
+      const staleCount = botHealth ? (botHealth.stale || []).length : null;
+      const storagePct = storage ? Math.round((storage.pct || 0) * 100) : null;
+      statsEl.innerHTML = [
+        `<span><strong>${users.total}</strong> accounts <span class="ua-muted">(+${users.newLast7Days}/7d)</span></span>`,
+        `<span><strong>${q.total}</strong> queries <span class="ua-muted">(+${q.last7Days}/7d)</span></span>`,
+        Number.isFinite(c.versionsTotal) ? `<span><strong>${c.versionsTotal.toLocaleString()}</strong> versions tracked</span>` : "",
+        Number.isFinite(c.cveTotal) ? `<span><strong>${c.cveTotal.toLocaleString()}</strong> CVEs</span>` : "",
+        staleCount != null
+          ? `<span class="${staleCount ? "ua-reg-stat-alert" : ""}"><strong>${staleCount}</strong> bot${staleCount === 1 ? "" : "s"} stale</span>`
+          : "",
+        storagePct != null ? `<span class="${storagePct >= 90 ? "ua-reg-stat-alert" : ""}"><strong>${storagePct}%</strong> storage used</span>` : "",
+      ].filter(Boolean).join("");
     }
 
     async function uaLoadDashboard() {
@@ -11666,7 +11704,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const { botHealth, sourceAttribution, storage, counts, users, queries } = data;
 
       if (updatedEl) updatedEl.textContent = data.checkedAt ? "as of " + new Date(data.checkedAt).toLocaleTimeString() : "";
-      uaRenderRegistrationNotice(users, queries);
+      uaRenderRegistrationNotice(users, queries, counts, botHealth, storage);
 
       const staleCount = (botHealth.stale || []).length;
       const storagePct = Math.round((storage.pct || 0) * 100);
