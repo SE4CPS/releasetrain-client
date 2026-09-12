@@ -255,15 +255,21 @@
       border-bottom: 1px solid var(--border); overflow-wrap: break-word;
     }
     .ask-intro-table th { font-size: 8.5px; text-transform: uppercase; letter-spacing: .2px; color: var(--muted); font-weight: 700; }
-    .ask-intro-table th:nth-child(1), .ask-intro-table td:nth-child(1) { width: 16%; }
-    .ask-intro-table th:nth-child(2), .ask-intro-table td:nth-child(2) { width: 30%; }
-    .ask-intro-table th:nth-child(3), .ask-intro-table td:nth-child(3) { width: 30%; }
-    .ask-intro-table th:nth-child(4), .ask-intro-table td:nth-child(4) { width: 24%; }
+    .ask-intro-table th:nth-child(1), .ask-intro-table td:nth-child(1) { width: 24%; }
+    .ask-intro-table th:nth-child(2), .ask-intro-table td:nth-child(2) { width: 12%; }
+    .ask-intro-table th:nth-child(3), .ask-intro-table td:nth-child(3) { width: 20%; }
+    .ask-intro-table th:nth-child(4), .ask-intro-table td:nth-child(4) { width: 22%; }
+    .ask-intro-table th:nth-child(5), .ask-intro-table td:nth-child(5) { width: 22%; }
     .ask-intro-table .ask-sample-btn {
       display: inline; width: auto; background: transparent; border: none; padding: 0;
       color: var(--brand); text-decoration: underline; font: inherit; font-size: 9.5px; line-height: 1.3;
     }
     .ask-intro-table .ask-sample-btn:hover { color: var(--text); }
+    /* Full paper citations, once, below the table rather than repeated
+       in every "Research type" cell (see the table's own comment): a
+       superscript number in the cell is enough to point back here. */
+    .ask-intro-cite { font-size: 9px; color: var(--muted); margin: 4px 0 0; }
+    .ask-intro-cite a { color: var(--brand); }
 
     /* ── Sidebar (menu drawer) ──────────────────────────────────
        Off-canvas at every width, not just mobile — this is the single
@@ -1268,6 +1274,19 @@
       padding: 3px 6px; border: 1px solid var(--border); border-radius: var(--radius-sm);
       font: inherit; font-size: 12px; background: var(--bg); color: var(--text); cursor: pointer;
     }
+    .ua-settings-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+    .ua-settings-row {
+      display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      background: var(--surface); font-size: 13px; flex-wrap: wrap;
+    }
+    .ua-settings-info { display: flex; flex-direction: column; gap: 2px; flex: 1 1 200px; min-width: 0; }
+    .ua-settings-info strong { font-weight: 600; }
+    .ua-settings-info .ua-muted { font-size: 11px; }
+    .ua-settings-input {
+      width: 80px; padding: 4px 6px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+      font: inherit; font-size: 13px; background: var(--bg); color: var(--text);
+    }
     .ua-topbar-chip {
       font-size: 12px; font-weight: 600; white-space: nowrap;
       color: var(--brand); background: var(--brand-light);
@@ -1861,7 +1880,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.64.1">Releasetrain <em>v3.64.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.65.0">Releasetrain <em>v3.65.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2963,18 +2982,19 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
 
 <section class="block" id="d-ask-pipelines">
 <h2>Ask pipelines</h2>
-<p class="section-sort-note">Which process <code class="inline">POST /api/ask</code> runs, by the question's own classified intent. Preset <code class="inline">"auto"</code> resolves to one of these before the model is ever called (see <code class="inline">pickAutoPipeline</code> in <code class="inline">ask.js</code>); any other preset value runs that one directly regardless of intent.</p>
+<p class="section-sort-note">Which process <code class="inline">POST /api/ask</code> runs, by the question's own classified intent. Preset <code class="inline">"auto"</code> resolves to one of these before the model is ever called (see <code class="inline">pickAutoPipeline</code> in <code class="inline">ask.js</code>); any other preset value runs that one directly regardless of intent. "Research type" is the general question-type literature these categories come from, not this system's own terms (full citations below the table).</p>
 <table>
-<thead><tr><th style="width:14%">Type</th><th style="width:22%">Intent</th><th style="width:24%">Process</th><th>Example</th></tr></thead>
+<thead><tr><th style="width:16%">Research type</th><th style="width:10%">Type</th><th style="width:20%">Intent</th><th style="width:22%">Process</th><th>Example</th></tr></thead>
 <tbody>
-<tr><td>Comparison</td><td><code class="inline">comparison-question</code></td><td>Delegated + feedback loop</td><td>"Should I use Node or Flask?"</td></tr>
-<tr><td>Security</td><td><code class="inline">cve-question</code></td><td>Union search + BM25 rerank</td><td>"Any recent CVEs in MySQL?"</td></tr>
-<tr><td>Patch</td><td><code class="inline">patch-question</code></td><td>Union search + BM25 rerank</td><td>"Was the WebView bug patched?"</td></tr>
-<tr><td>Version</td><td><code class="inline">version-question</code></td><td>Single-agent</td><td>"What's the latest PHP version?"</td></tr>
-<tr><td>General</td><td><code class="inline">general-question</code></td><td>Delegated, no feedback loop</td><td>"How do I roll back a Windows update?"</td></tr>
-<tr><td>Opinion</td><td><code class="inline">opinion</code></td><td>Declined, no retrieval</td><td>"What's the best language?"</td></tr>
+<tr><td>Decision-making<sup>2</sup></td><td>Comparison</td><td><code class="inline">comparison-question</code></td><td>Delegated + feedback loop</td><td>"Should I use Node or Flask?"</td></tr>
+<tr><td>Factoid, verify<sup>1</sup></td><td>Security</td><td><code class="inline">cve-question</code></td><td>Union search + BM25 rerank</td><td>"Any recent CVEs in MySQL?"</td></tr>
+<tr><td>Factoid, verify<sup>1</sup></td><td>Patch</td><td><code class="inline">patch-question</code></td><td>Union search + BM25 rerank</td><td>"Was the WebView bug patched?"</td></tr>
+<tr><td>Factoid, numeric<sup>1</sup></td><td>Version</td><td><code class="inline">version-question</code></td><td>Single-agent</td><td>"What's the latest PHP version?"</td></tr>
+<tr><td>How-to<sup>2</sup></td><td>General</td><td><code class="inline">general-question</code></td><td>Delegated, no feedback loop</td><td>"How do I roll back a Windows update?"</td></tr>
+<tr><td>Review/opinion<sup>2</sup></td><td>Opinion</td><td><code class="inline">opinion</code></td><td>Declined, no retrieval</td><td>"What's the best language?"</td></tr>
 </tbody>
 </table>
+<p class="small muted" style="margin:.4rem 0 0"><sup>1</sup> Li &amp; Roth, <a href="https://aclanthology.org/C02-1150/" target="_blank" rel="noopener">"Learning Question Classifiers,"</a> COLING 2002 (the classic ABBREVIATION/ENTITY/DESCRIPTION/HUMAN/LOCATION/NUMERIC factoid-QA taxonomy). <sup>2</sup> Treude, Barzilay &amp; Storey, <a href="https://doi.org/10.1145/1985793.1985907" target="_blank" rel="noopener">"How Do Programmers Ask and Answer Questions on the Web?"</a> ICSE 2011 (NIER track; studied real Stack Overflow questions and named how-to, decision-making/comparison, and review as recurring categories there).</p>
 <a class="toplink" href="#">↑ Back to top</a></section>
 
 
@@ -3456,6 +3476,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-11</div>
+              <div class="cl-ver cl-ver-minor">v3.65.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Admin settings panel; research-type column with citations</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> New <strong>Settings</strong> section in the Account view's admin area, backed by the server's new generic <code>/api/admin/settings</code> (GET/PUT). Renders whatever keys the server actually returns, not a hardcoded form, so a new admin-tunable value needs no new markup here. First real setting: Ask's recency window (days), now admin-editable and defaulting to 14 to match the feed.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Both "Ask pipelines" tables (the Ask intro panel and the docs view) gained a "Research type" first column: the general question-type literature these categories come from (Li &amp; Roth 2002's factoid-QA taxonomy; Treude, Barzilay &amp; Storey 2011's Stack Overflow question-type study), cited below each table.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5007,6 +5041,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               </div>
               <div id="ua-dash-bots"></div>
             </div>
+            <!-- Runtime settings / feature flags. One generic list, not
+                 a hardcoded form per setting: each row is rendered from
+                 whatever GET /api/admin/settings actually returns, so a
+                 new admin-tunable value added server-side needs no new
+                 markup here (see uaLoadSettings/UA_SETTINGS_META). -->
+            <div id="ua-settings-section" style="margin-top:20px">
+              <div class="ua-admin-header">
+                <span style="font-weight:700;font-size:13px">Settings</span>
+              </div>
+              <div id="ua-settings-list" class="ua-settings-list">
+                <p class="ua-muted" style="font-size:12px;padding:8px 0">Loading…</p>
+              </div>
+            </div>
             <div class="ua-admin-header" style="margin-top:20px">
               <span style="font-weight:700;font-size:13px">All users</span>
               <span id="ua-user-count" class="ua-muted" style="font-size:12px"></span>
@@ -5165,18 +5212,28 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
            the single source of truth this table's own wording is kept
            in sync with by hand). Opinion's row honestly shows it
            declines rather than reading like every other row that gets
-           a real answer. -->
+           a real answer. Research column: the general question-type
+           literature these categories come from, not this system's own
+           terms. Li & Roth (2002) is a factoid-QA classification
+           scheme (the classic ABBREVIATION/ENTITY/DESCRIPTION/HUMAN/
+           LOCATION/NUMERIC taxonomy); Treude, Barzilay & Storey (2011)
+           studied real Stack Overflow questions specifically and named
+           how-to, decision-making/comparison, and review (opinion) as
+           genuine recurring categories there, the closest real-world
+           analogue to this system's own domain. Full citations in the
+           caption below the table, not repeated in every cell. -->
       <table class="ask-intro-table">
-        <thead><tr><th>Type</th><th>Intent</th><th>Process</th><th>Example</th></tr></thead>
+        <thead><tr><th>Research type</th><th>Type</th><th>Intent</th><th>Process</th><th>Example</th></tr></thead>
         <tbody>
-          <tr><td>Comparison</td><td>comparison-question</td><td>Delegated+feedback</td><td><button type="button" class="ask-sample-btn" data-ask-sample="Should I use Node or Flask for a new API?">Node or Flask?</button></td></tr>
-          <tr><td>Security</td><td>cve-question</td><td>Union+rerank</td><td><button type="button" class="ask-sample-btn" data-ask-sample="Are there any recent CVEs affecting MySQL?">CVEs in MySQL?</button></td></tr>
-          <tr><td>Patch</td><td>patch-question</td><td>Union+rerank</td><td><button type="button" class="ask-sample-btn" data-ask-sample="Was the WebView bug fixed in a Chrome patch?">Chrome patched?</button></td></tr>
-          <tr><td>Version</td><td>version-question</td><td>Single-agent</td><td><button type="button" class="ask-sample-btn" data-ask-sample="What's the latest PHP version?">Latest PHP?</button></td></tr>
-          <tr><td>General</td><td>general-question</td><td>Delegated</td><td><button type="button" class="ask-sample-btn" data-ask-sample="How do I roll back a bad Windows update?">Roll back update?</button></td></tr>
-          <tr><td>Opinion</td><td>opinion</td><td>Declined, no retrieval</td><td><button type="button" class="ask-sample-btn" data-ask-sample="What's the best programming language?">Best language?</button></td></tr>
+          <tr><td>Decision-making<sup>2</sup></td><td>Comparison</td><td>comparison-question</td><td>Delegated+feedback</td><td><button type="button" class="ask-sample-btn" data-ask-sample="Should I use Node or Flask for a new API?">Node or Flask?</button></td></tr>
+          <tr><td>Factoid, verify<sup>1</sup></td><td>Security</td><td>cve-question</td><td>Union+rerank</td><td><button type="button" class="ask-sample-btn" data-ask-sample="Are there any recent CVEs affecting MySQL?">CVEs in MySQL?</button></td></tr>
+          <tr><td>Factoid, verify<sup>1</sup></td><td>Patch</td><td>patch-question</td><td>Union+rerank</td><td><button type="button" class="ask-sample-btn" data-ask-sample="Was the WebView bug fixed in a Chrome patch?">Chrome patched?</button></td></tr>
+          <tr><td>Factoid, numeric<sup>1</sup></td><td>Version</td><td>version-question</td><td>Single-agent</td><td><button type="button" class="ask-sample-btn" data-ask-sample="What's the latest PHP version?">Latest PHP?</button></td></tr>
+          <tr><td>How-to<sup>2</sup></td><td>General</td><td>general-question</td><td>Delegated</td><td><button type="button" class="ask-sample-btn" data-ask-sample="How do I roll back a bad Windows update?">Roll back update?</button></td></tr>
+          <tr><td>Review/opinion<sup>2</sup></td><td>Opinion</td><td>opinion</td><td>Declined, no retrieval</td><td><button type="button" class="ask-sample-btn" data-ask-sample="What's the best programming language?">Best language?</button></td></tr>
         </tbody>
       </table>
+      <p class="ask-intro-cite"><sup>1</sup> Li &amp; Roth, <a href="https://aclanthology.org/C02-1150/" target="_blank" rel="noopener">"Learning Question Classifiers,"</a> COLING 2002. <sup>2</sup> Treude, Barzilay &amp; Storey, <a href="https://doi.org/10.1145/1985793.1985907" target="_blank" rel="noopener">"How Do Programmers Ask and Answer Questions on the Web?"</a> ICSE 2011.</p>
     </aside>
 
   </div><!-- /.layout -->
@@ -10916,6 +10973,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         if (user.role === "admin") {
           adminSection.style.display = "";
           uaLoadDashboard();
+          uaLoadSettings();
           uaLoadUsers();
           uaLoadSearchEvents();
         } else {
@@ -11067,6 +11125,81 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     const uaRefreshDashBtn = document.getElementById("ua-refresh-dash");
     if (uaRefreshDashBtn) uaRefreshDashBtn.addEventListener("click", uaLoadDashboard);
+
+    // Generic runtime settings / feature flags (GET/PUT /api/admin/settings
+    // in app.js). Only display metadata (a label + hint) lives here per
+    // key, since the value, its default, and its own valid range are owned
+    // server-side (see ask.js's getAskRuntimeSettings/setAskRuntimeSettings)
+    // and never duplicated here. A key GET returns with no entry below
+    // still renders, just with its bare name as the label, so a new
+    // server-side setting is usable from this panel immediately, before
+    // anyone gets around to giving it a nicer label here.
+    const UA_SETTINGS_META = {
+      askRecentWindowDays: {
+        label: "Ask recency window (days)",
+        hint: "How far back Ask searches when a question names no explicit date. Matches the feed's own lookback window by default (14 days).",
+        min: 1, max: 90,
+      },
+    };
+    async function uaLoadSettings() {
+      const listEl = document.getElementById("ua-settings-list");
+      const res = await uaRequest("admin/settings").catch(() => null);
+      if (!res || !res.ok) {
+        listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">Could not load settings.</p>`;
+        return;
+      }
+      const settings = await res.json();
+      const keys = Object.keys(settings);
+      if (!keys.length) {
+        listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">No settings defined yet.</p>`;
+        return;
+      }
+      listEl.innerHTML = keys.map(key => {
+        const meta = UA_SETTINGS_META[key] || {};
+        const value = settings[key];
+        // Only a plain finite number is editable as a number input for
+        // now; a boolean/string flag would need its own input type,
+        // added here once a real one actually exists server-side.
+        const inputHtml = Number.isFinite(value)
+          ? `<input type="number" class="ua-settings-input" data-key="${uaEsc(key)}" value="${value}"${Number.isFinite(meta.min) ? ` min="${meta.min}"` : ""}${Number.isFinite(meta.max) ? ` max="${meta.max}"` : ""}>`
+          : `<input type="text" class="ua-settings-input" data-key="${uaEsc(key)}" value="${uaEsc(String(value))}">`;
+        return `<div class="ua-settings-row">
+          <div class="ua-settings-info">
+            <strong>${uaEsc(meta.label || key)}</strong>
+            ${meta.hint ? `<span class="ua-muted">${uaEsc(meta.hint)}</span>` : ""}
+          </div>
+          ${inputHtml}
+          <button type="button" class="btn btn-ghost ua-settings-save" data-key="${uaEsc(key)}" style="font-size:12px;padding:4px 10px">Save</button>
+        </div>`;
+      }).join("");
+
+      listEl.querySelectorAll(".ua-settings-save").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const key = btn.dataset.key;
+          const input = listEl.querySelector(`.ua-settings-input[data-key="${CSS.escape(key)}"]`);
+          if (!input) return;
+          const raw = input.type === "number" ? Number(input.value) : input.value;
+          btn.disabled = true;
+          const prevText = btn.textContent;
+          btn.textContent = "Saving…";
+          try {
+            const putRes = await uaRequest("admin/settings", { method: "PUT", body: JSON.stringify({ [key]: raw }) });
+            if (!putRes.ok) throw new Error((await putRes.json().catch(() => ({}))).error || "Save failed.");
+            const applied = await putRes.json();
+            // The server clamps to its own valid range (e.g. 1-90 days),
+            // so the input reflects what actually took effect, not
+            // necessarily the raw value just typed.
+            if (Number.isFinite(applied[key])) input.value = applied[key];
+            btn.textContent = "Saved";
+            setTimeout(() => { btn.textContent = prevText; btn.disabled = false; }, 1200);
+          } catch (err) {
+            alert(err.message || "Save failed.");
+            btn.textContent = prevText;
+            btn.disabled = false;
+          }
+        });
+      });
+    }
 
     async function uaLoadUsers() {
       const listEl = document.getElementById("ua-user-list");
