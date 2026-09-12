@@ -294,6 +294,17 @@
       z-index: 1300;
     }
     .sidebar.open { transform: translateX(0); }
+    /* Filters panel: the same .sidebar shape/mechanics, mirrored to the
+       right edge instead of the left, so it reads as a distinct, second
+       drawer rather than a variant of the ☰ menu (which stays
+       left-anchored). Same z-index/overlay/transition as .sidebar;
+       only the anchor side and its own open-state transform differ. */
+    .filters-panel {
+      left: auto; right: 0;
+      border-right: none; border-left: 1px solid var(--border);
+      transform: translateX(100%);
+    }
+    .filters-panel.open { transform: translateX(0); }
 
     #sidebarOverlay {
       display: none;
@@ -1262,7 +1273,12 @@
     .ua-msg-error { background: var(--cve-bg); color: var(--cve); border: 1px solid #fca5a5; }
     .ua-msg-ok    { background: var(--new-bg); color: var(--new); border: 1px solid #e2e8f0; }
     .ua-badge {
-      display: inline-block; padding: 2px 10px; border-radius: var(--radius-full);
+      /* align-self: its parent (.ua-profile-info) is a column flexbox,
+         where a child's cross-axis default is stretch. Without this,
+         an inline-block span still gets stretched to the FULL width of
+         that column, turning a short "ADMIN" pill into an oddly wide,
+         mostly-empty stadium shape instead of a compact badge. */
+      display: inline-block; align-self: flex-start; padding: 2px 10px; border-radius: var(--radius-full);
       font: 700 11px/1.4 inherit; text-transform: uppercase; letter-spacing: .4px;
     }
     .ua-badge-user  { background: var(--chip-bg); color: var(--chip-text); }
@@ -1971,7 +1987,15 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.69.0">Releasetrain <em>v3.69.0</em></a>
+      <!-- Filters + Stats used to live inside the same ☰ drawer as the
+           view-switcher nav, permanently taking up sidebar space every
+           time the menu opened. Its own toggle/panel, separate from ☰,
+           per explicit request: "I want them to have their own view
+           which I can toggle." -->
+      <button class="nav-toggle" type="button" id="filtersToggleBtn"
+        aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
+        title="Filters &amp; stats">🎚️</button>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.70.0">Releasetrain <em>v3.70.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2128,134 +2152,9 @@
           target="_blank" rel="noopener noreferrer">⭐ GitHub</a>
       </nav>
 
-      <div id="feedSidebarSections">
+      <!-- Filters/Stats moved to their own panel (#filtersPanel, toggled
+           by the 🎚️ topbar button), separate from this ☰ menu drawer. -->
 
-        <details class="sb-details" open>
-          <summary>Filters</summary>
-          <div class="sidebar-section" style="padding-bottom:12px">
-            <div class="toggles" id="fixedToggles" role="group" aria-label="Quick filters">
-              <button class="toggle" data-key="major" aria-pressed="false" type="button"
-                title="Releases classified as a major version bump (breaking or large changes)">
-                <span class="lbl">🔖 Major</span><span id="btn-major" class="count">0</span>
-              </button>
-              <button class="toggle" data-key="minor" aria-pressed="false" type="button"
-                title="Releases classified as a minor version bump (new features, backward-compatible)">
-                <span class="lbl">🔹 Minor</span><span id="btn-minor" class="count">0</span>
-              </button>
-              <button class="toggle" data-key="patch" aria-pressed="false" type="button"
-                title="Releases classified as a patch (bug fixes, small changes)">
-                <span class="lbl">🩹 Patch</span><span id="btn-patch" class="count">0</span>
-              </button>
-              <button class="toggle" data-key="cve" aria-pressed="false" type="button"
-                title="Documents flagged as a security vulnerability (CVE), not a regular release">
-                <span class="lbl">🔴 CVE</span><span id="btn-cve" class="count">0</span>
-              </button>
-              <button class="toggle" data-key="llm" aria-pressed="false" type="button"
-                title="AI model releases (LLM, embedding, multimodal) vs. regular software">
-                <span class="lbl">🤖 LLM</span><span id="btn-llm" class="count">0</span>
-              </button>
-              <button class="toggle" data-key="hv" aria-pressed="false" type="button"
-                title="Hypervisor / virtualization-platform releases (VMware, VirtualBox, Xen, Proxmox, XCP-ng)">
-                <span class="lbl">🖥️ Hypervisor</span><span id="btn-hv" class="count">0</span>
-              </button>
-
-              <details class="toggle-more">
-                <summary>community &amp; risk filters</summary>
-                <div class="toggles">
-                  <button class="toggle" data-key="potential-cve" aria-pressed="false" type="button"
-                    title="Versions with Reddit discussions mentioning both latest update and CVE">
-                    <span class="lbl">⚠️ Pot. CVE</span><span id="btn-potential-cve" class="count">0</span>
-                  </button>
-                  <button class="toggle" data-key="reddit" aria-pressed="false" type="button"
-                    title="All Reddit posts matched to this component, regardless of risk score">
-                    <span class="lbl">💬 Reddit</span><span id="btn-reddit" class="count">0</span>
-                  </button>
-                  <button class="toggle" data-key="reddit-risk" aria-pressed="false" type="button"
-                    title="AI-detected isUpdateRelated or score > 0.5">
-                    <span class="lbl">⚠️ Reddit Risk</span><span id="btn-reddit-risk" class="count">0</span>
-                  </button>
-                  <button class="toggle" data-key="reddit-risk-latest" aria-pressed="false" type="button"
-                    title="Risky Reddit posts about latest updates">
-                    <span class="lbl">⚠️ Risk Latest</span><span id="btn-reddit-risk-latest" class="count">0</span>
-                  </button>
-                  <button class="toggle" data-key="reddit-risk-cve" aria-pressed="false" type="button"
-                    title="Risky Reddit posts about security/CVE">
-                    <span class="lbl">🔐 Risk Security</span><span id="btn-reddit-risk-cve" class="count">0</span>
-                  </button>
-                  <button class="toggle" data-key="so-risk" aria-pressed="false" type="button"
-                    title="AI-detected isUpdateRelated or score > 0.5 (StackOverflow)">
-                    <span class="lbl">⚠️ SO Risk</span><span id="btn-so-risk" class="count">0</span>
-                  </button>
-                  <button class="toggle" data-key="so" aria-pressed="false" type="button"
-                    title="All Stack Overflow posts matched to this component">
-                    <span class="lbl">🟧 SO</span><span id="btn-so" class="count">0</span>
-                  </button>
-                </div>
-              </details>
-            </div>
-          </div>
-        </details>
-
-        <div id="activeFilters" aria-live="polite" aria-label="Active filters">
-          <span>Active:</span>
-          <div id="afTags"></div>
-          <button class="af-clear" type="button" id="afClearAll">Clear all</button>
-        </div>
-
-        <!-- Types, Stats, Activity, and Top searches used to each be
-             their own top-level collapsible row; combined into this one
-             "Stats" section (sub-divided by plain .sb-group-label
-             headers, not further toggles) so the sidebar is 2 rows to
-             scan instead of 5. Collection totals keeps its own existing
-             nested toggle (.sb-stat-group) unchanged. -->
-        <details class="sb-details">
-          <summary>Stats</summary>
-          <div class="sidebar-section" style="padding-bottom:12px">
-
-            <div class="sb-group-label">Types</div>
-            <div class="toggles" id="typeToggles" role="group" aria-label="Component type filters"></div>
-
-            <div class="sb-group-label">Summary</div>
-            <div class="kpis" role="status" aria-live="polite" aria-label="Summary statistics">
-              <div class="kpi">📦 Components <em id="kpi-page">0</em></div>
-              <div class="kpi">🧩 Components <em id="kpi-uniq">0</em></div>
-              <div class="kpi">💬 Reddit <em id="kpi-reddit">0</em></div>
-              <div class="kpi">🤖 AI Models <em id="kpi-llm">0</em></div>
-              <div class="kpi">🖥️ Hypervisors <em id="kpi-hv">0</em></div>
-              <div class="kpi" id="kpi-range">📅 Range: <em>—</em></div>
-            </div>
-            <details class="sb-stat-group" style="margin-top:8px">
-              <summary class="sb-stat-head">Collection totals</summary>
-              <div class="sb-stat-body">
-                <div class="sb-stat-row"><span>Versions</span><span id="home-v-total">…</span></div>
-                <div class="sb-stat-row"><span>CVE advisories</span><span id="home-v-cve">…</span></div>
-                <div class="sb-stat-row"><span>Release notes</span><span id="home-v-noncve">…</span></div>
-                <div class="sb-stat-row"><span>Community total</span><span id="home-r-total">…</span></div>
-                <div class="sb-stat-row"><span>Reddit posts</span><span id="home-r-reddit">…</span></div>
-                <div class="sb-stat-row"><span>Stack Overflow</span><span id="home-r-so">…</span></div>
-              </div>
-            </details>
-
-            <div class="sb-group-label">Activity (2 weeks)</div>
-            <div style="position:relative;height:118px"><canvas id="home-activity-chart"></canvas></div>
-            <p style="margin:2px 0 0;font-size:10px;color:var(--muted)">Click a label to show/hide that line.</p>
-            <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;font-size:10px;color:var(--muted);margin-top:4px">
-              <span><span style="color:#2563eb;font-size:12px">●</span> Versions</span>
-              <span><span style="color:#dc2626;font-size:12px">●</span> CVE</span>
-              <span><span style="color:#64748b;font-size:12px">●</span> Community</span>
-              <span><span style="color:#475569;font-size:12px">●</span> LLM</span>
-              <span><span style="color:#0f766e;font-size:12px">●</span> Hypervisor</span>
-            </div>
-
-            <div class="sb-group-label">Top searches (24h)</div>
-            <div id="top-searches-list" style="display:flex;flex-direction:column;gap:6px">
-              <span style="font-size:11px;color:var(--muted)">Loading...</span>
-            </div>
-
-          </div>
-        </details>
-
-      </div><!-- /#feedSidebarSections -->
 
       <!-- ── Graph controls (shown only in graph view) ── -->
       <div id="graphControls" style="display:none">
@@ -2593,6 +2492,144 @@
         </div>
         <div id="nk-sidebar-status" style="font-size:11px;color:var(--muted);padding:0 2px"></div>
       </div>
+
+    </aside>
+
+    <!-- ── Filters panel: Filters + Stats, opened via the 🎚️ button,
+         separate from the ☰ menu drawer above. Same off-canvas
+         mechanism (slides in from the right instead of the left, see
+         .filters-panel's own CSS), so opening one doesn't imply or
+         require the other. -->
+    <aside class="sidebar filters-panel" id="filtersPanel" aria-label="Filters and stats">
+
+      <div id="feedSidebarSections">
+
+        <details class="sb-details" open>
+          <summary>Filters</summary>
+          <div class="sidebar-section" style="padding-bottom:12px">
+            <div class="toggles" id="fixedToggles" role="group" aria-label="Quick filters">
+              <button class="toggle" data-key="major" aria-pressed="false" type="button"
+                title="Releases classified as a major version bump (breaking or large changes)">
+                <span class="lbl">🔖 Major</span><span id="btn-major" class="count">0</span>
+              </button>
+              <button class="toggle" data-key="minor" aria-pressed="false" type="button"
+                title="Releases classified as a minor version bump (new features, backward-compatible)">
+                <span class="lbl">🔹 Minor</span><span id="btn-minor" class="count">0</span>
+              </button>
+              <button class="toggle" data-key="patch" aria-pressed="false" type="button"
+                title="Releases classified as a patch (bug fixes, small changes)">
+                <span class="lbl">🩹 Patch</span><span id="btn-patch" class="count">0</span>
+              </button>
+              <button class="toggle" data-key="cve" aria-pressed="false" type="button"
+                title="Documents flagged as a security vulnerability (CVE), not a regular release">
+                <span class="lbl">🔴 CVE</span><span id="btn-cve" class="count">0</span>
+              </button>
+              <button class="toggle" data-key="llm" aria-pressed="false" type="button"
+                title="AI model releases (LLM, embedding, multimodal) vs. regular software">
+                <span class="lbl">🤖 LLM</span><span id="btn-llm" class="count">0</span>
+              </button>
+              <button class="toggle" data-key="hv" aria-pressed="false" type="button"
+                title="Hypervisor / virtualization-platform releases (VMware, VirtualBox, Xen, Proxmox, XCP-ng)">
+                <span class="lbl">🖥️ Hypervisor</span><span id="btn-hv" class="count">0</span>
+              </button>
+
+              <details class="toggle-more">
+                <summary>community &amp; risk filters</summary>
+                <div class="toggles">
+                  <button class="toggle" data-key="potential-cve" aria-pressed="false" type="button"
+                    title="Versions with Reddit discussions mentioning both latest update and CVE">
+                    <span class="lbl">⚠️ Pot. CVE</span><span id="btn-potential-cve" class="count">0</span>
+                  </button>
+                  <button class="toggle" data-key="reddit" aria-pressed="false" type="button"
+                    title="All Reddit posts matched to this component, regardless of risk score">
+                    <span class="lbl">💬 Reddit</span><span id="btn-reddit" class="count">0</span>
+                  </button>
+                  <button class="toggle" data-key="reddit-risk" aria-pressed="false" type="button"
+                    title="AI-detected isUpdateRelated or score > 0.5">
+                    <span class="lbl">⚠️ Reddit Risk</span><span id="btn-reddit-risk" class="count">0</span>
+                  </button>
+                  <button class="toggle" data-key="reddit-risk-latest" aria-pressed="false" type="button"
+                    title="Risky Reddit posts about latest updates">
+                    <span class="lbl">⚠️ Risk Latest</span><span id="btn-reddit-risk-latest" class="count">0</span>
+                  </button>
+                  <button class="toggle" data-key="reddit-risk-cve" aria-pressed="false" type="button"
+                    title="Risky Reddit posts about security/CVE">
+                    <span class="lbl">🔐 Risk Security</span><span id="btn-reddit-risk-cve" class="count">0</span>
+                  </button>
+                  <button class="toggle" data-key="so-risk" aria-pressed="false" type="button"
+                    title="AI-detected isUpdateRelated or score > 0.5 (StackOverflow)">
+                    <span class="lbl">⚠️ SO Risk</span><span id="btn-so-risk" class="count">0</span>
+                  </button>
+                  <button class="toggle" data-key="so" aria-pressed="false" type="button"
+                    title="All Stack Overflow posts matched to this component">
+                    <span class="lbl">🟧 SO</span><span id="btn-so" class="count">0</span>
+                  </button>
+                </div>
+              </details>
+            </div>
+          </div>
+        </details>
+
+        <div id="activeFilters" aria-live="polite" aria-label="Active filters">
+          <span>Active:</span>
+          <div id="afTags"></div>
+          <button class="af-clear" type="button" id="afClearAll">Clear all</button>
+        </div>
+
+        <!-- Types, Stats, Activity, and Top searches used to each be
+             their own top-level collapsible row; combined into this one
+             "Stats" section (sub-divided by plain .sb-group-label
+             headers, not further toggles) so this panel is 2 rows to
+             scan instead of 5. Collection totals keeps its own existing
+             nested toggle (.sb-stat-group) unchanged. -->
+        <details class="sb-details">
+          <summary>Stats</summary>
+          <div class="sidebar-section" style="padding-bottom:12px">
+
+            <div class="sb-group-label">Types</div>
+            <div class="toggles" id="typeToggles" role="group" aria-label="Component type filters"></div>
+
+            <div class="sb-group-label">Summary</div>
+            <div class="kpis" role="status" aria-live="polite" aria-label="Summary statistics">
+              <div class="kpi">📦 Components <em id="kpi-page">0</em></div>
+              <div class="kpi">🧩 Components <em id="kpi-uniq">0</em></div>
+              <div class="kpi">💬 Reddit <em id="kpi-reddit">0</em></div>
+              <div class="kpi">🤖 AI Models <em id="kpi-llm">0</em></div>
+              <div class="kpi">🖥️ Hypervisors <em id="kpi-hv">0</em></div>
+              <div class="kpi" id="kpi-range">📅 Range: <em>—</em></div>
+            </div>
+            <details class="sb-stat-group" style="margin-top:8px">
+              <summary class="sb-stat-head">Collection totals</summary>
+              <div class="sb-stat-body">
+                <div class="sb-stat-row"><span>Versions</span><span id="home-v-total">…</span></div>
+                <div class="sb-stat-row"><span>CVE advisories</span><span id="home-v-cve">…</span></div>
+                <div class="sb-stat-row"><span>Release notes</span><span id="home-v-noncve">…</span></div>
+                <div class="sb-stat-row"><span>Community total</span><span id="home-r-total">…</span></div>
+                <div class="sb-stat-row"><span>Reddit posts</span><span id="home-r-reddit">…</span></div>
+                <div class="sb-stat-row"><span>Stack Overflow</span><span id="home-r-so">…</span></div>
+              </div>
+            </details>
+
+            <div class="sb-group-label">Activity (2 weeks)</div>
+            <div style="position:relative;height:118px"><canvas id="home-activity-chart"></canvas></div>
+            <p style="margin:2px 0 0;font-size:10px;color:var(--muted)">Click a label to show/hide that line.</p>
+            <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;font-size:10px;color:var(--muted);margin-top:4px">
+              <span><span style="color:#2563eb;font-size:12px">●</span> Versions</span>
+              <span><span style="color:#dc2626;font-size:12px">●</span> CVE</span>
+              <span><span style="color:#64748b;font-size:12px">●</span> Community</span>
+              <span><span style="color:#475569;font-size:12px">●</span> LLM</span>
+              <span><span style="color:#0f766e;font-size:12px">●</span> Hypervisor</span>
+            </div>
+
+            <div class="sb-group-label">Top searches (24h)</div>
+            <div id="top-searches-list" style="display:flex;flex-direction:column;gap:6px">
+              <span style="font-size:11px;color:var(--muted)">Loading...</span>
+            </div>
+
+          </div>
+        </details>
+
+      </div><!-- /#feedSidebarSections -->
 
     </aside>
 
@@ -3563,6 +3600,34 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-12</div>
+              <div class="cl-ver cl-ver-minor">v3.70.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Filters/Stats get their own panel; badge and source-list fixes</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Filters and Stats are now their own slide-over panel, opened with a new 🎚️ topbar button, separate from the ☰ menu (which now holds just the view-switcher nav). Toggle either one independently; opening one closes the other.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The Account page's role badge ("ADMIN"/"USER") was stretching to the full width of its card instead of staying a compact pill, since its flex-column parent's default cross-axis stretch was overriding its own inline-block sizing.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> A feed group's "Sources" line could show a stray "videoCall" alongside the real vendor (e.g. "mitre, teams, videoCall") from documents saved before videoCall.py started stamping the actual vendor per URL; the legacy generic label is no longer shown.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-11</div>
+              <div class="cl-ver cl-ver-patch">v3.69.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Recent Updates now strictly capped at the lookback window</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> A named component search, or the LLM/Hypervisor toggles, used to bypass the feed's recency window entirely and surface a release from a year ago. Per request, the feed now hard-caps at the lookback window (14 days) in every case, no exceptions: a search or toggle with nothing that recent shows no results instead of reaching further back.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5597,26 +5662,51 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       topbarEl.classList.toggle("scrolled", window.scrollY > 4);
     }, { passive: true });
 
-    /* ── Menu drawer (☰) ──────────────────────────────────────────
-       One toggle opens everything that isn't the feed itself: the view
-       switcher (nav-links) and the search/filters/stats sidebar, both
-       nested inside #sidebar. Off-canvas at every width, not just mobile. */
+    /* ── Menu drawer (☰) and Filters panel (🎚️) ────────────────────
+       Two independent off-canvas drawers, left (☰: just the view-
+       switcher nav now) and right (🎚️: Filters + Stats, previously
+       nested inside the ☰ drawer, given its own toggle per explicit
+       request). They share one overlay/backdrop and one Escape handler;
+       opening either one closes the other, so only one is ever open at
+       once (avoids both drawers' shadows/backdrops stacking oddly on a
+       narrow screen), but each has its own toggle button and CSS
+       transform, so they're genuinely independent, not one control
+       driving two things. */
     const navToggleBtn = document.getElementById("navToggle");
     const sidebarEl = document.getElementById("sidebar");
+    const filtersToggleBtn = document.getElementById("filtersToggleBtn");
+    const filtersPanelEl = document.getElementById("filtersPanel");
     const sidebarOverlayEl = document.getElementById("sidebarOverlay");
 
     function setSidebarOpen(open) {
       sidebarEl.classList.toggle("open", open);
-      sidebarOverlayEl.classList.toggle("open", open);
+      if (open) filtersPanelEl.classList.remove("open");
+      sidebarOverlayEl.classList.toggle("open", open || filtersPanelEl.classList.contains("open"));
       navToggleBtn.setAttribute("aria-expanded", String(open));
       navToggleBtn.textContent = open ? "✕" : "☰";
+    }
+    function setFiltersPanelOpen(open) {
+      filtersPanelEl.classList.toggle("open", open);
+      if (open) sidebarEl.classList.remove("open");
+      sidebarOverlayEl.classList.toggle("open", open || sidebarEl.classList.contains("open"));
+      filtersToggleBtn.setAttribute("aria-expanded", String(open));
+      navToggleBtn.setAttribute("aria-expanded", String(sidebarEl.classList.contains("open")));
+      navToggleBtn.textContent = sidebarEl.classList.contains("open") ? "✕" : "☰";
     }
     navToggleBtn.addEventListener("click", () => {
       setSidebarOpen(!sidebarEl.classList.contains("open"));
     });
-    sidebarOverlayEl.addEventListener("click", () => setSidebarOpen(false));
+    filtersToggleBtn.addEventListener("click", () => {
+      setFiltersPanelOpen(!filtersPanelEl.classList.contains("open"));
+    });
+    sidebarOverlayEl.addEventListener("click", () => {
+      setSidebarOpen(false);
+      setFiltersPanelOpen(false);
+    });
     document.addEventListener("keydown", e => {
-      if (e.key === "Escape") setSidebarOpen(false);
+      if (e.key !== "Escape") return;
+      setSidebarOpen(false);
+      setFiltersPanelOpen(false);
     });
     // Picking a view closes the drawer so the chosen view is immediately
     // visible instead of staying hidden behind it.
@@ -9201,24 +9291,28 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     function updateRangeKpi(items) {
       const fmt = d => d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
-      // Reflects what's actually displayed, not a fixed assumed window — a named
-      // search can surface releases far older than LOOKBACK_DAYS (see withinFeedWindow).
+      // Reflects what's actually displayed. Always inside LOOKBACK_DAYS
+      // now (see withinFeedWindow), so this range should never span
+      // wider than that window.
       const times = (items || []).map(versionTime).filter(Boolean);
       if (!times.length) { EL["kpi-range"].innerHTML = `📅 Range: <em>—</em>`; return; }
       const min = Math.min(...times), max = Math.max(...times);
       EL["kpi-range"].innerHTML = `📅 Range: <em>${fmt(new Date(min))} – ${fmt(new Date(max))}</em>`;
     }
 
-    // Recency window applies to the default "recent activity" feed only. An explicit
-    // named search, or the LLM toggle, should surface full history instead of just
-    // what's recent — searching "Mistral" (or clicking 🤖 LLM) should still find
-    // matches even if the last tracked release was a year ago, as long as the server
-    // returned it. AI model releases in particular are sparse enough in time that
-    // they're essentially never inside the default window.
-    function withinFeedWindow(v, comps, bypassRecency) {
+    // The recency window is a hard cap on the feed, no exceptions: a
+    // named component search or the LLM/Hypervisor toggles used to
+    // bypass it entirely (AI model releases especially are sparse enough
+    // in time that they were essentially never inside the default
+    // window otherwise), but that meant "Recent Updates" could quietly
+    // show a release from a year ago. Per explicit request, nothing
+    // older than LOOKBACK_DAYS is shown here regardless of how it was
+    // found; a search or toggle with nothing that recent now correctly
+    // shows no results rather than reaching further back.
+    function withinFeedWindow(v) {
       const ts = versionTime(v);
       if (!ts) return false;
-      if (!comps.length && !bypassRecency && ts < LOOKBACK_AGO) return false;
+      if (ts < LOOKBACK_AGO) return false;
       if (ts > Date.now() && !v.isVendorPublished) return false;
       return true;
     }
@@ -9229,14 +9323,17 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const comps = STATE.filters.components;
       const llmActive = STATE.filters.toggles.has("llm");
       const hvActive = STATE.filters.toggles.has("hv");
-      // Extend the windowed feed with the full LLM / hypervisor datasets whenever
-      // they're relevant — otherwise those docs are usually invisible (see
-      // withinFeedWindow above).
+      // Extends the candidate pool with the full LLM / hypervisor
+      // datasets whenever relevant, since STATE.rawVersions alone
+      // doesn't necessarily include them. withinFeedWindow below still
+      // applies the same LOOKBACK_DAYS cap to every candidate regardless
+      // of which pool it came from, so this only widens WHERE a recent
+      // match can be found, not whether an old one can slip through.
       const pool = (llmActive || hvActive || comps.length)
         ? dedupeByVersionId([STATE.rawVersions, STATE.llmVersions, STATE.hvVersions])
         : STATE.rawVersions;
       const candidates = pool.filter(v => {
-        if (!withinFeedWindow(v, comps, llmActive || hvActive)) return false;
+        if (!withinFeedWindow(v)) return false;
         if (!comps.length) return true;
         const name = norm(v.versionProductName);
         const tags = (Array.isArray(v.versionSearchTags) ? v.versionSearchTags.join(",") : "").toLowerCase();
@@ -9376,6 +9473,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       }
       if (redditCount) botSet.add("reddit.py");
       if (soCount) botSet.add("stackoverflow.py");
+      // "videoCall"/"videoCall.py" is a legacy sourceBot value from
+      // before videoCall.py started stamping the actual vendor
+      // (zoom/teams/webex) it found in each document's own URL; older
+      // documents saved before that fix still carry it. It's never the
+      // real source, just the bot's own filename, so it's excluded here
+      // rather than shown alongside (or instead of) the real vendor
+      // label a reader actually wants (e.g. "mitre, teams", not "mitre,
+      // teams, videoCall").
+      botSet.delete("videoCall"); botSet.delete("videoCall.py");
       const bots = [...botSet].sort((a, b) => (a === "unknown") - (b === "unknown") || a.localeCompare(b));
       // ".py" is an implementation detail (the actual script filename,
       // kept as the real sourceBot value so it stays consistent with
@@ -9601,10 +9707,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // Apply current component + toggle filters to a list of versions (used for incoming pages)
     function filterVersions(vers) {
       const comps = STATE.filters.components;
-      const llmActive = STATE.filters.toggles.has("llm");
-      const hvActive = STATE.filters.toggles.has("hv");
       const candidates = vers.filter(v => {
-        if (!withinFeedWindow(v, comps, llmActive || hvActive)) return false;
+        if (!withinFeedWindow(v)) return false;
         if (!comps.length) return true;
         const name = norm(v.versionProductName);
         const tags = (Array.isArray(v.versionSearchTags) ? v.versionSearchTags.join(",") : "").toLowerCase();
