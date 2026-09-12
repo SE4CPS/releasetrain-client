@@ -184,12 +184,20 @@
        real question is asked, then swaps to #askAnswerRail. Below the
        breakpoint, or in Compare mode, the popup modal is used instead
        for a real answer, and the intro panel doesn't show at all (no
-       spare width to give it). */
+       spare width to give it).
+       .ask-rail-col wraps #askOptionsPanel's landing spot (see
+       relocateAskOptionsPanel in the script) plus both of the asides
+       below: it, not the individual asides, is the actual flex/sticky
+       column now, so the moved options panel scrolls and sticks
+       together with whichever of intro/answer is currently showing
+       instead of being positioned separately. */
+    .ask-rail-col { display: none; }
     .ask-answer-rail, .ask-intro-panel { display: none; }
     @media (min-width: 900px) {
       .layout { display: flex; align-items: flex-start; gap: 20px; max-width: 1700px; }
       .layout > .feed-main { flex: 1 1 0; min-width: 0; }
-      .layout .ask-answer-rail, .layout .ask-intro-panel {
+      .layout .ask-rail-col {
+        display: block;
         flex: 1 1 0; min-width: 0;
         position: sticky;
         top: calc(var(--topbar-h) + 12px);
@@ -375,11 +383,16 @@
       background: var(--surface); color: var(--text); font: 12px/1 inherit; cursor: pointer; flex-shrink: 0;
     }
     /* Ask form: input is its own full-width row on top (.ask-input-row),
-       every option (model, size, pipeline, the three toggles, usage,
-       submit) is always visible in one row below it (.ask-options-row) -
-       no gear button, no popover to click open first. Stacked vertically
-       via flex-direction:column, overriding .topbar-form's default
-       row-wrap behavior for just this form. */
+       Clear/bookmark/submit stay in a second row below it
+       (.ask-options-row) on every screen size, no gear button or popover
+       to click open first. The agentic-AI-specific controls that used to
+       always live in that same row (model/size/pipeline, the three
+       toggles, usage) are grouped into #askOptionsPanel, which
+       relocateAskOptionsPanel() moves out of this row into the top of
+       the answer rail's column on a wide screen; .ask-options-row still
+       holds it, unmoved, on a narrow one where the rail doesn't exist.
+       Stacked vertically via flex-direction:column, overriding
+       .topbar-form's default row-wrap behavior for just this form. */
     .ask-form-stacked { flex-direction: column; align-items: stretch; flex-wrap: nowrap; gap: 6px; }
     .ask-input-row { display: flex; align-items: center; gap: 8px; }
 
@@ -414,6 +427,20 @@
     .ask-options-row {
       display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
       font-size: 11px; color: var(--muted);
+    }
+    /* Self-contained flex row (not just a plain block) so its own layout
+       (selects/toggles/usage wrapping sensibly) works identically in
+       both places relocateAskOptionsPanel() can put it: nested one level
+       inside .ask-options-row (a narrow screen) or standing alone at the
+       top of .ask-rail-col (a wide one). flex:1 1 auto only matters in
+       the first case, letting it absorb the row's available width so
+       Clear/bookmark/submit still end up flush right, same as before
+       these controls were grouped into their own node. */
+    .ask-options-panel {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      font-size: 11px; color: var(--muted);
+      flex: 1 1 auto; min-width: 0;
+      margin-bottom: 6px;
     }
     .ask-toggle-inline { display: flex; align-items: center; gap: 4px; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
     .ask-toggle-inline input[type="checkbox"] { accent-color: var(--brand); cursor: pointer; }
@@ -2049,7 +2076,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.72.0">Releasetrain <em>v3.72.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.72.1">Releasetrain <em>v3.72.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2110,42 +2137,55 @@
           <span id="askIntentBadge" class="ask-intent-badge" hidden></span>
         </div>
         <div class="ask-options-row">
-          <!-- Options populated live from GET /api/ask/providers (see
-               askLoadProviders below) rather than hardcoded here. The
-               server is the single source of truth for which providers/
-               sizes actually exist. These two <option>s are just a
-               same-render fallback in case that fetch hasn't completed
-               yet. Only apply once a query turns out to be a real
-               question; a plain vendor/category lookup ignores them. -->
-          <select id="askProvider" class="ask-preset-select" aria-label="Which model answers"
-            title="Which LLM answers a real question (Claude, Groq, or Ollama Cloud). No effect on a plain vendor/category lookup.">
-            <option value="anthropic">Claude (Anthropic)</option>
-            <option value="groq">Groq (free tier)</option>
-            <option value="ollama" selected>Ollama Cloud (free tier)</option>
-          </select>
-          <select id="askSize" class="ask-preset-select" aria-label="Model size"
-            title="Model size tier for the selected provider. Larger sizes trade speed for answer quality."></select>
-          <select id="askPreset" class="ask-preset-select" aria-label="Which pipeline to ask"
-            title="Which pipeline runs. Auto picks one from the question's own classified intent (a comparison, security, or plain version question each get a different pipeline) and the answer states why.&#10;&#10;Single-agent/Multi-agent buggy/fixed are one continuous model call with capability flags toggled on or off.&#10;&#10;Multi-agent (delegated) and Multi-agent (feedback loop) are genuine delegation: Rewriter, Retriever, and Evaluator are each their own separate model call.">
-            <option value="auto" selected>Auto (recommended)</option>
-            <option value="multi_agent_fixed">Multi-agent (fixed)</option>
-            <option value="single_agent">Single-agent</option>
-            <option value="multi_agent_buggy">Multi-agent (buggy)</option>
-            <option value="multi_agent">Multi-agent (delegated)</option>
-            <option value="multi_agent_feedback">Multi-agent (feedback loop)</option>
-            <option value="compare">Compare all 5</option>
-          </select>
-          <span class="ask-options-sep" aria-hidden="true"></span>
-          <label class="ask-toggle-inline" title="Checked: requires a resolvable vendor/product, declines outright if none is found.&#10;&#10;Unchecked: answers without that requirement.">
-            <input type="checkbox" id="askVendorCheck" checked /> Vendor check
-          </label>
-          <label class="ask-toggle-inline" title="Checked: time-boxed to a recent window, or a date named in the question.&#10;&#10;Unchecked: searches all-time, no date restriction.">
-            <input type="checkbox" id="askTemporalFilter" checked /> Temporal filter
-          </label>
-          <label class="ask-toggle-inline" title="Checked: classifies the question (CVE/patch/version/general/opinion), only matching tools are used.&#10;&#10;Unchecked: every tool is available regardless of classification.">
-            <input type="checkbox" id="askIntentFilter" checked /> Intent filter
-          </label>
-          <span id="askQuotaLine" class="ask-quota-line">Usage: &#8212;</span>
+          <!-- Agentic-AI-specific controls (model/size/pipeline, the
+               evidence-gating toggles, usage), grouped in one movable
+               panel: relocateAskOptionsPanel() moves this exact node
+               (not a clone or a duplicate-ID copy) into the top of the
+               answer rail's column on a wide screen, and back here on a
+               narrow one, per explicit request to keep them beside the
+               answer/diagram they configure rather than pinned in the
+               fixed header. Its own id/children never change, only its
+               parent, so every existing getElementById reference and
+               event listener on these controls keeps working unchanged
+               regardless of which parent currently holds it. -->
+          <div id="askOptionsPanel" class="ask-options-panel">
+            <!-- Options populated live from GET /api/ask/providers (see
+                 askLoadProviders below) rather than hardcoded here. The
+                 server is the single source of truth for which providers/
+                 sizes actually exist. These two <option>s are just a
+                 same-render fallback in case that fetch hasn't completed
+                 yet. Only apply once a query turns out to be a real
+                 question; a plain vendor/category lookup ignores them. -->
+            <select id="askProvider" class="ask-preset-select" aria-label="Which model answers"
+              title="Which LLM answers a real question (Claude, Groq, or Ollama Cloud). No effect on a plain vendor/category lookup.">
+              <option value="anthropic">Claude (Anthropic)</option>
+              <option value="groq">Groq (free tier)</option>
+              <option value="ollama" selected>Ollama Cloud (free tier)</option>
+            </select>
+            <select id="askSize" class="ask-preset-select" aria-label="Model size"
+              title="Model size tier for the selected provider. Larger sizes trade speed for answer quality."></select>
+            <select id="askPreset" class="ask-preset-select" aria-label="Which pipeline to ask"
+              title="Which pipeline runs. Auto picks one from the question's own classified intent (a comparison, security, or plain version question each get a different pipeline) and the answer states why.&#10;&#10;Single-agent/Multi-agent buggy/fixed are one continuous model call with capability flags toggled on or off.&#10;&#10;Multi-agent (delegated) and Multi-agent (feedback loop) are genuine delegation: Rewriter, Retriever, and Evaluator are each their own separate model call.">
+              <option value="auto" selected>Auto (recommended)</option>
+              <option value="multi_agent_fixed">Multi-agent (fixed)</option>
+              <option value="single_agent">Single-agent</option>
+              <option value="multi_agent_buggy">Multi-agent (buggy)</option>
+              <option value="multi_agent">Multi-agent (delegated)</option>
+              <option value="multi_agent_feedback">Multi-agent (feedback loop)</option>
+              <option value="compare">Compare all 5</option>
+            </select>
+            <span class="ask-options-sep" aria-hidden="true"></span>
+            <label class="ask-toggle-inline" title="Checked: requires a resolvable vendor/product, declines outright if none is found.&#10;&#10;Unchecked: answers without that requirement.">
+              <input type="checkbox" id="askVendorCheck" checked /> Vendor check
+            </label>
+            <label class="ask-toggle-inline" title="Checked: time-boxed to a recent window, or a date named in the question.&#10;&#10;Unchecked: searches all-time, no date restriction.">
+              <input type="checkbox" id="askTemporalFilter" checked /> Temporal filter
+            </label>
+            <label class="ask-toggle-inline" title="Checked: classifies the question (CVE/patch/version/general/opinion), only matching tools are used.&#10;&#10;Unchecked: every tool is available regardless of classification.">
+              <input type="checkbox" id="askIntentFilter" checked /> Intent filter
+            </label>
+            <span id="askQuotaLine" class="ask-quota-line">Usage: &#8212;</span>
+          </div>
           <button class="btn btn-ghost" type="button" id="clearBtn">Clear</button>
           <button class="btn btn-ghost" type="button" id="ua-bm-save-btn" style="display:none" title="Save current search as a bookmark">🔖</button>
           <button class="btn btn-icon" type="submit" id="askSubmitBtn" aria-label="Search or ask">➤</button>
@@ -3639,6 +3679,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-12</div>
+              <div class="cl-ver cl-ver-minor">v3.72.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Agentic-AI controls move into the answer rail on wide screens</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The model/size/pipeline selects, the three evidence-gating toggles, and the usage line used to always live in the topbar's second row, pinned in the fixed header regardless of screen width. Per request, they're grouped into <code>#askOptionsPanel</code> and relocated (the real node, not a copy) to sit at the top of the answer rail's column on a screen with room for it (&ge;900px), right beside the diagram/answer they configure; a narrow screen, with no rail at all, keeps them in the topbar exactly as before. <code>relocateAskOptionsPanel()</code> runs once at load and again every time the viewport crosses that width. Clear, the bookmark button, and the actual submit arrow stay in the topbar on every screen size, since those are core form controls, not agentic-AI configuration.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <code>.ask-rail-col</code> now wraps the options panel's landing spot plus both the intro panel and the answer rail, and is itself the sticky/scrollable flex column; the two panels are plain toggled children of it instead of each separately carrying their own flex/sticky/overflow rules, so the relocated options panel scrolls and sticks together with whichever of the two is showing.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5673,6 +5727,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       </section>
     </main>
 
+    <!-- Wraps #askOptionsPanel's landing spot (relocateAskOptionsPanel
+         moves the real node here on a wide screen) plus the two mutually
+         exclusive panels below, so the whole column (options + whichever
+         of intro/answer is showing) is one flex item that's sticky/
+         scrollable together, not two separately-positioned ones. -->
+    <div class="ask-rail-col">
     <!-- Inline answer rail: a real question's answer, shown beside the
          feed instead of the popup modal, on a screen with room for it
          (see ASK_RAIL_MIN_WIDTH's own comment in the script; keep it in
@@ -5727,6 +5787,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </tbody>
       </table>
     </aside>
+    </div><!-- /.ask-rail-col -->
 
   </div><!-- /.layout -->
 
@@ -7224,9 +7285,36 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // since CSS can't read a JS value; kept in sync by this comment.
     const ASK_RAIL_MIN_WIDTH = 900;
     const ASK_RAIL_ANSWER_TRIM = 480; // chars: short enough for a ~360px column, long enough to be useful
+    const askRailMql = window.matchMedia(`(min-width: ${ASK_RAIL_MIN_WIDTH}px)`);
     function canUseAskRail() {
-      return window.matchMedia(`(min-width: ${ASK_RAIL_MIN_WIDTH}px)`).matches;
+      return askRailMql.matches;
     }
+    // Moves the real #askOptionsPanel node (never a clone; appendChild/
+    // insertBefore on a node already in the document relocates it,
+    // preserving every listener and its element identity) between the
+    // topbar's .ask-options-row and the top of .ask-rail-col as the
+    // viewport crosses ASK_RAIL_MIN_WIDTH, per explicit request to keep
+    // the agentic-AI-specific controls (model/size/pipeline, the
+    // evidence-gating toggles, usage) beside the answer/diagram they
+    // configure on a screen with room for that, while a narrow screen
+    // (no rail at all, see canUseAskRail) still needs them reachable
+    // from the form itself. Idempotent: checks where the node already is
+    // before moving it, so calling this on every resize event costs
+    // nothing once the viewport is already settled on one side.
+    function relocateAskOptionsPanel() {
+      const panel = document.getElementById("askOptionsPanel");
+      if (!panel) return;
+      if (askRailMql.matches) {
+        const col = document.querySelector(".ask-rail-col");
+        if (col && col.firstElementChild !== panel) col.insertBefore(panel, col.firstChild);
+      } else {
+        const row = document.querySelector(".ask-options-row");
+        const clearBtn = document.getElementById("clearBtn");
+        if (row && clearBtn && panel.nextElementSibling !== clearBtn) row.insertBefore(panel, clearBtn);
+      }
+    }
+    relocateAskOptionsPanel();
+    askRailMql.addEventListener("change", relocateAskOptionsPanel);
     let askRailData = null; // { label, res, question } backing "Show full answer": re-renders untrimmed from the same data, no second request
     function wireAskRailBody(body) {
       askWireRateButtons(body);
