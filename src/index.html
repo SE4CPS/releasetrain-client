@@ -1287,7 +1287,14 @@
     }
     .ua-reg-stats strong { color: var(--text); }
     .ua-admin-header {
-      display: flex; align-items: center; gap: 8px; padding: 10px 0 8px;
+      /* flex-direction/text-align/justify-content spelled out explicitly:
+         the global `summary { flex-direction: column; ... }` rule above
+         only loses on the properties .ua-admin-header actually redeclares
+         (display/padding here) — flex-direction wasn't one of them, so
+         without this the row stacked vertically and centered instead of
+         reading as one compact line (chevron, title, count, Refresh). */
+      display: flex; flex-direction: row; align-items: center; text-align: left;
+      gap: 8px; padding: 8px 0;
     }
     /* Each admin section is a <details>/<summary> using .ua-admin-header
        as the summary row; the global `summary { }` rule above hides the
@@ -1929,7 +1936,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.66.0">Releasetrain <em>v3.66.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.66.1">Releasetrain <em>v3.66.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3524,6 +3531,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-11</div>
+              <div class="cl-ver cl-ver-patch">v3.66.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Admin section headers: fix wrapped summary layout</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Each admin section's closed-state <code>&lt;summary&gt;</code> row (chevron, title, count, Refresh) was rendering as four centered, stacked lines instead of one compact row — a global <code>summary</code> CSS rule's <code>flex-direction: column</code> wasn't being overridden. Now a single line, tighter padding.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Settings section's summary now shows a count, matching All users / Search &amp; Ask activity.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5147,6 +5168,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <details class="ua-admin-details" style="margin-top:12px">
               <summary class="ua-admin-header">
                 <span style="font-weight:700;font-size:13px">Settings</span>
+                <span id="ua-settings-count" class="ua-muted" style="font-size:12px"></span>
               </summary>
               <div id="ua-settings-section">
                 <div id="ua-settings-list" class="ua-settings-list">
@@ -11411,6 +11433,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     };
     async function uaLoadSettings() {
       const listEl = document.getElementById("ua-settings-list");
+      const countEl = document.getElementById("ua-settings-count");
       const res = await uaRequest("admin/settings").catch(() => null);
       if (!res || !res.ok) {
         listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">Could not load settings.</p>`;
@@ -11418,6 +11441,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       }
       const settings = await res.json();
       const keys = Object.keys(settings);
+      if (countEl) countEl.textContent = keys.length ? "(" + keys.length + ")" : "";
       if (!keys.length) {
         listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">No settings defined yet.</p>`;
         return;
