@@ -2039,7 +2039,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.71.4">Releasetrain <em>v3.71.4</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.71.5">Releasetrain <em>v3.71.5</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2654,7 +2654,7 @@
               </div>
             </details>
 
-            <div class="sb-group-label">Activity (2 weeks)</div>
+            <div class="sb-group-label" id="sbActivityLabel">Activity (2 weeks)</div>
             <div style="position:relative;height:118px"><canvas id="home-activity-chart"></canvas></div>
             <p style="margin:2px 0 0;font-size:10px;color:var(--muted)">Click a label to show/hide that line.</p>
             <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;font-size:10px;color:var(--muted);margin-top:4px">
@@ -3644,6 +3644,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-12</div>
+              <div class="cl-ver cl-ver-patch">v3.71.5</div>
+            </div>
+            <div class="cl-content">
+              <h3>Lookback window widened to 4 weeks; fixed a stale label</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <code>LOOKBACK_DAYS</code> back up to 28 (was 14). The sidebar's "Activity (2 weeks)" label was hardcoded text, not derived from the constant like the feed header's own "(last N weeks, M components)" is, so it silently went stale the last time this changed; now set once from a new <code>LOOKBACK_WEEKS</code> derived constant, same source of truth as everywhere else.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The admin Settings panel's "Ask recency window (days)" hint said it "matches the feed's own lookback window by default (14 days)," worded as if the two were linked; they only ever coincidentally shared a starting value; changing one has never changed the other. Reworded to say so plainly, and the day count it does mention is now interpolated from <code>LOOKBACK_DAYS</code> instead of a hardcoded number that can drift again.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5748,7 +5762,17 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       window.addEventListener("error", (e) => show(e.error || e.message));
       window.addEventListener("unhandledrejection", (e) => show(e.reason));
     })();
-    const LOOKBACK_DAYS = 14; // feed/chart window: last 2 weeks (was 4 weeks, was 2 weeks, was 7 days)
+    const LOOKBACK_DAYS = 28; // feed/chart window: last 4 weeks (was 2 weeks, was 4 weeks, was 2 weeks, was 7 days)
+    const LOOKBACK_WEEKS = Math.round(LOOKBACK_DAYS / 7);
+    // Static sidebar label ("Activity (N weeks)") was hardcoded text, not
+    // derived from LOOKBACK_DAYS like updateFeedWindowLabel()'s own
+    // "(last N weeks, M components)" is. It drifted out of sync the last
+    // time this constant changed; set once here instead of duplicating
+    // the number by hand.
+    (() => {
+      const el = document.getElementById("sbActivityLabel");
+      if (el) el.textContent = `Activity (${LOOKBACK_WEEKS} week${LOOKBACK_WEEKS !== 1 ? "s" : ""})`;
+    })();
     const LOOKBACK_MS = 1000 * 60 * 60 * 24 * LOOKBACK_DAYS;
     const LOOKBACK_AGO = Date.now() - LOOKBACK_MS;
 
@@ -9431,9 +9455,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // reasoning as everywhere else this constant is the source of truth.
     function updateFeedWindowLabel() {
       if (!EL.feedWindowLabel) return;
-      const weeks = Math.round(LOOKBACK_DAYS / 7);
       const n = STATE.groupsFiltered.length;
-      EL.feedWindowLabel.textContent = `(last ${weeks} week${weeks !== 1 ? "s" : ""}, ${n.toLocaleString()} component${n !== 1 ? "s" : ""})`;
+      EL.feedWindowLabel.textContent = `(last ${LOOKBACK_WEEKS} week${LOOKBACK_WEEKS !== 1 ? "s" : ""}, ${n.toLocaleString()} component${n !== 1 ? "s" : ""})`;
     }
 
     function updateRangeKpi(items) {
@@ -11892,7 +11915,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     const UA_SETTINGS_META = {
       askRecentWindowDays: {
         label: "Ask recency window (days)",
-        hint: "How far back Ask searches when a question names no explicit date. Matches the feed's own lookback window by default (14 days).",
+        // Was "Matches the feed's own lookback window by default (14
+        // days)", worded as if the two were linked (and went stale the
+        // moment LOOKBACK_DAYS changed without this hint being touched
+        // too). They only ever coincidentally shared a starting value:
+        // this is a server-side runtime setting for Ask alone; the feed's
+        // own window is the separate, hardcoded LOOKBACK_DAYS constant in
+        // this file. Say that plainly instead of implying they're tied.
+        hint: `How far back Ask searches when a question names no explicit date. This is independent of the feed's own lookback window (currently ${LOOKBACK_DAYS} days here in the client); changing one does not change the other.`,
         min: 1, max: 90,
       },
       // "compare" is deliberately not offered here: the server rejects
