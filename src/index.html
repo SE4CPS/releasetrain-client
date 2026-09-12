@@ -2091,7 +2091,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.72.4">Releasetrain <em>v3.72.4</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.72.5">Releasetrain <em>v3.72.5</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2159,7 +2159,7 @@
                a stray blank line. -->
           <button class="btn btn-ghost" type="button" id="clearBtn">Clear</button>
           <button class="btn btn-ghost" type="button" id="ua-bm-save-btn" style="display:none" title="Save current search as a bookmark">🔖</button>
-          <button class="btn btn-icon" type="submit" id="askSubmitBtn" aria-label="Search or ask">➤</button>
+          <button class="btn btn-icon btn-primary" type="submit" id="askSubmitBtn" aria-label="Search or ask">➤</button>
         </div>
         <div class="ask-options-row">
           <!-- Agentic-AI-specific controls (model/size/pipeline, the
@@ -3701,6 +3701,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-12</div>
+              <div class="cl-ver cl-ver-patch">v3.72.5</div>
+            </div>
+            <div class="cl-content">
+              <h3>Higher-contrast Ask submit button</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <code>#askSubmitBtn</code> (the arrow, and the spinning hourglass shown while a question is running) had neither <code>.btn-primary</code> nor <code>.btn-ghost</code>, so it rendered with no explicit background at all and read as barely visible against the page. Added <code>.btn-primary</code> (dark background, white icon), matching the contrast every other primary action button on the page already has.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
