@@ -1227,8 +1227,16 @@
     .ack-list li span { font-size: 12px; color: var(--muted); }
 
     /* ── User account management view ──────────────────────── */
+    /* max-width used to be a narrow fixed 580px though #usersView has
+       had the whole main column to itself since Filters/nav became
+       their own off-canvas drawers; a fair amount of unused width sat
+       to its right at any normal desktop size, forcing content (the
+       profile card's stat row, in particular) to wrap onto extra lines
+       it didn't need to. min(900px, 96vw) uses that space, still capped
+       so lines of text don't get uncomfortably long on a very wide
+       monitor, and still shrinks correctly on narrow screens. */
     #usersView {
-      max-width: 580px; padding: 20px;
+      max-width: min(900px, 96vw); padding: 16px;
       position: sticky; top: calc(var(--topbar-h) + 16px);
       height: calc(100vh - var(--topbar-h) - 32px);
       overflow-y: auto; overscroll-behavior: contain;
@@ -1268,7 +1276,13 @@
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius); padding: 20px; margin-top: 16px;
     }
-    .ua-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+    /* Capped, not full-width: #usersView is now wide enough (up to
+       900px) that a single password/text input stretching edge to edge
+       would look stray rather than using the space well. Wide use of
+       the panel's own width belongs to things that actually benefit
+       from it (stat rows, dashboard cards, the search-events table),
+       not a one-line form field. */
+    .ua-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; max-width: 420px; }
     .ua-field label { font: 600 12px/1 inherit; color: var(--text); }
     .ua-opt { font-weight: 400; color: var(--muted); }
     .ua-msg {
@@ -1295,9 +1309,9 @@
        profile card itself ("the top box") per explicit request, so it's
        part of the one thing every visitor already looks at first. */
     .ua-profile-header {
-      display: flex; flex-direction: column; gap: 10px; padding: 14px 16px;
+      display: flex; flex-direction: column; gap: 8px; padding: 12px 16px;
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); margin-bottom: 14px;
+      border-radius: var(--radius); margin-bottom: 10px;
     }
     .ua-profile-header-top { display: flex; align-items: center; gap: 12px; }
     .ua-profile-info { display: flex; flex-direction: column; gap: 5px; flex: 1; }
@@ -1310,8 +1324,8 @@
       font-weight: 600;
     }
     .ua-reg-stats {
-      display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 11px;
-      color: var(--muted); border-top: 1px solid var(--border); padding-top: 10px;
+      display: flex; flex-wrap: wrap; gap: 4px 20px; font-size: 11px;
+      color: var(--muted); border-top: 1px solid var(--border); padding-top: 8px;
     }
     .ua-reg-stats strong { font-size: 13px; color: var(--text); }
     .ua-reg-stats .ua-reg-stat-alert { color: var(--cve); }
@@ -2007,7 +2021,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.71.0">Releasetrain <em>v3.71.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.71.1">Releasetrain <em>v3.71.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3612,6 +3626,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-12</div>
+              <div class="cl-ver cl-ver-patch">v3.71.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Account view uses the available width instead of wrapping</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The Account view's own column was capped at a fixed 580px even though it's had the whole main area to itself since Filters/nav became their own drawers, forcing the profile card's stat row (and other content) to wrap onto extra lines it didn't need to. Widened to <code>min(900px, 96vw)</code>. Form fields (password, org names, provider keys) are capped to a sensible width instead of stretching edge to edge; the search-events table, dashboard cards, and stat rows use the extra room.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Reduced remaining padding/margin in the profile card and its stat row.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
