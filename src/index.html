@@ -1011,6 +1011,16 @@
     }
     @keyframes pulse { from { background-position: 0 0; } to { background-position: 200% 0; } }
     .sentinel { font-size: 12px; text-align: center; color: var(--muted); padding: 12px 0 6px; }
+    /* #sentinel's job is reporting infinite-scroll status ("Loading
+       more…", "End of results"), which is meaningless once #emptyState
+       is already showing its own, more specific "no results" message.
+       Every codepath that shows emptyState also sets #sentinel's text to
+       some flavor of "No results", so without this a viewer saw the same
+       message twice in a row (a big "No results found for the last N
+       days" immediately followed by a small "🔍 No results"). One rule
+       here covers every such codepath instead of hunting down each one
+       that sets that text. */
+    #emptyState.show ~ #sentinel { display: none; }
 
     /* ── Graph view (vis-network) ── */
     #graphView {
@@ -2039,7 +2049,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.71.5">Releasetrain <em>v3.71.5</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.71.6">Releasetrain <em>v3.71.6</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3644,6 +3654,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-12</div>
+              <div class="cl-ver cl-ver-patch">v3.71.6</div>
+            </div>
+            <div class="cl-content">
+              <h3>Removed a redundant "no results" message</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> An empty feed showed two "no results" messages in a row: the prominent emptyState block ("No results found for the last 28 days") immediately followed by the small infinite-scroll sentinel's own "🔍 No results" text right below it. <code>#emptyState.show ~ #sentinel { display: none; }</code> hides the sentinel whenever the empty state is already showing, covering every codepath that sets that text rather than patching one call site.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
