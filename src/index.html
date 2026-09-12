@@ -2081,7 +2081,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.72.2">Releasetrain <em>v3.72.2</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.72.3">Releasetrain <em>v3.72.3</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3691,6 +3691,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-12</div>
+              <div class="cl-ver cl-ver-patch">v3.72.3</div>
+            </div>
+            <div class="cl-content">
+              <h3>Query preview names the vendors it actually found</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The "vendor required" flag in the query preview said nothing about which vendor, if any, the question actually resolved to. New <code>previewVendors()</code> tests the question's words against <code>suggestionPool</code>, the same live component-name list the search autocomplete already matches against, and shows the real recognized name(s) (e.g. "vendor: zoom, teams") whenever at least one is found; falls back to the old "vendor required" only when the box is checked but nothing in the question is recognized.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -6537,13 +6550,34 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // still worth keeping even off the fixed-overlay path this was
     // originally written for: a comparison question's own 4-term list
     // still runs long, and this stays legible next to the diagram.
+    // Real recognized product/vendor names found in the question, tested
+    // against suggestionPool (the same live list, built by
+    // buildSuggestionPool, that the search autocomplete already matches
+    // against), not just "the vendor-check box is on." A bare "vendor
+    // required" told a viewer nothing about which vendor it actually
+    // resolved to; this shows the real name(s) whenever at least one is
+    // recognized, per explicit request.
+    function previewVendors(question) {
+      const words = String(question || "").toLowerCase().match(/[a-z0-9][a-z0-9.+#-]*/g) || [];
+      if (!words.length) return [];
+      const pool = new Set(suggestionPool);
+      const found = [];
+      const seen = new Set();
+      for (const w of words) {
+        if (pool.has(w) && !seen.has(w)) { seen.add(w); found.push(w); }
+      }
+      return found;
+    }
     function buildAskPreviewParts(question, intent) {
       const terms = previewSearchTerms(question);
       const parts = [];
       if (terms.length) parts.push(`search: <strong>${uaEsc(terms.join(", "))}</strong>`);
       if (askTemporalFilterEl.checked) parts.push(`window: ${uaEsc(formatTemporalConstraint(previewTemporalConstraint(question)))}`);
       if (askIntentFilterEl.checked) parts.push(`intent: <strong>${uaEsc(ASK_INTENT_TAGS[intent || "general"])}</strong>`);
-      if (askVendorCheckEl.checked) parts.push("vendor required");
+      if (askVendorCheckEl.checked) {
+        const vendors = previewVendors(question);
+        parts.push(vendors.length ? `vendor: <strong>${uaEsc(vendors.join(", "))}</strong>` : "vendor required");
+      }
       return parts;
     }
     function askQueryPreviewBlockHtml(question) {
