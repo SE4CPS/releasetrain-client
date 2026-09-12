@@ -216,9 +216,15 @@
       .layout.has-ask-rail .ask-intro-panel { display: none; }
       .layout.has-ask-rail .ask-answer-rail { display: block; }
     }
-    /* Holds only the close button now; the question itself moved inside
-       the card (see .ask-answer-heading/.ask-answer-question). */
-    .ask-rail-header { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
+    /* The close button, and #askOptionsPanel once relocateAskOptionsPanel
+       lands it here on a wide screen (see that function's own comment):
+       sharing this row instead of the button getting an otherwise-empty
+       row of its own. flex-wrap:wrap is a fallback for a genuinely
+       narrow rail (the options panel's own content can still wrap
+       inside itself first, via its own flex-wrap, before this row needs
+       to). The question itself lives inside the card now, not here (see
+       .ask-answer-heading/.ask-answer-question). */
+    .ask-rail-header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
     /* Plain, technical copy. No marketing language, no imagery beyond
        a small heading. .ask-sample-btn reuses the feed's own muted
        chip-like styling so the samples read as inline, clickable
@@ -454,12 +460,15 @@
     }
     .ask-toggle-inline { display: flex; align-items: center; gap: 4px; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
     .ask-toggle-inline input[type="checkbox"] { accent-color: var(--brand); cursor: pointer; }
+    /* Keeps the three toggles together as one wrapping unit (see the
+       markup's own comment): nowrap internally so they never split
+       apart from each other, flex-shrink:0 so the group as a whole is
+       what wraps to the next line, not one toggle peeling off alone. */
+    .ask-toggle-group { display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; flex-shrink: 0; }
     /* A plain vertical rule (no text) separating the selects from the
        toggles, so the row still reads as two groups even with nothing
        to wrap onto a line of its own. */
     .ask-options-sep { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
-    .ask-quota-line { font-size: 10px; color: var(--muted); white-space: nowrap; margin-left: auto; }
-    .ask-quota-line strong { color: var(--text); font-weight: 600; }
     .ask-intent-badge {
       flex-shrink: 0; align-self: center;
       font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: var(--radius-full);
@@ -556,14 +565,24 @@
        outside, in the rail's own static header), plus the pipeline name
        right next to it in brackets instead of as its own separate
        uppercase line. */
+    /* nowrap, not wrap: a long question plus a long preset name (e.g.
+       "Multi-agent (feedback loop)") wrapped to a second line, costing
+       real vertical space in a column already tight on it. The question
+       truncates with an ellipsis instead (min-width:0 on the flex item,
+       overflow/text-overflow on the text itself); the preset stays
+       flex-shrink:0 so it's always fully visible on that same line. */
     .ask-answer-heading {
-      display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap;
+      display: flex; align-items: baseline; gap: 6px; flex-wrap: nowrap;
       margin-bottom: 6px;
     }
-    .ask-answer-question { font: 700 13px/1.4 inherit; color: var(--text); }
+    .ask-answer-question {
+      font: 700 13px/1.4 inherit; color: var(--text);
+      flex: 1 1 auto; min-width: 0;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
     .ask-answer-preset {
       font: 700 10px/1 inherit; text-transform: uppercase; letter-spacing: .4px;
-      color: var(--brand); white-space: nowrap;
+      color: var(--brand); white-space: nowrap; flex-shrink: 0;
     }
     .ask-answer-summary { font-size: 13px; line-height: 1.6; margin: 0 0 10px; overflow-wrap: anywhere; }
     /* The one substring (a version number, so far) that most directly
@@ -2110,7 +2129,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.72.7">Releasetrain <em>v3.72.7</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.73.0">Releasetrain <em>v3.73.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2219,16 +2238,22 @@
               <option value="compare">Compare all 5</option>
             </select>
             <span class="ask-options-sep" aria-hidden="true"></span>
-            <label class="ask-toggle-inline" title="Checked: requires a resolvable vendor/product, declines outright if none is found.&#10;&#10;Unchecked: answers without that requirement.">
-              <input type="checkbox" id="askVendorCheck" checked /> Vendor check
-            </label>
-            <label class="ask-toggle-inline" title="Checked: time-boxed to a recent window, or a date named in the question.&#10;&#10;Unchecked: searches all-time, no date restriction.">
-              <input type="checkbox" id="askTemporalFilter" checked /> Temporal filter
-            </label>
-            <label class="ask-toggle-inline" title="Checked: classifies the question (CVE/patch/version/general/opinion), only matching tools are used.&#10;&#10;Unchecked: every tool is available regardless of classification.">
-              <input type="checkbox" id="askIntentFilter" checked /> Intent filter
-            </label>
-            <span id="askQuotaLine" class="ask-quota-line">Usage: &#8212;</span>
+            <!-- Grouped so the three toggles wrap together as one unit
+               (all three on their line, or all three dropping to the
+               next one) rather than splitting apart individually when
+               #askOptionsPanel's own row runs out of width, per explicit
+               request to keep them on one row. -->
+            <div class="ask-toggle-group">
+              <label class="ask-toggle-inline" title="Checked: requires a resolvable vendor/product, declines outright if none is found.&#10;&#10;Unchecked: answers without that requirement.">
+                <input type="checkbox" id="askVendorCheck" checked /> Vendor check
+              </label>
+              <label class="ask-toggle-inline" title="Checked: time-boxed to a recent window, or a date named in the question.&#10;&#10;Unchecked: searches all-time, no date restriction.">
+                <input type="checkbox" id="askTemporalFilter" checked /> Temporal filter
+              </label>
+              <label class="ask-toggle-inline" title="Checked: classifies the question (CVE/patch/version/general/opinion), only matching tools are used.&#10;&#10;Unchecked: every tool is available regardless of classification.">
+                <input type="checkbox" id="askIntentFilter" checked /> Intent filter
+              </label>
+            </div>
           </div>
         </div>
       </form>
@@ -3720,6 +3745,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-12</div>
+              <div class="cl-ver cl-ver-minor">v3.73.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Tighter answer rail: one-line heading, grouped toggles, no dead usage line</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> A long question plus a long preset name (e.g. "Multi-agent (feedback loop)") wrapped <code>.ask-answer-heading</code> to two lines, costing real vertical space in an already-tight column. The question now truncates with an ellipsis instead (<code>.ask-answer-question</code> shrinks/truncates, <code>.ask-answer-preset</code> stays <code>flex-shrink:0</code> so the bracket is always fully visible on that same line), per explicit request to reduce line breaks in the rail and avoid scrolling.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The three evidence-gating toggles (Vendor check/Temporal filter/Intent filter) are now grouped in <code>.ask-toggle-group</code> so they wrap together as one unit inside <code>#askOptionsPanel</code>'s own row instead of splitting apart individually when the row runs out of width.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> <code>relocateAskOptionsPanel()</code> now lands <code>#askOptionsPanel</code> inside <code>.ask-rail-header</code> (sharing that row with the close button) instead of at the top of <code>.ask-rail-col</code> on its own otherwise-empty row, per request to put the close button next to an existing row rather than giving it one of its own.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Removed the "Usage: N call(s) today..." line: it read as permanently broken, stuck on "limits unknown until a request succeeds" for any provider that doesn't return real rate-limit headers (Ollama Cloud, the default, among them). The underlying quota fetch and the rate-limited-provider graying-out in the Model select are unaffected; only the visible text line is gone.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5864,9 +5905,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       <!-- The question itself moved inside #askRailBody's own card, next
            to the pipeline label in brackets, per explicit request (see
            askRenderCard/showAskRailRunning/askRenderCompareBody's own
-           comments); this header now holds just the close button. -->
+           comments). relocateAskOptionsPanel() lands #askOptionsPanel as
+           this row's first child on a wide screen, sharing the row with
+           the close button rather than the button sitting alone. -->
       <div class="ask-rail-header">
-        <button type="button" id="askRailClose" class="btn btn-ghost" aria-label="Close answer" style="padding:2px 8px;margin-left:auto">✕</button>
+        <button type="button" id="askRailClose" class="btn btn-ghost" aria-label="Close answer" style="padding:2px 8px;margin-left:auto;flex-shrink:0">✕</button>
       </div>
       <div id="askRailBody"></div>
     </aside>
@@ -6925,20 +6968,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     document.getElementById("askProvider").addEventListener("change", askPopulateSizeOptions);
     askLoadProviders().then(() => askRefreshQuota());
 
-    // Usage line: a snapshot of the provider's own last-seen rate-limit
-    // headers, as reported by the server (it never spends a call just to
-    // go check quota, see GET /api/ask/quota in ask.js). Options are
-    // always visible now (no popover to gate this on opening), so it
-    // refreshes on Ask-mode activation, on a Model change, and again
-    // after every ask attempt.
-    const askQuotaLineEl = document.getElementById("askQuotaLine");
-    // Rather than silently falling back to a different provider when one
-    // is rate-limited (surprising: "I picked Claude but got a Groq
-    // answer"), disable that option in the Model select so it can be
-    // seen but not picked, and let the user explicitly choose a working
-    // one. Doesn't touch an already-selected option's value. Only new
-    // selections are blocked, so a provider that becomes rate-limited
-    // mid-use doesn't get silently swapped out from under an open answer.
+    // Was also a visible "Usage: N call(s) today..." line; removed per
+    // explicit request (it read as broken, permanently stuck on "limits
+    // unknown until a request succeeds" for any provider that doesn't
+    // return real rate-limit headers, e.g. Ollama Cloud, the default).
+    // The underlying quota fetch stays: rather than silently falling
+    // back to a different provider when one is rate-limited (surprising:
+    // "I picked Claude but got a Groq answer"), disable that option in
+    // the Model select so it can be seen but not picked, and let the
+    // user explicitly choose a working one. Doesn't touch an
+    // already-selected option's value. Only new selections are blocked,
+    // so a provider that becomes rate-limited mid-use doesn't get
+    // silently swapped out from under an open answer.
     function askUpdateProviderOptions(quotaData) {
       Array.from(document.getElementById("askProvider").options).forEach(opt => {
         const q = quotaData[opt.value];
@@ -6949,33 +6990,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       });
     }
     async function askRefreshQuota() {
-      askQuotaLineEl.textContent = "Usage: loading…";
       try {
         const res = await uaRequest("ask/quota");
-        if (!res.ok) throw new Error("quota fetch failed");
-        const data = await res.json();
-        askUpdateProviderOptions(data);
-        const provider = document.getElementById("askProvider").value;
-        const q = data[provider];
-        if (!q || !q.limits) {
-          askQuotaLineEl.innerHTML = `Usage: <strong>${q ? q.callsToday : 0}</strong> call(s) today &middot; limits unknown until a request succeeds`;
-          return;
-        }
-        const { remainingRequests, limitRequests, remainingTokens, limitTokens } = q.limits;
-        let html = `Usage today: <strong>${q.callsToday}</strong> call(s) &middot; `
-          + `<strong>${uaEsc(remainingRequests)}</strong>/${uaEsc(limitRequests)} requests left &middot; `
-          + `<strong>${uaEsc(remainingTokens)}</strong>/${uaEsc(limitTokens)} tokens left`;
-        // Surfaces the exact same rate-limit hit a failed call would show
-        // as an error banner (e.g. "TPM: Limit 8000, Used 7333... try
-        // again in 21s") in this same usage line, so it's visible even
-        // without having just triggered the error yourself.
-        if (q.rateLimitedSecondsLeft) {
-          html += `<br><span style="color:var(--cve)">&#9888;&#65039; rate limited &mdash; retry in ~${q.rateLimitedSecondsLeft}s</span>`;
-        }
-        askQuotaLineEl.innerHTML = html;
-      } catch {
-        askQuotaLineEl.textContent = "Usage: unavailable";
-      }
+        if (!res.ok) return;
+        askUpdateProviderOptions(await res.json());
+      } catch { /* provider options just stay as they were */ }
     }
     document.getElementById("askProvider").addEventListener("change", askRefreshQuota);
 
@@ -7456,21 +7475,24 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // Moves the real #askOptionsPanel node (never a clone; appendChild/
     // insertBefore on a node already in the document relocates it,
     // preserving every listener and its element identity) between the
-    // topbar's .ask-options-row and the top of .ask-rail-col as the
+    // topbar's .ask-options-row and the top of .ask-rail-header as the
     // viewport crosses ASK_RAIL_MIN_WIDTH, per explicit request to keep
     // the agentic-AI-specific controls (model/size/pipeline, the
-    // evidence-gating toggles, usage) beside the answer/diagram they
-    // configure on a screen with room for that, while a narrow screen
-    // (no rail at all, see canUseAskRail) still needs them reachable
-    // from the form itself. Idempotent: checks where the node already is
-    // before moving it, so calling this on every resize event costs
-    // nothing once the viewport is already settled on one side.
+    // evidence-gating toggles) beside the answer/diagram they configure
+    // on a screen with room for that, while a narrow screen (no rail at
+    // all, see canUseAskRail) still needs them reachable from the form
+    // itself. Landing inside .ask-rail-header specifically (not just
+    // .ask-rail-col) puts it on the same row as the close button, per
+    // request, instead of that button getting its own otherwise-empty
+    // row. Idempotent: checks where the node already is before moving
+    // it, so calling this on every resize event costs nothing once the
+    // viewport is already settled on one side.
     function relocateAskOptionsPanel() {
       const panel = document.getElementById("askOptionsPanel");
       if (!panel) return;
       if (askRailMql.matches) {
-        const col = document.querySelector(".ask-rail-col");
-        if (col && col.firstElementChild !== panel) col.insertBefore(panel, col.firstChild);
+        const header = document.querySelector(".ask-rail-header");
+        if (header && header.firstElementChild !== panel) header.insertBefore(panel, header.firstChild);
       } else {
         // .ask-options-row holds nothing else (Clear/bookmark/submit
         // moved up to .ask-input-row, always on the input's own line,
