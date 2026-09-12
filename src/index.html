@@ -1936,7 +1936,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.66.1">Releasetrain <em>v3.66.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.67.0">Releasetrain <em>v3.67.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3531,6 +3531,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-11</div>
+              <div class="cl-ver cl-ver-minor">v3.67.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Admin-configurable Ask defaults</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Three new admin Settings entries: default Ask pipeline, default model provider, and default model size — what a new visitor's Ask form starts on, instead of the previous fixed Auto/Ollama Cloud/Medium defaults. Rendered as real dropdowns (not free text), so an invalid value can't be typed in.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -6171,6 +6184,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // are just a same-render fallback for the brief window before this
     // resolves.
     let ASK_PROVIDER_DATA = null;
+    // Set once askLoadProviders' response arrives (admin-configured, via
+    // GET /api/ask/providers' defaultSize) and consumed the first time
+    // askPopulateSizeOptions runs after that; preferred over the
+    // prevValue/"medium" fallback below exactly once, then cleared, so a
+    // later provider switch (the user actively picking a different size)
+    // isn't repeatedly forced back to the admin default.
+    let askDefaultSizePending = null;
     function askPopulateSizeOptions() {
       const sizeEl = document.getElementById("askSize");
       if (!ASK_PROVIDER_DATA) return;
@@ -6182,8 +6202,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // Keep the same size tier (e.g. stay on "large") across a provider
       // switch when the new provider has one by that id; default to
       // medium otherwise rather than whatever the browser picks first.
-      if (sizes.some(s => s.id === prevValue)) sizeEl.value = prevValue;
-      else if (sizes.some(s => s.id === "medium")) sizeEl.value = "medium";
+      if (askDefaultSizePending && sizes.some(s => s.id === askDefaultSizePending)) {
+        sizeEl.value = askDefaultSizePending;
+      } else if (sizes.some(s => s.id === prevValue)) {
+        sizeEl.value = prevValue;
+      } else if (sizes.some(s => s.id === "medium")) {
+        sizeEl.value = "medium";
+      }
+      askDefaultSizePending = null;
     }
     async function askLoadProviders() {
       try {
@@ -6193,8 +6219,23 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const providerEl = document.getElementById("askProvider");
         const prevValue = providerEl.value;
         providerEl.innerHTML = ASK_PROVIDER_DATA.map(p => `<option value="${uaEsc(p.id)}">${uaEsc(p.label)}</option>`).join("");
-        if (ASK_PROVIDER_DATA.some(p => p.id === prevValue)) providerEl.value = prevValue;
+        // The admin-configured default (see UA_SETTINGS_META's
+        // askDefaultProvider/askDefaultSize/askDefaultPreset) wins on this
+        // first load over the static markup's hardcoded selection; a
+        // later re-fetch (there isn't one today, but if one's ever added)
+        // would fall back to preserving whatever the visitor already
+        // has selected instead of re-forcing the admin default on them.
+        if (data.defaultProvider && ASK_PROVIDER_DATA.some(p => p.id === data.defaultProvider)) {
+          providerEl.value = data.defaultProvider;
+        } else if (ASK_PROVIDER_DATA.some(p => p.id === prevValue)) {
+          providerEl.value = prevValue;
+        }
+        askDefaultSizePending = data.defaultSize || null;
         askPopulateSizeOptions();
+        const presetEl = document.getElementById("askPreset");
+        if (data.defaultPreset && presetEl.querySelector(`option[value="${CSS.escape(data.defaultPreset)}"]`)) {
+          presetEl.value = data.defaultPreset;
+        }
       } catch {
         // Leave the two hardcoded fallback <option>s in place; Size stays
         // empty in this case (no live provider/size data to build it
@@ -11430,6 +11471,35 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         hint: "How far back Ask searches when a question names no explicit date. Matches the feed's own lookback window by default (14 days).",
         min: 1, max: 90,
       },
+      // "compare" is deliberately not offered here: the server rejects
+      // it as a default anyway (see setAskRuntimeSettings in ask.js), so
+      // it's left out of this list rather than shown and then silently
+      // ignored on save.
+      askDefaultPreset: {
+        label: "Ask default pipeline",
+        hint: "Which Pipeline option a new visitor's Ask form starts on.",
+        options: Object.keys(ASK_PRESET_LABELS)
+          .filter(k => k !== "compare")
+          .map(k => ({ value: k, label: ASK_PRESET_LABELS[k] })),
+      },
+      askDefaultProvider: {
+        label: "Ask default model provider",
+        hint: "Which Model option a new visitor's Ask form starts on.",
+        options: [
+          { value: "anthropic", label: "Claude (Anthropic)" },
+          { value: "groq", label: "Groq (free tier)" },
+          { value: "ollama", label: "Ollama Cloud (free tier)" },
+        ],
+      },
+      askDefaultSize: {
+        label: "Ask default model size",
+        hint: "Which Size tier a new visitor's Ask form starts on (exact model varies by provider).",
+        options: [
+          { value: "small", label: "Small" },
+          { value: "medium", label: "Medium" },
+          { value: "large", label: "Large" },
+        ],
+      },
     };
     async function uaLoadSettings() {
       const listEl = document.getElementById("ua-settings-list");
@@ -11449,10 +11519,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       listEl.innerHTML = keys.map(key => {
         const meta = UA_SETTINGS_META[key] || {};
         const value = settings[key];
-        // Only a plain finite number is editable as a number input for
-        // now; a boolean/string flag would need its own input type,
-        // added here once a real one actually exists server-side.
-        const inputHtml = Number.isFinite(value)
+        // A fixed-choice value (meta.options) renders as a <select> so an
+        // admin can't type an invalid string the server would just
+        // silently reject; a plain finite number is a number input;
+        // anything else falls back to free text.
+        const inputHtml = Array.isArray(meta.options)
+          ? `<select class="ua-settings-input" data-key="${uaEsc(key)}">${meta.options.map(o =>
+              `<option value="${uaEsc(o.value)}"${o.value === value ? " selected" : ""}>${uaEsc(o.label)}</option>`
+            ).join("")}</select>`
+          : Number.isFinite(value)
           ? `<input type="number" class="ua-settings-input" data-key="${uaEsc(key)}" value="${value}"${Number.isFinite(meta.min) ? ` min="${meta.min}"` : ""}${Number.isFinite(meta.max) ? ` max="${meta.max}"` : ""}>`
           : `<input type="text" class="ua-settings-input" data-key="${uaEsc(key)}" value="${uaEsc(String(value))}">`;
         return `<div class="ua-settings-row">
@@ -11478,10 +11553,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             const putRes = await uaRequest("admin/settings", { method: "PUT", body: JSON.stringify({ [key]: raw }) });
             if (!putRes.ok) throw new Error((await putRes.json().catch(() => ({}))).error || "Save failed.");
             const applied = await putRes.json();
-            // The server clamps to its own valid range (e.g. 1-90 days),
-            // so the input reflects what actually took effect, not
-            // necessarily the raw value just typed.
-            if (Number.isFinite(applied[key])) input.value = applied[key];
+            // The server clamps/validates before persisting (a number to
+            // its valid range, an enum string to one it actually
+            // recognizes; see setAskRuntimeSettings in ask.js), so the
+            // input reflects what actually took effect, not necessarily
+            // the raw value just submitted.
+            if (Number.isFinite(applied[key]) || typeof applied[key] === "string") input.value = applied[key];
             btn.textContent = "Saved";
             setTimeout(() => { btn.textContent = prevText; btn.disabled = false; }, 1200);
           } catch (err) {
