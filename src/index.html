@@ -241,6 +241,29 @@
       color: var(--text); padding: 5px 8px; cursor: pointer;
     }
     .ask-sample-btn:hover { border-color: var(--brand); }
+    /* Small font on purpose (this panel is a narrow sidebar column,
+       never allowed to scroll sideways): four columns of real technical
+       content (a plain type label, the literal internal intent tag, the
+       process name, a clickable example) need every character kept, so
+       the font shrinks rather than the content. table-layout:fixed plus
+       overflow-wrap lets a long value like "comparison-question" wrap
+       to a second line within its own cell instead of forcing a wider
+       table or a horizontal scrollbar. */
+    .ask-intro-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 9.5px; }
+    .ask-intro-table th, .ask-intro-table td {
+      padding: 3px 4px; text-align: left; vertical-align: top;
+      border-bottom: 1px solid var(--border); overflow-wrap: break-word;
+    }
+    .ask-intro-table th { font-size: 8.5px; text-transform: uppercase; letter-spacing: .2px; color: var(--muted); font-weight: 700; }
+    .ask-intro-table th:nth-child(1), .ask-intro-table td:nth-child(1) { width: 16%; }
+    .ask-intro-table th:nth-child(2), .ask-intro-table td:nth-child(2) { width: 30%; }
+    .ask-intro-table th:nth-child(3), .ask-intro-table td:nth-child(3) { width: 30%; }
+    .ask-intro-table th:nth-child(4), .ask-intro-table td:nth-child(4) { width: 24%; }
+    .ask-intro-table .ask-sample-btn {
+      display: inline; width: auto; background: transparent; border: none; padding: 0;
+      color: var(--brand); text-decoration: underline; font: inherit; font-size: 9.5px; line-height: 1.3;
+    }
+    .ask-intro-table .ask-sample-btn:hover { color: var(--text); }
 
     /* ── Sidebar (menu drawer) ──────────────────────────────────
        Off-canvas at every width, not just mobile — this is the single
@@ -1824,7 +1847,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.63.3">Releasetrain <em>v3.63.3</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.64.0">Releasetrain <em>v3.64.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -1901,9 +1924,10 @@
           <select id="askSize" class="ask-preset-select" aria-label="Model size"
             title="Model size tier for the selected provider. Larger sizes trade speed for answer quality."></select>
           <select id="askPreset" class="ask-preset-select" aria-label="Which pipeline to ask"
-            title="Which pipeline runs. Single-agent/Multi-agent buggy/fixed are one continuous model call with capability flags toggled on or off.&#10;&#10;Multi-agent (delegated) and Multi-agent (feedback loop) are genuine delegation: Rewriter, Retriever, and Evaluator are each their own separate model call.">
+            title="Which pipeline runs. Auto picks one from the question's own classified intent (a comparison, security, or plain version question each get a different pipeline) and the answer states why.&#10;&#10;Single-agent/Multi-agent buggy/fixed are one continuous model call with capability flags toggled on or off.&#10;&#10;Multi-agent (delegated) and Multi-agent (feedback loop) are genuine delegation: Rewriter, Retriever, and Evaluator are each their own separate model call.">
+            <option value="auto" selected>Auto (recommended)</option>
             <option value="multi_agent_fixed">Multi-agent (fixed)</option>
-            <option value="single_agent" selected>Single-agent</option>
+            <option value="single_agent">Single-agent</option>
             <option value="multi_agent_buggy">Multi-agent (buggy)</option>
             <option value="multi_agent">Multi-agent (delegated)</option>
             <option value="multi_agent_feedback">Multi-agent (feedback loop)</option>
@@ -2271,6 +2295,7 @@
               <li><a href="#" data-target="d-components">🧩 Components</a></li>
               <li><a href="#" data-target="d-aggregations">📊 Aggregations</a></li>
               <li><a href="#" data-target="d-testing">🧪 Test &amp; discovery</a></li>
+              <li><a href="#" data-target="d-ask-pipelines">🤖 Ask pipelines</a></li>
             </ul>
           </div>
         </details>
@@ -2922,6 +2947,22 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/test/endpoints/html</span></summary><div class="endpoint-body"><p>HTML view of discovered GET endpoints with generated example URLs and sample outputs.</p><pre><code>curl "https://releasetrain.io/api/test/endpoints/html"</code></pre></div></details>
 </div><a class="toplink" href="#">↑ Back to top</a></section>
 
+<section class="block" id="d-ask-pipelines">
+<h2>Ask pipelines</h2>
+<p class="section-sort-note">Which process <code class="inline">POST /api/ask</code> runs, by the question's own classified intent. Preset <code class="inline">"auto"</code> resolves to one of these before the model is ever called (see <code class="inline">pickAutoPipeline</code> in <code class="inline">ask.js</code>); any other preset value runs that one directly regardless of intent.</p>
+<table>
+<thead><tr><th style="width:14%">Type</th><th style="width:22%">Intent</th><th style="width:24%">Process</th><th>Example</th></tr></thead>
+<tbody>
+<tr><td>Comparison</td><td><code class="inline">comparison-question</code></td><td>Delegated + feedback loop</td><td>"Should I use Node or Flask?"</td></tr>
+<tr><td>Security</td><td><code class="inline">cve-question</code></td><td>Union search + BM25 rerank</td><td>"Any recent CVEs in MySQL?"</td></tr>
+<tr><td>Patch</td><td><code class="inline">patch-question</code></td><td>Union search + BM25 rerank</td><td>"Was the WebView bug patched?"</td></tr>
+<tr><td>Version</td><td><code class="inline">version-question</code></td><td>Single-agent</td><td>"What's the latest PHP version?"</td></tr>
+<tr><td>General</td><td><code class="inline">general-question</code></td><td>Delegated, no feedback loop</td><td>"How do I roll back a Windows update?"</td></tr>
+<tr><td>Opinion</td><td><code class="inline">opinion</code></td><td>Declined, no retrieval</td><td>"What's the best language?"</td></tr>
+</tbody>
+</table>
+<a class="toplink" href="#">↑ Back to top</a></section>
+
 
 <!-- ═══ QUICK START ══════════════════════════════════════════════ -->
 <section class="block" id="d-quickstart">
@@ -3401,6 +3442,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-11</div>
+              <div class="cl-ver cl-ver-minor">v3.64.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Auto pipeline selection, by question intent</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> New "Auto (recommended)" Pipeline option, now the default: the question's own classified intent picks a concrete pipeline server-side (comparison → delegated + feedback loop, security/patch → union search + rerank, a plain version lookup → single-agent, everything else → delegated) instead of a manual guess, and the answer states plainly why ("Why this process: ...") once it's done.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Replaced the Ask intro panel's "Try asking" list with a table: question type, the real internal intent tag, which process Auto picks for it, and a clickable example (same fill-the-input behavior as before).</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> New "Ask pipelines" section in the docs view with the same mapping, for anyone reading the API docs directly rather than the Ask box's own intro panel.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> A live run's phase captions (and the answer card's own pipeline label) previously showed the literal word "auto" instead of the real resolved pipeline, since the client only learns which concrete preset Auto picked once the server says so. A new synthetic <code>auto_resolved</code> progress event (and preferring <code>data.config.preset</code> for the final label) fixes both.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5072,40 +5129,27 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       <p>A bare vendor/category name (e.g. "mysql", "llm") browses directly, no model call. A real question needs <a href="#" id="askIntroSignInLink" target="_self">sign-in</a>; a name lookup doesn't.</p>
       <h4>Pipeline</h4>
       <p>Picks how the question is answered: one continuous tool-use loop (Single-agent, Multi-agent buggy/fixed) or real role delegation (Multi-agent delegated, optional feedback loop). "Compare all 5" runs all five side by side.</p>
-      <h4>Try asking</h4>
-      <!-- One example per intent classifyIntentClient (and the server's
-           own classifyIntent) can actually recognize, the bracketed
-           label naming which one so this doubles as a live demo of the
-           intent filter itself, not just a list of things to click.
-           Opinion is included on purpose, phrasing set to honestly
-           preview that it declines rather than reading like every
-           other example that gets a real answer. Two entries below
-           aren't their own intent, both fall into General, and both
-           are labeled that way honestly rather than implying a
-           dedicated intent that doesn't exist: the how-to one is a
-           real, well-established question type (procedural/how-to)
-           this system's own bots now flag on ingest (stackoverflow.py's
-           isHowTo field) but classifyIntent does not yet route
-           specially; the poll one showcases a distinct capability
-           instead, an experiential "did this happen to other people"
-           question routes to search_reddit_questions (see
-           buildSystemPrompt's own instruction for this exact question
-           shape), which tallies a real Yes/No/Unclear poll from
-           comments on a similar past question rather than reading a
-           release note. Kept at 7 items total on purpose: this list
-           already had to be shrunk once to stop the panel needing a
-           vertical scroll, so a type this system doesn't specially
-           handle replaces one already covered by another example,
-           rather than growing the list further. -->
-      <ul>
-        <li><button type="button" class="ask-sample-btn" data-ask-sample="What's the latest PHP version?">What's the latest PHP version? (Version)</button></li>
-        <li><button type="button" class="ask-sample-btn" data-ask-sample="Are there any recent CVEs affecting MySQL?">Are there any recent CVEs affecting MySQL? (CVE)</button></li>
-        <li><button type="button" class="ask-sample-btn" data-ask-sample="Was the WebView bug fixed in a Chrome patch?">Was the WebView bug fixed in a Chrome patch? (Patch)</button></li>
-        <li><button type="button" class="ask-sample-btn" data-ask-sample="How do I roll back a bad Windows update?">How do I roll back a bad Windows update? (General, how-to)</button></li>
-        <li><button type="button" class="ask-sample-btn" data-ask-sample="Should I use Node or Flask for a new API?">Should I use Node or Flask for a new API? (Comparison)</button></li>
-        <li><button type="button" class="ask-sample-btn" data-ask-sample="What's the best programming language?">What's the best programming language? (Opinion, declines)</button></li>
-        <li><button type="button" class="ask-sample-btn" data-ask-sample="Did other people lose Wi-Fi after the latest Windows update?">Did other people lose Wi-Fi after the latest Windows update? (General, community poll)</button></li>
-      </ul>
+      <h4>Auto: which process, by question type</h4>
+      <!-- Replaces the old plain "Try asking" list: the same clickable
+           sample questions (still wired via the delegated [data-ask-sample]
+           click listener below (a table cell qualifies exactly like a
+           <li> did), now shown against the real intent tag and the real
+           pipeline Auto picks for it (see pickAutoPipeline in ask.js,
+           the single source of truth this table's own wording is kept
+           in sync with by hand). Opinion's row honestly shows it
+           declines rather than reading like every other row that gets
+           a real answer. -->
+      <table class="ask-intro-table">
+        <thead><tr><th>Type</th><th>Intent</th><th>Process</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>Comparison</td><td>comparison-question</td><td>Delegated+feedback</td><td><button type="button" class="ask-sample-btn" data-ask-sample="Should I use Node or Flask for a new API?">Node or Flask?</button></td></tr>
+          <tr><td>Security</td><td>cve-question</td><td>Union+rerank</td><td><button type="button" class="ask-sample-btn" data-ask-sample="Are there any recent CVEs affecting MySQL?">CVEs in MySQL?</button></td></tr>
+          <tr><td>Patch</td><td>patch-question</td><td>Union+rerank</td><td><button type="button" class="ask-sample-btn" data-ask-sample="Was the WebView bug fixed in a Chrome patch?">Chrome patched?</button></td></tr>
+          <tr><td>Version</td><td>version-question</td><td>Single-agent</td><td><button type="button" class="ask-sample-btn" data-ask-sample="What's the latest PHP version?">Latest PHP?</button></td></tr>
+          <tr><td>General</td><td>general-question</td><td>Delegated</td><td><button type="button" class="ask-sample-btn" data-ask-sample="How do I roll back a bad Windows update?">Roll back update?</button></td></tr>
+          <tr><td>Opinion</td><td>opinion</td><td>Declined, no retrieval</td><td><button type="button" class="ask-sample-btn" data-ask-sample="What's the best programming language?">Best language?</button></td></tr>
+        </tbody>
+      </table>
     </aside>
 
   </div><!-- /.layout -->
@@ -5272,6 +5316,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       multi_agent_fixed: "Multi-agent (fixed)",
       multi_agent: "Multi-agent (delegated)",
       multi_agent_feedback: "Multi-agent (feedback loop)",
+      // Defensive fallback only: the server always resolves "auto" to a
+      // concrete preset before an answer comes back (see /api/ask),
+      // so this should never actually render.
+      auto: "Auto",
     };
 
     // Shown on the abstain badge instead of a plain, unexplained
@@ -6473,7 +6521,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           if (!dataLine) continue;
           let evt;
           try { evt = JSON.parse(dataLine.slice(5).trim()); } catch { continue; }
-          if (evt.type === "progress") pushAskWorkflowPhase(evt.phase, evt.detail, preset, evt.meta);
+          if (evt.type === "progress") {
+            // Synthetic, not a real agent phase: the request was sent as
+            // "auto", and askPhaseLabel's own multi-agent role-prefix
+            // check is keyed on the exact preset string, so every phase
+            // caption from here on needs the concrete pipeline Auto
+            // actually picked, not the literal word "auto".
+            if (evt.phase === "auto_resolved" && evt.meta && evt.meta.preset) {
+              preset = evt.meta.preset;
+            } else {
+              pushAskWorkflowPhase(evt.phase, evt.detail, preset, evt.meta);
+            }
+          }
           else if (evt.type === "result") finalResult = evt;
           else if (evt.type === "error") errorMessage = evt.error || "Request failed.";
         }
@@ -6597,14 +6656,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           return;
         }
 
+        // "auto" resolves to a real preset server-side (see /api/ask),
+        // returned as data.config.preset; prefer that over the raw form
+        // value so the label reads as the pipeline that actually ran
+        // ("Multi-agent (feedback loop)"), not the literal word "auto".
+        const resolvedPreset = (data.config && data.config.preset) || preset;
         // A real answer: shown inline beside the feed when there's room
         // for it, the popup modal otherwise (a narrow window, or a
         // laptop split half-screen with a chat window, say).
         if (canUseAskRail()) {
-          showAskRail(question, ASK_PRESET_LABELS[preset] || preset, data);
+          showAskRail(question, ASK_PRESET_LABELS[resolvedPreset] || resolvedPreset, data);
         } else {
           document.getElementById("askModalQuestion").textContent = question;
-          document.getElementById("askModalBody").innerHTML = askRenderCard(ASK_PRESET_LABELS[preset] || preset, data);
+          document.getElementById("askModalBody").innerHTML = askRenderCard(ASK_PRESET_LABELS[resolvedPreset] || resolvedPreset, data);
           askModalEl.classList.remove("ask-compare-mode");
           askOverlayEl.classList.add("open");
           askModalEl.classList.add("open");
