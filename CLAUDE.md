@@ -110,6 +110,16 @@ always reflect the current, real conventions of the repo, not lag behind what's 
   controls, etc.) isn't the thing that's actually crowded, it's fine to leave it inside the ☰ drawer as-is;
   this pattern is for a specific "this got too big for where it lives" complaint, not a mandate to give
   every sidebar section its own drawer preemptively.
+- **GLOBAL RULE — any custom `<summary>` style in this file must explicitly declare `flex-direction: row`
+  whenever it sets `display: flex`/`inline-flex`.** The global bare `summary { display: flex; flex-direction:
+  column; ... }` rule sets a default of `column`; a more specific selector that redeclares `display` but not
+  `flex-direction` still loses that one property to the global rule (CSS wins per-property, not per-rule), so
+  the chevron and label render as two centered, stacked lines instead of one row. This bit `.ua-admin-header`
+  first, then turned out to already be latent in nearly every other custom summary style in the file
+  (`.sb-details`, `.sb-stat-head`, `.toggle-more`, docsView's endpoint/architecture summaries, cveView's
+  details/legend/post-summary toggles, and two inline-styled ones) once actually checked. When adding a new
+  collapsible section anywhere, set `flex-direction: row` on its summary rule from the start rather than
+  discovering this the same way.
 - **A flex-column parent stretches its children to its own full cross-axis width by default**
   (`align-items: stretch`), even a child whose own `display` is `inline-block`. A short badge/pill/chip
   placed inside one (e.g. `.ua-profile-info`'s role badge) needs `align-self: flex-start` on the child
