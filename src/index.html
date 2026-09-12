@@ -320,7 +320,12 @@
     /* Collapsible sidebar blocks */
     .sb-details { border-top: 1px solid var(--border); }
     .sb-details > summary {
-      list-style: none; display: flex; align-items: center; gap: 5px;
+      /* flex-direction: row spelled out explicitly, same reason as
+         .ua-admin-header: the global `summary { flex-direction: column }`
+         rule below wins on any property this rule doesn't itself
+         redeclare, stacking the chevron and label into two centered
+         lines instead of one row. */
+      list-style: none; display: flex; flex-direction: row; align-items: center; gap: 5px;
       padding: 8px 12px; cursor: pointer; user-select: none;
       font: 700 9px/1 var(--mono); color: var(--muted);
       text-transform: uppercase; letter-spacing: .5px;
@@ -679,7 +684,7 @@
       list-style: none; cursor: pointer; user-select: none;
       font: 600 10px/1.4 var(--mono); color: var(--muted);
       text-transform: uppercase; letter-spacing: .4px;
-      padding: 2px 0; display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 0; display: inline-flex; flex-direction: row; align-items: center; gap: 4px;
     }
     .toggle-more > summary::-webkit-details-marker { display: none; }
     .toggle-more > summary::before { content: '›'; display: inline-block; transition: transform .15s; }
@@ -1480,7 +1485,7 @@
     #docsView .endpoint { width: 100%; box-sizing: border-box; border: 1px solid #d9dee3; border-left-width: 6px; border-radius: 6px; margin: 0 0 8px; overflow: hidden; background: #fff; padding: 0; }
     #docsView details.endpoint > summary { list-style: none; }
     #docsView details.endpoint > summary::-webkit-details-marker { display: none; }
-    #docsView .endpoint summary.endpoint-head { display: flex !important; align-items: center !important; gap: .55rem !important; flex-wrap: wrap !important; margin: 0 !important; padding: 7px 10px !important; cursor: pointer !important; border-bottom: 1px solid transparent !important; font-size: 13px !important; }
+    #docsView .endpoint summary.endpoint-head { display: flex !important; flex-direction: row !important; align-items: center !important; gap: .55rem !important; flex-wrap: wrap !important; margin: 0 !important; padding: 7px 10px !important; cursor: pointer !important; border-bottom: 1px solid transparent !important; font-size: 13px !important; }
     #docsView details.endpoint[open] summary.endpoint-head { border-bottom-color: #e2e8f0 !important; }
     #docsView .endpoint-body { padding: 7px 10px 10px; }
     #docsView .endpoint.method-get { border-left-color: #2563eb; }
@@ -1512,7 +1517,7 @@
     #docsView .mermaid { text-align: center; margin: .8rem 0 1.2rem; overflow-x: auto; }
     /* arch-sub: collapsible details blocks inside #d-architecture */
     #docsView details.arch-sub { border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; margin-top: .6rem; overflow: hidden; }
-    #docsView summary.d-arch-sum { list-style: none; display: flex !important; align-items: center !important; gap: .45rem !important; padding: .58rem .8rem !important; cursor: pointer; font-size: .88rem !important; font-weight: 700 !important; color: #0f172a !important; background: #f1f5f9 !important; border-bottom: 1px solid transparent; transition: background .12s !important; }
+    #docsView summary.d-arch-sum { list-style: none; display: flex !important; flex-direction: row !important; align-items: center !important; gap: .45rem !important; padding: .58rem .8rem !important; cursor: pointer; font-size: .88rem !important; font-weight: 700 !important; color: #0f172a !important; background: #f1f5f9 !important; border-bottom: 1px solid transparent; transition: background .12s !important; }
     #docsView details.arch-sub[open] > summary.d-arch-sum { border-bottom-color: #e2e8f0 !important; }
     #docsView summary.d-arch-sum:hover { background: #f1f5f9 !important; }
     #docsView summary.d-arch-sum::-webkit-details-marker { display: none !important; }
@@ -1521,7 +1526,7 @@
     #docsView .arch-sub-body { padding: .55rem .8rem .8rem; }
     /* arch-view: nested frontend-view details inside arch-sub */
     #docsView details.arch-view { border: 1px solid #e2e8f0; border-radius: 6px; margin: .28rem 0; background: #f8fafc; overflow: hidden; }
-    #docsView summary.d-arch-view-sum { list-style: none; display: flex !important; align-items: center !important; gap: .4rem !important; padding: .38rem .6rem !important; cursor: pointer; font-size: .82rem !important; font-weight: 600 !important; color: #0f172a !important; background: transparent !important; transition: background .12s !important; }
+    #docsView summary.d-arch-view-sum { list-style: none; display: flex !important; flex-direction: row !important; align-items: center !important; gap: .4rem !important; padding: .38rem .6rem !important; cursor: pointer; font-size: .82rem !important; font-weight: 600 !important; color: #0f172a !important; background: transparent !important; transition: background .12s !important; }
     #docsView details.arch-view[open] > summary.d-arch-view-sum { background: #f1f5f9 !important; border-bottom: 1px solid #e2e8f0 !important; }
     #docsView summary.d-arch-view-sum:hover { background: #f1f5f9 !important; }
     #docsView summary.d-arch-view-sum::-webkit-details-marker { display: none !important; }
@@ -1553,7 +1558,7 @@
     /* Sidebar live stats widget */
     .sb-stat-group { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 6px; }
     .sb-stat-group:last-child { margin-bottom: 0; }
-    .sb-stat-head { list-style: none; display: flex; align-items: center; gap: 5px; padding: 5px 9px; cursor: pointer; font: 700 10px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .4px; color: var(--muted); background: var(--chip-bg); border-bottom: 1px solid transparent; }
+    .sb-stat-head { list-style: none; display: flex; flex-direction: row; align-items: center; gap: 5px; padding: 5px 9px; cursor: pointer; font: 700 10px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .4px; color: var(--muted); background: var(--chip-bg); border-bottom: 1px solid transparent; }
     .sb-stat-group[open] > .sb-stat-head { border-bottom-color: var(--border); }
     .sb-stat-head::-webkit-details-marker { display: none; }
     .sb-stat-head::before { content: '›'; font-size: 12px; display: inline-block; transition: transform .13s; }
@@ -1646,7 +1651,7 @@
     #cveView .cv-search-bar .cv-search-input { width: 100%; box-sizing: border-box; }
     #cveView .cv-filter-group { display: flex; gap: 8px; flex-wrap: wrap; padding: 8px 12px 10px; }
     /* cv-details summary styles (restore after the blanket reset) */
-    #cveView .cv-details > summary { padding: 7px 12px !important; cursor: pointer !important; display: flex !important; align-items: center !important; gap: 6px !important; font-size: 11px !important; font-weight: 700 !important; color: var(--muted) !important; text-transform: uppercase !important; letter-spacing: .5px !important; user-select: none; background: transparent !important; }
+    #cveView .cv-details > summary { padding: 7px 12px !important; cursor: pointer !important; display: flex !important; flex-direction: row !important; align-items: center !important; gap: 6px !important; font-size: 11px !important; font-weight: 700 !important; color: var(--muted) !important; text-transform: uppercase !important; letter-spacing: .5px !important; user-select: none; background: transparent !important; }
     #cveView .cv-details > summary::before { display: inline !important; content: "▶" !important; font-size: 8px !important; color: var(--muted) !important; transition: transform .2s !important; flex-shrink: 0 !important; }
     #cveView .cv-details[open] > summary::before { transform: rotate(90deg) !important; }
     /* Suppress inner borders that duplicate the details border-bottom */
@@ -1657,10 +1662,10 @@
     #cveView summary::before { display: none !important; content: none !important; }
     #cveView details[open] > summary { background: transparent !important; color: inherit !important; }
     /* Restore legend-toggle and post-summary arrow/styles in both hosts */
-    .cv-host .legend-toggle { padding: 10px 12px !important; cursor: pointer !important; display: flex !important; align-items: center !important; gap: 6px !important; }
+    .cv-host .legend-toggle { padding: 10px 12px !important; cursor: pointer !important; display: flex !important; flex-direction: row !important; align-items: center !important; gap: 6px !important; }
     .cv-host .legend-toggle::before { display: inline !important; content: "▶" !important; font-size: 9px !important; color: var(--muted) !important; transition: transform .2s !important; flex-shrink: 0 !important; }
     .cv-host details[open] > .legend-toggle::before { transform: rotate(90deg) !important; }
-    .cv-host .post-summary { padding: 14px 16px !important; cursor: pointer !important; display: flex !important; align-items: flex-start !important; gap: 10px !important; }
+    .cv-host .post-summary { padding: 14px 16px !important; cursor: pointer !important; display: flex !important; flex-direction: row !important; align-items: flex-start !important; gap: 10px !important; }
     .cv-host .post-summary::before { display: inline !important; content: "▶" !important; font-size: 9px !important; color: var(--muted) !important; flex-shrink: 0 !important; margin-top: 5px !important; transition: transform .2s !important; }
     .cv-host details[open] > .post-summary::before { transform: rotate(90deg) !important; }
     .cv-host .cv-page { padding: 12px 14px 48px; }
@@ -1717,7 +1722,7 @@
     .cv-host #postList { list-style:none;margin:0;padding:0; }
     .cv-host .post-card { border-bottom:1px solid var(--line); }
     .cv-host .post-card:last-child { border-bottom:none; }
-    .cv-host .post-summary { display:flex;align-items:flex-start;gap:10px;padding:14px 16px;cursor:pointer;list-style:none; }
+    .cv-host .post-summary { display:flex;flex-direction:row;align-items:flex-start;gap:10px;padding:14px 16px;cursor:pointer;list-style:none; }
     .cv-host .post-summary::-webkit-details-marker { display:none; }
     .cv-host .post-summary::before { content:"▶";font-size:9px;color:var(--muted);flex-shrink:0;margin-top:5px;transition:transform .2s; }
     .cv-host details[open] > .post-summary::before { transform:rotate(90deg); }
@@ -1782,7 +1787,7 @@
     .cv-host .skel-card { padding:10px 12px;border-bottom:1px solid var(--line); }
     .cv-host .empty-state { text-align:center;padding:30px 16px;color:var(--muted);font-size:13px; }
     .cv-host .empty-state .icon { font-size:2rem;margin-bottom:6px; }
-    .cv-host .legend-toggle { display:flex;align-items:center;gap:6px;padding:10px 12px;cursor:pointer;list-style:none;border-bottom:1px solid transparent;transition:border-color .15s; }
+    .cv-host .legend-toggle { display:flex;flex-direction:row;align-items:center;gap:6px;padding:10px 12px;cursor:pointer;list-style:none;border-bottom:1px solid transparent;transition:border-color .15s; }
     .cv-host .legend-toggle::-webkit-details-marker { display:none; }
     .cv-host .legend-toggle::before { content:"▶";font-size:9px;color:var(--muted);transition:transform .2s;flex-shrink:0; }
     .cv-host details[open] > .legend-toggle::before { transform:rotate(90deg); }
@@ -1995,7 +2000,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.70.0">Releasetrain <em>v3.70.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.70.1">Releasetrain <em>v3.70.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3604,6 +3609,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-12</div>
+              <div class="cl-ver cl-ver-patch">v3.70.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Fix: every collapsible summary row, not just the admin panel's</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The "chevron stacked above centered text" layout bug fixed for the admin panel earlier applied to every other collapsible <code>&lt;summary&gt;</code> in the app too (Filters/Stats and other sidebar sections, docs view's endpoint/architecture toggles, CVE view's post/legend toggles, "Why create an account?", "Paste a list"): each was missing an explicit <code>flex-direction: row</code>, so the global summary style's own <code>column</code> default won on that one property. All fixed the same way.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-12</div>
               <div class="cl-ver cl-ver-minor">v3.70.0</div>
             </div>
             <div class="cl-content">
@@ -5162,7 +5180,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             </form>
           </div>
         <details style="margin-top:12px">
-          <summary style="cursor:pointer;font-size:12px;color:var(--muted);list-style:none;display:flex;align-items:center;gap:4px">
+          <summary style="cursor:pointer;font-size:12px;color:var(--muted);list-style:none;display:flex;flex-direction:row;align-items:center;gap:4px">
             <span style="font-size:10px">›</span> Why create an account?
           </summary>
           <ul class="ua-why-list">
@@ -5281,7 +5299,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             </form>
             <datalist id="ua-comp-names"></datalist>
             <details style="margin-bottom:8px">
-              <summary style="cursor:pointer;font-size:12px;color:var(--muted);list-style:none;display:flex;align-items:center;gap:4px">
+              <summary style="cursor:pointer;font-size:12px;color:var(--muted);list-style:none;display:flex;flex-direction:row;align-items:center;gap:4px">
                 <span style="font-size:10px">›</span> Paste a list
               </summary>
               <div style="margin-top:8px">
