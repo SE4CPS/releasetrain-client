@@ -482,10 +482,6 @@
        apart from each other, flex-shrink:0 so the group as a whole is
        what wraps to the next line, not one toggle peeling off alone. */
     .ask-toggle-group { display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; flex-shrink: 0; }
-    /* A plain vertical rule (no text) separating the selects from the
-       toggles, so the row still reads as two groups even with nothing
-       to wrap onto a line of its own. */
-    .ask-options-sep { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
     .ask-intent-badge {
       flex-shrink: 0; align-self: center;
       font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: var(--radius-full);
@@ -2146,7 +2142,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.73.1">Releasetrain <em>v3.73.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.73.2">Releasetrain <em>v3.73.2</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2254,7 +2250,6 @@
               <option value="multi_agent_feedback">Multi-agent (feedback loop)</option>
               <option value="compare">Compare all 5</option>
             </select>
-            <span class="ask-options-sep" aria-hidden="true"></span>
             <!-- Grouped so the three toggles wrap together as one unit
                (all three on their line, or all three dropping to the
                next one) rather than splitting apart individually when
@@ -3762,6 +3757,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-12</div>
+              <div class="cl-ver cl-ver-patch">v3.73.2</div>
+            </div>
+            <div class="cl-content">
+              <h3>Removed the vertical rule between selects and toggles</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <code>.ask-options-sep</code> (the plain vertical rule separating the model/size/pipeline selects from the evidence-gating toggles) removed per request, markup and CSS both.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
