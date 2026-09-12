@@ -70,7 +70,6 @@
       --radius-sm: 2px;
       --radius-full: 999px;
       --topbar-h: 0px;
-      --preview-h: 0px;
     }
 
     /* ── Reset ──────────────────────────────────────────────── */
@@ -170,19 +169,11 @@
     .layout {
       max-width: 1100px;
       margin: 0 auto;
-      /* + var(--preview-h): the "Will search for..." strip is a fixed
-         overlay below the header (see .ask-query-preview), not part of
-         normal document flow, so nothing pushes the page's own content
-         down for it automatically. Without this, its height (0 when
-         hidden, its real rendered height when shown, which itself varies
-         as the text wraps to more/fewer lines) has to be added to the
-         layout's own top padding by hand, or the top of the page's real
-         content sits underneath it. */
-      padding: calc(var(--topbar-h) + var(--preview-h) + 12px) 8px 28px;
+      padding: calc(var(--topbar-h) + 12px) 8px 28px;
     }
     @media (max-width: 640px) {
       html, body { overflow: auto; height: auto; }
-      .layout { padding: calc(var(--topbar-h) + var(--preview-h) + 12px) 8px 32px; }
+      .layout { padding: calc(var(--topbar-h) + 12px) 8px 32px; }
     }
 
     /* ── Inline answer rail / Ask intro panel ─────────────────────
@@ -201,8 +192,8 @@
       .layout .ask-answer-rail, .layout .ask-intro-panel {
         flex: 1 1 0; min-width: 0;
         position: sticky;
-        top: calc(var(--topbar-h) + var(--preview-h) + 12px);
-        max-height: calc(100vh - var(--topbar-h) - var(--preview-h) - 24px);
+        top: calc(var(--topbar-h) + 12px);
+        max-height: calc(100vh - var(--topbar-h) - 24px);
         overflow-y: auto;
         /* overflow-y:auto alone silently promotes overflow-x to auto too
            (same gotcha already fixed on every other scrolling view this
@@ -437,22 +428,17 @@
       font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: var(--radius-full);
       background: var(--brand-light); color: var(--brand); white-space: nowrap;
     }
+    /* Was a fixed full-width strip below the header (any real overlay
+       needs the page's own top padding bumped to make room for it, see
+       .layout's own history); moved per explicit request to sit inline
+       right above the workflow diagram in the Answer panel instead, so
+       it reads as "here's what this question actually searched for"
+       rather than a page-wide typing hint. Small and muted since it's a
+       secondary technical detail next to the diagram/answer, not the
+       main content of the panel. */
     .ask-query-preview {
-      position: fixed; top: var(--topbar-h); left: 0; right: 0; z-index: 999;
-      background: var(--surface); border-bottom: 1px solid var(--border);
-      /* Tighter than the surrounding page's own 1.45 line-height on
-         purpose: this strip is a fixed overlay with no reserved layout
-         space of its own (see --preview-h), so every line it wraps to
-         pushes the whole page down by that much. A longer preview
-         (e.g. a comparison question's 4-term list) already wraps to 2-3
-         lines, and each one costs noticeably less this way. */
-      padding: 3px 14px; font-size: 11px; line-height: 1.3; color: var(--muted); font-family: var(--mono);
-      /* Right-aligned per explicit request: on a wide screen this puts
-         it roughly above the Ask answer rail (the right column at
-         min-width:900px, see .ask-answer-rail below), the same side of
-         the screen as the "Ask" tab strip/question line it's describing,
-         instead of sitting flush against the feed on the left. */
-      text-align: right;
+      font-size: 10px; line-height: 1.3; color: var(--muted); font-family: var(--mono);
+      margin: 0 0 8px;
     }
     .ask-query-preview strong { color: var(--text); font-weight: 600; }
 
@@ -823,9 +809,17 @@
     #status { color: var(--muted); font-size: 12px; }
 
     /* ── Empty state ────────────────────────────────────────── */
+    /* One surface for both "nothing matched" and "the request itself
+       failed" (see showEmptyState): .emptyState-error just recolors the
+       headline red, everything else (icon, detail line, centered layout)
+       stays the same between the two so a viewer isn't shown a
+       completely different-looking block depending on which of the two
+       it is. */
     #emptyState { display: none; padding: 48px 20px; text-align: center; color: var(--muted); }
     #emptyState.show { display: block; }
     #emptyState p { margin: 6px 0 0; font-size: 13px; }
+    #emptyState.emptyState-error #emptyStateMsg { color: var(--cve); font-weight: 600; }
+    #emptyStateDetail { font-size: 12px; }
 
     /* ── Feed ───────────────────────────────────────────────── */
     #feed { padding: 6px 10px 4px; }
@@ -2055,7 +2049,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.71.9">Releasetrain <em>v3.71.9</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.72.0">Releasetrain <em>v3.72.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2159,21 +2153,6 @@
       </form>
     </div>
   </header>
-  <!-- Deterministic, client-only preview of which words will actually
-       drive the search match (same generic-word filtering
-       releasetrain-server's ask.js applies before querying), computed
-       and shown before any API call is made, so it's visible regardless
-       of whether the configured key has credit. This is an approximation
-       of what will be searched, not the model's own eventual tool-call
-       query, which can still add vendor synonyms the model knows and
-       this simple filter doesn't.
-       Deliberately a sibling of <header>, not a child of it: the header
-       itself is capped at exactly two rows (identity/mode line, then the
-       active form); this floats as its own fixed strip right below it
-       (top: var(--topbar-h), the same live-measured offset every other
-       fixed panel in this page already anchors to) so a long preview
-       line never grows the header past that two-row budget. -->
-  <div id="askQueryPreview" class="ask-query-preview" hidden></div>
 
   <div id="navLoader" role="progressbar" aria-label="Loading" aria-hidden="true"></div>
 
@@ -3660,6 +3639,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-12</div>
+              <div class="cl-ver cl-ver-minor">v3.72.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Query preview moved into the Ask answer; one empty-state surface</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The "search: ... window: ... intent: ... vendor required" readout is no longer a page-wide fixed strip below the header (right-aligned as of the last release, per an earlier request). Per follow-up request it now renders inline, small and muted, right above the workflow diagram in the Ask answer rail's Answer tab, a snapshot of what the submitted question actually resolved to rather than a live typing hint. The old fixed-overlay plumbing (<code>--preview-h</code>, its ResizeObserver, the layout padding/rail-offset calc()s that reserved space for it) is gone with it, since the reading now lives inside normal document flow.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> A genuine fetch failure (a real "⚠️ The server is temporarily unavailable (502)" case) still showed three uncoordinated messages at once: an ad-hoc error paragraph written straight into <code>#feed</code>, the unrelated pagination sentinel independently reading "🔍 No results," and <code>#status</code> saying "Failed to load." Same redundant-elements bug fixed for the plain-empty-search case last release, just via a different codepath that fix didn't reach. <code>showEmptyState(message, {icon, detail, isError})</code>/<code>hideEmptyState()</code> is now the one surface every "nothing in the feed" case (over-filtered search, day-window exclusion, or a real fetch error) goes through, so <code>#emptyState.show ~ #sentinel</code> suppresses the sentinel regardless of which reason triggered it.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5659,9 +5652,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div id="status" class="status" aria-live="polite">Idle</div>
         </header>
 
+        <!-- The one "nothing in the feed" surface, reused for a genuine
+             empty result AND a real fetch failure (see showEmptyState) so
+             a viewer only ever sees one clear message, in one place,
+             instead of a status-text line, a separate error paragraph,
+             and this block all saying overlapping things at once. -->
         <div id="emptyState">
-          <div style="font-size:32px">🔍</div>
+          <div id="emptyStateIcon" style="font-size:32px">🔍</div>
           <p id="emptyStateMsg">No updates match the current filters.</p>
+          <p id="emptyStateDetail" hidden></p>
         </div>
 
         <div id="feed">
@@ -5890,7 +5889,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       "btn-major", "btn-minor", "btn-patch", "btn-cve", "btn-llm", "btn-hv", "btn-potential-cve", "btn-reddit",
       "btn-reddit-risk", "btn-reddit-risk-latest", "btn-reddit-risk-cve", "btn-so-risk", "btn-so",
       "filterForm", "components", "clearBtn", "fixedToggles", "typeToggles",
-      "homeLink", "graphLink", "archLink", "cveLink", "dashboardLink", "docsLink", "changelogLink", "ackLink", "usersLink", "networkLink", "expandAllBtn", "feedSortSelect", "activeFilters", "afTags", "afClearAll", "emptyState", "emptyStateMsg"
+      "homeLink", "graphLink", "archLink", "cveLink", "dashboardLink", "docsLink", "changelogLink", "ackLink", "usersLink", "networkLink", "expandAllBtn", "feedSortSelect", "activeFilters", "afTags", "afClearAll", "emptyState", "emptyStateIcon", "emptyStateMsg", "emptyStateDetail"
     ].forEach(id => { EL[id] = document.getElementById(id); });
 
     const $ = s => document.querySelector(s);
@@ -6193,7 +6192,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       }
     });
     const askIntentBadgeEl = document.getElementById("askIntentBadge");
-    const askQueryPreviewEl = document.getElementById("askQueryPreview");
     const askVendorCheckEl = document.getElementById("askVendorCheck");
     const askTemporalFilterEl = document.getElementById("askTemporalFilter");
     const askIntentFilterEl = document.getElementById("askIntentFilter");
@@ -6439,31 +6437,33 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       } else {
         askIntentBadgeEl.hidden = true;
       }
+    }
+    askQuestionEl.addEventListener("input", updateAskPreview);
 
-      // Short, label-style phrasing ("search:", not "Will search for") on
-      // purpose: this strip is a fixed overlay with no reserved space
-      // (see --preview-h below), so every wrapped line it grows to pushes
-      // the whole page down by that much. A comparison question's own
-      // 4-term list already runs long; trimming the connective words down
-      // to plain labels keeps every fact but measurably cuts how often
-      // this wraps to 2-3 lines, without hiding or shortening the actual
-      // information itself.
+    // The "search: ... · window: ... · intent: ... · vendor required"
+    // readout used to live here too, as its own fixed strip below the
+    // header, updating live as you typed. Moved per explicit request to
+    // sit above the workflow diagram in the Answer panel instead (see
+    // askQueryPreviewBlockHtml, wired into showAskRailRunning and
+    // askRenderCard's showWorkflow branch): a snapshot of what the
+    // submitted question actually resolved to, not a live typing hint.
+    // Short, label-style phrasing ("search:", not "Will search for") is
+    // still worth keeping even off the fixed-overlay path this was
+    // originally written for: a comparison question's own 4-term list
+    // still runs long, and this stays legible next to the diagram.
+    function buildAskPreviewParts(question, intent) {
       const terms = previewSearchTerms(question);
       const parts = [];
       if (terms.length) parts.push(`search: <strong>${uaEsc(terms.join(", "))}</strong>`);
       if (askTemporalFilterEl.checked) parts.push(`window: ${uaEsc(formatTemporalConstraint(previewTemporalConstraint(question)))}`);
       if (askIntentFilterEl.checked) parts.push(`intent: <strong>${uaEsc(ASK_INTENT_TAGS[intent || "general"])}</strong>`);
       if (askVendorCheckEl.checked) parts.push("vendor required");
-
-      if (parts.length) {
-        askQueryPreviewEl.innerHTML = parts.join(" · ");
-        askQueryPreviewEl.hidden = false;
-      } else {
-        askQueryPreviewEl.hidden = true;
-      }
+      return parts;
     }
-    askQuestionEl.addEventListener("input", updateAskPreview);
-    [askVendorCheckEl, askTemporalFilterEl, askIntentFilterEl].forEach(el => el.addEventListener("change", updateAskPreview));
+    function askQueryPreviewBlockHtml(question) {
+      const parts = buildAskPreviewParts(question, classifyIntentClient(question));
+      return parts.length ? `<div class="ask-query-preview">${parts.join(" · ")}</div>` : "";
+    }
 
     // One combined dropdown, two sources: real component names (the
     // old Search box's own autocomplete, instant/local; see
@@ -7166,6 +7166,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <button type="button" class="ask-rail-tab" data-tab="benchmark" role="tab" aria-selected="false">Benchmark</button>
         </div>
         <div class="ask-rail-panel" data-panel="answer">
+          ${opts.previewQuestion ? askQueryPreviewBlockHtml(opts.previewQuestion) : ""}
           <div id="askWorkflowDiagram" class="ask-workflow-diagram"></div>
           <div id="askWorkflowCaption" class="ask-workflow-caption"></div>
           ${answerHtml}
@@ -7226,13 +7227,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     function canUseAskRail() {
       return window.matchMedia(`(min-width: ${ASK_RAIL_MIN_WIDTH}px)`).matches;
     }
-    let askRailData = null; // { label, res } backing "Show full answer": re-renders untrimmed from the same data, no second request
+    let askRailData = null; // { label, res, question } backing "Show full answer": re-renders untrimmed from the same data, no second request
     function wireAskRailBody(body) {
       askWireRateButtons(body);
       askWireRailTabs(body);
       const fullBtn = body.querySelector(".ask-view-full-btn");
       if (fullBtn) fullBtn.addEventListener("click", () => {
-        body.innerHTML = askRenderCard(askRailData.label, askRailData.res, { showWorkflow: true });
+        body.innerHTML = askRenderCard(askRailData.label, askRailData.res, { showWorkflow: true, previewQuestion: askRailData.question });
         wireAskRailBody(body);
         renderAskWorkflowDiagram();
       });
@@ -7259,7 +7260,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const body = document.getElementById("askRailBody");
       const answerPanel = isCompare
         ? `<p class="ask-muted">Running all 5 pipelines against the same question…</p>`
-        : `<div id="askWorkflowDiagram" class="ask-workflow-diagram"></div>
+        : `${askQueryPreviewBlockHtml(question)}
+           <div id="askWorkflowDiagram" class="ask-workflow-diagram"></div>
            <div id="askWorkflowCaption" class="ask-workflow-caption"></div>
            <p class="ask-muted">Thinking…</p>`;
       body.innerHTML = `<div class="ask-answer-card">
@@ -7281,10 +7283,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (!isCompare) renderAskWorkflowDiagram();
     }
     function showAskRail(question, label, res) {
-      askRailData = { label, res };
+      askRailData = { label, res, question };
       document.getElementById("askRailQuestion").textContent = question;
       const body = document.getElementById("askRailBody");
-      body.innerHTML = askRenderCard(label, res, { trimAnswer: ASK_RAIL_ANSWER_TRIM, showWorkflow: true });
+      body.innerHTML = askRenderCard(label, res, { trimAnswer: ASK_RAIL_ANSWER_TRIM, showWorkflow: true, previewQuestion: question });
       wireAskRailBody(body);
       $(".layout").classList.add("has-ask-rail");
       // Paints the diagram into the freshly-built container. finishAskWorkflow
@@ -7625,20 +7627,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     function updateOffsets() {
       const tb = $(".topbar");
       document.documentElement.style.setProperty("--topbar-h", (tb ? tb.offsetHeight : 0) + "px");
-      // Same live-measurement pattern for the "Will search for..." strip:
-      // 0 when hidden ([hidden] is display:none, so offsetHeight is
-      // already 0, no need to special-case it), its real rendered height
-      // when shown, which itself changes as the text wraps to more or
-      // fewer lines. Without this, the strip (a fixed overlay, not part
-      // of normal document flow) sits on top of the page's own content
-      // instead of the content starting below it.
-      const preview = $("#askQueryPreview");
-      document.documentElement.style.setProperty("--preview-h", (preview ? preview.offsetHeight : 0) + "px");
     }
     window.addEventListener("load", updateOffsets);
     window.addEventListener("resize", updateOffsets);
     new ResizeObserver(updateOffsets).observe($(".topbar"));
-    new ResizeObserver(updateOffsets).observe($("#askQueryPreview"));
 
     const normalizeQuery = q => String(q || "").split(",").map(t => t.trim()).filter(Boolean).join(",");
     const encodeCsvKeepCommas = csv => {
@@ -9659,9 +9651,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       EL.feed.innerHTML = "";
       EL["kpi-page"].textContent = STATE.groupsFiltered.length;
       EL.sentinel.textContent = STATE.groupsFiltered.length ? "Loading more…" : "No results";
-      const isEmpty = !STATE.groupsFiltered.length;
-      EL.emptyState.classList.toggle("show", isEmpty);
-      if (isEmpty && EL.emptyStateMsg) {
+      if (STATE.groupsFiltered.length) {
+        hideEmptyState();
+      } else {
         // Distinguish "this component exists but has nothing recent
         // enough" (withinFeedWindow is what actually excluded it) from a
         // genuinely empty/over-filtered result, since the day-window cap
@@ -9673,9 +9665,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           const tags = (Array.isArray(v.versionSearchTags) ? v.versionSearchTags.join(",") : "").toLowerCase();
           return comps.some(t => name.includes(t) || tags.includes(t));
         });
-        EL.emptyStateMsg.textContent = matchedOutsideWindow
+        showEmptyState(matchedOutsideWindow
           ? `No results found for the last ${LOOKBACK_DAYS} days.`
-          : "No updates match the current filters.";
+          : "No updates match the current filters.");
       }
       // The header's own "(last N weeks, M components)" label now states
       // this same count. #status stays reserved for transient messages
@@ -10201,11 +10193,36 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       return { headline: "Can't reach the server right now.", detail: "Check your connection and try again." };
     }
 
+    // Single shared "nothing to show" surface for every reason the feed
+    // can come up empty: a plain over-filtered search, a component with
+    // nothing inside the day window, or a genuine fetch failure. Before
+    // this, a failed fetch wrote its own ad-hoc error paragraph straight
+    // into #feed while the unrelated pagination sentinel independently
+    // set itself to "No results" and #status said "Failed to load," all
+    // three visible at once, none of them coordinated (see this file's
+    // own GLOBAL RULE on redundant elements). Routing every case through
+    // here means #emptyState.show ~ #sentinel (that same rule's fix)
+    // suppresses the sentinel regardless of which reason triggered this.
+    function showEmptyState(message, opts) {
+      opts = opts || {};
+      EL.emptyState.classList.toggle("emptyState-error", !!opts.isError);
+      EL.emptyState.classList.add("show");
+      if (EL.emptyStateIcon) EL.emptyStateIcon.textContent = opts.icon || "🔍";
+      if (EL.emptyStateMsg) EL.emptyStateMsg.textContent = message;
+      if (EL.emptyStateDetail) {
+        EL.emptyStateDetail.textContent = opts.detail || "";
+        EL.emptyStateDetail.hidden = !opts.detail;
+      }
+    }
+    function hideEmptyState() {
+      EL.emptyState.classList.remove("show", "emptyState-error");
+    }
+
     async function boot() {
       EL.status.textContent = "Loading…";
       EL.navLoader.classList.add("active");
       EL.feed.innerHTML = "";
-      EL.emptyState.classList.remove("show");
+      hideEmptyState();
       STATE.groupIndex = 0;
       STATE.nextCursor = null;
       STATE.rawVersions = [];
@@ -10243,8 +10260,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
         if (!vers.length) {
           EL.status.textContent = "No versions found";
-          EL.sentinel.textContent = "No results";
-          EL.emptyState.classList.add("show");
+          showEmptyState("No versions found for that search.");
           return;
         }
 
@@ -10258,9 +10274,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         ensureHvVersionsLoaded();
       } catch (e) {
         console.error(e);
+        EL.feed.innerHTML = "";
         const { headline, detail } = friendlyFetchError(e);
-        EL.feed.innerHTML = `<p class="meta" style="padding:14px;color:var(--cve)">⚠️ ${headline}</p>` +
-          `<p class="meta" style="padding:0 14px;color:var(--muted);font-size:12px">${detail}</p>`;
+        showEmptyState(headline, { icon: "⚠️", detail, isError: true });
         EL.status.textContent = "Failed to load";
       } finally {
         EL.navLoader.classList.remove("active");
@@ -10284,8 +10300,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const { versions: vers, nextCursor: nc } = await Api.versions(input);
         STATE.nextCursor = nc;
         if (!vers.length) {
-          EL.feed.innerHTML = ""; EL.sentinel.textContent = "No results";
-          EL.emptyState.classList.add("show"); EL.status.textContent = "No versions";
+          EL.feed.innerHTML = "";
+          showEmptyState("No versions found for that search.");
+          EL.status.textContent = "No versions";
           return;
         }
         vers.sort((a, b) => (versionTime(b) || +new Date(b.versionTimestampLastUpdate || b.versionTimestamp || 0)) - (versionTime(a) || +new Date(a.versionTimestampLastUpdate || a.versionTimestamp || 0)));

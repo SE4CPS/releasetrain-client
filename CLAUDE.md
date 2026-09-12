@@ -146,7 +146,18 @@ always reflect the current, real conventions of the repo, not lag behind what's 
   none; }` is the concrete fix for that instance: one rule silences `#sentinel` under `#emptyState`
   regardless of which of the several places in this file sets its text to a "no results" variant, rather
   than hunting down and patching each one individually. When adding a new status/empty/loading indicator,
-  check what else is already visible in the same moment before assuming it needs its own message.
+  check what else is already visible in the same moment before assuming it needs its own message. The CSS
+  fix alone didn't cover a genuine fetch failure, though: that path wrote its own ad-hoc error paragraph
+  straight into `#feed` (never showing `#emptyState` at all) while the unrelated pagination sentinel
+  independently set itself to "No results" and `#status` said "Failed to load," three uncoordinated
+  messages again, just via a different mechanism than the first instance. Fixed the same way this rule
+  already prescribes: one shared `showEmptyState(message, {icon, detail, isError})`/`hideEmptyState()`
+  pair, used by every codepath that can leave the feed empty (an over-filtered search, a component outside
+  the day window, a genuine 5xx/network failure), so `#emptyState.show ~ #sentinel` suppresses the sentinel
+  regardless of which reason triggered it, and a real error gets the same visual treatment (icon, headline,
+  detail line) as a plain empty result rather than its own differently-styled block. When a new "nothing to
+  show" case is added anywhere in the feed, route it through `showEmptyState`/`hideEmptyState` rather than
+  writing a new ad-hoc message into `#feed` or toggling `#emptyState`'s classes directly.
 - **A flex-column parent stretches its children to its own full cross-axis width by default**
   (`align-items: stretch`), even a child whose own `display` is `inline-block`. A short badge/pill/chip
   placed inside one needs `align-self: flex-start` on the child itself, or it silently renders as an oddly
