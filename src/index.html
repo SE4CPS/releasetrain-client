@@ -371,7 +371,7 @@
        only the node states differ, so a preset with no real role
        delegation (Single-agent) just leaves every node idle instead of
        hiding or reshaping the diagram itself. */
-    .ask-workflow-diagram { margin: 2px 0 2px; min-height: 60px; }
+    .ask-workflow-diagram { margin: 2px 0 2px; min-height: 100px; }
     .ask-workflow-diagram svg { width: 100%; height: auto; display: block; }
     .ask-workflow-caption {
       font-size: 10.5px; color: var(--muted); min-height: 14px;
@@ -1824,7 +1824,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.63.2">Releasetrain <em>v3.63.2</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.63.3">Releasetrain <em>v3.63.3</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3401,6 +3401,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-11</div>
+              <div class="cl-ver cl-ver-patch">v3.63.3</div>
+            </div>
+            <div class="cl-content">
+              <h3>"Do you recommend X or Y" fixed; taller, smaller-font workflow diagram</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> "Do you recommend zoom or teams?" leaked "recommend zoom" into the feed's own vendor filter (<code>?q=recommend+zoom,teams</code>), silently dropping Zoom out of the feed since no real product name contains "recommend zoom" as a substring. The comparison entity-name regex only stripped a leading verb phrase at the very start of the question ("Should I use...", "Recommend..."); it didn't know about a leading "Do/Would/Will you..." wrapped around it. Fixed in both the client's own preview and the server's real entity extraction (kept in sync by hand, see each one's own comment).</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Workflow diagram: smaller font and more node/rank spacing, scoped to just this diagram (not the docs view's own Mermaid diagrams), now that each box carries a two-line label (name + seconds).</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5287,7 +5301,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       opinion: ["nightmare", "best", "worst", "should i", "recommend", "opinion", "prefer", "versus", " vs ", "better than", "worth it", "favorite", "favourite", "hate", "love", "annoying", "say goodbye"],
     };
     const ASK_COMPARISON_SPLIT_RX = /\s+(?:or|vs\.?|versus)\s+/i;
-    const ASK_COMPARISON_LEADIN_RX = /^(?:should\s+(?:i|we)\s+(?:use|go\s+with|pick|choose)|(?:let'?s\s+)?use|using|choose|choosing|pick|picking|go(?:ing)?\s+with|prefer|recommend(?:ing)?)\s+/i;
+    // Kept in sync by hand with ask.js's own COMPARISON_LEADIN_RX. See
+    // its comment for the live bug this optional interrogative prefix
+    // fixes ("Do you recommend zoom or teams?" leaking "recommend zoom"
+    // into the feed's own vendor filter).
+    const ASK_COMPARISON_LEADIN_RX = /^(?:(?:do|does|would|will|can|could)\s+(?:you|we|i)\s+)?(?:should\s+(?:i|we)\s+(?:use|go\s+with|pick|choose)|(?:let'?s\s+)?use|using|choose|choosing|pick|picking|go(?:ing)?\s+with|prefer|recommend(?:ing)?)\s+/i;
     const ASK_COMPARISON_TRAILER_RX = /\s+(?:for|to|when|while|during|tomorrow|today|tonight|this\s+\w+|next\s+\w+|which|that|who|whose)\b.*$/i;
     const ASK_COMPARISON_DECISION_WORDS = new Set([
       "upgrade", "upgrading", "downgrade", "downgrading", "update", "updating",
@@ -5569,7 +5587,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const secs = askWorkflowNodeSeconds(k);
         return secs ? `${name}<br/>${secs}` : name;
       };
+      // Smaller font + more spacing than mermaid's own defaults, scoped
+      // to just this diagram via an %%{init}%% directive (not the
+      // global mermaid.initialize() call, which the docs view's own
+      // diagrams also share). Each node now carries a two-line label
+      // (name + seconds), and the extra rankSpacing/nodeSpacing keeps
+      // the "retry" feedback curve clear of the boxes and their text.
       return [
+        "%%{init: {'themeVariables': {'fontSize': '11px'}, 'flowchart': {'nodeSpacing': 55, 'rankSpacing': 70}}}%%",
         "flowchart LR",
         `  RW("${label("rewriter", "Rewriter")}") --> RT("${label("retriever", "Retriever")}") --> EV("${label("evaluator", "Evaluator")}") --> OR("${label("orchestrator", "Orchestrator")}")`,
         "  EV -. retry .-> RT",
