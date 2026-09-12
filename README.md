@@ -1,89 +1,56 @@
 # Releasetrain Client
 
-Static browser client for Releasetrain. It renders software release activity,
-CVE advisories, and Reddit and Stack Overflow discussion signals from the
-Releasetrain REST API. The API itself lives in a separate repository
-(releasetrain-server); this repository contains only the front end.
+[![CI](https://github.com/SE4CPS/releasetrain-client/actions/workflows/ci.yml/badge.svg)](https://github.com/SE4CPS/releasetrain-client/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/SE4CPS/releasetrain-client)](https://github.com/SE4CPS/releasetrain-client/releases)
+[![License: ISC](https://img.shields.io/github/license/SE4CPS/releasetrain-client)](LICENSE)
+
+Static browser client for Releasetrain: software release activity, CVE
+advisories, and Reddit/Stack Overflow discussion signals from the
+Releasetrain REST API (lives in the separate `releasetrain-server` repo).
 
 ## Architecture
 
-The application is one self contained file, `src/index.html`, with inline CSS
-and JavaScript and no build time framework. Everything under `src/` is a static
-asset. Third party runtime libraries (Chart.js, vis-network, mermaid, pako) load
-from a CDN on demand at pinned versions.
+One self-contained file, `src/index.html`: inline CSS/JS, no build-time
+framework. Third-party runtime libraries (Chart.js, vis-network, mermaid,
+pako) load from a CDN at pinned versions. `npm run build` copies `src/` to
+`dist/` (git-ignored) and stamps the version; `src/` is the source of truth.
 
-`npm run build` copies `src/` to `dist/` via `scripts/build.js` and stamps the
-`package.json` version into the page. `dist/` is generated, git ignored, and
-only exists so a plain file server has a single root to serve. `src/` is the
-source of truth.
+The API base resolves from, in order: a `?api=` query param, the
+`<meta name="api-base">` tag in `src/index.html`, then the built-in default
+`https://releasetrain.io/api/`.
 
-The API base URL resolves from, in order: a `?api=` query parameter, the
-`<meta name="api-base">` tag in `src/index.html`, then the built in default
-`https://releasetrain.io/api/`. There is no server side code here; the API
-lives in `releasetrain-server`.
-
-## Requirements
-
-* Node.js 18 or newer
-
-## Install
+## Install & run
 
 ```bash
 git clone https://github.com/SE4CPS/releasetrain-client.git
 cd releasetrain-client
 npm install
+npm run dev   # serves src/ at http://127.0.0.1:8080
 ```
 
-## Scripts
+Node.js 18+ required. Playwright needs its browser once: `npx playwright install chromium`.
 
-| Script           | Action                                                        |
-| ---------------- | ---------------------------------------------------------- |
-| `npm run dev`    | Serve `src/` on `http://127.0.0.1:8080`, caching off.    |
-| `npm run build`  | Copy `src/` to `dist/` and stamp the version.            |
-| `npm start`      | Serve `dist/` on `http://127.0.0.1:8080`, caching off.   |
-| `npm run prod`   | `build` then `start`.                                    |
-| `npm run lint`   | Biome check on `tests/`.                                 |
-| `npm run format` | Biome check with `--write` on `tests/`.                  |
-| `npm test`       | `build` then Playwright smoke tests against `dist/`.     |
-| `npm run check`  | `build`, `lint`, and Playwright tests. CI runs this.     |
-
-Playwright needs browser binaries once: `npx playwright install chromium`.
-
-## Testing
-
-`tests/smoke.spec.js` loads the built page, visits every top level view, and
-fails on any uncaught JavaScript error. It also checks that a shareable filter
-parameter is applied on load. This is deliberately shallow; it stands in for a
-real unit layer until `src/index.html` is split into modules.
-
-CI (`.github/workflows/ci.yml`) runs `build`, `lint`, and the Playwright suite
-on every push and pull request.
+| Script | Action |
+| --- | --- |
+| `npm run dev` | Serve `src/` directly, caching off. |
+| `npm run build` | Copy `src/` to `dist/`, stamp the version. |
+| `npm run check` | Build, lint, and run the Playwright smoke suite (what CI runs). |
 
 ## Views
 
-The feed is the default view. Every other view is reachable from the top
-navigation and by a `view` query parameter.
+Feed is the default view; every other view is reachable from the top nav or a `view` query param.
 
-| View        | URL                  | Contents                                                        |
-| ----------- | -------------------- | ------------------------------------------------------------- |
-| Feed        | `/`                  | Grouped release cards, quick filters, sidebar activity chart.  |
-| Graph       | `/?view=graph`       | vis-network graph of components with their releases and posts. |
-| Arch        | `/?view=arch`        | PlantUML stack diagram, layered hypervisor then OS then application. |
-| CVE         | `/?view=cve`         | CVE timeline with NVD pipeline status.                         |
-| Risk Report | `/?view=risk`        | Community risk summary.                                        |
-| Docs        | `/?view=docs`        | API reference and system architecture diagrams.               |
-| Changelog   | `/?view=changelog`   | Client change history.                                         |
-| Release     | `/?view=release`     | Release outcome reports.                                       |
-| Credits     | `/?view=credits`     | Acknowledgements.                                              |
-| Account     | `/?view=account`     | Local inventory and saved searches.                            |
+| View | URL | Contents |
+| --- | --- | --- |
+| Feed | `/` | Grouped release cards, filters, activity chart. |
+| Graph | `/?view=graph` | Component/release/post graph. |
+| Arch | `/?view=arch` | Layered architecture diagram. |
+| CVE | `/?view=cve` | CVE timeline. |
+| Risk Report | `/?view=risk` | Community risk summary. |
+| Docs | `/?view=docs` | API reference. |
+| Account | `/?view=account` | Sign-in, saved searches, admin panel. |
 
-Filter state is shareable through the URL, for example `/?q=chrome,firefox`,
-`/?type=llm`, and `/?type=hv`.
-
-## Configuration
-
-To point the client at a different API, edit `API_BASE` in `src/index.html`.
-There are no environment variables and no server side configuration.
+Filters are shareable via URL, e.g. `/?q=chrome,firefox`.
 
 ## Docker
 
@@ -92,21 +59,11 @@ docker build -t releasetrain-client .
 docker run --rm -p 8080:8080 releasetrain-client
 ```
 
-The image runs `npm ci --omit=dev` and `npm run build`, then serves `dist/` on
-port 8080.
-
-## API
-
-Endpoint documentation is in the running app under the Docs view, and live at
-`https://releasetrain.io/api`.
-
 ## Contributing
 
-Edit files under `src/` only. `dist/` is generated; do not commit it. Keep pull
-requests focused.
-
-Issues: https://github.com/SE4CPS/releasetrain-client/issues
+Edit files under `src/` only. `dist/` is generated; never commit it. See
+[CONTRIBUTING.md](CONTRIBUTING.md). Issues: [github.com/SE4CPS/releasetrain-client/issues](https://github.com/SE4CPS/releasetrain-client/issues).
 
 ## License
 
-ISC. See `LICENSE`.
+ISC. See [LICENSE](LICENSE).
