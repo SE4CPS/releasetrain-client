@@ -1956,7 +1956,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.68.0">Releasetrain <em>v3.68.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.68.1">Releasetrain <em>v3.68.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3551,6 +3551,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-11</div>
+              <div class="cl-ver cl-ver-patch">v3.68.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Fix: feed group's "latest" freshness could read a day off</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> A feed group's "(latest: X, Yd ago)" freshness could say "1d ago" for a version genuinely posted earlier the same day. The date was anchored to a fixed noon-UTC instant and diffed against the current moment, so the result depended on how far the viewer's own timezone sits from UTC, not on whether a calendar day had actually passed for them (confirmed live: a release posted 5am Pacific already read "1d ago" by evening the same Pacific day). Now computed as a plain whole-calendar-day difference in the viewer's own local timezone.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -7783,6 +7796,28 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (!/^\d{8}$/.test(s)) return 0;
       return +new Date(s.slice(0, 4) + "-" + s.slice(4, 6) + "-" + s.slice(6, 8) + "T12:00:00Z");
     }
+    // Whole calendar days between a YYYYMMDD date-only value and "today",
+    // in the viewer's own local timezone. Deliberately NOT
+    // aDateMs(date) vs Date.now(). aDateMs pins every date to a fixed
+    // noon-UTC instant; diffing that against Date.now() (a real, moving
+    // instant) means the result silently depends on how far the viewer's
+    // own timezone sits from UTC, not on whether a calendar day has
+    // actually passed for them. Confirmed live: a release dated "today"
+    // and posted at 5am Pacific already read "1d ago" by evening the
+    // same Pacific day, purely because Pacific time is far enough behind
+    // UTC that "now" had already crossed past the item's noon-UTC anchor
+    // by more than 12 hours, even though the viewer's own calendar date
+    // hadn't changed at all. Building both sides as local-midnight
+    // Date objects instead makes the diff a plain, exact day count that
+    // only moves once the viewer's own local date actually does.
+    function calendarDaysAgo(yyyymmdd) {
+      const s = String(yyyymmdd || "").replace(/-/g, "");
+      if (!/^\d{8}$/.test(s)) return null;
+      const itemMidnight = new Date(+s.slice(0, 4), +s.slice(4, 6) - 1, +s.slice(6, 8)).getTime();
+      const now = new Date();
+      const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      return Math.round((todayMidnight - itemMidnight) / 86400000);
+    }
     // Per-position step counts from installed → latest, plus the dominant tier.
     function aVerGap(cur, lat) {
       const P = v => String(v || "").split(/[^\d]+/).filter(x => x !== "").map(n => parseInt(n, 10));
@@ -9359,8 +9394,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         // How fresh "latest" actually is, right next to the version
         // number itself, since a version can be genuinely current or a
         // year stale, and the bare number alone doesn't say which.
-        const ms = date ? aDateMs(date) : 0;
-        const days = ms ? Math.round((Date.now() - ms) / 86400000) : null;
+        // calendarDaysAgo, not aDateMs vs Date.now() (see its own
+        // comment): a plain calendar-day diff in the viewer's own
+        // timezone, not one that can flip to "1d ago" on the same local
+        // day just because UTC noon has passed.
+        const days = date ? calendarDaysAgo(date) : null;
         const freshness = days == null ? "" : (days <= 0 ? ", today" : `, ${days}d ago`);
         verSlot.textContent = ` (latest: ${version}${freshness})`;
       });
