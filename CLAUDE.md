@@ -120,12 +120,27 @@ always reflect the current, real conventions of the repo, not lag behind what's 
   details/legend/post-summary toggles, and two inline-styled ones) once actually checked. When adding a new
   collapsible section anywhere, set `flex-direction: row` on its summary rule from the start rather than
   discovering this the same way.
+- **GLOBAL RULE — never let two elements say the same thing in a row.** A prominent, specific message (an
+  emptyState block reading "No results found for the last 28 days") followed immediately by a smaller,
+  generic one saying essentially the same thing (a `#sentinel` row reading "🔍 No results") reads as a
+  visible bug even though each element is individually correct: it happened when `#sentinel`'s
+  infinite-scroll status text and `#emptyState`'s own message both render whenever the feed comes back
+  empty, since neither was written with the other in mind. Fix this class of bug at the display layer
+  (a CSS rule or a shared visibility check covering every codepath that can trigger the collision), not by
+  patching just the one call site that happened to be flagged. `#emptyState.show ~ #sentinel { display:
+  none; }` is the concrete fix for that instance: one rule silences `#sentinel` under `#emptyState`
+  regardless of which of the several places in this file sets its text to a "no results" variant, rather
+  than hunting down and patching each one individually. When adding a new status/empty/loading indicator,
+  check what else is already visible in the same moment before assuming it needs its own message.
 - **A flex-column parent stretches its children to its own full cross-axis width by default**
   (`align-items: stretch`), even a child whose own `display` is `inline-block`. A short badge/pill/chip
-  placed inside one (e.g. `.ua-profile-info`'s role badge) needs `align-self: flex-start` on the child
-  itself, or it silently renders as an oddly wide, mostly-empty shape instead of a compact one, sized to its
-  own container's width rather than its own content. Check for this whenever a small inline element looks
-  "stretched" or "strange" inside a `flex-direction: column` container.
+  placed inside one needs `align-self: flex-start` on the child itself, or it silently renders as an oddly
+  wide, mostly-empty shape instead of a compact one, sized to its own container's width rather than its own
+  content. Check for this whenever a small inline element looks "stretched" or "strange" inside a
+  `flex-direction: column` container. (`.ua-profile-info`'s role badge needed exactly this fix once, back
+  when that container was a column; it's since become a row per request, so `align-items: center` on the row
+  now does the equivalent job and the badge no longer carries its own `align-self` override. That's the
+  current, correct state, not a regression of this rule.)
 - **A date shown anywhere in an Ask answer is friendly, not a raw ISO string.** `friendlyDate`/
   `daysAgoFromYmd`/`friendlyDateAgo` in `releasetrain-server/src/ask.js` render "Aug 26" or "Aug 26 (17d
   ago)" instead of "2026-08-26", and the system prompt fed to the model uses the same helpers (a model
