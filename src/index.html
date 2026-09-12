@@ -741,7 +741,21 @@
       border: none;
       box-shadow: none;
     }
-    @media (max-width: 640px) { #feedPanel { position: static; max-height: 70vh; overflow-y: auto; } }
+    /* Un-stuck AND un-capped on mobile, not just un-stuck: the sticky
+       two-column desktop pattern above (feed + Ask rail each pinned and
+       independently scrollable) doesn't apply here, since there's only
+       one column, so a leftover max-height/overflow-y just boxed the
+       feed into 70% of the screen with its own nested scroll, on top of
+       the page's own scroll (already enabled for mobile, see html/body
+       above). That trapped the panel header (sort dropdown, Expand all)
+       inside the same scrolling box as the list, so scrolling through
+       updates also scrolled the controls out of reach. Letting the feed
+       flow with the page instead means the header only leaves view the
+       same way any page header normally would. Confirmed live:
+       infinite-scroll pagination (setupObserver) doesn't depend on
+       #feedPanel being the scrolling element; its IntersectionObserver
+       has no `root` set, so it already watches the real viewport. */
+    @media (max-width: 640px) { #feedPanel { position: static; max-height: none; overflow: visible; } }
     .panel-header {
       display: flex; align-items: center; gap: 8px;
       padding: 9px 14px; border-bottom: 1px solid var(--border);
@@ -1847,7 +1861,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.64.0">Releasetrain <em>v3.64.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.64.1">Releasetrain <em>v3.64.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3442,6 +3456,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-11</div>
+              <div class="cl-ver cl-ver-patch">v3.64.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Feed scrolls with the page on mobile, not boxed into 70vh</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> On a narrow screen, <code>#feedPanel</code> (list and its own header, including the sort dropdown and Expand all) was capped to <code>max-height: 70vh</code> with its own nested scroll, on top of the page's own scroll. Scrolling through updates scrolled the sort/Expand-all controls out of reach too, and there was nothing else on the single-column mobile layout the cap was actually making room for. Removed; the feed now flows with the page like the rest of this layout already does on mobile. Confirmed infinite-scroll pagination doesn't depend on the feed being its own scrolling element (its <code>IntersectionObserver</code> has no <code>root</code> set, so it already watches the real viewport).</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
