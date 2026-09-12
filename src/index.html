@@ -216,8 +216,9 @@
       .layout.has-ask-rail .ask-intro-panel { display: none; }
       .layout.has-ask-rail .ask-answer-rail { display: block; }
     }
+    /* Holds only the close button now; the question itself moved inside
+       the card (see .ask-answer-heading/.ask-answer-question). */
     .ask-rail-header { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
-    .ask-rail-header strong { flex: 1; font-size: 13px; line-height: 1.4; color: var(--text); }
     /* Plain, technical copy. No marketing language, no imagery beyond
        a small heading. .ask-sample-btn reuses the feed's own muted
        chip-like styling so the samples read as inline, clickable
@@ -545,6 +546,20 @@
     .ask-answer-label {
       font: 700 10px/1 inherit; text-transform: uppercase; letter-spacing: .4px;
       color: var(--brand); margin-bottom: 6px;
+    }
+    /* Rail-only alternative to .ask-answer-label: the actual question,
+       moved inside the card per explicit request (it used to sit
+       outside, in the rail's own static header), plus the pipeline name
+       right next to it in brackets instead of as its own separate
+       uppercase line. */
+    .ask-answer-heading {
+      display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+    .ask-answer-question { font: 700 13px/1.4 inherit; color: var(--text); }
+    .ask-answer-preset {
+      font: 700 10px/1 inherit; text-transform: uppercase; letter-spacing: .4px;
+      color: var(--brand); white-space: nowrap;
     }
     .ask-answer-summary { font-size: 13px; line-height: 1.6; margin: 0 0 10px; overflow-wrap: anywhere; }
     /* The one substring (a version number, so far) that most directly
@@ -2091,7 +2106,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.72.5">Releasetrain <em>v3.72.5</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.72.6">Releasetrain <em>v3.72.6</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3701,6 +3716,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-12</div>
+              <div class="cl-ver cl-ver-minor">v3.72.6</div>
+            </div>
+            <div class="cl-content">
+              <h3>Question moves inside the answer card, next to the pipeline</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The asked question used to sit outside the answer rail's card, in the rail's own static header (<code>#askRailQuestion</code>); the pipeline name (e.g. "SINGLE-AGENT") was a separate bold uppercase line inside the card. Per request, the question moved inside the card as the first line, with the pipeline name right next to it in brackets, e.g. "whats the latest flask version? (single-agent)". Applies to the running/loading state (question only, no bracket yet since the pipeline isn't resolved until the answer arrives), the final single-pipeline answer, an error card, and Compare mode's rail rendering (question only, no single pipeline to bracket). The rail's header now holds only the close button. The narrow-screen modal is unaffected: it already shows the question in its own separate <code>#askModalQuestion</code> header, so nothing was duplicated there.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5816,9 +5844,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
          controlling its visibility, not two competing ones. Narrower
          screens, and Compare mode, keep using the modal. -->
     <aside id="askAnswerRail" class="ask-answer-rail" aria-label="Answer">
+      <!-- The question itself moved inside #askRailBody's own card, next
+           to the pipeline label in brackets, per explicit request (see
+           askRenderCard/showAskRailRunning/askRenderCompareBody's own
+           comments); this header now holds just the close button. -->
       <div class="ask-rail-header">
-        <strong id="askRailQuestion"></strong>
-        <button type="button" id="askRailClose" class="btn btn-ghost" aria-label="Close answer" style="padding:2px 8px">✕</button>
+        <button type="button" id="askRailClose" class="btn btn-ghost" aria-label="Close answer" style="padding:2px 8px;margin-left:auto">✕</button>
       </div>
       <div id="askRailBody"></div>
     </aside>
@@ -7229,7 +7260,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // as "the same answer UI, with a comparison available" rather than a
     // separate page. Used for both the rail (wide screens) and the modal
     // (narrow-screen fallback) — one Compare rendering, not two.
-    function askRenderCompareBody(question, data) {
+    function askRenderCompareBody(question, data, opts) {
+      opts = opts || {};
       const runs = data.runs || [];
       const ok = runs.filter(r => !r.error);
       const primary = ok.find(r => !r.abstained) || ok[0];
@@ -7250,7 +7282,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           mergedSources.push(s);
         }
       }
+      // opts.showQuestion: rail-only (see showAskRailCompare). The modal
+      // already shows the question in its own #askModalQuestion header,
+      // so baking it in here too for that context would duplicate it.
+      const questionHeading = opts.showQuestion
+        ? `<div class="ask-answer-heading"><span class="ask-answer-question">${uaEsc(question)}</span></div>`
+        : "";
       return `<div class="ask-answer-card" data-run-id="${uaEsc((primary && primary.runId) || "")}">
+        ${questionHeading}
         <div class="ask-rail-tabs" role="tablist">
           <button type="button" class="ask-rail-tab active" data-tab="answer" role="tab" aria-selected="true">Answer</button>
           <button type="button" class="ask-rail-tab" data-tab="sources" role="tab" aria-selected="false">Sources</button>
@@ -7287,15 +7326,28 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     function askRenderCard(label, res, opts) {
       opts = opts || {};
       if (res.error) {
+        const errLabelHtml = opts.previewQuestion
+          ? `<div class="ask-answer-heading"><span class="ask-answer-question">${uaEsc(opts.previewQuestion)}</span><span class="ask-answer-preset">(${uaEsc(label)})</span></div>`
+          : `<div class="ask-answer-label">${uaEsc(label)}</div>`;
         return `<div class="ask-answer-card">
-          <div class="ask-answer-label">${uaEsc(label)}</div>
+          ${errLabelHtml}
           <p class="ask-error">${uaEsc(res.error)}</p>
         </div>`;
       }
       const fullAnswer = res.answer || "";
       const wasTrimmed = !!opts.trimAnswer && fullAnswer.length > opts.trimAnswer;
       const shownAnswer = wasTrimmed ? truncate(fullAnswer, opts.trimAnswer) : fullAnswer;
-      const labelHtml = `<div class="ask-answer-label">${uaEsc(label)}${res.abstained ? `<span class="ask-abstain-badge">⛔ ${uaEsc(ASK_ABSTAIN_REASON_LABELS[res.abstainReason] || "Abstained")}</span>` : ""}</div>`;
+      const abstainBadge = res.abstained ? `<span class="ask-abstain-badge">⛔ ${uaEsc(ASK_ABSTAIN_REASON_LABELS[res.abstainReason] || "Abstained")}</span>` : "";
+      // The rail passes the actual question in as opts.previewQuestion so
+      // it can render inside the card, right next to the pipeline label
+      // in brackets, per explicit request (previously the question sat
+      // outside the card entirely, in the rail's own static header, with
+      // just the bare uppercase label inside). Every other caller
+      // (modal, Compare grid) has nowhere to put a question this way and
+      // keeps the original plain-label line.
+      const labelHtml = opts.previewQuestion
+        ? `<div class="ask-answer-heading"><span class="ask-answer-question">${uaEsc(opts.previewQuestion)}</span><span class="ask-answer-preset">(${uaEsc(label)})</span>${abstainBadge}</div>`
+        : `<div class="ask-answer-label">${uaEsc(label)}${abstainBadge}</div>`;
       const answerHtml = `
         <div class="ask-answer-summary">${highlightAnswerTerm(mdLite(shownAnswer), res.highlightTerm)}</div>
         ${wasTrimmed ? '<button type="button" class="btn btn-ghost ask-view-full-btn" style="font-size:11px;padding:3px 8px;margin:-4px 0 8px">Show full answer</button>' : ""}
@@ -7429,7 +7481,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const compareBtn = body.querySelector(".ask-run-compare-btn");
       if (compareBtn) compareBtn.addEventListener("click", () => {
         document.getElementById("askPreset").value = "compare";
-        document.getElementById("askQuestion").value = document.getElementById("askRailQuestion").textContent;
+        document.getElementById("askQuestion").value = askRailData.question;
         document.getElementById("askForm").requestSubmit();
       });
     }
@@ -7442,7 +7494,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // and labels the wait accordingly.
     function showAskRailRunning(question, isCompare) {
       askRailData = null;
-      document.getElementById("askRailQuestion").textContent = question;
       const body = document.getElementById("askRailBody");
       const answerPanel = isCompare
         ? `<p class="ask-muted">Running all 5 pipelines against the same question…</p>`
@@ -7450,7 +7501,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
            <div id="askWorkflowDiagram" class="ask-workflow-diagram"></div>
            <div id="askWorkflowCaption" class="ask-workflow-caption"></div>
            <p class="ask-muted">Thinking…</p>`;
+      // No pipeline label yet (unresolved until the answer arrives,
+      // especially for "Auto"), so just the question, no bracket. See
+      // askRenderCard's own labelHtml for the question+label version
+      // used once there's a real answer.
       body.innerHTML = `<div class="ask-answer-card">
+        <div class="ask-answer-heading"><span class="ask-answer-question">${uaEsc(question)}</span></div>
         <div class="ask-rail-tabs" role="tablist">
           <button type="button" class="ask-rail-tab active" data-tab="answer" role="tab" aria-selected="true">Answer</button>
           <button type="button" class="ask-rail-tab" data-tab="sources" role="tab" aria-selected="false">Sources</button>
@@ -7470,7 +7526,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     }
     function showAskRail(question, label, res) {
       askRailData = { label, res, question };
-      document.getElementById("askRailQuestion").textContent = question;
       const body = document.getElementById("askRailBody");
       body.innerHTML = askRenderCard(label, res, { trimAnswer: ASK_RAIL_ANSWER_TRIM, showWorkflow: true, previewQuestion: question });
       wireAskRailBody(body);
@@ -7486,9 +7541,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // Compare body (see askRenderCompareBody) with rate buttons wired.
     function showAskRailCompare(question, data) {
       askRailData = null;
-      document.getElementById("askRailQuestion").textContent = question;
       const body = document.getElementById("askRailBody");
-      body.innerHTML = askRenderCompareBody(question, data);
+      body.innerHTML = askRenderCompareBody(question, data, { showQuestion: true });
       askWireRateButtons(body);
       askWireRailTabs(body);
       $(".layout").classList.add("has-ask-rail");
