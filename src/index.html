@@ -268,8 +268,6 @@
     /* Full paper citations, once, below the table rather than repeated
        in every "Research type" cell (see the table's own comment): a
        superscript number in the cell is enough to point back here. */
-    .ask-intro-cite { font-size: 9px; color: var(--muted); margin: 4px 0 0; }
-    .ask-intro-cite a { color: var(--brand); }
 
     /* ── Sidebar (menu drawer) ──────────────────────────────────
        Off-canvas at every width, not just mobile — this is the single
@@ -479,6 +477,33 @@
     .ask-compare-legend td.ask-cy { color: var(--ok); }
     .ask-compare-legend td.ask-cn { color: var(--muted); }
     .ask-compare-legend td.ask-ex { font-family: var(--mono); font-size: 10.5px; }
+    /* Compare mode's Benchmark tab: a CSS-grid block, not a real <table> -
+       a genuine 4-column table doesn't fit the rail's ~360px column (see
+       askRenderBenchmarkTable's own comment), so each pipeline gets a
+       compact 3-cell header row (name/time/source count) then a
+       full-width answer row right below it. */
+    .ask-bm-legend-details { margin-bottom: 12px; font-size: 11px; }
+    .ask-bm-legend-details summary { font-size: 11px; }
+    .ask-bm-table {
+      display: grid; grid-template-columns: 1fr auto auto;
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      overflow: hidden; font-size: 11px;
+    }
+    .ask-bm-head {
+      padding: 6px 8px; border-bottom: 1px solid var(--border);
+      background: var(--chip-bg); font-weight: 700; white-space: nowrap;
+    }
+    .ask-bm-col-head {
+      font-size: 10px; text-transform: uppercase; letter-spacing: .3px;
+      color: var(--muted); font-weight: 700;
+    }
+    .ask-bm-answer-row {
+      grid-column: 1 / -1; padding: 6px 10px 10px; border-bottom: 1px solid var(--border);
+      line-height: 1.5;
+    }
+    .ask-bm-table > *:nth-last-child(-n+4) { border-bottom: none; }
+    .ask-bm-rate { display: inline-flex; gap: 4px; margin-left: 8px; vertical-align: middle; }
+    .ask-bm-rate .ask-rate-btn { font-size: 11px; padding: 2px 6px; }
     .ask-answer-card {
       background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
       padding: 14px;
@@ -1251,16 +1276,40 @@
     .ua-profile-name { font: 700 15px/1 inherit; }
     .ua-profile-email { font-size: 12px; color: var(--muted); }
     .ua-muted { color: var(--muted); }
+    .ua-reg-notice {
+      background: var(--brand-light); color: var(--brand); border: 1px solid var(--brand);
+      border-radius: var(--radius-sm); padding: 8px 12px; font-size: 12px;
+      font-weight: 600; margin-bottom: 10px;
+    }
+    .ua-reg-stats {
+      display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 11px;
+      color: var(--muted); margin-bottom: 14px;
+    }
+    .ua-reg-stats strong { color: var(--text); }
     .ua-admin-header {
       display: flex; align-items: center; gap: 8px; padding: 10px 0 8px;
     }
+    /* Each admin section is a <details>/<summary> using .ua-admin-header
+       as the summary row; the global `summary { }` rule above hides the
+       native marker, so this adds back a rotating chevron (same pattern
+       as .groupHead::before on the feed) as the section's own
+       open/closed affordance. */
+    .ua-admin-details { border-bottom: 1px solid var(--border); }
+    .ua-admin-details:last-child { border-bottom: none; }
+    .ua-admin-header::before {
+      content: "▶"; font-size: 8px; color: var(--muted); flex-shrink: 0;
+      transition: transform .15s ease;
+    }
+    details[open] > .ua-admin-header::before { transform: rotate(90deg); }
     #ua-search-events-section { margin-top: 24px; }
     .ua-se-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
     .ua-se-table th { text-align: left; padding: 6px 8px; border-bottom: 2px solid var(--border); color: var(--muted); font-weight: 600; white-space: nowrap; }
     .ua-se-table td { padding: 5px 8px; border-bottom: 1px solid var(--border); vertical-align: top; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .ua-se-table tr:last-child td { border-bottom: none; }
     .ua-se-anon { color: var(--muted); font-style: italic; }
-    @media (max-width: 640px) { .ua-se-table td:nth-child(4), .ua-se-table th:nth-child(4) { display: none; } }
+    @media (max-width: 640px) { .ua-se-table td:nth-child(5), .ua-se-table th:nth-child(5) { display: none; } }
+    .ua-se-type { font-size: 11px; white-space: nowrap; }
+    .ua-se-type-ask { color: var(--brand); font-weight: 600; }
     .ua-user-row {
       display: flex; align-items: center; gap: 10px; padding: 10px 14px;
       border: 1px solid var(--border); border-radius: var(--radius-sm);
@@ -1880,7 +1929,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.65.1">Releasetrain <em>v3.65.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.66.0">Releasetrain <em>v3.66.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2982,19 +3031,18 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
 
 <section class="block" id="d-ask-pipelines">
 <h2>Ask pipelines</h2>
-<p class="section-sort-note">Which process <code class="inline">POST /api/ask</code> runs, by the question's own classified intent. Preset <code class="inline">"auto"</code> resolves to one of these before the model is ever called (see <code class="inline">pickAutoPipeline</code> in <code class="inline">ask.js</code>); any other preset value runs that one directly regardless of intent. "Research type" is the general question-type literature these categories come from, not this system's own terms (full citations below the table).</p>
+<p class="section-sort-note">Which process <code class="inline">POST /api/ask</code> runs, by the question's own classified intent. Preset <code class="inline">"auto"</code> resolves to one of these before the model is ever called (see <code class="inline">pickAutoPipeline</code> in <code class="inline">ask.js</code>); any other preset value runs that one directly regardless of intent. "Research type" is the general question-type category each row corresponds to in the wider question-classification literature, not this system's own terms.</p>
 <table>
 <thead><tr><th style="width:16%">Research type</th><th style="width:10%">Type</th><th style="width:20%">Intent</th><th style="width:22%">Process</th><th>Example</th></tr></thead>
 <tbody>
-<tr><td>Decision-making<sup>2</sup></td><td>Comparison</td><td><code class="inline">comparison-question</code></td><td>Delegated + feedback loop</td><td>"Should I use Node or Flask?"</td></tr>
-<tr><td>Factoid, verify<sup>1</sup></td><td>Security</td><td><code class="inline">cve-question</code></td><td>Union search + BM25 rerank</td><td>"Any recent CVEs in MySQL?"</td></tr>
-<tr><td>Factoid, verify<sup>1</sup></td><td>Patch</td><td><code class="inline">patch-question</code></td><td>Union search + BM25 rerank</td><td>"Was the WebView bug patched?"</td></tr>
-<tr><td>Factoid, numeric<sup>1</sup></td><td>Version</td><td><code class="inline">version-question</code></td><td>Single-agent</td><td>"What's the latest PHP version?"</td></tr>
-<tr><td>How-to<sup>2</sup></td><td>General</td><td><code class="inline">general-question</code></td><td>Delegated, no feedback loop</td><td>"How do I roll back a Windows update?"</td></tr>
-<tr><td>Review/opinion<sup>2</sup></td><td>Opinion</td><td><code class="inline">opinion</code></td><td>Declined, no retrieval</td><td>"What's the best language?"</td></tr>
+<tr><td>Decision-making</td><td>Comparison</td><td><code class="inline">comparison-question</code></td><td>Delegated + feedback loop</td><td>"Should I use Node or Flask?"</td></tr>
+<tr><td>Factoid, verify</td><td>Security</td><td><code class="inline">cve-question</code></td><td>Union search + BM25 rerank</td><td>"Any recent CVEs in MySQL?"</td></tr>
+<tr><td>Factoid, verify</td><td>Patch</td><td><code class="inline">patch-question</code></td><td>Union search + BM25 rerank</td><td>"Was the WebView bug patched?"</td></tr>
+<tr><td>Factoid, numeric</td><td>Version</td><td><code class="inline">version-question</code></td><td>Single-agent</td><td>"What's the latest PHP version?"</td></tr>
+<tr><td>How-to</td><td>General</td><td><code class="inline">general-question</code></td><td>Delegated, no feedback loop</td><td>"How do I roll back a Windows update?"</td></tr>
+<tr><td>Review/opinion</td><td>Opinion</td><td><code class="inline">opinion</code></td><td>Declined, no retrieval</td><td>"What's the best language?"</td></tr>
 </tbody>
 </table>
-<p class="small muted" style="margin:.4rem 0 0"><sup>1</sup> Li &amp; Roth, <a href="https://aclanthology.org/C02-1150/" target="_blank" rel="noopener">"Learning Question Classifiers,"</a> COLING 2002 (the classic ABBREVIATION/ENTITY/DESCRIPTION/HUMAN/LOCATION/NUMERIC factoid-QA taxonomy). <sup>2</sup> Treude, Barzilay &amp; Storey, <a href="https://doi.org/10.1145/1985793.1985907" target="_blank" rel="noopener">"How Do Programmers Ask and Answer Questions on the Web?"</a> ICSE 2011 (NIER track; studied real Stack Overflow questions and named how-to, decision-making/comparison, and review as recurring categories there).</p>
 <a class="toplink" href="#">↑ Back to top</a></section>
 
 
@@ -3476,6 +3524,25 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-11</div>
+              <div class="cl-ver cl-ver-minor">v3.66.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Benchmark tab, admin registration/search visibility, installed-versions sync</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> New <strong>Benchmark</strong> tab on every Ask answer, alongside Answer and Sources. On a normal answer it offers a one-click "Compare all 5 now"; running Compare all 5 itself now renders here too (same tabbed card the rail already used, previously modal-only), with a compact side-by-side table (pipeline, time, source count, full answer at small font) so every pipeline's answer can actually be read and compared, not just skimmed as 5 separate full cards.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Admin panel: a registration notice banner ("N new registrations since your last login") plus an always-visible accounts/queries stat line (total + last-7-days for both), backed by <code>GET /api/admin/overview</code>'s new <code>users</code>/<code>queries</code> fields.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The admin "Search &amp; Ask activity" table (renamed from "Component searches") now logs and shows real Ask questions too, not just vendor/component searches, tagged by type; a signed-out visitor's question is logged even though it can't be answered without signing in.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <strong>Installed versions</strong> (Account view) now actually persists to your account server-side instead of only this browser's localStorage, so it follows you across devices.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Each admin section (System overview, Settings, All users, Search &amp; Ask activity) is now a closed-by-default, collapsible section instead of one long always-open page.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Search &amp; Ask activity table: removed the raw IP column, shows the user's real name instead of a truncated id.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Removed the inline research-type citation footnotes from the Ask pipelines tables (intro panel and docs view), per request.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5021,7 +5088,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               <span id="ua-inv-count" class="ua-muted" style="font-size:12px"></span>
               <button id="ua-inv-refresh" class="btn btn-ghost" style="font-size:12px;padding:4px 10px;margin-left:auto">Refresh</button>
             </div>
-            <p class="ua-muted" style="font-size:12px;margin:0 0 8px">Record the versions you actually run. The Arch view compares them against the latest release to show how far each component has drifted. <span style="opacity:.8">Saved on this device.</span></p>
+            <p class="ua-muted" style="font-size:12px;margin:0 0 8px">Record the versions you actually run. The Arch view compares them against the latest release to show how far each component has drifted. <span style="opacity:.8">Saved to your account, so it follows you across devices.</span></p>
             <div id="ua-inv-msg" class="ua-msg" style="display:none"></div>
             <form id="ua-inv-add-form" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
               <input id="ua-inv-comp" list="ua-comp-names" class="search-input" placeholder="component (e.g. apache)" maxlength="64" autocomplete="off" required style="flex:1 1 150px;min-width:0" />
@@ -5044,45 +5111,65 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           </div>
           <!-- Admin: all users -->
           <div id="ua-admin-section" style="display:none">
-            <!-- System overview dashboard -->
-            <div id="ua-dash-section">
-              <div class="ua-admin-header">
+            <!-- Always visible (not inside a closed <details> like the
+                 sections below it): a registration notice is exactly the
+                 kind of thing that should be seen without an extra click,
+                 and the stat line underneath it is cheap, always-useful
+                 context. Populated by uaLoadDashboard from the same
+                 GET /api/admin/overview call the System overview cards
+                 already use, not a separate request. -->
+            <div id="ua-reg-notice" class="ua-reg-notice" style="display:none"></div>
+            <div id="ua-reg-stats" class="ua-reg-stats"></div>
+            <!-- Each admin section is its own closed-by-default <details>
+                 so the panel opens short rather than dumping four
+                 sections' worth of content at once. The section's own
+                 data still loads eagerly on sign-in (uaRender), not only
+                 on first expand, so the count next to a closed summary
+                 (e.g. "All users (6)") is accurate without opening it. -->
+            <details class="ua-admin-details">
+              <summary class="ua-admin-header">
                 <span style="font-weight:700;font-size:13px">System overview</span>
                 <span id="ua-dash-updated" class="ua-muted" style="font-size:12px"></span>
                 <button id="ua-refresh-dash" class="btn btn-ghost" style="font-size:12px;padding:4px 10px;margin-left:auto">Refresh</button>
+              </summary>
+              <div id="ua-dash-section">
+                <div id="ua-dash-grid" class="ua-dash-grid">
+                  <p class="ua-muted" style="font-size:12px;padding:8px 0">Loading…</p>
+                </div>
+                <div id="ua-dash-bots"></div>
               </div>
-              <div id="ua-dash-grid" class="ua-dash-grid">
-                <p class="ua-muted" style="font-size:12px;padding:8px 0">Loading…</p>
-              </div>
-              <div id="ua-dash-bots"></div>
-            </div>
+            </details>
             <!-- Runtime settings / feature flags. One generic list, not
                  a hardcoded form per setting: each row is rendered from
                  whatever GET /api/admin/settings actually returns, so a
                  new admin-tunable value added server-side needs no new
                  markup here (see uaLoadSettings/UA_SETTINGS_META). -->
-            <div id="ua-settings-section" style="margin-top:20px">
-              <div class="ua-admin-header">
+            <details class="ua-admin-details" style="margin-top:12px">
+              <summary class="ua-admin-header">
                 <span style="font-weight:700;font-size:13px">Settings</span>
+              </summary>
+              <div id="ua-settings-section">
+                <div id="ua-settings-list" class="ua-settings-list">
+                  <p class="ua-muted" style="font-size:12px;padding:8px 0">Loading…</p>
+                </div>
               </div>
-              <div id="ua-settings-list" class="ua-settings-list">
-                <p class="ua-muted" style="font-size:12px;padding:8px 0">Loading…</p>
-              </div>
-            </div>
-            <div class="ua-admin-header" style="margin-top:20px">
-              <span style="font-weight:700;font-size:13px">All users</span>
-              <span id="ua-user-count" class="ua-muted" style="font-size:12px"></span>
-              <button id="ua-refresh-users" class="btn btn-ghost" style="font-size:12px;padding:4px 10px;margin-left:auto">Refresh</button>
-            </div>
-            <div id="ua-user-list"></div>
-            <div id="ua-search-events-section" style="display:none">
-              <div class="ua-admin-header" style="margin-top:16px">
-                <span style="font-weight:700;font-size:13px">Component searches</span>
+            </details>
+            <details class="ua-admin-details" style="margin-top:12px">
+              <summary class="ua-admin-header">
+                <span style="font-weight:700;font-size:13px">All users</span>
+                <span id="ua-user-count" class="ua-muted" style="font-size:12px"></span>
+                <button id="ua-refresh-users" class="btn btn-ghost" style="font-size:12px;padding:4px 10px;margin-left:auto">Refresh</button>
+              </summary>
+              <div id="ua-user-list"></div>
+            </details>
+            <details class="ua-admin-details" id="ua-search-events-section" style="margin-top:12px;display:none">
+              <summary class="ua-admin-header">
+                <span style="font-weight:700;font-size:13px">Search &amp; Ask activity</span>
                 <span id="ua-se-count" class="ua-muted" style="font-size:12px"></span>
                 <button id="ua-refresh-searches" class="btn btn-ghost" style="font-size:12px;padding:4px 10px;margin-left:auto">Refresh</button>
-              </div>
+              </summary>
               <div id="ua-se-list"></div>
-            </div>
+            </details>
           </div>
         </div>
 
@@ -5227,28 +5314,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
            the single source of truth this table's own wording is kept
            in sync with by hand). Opinion's row honestly shows it
            declines rather than reading like every other row that gets
-           a real answer. Research column: the general question-type
-           literature these categories come from, not this system's own
-           terms. Li & Roth (2002) is a factoid-QA classification
-           scheme (the classic ABBREVIATION/ENTITY/DESCRIPTION/HUMAN/
-           LOCATION/NUMERIC taxonomy); Treude, Barzilay & Storey (2011)
-           studied real Stack Overflow questions specifically and named
-           how-to, decision-making/comparison, and review (opinion) as
-           genuine recurring categories there, the closest real-world
-           analogue to this system's own domain. Full citations in the
-           caption below the table, not repeated in every cell. -->
+           a real answer. Research type: the general question-type
+           category each row corresponds to in the wider question-
+           classification literature (factoid/verify, decision-making,
+           how-to, review/opinion), not this system's own terms; no
+           inline citation markers or footnote, per request. -->
       <table class="ask-intro-table">
         <thead><tr><th>Research type</th><th>Type</th><th>Intent</th><th>Process</th><th>Example</th></tr></thead>
         <tbody>
-          <tr><td>Decision-making<sup>2</sup></td><td>Comparison</td><td>comparison-question</td><td>Delegated+feedback</td><td><button type="button" class="ask-sample-btn" data-ask-sample="Should I use Node or Flask for a new API?">Node or Flask?</button></td></tr>
-          <tr><td>Factoid, verify<sup>1</sup></td><td>Security</td><td>cve-question</td><td>Union+rerank</td><td><button type="button" class="ask-sample-btn" data-ask-sample="Are there any recent CVEs affecting MySQL?">CVEs in MySQL?</button></td></tr>
-          <tr><td>Factoid, verify<sup>1</sup></td><td>Patch</td><td>patch-question</td><td>Union+rerank</td><td><button type="button" class="ask-sample-btn" data-ask-sample="Was the WebView bug fixed in a Chrome patch?">Chrome patched?</button></td></tr>
-          <tr><td>Factoid, numeric<sup>1</sup></td><td>Version</td><td>version-question</td><td>Single-agent</td><td><button type="button" class="ask-sample-btn" data-ask-sample="What's the latest PHP version?">Latest PHP?</button></td></tr>
-          <tr><td>How-to<sup>2</sup></td><td>General</td><td>general-question</td><td>Delegated</td><td><button type="button" class="ask-sample-btn" data-ask-sample="How do I roll back a bad Windows update?">Roll back update?</button></td></tr>
-          <tr><td>Review/opinion<sup>2</sup></td><td>Opinion</td><td>opinion</td><td>Declined, no retrieval</td><td><button type="button" class="ask-sample-btn" data-ask-sample="What's the best programming language?">Best language?</button></td></tr>
+          <tr><td>Decision-making</td><td>Comparison</td><td>comparison-question</td><td>Delegated+feedback</td><td><button type="button" class="ask-sample-btn" data-ask-sample="Should I use Node or Flask for a new API?">Node or Flask?</button></td></tr>
+          <tr><td>Factoid, verify</td><td>Security</td><td>cve-question</td><td>Union+rerank</td><td><button type="button" class="ask-sample-btn" data-ask-sample="Are there any recent CVEs affecting MySQL?">CVEs in MySQL?</button></td></tr>
+          <tr><td>Factoid, verify</td><td>Patch</td><td>patch-question</td><td>Union+rerank</td><td><button type="button" class="ask-sample-btn" data-ask-sample="Was the WebView bug fixed in a Chrome patch?">Chrome patched?</button></td></tr>
+          <tr><td>Factoid, numeric</td><td>Version</td><td>version-question</td><td>Single-agent</td><td><button type="button" class="ask-sample-btn" data-ask-sample="What's the latest PHP version?">Latest PHP?</button></td></tr>
+          <tr><td>How-to</td><td>General</td><td>general-question</td><td>Delegated</td><td><button type="button" class="ask-sample-btn" data-ask-sample="How do I roll back a bad Windows update?">Roll back update?</button></td></tr>
+          <tr><td>Review/opinion</td><td>Opinion</td><td>opinion</td><td>Declined, no retrieval</td><td><button type="button" class="ask-sample-btn" data-ask-sample="What's the best programming language?">Best language?</button></td></tr>
         </tbody>
       </table>
-      <p class="ask-intro-cite"><sup>1</sup> Li &amp; Roth, <a href="https://aclanthology.org/C02-1150/" target="_blank" rel="noopener">"Learning Question Classifiers,"</a> COLING 2002. <sup>2</sup> Treude, Barzilay &amp; Storey, <a href="https://doi.org/10.1145/1985793.1985907" target="_blank" rel="noopener">"How Do Programmers Ask and Answer Questions on the Web?"</a> ICSE 2011.</p>
     </aside>
 
   </div><!-- /.layout -->
@@ -6411,6 +6492,91 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       );
     }
 
+    // A CSS-grid block, not a real <table> — a genuine 4-column table
+    // doesn't fit the ~360px answer rail (see ASK_RAIL_MIN_WIDTH's own
+    // comment), so each pipeline gets a compact 3-cell header row
+    // (name/time/source count) plus a full-width answer row beneath it.
+    // Reads the same in the wider modal fallback too, so there's exactly
+    // one Benchmark rendering, not two to keep in sync. Answers are
+    // shown in full (small font), not truncated — the point is reading
+    // them side by side to actually compare, not a teaser.
+    function askRenderBenchmarkTable(runs) {
+      const rows = (runs || []).map(r => {
+        const label = uaEsc(ASK_PRESET_LABELS[r.preset] || r.preset);
+        if (r.error) {
+          return `<div class="ask-bm-head">${label}</div><div class="ask-bm-head ask-muted">&mdash;</div><div class="ask-bm-head ask-muted">&mdash;</div>` +
+            `<div class="ask-bm-answer-row"><span class="ask-error">${uaEsc(r.error)}</span></div>`;
+        }
+        const time = r.latencyMs ? Math.round(r.latencyMs / 1000) + "s" : "&mdash;";
+        const srcCount = (r.sources || []).length;
+        const abstainHtml = r.abstained
+          ? `<span class="ask-abstain-badge">⛔ ${uaEsc(ASK_ABSTAIN_REASON_LABELS[r.abstainReason] || "Abstained")}</span> `
+          : "";
+        const rateHtml = r.runId
+          ? `<span class="ask-bm-rate">
+              <button type="button" class="btn btn-ghost ask-rate-btn" data-rating="1" title="Helpful">👍</button>
+              <button type="button" class="btn btn-ghost ask-rate-btn" data-rating="-1" title="Not helpful">👎</button>
+            </span>`
+          : "";
+        return `<div class="ask-bm-head">${label}</div><div class="ask-bm-head ask-muted">${time}</div><div class="ask-bm-head ask-muted">${srcCount} src</div>` +
+          `<div class="ask-bm-answer-row" data-run-id="${uaEsc(r.runId || "")}">${abstainHtml}${highlightAnswerTerm(mdLite(r.answer || ""), r.highlightTerm)}${rateHtml}</div>`;
+      }).join("");
+      return `<div class="ask-bm-table">
+        <div class="ask-bm-head ask-bm-col-head">Pipeline</div><div class="ask-bm-head ask-bm-col-head">Time</div><div class="ask-bm-head ask-bm-col-head">Sources</div>
+        ${rows}
+      </div>`;
+    }
+
+    // Full Compare-mode result: the same three-tab shape as a normal
+    // single-pipeline answer (askRenderCard's showWorkflow branch), just
+    // with the Benchmark tab actually filled in, so Compare mode reads
+    // as "the same answer UI, with a comparison available" rather than a
+    // separate page. Used for both the rail (wide screens) and the modal
+    // (narrow-screen fallback) — one Compare rendering, not two.
+    function askRenderCompareBody(question, data) {
+      const runs = data.runs || [];
+      const ok = runs.filter(r => !r.error);
+      const primary = ok.find(r => !r.abstained) || ok[0];
+      const answerHtml = primary
+        ? `<div class="ask-answer-label">${uaEsc(ASK_PRESET_LABELS[primary.preset] || primary.preset)}</div>
+           <div class="ask-answer-summary">${highlightAnswerTerm(mdLite(primary.answer || ""), primary.highlightTerm)}</div>`
+        : `<p class="ask-error">None of the 5 pipelines produced an answer.</p>`;
+      // Union of every run's sources, deduped by URL (title when a
+      // source has none), so 5 answers about the same question don't
+      // mean 5 separate, mostly-overlapping source lists.
+      const seen = new Set();
+      const mergedSources = [];
+      for (const r of runs) {
+        for (const s of (r.sources || [])) {
+          const key = s.url || s.title;
+          if (!key || seen.has(key)) continue;
+          seen.add(key);
+          mergedSources.push(s);
+        }
+      }
+      return `<div class="ask-answer-card" data-run-id="${uaEsc((primary && primary.runId) || "")}">
+        <div class="ask-rail-tabs" role="tablist">
+          <button type="button" class="ask-rail-tab active" data-tab="answer" role="tab" aria-selected="true">Answer</button>
+          <button type="button" class="ask-rail-tab" data-tab="sources" role="tab" aria-selected="false">Sources</button>
+          <button type="button" class="ask-rail-tab" data-tab="benchmark" role="tab" aria-selected="false">Benchmark</button>
+        </div>
+        <div class="ask-rail-panel" data-panel="answer">
+          <p class="ask-muted" style="margin:0 0 10px">Ran all 5 pipelines against the same question${primary ? ". Shown here: " + uaEsc(ASK_PRESET_LABELS[primary.preset] || primary.preset) + "&rsquo;s answer" : ""}. See the Benchmark tab to compare every pipeline's answer side by side.</p>
+          ${answerHtml}
+        </div>
+        <div class="ask-rail-panel" data-panel="sources" hidden>
+          ${askRenderSources(mergedSources)}
+        </div>
+        <div class="ask-rail-panel" data-panel="benchmark" hidden>
+          <details class="ask-bm-legend-details">
+            <summary>What do these pipelines do?</summary>
+            ${askCompareLegendHTML()}
+          </details>
+          ${askRenderBenchmarkTable(runs)}
+        </div>
+      </div>`;
+    }
+
     // opts.trimAnswer: cap the answer text to N chars (a "Show full
     // answer" button appears when it actually got cut), used by the
     // right-side rail so a long answer doesn't dominate the sidebar;
@@ -6457,6 +6623,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         <div class="ask-rail-tabs" role="tablist">
           <button type="button" class="ask-rail-tab active" data-tab="answer" role="tab" aria-selected="true">Answer</button>
           <button type="button" class="ask-rail-tab" data-tab="sources" role="tab" aria-selected="false">Sources</button>
+          <button type="button" class="ask-rail-tab" data-tab="benchmark" role="tab" aria-selected="false">Benchmark</button>
         </div>
         <div class="ask-rail-panel" data-panel="answer">
           <div id="askWorkflowDiagram" class="ask-workflow-diagram"></div>
@@ -6468,13 +6635,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           ${askRenderSources(res.sources)}
           ${askRenderDetails(res)}
         </div>
+        <div class="ask-rail-panel" data-panel="benchmark" hidden>
+          <p class="ask-muted">See how every pipeline (Single-agent, Multi-agent buggy/fixed/delegated/feedback loop) answers this exact question, side by side.</p>
+          <button type="button" class="btn btn-primary ask-run-compare-btn" style="font-size:12px">Compare all 5 now</button>
+        </div>
       </div>`;
     }
 
     function askWireRateButtons(root) {
       root.querySelectorAll(".ask-rate-btn").forEach(rb => {
         rb.addEventListener("click", async () => {
-          const card = rb.closest(".ask-answer-card");
+          // [data-run-id], not the narrower .ask-answer-card: the
+          // Benchmark table's own rows carry data-run-id directly on a
+          // <tr>, not wrapped in a full answer card.
+          const card = rb.closest("[data-run-id]");
           const runId = card && card.dataset.runId;
           if (!runId) return;
           rb.disabled = true;
@@ -6522,32 +6696,49 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         wireAskRailBody(body);
         renderAskWorkflowDiagram();
       });
+      // The Benchmark tab's own CTA on a normal single-pipeline answer:
+      // re-runs the exact same question through Compare mode instead of
+      // requiring it to be retyped with a different pipeline selected.
+      const compareBtn = body.querySelector(".ask-run-compare-btn");
+      if (compareBtn) compareBtn.addEventListener("click", () => {
+        document.getElementById("askPreset").value = "compare";
+        document.getElementById("askQuestion").value = document.getElementById("askRailQuestion").textContent;
+        document.getElementById("askForm").requestSubmit();
+      });
     }
     // Opened the moment a real question is submitted (see the submit
     // handler), before any answer exists yet, so the workflow diagram
     // is visible and animating from the very first phase event rather
     // than only appearing once the whole request is already done.
-    function showAskRailRunning(question) {
+    // isCompare skips the single-pipeline workflow diagram (Compare mode
+    // runs 5 parallel requests, not one phase-event stream to animate)
+    // and labels the wait accordingly.
+    function showAskRailRunning(question, isCompare) {
       askRailData = null;
       document.getElementById("askRailQuestion").textContent = question;
       const body = document.getElementById("askRailBody");
+      const answerPanel = isCompare
+        ? `<p class="ask-muted">Running all 5 pipelines against the same question…</p>`
+        : `<div id="askWorkflowDiagram" class="ask-workflow-diagram"></div>
+           <div id="askWorkflowCaption" class="ask-workflow-caption"></div>
+           <p class="ask-muted">Thinking…</p>`;
       body.innerHTML = `<div class="ask-answer-card">
         <div class="ask-rail-tabs" role="tablist">
           <button type="button" class="ask-rail-tab active" data-tab="answer" role="tab" aria-selected="true">Answer</button>
           <button type="button" class="ask-rail-tab" data-tab="sources" role="tab" aria-selected="false">Sources</button>
+          <button type="button" class="ask-rail-tab" data-tab="benchmark" role="tab" aria-selected="false">Benchmark</button>
         </div>
-        <div class="ask-rail-panel" data-panel="answer">
-          <div id="askWorkflowDiagram" class="ask-workflow-diagram"></div>
-          <div id="askWorkflowCaption" class="ask-workflow-caption"></div>
-          <p class="ask-muted">Thinking…</p>
-        </div>
+        <div class="ask-rail-panel" data-panel="answer">${answerPanel}</div>
         <div class="ask-rail-panel" data-panel="sources" hidden>
           <p class="ask-muted">Waiting for the answer…</p>
+        </div>
+        <div class="ask-rail-panel" data-panel="benchmark" hidden>
+          <p class="ask-muted">${isCompare ? "Waiting for all 5 to finish…" : "Waiting for the answer…"}</p>
         </div>
       </div>`;
       askWireRailTabs(body);
       $(".layout").classList.add("has-ask-rail");
-      renderAskWorkflowDiagram();
+      if (!isCompare) renderAskWorkflowDiagram();
     }
     function showAskRail(question, label, res) {
       askRailData = { label, res };
@@ -6561,6 +6752,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // render it again once the last active node flips to "done", but this
       // keeps the container from sitting blank in between.
       renderAskWorkflowDiagram();
+    }
+    // Compare mode's rail rendering: no live workflow diagram (5 parallel
+    // requests, not one phase-event stream), just the shared 3-tab
+    // Compare body (see askRenderCompareBody) with rate buttons wired.
+    function showAskRailCompare(question, data) {
+      askRailData = null;
+      document.getElementById("askRailQuestion").textContent = question;
+      const body = document.getElementById("askRailBody");
+      body.innerHTML = askRenderCompareBody(question, data);
+      askWireRateButtons(body);
+      askWireRailTabs(body);
+      $(".layout").classList.add("has-ask-rail");
     }
     function hideAskRail() {
       $(".layout").classList.remove("has-ask-rail");
@@ -6685,29 +6888,31 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       btn.classList.add("ask-btn-loading");
       startAskWorkflow();
       // The rail opens immediately with a running skeleton (diagram +
-      // "Thinking…") rather than waiting for the full response, so the
-      // workflow diagram actually animates live as phase events arrive -
-      // showAskRail() below only ever ran once the complete answer was
-      // already in hand. Compare mode and narrow screens keep using the
-      // modal, which has no live workflow view (see the module comment
-      // on askRenderCard's opts.showWorkflow).
-      if (!isCompare && canUseAskRail()) showAskRailRunning(question);
+      // "Thinking…", or for Compare mode a plain "Running 5 pipelines…")
+      // rather than waiting for the full response. Compare mode now uses
+      // the rail too when there's room for it, same as a normal question;
+      // only a narrow screen still falls back to the modal (see the
+      // isCompare branch below), since Compare has no live phase stream
+      // either way (5 parallel requests, not one to animate).
+      const useRail = canUseAskRail();
+      if (useRail) showAskRailRunning(question, isCompare);
       let refreshQuotaAfter = true;
 
       try {
         if (isCompare) {
-          // Five cards side by side genuinely need the modal's width -
-          // always used here, even if a rail answer happened to be open
-          // from an earlier question.
-          hideAskRail();
-          // The question itself is left exactly as typed. Closing/
-          // reopening the answer modal, or asking again, should never
-          // require retyping it.
-          document.getElementById("askModalQuestion").textContent = question;
-          document.getElementById("askModalBody").innerHTML = '<p class="ask-muted">Thinking…</p>';
-          askModalEl.classList.add("ask-compare-mode");
-          askOverlayEl.classList.add("open");
-          askModalEl.classList.add("open");
+          if (!useRail) {
+            // Narrow screen: the modal fallback, using the exact same
+            // 3-tab Compare rendering as the rail (askRenderCompareBody),
+            // one Compare rendering, not two to keep in sync. The question
+            // itself is left exactly as typed; closing/reopening the
+            // modal, or asking again, should never require retyping it.
+            hideAskRail();
+            document.getElementById("askModalQuestion").textContent = question;
+            document.getElementById("askModalBody").innerHTML = '<p class="ask-muted">Running all 5 pipelines against the same question…</p>';
+            askModalEl.classList.add("ask-compare-mode");
+            askOverlayEl.classList.add("open");
+            askModalEl.classList.add("open");
+          }
           const params = new URLSearchParams({
             question, presets: "single_agent,multi_agent_buggy,multi_agent_fixed,multi_agent,multi_agent_feedback",
             vendorCheck: String(vendorCheck), temporalFilter: String(temporalFilter), intentFilter: String(intentFilter),
@@ -6716,12 +6921,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           const res = await uaRequest("ask/compare?" + params.toString());
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || "Request failed.");
-          document.getElementById("askModalBody").innerHTML =
-            askCompareLegendHTML() +
-            '<div class="ask-compare-grid">' +
-            data.runs.map(r => askRenderCard(ASK_PRESET_LABELS[r.preset] || r.preset, r)).join("") +
-            "</div>";
-          askWireRateButtons(document.getElementById("askModalBody"));
+          if (useRail) {
+            showAskRailCompare(question, data);
+          } else {
+            document.getElementById("askModalBody").innerHTML = askRenderCompareBody(question, data);
+            askWireRateButtons(document.getElementById("askModalBody"));
+            askWireRailTabs(document.getElementById("askModalBody"));
+          }
           // Every preset resolves the same vendor from the same catalog,
           // Vendor check being the one config that actually varies here -
           // the first successful run stands in for all three.
@@ -11008,7 +11214,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           adminSection.style.display = "none";
         }
         uaLoadBookmarks();
-        uaRenderInventory();
+        uaLoadInventoryFromServer();
         uaLoadProviderKeys();
       }
       uaUpdateSidebar();
@@ -11105,6 +11311,29 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       }).join("");
     }
 
+    // The banner only appears when there's actually something new to
+    // flag (newSinceLastLogin > 0); the stat line below it always shows
+    // the running totals regardless, since "how many accounts/queries
+    // exist" is useful context even on a quiet day.
+    function uaRenderRegistrationNotice(users, queries) {
+      const noticeEl = document.getElementById("ua-reg-notice");
+      const statsEl = document.getElementById("ua-reg-stats");
+      if (!noticeEl || !statsEl || !users) return;
+      if (users.newSinceLastLogin > 0) {
+        noticeEl.style.display = "";
+        noticeEl.innerHTML = `🔔 <strong>${users.newSinceLastLogin}</strong> new registration${users.newSinceLastLogin === 1 ? "" : "s"} since your last login.`;
+      } else {
+        noticeEl.style.display = "none";
+        noticeEl.innerHTML = "";
+      }
+      const q = queries || { total: 0, last7Days: 0 };
+      statsEl.innerHTML =
+        `<span><strong>${users.total}</strong> accounts</span>` +
+        `<span>${users.newLast7Days} new in last 7 days</span>` +
+        `<span><strong>${q.total}</strong> queries</span>` +
+        `<span>${q.last7Days} in last 7 days</span>`;
+    }
+
     async function uaLoadDashboard() {
       const gridEl = document.getElementById("ua-dash-grid");
       const botsEl = document.getElementById("ua-dash-bots");
@@ -11116,9 +11345,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         return;
       }
       const data = await res.json();
-      const { botHealth, sourceAttribution, storage, counts } = data;
+      const { botHealth, sourceAttribution, storage, counts, users, queries } = data;
 
       if (updatedEl) updatedEl.textContent = data.checkedAt ? "as of " + new Date(data.checkedAt).toLocaleTimeString() : "";
+      uaRenderRegistrationNotice(users, queries);
 
       const staleCount = (botHealth.stale || []).length;
       const storagePct = Math.round((storage.pct || 0) * 100);
@@ -11153,6 +11383,16 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     const uaRefreshDashBtn = document.getElementById("ua-refresh-dash");
     if (uaRefreshDashBtn) uaRefreshDashBtn.addEventListener("click", uaLoadDashboard);
+
+    // Each admin section's Refresh button lives inside its own <summary>
+    // (see ua-admin-section's <details> markup); a click there would
+    // otherwise also toggle the section open/closed via the browser's
+    // native <summary> click handling, since the click bubbles up to it.
+    // Stopping propagation here keeps "Refresh" from also collapsing the
+    // section it just refreshed.
+    document.querySelectorAll(".ua-admin-details summary button").forEach(btn => {
+      btn.addEventListener("click", e => e.stopPropagation());
+    });
 
     // Generic runtime settings / feature flags (GET/PUT /api/admin/settings
     // in app.js). Only display metadata (a label + hint) lives here per
@@ -11391,6 +11631,24 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // (and offline reloads) can read it without a round-trip.
     const RT_INV_KEY = "rt_inventory";
 
+    // Pulls the server's copy of the inventory on Account-page load and
+    // reconciles it into localStorage, so a user switching devices/browsers
+    // sees their real saved list instead of whatever (possibly empty)
+    // localStorage this device happens to have. Falls back silently to
+    // whatever's already local if the request fails (offline, etc.).
+    async function uaLoadInventoryFromServer() {
+      try {
+        const res = await uaRequest("users/me");
+        if (!res.ok) return uaRenderInventory();
+        const me = await res.json();
+        const list = uaInvNormalize(Array.isArray(me.inventory) ? me.inventory : []);
+        localStorage.setItem(RT_INV_KEY, JSON.stringify(list));
+        const stored = uaUser();
+        if (stored) { stored.inventory = list; localStorage.setItem("rt_user", JSON.stringify(stored)); }
+        uaRenderInventory(list);
+      } catch { uaRenderInventory(); }
+    }
+
     function uaInvGet() {
       const u = uaUser();
       if (u && Array.isArray(u.inventory)) return uaInvNormalize(u.inventory);
@@ -11414,14 +11672,24 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     async function uaInvPersist(arr) {
       const next = uaInvNormalize(arr);
-      // Stored per-browser. The user model does not yet accept an `inventory`
-      // field on PUT /api/users/:id (server whitelists name/password/orgs/role),
-      // so there is no server round-trip until that lands. We still mirror onto
-      // the local user object so it travels with the session on this device.
+      // Mirror locally first so the UI (and offline reloads) always has
+      // something to show even if the server round-trip below fails.
       localStorage.setItem(RT_INV_KEY, JSON.stringify(next));
       const stored = uaUser();
       if (stored) { stored.inventory = next; localStorage.setItem("rt_user", JSON.stringify(stored)); }
-      return { list: next, serverOk: true, serverErr: "" };
+      const user = uaUser();
+      if (!user) return { list: next, serverOk: false, serverErr: "Not signed in." };
+      try {
+        const res = await uaRequest("users/" + user.id, {
+          method: "PUT",
+          body: JSON.stringify({ inventory: next }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) return { list: next, serverOk: false, serverErr: data.error || "Failed to save to your account." };
+        return { list: next, serverOk: true, serverErr: "" };
+      } catch {
+        return { list: next, serverOk: false, serverErr: "Failed to reach the server; saved on this device only." };
+      }
     }
 
     function uaInvMsg(text, kind) {
@@ -11448,9 +11716,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     }
 
     async function uaInvApply(arr, okText) {
-      const { list } = await uaInvPersist(arr);
+      const { list, serverOk, serverErr } = await uaInvPersist(arr);
       uaRenderInventory(list);
-      uaInvMsg(okText || "Saved.", "ok");
+      uaInvMsg(serverOk ? (okText || "Saved.") : serverErr, serverOk ? "ok" : "error");
     }
 
     function uaRenderInventory(list) {
@@ -11558,7 +11826,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       });
     }
 
-    document.getElementById("ua-inv-refresh").addEventListener("click", () => uaRenderInventory());
+    document.getElementById("ua-inv-refresh").addEventListener("click", () => uaLoadInventoryFromServer());
 
     document.getElementById("ua-inv-add-form").addEventListener("submit", async e => {
       e.preventDefault();
@@ -11596,13 +11864,32 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     document.getElementById("ua-refresh-users").addEventListener("click", uaLoadUsers);
     document.getElementById("ua-refresh-searches").addEventListener("click", uaLoadSearchEvents);
 
+    // Cached id -> {name, email} lookup, shared with uaLoadUsers's own list
+    // so the search-events table can show a real name instead of a raw
+    // ObjectId. Fetched at most once per page load (capped at the same
+    // 100-user page size GET /api/users/ itself caps at) and reused by
+    // both callers.
+    let uaUsersMapPromise = null;
+    function uaUsersMap() {
+      if (!uaUsersMapPromise) {
+        uaUsersMapPromise = uaRequest("users/?limit=100")
+          .then(res => res.ok ? res.json() : { data: [] })
+          .then(data => new Map((data.data || []).map(u => [String(u._id), u])))
+          .catch(() => new Map());
+      }
+      return uaUsersMapPromise;
+    }
+
     async function uaLoadSearchEvents() {
       const section = document.getElementById("ua-search-events-section");
       const listEl  = document.getElementById("ua-se-list");
       const countEl = document.getElementById("ua-se-count");
       section.style.display = "";
       listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">Loading…</p>`;
-      const res = await uaRequest("events/search?limit=200").catch(() => null);
+      const [res, usersById] = await Promise.all([
+        uaRequest("events/search?limit=200").catch(() => null),
+        uaUsersMap(),
+      ]);
       if (!res || !res.ok) {
         listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">Could not load search events.</p>`;
         return;
@@ -11616,20 +11903,32 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       }
       const esc = s => String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
       listEl.innerHTML = `<table class="ua-se-table">
-        <thead><tr><th>Query</th><th>User</th><th>Time</th><th>IP</th><th>User agent</th></tr></thead>
+        <thead><tr><th>Type</th><th>Query / prompt</th><th>User</th><th>Time</th><th>User agent</th></tr></thead>
         <tbody>` +
         events.map(e => {
           const t = e.timestamp ? new Date(e.timestamp).toLocaleString() : "";
-          const q = normalizeQuery(e.query);
+          const isAsk = e.kind === "ask";
+          // A real Ask prompt is a full sentence, not a comma-separated
+          // list of component names — normalizeQuery is built for the
+          // latter (trims each comma segment) and would only cosmetically
+          // reflow a prompt's punctuation, so it's skipped here to show
+          // exactly what was typed.
+          const q = isAsk ? String(e.query || "") : normalizeQuery(e.query);
+          const typeCell = isAsk
+            ? `<span class="ua-se-type ua-se-type-ask" title="Real Ask question">💬 ask</span>`
+            : `<span class="ua-se-type" title="Vendor/component search">🔍 search</span>`;
           const isAnon = !e.userId || e.userId === "anonymous";
+          const known = !isAnon && usersById.get(String(e.userId));
           const userCell = isAnon
             ? `<span class="ua-se-anon">anonymous</span>`
-            : `<span title="${esc(e.userId)}">${esc((e.userId || "").slice(-8))}</span>`;
+            : known
+              ? `<span title="${esc(known.email)}">${esc(known.name || known.email)}</span>`
+              : `<span title="${esc(e.userId)}">${esc((e.userId || "").slice(-8))}</span>`;
           return `<tr>
+            <td style="white-space:nowrap">${typeCell}</td>
             <td title="${esc(q)}">${esc(q)}</td>
             <td>${userCell}</td>
             <td style="white-space:nowrap">${esc(t)}</td>
-            <td>${esc(e.ip || "")}</td>
             <td title="${esc(e.userAgent)}">${esc((e.userAgent || "").slice(0, 60))}</td>
           </tr>`;
         }).join("") +

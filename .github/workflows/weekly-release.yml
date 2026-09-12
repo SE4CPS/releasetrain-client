@@ -1,0 +1,60 @@
+name: weekly-release
+
+# Tags and publishes a GitHub Release for whatever version is currently on
+# master, once a week. This repo already bumps src/index.html's own
+# data-app-version + in-app changelog on every commit (see CLAUDE.md), so
+# there's no version-bumping logic here — this workflow only tags the
+# version master is already at and lets GitHub auto-generate the release
+# notes from the commits/PRs merged since the previous tag (this repo
+# commits straight to master with real, technical commit messages, so
+# those notes come out genuinely "brief technical release notes", not
+# filler). If master's version hasn't changed since the last tag (a quiet
+# week), the job finds the tag already exists and skips without creating
+# a duplicate/empty release.
+
+on:
+  schedule:
+    - cron: '0 15 * * 1' # every Monday, 15:00 UTC
+  workflow_dispatch: {} # allow a manual run from the Actions tab too
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Read current version
+        id: ver
+        run: |
+          VERSION=$(grep -oP 'data-app-version="\K[0-9]+\.[0-9]+\.[0-9]+' src/index.html | head -n1)
+          if [ -z "$VERSION" ]; then
+            echo "Could not find data-app-version in src/index.html" >&2
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Skip if this version is already tagged
+        id: check
+        run: |
+          if git rev-parse "${{ steps.ver.outputs.tag }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Tag and publish release
+        if: steps.check.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git tag "${{ steps.ver.outputs.tag }}"
+          git push origin "${{ steps.ver.outputs.tag }}"
+          gh release create "${{ steps.ver.outputs.tag }}" \
+            --title "${{ steps.ver.outputs.tag }}" \
+            --generate-notes
