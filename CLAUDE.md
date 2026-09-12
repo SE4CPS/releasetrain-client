@@ -19,8 +19,14 @@ always reflect the current, real conventions of the repo, not lag behind what's 
   Never skip this, even for a small fix.
 - **No dash used as emphasis** in code, comments, commit messages, or user-visible copy — split into two
   sentences or use a colon/semicolon/comma instead. Legitimate uses stay: arithmetic
-  (`Date.now() - t.startedAt`), numeric ranges, hyphenated compound words. Sweep the diff before every
-  commit: `git diff -U0 -- src/index.html | grep -E '^\+' | grep ' - '` (exclude legitimate arithmetic by eye).
+  (`Date.now() - t.startedAt`), numeric ranges, hyphenated compound words, and a bare `&mdash;`/`—` used as
+  a literal "no value"/"false" table-cell glyph (e.g. `askRenderBenchmarkTable`'s "no source data" cells),
+  which is a placeholder symbol, not a rhetorical aside. Sweep the diff before every commit for **both**
+  forms: the literal hyphen (`git diff -U0 -- src/index.html | grep -E '^\+' | grep ' - '`) **and** a real
+  em/en dash or its HTML entity (`git diff -U0 -- src/index.html | grep -E '^\+' | grep -E '—|–|&mdash;|&ndash;'`).
+  Checking only the first one is not enough: two em-dash-as-emphasis instances from this session's own
+  earlier commits (in code comments, using `—` directly rather than a hyphen) went unnoticed for several
+  commits before a broader sweep caught them, precisely because the usual grep only ever looked for `' - '`.
 - **Commit directly to `master`** — no feature-branch workflow unless asked.
 - **State exact pull/restart instructions after every push** (this is served live).
 - **Keep server/client duplicate logic in sync by hand, with a comment noting the duplication.** E.g. the
@@ -64,16 +70,36 @@ always reflect the current, real conventions of the repo, not lag behind what's 
 - **A UI element added inside a `<summary>` (a Refresh button, etc.) needs its click handler to call
   `e.stopPropagation()`**, or clicking it also toggles the parent `<details>` open/closed via the browser's
   native summary click handling, since the click bubbles up to it.
-- **Admin panel sections are closed-by-default `<details>`/`<summary>` blocks** (`.ua-admin-details`), not
-  always-open `<div>`s — added after the panel grew to 4+ sections and got too long to scan. A genuinely
-  urgent/always-relevant item (the registration notice banner, the accounts/queries stat line) stays
-  outside any `<details>`, always visible, rather than hidden behind a click.
+- **Every collapsible section on the Account page (admin or not) is a closed-by-default `<details>`/
+  `<summary class="ua-admin-header">` block** (`.ua-admin-details`), not an always-open `<div>`/`.ua-card`.
+  This covers the 4 admin-only sections (System overview, Settings, All users, Search & Ask activity) and
+  the 5 profile sections above them (Change password, Model provider keys, Organization namespaces,
+  Bookmarks, Installed versions), added after the page grew long enough that reaching the admin sections
+  meant scrolling past several always-open cards first. `.ua-admin-header`'s summary row (chevron, bold
+  title, optional muted count, optional right-aligned Refresh button) is the one consistent header shape for
+  all of these; don't reintroduce the older per-section inline-styled `<summary>` pattern for a new one. A
+  genuinely urgent/always-relevant item (the registration notice banner, the accounts/queries stat line)
+  stays outside any `<details>`, always visible, rather than hidden behind a click. A `<button>` inside the
+  summary needs `e.stopPropagation()` on its own click handler (see the dedicated rule below); this is
+  already wired generically via `.ua-admin-details summary button`, so a new section reusing this class
+  gets it for free.
 - **New admin-tunable values go through the existing generic settings mechanism**
   (`GET`/`PUT /api/admin/settings`, `UA_SETTINGS_META` on the client), not a bespoke new endpoint/markup —
-  see the Settings section in `ua-admin-section`. A value only becomes admin-configurable this way when it's
-  a small, low-frequency scalar (like `askRecentWindowDays`); a value baked into many synchronous
-  computations at module load (e.g. the feed's own `LOOKBACK_DAYS`) is a bigger, riskier lift and needs a
-  real refactor plan first, not a quick wire-up.
+  see the Settings section in `ua-admin-section`. `UA_SETTINGS_META` supports three shapes per key: a plain
+  number (`min`/`max`, renders `<input type=number>`), a fixed enum (`options: [{value,label}]`, renders a
+  `<select>` so an invalid value can't be typed), or a flag (`type: "boolean"`, renders a checkbox). A value
+  only becomes admin-configurable this way when it's a small, low-frequency scalar (like
+  `askRecentWindowDays`, or a per-view visibility boolean); a value baked into many synchronous computations
+  at module load (e.g. the feed's own `LOOKBACK_DAYS`) is a bigger, riskier lift and needs a real refactor
+  plan first, not a quick wire-up.
+- **Per-view menu visibility is admin-configurable** (`viewGraphVisible`, `viewArchVisible`, etc.; see
+  `VIEW_NAV_LINKS` and the matching `TOGGLEABLE_VIEWS` in `releasetrain-server/src/app.js`), fetched from
+  the public `GET /api/views/visibility` (not the admin-only settings route, since every visitor's nav
+  depends on it) and applied by hiding the corresponding `<a class="nav-link">`. "Home" and "Account" are
+  deliberately never toggleable, on both client and server: hiding either breaks core navigation or can
+  lock an admin out of the panel that controls this setting. Hiding a nav link doesn't block the view's own
+  `#/hash` route if navigated to directly; this only controls what's reachable from the menu, matching what
+  was actually asked for.
 - **A weekly release workflow (`.github/workflows/weekly-release.yml`) tags and publishes a GitHub Release
   for whatever version is currently on master**, reading the version from `data-app-version` and using
   `gh release create --generate-notes` for the release notes (this repo's commit messages are already
