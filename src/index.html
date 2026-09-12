@@ -1880,7 +1880,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.65.0">Releasetrain <em>v3.65.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.65.1">Releasetrain <em>v3.65.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3476,6 +3476,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-11</div>
+              <div class="cl-ver cl-ver-patch">v3.65.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Agent-workflow diagram: full width, no edge overlap</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The live agentic-workflow diagram now stretches to fill its full column width; Mermaid stamps its own <code>max-width</code> inline style on the rendered SVG, which was overriding the external <code>width:100%</code> rule.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Increased node/rank spacing so the dotted "retry" feedback edge between Evaluator and Retriever no longer overlaps the main flow line.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Comparison-question entity extraction: a trailing connector word ("...and which browser?") could leave it attached to the previous entity (e.g. "teams and"); the trailer pattern now also strips "and"/"but".</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5438,7 +5453,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // fixes ("Do you recommend zoom or teams?" leaking "recommend zoom"
     // into the feed's own vendor filter).
     const ASK_COMPARISON_LEADIN_RX = /^(?:(?:do|does|would|will|can|could)\s+(?:you|we|i)\s+)?(?:should\s+(?:i|we)\s+(?:use|go\s+with|pick|choose)|(?:let'?s\s+)?use|using|choose|choosing|pick|picking|go(?:ing)?\s+with|prefer|recommend(?:ing)?)\s+/i;
-    const ASK_COMPARISON_TRAILER_RX = /\s+(?:for|to|when|while|during|tomorrow|today|tonight|this\s+\w+|next\s+\w+|which|that|who|whose)\b.*$/i;
+    const ASK_COMPARISON_TRAILER_RX = /\s+(?:for|to|when|while|during|tomorrow|today|tonight|this\s+\w+|next\s+\w+|which|that|who|whose|and|but)\b.*$/i;
     const ASK_COMPARISON_DECISION_WORDS = new Set([
       "upgrade", "upgrading", "downgrade", "downgrading", "update", "updating",
       "install", "installing", "uninstall", "reinstall", "wait", "waiting",
@@ -5725,8 +5740,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // diagrams also share). Each node now carries a two-line label
       // (name + seconds), and the extra rankSpacing/nodeSpacing keeps
       // the "retry" feedback curve clear of the boxes and their text.
+      // nodeSpacing in particular is the vertical gap (perpendicular to
+      // the LR flow) that the dotted EV->RT retry edge routes through
+      // below the main line; too small and its "retry" label sits on
+      // top of that line instead of clearly under it.
       return [
-        "%%{init: {'themeVariables': {'fontSize': '11px'}, 'flowchart': {'nodeSpacing': 55, 'rankSpacing': 70}}}%%",
+        "%%{init: {'themeVariables': {'fontSize': '11px'}, 'flowchart': {'nodeSpacing': 85, 'rankSpacing': 75}}}%%",
         "flowchart LR",
         `  RW("${label("rewriter", "Rewriter")}") --> RT("${label("retriever", "Retriever")}") --> EV("${label("evaluator", "Evaluator")}") --> OR("${label("orchestrator", "Orchestrator")}")`,
         "  EV -. retry .-> RT",
@@ -5745,6 +5764,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const { svg } = await window.mermaid.render("askWorkflowSvg" + mySeq, askWorkflowMermaidSource(askWorkflowState));
         if (mySeq !== askWorkflowRenderSeq) return; // a newer render already started
         el.innerHTML = svg;
+        // Mermaid stamps its own computed width as an inline
+        // style="max-width:NNNpx" on the <svg> it returns, which wins
+        // over .ask-workflow-diagram svg's external width:100% rule at
+        // equal specificity: inline beats an external stylesheet
+        // regardless of source order, so without this the diagram
+        // rendered narrower than its column instead of stretching to
+        // fill it. Clearing it lets the external rule actually apply.
+        const svgEl = el.querySelector("svg");
+        if (svgEl) svgEl.style.maxWidth = "none";
       } catch (e) {
         console.error("[ASK] workflow diagram failed to render:", e);
       }
