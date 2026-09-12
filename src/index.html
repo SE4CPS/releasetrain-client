@@ -1235,10 +1235,15 @@
        it didn't need to. min(900px, 96vw) uses that space, still capped
        so lines of text don't get uncomfortably long on a very wide
        monitor, and still shrinks correctly on narrow screens. */
+    /* Bottom slack trimmed from 16px to 8px (kept asymmetric with the
+       16px top gap on purpose): every extra px here directly shrinks
+       the box available for content before the "all closed" admin
+       panel needs to scroll at all, which matters more than a perfectly
+       even gap on both sides. */
     #usersView {
-      max-width: min(900px, 96vw); padding: 16px;
+      max-width: min(900px, 96vw); padding: 14px 16px;
       position: sticky; top: calc(var(--topbar-h) + 16px);
-      height: calc(100vh - var(--topbar-h) - 32px);
+      height: calc(100vh - var(--topbar-h) - 24px);
       overflow-y: auto; overscroll-behavior: contain;
     }
     @media (max-width: 640px) { #usersView { position: static; height: auto; overflow-y: visible; } }
@@ -1309,9 +1314,9 @@
        profile card itself ("the top box") per explicit request, so it's
        part of the one thing every visitor already looks at first. */
     .ua-profile-header {
-      display: flex; flex-direction: column; gap: 8px; padding: 12px 16px;
+      display: flex; flex-direction: column; gap: 6px; padding: 10px 14px;
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); margin-bottom: 10px;
+      border-radius: var(--radius); margin-bottom: 8px;
     }
     .ua-profile-header-top { display: flex; align-items: center; gap: 12px; }
     .ua-profile-info { display: flex; flex-direction: column; gap: 5px; flex: 1; }
@@ -1323,11 +1328,15 @@
       border-radius: var(--radius-sm); padding: 0.4rem 0.6rem; font-size: 12px;
       font-weight: 600;
     }
+    /* Six chips (accounts, queries, versions, CVEs, Reddit, StackOverflow,
+       stale bots, storage) wrap to 2-3 lines at any normal panel width;
+       a smaller font and tighter gap keep that wrap from costing as much
+       vertical space. */
     .ua-reg-stats {
-      display: flex; flex-wrap: wrap; gap: 4px 20px; font-size: 11px;
-      color: var(--muted); border-top: 1px solid var(--border); padding-top: 8px;
+      display: flex; flex-wrap: wrap; gap: 3px 14px; font-size: 10px;
+      color: var(--muted); border-top: 1px solid var(--border); padding-top: 6px;
     }
-    .ua-reg-stats strong { font-size: 13px; color: var(--text); }
+    .ua-reg-stats strong { font-size: 11px; color: var(--text); }
     .ua-reg-stats .ua-reg-stat-alert { color: var(--cve); }
     .ua-admin-header {
       /* flex-direction/text-align/justify-content spelled out explicitly:
@@ -1337,7 +1346,7 @@
          without this the row stacked vertically and centered instead of
          reading as one compact line (chevron, title, count, Refresh). */
       display: flex; flex-direction: row; align-items: center; text-align: left;
-      gap: 0.5rem; padding: 0.3rem 0;
+      gap: 0.5rem; padding: 0.25rem 0;
     }
     /* Each admin section is a <details>/<summary> using .ua-admin-header
        as the summary row; the global `summary { }` rule above hides the
@@ -2021,7 +2030,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.71.1">Releasetrain <em>v3.71.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.71.3">Releasetrain <em>v3.71.3</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3626,6 +3635,33 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-12</div>
+              <div class="cl-ver cl-ver-patch">v3.71.3</div>
+            </div>
+            <div class="cl-content">
+              <h3>More stats on the Account profile card; tighter admin panel</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The profile card's stat row now also shows Reddit and StackOverflow document counts (new <code>stackoverflowTotal</code> field on <code>GET /api/admin/overview</code>; <code>redditTotal</code> no longer double-counts stackoverflow.py's posts, which share the same collection). "Bots stale" now reads as a fraction of the total tracked bots (e.g. "0/9") instead of a bare count with no denominator.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Smaller font and tighter gaps on the stat row now that it holds more chips. Trimmed remaining padding/margin in the profile card and each admin section's closed row, and gave <code>#usersView</code>'s own box a few more px of height (bottom slack 16px &rarr; 8px), so the "all admin sections closed" state fits without scrolling on more screens.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-12</div>
+              <div class="cl-ver cl-ver-patch">v3.71.2</div>
+            </div>
+            <div class="cl-content">
+              <h3>"Latest version" for a component picked the wrong branch</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> A product with several concurrently-maintained branches (e.g. Python's 3.12/3.13/3.14) posts patches to each on its own schedule, so the most recently-dated release isn't necessarily the highest version number: an older branch's patch can land after a newer branch's. <code>fetchLatestVersionFor</code> (the feed group header's "(latest: X, Nd ago)" bracket and the Ask suggestion dropdown's own bracket) was taking the first non-CVE entry in <code>/api/c/name/:name</code>'s date-sorted list, so it showed Python's latest as "3.12.14" (dated after 3.14.7) instead of the real latest, 3.14.7. Now picks the max by actual version number instead. The server-side counterpart (<code>/api/v/d/versionsByComponent</code>, used by the Account page's Installed Versions drift check) had the identical bug and is fixed the same way.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -6324,13 +6360,31 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           const data = await res.json();
           const list = Object.values(data)[0];
           // /api/c/name/:name is sorted by versionReleaseDate (real
-          // release date), but a CVE record can share that same date, or
-          // an even more recent one, and still isn't itself a release
-          // (verified live: "Android"'s own top result was a Samsung CVE
-          // patch version, "20.1.00", not any real Android OS version).
-          // The first non-CVE entry in that date order is the real one.
-          const real = Array.isArray(list) ? list.find(v => !v.isCve) : null;
-          if (real && real.versionNumber) result = { version: real.versionNumber, date: real.versionReleaseDate || null };
+          // release date), but that's not the same as "the highest
+          // version": a CVE record can share/exceed a real release's date
+          // (excluded below via !v.isCve), and separately, a product with
+          // several concurrently-maintained branches (e.g. Python's
+          // 3.12/3.13/3.14) can post an older branch's patch after a
+          // newer branch's, so the first non-CVE, most-recently-dated
+          // entry isn't necessarily the actual highest version (verified
+          // live: Python's own top result this way was "3.12.14," dated
+          // after 3.14.7 even though 3.14 is the newer branch). Pick the
+          // max by real version number instead, same numeric-split
+          // comparison as aVerGap's own parser here and
+          // compareVersionsNumeric in the server's app.js; keep all three
+          // in sync.
+          const nonCve = Array.isArray(list) ? list.filter(v => !v.isCve) : [];
+          const parseVer = s => String(s || "").split(/[^0-9]+/).filter(Boolean).map(Number);
+          const best = nonCve.reduce((top, v) => {
+            if (!top) return v;
+            const pv = parseVer(v.versionNumber), pt = parseVer(top.versionNumber);
+            for (let i = 0; i < Math.max(pv.length, pt.length); i++) {
+              const d = (pv[i] || 0) - (pt[i] || 0);
+              if (d !== 0) return d > 0 ? v : top;
+            }
+            return (v.versionReleaseDate || "") > (top.versionReleaseDate || "") ? v : top;
+          }, null);
+          if (best && best.versionNumber) result = { version: best.versionNumber, date: best.versionReleaseDate || null };
         }
       } catch { /* leave result null; a missing bracket beats a broken dropdown */ }
       componentLatestVersionCache.set(key, result);
@@ -11704,6 +11758,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       }
       const q = queries || { total: 0, last7Days: 0 };
       const c = counts || {};
+      // "N stale" alone doesn't say how many bots exist at all; showing
+      // it as a fraction of the total (stale + healthy + no-data, the
+      // same set BOT_HEALTH_CADENCE_DAYS tracks) reads the same whether
+      // it's 0 stale or all of them.
+      const botsTotal = botHealth
+        ? (botHealth.stale || []).length + (botHealth.healthy || []).length + (botHealth.noData || []).length
+        : null;
       const staleCount = botHealth ? (botHealth.stale || []).length : null;
       const storagePct = storage ? Math.round((storage.pct || 0) * 100) : null;
       statsEl.innerHTML = [
@@ -11711,8 +11772,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         `<span><strong>${q.total}</strong> queries <span class="ua-muted">(+${q.last7Days}/7d)</span></span>`,
         Number.isFinite(c.versionsTotal) ? `<span><strong>${c.versionsTotal.toLocaleString()}</strong> versions tracked</span>` : "",
         Number.isFinite(c.cveTotal) ? `<span><strong>${c.cveTotal.toLocaleString()}</strong> CVEs</span>` : "",
+        Number.isFinite(c.redditTotal) ? `<span><strong>${c.redditTotal.toLocaleString()}</strong> Reddit</span>` : "",
+        Number.isFinite(c.stackoverflowTotal) ? `<span><strong>${c.stackoverflowTotal.toLocaleString()}</strong> StackOverflow</span>` : "",
         staleCount != null
-          ? `<span class="${staleCount ? "ua-reg-stat-alert" : ""}"><strong>${staleCount}</strong> bot${staleCount === 1 ? "" : "s"} stale</span>`
+          ? `<span class="${staleCount ? "ua-reg-stat-alert" : ""}"><strong>${staleCount}/${botsTotal}</strong> bots stale</span>`
           : "",
         storagePct != null ? `<span class="${storagePct >= 90 ? "ua-reg-stat-alert" : ""}"><strong>${storagePct}%</strong> storage used</span>` : "",
       ].filter(Boolean).join("");
@@ -11758,7 +11821,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         <div class="ua-dash-card">
           <div class="ua-dash-card-label">Collection totals</div>
           <div class="ua-dash-card-value">${counts.versionsTotal}</div>
-          <div class="ua-dash-card-sub">${counts.cveTotal} CVE · ${counts.releaseNotesTotal} release · ${counts.redditTotal} reddit</div>
+          <div class="ua-dash-card-sub">${counts.cveTotal} CVE · ${counts.releaseNotesTotal} release · ${counts.redditTotal} reddit · ${counts.stackoverflowTotal} SO</div>
         </div>`;
 
       botsEl.innerHTML = uaRenderBotGroups(botHealth) ||
