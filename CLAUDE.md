@@ -1,0 +1,50 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository
+(the `releasetrain-client` frontend — a single large `src/index.html`).
+
+## Keeping this file current
+
+**When the user gives an instruction that's a reusable correction or general convention (not a one-off
+for the task at hand), add it here as a documented rule in the same turn, without waiting to be asked
+separately.** Use judgment on what counts as reusable versus a one-off content edit. This file should
+always reflect the current, real conventions of the repo, not lag behind what's actually been established.
+
+## Standing conventions
+
+- **Every commit bumps the version and adds a changelog entry.** The version string appears in two spots
+  in `src/index.html`: the `<a class="brand" ... data-app-version="X.Y.Z">` header tag, and a new
+  `.cl-release` block at the top of the in-app changelog list (`.cl-ver-minor` for a feature, `.cl-ver-patch`
+  for a fix/tweak — reuse whichever existing `cl-tag-*` classes fit: `feat`/`fix`/`ux`/`perf`/`docs`).
+  Never skip this, even for a small fix.
+- **No dash used as emphasis** in code, comments, commit messages, or user-visible copy — split into two
+  sentences or use a colon/semicolon/comma instead. Legitimate uses stay: arithmetic
+  (`Date.now() - t.startedAt`), numeric ranges, hyphenated compound words. Sweep the diff before every
+  commit: `git diff -U0 -- src/index.html | grep -E '^\+' | grep ' - '` (exclude legitimate arithmetic by eye).
+- **Commit directly to `master`** — no feature-branch workflow unless asked.
+- **State exact pull/restart instructions after every push** (this is served live).
+- **Keep server/client duplicate logic in sync by hand, with a comment noting the duplication.** E.g. the
+  comparison-question entity-extraction regexes (`ASK_COMPARISON_LEADIN_RX`/`ASK_COMPARISON_TRAILER_RX`
+  here mirror `COMPARISON_LEADIN_RX`/`COMPARISON_TRAILER_RX` in `releasetrain-server/src/ask.js`) — when
+  fixing one side, check whether the other needs the identical fix.
+- **Mermaid gotchas** (the Ask agentic-workflow diagram uses Mermaid):
+  - Mermaid stamps an inline `style="max-width:NNNpx"` on the `<svg>` it renders, which overrides an
+    external CSS `width:100%` rule at equal specificity regardless of source order — clear
+    `svgEl.style.maxWidth = "none"` after inserting the rendered SVG if it needs to stretch to fill its
+    container.
+  - A `%%{init: {...}}%%` directive as the first line of a diagram's source scopes that config to just
+    that one render, not the global `mermaid.initialize()` call — other Mermaid usages on the page
+    (e.g. the docs view) are unaffected.
+  - A compact `flowchart LR` with a feedback/back-edge (e.g. a dotted "retry" edge) can visually overlap
+    the main flow line; tune `flowchart.nodeSpacing`/`rankSpacing` in the init directive to give it room.
+- **Mobile responsiveness matters** — this app is used on phones; check any layout change against a
+  narrow viewport, especially anything using `position:sticky`/fixed heights on desktop that might trap
+  scrolling content on mobile (e.g. the feed panel's mobile scroll fix).
+- **Keep it simple when adding UI, per explicit user direction** ("keep it simple but good") — don't
+  over-build a feature beyond what was asked.
+
+## Related repos
+
+- `releasetrain-server` — the Node/Express API this client calls; `src/ask.js` holds the Ask
+  pipeline/comparison logic this file has regex mirrors of.
+- `releasetrain-bot` — the Python scraper/maintainer scripts populating the data this client displays.
