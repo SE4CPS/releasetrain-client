@@ -1398,6 +1398,16 @@
          reading as one compact line (chevron, title, count, Refresh). */
       display: flex; flex-direction: row; align-items: center; text-align: left;
       gap: 0.5rem; padding: 0.25rem 0;
+      /* A row with a Refresh button (font-size:12px, padding:4px 10px,
+         1px border) is taller than a plain text-only row (Change
+         password, Model provider keys, Organization namespaces), so
+         the two kinds of rows read as different heights side by side.
+         min-height matches that button's own outer height (12px
+         line-height + 8px padding + 2px border); align-items:center
+         (already set above) then centers a text-only row's shorter
+         content within the same guaranteed height instead of it
+         shrinking to fit. */
+      min-height: 22px;
     }
     /* Each admin section is a <details>/<summary> using .ua-admin-header
        as the summary row; the global `summary { }` rule above hides the
@@ -2081,7 +2091,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.72.3">Releasetrain <em>v3.72.3</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.72.4">Releasetrain <em>v3.72.4</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3691,6 +3701,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-12</div>
+              <div class="cl-ver cl-ver-patch">v3.72.4</div>
+            </div>
+            <div class="cl-content">
+              <h3>Even row height across every admin section</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> A closed admin row with a Refresh button (Bookmarks, Installed versions, System overview, All users, Search &amp; Ask activity) was visibly taller than a plain text-only one (Change password, Model provider keys, Organization namespaces), since the button's own padding and border added height the plain rows never had. <code>.ua-admin-header</code> now has a <code>min-height</code> matching the button's own outer height, so every row reads at the same height whether or not it has one.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
