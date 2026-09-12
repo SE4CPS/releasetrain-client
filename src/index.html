@@ -456,27 +456,21 @@
     .ask-modal-header strong { flex: 1; font-size: 14px; line-height: 1.4; }
     .ask-compare-grid { display: flex; flex-wrap: wrap; gap: 12px; }
     .ask-compare-grid .ask-answer-card { flex: 1 1 240px; min-width: 0; }
-    /* The "what they do/don't do" legend shown above the 5 cards in
-       Compare mode; see askCompareLegendHTML(). Kept compact and
-       scrollable on its own axis (a 6-column technical table is wider
-       than most screens) rather than letting it force the whole modal
-       wider or wrap awkwardly. */
-    .ask-compare-legend-wrap { overflow-x: auto; margin-bottom: 14px; }
-    .ask-compare-legend {
-      width: 100%; min-width: 760px; border-collapse: collapse; font-size: 11.5px;
+    /* The "what they do/don't do" legend shown in Compare mode's
+       Benchmark tab; see askCompareLegendHTML(). A stacked list, not a
+       table with a horizontal-scroll fallback: every line wraps to fit
+       whatever width it's given (rail column, narrow-screen modal, or a
+       phone), no minimum width to force a scrollbar. */
+    .ask-legend-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px; }
+    .ask-legend-item {
+      border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 10px;
+      font-size: 11.5px;
     }
-    .ask-compare-legend th, .ask-compare-legend td {
-      border: 1px solid var(--border); padding: 6px 8px; text-align: left;
-      vertical-align: top; line-height: 1.45;
-    }
-    .ask-compare-legend th {
-      background: var(--chip-bg); font-weight: 700; font-size: 10.5px;
-      text-transform: uppercase; letter-spacing: .3px;
-    }
-    .ask-compare-legend td:first-child { font-weight: 700; white-space: nowrap; }
-    .ask-compare-legend td.ask-cy { color: var(--ok); }
-    .ask-compare-legend td.ask-cn { color: var(--muted); }
-    .ask-compare-legend td.ask-ex { font-family: var(--mono); font-size: 10.5px; }
+    .ask-legend-name { font-weight: 700; margin-bottom: 4px; }
+    .ask-legend-facts { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 6px; font-size: 10.5px; }
+    .ask-legend-example { font-family: var(--mono); font-size: 10.5px; line-height: 1.5; color: var(--muted); }
+    .ask-cy { color: var(--ok); }
+    .ask-cn { color: var(--muted); }
     /* Compare mode's Benchmark tab: a CSS-grid block, not a real <table> -
        a genuine 4-column table doesn't fit the rail's ~360px column (see
        askRenderBenchmarkTable's own comment), so each pipeline gets a
@@ -1228,14 +1222,20 @@
     /* ── No view scrolls the whole page (or its own panel) sideways ──
        Each of these containers sets overflow-y:auto, which per the CSS
        spec silently promotes overflow-x to auto as well, so any child a
-       few px too wide (a long unbreakable token, a wide admin table)
-       drops a horizontal scrollbar across the entire view. Pin
-       overflow-x to hidden on the container; content that genuinely
-       needs the width (the admin search-events table) gets its own
-       overflow-x:auto box so its columns stay reachable by scrolling
-       within that box, not by scrolling the view. */
+       few px too wide (a long unbreakable token) drops a horizontal
+       scrollbar across the entire view. Pin overflow-x to hidden on the
+       container; a piece of content that genuinely can't reflow (a wide
+       diagram, a code block) gets its own small overflow-x:auto box
+       instead, so any scroll stays contained to it, never the view. */
     #usersView, #feedPanel, #changelogView, #dashboardView,
     #networkView, #docsView, #ackView { overflow-x: hidden; }
+    /* #ua-se-list keeps a defensive overflow-x:auto box here for the
+       admin search-events table even though that table now uses a fixed
+       percentage-column layout (see .ua-se-table's own comment) that
+       guarantees it fits its container at any width; the box stays as a
+       fallback (an unusually long unbroken token slipping past ellipsis
+       truncation, say) rather than something expected to actually
+       engage. */
     #ua-se-list { overflow-x: auto; overflow-y: hidden; }
     .ua-tabs {
       display: flex; border-bottom: 2px solid var(--border); margin-bottom: 0;
@@ -1309,12 +1309,25 @@
     }
     details[open] > .ua-admin-header::before { transform: rotate(90deg); }
     #ua-search-events-section { margin-top: 24px; }
-    .ua-se-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
-    .ua-se-table th { text-align: left; padding: 6px 8px; border-bottom: 2px solid var(--border); color: var(--muted); font-weight: 600; white-space: nowrap; }
-    .ua-se-table td { padding: 5px 8px; border-bottom: 1px solid var(--border); vertical-align: top; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    /* table-layout: fixed + percentage columns, not a content-driven
+       auto layout: a per-cell max-width alone only caps how wide ONE
+       cell can grow, it doesn't stop the four columns' natural content
+       widths from summing past the container on a narrow phone. Fixed
+       layout makes each column exactly its declared % of the table's
+       own width (which is 100% of its container) regardless of content,
+       so the row can never be wider than the space it's given; no
+       horizontal scroll needed at any width, only the existing
+       ellipsis/nowrap truncation inside each now-guaranteed-narrow cell. */
+    .ua-se-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+    .ua-se-table th { text-align: left; padding: 6px 8px; border-bottom: 2px solid var(--border); color: var(--muted); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ua-se-table td { padding: 5px 8px; border-bottom: 1px solid var(--border); vertical-align: top; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .ua-se-table tr:last-child td { border-bottom: none; }
+    .ua-se-table th:nth-child(1), .ua-se-table td:nth-child(1) { width: 16%; }
+    .ua-se-table th:nth-child(2), .ua-se-table td:nth-child(2) { width: 44%; }
+    .ua-se-table th:nth-child(3), .ua-se-table td:nth-child(3) { width: 24%; }
+    .ua-se-table th:nth-child(4), .ua-se-table td:nth-child(4) { width: 16%; }
     .ua-se-anon { color: var(--muted); font-style: italic; }
-    @media (max-width: 640px) { .ua-se-table td:nth-child(5), .ua-se-table th:nth-child(5) { display: none; } }
+    @media (max-width: 640px) { .ua-se-table { font-size: 11px; } }
     .ua-se-type { font-size: 11px; white-space: nowrap; }
     .ua-se-type-ask { color: var(--brand); font-weight: 600; }
     .ua-user-row {
@@ -1343,6 +1356,13 @@
       width: 80px; padding: 4px 6px; border: 1px solid var(--border); border-radius: var(--radius-sm);
       font: inherit; font-size: 13px; background: var(--bg); color: var(--text);
     }
+    /* An enum setting's <select> needs real width for its longer option
+       labels (e.g. "Multi-agent (feedback loop)"); the 80px default above
+       (sized for a short number input) would just clip the closed-state
+       text. A boolean setting's checkbox needs the opposite: its
+       intrinsic small square, not a stretched 80px-wide box. */
+    select.ua-settings-input { width: auto; max-width: 100%; }
+    .ua-settings-checkbox { width: 18px; height: 18px; padding: 0; accent-color: var(--brand); cursor: pointer; }
     .ua-topbar-chip {
       font-size: 12px; font-weight: 600; white-space: nowrap;
       color: var(--brand); background: var(--brand-light);
@@ -1936,7 +1956,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.67.0">Releasetrain <em>v3.67.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.68.0">Releasetrain <em>v3.68.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3535,6 +3555,36 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-11</div>
+              <div class="cl-ver cl-ver-minor">v3.68.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>View-visibility menu toggles; consistent collapsible sections; narrower admin table</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> New admin Settings toggles for each optional nav-menu view (Graph/Arch/CVE/Risk Report/Docs/Changelog/Credits/Release): turn one off and its menu link disappears for everyone. Home and Account can't be hidden, to keep core navigation and admin access always reachable.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Change password, Model provider keys, Organization namespaces, Bookmarks, and Installed versions are now the same closed-by-default collapsible design as System overview/Settings/All users/Search &amp; Ask activity, instead of a different always-open card style, so the Account page is shorter overall and reachable without scrolling past several open sections first.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Search &amp; Ask activity table: removed the User agent column, timestamps now show as "3d ago" instead of a full date/time, and the table switched to a fixed percentage-column layout so it fits its container at any width instead of occasionally needing its own horizontal scroll.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Compare mode's pipeline legend (Benchmark tab) no longer needs horizontal scroll either: replaced the old 6-column min-width table with a stacked list that reflows to any width.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-11</div>
+              <div class="cl-ver cl-ver-patch">v3.67.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Compare mode: no more horizontal scroll on the pipeline legend</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The Benchmark tab's "What do these pipelines do?" legend was a 6-column table (min-width 760px) that only fit with its own horizontal scrollbar, wider than the answer rail, the narrow-screen modal, and most phones. Replaced with a stacked list: each pipeline's name, a wrapping row of yes/no fact chips, and its example, all reflowing to fit any width instead of needing to scroll sideways.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Admin Search &amp; Ask activity table tightened further on mobile (smaller cell width/font) so its own self-contained scroll box is needed as rarely as possible.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-11</div>
               <div class="cl-ver cl-ver-minor">v3.67.0</div>
             </div>
             <div class="cl-content">
@@ -5032,11 +5082,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             </div>
             <button id="ua-logout-btn" class="btn btn-ghost">Sign out</button>
           </div>
-          <div class="ua-card" style="margin-bottom:14px">
-            <details>
-              <summary style="cursor:pointer;font-weight:700;font-size:13px;list-style:none;display:flex;align-items:center;gap:5px">
-                <span style="font-size:11px;color:var(--muted)">›</span> Change password
-              </summary>
+          <details class="ua-admin-details" style="margin-bottom:14px">
+            <summary class="ua-admin-header">
+              <span style="font-weight:700;font-size:13px">Change password</span>
+            </summary>
               <form id="ua-pw-form" style="margin-top:14px">
                 <div id="ua-pw-error" class="ua-msg ua-msg-error" style="display:none"></div>
                 <div id="ua-pw-ok" class="ua-msg ua-msg-ok" style="display:none"></div>
@@ -5046,14 +5095,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                 </div>
                 <button class="btn btn-primary" type="submit">Update password</button>
               </form>
-            </details>
-          </div>
+          </details>
           <!-- Model provider keys (bring your own) -->
-          <div class="ua-card" style="margin-bottom:14px">
-            <details>
-              <summary style="cursor:pointer;font-weight:700;font-size:13px;list-style:none;display:flex;align-items:center;gap:5px">
-                <span style="font-size:11px;color:var(--muted)">›</span> Model provider keys <span class="ua-opt" style="font-weight:400;font-size:12px">(use your own instead of the shared server key)</span>
-              </summary>
+          <details class="ua-admin-details" style="margin-bottom:14px">
+            <summary class="ua-admin-header">
+              <span style="font-weight:700;font-size:13px">Model provider keys</span>
+              <span class="ua-opt" style="font-weight:400;font-size:12px">(use your own instead of the shared server key)</span>
+            </summary>
               <div style="margin-top:14px">
                 <div id="ua-keys-error" class="ua-msg ua-msg-error" style="display:none"></div>
                 <div id="ua-keys-ok" class="ua-msg ua-msg-ok" style="display:none"></div>
@@ -5080,14 +5128,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                   </div>
                 </div>
               </div>
-            </details>
-          </div>
+          </details>
           <!-- Org namespaces -->
-          <div class="ua-card" style="margin-bottom:14px">
-            <details>
-              <summary style="cursor:pointer;font-weight:700;font-size:13px;list-style:none;display:flex;align-items:center;gap:5px">
-                <span style="font-size:11px;color:var(--muted)">›</span> Organization namespaces <span class="ua-opt" style="font-weight:400;font-size:12px">(appear in share links)</span>
-              </summary>
+          <details class="ua-admin-details" style="margin-bottom:14px">
+            <summary class="ua-admin-header">
+              <span style="font-weight:700;font-size:13px">Organization namespaces</span>
+              <span class="ua-opt" style="font-weight:400;font-size:12px">(appear in share links)</span>
+            </summary>
               <div style="margin-top:14px">
                 <div id="ua-org-error" class="ua-msg ua-msg-error" style="display:none"></div>
                 <div id="ua-org-ok" class="ua-msg ua-msg-ok" style="display:none"></div>
@@ -5102,27 +5149,26 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                 </div>
                 <button class="btn btn-primary" type="button" id="ua-org-save-btn">Save namespaces</button>
               </div>
-            </details>
-          </div>
+          </details>
           <!-- Bookmarks -->
-          <div class="ua-card" style="margin-bottom:14px">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <details class="ua-admin-details" style="margin-bottom:14px">
+            <summary class="ua-admin-header">
               <span style="font-weight:700;font-size:13px">Bookmarks</span>
               <span id="ua-bm-count" class="ua-muted" style="font-size:12px"></span>
               <button id="ua-bm-refresh" class="btn btn-ghost" style="font-size:12px;padding:4px 10px;margin-left:auto">Refresh</button>
-            </div>
-            <p class="ua-muted" style="font-size:12px;margin:0 0 6px">Save searches using the 🔖 button in the sidebar. Share links are public.</p>
+            </summary>
+            <p class="ua-muted" style="font-size:12px;margin:8px 0 6px">Save searches using the 🔖 button in the sidebar. Share links are public.</p>
             <div id="ua-bm-empty" class="ua-muted" style="font-size:12px;display:none">No bookmarks yet.</div>
             <div id="ua-bm-list" class="ua-bm-list"></div>
-          </div>
+          </details>
           <!-- Installed versions -->
-          <div class="ua-card" style="margin-bottom:14px">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <details class="ua-admin-details" style="margin-bottom:14px">
+            <summary class="ua-admin-header">
               <span style="font-weight:700;font-size:13px">Installed versions</span>
               <span id="ua-inv-count" class="ua-muted" style="font-size:12px"></span>
               <button id="ua-inv-refresh" class="btn btn-ghost" style="font-size:12px;padding:4px 10px;margin-left:auto">Refresh</button>
-            </div>
-            <p class="ua-muted" style="font-size:12px;margin:0 0 8px">Record the versions you actually run. The Arch view compares them against the latest release to show how far each component has drifted. <span style="opacity:.8">Saved to your account, so it follows you across devices.</span></p>
+            </summary>
+            <p class="ua-muted" style="font-size:12px;margin:8px 0 8px">Record the versions you actually run. The Arch view compares them against the latest release to show how far each component has drifted. <span style="opacity:.8">Saved to your account, so it follows you across devices.</span></p>
             <div id="ua-inv-msg" class="ua-msg" style="display:none"></div>
             <form id="ua-inv-add-form" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
               <input id="ua-inv-comp" list="ua-comp-names" class="search-input" placeholder="component (e.g. apache)" maxlength="64" autocomplete="off" required style="flex:1 1 150px;min-width:0" />
@@ -5142,7 +5188,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             </details>
             <div id="ua-inv-empty" class="ua-muted" style="font-size:12px;display:none">No versions recorded yet.</div>
             <div id="ua-inv-list" class="ua-bm-list"></div>
-          </div>
+          </details>
           <!-- Admin: all users -->
           <div id="ua-admin-section" style="display:none">
             <!-- Always visible (not inside a closed <details> like the
@@ -5484,6 +5530,27 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     const $ = s => document.querySelector(s);
     const $$ = s => Array.from(document.querySelectorAll(s));
+
+    // View visibility: which nav-menu links are enabled, admin-
+    // configurable (see the admin Settings section's viewXVisible
+    // entries and app.js's TOGGLEABLE_VIEWS/setViewVisibility). A public
+    // endpoint, not one of the admin-only /api/admin/settings routes -
+    // every visitor's nav depends on this, not just admins. Hides the
+    // <a> itself rather than blocking the view's own switch logic,
+    // matching the literal request ("toggle the view option... from the
+    // menu"); navigating a hidden view's own #/hash route directly still
+    // works. "Home" and "Account" are never in this list (see the
+    // server's own comment on why), so they're always shown.
+    const VIEW_NAV_LINKS = {
+      viewGraphVisible: "graphLink", viewArchVisible: "archLink", viewCveVisible: "cveLink",
+      viewDashboardVisible: "dashboardLink", viewDocsVisible: "docsLink", viewChangelogVisible: "changelogLink",
+      viewAckVisible: "ackLink", viewNetworkVisible: "networkLink",
+    };
+    fetch(API_BASE + "views/visibility").then(r => r.ok ? r.json() : {}).then(flags => {
+      for (const [key, elId] of Object.entries(VIEW_NAV_LINKS)) {
+        if (flags[key] === false && EL[elId]) EL[elId].style.display = "none";
+      }
+    }).catch(() => { /* nav just shows every link, same as before this existed */ });
 
     /* ── Topbar scroll shadow ─────────────────────────────────── */
     const topbarEl = document.getElementById("topbar");
@@ -6532,30 +6599,32 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         example: "Same 4 separate calls as delegated, but if the Evaluator judges the first pass insufficient, it sends the Retriever back for one more, targeted search before answering.",
       },
     ];
+    // A stacked list, not a real <table>: a genuine 6-column table only
+    // fits with its own horizontal scrollbar (min-width 760px, wider than
+    // the answer rail, the narrow-screen modal, and most phones), and this
+    // repo avoids horizontal scroll wherever a layout can reasonably be
+    // made to reflow instead. Each pipeline gets its own name, a
+    // fact-chip row (label: yes/no, wraps naturally at any width instead
+    // of forcing a scrollbar), and the example paragraph below it.
     function askCompareLegendHTML() {
-      const cell = (yes) => yes
-        ? '<td class="ask-cy">&check; yes</td>'
-        : '<td class="ask-cn">&mdash; no</td>';
-      const rows = ASK_COMPARE_LEGEND_ROWS.map((r) => (
-        "<tr>" +
-        `<td>${uaEsc(r.name)}</td>` +
-        cell(r.rewrite) + cell(r.union) + cell(r.delegated) + cell(r.feedback) +
-        `<td class="ask-ex">${uaEsc(r.example)}</td>` +
-        "</tr>"
-      )).join("");
-      return (
-        '<div class="ask-compare-legend-wrap">' +
-        '<table class="ask-compare-legend">' +
-        "<thead><tr>" +
-        "<th>Pipeline</th><th>Rewrites query</th><th>Searches union of original + rewrite</th>" +
-        "<th>Real agent delegation</th><th>Feedback loop retry</th><th>Example</th>" +
-        "</tr></thead>" +
-        `<tbody>${rows}</tbody>` +
-        "</table></div>"
-      );
+      const fact = (label, yes) =>
+        `<span class="ask-legend-fact">${uaEsc(label)}: ${yes ? '<span class="ask-cy">&check; yes</span>' : '<span class="ask-cn">&mdash; no</span>'}</span>`;
+      const items = ASK_COMPARE_LEGEND_ROWS.map((r) => `
+        <div class="ask-legend-item">
+          <div class="ask-legend-name">${uaEsc(r.name)}</div>
+          <div class="ask-legend-facts">
+            ${fact("Rewrites query", r.rewrite)}
+            ${fact("Searches union", r.union)}
+            ${fact("Real delegation", r.delegated)}
+            ${fact("Feedback retry", r.feedback)}
+          </div>
+          <div class="ask-legend-example">${uaEsc(r.example)}</div>
+        </div>`
+      ).join("");
+      return `<div class="ask-legend-list">${items}</div>`;
     }
 
-    // A CSS-grid block, not a real <table> — a genuine 4-column table
+    // A CSS-grid block, not a real <table>: a genuine 4-column table
     // doesn't fit the ~360px answer rail (see ASK_RAIL_MIN_WIDTH's own
     // comment), so each pipeline gets a compact 3-cell header row
     // (name/time/source count) plus a full-width answer row beneath it.
@@ -11500,6 +11569,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           { value: "large", label: "Large" },
         ],
       },
+      // View visibility: which nav-menu links show up at all, server-
+      // validated against the same TOGGLEABLE_VIEWS list app.js keys off
+      // (see setViewVisibility). "Home" and "Account" aren't offered
+      // here for the same reason the server won't accept them: hiding
+      // either breaks core navigation or can lock an admin out of this
+      // very panel.
+      viewGraphVisible: { label: "Show Graph in the menu", type: "boolean" },
+      viewArchVisible: { label: "Show Arch in the menu", type: "boolean" },
+      viewCveVisible: { label: "Show CVE in the menu", type: "boolean" },
+      viewDashboardVisible: { label: "Show Risk Report in the menu", type: "boolean" },
+      viewDocsVisible: { label: "Show Docs in the menu", type: "boolean" },
+      viewChangelogVisible: { label: "Show Changelog in the menu", type: "boolean" },
+      viewAckVisible: { label: "Show Credits in the menu", type: "boolean" },
+      viewNetworkVisible: { label: "Show Release in the menu", type: "boolean" },
     };
     async function uaLoadSettings() {
       const listEl = document.getElementById("ua-settings-list");
@@ -11519,11 +11602,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       listEl.innerHTML = keys.map(key => {
         const meta = UA_SETTINGS_META[key] || {};
         const value = settings[key];
-        // A fixed-choice value (meta.options) renders as a <select> so an
-        // admin can't type an invalid string the server would just
-        // silently reject; a plain finite number is a number input;
-        // anything else falls back to free text.
-        const inputHtml = Array.isArray(meta.options)
+        // meta.type === "boolean" renders a checkbox; a fixed-choice
+        // value (meta.options) renders a <select> so an admin can't type
+        // an invalid string the server would just silently reject; a
+        // plain finite number is a number input; anything else falls
+        // back to free text.
+        const inputHtml = meta.type === "boolean"
+          ? `<input type="checkbox" class="ua-settings-input ua-settings-checkbox" data-key="${uaEsc(key)}"${value ? " checked" : ""}>`
+          : Array.isArray(meta.options)
           ? `<select class="ua-settings-input" data-key="${uaEsc(key)}">${meta.options.map(o =>
               `<option value="${uaEsc(o.value)}"${o.value === value ? " selected" : ""}>${uaEsc(o.label)}</option>`
             ).join("")}</select>`
@@ -11545,7 +11631,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           const key = btn.dataset.key;
           const input = listEl.querySelector(`.ua-settings-input[data-key="${CSS.escape(key)}"]`);
           if (!input) return;
-          const raw = input.type === "number" ? Number(input.value) : input.value;
+          const raw = input.type === "checkbox" ? input.checked : input.type === "number" ? Number(input.value) : input.value;
           btn.disabled = true;
           const prevText = btn.textContent;
           btn.textContent = "Saving…";
@@ -11558,7 +11644,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             // recognizes; see setAskRuntimeSettings in ask.js), so the
             // input reflects what actually took effect, not necessarily
             // the raw value just submitted.
-            if (Number.isFinite(applied[key]) || typeof applied[key] === "string") input.value = applied[key];
+            if (input.type === "checkbox" && typeof applied[key] === "boolean") input.checked = applied[key];
+            else if (Number.isFinite(applied[key]) || typeof applied[key] === "string") input.value = applied[key];
             btn.textContent = "Saved";
             setTimeout(() => { btn.textContent = prevText; btn.disabled = false; }, 1200);
           } catch (err) {
@@ -12003,11 +12090,29 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         return;
       }
       const esc = s => String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+      // Relative instead of a full timestamp: shorter (helps the table
+      // stay narrow enough to never need its own horizontal scroll, see
+      // .ua-se-table's own comment), and "3d ago" reads faster than a
+      // full date/time for a list sorted newest-first anyway. The exact
+      // timestamp is still the row's title attribute for anyone who
+      // needs it precisely.
+      const relTime = (iso) => {
+        if (!iso) return "";
+        const ms = Date.now() - new Date(iso).getTime();
+        if (ms < 0) return "just now";
+        const min = Math.floor(ms / 60000);
+        if (min < 1) return "just now";
+        if (min < 60) return min + "m ago";
+        const hr = Math.floor(min / 60);
+        if (hr < 24) return hr + "h ago";
+        const day = Math.floor(hr / 24);
+        if (day < 30) return day + "d ago";
+        return new Date(iso).toISOString().slice(0, 10);
+      };
       listEl.innerHTML = `<table class="ua-se-table">
-        <thead><tr><th>Type</th><th>Query / prompt</th><th>User</th><th>Time</th><th>User agent</th></tr></thead>
+        <thead><tr><th>Type</th><th>Query / prompt</th><th>User</th><th>Time</th></tr></thead>
         <tbody>` +
         events.map(e => {
-          const t = e.timestamp ? new Date(e.timestamp).toLocaleString() : "";
           const isAsk = e.kind === "ask";
           // A real Ask prompt is a full sentence, not a comma-separated
           // list of component names — normalizeQuery is built for the
@@ -12029,8 +12134,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <td style="white-space:nowrap">${typeCell}</td>
             <td title="${esc(q)}">${esc(q)}</td>
             <td>${userCell}</td>
-            <td style="white-space:nowrap">${esc(t)}</td>
-            <td title="${esc(e.userAgent)}">${esc((e.userAgent || "").slice(0, 60))}</td>
+            <td style="white-space:nowrap" title="${esc(e.timestamp ? new Date(e.timestamp).toLocaleString() : "")}">${esc(relTime(e.timestamp))}</td>
           </tr>`;
         }).join("") +
         `</tbody></table>`;

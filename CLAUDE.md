@@ -37,9 +37,24 @@ always reflect the current, real conventions of the repo, not lag behind what's 
     (e.g. the docs view) are unaffected.
   - A compact `flowchart LR` with a feedback/back-edge (e.g. a dotted "retry" edge) can visually overlap
     the main flow line; tune `flowchart.nodeSpacing`/`rankSpacing` in the init directive to give it room.
-- **Mobile responsiveness matters** — this app is used on phones; check any layout change against a
-  narrow viewport, especially anything using `position:sticky`/fixed heights on desktop that might trap
-  scrolling content on mobile (e.g. the feed panel's mobile scroll fix).
+- **GLOBAL RULE — avoid scrolling wherever it isn't actually necessary (mobile's own page scroll is the
+  normal exception); never scroll horizontally, anywhere, at any width.** Favor a layout that reflows
+  (stacks, wraps, shrinks) over one that's fixed-width and needs a scrollbar to reach the rest of it — this
+  applies at every width, not just mobile, but check mobile specifically since a narrow viewport is where a
+  fixed-width layout hits this first. When a piece of content genuinely can't reflow (a wide technical
+  table, a diagram, a code block — the standard exception, same as the Teaching-lab repo's own
+  `artifact-design` convention), give *that element itself* its own small `overflow-x:auto` box so the
+  scroll stays contained to it, never the page or view around it. Before reaching for that exception, ask
+  whether the content could instead become a stacked list/CSS-grid block — see `askRenderBenchmarkTable`'s
+  comment and `askCompareLegendHTML`'s stacked-fact-card layout (replaced an earlier `min-width:760px`
+  6-column table that only fit with a horizontal scrollbar) for the preferred pattern. `#ua-se-list`'s admin
+  search-events table is a deliberate, narrower exception: a genuinely dense multi-field data table for an
+  admin/debug audience, where a real table is the right tool and reformatting it into cards would hurt
+  scanability for no real benefit — its scroll is fully self-contained (`overflow-x:auto` on the table's own
+  wrapper only) and tightened further on mobile (smaller cell max-width/font, one column hidden) so it needs
+  that scroll as rarely as possible. Check any layout change against a narrow viewport, especially anything
+  using `position:sticky`/fixed heights on desktop that might trap scrolling content on mobile (e.g. the
+  feed panel's mobile scroll fix).
 - **Keep it simple when adding UI, per explicit user direction** ("keep it simple but good") — don't
   over-build a feature beyond what was asked.
 - **A real `<table>` doesn't fit the answer rail's narrow column (~360px, see `ASK_RAIL_MIN_WIDTH`'s own
