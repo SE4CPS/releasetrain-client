@@ -1278,12 +1278,12 @@
     .ua-muted { color: var(--muted); }
     .ua-reg-notice {
       background: var(--brand-light); color: var(--brand); border: 1px solid var(--brand);
-      border-radius: var(--radius-sm); padding: 8px 12px; font-size: 12px;
-      font-weight: 600; margin-bottom: 10px;
+      border-radius: var(--radius-sm); padding: 0.4rem 0.6rem; font-size: 12px;
+      font-weight: 600; margin-bottom: 0.4rem;
     }
     .ua-reg-stats {
-      display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 11px;
-      color: var(--muted); margin-bottom: 14px;
+      display: flex; flex-wrap: wrap; gap: 2px 14px; font-size: 11px;
+      color: var(--muted); margin-bottom: 0.4rem;
     }
     .ua-reg-stats strong { color: var(--text); }
     .ua-admin-header {
@@ -1294,14 +1294,19 @@
          without this the row stacked vertically and centered instead of
          reading as one compact line (chevron, title, count, Refresh). */
       display: flex; flex-direction: row; align-items: center; text-align: left;
-      gap: 8px; padding: 8px 0;
+      gap: 0.5rem; padding: 0.3rem 0;
     }
     /* Each admin section is a <details>/<summary> using .ua-admin-header
        as the summary row; the global `summary { }` rule above hides the
        native marker, so this adds back a rotating chevron (same pattern
        as .groupHead::before on the feed) as the section's own
-       open/closed affordance. */
-    .ua-admin-details { border-bottom: 1px solid var(--border); }
+       open/closed affordance. Zero margin, relying only on the
+       border-bottom for visual separation between closed rows: with
+       several of these stacked (the whole Account panel is now built
+       from them), every extra px of margin multiplies, and the goal
+       when they're all closed is to fit as many as possible without
+       scrolling on a laptop screen. */
+    .ua-admin-details { border-bottom: 1px solid var(--border); margin: 0; }
     .ua-admin-details:last-child { border-bottom: none; }
     .ua-admin-header::before {
       content: "▶"; font-size: 8px; color: var(--muted); flex-shrink: 0;
@@ -1544,6 +1549,16 @@
     .sb-stat-row span:last-child { font-weight: 700; color: var(--text); font-family: var(--mono); }
     .sb-stat-row.size-row span:last-child { color: #475569; font-size: 10px; }
     .sb-stat-divider { border: none; border-top: 1px dashed #e2e8f0; margin: 4px 0; }
+    /* A plain (non-clickable) group label, same visual weight as
+       .sb-stat-head minus its chevron/cursor, used to sub-divide the
+       combined Stats section (Types/Summary/Activity/Top searches) into
+       labeled blocks without making each one its own extra toggle click
+       on top of the outer one. */
+    .sb-group-label {
+      font: 700 10px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .4px;
+      color: var(--muted); margin: 10px 0 6px;
+    }
+    .sb-group-label:first-child { margin-top: 0; }
 
     /* ── Back to top FAB ────────────────────────────────────── */
     #backToTop {
@@ -1956,7 +1971,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.68.1">Releasetrain <em>v3.68.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.69.0">Releasetrain <em>v3.69.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2181,22 +2196,26 @@
           </div>
         </details>
 
-        <details class="sb-details">
-          <summary>Types</summary>
-          <div class="sidebar-section" style="padding-bottom:12px">
-            <div class="toggles" id="typeToggles" role="group" aria-label="Component type filters"></div>
-          </div>
-        </details>
-
         <div id="activeFilters" aria-live="polite" aria-label="Active filters">
           <span>Active:</span>
           <div id="afTags"></div>
           <button class="af-clear" type="button" id="afClearAll">Clear all</button>
         </div>
 
+        <!-- Types, Stats, Activity, and Top searches used to each be
+             their own top-level collapsible row; combined into this one
+             "Stats" section (sub-divided by plain .sb-group-label
+             headers, not further toggles) so the sidebar is 2 rows to
+             scan instead of 5. Collection totals keeps its own existing
+             nested toggle (.sb-stat-group) unchanged. -->
         <details class="sb-details">
           <summary>Stats</summary>
           <div class="sidebar-section" style="padding-bottom:12px">
+
+            <div class="sb-group-label">Types</div>
+            <div class="toggles" id="typeToggles" role="group" aria-label="Component type filters"></div>
+
+            <div class="sb-group-label">Summary</div>
             <div class="kpis" role="status" aria-live="polite" aria-label="Summary statistics">
               <div class="kpi">📦 Components <em id="kpi-page">0</em></div>
               <div class="kpi">🧩 Components <em id="kpi-uniq">0</em></div>
@@ -2216,12 +2235,8 @@
                 <div class="sb-stat-row"><span>Stack Overflow</span><span id="home-r-so">…</span></div>
               </div>
             </details>
-          </div>
-        </details>
 
-        <details class="sb-details">
-          <summary>Activity (2 weeks)</summary>
-          <div class="sidebar-section" style="padding-bottom:10px">
+            <div class="sb-group-label">Activity (2 weeks)</div>
             <div style="position:relative;height:118px"><canvas id="home-activity-chart"></canvas></div>
             <p style="margin:2px 0 0;font-size:10px;color:var(--muted)">Click a label to show/hide that line.</p>
             <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;font-size:10px;color:var(--muted);margin-top:4px">
@@ -2231,15 +2246,12 @@
               <span><span style="color:#475569;font-size:12px">●</span> LLM</span>
               <span><span style="color:#0f766e;font-size:12px">●</span> Hypervisor</span>
             </div>
-          </div>
-        </details>
 
-        <details class="sb-details" id="top-searches-details">
-          <summary>Top searches (24h)</summary>
-          <div class="sidebar-section" style="padding-bottom:12px">
-            <div id="top-searches-list" style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+            <div class="sb-group-label">Top searches (24h)</div>
+            <div id="top-searches-list" style="display:flex;flex-direction:column;gap:6px">
               <span style="font-size:11px;color:var(--muted)">Loading...</span>
             </div>
+
           </div>
         </details>
 
@@ -3551,6 +3563,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-11</div>
+              <div class="cl-ver cl-ver-minor">v3.69.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Sidebar consolidated to 2 sections; tighter admin/profile padding</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The feed sidebar's Types, Stats, Activity, and Top searches sections (previously 4 separate collapsible rows) are now sub-divisions of one combined "Stats" section, next to Filters. 5 rows to scan closed, down to 2.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Reduced the padding/margin around every admin and Account-page collapsible section (System overview, Settings, All users, Search &amp; Ask activity, Change password, Model provider keys, Organization namespaces, Bookmarks, Installed versions): removed redundant per-section margins (the border between rows already provides separation) and switched the summary row's own padding to a smaller, relative (rem-based) size. With everything closed, the whole admin panel now fits without scrolling on a typical laptop screen.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5095,7 +5121,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             </div>
             <button id="ua-logout-btn" class="btn btn-ghost">Sign out</button>
           </div>
-          <details class="ua-admin-details" style="margin-bottom:14px">
+          <details class="ua-admin-details">
             <summary class="ua-admin-header">
               <span style="font-weight:700;font-size:13px">Change password</span>
             </summary>
@@ -5110,7 +5136,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               </form>
           </details>
           <!-- Model provider keys (bring your own) -->
-          <details class="ua-admin-details" style="margin-bottom:14px">
+          <details class="ua-admin-details">
             <summary class="ua-admin-header">
               <span style="font-weight:700;font-size:13px">Model provider keys</span>
               <span class="ua-opt" style="font-weight:400;font-size:12px">(use your own instead of the shared server key)</span>
@@ -5143,7 +5169,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               </div>
           </details>
           <!-- Org namespaces -->
-          <details class="ua-admin-details" style="margin-bottom:14px">
+          <details class="ua-admin-details">
             <summary class="ua-admin-header">
               <span style="font-weight:700;font-size:13px">Organization namespaces</span>
               <span class="ua-opt" style="font-weight:400;font-size:12px">(appear in share links)</span>
@@ -5164,7 +5190,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               </div>
           </details>
           <!-- Bookmarks -->
-          <details class="ua-admin-details" style="margin-bottom:14px">
+          <details class="ua-admin-details">
             <summary class="ua-admin-header">
               <span style="font-weight:700;font-size:13px">Bookmarks</span>
               <span id="ua-bm-count" class="ua-muted" style="font-size:12px"></span>
@@ -5175,7 +5201,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <div id="ua-bm-list" class="ua-bm-list"></div>
           </details>
           <!-- Installed versions -->
-          <details class="ua-admin-details" style="margin-bottom:14px">
+          <details class="ua-admin-details">
             <summary class="ua-admin-header">
               <span style="font-weight:700;font-size:13px">Installed versions</span>
               <span id="ua-inv-count" class="ua-muted" style="font-size:12px"></span>
@@ -5237,7 +5263,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                  whatever GET /api/admin/settings actually returns, so a
                  new admin-tunable value added server-side needs no new
                  markup here (see uaLoadSettings/UA_SETTINGS_META). -->
-            <details class="ua-admin-details" style="margin-top:12px">
+            <details class="ua-admin-details">
               <summary class="ua-admin-header">
                 <span style="font-weight:700;font-size:13px">Settings</span>
                 <span id="ua-settings-count" class="ua-muted" style="font-size:12px"></span>
@@ -5248,7 +5274,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                 </div>
               </div>
             </details>
-            <details class="ua-admin-details" style="margin-top:12px">
+            <details class="ua-admin-details">
               <summary class="ua-admin-header">
                 <span style="font-weight:700;font-size:13px">All users</span>
                 <span id="ua-user-count" class="ua-muted" style="font-size:12px"></span>
@@ -5256,7 +5282,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               </summary>
               <div id="ua-user-list"></div>
             </details>
-            <details class="ua-admin-details" id="ua-search-events-section" style="margin-top:12px;display:none">
+            <details class="ua-admin-details" id="ua-search-events-section" style="display:none">
               <summary class="ua-admin-header">
                 <span style="font-weight:700;font-size:13px">Search &amp; Ask activity</span>
                 <span id="ua-se-count" class="ua-muted" style="font-size:12px"></span>
