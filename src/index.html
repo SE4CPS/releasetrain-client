@@ -2049,7 +2049,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.71.6">Releasetrain <em>v3.71.6</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.71.8">Releasetrain <em>v3.71.8</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3654,6 +3654,33 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-12</div>
+              <div class="cl-ver cl-ver-patch">v3.71.8</div>
+            </div>
+            <div class="cl-content">
+              <h3>Feed lookback window now tracks the Ask recency setting</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <code>LOOKBACK_DAYS</code> (the feed's own recency window, driving "Recent Updates," the activity chart, and Reddit/StackOverflow matching) used to be a plain hardcoded constant, separate from the admin Settings panel's "Ask recency window (days)," which only ever coincidentally shared a starting value. Per explicit request they're now the same number: the client fetches the live value from a new public <code>GET /api/ask/recent-window-days</code> at page load and applies it before the feed's first render (28 stays as the fallback if that fetch fails). Changing the Settings value and reloading now widens or narrows the feed too.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <code>boot()</code> and the independent top-level <code>loadHomeStats()</code> IIFE both build something sized off <code>LOOKBACK_DAYS</code> and both run concurrently at page load; each now awaits the same single <code>lookbackDaysReady</code> promise before doing so, so there's no race where one of them builds its day range from the stale fallback while the other already has the live value.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-12</div>
+              <div class="cl-ver cl-ver-patch">v3.71.7</div>
+            </div>
+            <div class="cl-content">
+              <h3>Friendlier message when the API is unreachable</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> A failed feed load showed the raw thrown error verbatim, e.g. "⚠️ Error: 502 Bad Gateway": accurate, but not something most visitors can act on. <code>friendlyFetchError()</code> now classifies it (a 5xx means the server itself is down, a 4xx means the request was rejected, anything else is a real network/connectivity failure) and shows a plain-language headline plus a short, still-realistic detail line, reused by both the main feed's error state and the filter-submit failure's status text.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5785,19 +5812,58 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       window.addEventListener("error", (e) => show(e.error || e.message));
       window.addEventListener("unhandledrejection", (e) => show(e.reason));
     })();
-    const LOOKBACK_DAYS = 28; // feed/chart window: last 4 weeks (was 2 weeks, was 4 weeks, was 2 weeks, was 7 days)
-    const LOOKBACK_WEEKS = Math.round(LOOKBACK_DAYS / 7);
-    // Static sidebar label ("Activity (N weeks)") was hardcoded text, not
-    // derived from LOOKBACK_DAYS like updateFeedWindowLabel()'s own
-    // "(last N weeks, M components)" is. It drifted out of sync the last
-    // time this constant changed; set once here instead of duplicating
-    // the number by hand.
-    (() => {
+    // 28 is only the fallback used until /api/ask/recent-window-days
+    // resolves in boot() (or if that fetch fails): the feed's own window
+    // now tracks the admin-configurable "Ask recency window" setting live
+    // instead of carrying its own separately-hardcoded number. These were
+    // two genuinely independent values that only ever coincidentally
+    // shared a starting value, which read as a bug the moment someone
+    // changed one expecting the other to follow; per explicit request
+    // they're now the same number by construction. All four are `let`,
+    // not `const`, so setLookbackDays() below can update them in place.
+    let LOOKBACK_DAYS = 28;
+    let LOOKBACK_WEEKS = Math.round(LOOKBACK_DAYS / 7);
+    let LOOKBACK_MS = 1000 * 60 * 60 * 24 * LOOKBACK_DAYS;
+    let LOOKBACK_AGO = Date.now() - LOOKBACK_MS;
+    // Recomputes every LOOKBACK_* derived value, plus the sidebar's
+    // static "Activity (N weeks)" label (previously hand-set once at
+    // load and prone to drifting out of sync any time this changed), from
+    // a single day count. Ignores a bad/missing value rather than
+    // clearing the current one, so a failed fetch in boot() just keeps
+    // whatever LOOKBACK_DAYS already was.
+    function setLookbackDays(days) {
+      const n = Number(days);
+      if (!Number.isFinite(n) || n < 1) return;
+      LOOKBACK_DAYS = Math.round(n);
+      LOOKBACK_WEEKS = Math.round(LOOKBACK_DAYS / 7);
+      LOOKBACK_MS = 1000 * 60 * 60 * 24 * LOOKBACK_DAYS;
+      LOOKBACK_AGO = Date.now() - LOOKBACK_MS;
       const el = document.getElementById("sbActivityLabel");
       if (el) el.textContent = `Activity (${LOOKBACK_WEEKS} week${LOOKBACK_WEEKS !== 1 ? "s" : ""})`;
-    })();
-    const LOOKBACK_MS = 1000 * 60 * 60 * 24 * LOOKBACK_DAYS;
-    const LOOKBACK_AGO = Date.now() - LOOKBACK_MS;
+    }
+    setLookbackDays(LOOKBACK_DAYS); // sets the sidebar label immediately, ahead of the live fetch below
+    // Public, no auth (see its own comment in app.js): reads the admin
+    // Settings panel's "Ask recency window (days)" value. Swallows its
+    // own errors and leaves LOOKBACK_DAYS at its current value (the
+    // fallback above, on a first load) rather than letting a failed
+    // fetch break the feed.
+    async function fetchAndApplyLookbackDays() {
+      try {
+        const res = await fetch(`${API_BASE}ask/recent-window-days`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setLookbackDays(data.askRecentWindowDays);
+      } catch { /* keep whatever LOOKBACK_DAYS already was */ }
+    }
+    // Kicked off once, immediately, rather than called separately by each
+    // consumer: boot() and loadHomeStats() further down both run at page
+    // load concurrently, not one after another, and both build a
+    // LOOKBACK_DAYS-sized day range before their own first render. Each
+    // awaits this same promise instead of calling
+    // fetchAndApplyLookbackDays() itself, so the live value is only
+    // fetched once per page load and both consumers see the exact same
+    // resolved LOOKBACK_DAYS by the time either needs it.
+    const lookbackDaysReady = fetchAndApplyLookbackDays();
 
     /* ── DOM cache ────────────────────────────────────────────── */
     const EL = {};
@@ -10095,6 +10161,27 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       return STATE.hvReady;
     }
 
+    // Turns a fetch/API failure into a plain-language message that still
+    // states the real cause, rather than a bare "⚠️ Error: 502 Bad
+    // Gateway" dump, which reads as a crash report to a viewer with no
+    // reason to know what a gateway even is. Api.versions() throws
+    // `new Error("${status} ${statusText}")` for a non-ok response; a
+    // genuine network failure (offline, DNS, CORS) instead throws a
+    // native error with no leading status code at all, so that case is
+    // told apart by the absence of one, not assumed away.
+    function friendlyFetchError(e) {
+      const msg = String((e && e.message) || "");
+      const m5xx = msg.match(/^5\d\d\b/);
+      if (m5xx) {
+        return { headline: `The server is temporarily unavailable (${m5xx[0]}).`, detail: "This isn't your connection; try again in a minute." };
+      }
+      const m4xx = msg.match(/^4\d\d\b/);
+      if (m4xx) {
+        return { headline: `That request was rejected (${m4xx[0]}).`, detail: "Try reloading the page." };
+      }
+      return { headline: "Can't reach the server right now.", detail: "Check your connection and try again." };
+    }
+
     async function boot() {
       EL.status.textContent = "Loading…";
       EL.navLoader.classList.add("active");
@@ -10124,7 +10211,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
         // First page only — renders immediately, more loaded lazily as user scrolls
         trackSearch(rawQ);
-        const { versions: vers, nextCursor } = await Api.versions(rawQ);
+        // Run alongside the feed's own fetch, not before it: neither
+        // depends on the other, and every LOOKBACK_* consumer below
+        // (sorting, applyFilters, the activity chart) only runs once
+        // both have settled, so there's nothing to gain by sequencing
+        // them.
+        const [{ versions: vers, nextCursor }] = await Promise.all([
+          Api.versions(rawQ),
+          lookbackDaysReady,
+        ]);
         STATE.nextCursor = nextCursor;
 
         if (!vers.length) {
@@ -10144,7 +10239,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         ensureHvVersionsLoaded();
       } catch (e) {
         console.error(e);
-        EL.feed.innerHTML = `<p class="meta" style="padding:14px;color:var(--cve)">⚠️ Error: ${e.message}</p>`;
+        const { headline, detail } = friendlyFetchError(e);
+        EL.feed.innerHTML = `<p class="meta" style="padding:14px;color:var(--cve)">⚠️ ${headline}</p>` +
+          `<p class="meta" style="padding:0 14px;color:var(--muted);font-size:12px">${detail}</p>`;
         EL.status.textContent = "Failed to load";
       } finally {
         EL.navLoader.classList.remove("active");
@@ -10175,7 +10272,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         vers.sort((a, b) => (versionTime(b) || +new Date(b.versionTimestampLastUpdate || b.versionTimestamp || 0)) - (versionTime(a) || +new Date(a.versionTimestampLastUpdate || a.versionTimestamp || 0)));
         STATE.rawVersions = vers;
         applyFilters();
-      } catch (e) { console.error(e); EL.status.textContent = "Filter failed"; }
+      } catch (e) { console.error(e); EL.status.textContent = friendlyFetchError(e).headline; }
       finally { EL.navLoader.classList.remove("active"); }
     });
 
@@ -10427,6 +10524,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     })();
 
     (async function loadHomeStats() {
+      // Runs concurrently with boot() at page load, not after it; without
+      // this, the LOOKBACK_DAYS-sized day array below could be built from
+      // the fallback value if this resolves first, a live race that would
+      // show a different window here than the feed itself ends up using.
+      await lookbackDaysReady;
       const fmtDate = d => d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
       const today = new Date();
       const fmt = n => typeof n === 'number' ? n.toLocaleString() : '—';
@@ -11938,14 +12040,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     const UA_SETTINGS_META = {
       askRecentWindowDays: {
         label: "Ask recency window (days)",
-        // Was "Matches the feed's own lookback window by default (14
-        // days)", worded as if the two were linked (and went stale the
-        // moment LOOKBACK_DAYS changed without this hint being touched
-        // too). They only ever coincidentally shared a starting value:
-        // this is a server-side runtime setting for Ask alone; the feed's
-        // own window is the separate, hardcoded LOOKBACK_DAYS constant in
-        // this file. Say that plainly instead of implying they're tied.
-        hint: `How far back Ask searches when a question names no explicit date. This is independent of the feed's own lookback window (currently ${LOOKBACK_DAYS} days here in the client); changing one does not change the other.`,
+        // Used to say these were independent, which was true right up
+        // until it wasn't: they'd coincidentally shared a starting value
+        // and someone (reasonably) expected changing this one to widen
+        // the feed too. Per explicit request, this value now drives both:
+        // the feed's own LOOKBACK_DAYS in index.html fetches this same
+        // setting live from GET /api/ask/recent-window-days at page load
+        // (see fetchAndApplyLookbackDays there) instead of carrying its
+        // own separate hardcoded number.
+        hint: "How far back Ask searches when a question names no explicit date. The feed's own lookback window reads this same value live at page load, so changing it here changes both.",
         min: 1, max: 90,
       },
       // "compare" is deliberately not offered here: the server rejects

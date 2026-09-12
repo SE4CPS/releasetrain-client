@@ -87,11 +87,26 @@ always reflect the current, real conventions of the repo, not lag behind what's 
   (`GET`/`PUT /api/admin/settings`, `UA_SETTINGS_META` on the client), not a bespoke new endpoint/markup;
   see the Settings section in `ua-admin-section`. `UA_SETTINGS_META` supports three shapes per key: a plain
   number (`min`/`max`, renders `<input type=number>`), a fixed enum (`options: [{value,label}]`, renders a
-  `<select>` so an invalid value can't be typed), or a flag (`type: "boolean"`, renders a checkbox). A value
-  only becomes admin-configurable this way when it's a small, low-frequency scalar (like
-  `askRecentWindowDays`, or a per-view visibility boolean); a value baked into many synchronous computations
-  at module load (e.g. the feed's own `LOOKBACK_DAYS`) is a bigger, riskier lift and needs a real refactor
-  plan first, not a quick wire-up.
+  `<select>` so an invalid value can't be typed), or a flag (`type: "boolean"`, renders a checkbox).
+- **GLOBAL RULE — a value baked into many synchronous computations at module load (the feed's own
+  `LOOKBACK_DAYS` is the concrete case) can still track a live server-side setting; it just needs its own
+  small public (no-auth) read endpoint and a `let`-not-`const` variable, not a bespoke new admin-settings UI
+  entry.** `LOOKBACK_DAYS`/`LOOKBACK_MS`/`LOOKBACK_AGO`/`LOOKBACK_WEEKS` used to be plain `const`s computed
+  once at script load; per explicit request they now track `askRecentWindowDays` (the same admin-configurable
+  value `UA_SETTINGS_META.askRecentWindowDays` already exposed for the Ask feature) instead of carrying a
+  second, separately-hardcoded number that only ever coincidentally matched. The mechanism: all four became
+  `let`s; `setLookbackDays(days)` recomputes every derived value plus the sidebar's `#sbActivityLabel` text
+  from one input; `fetchAndApplyLookbackDays()` reads the new public `GET /api/ask/recent-window-days`
+  (app.js) and calls it, swallowing its own errors so a failed fetch just leaves `LOOKBACK_DAYS` at its
+  current value (28, the fallback, on a first load) rather than breaking the feed; and a single
+  `lookbackDaysReady` promise (the one call to `fetchAndApplyLookbackDays()`, not one per consumer) is
+  `await`-ed by both `boot()` and the independent top-level `loadHomeStats()` IIFE before either builds
+  anything sized off `LOOKBACK_DAYS`. Those two run concurrently at page load, not one after another, so
+  without a shared promise the second one to resolve could win the fallback value in a genuine race. Any
+  future value with the same shape (a scalar already exposed via `UA_SETTINGS_META` that a synchronous,
+  module-load computation elsewhere also wants live) should follow this same pattern: one small public
+  endpoint, `let`s instead of `const`s, one `setX()` recomputation function, one shared ready-promise every
+  concurrent consumer awaits.
 - **Per-view menu visibility is admin-configurable** (`viewGraphVisible`, `viewArchVisible`, etc.; see
   `VIEW_NAV_LINKS` and the matching `TOGGLEABLE_VIEWS` in `releasetrain-server/src/app.js`), fetched from
   the public `GET /api/views/visibility` (not the admin-only settings route, since every visitor's nav
