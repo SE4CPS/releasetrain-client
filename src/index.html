@@ -382,19 +382,24 @@
       padding: 0 8px; border: 1px solid var(--border); border-radius: var(--radius);
       background: var(--surface); color: var(--text); font: 12px/1 inherit; cursor: pointer; flex-shrink: 0;
     }
-    /* Ask form: input is its own full-width row on top (.ask-input-row),
-       Clear/bookmark/submit stay in a second row below it
-       (.ask-options-row) on every screen size, no gear button or popover
+    /* Ask form: input, Clear, bookmark, and submit share one row on top
+       (.ask-input-row) on every screen size, no gear button or popover
        to click open first. The agentic-AI-specific controls that used to
-       always live in that same row (model/size/pipeline, the three
-       toggles, usage) are grouped into #askOptionsPanel, which
-       relocateAskOptionsPanel() moves out of this row into the top of
-       the answer rail's column on a wide screen; .ask-options-row still
-       holds it, unmoved, on a narrow one where the rail doesn't exist.
-       Stacked vertically via flex-direction:column, overriding
-       .topbar-form's default row-wrap behavior for just this form. */
+       live in a second row below it (model/size/pipeline, the three
+       toggles, usage) are grouped into #askOptionsPanel inside
+       .ask-options-row, which relocateAskOptionsPanel() moves out of
+       this row entirely into the top of the answer rail's column on a
+       wide screen (leaving .ask-options-row empty, which just collapses
+       to nothing); on a narrow one, with no rail to move it to, it stays
+       here as this form's own second row. Stacked vertically via
+       flex-direction:column, overriding .topbar-form's default row-wrap
+       behavior for just this form. */
     .ask-form-stacked { flex-direction: column; align-items: stretch; flex-wrap: nowrap; gap: 6px; }
     .ask-input-row { display: flex; align-items: center; gap: 8px; }
+    /* Clear/bookmark/submit shouldn't get squeezed as the row runs out
+       of room; .search-wrap's own flex-basis:100% already absorbs the
+       shrinking (same reasoning as #askIntentBadge's flex-shrink:0). */
+    .ask-input-row .btn { flex-shrink: 0; }
 
     /* ── Answer rail tabs (Answer+workflow / Sources) ──────────── */
     /* Negative margin matches .ask-answer-card's own 14px padding, so
@@ -2076,7 +2081,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.72.1">Releasetrain <em>v3.72.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.72.2">Releasetrain <em>v3.72.2</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2135,6 +2140,16 @@
             <ul id="askSuggestions" role="listbox" aria-label="Similar existing questions"></ul>
           </div>
           <span id="askIntentBadge" class="ask-intent-badge" hidden></span>
+          <!-- Core form controls, not agentic-AI configuration, so they
+               stay on the input's own row on every screen size (unlike
+               #askOptionsPanel below, which relocates). Once that panel
+               moves out to the answer rail on a wide screen, this leaves
+               .ask-options-row empty, and an empty flex row with no
+               padding of its own just collapses rather than reading as
+               a stray blank line. -->
+          <button class="btn btn-ghost" type="button" id="clearBtn">Clear</button>
+          <button class="btn btn-ghost" type="button" id="ua-bm-save-btn" style="display:none" title="Save current search as a bookmark">🔖</button>
+          <button class="btn btn-icon" type="submit" id="askSubmitBtn" aria-label="Search or ask">➤</button>
         </div>
         <div class="ask-options-row">
           <!-- Agentic-AI-specific controls (model/size/pipeline, the
@@ -2186,9 +2201,6 @@
             </label>
             <span id="askQuotaLine" class="ask-quota-line">Usage: &#8212;</span>
           </div>
-          <button class="btn btn-ghost" type="button" id="clearBtn">Clear</button>
-          <button class="btn btn-ghost" type="button" id="ua-bm-save-btn" style="display:none" title="Save current search as a bookmark">🔖</button>
-          <button class="btn btn-icon" type="submit" id="askSubmitBtn" aria-label="Search or ask">➤</button>
         </div>
       </form>
     </div>
@@ -3679,6 +3691,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-12</div>
+              <div class="cl-ver cl-ver-patch">v3.72.2</div>
+            </div>
+            <div class="cl-content">
+              <h3>Clear/submit share the input's row instead of their own</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> With #askOptionsPanel now relocating away from the topbar on a wide screen (last release), .ask-options-row was left holding only Clear, the bookmark button, and the submit arrow: a near-empty second row under the question input. Those three are core form controls, not agentic-AI configuration, so they moved up onto .ask-input-row itself, on every screen size: one row (search, Clear, bookmark, submit) instead of two. .ask-options-row now holds only #askOptionsPanel, so it collapses to nothing once that panel relocates, rather than sitting there empty.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -7308,9 +7333,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const col = document.querySelector(".ask-rail-col");
         if (col && col.firstElementChild !== panel) col.insertBefore(panel, col.firstChild);
       } else {
+        // .ask-options-row holds nothing else (Clear/bookmark/submit
+        // moved up to .ask-input-row, always on the input's own line,
+        // see that row's own comment), so the panel is this row's only
+        // possible child; appendChild is enough, no reference node needed.
         const row = document.querySelector(".ask-options-row");
-        const clearBtn = document.getElementById("clearBtn");
-        if (row && clearBtn && panel.nextElementSibling !== clearBtn) row.insertBefore(panel, clearBtn);
+        if (row && row.lastElementChild !== panel) row.appendChild(panel);
       }
     }
     relocateAskOptionsPanel();
