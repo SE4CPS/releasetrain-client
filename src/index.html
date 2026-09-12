@@ -376,9 +376,13 @@
     .topbar-form .btn { display: inline-flex; align-items: center; justify-content: center; }
     .btn-icon { padding: 0 10px; font-size: 14px; }
     /* Obviously working, not just disabled. A static hourglass reads as
-       "stuck", not "in progress". */
+       "stuck", not "in progress". Per request, plain .btn-ghost (no solid
+       background) rather than .btn-primary's solid dark fill; the emoji's
+       own built-in colors ignore CSS `color` either way, so the filter
+       below is what actually darkens it against a light background,
+       not a background swap on the button itself. */
     @keyframes askSpin { to { transform: rotate(360deg); } }
-    #askSubmitBtn.ask-btn-loading { animation: askSpin .9s linear infinite; }
+    #askSubmitBtn.ask-btn-loading { animation: askSpin .9s linear infinite; filter: brightness(0.6) saturate(1.3); }
     .ask-preset-select {
       padding: 0 8px; border: 1px solid var(--border); border-radius: var(--radius);
       background: var(--surface); color: var(--text); font: 12px/1 inherit; cursor: pointer; flex-shrink: 0;
@@ -2106,7 +2110,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.72.6">Releasetrain <em>v3.72.6</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.72.7">Releasetrain <em>v3.72.7</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2174,7 +2178,7 @@
                a stray blank line. -->
           <button class="btn btn-ghost" type="button" id="clearBtn">Clear</button>
           <button class="btn btn-ghost" type="button" id="ua-bm-save-btn" style="display:none" title="Save current search as a bookmark">🔖</button>
-          <button class="btn btn-icon btn-primary" type="submit" id="askSubmitBtn" aria-label="Search or ask">➤</button>
+          <button class="btn btn-icon btn-ghost" type="submit" id="askSubmitBtn" aria-label="Search or ask">➤</button>
         </div>
         <div class="ask-options-row">
           <!-- Agentic-AI-specific controls (model/size/pipeline, the
@@ -3716,6 +3720,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-12</div>
+              <div class="cl-ver cl-ver-patch">v3.72.7</div>
+            </div>
+            <div class="cl-content">
+              <h3>Submit button: no more solid dark fill, darker hourglass instead</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The <code>.btn-primary</code> added last release to fix the submit arrow's low contrast turned into a solid near-black box around the loading hourglass, which read worse, not better. Per follow-up request, back to plain <code>.btn-ghost</code> (matching Clear and the bookmark button); the hourglass emoji itself (its own built-in colors, unaffected by CSS <code>color</code>) is what actually needed to stand out, so <code>#askSubmitBtn.ask-btn-loading</code> now applies <code>filter: brightness(0.6) saturate(1.3)</code> to darken it directly instead of boxing it in a dark background.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
