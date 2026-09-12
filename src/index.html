@@ -1297,12 +1297,12 @@
     .ua-msg-error { background: var(--cve-bg); color: var(--cve); border: 1px solid #fca5a5; }
     .ua-msg-ok    { background: var(--new-bg); color: var(--new); border: 1px solid #e2e8f0; }
     .ua-badge {
-      /* align-self: its parent (.ua-profile-info) is a column flexbox,
-         where a child's cross-axis default is stretch. Without this,
-         an inline-block span still gets stretched to the FULL width of
-         that column, turning a short "ADMIN" pill into an oddly wide,
-         mostly-empty stadium shape instead of a compact badge. */
-      display: inline-block; align-self: flex-start; padding: 2px 10px; border-radius: var(--radius-full);
+      /* .ua-profile-info is a row flexbox now (see its own comment), so
+         align-items:center there already keeps this a compact pill; no
+         align-self override needed (it was needed only for the column
+         layout this replaced, where a plain inline-block child stretches
+         to the parent's full cross-axis width by default). */
+      display: inline-block; flex-shrink: 0; padding: 2px 10px; border-radius: var(--radius-full);
       font: 700 11px/1.4 inherit; text-transform: uppercase; letter-spacing: .4px;
     }
     .ua-badge-user  { background: var(--chip-bg); color: var(--chip-text); }
@@ -1319,9 +1319,18 @@
       border-radius: var(--radius); margin-bottom: 8px;
     }
     .ua-profile-header-top { display: flex; align-items: center; gap: 12px; }
-    .ua-profile-info { display: flex; flex-direction: column; gap: 5px; flex: 1; }
-    .ua-profile-name { font: 700 15px/1 inherit; }
-    .ua-profile-email { font-size: 12px; color: var(--muted); }
+    /* Name, email, and the role badge used to stack as three lines in
+       their own column; with the badge no longer needing to sit under
+       the email (see .ua-badge's own comment), all three read fine as
+       one row instead, wrapping to a second line only if the panel is
+       too narrow to fit them (min-width:0 lets the email actually
+       shrink/wrap rather than forcing the row wider than its container). */
+    .ua-profile-info {
+      display: flex; flex-direction: row; align-items: center; flex-wrap: wrap;
+      gap: 6px 10px; flex: 1; min-width: 0;
+    }
+    .ua-profile-name { font: 700 14px/1.2 inherit; }
+    .ua-profile-email { font-size: 11px; color: var(--muted); }
     .ua-muted { color: var(--muted); }
     .ua-reg-notice {
       background: var(--brand-light); color: var(--brand); border: 1px solid var(--brand);
@@ -2030,7 +2039,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.71.3">Releasetrain <em>v3.71.3</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.71.4">Releasetrain <em>v3.71.4</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3635,6 +3644,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-12</div>
+              <div class="cl-ver cl-ver-patch">v3.71.4</div>
+            </div>
+            <div class="cl-content">
+              <h3>Profile row on one line; empty state explains the day window</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Name, email, and the role badge in the Account profile card were three stacked lines; now one row (wraps only if the panel is too narrow to fit them), with Sign out staying right-aligned on the same line. Smaller font on all three now that they share a row.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The feed's empty state now says "No results found for the last <code>LOOKBACK_DAYS</code> days" whenever a named search actually has matches, just none recent enough to pass the feed's day-window cap (e.g. searching "Python" when its newest known release predates the window entirely). Previously a flat "No updates match the current filters," which didn't say why. An over-filtered or genuinely no-match result still gets the old generic message.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5555,7 +5578,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
         <div id="emptyState">
           <div style="font-size:32px">🔍</div>
-          <p>No updates match the current filters.</p>
+          <p id="emptyStateMsg">No updates match the current filters.</p>
         </div>
 
         <div id="feed">
@@ -5735,7 +5758,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       "btn-major", "btn-minor", "btn-patch", "btn-cve", "btn-llm", "btn-hv", "btn-potential-cve", "btn-reddit",
       "btn-reddit-risk", "btn-reddit-risk-latest", "btn-reddit-risk-cve", "btn-so-risk", "btn-so",
       "filterForm", "components", "clearBtn", "fixedToggles", "typeToggles",
-      "homeLink", "graphLink", "archLink", "cveLink", "dashboardLink", "docsLink", "changelogLink", "ackLink", "usersLink", "networkLink", "expandAllBtn", "feedSortSelect", "activeFilters", "afTags", "afClearAll", "emptyState"
+      "homeLink", "graphLink", "archLink", "cveLink", "dashboardLink", "docsLink", "changelogLink", "ackLink", "usersLink", "networkLink", "expandAllBtn", "feedSortSelect", "activeFilters", "afTags", "afClearAll", "emptyState", "emptyStateMsg"
     ].forEach(id => { EL[id] = document.getElementById(id); });
 
     const $ = s => document.querySelector(s);
@@ -9505,7 +9528,24 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       EL.feed.innerHTML = "";
       EL["kpi-page"].textContent = STATE.groupsFiltered.length;
       EL.sentinel.textContent = STATE.groupsFiltered.length ? "Loading more…" : "No results";
-      EL.emptyState.classList.toggle("show", !STATE.groupsFiltered.length);
+      const isEmpty = !STATE.groupsFiltered.length;
+      EL.emptyState.classList.toggle("show", isEmpty);
+      if (isEmpty && EL.emptyStateMsg) {
+        // Distinguish "this component exists but has nothing recent
+        // enough" (withinFeedWindow is what actually excluded it) from a
+        // genuinely empty/over-filtered result, since the day-window cap
+        // is by far the more common and more confusing reason a named
+        // search comes back blank (e.g. searching "Python" when its
+        // newest known release predates LOOKBACK_DAYS entirely).
+        const matchedOutsideWindow = comps.length && pool.some(v => {
+          const name = norm(v.versionProductName);
+          const tags = (Array.isArray(v.versionSearchTags) ? v.versionSearchTags.join(",") : "").toLowerCase();
+          return comps.some(t => name.includes(t) || tags.includes(t));
+        });
+        EL.emptyStateMsg.textContent = matchedOutsideWindow
+          ? `No results found for the last ${LOOKBACK_DAYS} days.`
+          : "No updates match the current filters.";
+      }
       // The header's own "(last N weeks, M components)" label now states
       // this same count. #status stays reserved for transient messages
       // (Loading…, Filtering…, error states) elsewhere in this file, not
