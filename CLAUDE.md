@@ -42,6 +42,28 @@ always reflect the current, real conventions of the repo, not lag behind what's 
   scrolling content on mobile (e.g. the feed panel's mobile scroll fix).
 - **Keep it simple when adding UI, per explicit user direction** ("keep it simple but good") — don't
   over-build a feature beyond what was asked.
+- **A real `<table>` doesn't fit the answer rail's narrow column (~360px, see `ASK_RAIL_MIN_WIDTH`'s own
+  comment).** When a rail panel needs tabular comparison data, use a CSS-grid block instead (see
+  `askRenderBenchmarkTable`'s own comment) — a compact header row per item plus a full-width row below it,
+  not a wide multi-column `<table>` that would need horizontal scroll or shrink illegibly.
+- **A UI element added inside a `<summary>` (a Refresh button, etc.) needs its click handler to call
+  `e.stopPropagation()`**, or clicking it also toggles the parent `<details>` open/closed via the browser's
+  native summary click handling, since the click bubbles up to it.
+- **Admin panel sections are closed-by-default `<details>`/`<summary>` blocks** (`.ua-admin-details`), not
+  always-open `<div>`s — added after the panel grew to 4+ sections and got too long to scan. A genuinely
+  urgent/always-relevant item (the registration notice banner, the accounts/queries stat line) stays
+  outside any `<details>`, always visible, rather than hidden behind a click.
+- **New admin-tunable values go through the existing generic settings mechanism**
+  (`GET`/`PUT /api/admin/settings`, `UA_SETTINGS_META` on the client), not a bespoke new endpoint/markup —
+  see the Settings section in `ua-admin-section`. A value only becomes admin-configurable this way when it's
+  a small, low-frequency scalar (like `askRecentWindowDays`); a value baked into many synchronous
+  computations at module load (e.g. the feed's own `LOOKBACK_DAYS`) is a bigger, riskier lift and needs a
+  real refactor plan first, not a quick wire-up.
+- **A weekly release workflow (`.github/workflows/weekly-release.yml`) tags and publishes a GitHub Release
+  for whatever version is currently on master**, reading the version from `data-app-version` and using
+  `gh release create --generate-notes` for the release notes (this repo's commit messages are already
+  real/technical, so auto-generated notes come out genuinely useful, not filler). No version-bumping logic
+  lives in the workflow itself — that's still done by hand per commit, per the rule above.
 
 ## Related repos
 
