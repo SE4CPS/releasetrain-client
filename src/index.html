@@ -2157,7 +2157,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.79.2">Releasetrain <em>v3.79.2</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.80.0">Releasetrain <em>v3.80.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3772,6 +3772,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-13</div>
+              <div class="cl-ver cl-ver-minor">v3.80.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Ask: a delayed second feed refresh catches late backfills</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> A web-verified vendor (see the pipeline-escalation work) can kick off a background Wikipedia-bot backfill that's still running when the answer comes back, so the feed's existing immediate refresh almost always raced it and found nothing yet even though the vendor genuinely gets posted a few seconds later. Reported live: "npm" answered correctly but the feed still said "No versions found." A second refresh now fires 6 seconds later, giving that backfill a real window to finish first; skipped if the search box no longer shows the same vendor by then.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -8121,8 +8134,31 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         // by side; no vendor resolved (Vendor check off, or genuinely
         // nothing matched) goes back to showing everything, rather than
         // leaving a stale unrelated filter in place.
-        if (data.vendor) applyVendorFeedFilter(data.vendor, data.categoryType, data.categoryMembers);
-        else clearVendorFeedFilter();
+        if (data.vendor) {
+          applyVendorFeedFilter(data.vendor, data.categoryType, data.categoryMembers);
+          // A web-verified vendor (data.vendorWebVerified, see
+          // verifyVendorViaWeb on the server) can kick off a background
+          // Wikipedia-bot backfill (tryWikipediaFallback) that's still
+          // running when this answer comes back -- the refresh just
+          // above almost always races it and finds nothing yet, even
+          // though the same vendor genuinely gets posted a few seconds
+          // later. Reported live: "npm" answered correctly but the feed
+          // still said "No versions found." One more refresh, given a
+          // real window to let that backfill actually finish first,
+          // catches it. Guarded on the search box still showing this
+          // same vendor, so a search the viewer has since typed over in
+          // the meantime isn't silently clobbered by a stale re-fetch.
+          if (data.vendorWebVerified) {
+            const resolvedVendor = data.vendor;
+            setTimeout(() => {
+              if (norm(EL.components.value) === norm(resolvedVendor)) {
+                EL.filterForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+              }
+            }, 6000);
+          }
+        } else {
+          clearVendorFeedFilter();
+        }
       } catch (err) {
         // Same reasoning as the "documents" branch above: a running rail
         // may already be open speculatively, and the error is shown in
