@@ -2185,7 +2185,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.74.1">Releasetrain <em>v3.74.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.75.0">Releasetrain <em>v3.75.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3806,6 +3806,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-13</div>
+              <div class="cl-ver cl-ver-minor">v3.75.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Eval: pick a specific question, and name your sessions</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Added an "Or pick a specific question" mode to the Eval page: load a pool of randomly-sampled candidates, each labeled with its real classified question type (cve/patch/version/opinion/comparison/general, the same classification "Auto" itself uses to route a question), and run a session on exactly the one you choose instead of trusting a type turns up in a random batch.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Sessions can now be named, either up front (an optional "Name" field next to Run new evaluation / Run this question) or after the fact (a Rename control on the loaded session). Named sessions show their name in the Past sessions dropdown.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5974,6 +5988,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
            call is requireAdmin server-side regardless. -->
       <div id="evalView" style="display:none">
         <div class="eval-toolbar">
+          <label class="eval-n-label">Name (optional):
+            <input id="eval-name" type="text" maxlength="200" placeholder="e.g. CVE-question pilot" class="ask-preset-select" style="width:180px" />
+          </label>
           <label class="eval-n-label">Questions:
             <input id="eval-n" type="number" min="1" max="20" value="10" class="ask-preset-select" style="width:64px" />
           </label>
@@ -5983,7 +6000,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           </label>
           <button id="eval-refresh-list-btn" class="btn btn-ghost" type="button">Refresh list</button>
         </div>
+        <!-- "Pick a specific question" mode: a pool of randomly-sampled
+             candidates, each labeled with its real classified question
+             type, so an admin can deliberately cover a type instead of
+             trusting it turns up in the random-N flow above. Runs a
+             1-question session on exactly the selected candidate. -->
+        <div class="eval-toolbar" style="margin-top:8px">
+          <span class="ask-source-heading" style="margin:0">Or pick a specific question:</span>
+          <button id="eval-load-candidates-btn" class="btn btn-ghost" type="button">Load random candidates</button>
+          <select id="eval-candidate-select" class="ask-preset-select" style="min-width:280px" disabled>
+            <option value="">Load candidates first…</option>
+          </select>
+          <button id="eval-run-candidate-btn" class="btn btn-primary" type="button" disabled>Run this question</button>
+        </div>
         <div id="eval-status" class="ua-muted" style="font-size:12px;margin:10px 0"></div>
+        <div id="eval-session-name-row" style="margin:0 0 10px"></div>
         <div id="eval-body"></div>
       </div><!-- /#evalView -->
 
@@ -12264,7 +12295,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         sel.innerHTML = sessions.map(s => {
           const when = new Date(s.createdAt).toLocaleString();
           const statusLabel = s.status === "running" ? `running ${s.completedCount}/${s.totalCount}` : s.status;
-          return `<option value="${uaEsc(s._id)}">${uaEsc(when)} · ${s.n} question(s) · ${uaEsc(statusLabel)}</option>`;
+          const namePrefix = s.name ? `${uaEsc(s.name)}: ` : "";
+          return `<option value="${uaEsc(s._id)}">${namePrefix}${uaEsc(when)} · ${s.n} question(s) · ${uaEsc(statusLabel)}</option>`;
         }).join("");
         const toSelect = selectId || sessions[0]._id;
         sel.value = toSelect;
@@ -12277,11 +12309,78 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     async function evalRunNew() {
       const runBtn = document.getElementById("eval-run-btn");
       const nInput = document.getElementById("eval-n");
+      const name = document.getElementById("eval-name").value.trim();
       const n = Math.max(1, Math.min(20, parseInt(nInput.value, 10) || 10));
       runBtn.disabled = true;
       uaShowMsg("eval-status", "Starting evaluation...");
       try {
-        const res = await uaRequest("eval/run", { method: "POST", body: JSON.stringify({ n }) });
+        const res = await uaRequest("eval/run", { method: "POST", body: JSON.stringify({ n, name: name || undefined }) });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || res.status);
+        }
+        const { evalId } = await res.json();
+        await evalLoadSessionList(evalId);
+      } catch (err) {
+        uaShowMsg("eval-status", "Failed to start evaluation: " + (err.message || err));
+      } finally {
+        runBtn.disabled = false;
+      }
+    }
+
+    // "Pick a specific question" mode: a pool of randomly-sampled
+    // candidates, each labeled with its real classified question type
+    // (see evalRunner.js's listCandidateQuestions), so an admin can
+    // deliberately cover a type instead of trusting it turns up in the
+    // random-N flow above. EVAL_CANDIDATES keeps the full objects
+    // (redditId/url/subreddit included) since the <select>'s own value
+    // is just an index; the option text alone isn't enough to run it.
+    let EVAL_CANDIDATES = [];
+
+    async function evalLoadCandidates() {
+      const btn = document.getElementById("eval-load-candidates-btn");
+      const sel = document.getElementById("eval-candidate-select");
+      const runBtn = document.getElementById("eval-run-candidate-btn");
+      btn.disabled = true;
+      sel.disabled = true;
+      runBtn.disabled = true;
+      sel.innerHTML = '<option value="">Loading candidates...</option>';
+      try {
+        const res = await uaRequest("eval/candidates?n=20");
+        if (!res.ok) throw new Error(res.status);
+        const { data } = await res.json();
+        EVAL_CANDIDATES = data || [];
+        if (!EVAL_CANDIDATES.length) {
+          sel.innerHTML = '<option value="">No candidates found</option>';
+          return;
+        }
+        sel.innerHTML = EVAL_CANDIDATES.map((c, i) => {
+          const q = c.question.length > 90 ? c.question.slice(0, 90) + "…" : c.question;
+          return `<option value="${i}">[${uaEsc(c.questionTypeLabel || c.questionType)}] ${uaEsc(q)}</option>`;
+        }).join("");
+        sel.disabled = false;
+        runBtn.disabled = false;
+      } catch (err) {
+        sel.innerHTML = '<option value="">Failed to load candidates</option>';
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function evalRunCandidate() {
+      const sel = document.getElementById("eval-candidate-select");
+      const runBtn = document.getElementById("eval-run-candidate-btn");
+      const idx = Number(sel.value);
+      const question = EVAL_CANDIDATES[idx];
+      if (!question) return;
+      const name = document.getElementById("eval-name").value.trim();
+      runBtn.disabled = true;
+      uaShowMsg("eval-status", "Starting evaluation for the selected question...");
+      try {
+        const res = await uaRequest("eval/run", {
+          method: "POST",
+          body: JSON.stringify({ name: name || undefined, question: { question: question.question, redditId: question.redditId, url: question.url, subreddit: question.subreddit } }),
+        });
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
           throw new Error(err.error || res.status);
@@ -12299,6 +12398,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (EVAL_POLL_TIMER) { clearInterval(EVAL_POLL_TIMER); EVAL_POLL_TIMER = null; }
       if (!evalId) {
         document.getElementById("eval-body").innerHTML = "";
+        document.getElementById("eval-session-name-row").innerHTML = "";
         uaShowMsg("eval-status", "");
         return;
       }
@@ -12375,8 +12475,36 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       </div>`;
     }
 
+    function evalRenderNameRow(doc) {
+      const row = document.getElementById("eval-session-name-row");
+      if (!row) return;
+      row.innerHTML = `
+        <span class="eval-question-heading" id="eval-session-name-display">${doc.name ? uaEsc(doc.name) : '<span class="ask-muted">Untitled session</span>'}</span>
+        <button type="button" class="btn btn-ghost eval-rename-btn" style="font-size:11px;padding:2px 8px;margin-left:8px">Rename</button>
+      `;
+      row.querySelector(".eval-rename-btn").addEventListener("click", () => {
+        const current = doc.name || "";
+        row.innerHTML = `
+          <input id="eval-session-name-input" type="text" maxlength="200" value="${uaEsc(current)}" class="ask-preset-select" style="width:220px" />
+          <button type="button" class="btn btn-ghost eval-rename-save-btn" style="font-size:11px;padding:2px 8px;margin-left:6px">Save</button>
+        `;
+        const input = document.getElementById("eval-session-name-input");
+        input.focus();
+        row.querySelector(".eval-rename-save-btn").addEventListener("click", async () => {
+          const newName = input.value.trim();
+          try {
+            await uaRequest(`eval/${doc._id}/rename`, { method: "POST", body: JSON.stringify({ name: newName }) });
+            doc.name = newName;
+            evalLoadSessionList(doc._id);
+          } catch { /* leaves the input in place so the admin can retry */ return; }
+          evalRenderNameRow(doc);
+        });
+      });
+    }
+
     function evalRenderSession(doc) {
       const body = document.getElementById("eval-body");
+      evalRenderNameRow(doc);
       if (!doc || !doc.questions || !doc.questions.length) {
         body.innerHTML = '<div class="ask-muted">No questions in this session.</div>';
         return;
@@ -12447,6 +12575,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     document.getElementById("eval-run-btn").addEventListener("click", evalRunNew);
     document.getElementById("eval-refresh-list-btn").addEventListener("click", () => evalLoadSessionList());
     document.getElementById("eval-session-select").addEventListener("change", (e) => evalLoadSession(e.target.value));
+    document.getElementById("eval-load-candidates-btn").addEventListener("click", evalLoadCandidates);
+    document.getElementById("eval-run-candidate-btn").addEventListener("click", evalRunCandidate);
 
     /************************* USER ACCOUNT MANAGEMENT *************************/
 
