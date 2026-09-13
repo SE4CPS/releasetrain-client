@@ -2157,7 +2157,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.79.1">Releasetrain <em>v3.79.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.79.2">Releasetrain <em>v3.79.2</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3772,6 +3772,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-13</div>
+              <div class="cl-ver cl-ver-patch">v3.79.2</div>
+            </div>
+            <div class="cl-content">
+              <h3>Ask: fewer lines, one fewer confusing timestamp</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The workflow caption used to stay frozen on its last in-progress phase ("Generating answer… 1.4s") even after the answer had fully finished, sitting right next to the card's own total latency chip ("6s") with no label telling the two apart. It now clears once the run finishes; the diagram itself still shows every node's own elapsed time.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Removed the separate static "Thinking…" line shown while a question is running: the live caption right above it already says what's happening, so it was one more line with no extra information.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -6881,6 +6895,17 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       for (const k of Object.keys(askWorkflowState)) {
         if (askWorkflowState[k] === "active") askWorkflowState[k] = "done";
       }
+      // Cleared, not frozen on its last phase: the caption's own job was
+      // narrating what's happening RIGHT NOW during the run ("Generating
+      // answer… 1.4s"); once the run is done, that same present-tense
+      // text just sits there looking unfinished, right next to the
+      // answer card's own total latency chip ("6s") -- two different
+      // numbers with no label distinguishing "this one node" from "the
+      // whole request," reported live as confusing. The diagram itself
+      // still shows every node's own elapsed time after this, so nothing
+      // about the per-phase breakdown is actually lost, just this one
+      // redundant trailing line.
+      askWorkflowLabel = "";
       renderAskWorkflowCaption();
       renderAskWorkflowDiagram();
     }
@@ -7808,12 +7833,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     function showAskRailRunning(question, isCompare) {
       askRailData = null;
       const body = document.getElementById("askRailBody");
+      // No separate "Thinking…" line: the live caption right below the
+      // diagram already says what's happening (e.g. "Rewriter: resolving
+      // vendor… 0.2s"), so a plain static "Thinking…" under that was
+      // redundant, one more line for no extra information.
       const answerPanel = isCompare
         ? `<p class="ask-muted">Running all 5 pipelines against the same question…</p>`
         : `${askQueryPreviewBlockHtml(question)}
            <div id="askWorkflowDiagram" class="ask-workflow-diagram"></div>
-           <div id="askWorkflowCaption" class="ask-workflow-caption"></div>
-           <p class="ask-muted">Thinking…</p>`;
+           <div id="askWorkflowCaption" class="ask-workflow-caption"></div>`;
       // No pipeline label yet (unresolved until the answer arrives,
       // especially for "Auto"), so just the question, no bracket. See
       // askRenderCard's own labelHtml for the question+label version
@@ -7983,7 +8011,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       btn.classList.add("ask-btn-loading");
       startAskWorkflow();
       // The rail opens immediately with a running skeleton (diagram +
-      // "Thinking…", or for Compare mode a plain "Running 5 pipelines…")
+      // live caption, or for Compare mode a plain "Running 5 pipelines…")
       // rather than waiting for the full response. Compare mode now uses
       // the rail too when there's room for it, same as a normal question;
       // only a narrow screen still falls back to the modal (see the
@@ -8062,7 +8090,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           // showAskRailRunning already opened one speculatively before
           // this was known (the server, not the client, decides which
           // this turns out to be), so close it rather than leaving a
-          // stuck "Thinking…" diagram on screen.
+          // stuck running diagram on screen.
           refreshQuotaAfter = false;
           hideAskRail();
           runDocumentsLookup(data);
@@ -8098,7 +8126,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       } catch (err) {
         // Same reasoning as the "documents" branch above: a running rail
         // may already be open speculatively, and the error is shown in
-        // the modal regardless of screen width, so a stale "Thinking…"
+        // the modal regardless of screen width, so a stale running
         // diagram shouldn't linger open behind it.
         hideAskRail();
         document.getElementById("askModalQuestion").textContent = question;
