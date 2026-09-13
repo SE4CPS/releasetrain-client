@@ -2143,7 +2143,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.77.0">Releasetrain <em>v3.77.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.77.1">Releasetrain <em>v3.77.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3758,6 +3758,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-13</div>
+              <div class="cl-ver cl-ver-patch">v3.77.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Register: state which email providers are accepted</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The registration form now shows, up front, which email providers signup actually accepts (Gmail, Outlook, Yahoo, iCloud, ProtonMail, AOL, or a .edu address; disposable/temp-mail addresses aren't) instead of a viewer only finding out after a rejected submission. Matches the server's own existing allowlist exactly, not a new or separate rule.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5678,6 +5691,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               <div class="ua-field">
                 <label for="ua-reg-email">Email</label>
                 <input id="ua-reg-email" type="email" class="search-input" autocomplete="email" required />
+                <p class="ua-muted" style="font-size:11px;margin:4px 0 0">Gmail, Outlook, Yahoo, iCloud, ProtonMail, AOL, or a .edu address. Disposable/temp-mail addresses aren't accepted.</p>
               </div>
               <div class="ua-field">
                 <label for="ua-reg-password">Password <span class="ua-opt">(min 8 chars)</span></label>
