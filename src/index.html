@@ -652,6 +652,36 @@
     .ask-rate-btn.ask-rate-chosen { background: var(--brand-light); color: var(--brand); border-color: var(--brand); }
     .ask-error { color: var(--cve); font-size: 13px; }
     .ask-muted { color: var(--muted); font-size: 12px; }
+
+    /* ── Eval (admin research tool) ───────────────────────────── */
+    .eval-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .eval-n-label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+    .eval-question-block {
+      border: 1px solid var(--border); border-radius: var(--radius);
+      background: var(--surface); padding: 14px; margin-bottom: 14px;
+    }
+    .eval-question-heading { font: 700 13px/1.4 inherit; color: var(--text); margin-bottom: 4px; }
+    .eval-question-meta { font-size: 10px; color: var(--muted); margin-bottom: 10px; }
+    .eval-answers-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+    .eval-answer-card { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; background: var(--chip-bg); }
+    .eval-answer-preset {
+      font: 700 10px/1 inherit; text-transform: uppercase; letter-spacing: .4px;
+      color: var(--brand); margin-bottom: 6px;
+    }
+    .eval-answer-text { font-size: 12px; line-height: 1.5; margin-bottom: 8px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .eval-answer-meta { font-size: 10px; color: var(--muted); margin-bottom: 6px; }
+    .eval-answer-pending { color: var(--muted); font-size: 11px; font-style: italic; }
+    .eval-expected-row { margin: 10px 0; }
+    .eval-expected-row textarea {
+      width: 100%; min-height: 56px; font: inherit; font-size: 12px; padding: 6px 8px;
+      border: 1px solid var(--border); border-radius: var(--radius-sm); resize: vertical;
+    }
+    .eval-gt-details { margin: 6px 0; font-size: 12px; }
+    .eval-gt-details summary { cursor: pointer; color: var(--muted); font-size: 11px; }
+    .eval-gt-item { padding: 6px 0; border-top: 1px dashed var(--border); }
+    .eval-gt-item:first-of-type { border-top: none; }
+    .eval-gt-item-title { font-weight: 700; font-size: 11.5px; }
+    .eval-gt-item-meta { color: var(--muted); font-size: 10px; }
     .ask-answer-abstained { border-color: var(--cve); background: var(--cve-bg); }
     .ask-abstain-badge {
       display: inline-block; margin-left: 8px; font-size: 10px; font-weight: 700;
@@ -2142,7 +2172,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.73.2">Releasetrain <em>v3.73.2</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.74.0">Releasetrain <em>v3.74.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2305,6 +2335,12 @@
         <a id="ackLink" class="nav-link" href="#" title="Show acknowledgements (in-page)">🤝 Credits</a>
         <a id="usersLink" class="nav-link" href="#" title="User account management">👤 Account</a>
         <a id="networkLink" class="nav-link" href="#" title="Releases: publish and report production outcomes">🌐 Release</a>
+        <!-- Admin-only research tool, hidden by default and only shown by
+             uaRender() (same check as #ua-admin-section) once a signed-in
+             admin's own role is known. Every /api/eval/* route is
+             requireAdmin server-side regardless; this just avoids
+             showing a link that would 403 for anyone else. -->
+        <a id="evalLink" class="nav-link" href="#" title="Pipeline evaluation (admin research tool)" style="display:none">🧪 Eval</a>
         <a class="nav-link" href="https://github.com/SE4CPS/releasetrain-client"
           target="_blank" rel="noopener noreferrer">⭐ GitHub</a>
       </nav>
@@ -3757,6 +3793,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-13</div>
+              <div class="cl-ver cl-ver-minor">v3.74.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>New admin-only Eval page: pipeline research evaluation</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Added an admin-only <code>🧪 Eval</code> nav item/view, backed by <a href="https://github.com/promptfoo/promptfoo" target="_blank" rel="noopener">promptfoo</a> on the server (<code>evalRunner.js</code>). Pick a flexible number of questions (1-20), and it draws a true random sample ($sample) of real, already-classified Reddit questions and runs every one through every pipeline preset (Single-agent, Multi-agent buggy/fixed/delegated/feedback loop, and Auto) side by side, for a human to rate 👍/👎: the tool behind this session's RISE-seminar evaluation of the per-question-type pipeline routing decision.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Each sampled question ships with real ground truth to judge answers against: an editable "expected answer" box the admin fills in by hand, the real top-level Reddit comments on that same post (closest thing to ground truth for "did this happen to other people" questions, which no release note or CVE record can confirm or deny), and real matching vendor release-note/CVE records pulled from this system's own tracked data.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> A session runs in the background on the server (an N-question x 6-preset matrix is real model calls, genuinely minutes) and the page polls for progress; past sessions are kept and browsable from a dropdown, and ratings/expected answers are stored separately from real production usage stats (<code>eval_runs</code>, never <code>ask_runs</code>).</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5889,6 +5940,27 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
       </div><!-- /#networkView -->
 
+      <!-- Admin-only research tool: samples N real Reddit questions and
+           runs each through every pipeline preset (see evalRunner.js on
+           the server), for a human to rate side by side. Not a general
+           user-facing feature; #evalLink itself stays hidden for anyone
+           but a signed-in admin (see uaRender), and every /api/eval/*
+           call is requireAdmin server-side regardless. -->
+      <div id="evalView" style="display:none">
+        <div class="eval-toolbar">
+          <label class="eval-n-label">Questions:
+            <input id="eval-n" type="number" min="1" max="20" value="10" class="ask-preset-select" style="width:64px" />
+          </label>
+          <button id="eval-run-btn" class="btn btn-primary" type="button">Run new evaluation</button>
+          <label class="eval-n-label">Past sessions:
+            <select id="eval-session-select" class="ask-preset-select"></select>
+          </label>
+          <button id="eval-refresh-list-btn" class="btn btn-ghost" type="button">Refresh list</button>
+        </div>
+        <div id="eval-status" class="ua-muted" style="font-size:12px;margin:10px 0"></div>
+        <div id="eval-body"></div>
+      </div><!-- /#evalView -->
+
       <section class="panel" id="feedPanel" aria-label="Updates feed">
         <header class="panel-header">
           <h2>📋 Recent Updates <small id="feedWindowLabel">(last 2 weeks)</small></h2>
@@ -6154,7 +6226,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       "btn-major", "btn-minor", "btn-patch", "btn-cve", "btn-llm", "btn-hv", "btn-potential-cve", "btn-reddit",
       "btn-reddit-risk", "btn-reddit-risk-latest", "btn-reddit-risk-cve", "btn-so-risk", "btn-so",
       "filterForm", "components", "clearBtn", "fixedToggles", "typeToggles",
-      "homeLink", "graphLink", "archLink", "cveLink", "dashboardLink", "docsLink", "changelogLink", "ackLink", "usersLink", "networkLink", "expandAllBtn", "feedSortSelect", "activeFilters", "afTags", "afClearAll", "emptyState", "emptyStateIcon", "emptyStateMsg", "emptyStateDetail"
+      "homeLink", "graphLink", "archLink", "cveLink", "dashboardLink", "docsLink", "changelogLink", "ackLink", "usersLink", "networkLink", "evalLink", "expandAllBtn", "feedSortSelect", "activeFilters", "afTags", "afClearAll", "emptyState", "emptyStateIcon", "emptyStateMsg", "emptyStateDetail"
     ].forEach(id => { EL[id] = document.getElementById(id); });
 
     const $ = s => document.querySelector(s);
@@ -8319,6 +8391,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (CL_ACTIVE)  deactivateChangelog();
       if (UA_ACTIVE)  deactivateUsers();
       if (NET_ACTIVE) deactivateNetwork();
+      if (EVAL_ACTIVE) deactivateEval();
       G_ACTIVE = true;
       setViewParam("graph");
       document.getElementById("graphView").style.display = "block";
@@ -9054,6 +9127,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (CL_ACTIVE)  deactivateChangelog();
       if (UA_ACTIVE)  deactivateUsers();
       if (NET_ACTIVE) deactivateNetwork();
+      if (EVAL_ACTIVE) deactivateEval();
       A_ACTIVE = true;
       setViewParam("arch");
       document.getElementById("archView").style.display = "flex";
@@ -9328,6 +9402,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (CL_ACTIVE)  deactivateChangelog();
       if (UA_ACTIVE)  deactivateUsers();
       if (NET_ACTIVE) deactivateNetwork();
+      if (EVAL_ACTIVE) deactivateEval();
       D_ACTIVE = true;
       setViewParam("docs");
       document.getElementById("docsView").style.display = "block";
@@ -9367,6 +9442,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (ACK_ACTIVE) deactivateAck();
       if (UA_ACTIVE)  deactivateUsers();
       if (NET_ACTIVE) deactivateNetwork();
+      if (EVAL_ACTIVE) deactivateEval();
       CL_ACTIVE = true;
       setViewParam("changelog");
       document.getElementById("changelogView").style.display = "block";
@@ -9404,6 +9480,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (CL_ACTIVE) deactivateChangelog();
       if (UA_ACTIVE) deactivateUsers();
       if (NET_ACTIVE) deactivateNetwork();
+      if (EVAL_ACTIVE) deactivateEval();
       ACK_ACTIVE = true;
       setViewParam("credits");
       document.getElementById("ackView").style.display = "block";
@@ -11575,6 +11652,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (CL_ACTIVE)  deactivateChangelog();
       if (UA_ACTIVE)  deactivateUsers();
       if (NET_ACTIVE) deactivateNetwork();
+      if (EVAL_ACTIVE) deactivateEval();
       CV_ACTIVE = true;
       setViewParam("cve");
       document.getElementById("cveView").style.display = "flex";
@@ -11797,6 +11875,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (CL_ACTIVE)  deactivateChangelog();
       if (UA_ACTIVE)  deactivateUsers();
       if (NET_ACTIVE) deactivateNetwork();
+      if (EVAL_ACTIVE) deactivateEval();
       DB_ACTIVE = true;
       setViewParam("risk");
       document.getElementById("dashboardView").style.display = "block";
@@ -12005,6 +12084,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (ACK_ACTIVE) deactivateAck();
       if (CL_ACTIVE)  deactivateChangelog();
       if (UA_ACTIVE)  deactivateUsers();
+      if (EVAL_ACTIVE) deactivateEval();
       NET_ACTIVE = true;
       setViewParam("release");
       document.getElementById("networkView").style.display = "block";
@@ -12093,6 +12173,255 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       }
     });
 
+    /************************* EVAL (admin research tool) *************************
+     * Backs evalRunner.js on the server: sample N real Reddit questions,
+     * run each through every pipeline preset, and let an admin rate each
+     * answer side by side against real ground truth (an admin-entered
+     * expected answer, real Reddit comments on that same post, and real
+     * vendor release-note/CVE records). See evalRunner.js's own header
+     * comment for why this exists (the RISE-seminar per-question-type
+     * pipeline routing evaluation) and why it's kept out of ask_runs.
+     */
+
+    let EVAL_ACTIVE = false;
+    let EVAL_POLL_TIMER = null;
+    let EVAL_SESSION = null; // last-rendered session doc, so evalRate/evalSaveExpected can update it in place without a re-fetch
+
+    function activateEval() {
+      if (G_ACTIVE)   deactivateGraph();
+      if (A_ACTIVE)   deactivateArch();
+      if (CV_ACTIVE)  deactivateCve();
+      if (DB_ACTIVE)  deactivateDashboard();
+      if (D_ACTIVE)   deactivateDocs();
+      if (ACK_ACTIVE) deactivateAck();
+      if (CL_ACTIVE)  deactivateChangelog();
+      if (UA_ACTIVE)  deactivateUsers();
+      if (NET_ACTIVE) deactivateNetwork();
+      EVAL_ACTIVE = true;
+      setViewParam("eval");
+      document.getElementById("evalView").style.display = "block";
+      document.getElementById("feedPanel").style.display = "none";
+      document.getElementById("feedSidebarSections").style.display = "none";
+      EL.evalLink.classList.add("nav-active");
+      evalLoadSessionList();
+    }
+
+    function deactivateEval() {
+      EVAL_ACTIVE = false;
+      if (EVAL_POLL_TIMER) { clearInterval(EVAL_POLL_TIMER); EVAL_POLL_TIMER = null; }
+      setViewParam("");
+      document.getElementById("evalView").style.display = "none";
+      document.getElementById("feedPanel").style.display = "";
+      document.getElementById("feedSidebarSections").style.display = "";
+      EL.evalLink.classList.remove("nav-active");
+    }
+
+    EL.evalLink.addEventListener("click", e => {
+      e.preventDefault();
+      if (EVAL_ACTIVE) { deactivateEval(); return; }
+      activateEval();
+    });
+
+    async function evalLoadSessionList(selectId) {
+      const sel = document.getElementById("eval-session-select");
+      if (!sel) return;
+      sel.innerHTML = '<option value="">Loading...</option>';
+      try {
+        const res = await uaRequest("eval?limit=50");
+        if (!res.ok) throw new Error(res.status);
+        const { data } = await res.json();
+        const sessions = data || [];
+        if (!sessions.length) {
+          sel.innerHTML = '<option value="">No past sessions</option>';
+          return;
+        }
+        sel.innerHTML = sessions.map(s => {
+          const when = new Date(s.createdAt).toLocaleString();
+          const statusLabel = s.status === "running" ? `running ${s.completedCount}/${s.totalCount}` : s.status;
+          return `<option value="${uaEsc(s._id)}">${uaEsc(when)} · ${s.n} question(s) · ${uaEsc(statusLabel)}</option>`;
+        }).join("");
+        const toSelect = selectId || sessions[0]._id;
+        sel.value = toSelect;
+        evalLoadSession(toSelect);
+      } catch {
+        sel.innerHTML = '<option value="">Failed to load sessions</option>';
+      }
+    }
+
+    async function evalRunNew() {
+      const runBtn = document.getElementById("eval-run-btn");
+      const nInput = document.getElementById("eval-n");
+      const n = Math.max(1, Math.min(20, parseInt(nInput.value, 10) || 10));
+      runBtn.disabled = true;
+      uaShowMsg("eval-status", "Starting evaluation...");
+      try {
+        const res = await uaRequest("eval/run", { method: "POST", body: JSON.stringify({ n }) });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || res.status);
+        }
+        const { evalId } = await res.json();
+        await evalLoadSessionList(evalId);
+      } catch (err) {
+        uaShowMsg("eval-status", "Failed to start evaluation: " + (err.message || err));
+      } finally {
+        runBtn.disabled = false;
+      }
+    }
+
+    async function evalLoadSession(evalId) {
+      if (EVAL_POLL_TIMER) { clearInterval(EVAL_POLL_TIMER); EVAL_POLL_TIMER = null; }
+      if (!evalId) {
+        document.getElementById("eval-body").innerHTML = "";
+        uaShowMsg("eval-status", "");
+        return;
+      }
+      const fetchAndRender = async () => {
+        try {
+          const res = await uaRequest(`eval/${evalId}`);
+          if (!res.ok) throw new Error(res.status);
+          const { data } = await res.json();
+          EVAL_SESSION = data;
+          evalRenderSession(data);
+          if (data.status === "running") {
+            uaShowMsg("eval-status", `Running: ${data.completedCount} of ${data.totalCount} answered...`);
+          } else if (data.status === "error") {
+            uaShowMsg("eval-status", "Session failed: " + (data.error || "unknown error"));
+            if (EVAL_POLL_TIMER) { clearInterval(EVAL_POLL_TIMER); EVAL_POLL_TIMER = null; }
+          } else {
+            uaShowMsg("eval-status", `Done: ${data.completedCount} of ${data.totalCount} answered.`);
+            if (EVAL_POLL_TIMER) { clearInterval(EVAL_POLL_TIMER); EVAL_POLL_TIMER = null; }
+          }
+        } catch (err) {
+          uaShowMsg("eval-status", "Failed to load session: " + (err.message || err));
+          if (EVAL_POLL_TIMER) { clearInterval(EVAL_POLL_TIMER); EVAL_POLL_TIMER = null; }
+        }
+      };
+      await fetchAndRender();
+      if (EVAL_SESSION && EVAL_SESSION.status === "running") {
+        EVAL_POLL_TIMER = setInterval(fetchAndRender, 3000);
+      }
+    }
+
+    function evalRenderGroundTruthHtml(q) {
+      const gt = q.groundTruth || { cveDocs: [], releaseDocs: [] };
+      const comments = q.redditComments || [];
+      const docHtml = (d) => `<div class="eval-gt-item">
+        <div class="eval-gt-item-title">${uaEsc(d.title)}</div>
+        <div class="eval-gt-item-meta">${uaEsc(d.date || "")}${d.url ? ` · <a href="${uaEsc(d.url)}" target="_blank" rel="noopener">source</a>` : ""}</div>
+        ${d.snippet ? `<div>${uaEsc(d.snippet)}</div>` : ""}
+      </div>`;
+      const cveHtml = gt.cveDocs && gt.cveDocs.length
+        ? `<details class="eval-gt-details"><summary>CVE / security records (${gt.cveDocs.length})</summary>${gt.cveDocs.map(docHtml).join("")}</details>`
+        : `<div class="ask-muted">No matching CVE records found.</div>`;
+      const releaseHtml = gt.releaseDocs && gt.releaseDocs.length
+        ? `<details class="eval-gt-details"><summary>Vendor release notes (${gt.releaseDocs.length})</summary>${gt.releaseDocs.map(docHtml).join("")}</details>`
+        : `<div class="ask-muted">No matching release notes found.</div>`;
+      const commentsHtml = comments.length
+        ? `<details class="eval-gt-details" open><summary>Real Reddit comments on this post (${comments.length})</summary>${comments.map(c => `<div class="eval-gt-item"><div class="eval-gt-item-meta">u/${uaEsc(c.author || "unknown")}</div><div>${uaEsc(c.body)}</div></div>`).join("")}</details>`
+        : `<div class="ask-muted">No top-level community comments found for this post.</div>`;
+      return `<div class="ask-source-heading">Ground truth reference${gt.vendor ? ` (vendor: ${uaEsc(gt.vendor)})` : ""}</div>
+        ${commentsHtml}${cveHtml}${releaseHtml}`;
+    }
+
+    function evalRenderAnswerCardHtml(evalId, qIndex, preset, label, ans) {
+      if (!ans) {
+        return `<div class="eval-answer-card"><div class="eval-answer-preset">${uaEsc(label)}</div><div class="eval-answer-pending">Waiting for this pipeline to answer...</div></div>`;
+      }
+      const resolvedNote = ans.resolvedPreset && ans.resolvedPreset !== preset
+        ? `<div class="eval-answer-meta">Resolved to: ${uaEsc(ans.resolvedPreset)}${ans.autoReason ? ` · ${uaEsc(ans.autoReason)}` : ""}</div>` : "";
+      const bodyText = ans.error ? `[error: ${ans.error}]` : (ans.output || "(empty answer)");
+      const metaBits = [];
+      if (ans.latencyMs != null) metaBits.push(Math.round(ans.latencyMs / 1000) + "s");
+      if (ans.vendor) metaBits.push("vendor: " + ans.vendor);
+      if (ans.intent) metaBits.push("intent: " + ans.intent);
+      if (ans.abstained) metaBits.push("abstained" + (ans.abstainReason ? `: ${ans.abstainReason}` : ""));
+      const ratedUp = ans.rating === 1, ratedDown = ans.rating === -1;
+      return `<div class="eval-answer-card" data-eval-id="${uaEsc(evalId)}" data-q-index="${qIndex}" data-preset="${uaEsc(preset)}">
+        <div class="eval-answer-preset">${uaEsc(label)}</div>
+        ${resolvedNote}
+        <div class="eval-answer-text">${uaEsc(bodyText)}</div>
+        ${metaBits.length ? `<div class="eval-answer-meta">${uaEsc(metaBits.join(" · "))}</div>` : ""}
+        <div class="ask-rate-row">
+          <button type="button" class="btn btn-ghost ask-rate-btn eval-rate-btn${ratedUp ? " ask-rate-chosen" : ""}" data-rating="1" ${ans.error ? "disabled" : ""}>👍</button>
+          <button type="button" class="btn btn-ghost ask-rate-btn eval-rate-btn${ratedDown ? " ask-rate-chosen" : ""}" data-rating="-1" ${ans.error ? "disabled" : ""}>👎</button>
+        </div>
+      </div>`;
+    }
+
+    function evalRenderSession(doc) {
+      const body = document.getElementById("eval-body");
+      if (!doc || !doc.questions || !doc.questions.length) {
+        body.innerHTML = '<div class="ask-muted">No questions in this session.</div>';
+        return;
+      }
+      body.innerHTML = doc.questions.map((q, qIndex) => {
+        const answersHtml = doc.presets.map(p => evalRenderAnswerCardHtml(doc._id, qIndex, p.preset, p.label, q.answers && q.answers[p.preset])).join("");
+        return `<div class="eval-question-block">
+          <div class="eval-question-heading">${uaEsc(q.question)}</div>
+          <div class="eval-question-meta">${q.subreddit ? `r/${uaEsc(q.subreddit)}` : ""}${q.url ? ` · <a href="${uaEsc(q.url)}" target="_blank" rel="noopener">source</a>` : ""}</div>
+          <div class="eval-expected-row">
+            <label class="ask-source-heading">Expected answer (your ground truth)</label>
+            <textarea data-q-index="${qIndex}" placeholder="Type what you'd consider the correct answer, informed by the comments/CVE records below...">${uaEsc(q.expectedAnswer || "")}</textarea>
+            <button type="button" class="btn btn-ghost eval-save-expected-btn" data-q-index="${qIndex}" style="font-size:11px;padding:3px 8px;margin-top:4px">Save expected answer</button>
+          </div>
+          ${evalRenderGroundTruthHtml(q)}
+          <div class="ask-source-heading" style="margin-top:10px">Pipeline answers</div>
+          <div class="eval-answers-grid">${answersHtml}</div>
+        </div>`;
+      }).join("");
+      evalWireBody(body, doc._id);
+    }
+
+    function evalWireBody(body, evalId) {
+      body.querySelectorAll(".eval-save-expected-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const qIndex = Number(btn.dataset.qIndex);
+          const textarea = body.querySelector(`textarea[data-q-index="${qIndex}"]`);
+          btn.disabled = true;
+          const original = btn.textContent;
+          btn.textContent = "Saving...";
+          try {
+            await uaRequest(`eval/${evalId}/expected`, {
+              method: "POST",
+              body: JSON.stringify({ questionIndex: qIndex, expectedAnswer: textarea.value }),
+            });
+            btn.textContent = "Saved";
+            setTimeout(() => { btn.textContent = original; }, 1200);
+          } catch {
+            btn.textContent = "Save failed";
+          } finally {
+            btn.disabled = false;
+          }
+        });
+      });
+      body.querySelectorAll(".eval-rate-btn").forEach(rb => {
+        rb.addEventListener("click", async () => {
+          const card = rb.closest(".eval-answer-card");
+          const qIndex = Number(card.dataset.qIndex);
+          const preset = card.dataset.preset;
+          const rating = Number(rb.dataset.rating);
+          card.querySelectorAll(".eval-rate-btn").forEach(b => b.disabled = true);
+          try {
+            await uaRequest(`eval/${evalId}/rate`, {
+              method: "POST",
+              body: JSON.stringify({ questionIndex: qIndex, preset, rating }),
+            });
+            card.querySelectorAll(".eval-rate-btn").forEach(b => {
+              b.classList.toggle("ask-rate-chosen", Number(b.dataset.rating) === rating);
+              b.disabled = false;
+            });
+          } catch {
+            card.querySelectorAll(".eval-rate-btn").forEach(b => b.disabled = false);
+          }
+        });
+      });
+    }
+
+    document.getElementById("eval-run-btn").addEventListener("click", evalRunNew);
+    document.getElementById("eval-refresh-list-btn").addEventListener("click", () => evalLoadSessionList());
+    document.getElementById("eval-session-select").addEventListener("change", (e) => evalLoadSession(e.target.value));
+
     /************************* USER ACCOUNT MANAGEMENT *************************/
 
     let UA_ACTIVE = false;
@@ -12160,6 +12489,17 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       document.getElementById("ua-profile-panel").style.display = (token && user) ? "" : "none";
       const saveBtn = document.getElementById("ua-bm-save-btn");
       if (saveBtn) saveBtn.style.display = (token && user) ? "" : "none";
+      const isAdmin = !!(token && user && user.role === "admin");
+      const evalLink = document.getElementById("evalLink");
+      if (evalLink) {
+        evalLink.style.display = isAdmin ? "" : "none";
+        // A non-admin's own token expiring/signing out while Eval happens
+        // to be the active view (only reachable by an admin in the first
+        // place, but a role can change server-side mid-session) shouldn't
+        // leave a page an ordinary user can no longer even navigate away
+        // from via its own now-hidden nav link.
+        if (!isAdmin && typeof EVAL_ACTIVE !== "undefined" && EVAL_ACTIVE) deactivateEval();
+      }
       if (token && user) {
         document.getElementById("ua-profile-name").textContent = user.name || user.email;
         document.getElementById("ua-profile-email").textContent = user.email;
@@ -13203,6 +13543,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (ACK_ACTIVE) deactivateAck();
       if (CL_ACTIVE) deactivateChangelog();
       if (NET_ACTIVE) deactivateNetwork();
+      if (EVAL_ACTIVE) deactivateEval();
       UA_ACTIVE = true;
       setViewParam("account");
       document.getElementById("usersView").style.display = "block";
