@@ -2143,7 +2143,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.77.1">Releasetrain <em>v3.77.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.78.0">Releasetrain <em>v3.78.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3758,6 +3758,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-13</div>
+              <div class="cl-ver cl-ver-minor">v3.78.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Ask: show pipeline escalation to web verification</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> When a question names a vendor this system doesn't track and the answer comes from a real web search verifying it instead (see the Wikipedia-fallback work), the workflow diagram now extends the single-agent pipeline with two more nodes, Web Search and Verify, spliced in between Rewriter and Retriever, live and timed the same as the other four. A question that never escalates still renders the exact same 4-node diagram as before.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The answer card's preset badge reflects the escalation too, e.g. "SINGLE-AGENT + WEB VERIFICATION" instead of just "SINGLE-AGENT", so it's visible without opening the diagram.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -6589,6 +6603,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (phase === "retrying") return `${tag("Evaluator")}: requesting another search pass`;
       if (phase === "widening") return `${role("Evaluator")}Widening search window`;
       if (phase === "generating") return `${role("Orchestrator")}Generating answer`;
+      // Pipeline escalation: the vendor wasn't in this system's own
+      // catalog, so it's being checked against a real web search before
+      // the run is allowed to abstain. See verifyVendorViaWeb on the
+      // server. Not gated by isMultiAgent/role() like the phases above:
+      // this can fire on single_agent too, which is the whole point.
+      if (phase === "web_searching") return "Web Search: searching for vendor evidence";
+      if (phase === "web_verifying") return "Verify: judging vendor evidence";
       return phase;
     }
     // ── Agent workflow diagram (live phase → node highlighting) ─────
@@ -6602,8 +6623,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // which phase events actually arrive, no per-preset case needed.
     // Replaces the old top-of-page text ticker (#askPipelineStatus):
     // this lives in the answer rail instead, next to the answer itself.
-    let askWorkflowState = null;      // { rewriter, retriever, evaluator, orchestrator } -> idle|active|done
-    let askWorkflowTiming = null;     // { rewriter, retriever, evaluator, orchestrator } -> { startedAt, doneMs } | null
+    // websearch/verify only ever leave "idle" on a run that actually
+    // escalates vendor resolution out to a real web search (see
+    // verifyVendorViaWeb on the server) -- a normal, non-escalating
+    // question never touches them, which is what lets
+    // askWorkflowMermaidSource keep rendering the plain 4-node single-agent
+    // diagram unchanged for every other question.
+    let askWorkflowState = null;      // { rewriter, retriever, evaluator, orchestrator, websearch, verify } -> idle|active|done
+    let askWorkflowTiming = null;     // { rewriter, retriever, evaluator, orchestrator, websearch, verify } -> { startedAt, doneMs } | null
     let askWorkflowLabel = "";        // current phase's own label (askPhaseLabel), shown under the diagram
     let askWorkflowStartedAt = null;  // for the caption's live elapsed-seconds tick
     let askWorkflowTickTimer = null;
@@ -6614,6 +6641,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       searching: "retriever",
       evaluating: "evaluator", retrying: "evaluator", widening: "evaluator",
       generating: "orchestrator",
+      web_searching: "websearch", web_verifying: "verify",
     };
 
     let _askMermaidLoadPromise = null;
@@ -6654,6 +6682,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const secs = askWorkflowNodeSeconds(k);
         return secs ? `${name}<br/>${secs}` : name;
       };
+      // Pipeline escalation: only spliced into the diagram once this run
+      // has actually touched websearch/verify (see the comment on
+      // askWorkflowState above) -- a normal single-agent question that
+      // never escalates keeps rendering the exact same 4-node diagram as
+      // before, unchanged.
+      const escalated = (state.websearch && state.websearch !== "idle")
+        || (state.verify && state.verify !== "idle");
       // Smaller font + more spacing than mermaid's own defaults, scoped
       // to just this diagram via an %%{init}%% directive (not the
       // global mermaid.initialize() call, which the docs view's own
@@ -6664,16 +6699,35 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // the LR flow) that the dotted EV->RT retry edge routes through
       // below the main line; too small and its "retry" label sits on
       // top of that line instead of clearly under it.
-      return [
+      const lines = [
         "%%{init: {'themeVariables': {'fontSize': '11px'}, 'flowchart': {'nodeSpacing': 85, 'rankSpacing': 75}}}%%",
         "flowchart LR",
-        `  RW("${label("rewriter", "Rewriter")}") --> RT("${label("retriever", "Retriever")}") --> EV("${label("evaluator", "Evaluator")}") --> OR("${label("orchestrator", "Orchestrator")}")`,
-        "  EV -. retry .-> RT",
-        `  style RW ${style("rewriter")}`,
-        `  style RT ${style("retriever")}`,
-        `  style EV ${style("evaluator")}`,
-        `  style OR ${style("orchestrator")}`,
-      ].join("\n");
+      ];
+      if (escalated) {
+        // Spliced in between Rewriter and Retriever, since vendor
+        // resolution (and its possible escalation to a real web search)
+        // happens right there, before retrieval ever starts.
+        lines.push(
+          `  RW("${label("rewriter", "Rewriter")}") --> WS("${label("websearch", "Web Search")}") --> VF("${label("verify", "Verify")}") --> RT("${label("retriever", "Retriever")}") --> EV("${label("evaluator", "Evaluator")}") --> OR("${label("orchestrator", "Orchestrator")}")`,
+          "  EV -. retry .-> RT",
+          `  style RW ${style("rewriter")}`,
+          `  style WS ${style("websearch")}`,
+          `  style VF ${style("verify")}`,
+          `  style RT ${style("retriever")}`,
+          `  style EV ${style("evaluator")}`,
+          `  style OR ${style("orchestrator")}`
+        );
+      } else {
+        lines.push(
+          `  RW("${label("rewriter", "Rewriter")}") --> RT("${label("retriever", "Retriever")}") --> EV("${label("evaluator", "Evaluator")}") --> OR("${label("orchestrator", "Orchestrator")}")`,
+          "  EV -. retry .-> RT",
+          `  style RW ${style("rewriter")}`,
+          `  style RT ${style("retriever")}`,
+          `  style EV ${style("evaluator")}`,
+          `  style OR ${style("orchestrator")}`
+        );
+      }
+      return lines.join("\n");
     }
     async function renderAskWorkflowDiagram() {
       const el = document.getElementById("askWorkflowDiagram");
@@ -6717,8 +6771,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // by the next phase's render racing past it (see renderAskWorkflowDiagram's
     // own askWorkflowRenderSeq guard).
     function startAskWorkflow() {
-      askWorkflowState = { rewriter: "idle", retriever: "idle", evaluator: "idle", orchestrator: "idle" };
-      askWorkflowTiming = { rewriter: null, retriever: null, evaluator: null, orchestrator: null };
+      askWorkflowState = { rewriter: "idle", retriever: "idle", evaluator: "idle", orchestrator: "idle", websearch: "idle", verify: "idle" };
+      askWorkflowTiming = { rewriter: null, retriever: null, evaluator: null, orchestrator: null, websearch: null, verify: null };
       askWorkflowLabel = ""; askWorkflowStartedAt = null;
       if (askWorkflowTickTimer) clearInterval(askWorkflowTickTimer);
       askWorkflowTickTimer = setInterval(() => { renderAskWorkflowCaption(); renderAskWorkflowDiagram(); }, 250);
@@ -7484,10 +7538,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // stream; the modal is the narrow-screen/Compare fallback).
     function askRenderCard(label, res, opts) {
       opts = opts || {};
+      // Pipeline escalation, surfaced right in the preset badge: a run
+      // whose vendor wasn't in this system's own catalog and got resolved
+      // via a real web search instead (res.vendorWebVerified, see
+      // verifyVendorViaWeb on the server) reads as "SINGLE-AGENT + WEB
+      // VERIFICATION" rather than the plain preset name, so a viewer sees
+      // the escalation happened without needing to open the workflow
+      // diagram at all. Applied uniformly to whichever preset actually ran
+      // it (not just single_agent) -- see ASK_WORKFLOW_PHASE_NODE's own
+      // comment on the same "not gated by preset" reasoning.
+      const displayLabel = res.vendorWebVerified ? `${label} + Web Verification` : label;
       if (res.error) {
         const errLabelHtml = opts.previewQuestion
-          ? `<div class="ask-answer-heading"><span class="ask-answer-question">${uaEsc(opts.previewQuestion)}</span><span class="ask-answer-preset">(${uaEsc(label)})</span></div>`
-          : `<div class="ask-answer-label">${uaEsc(label)}</div>`;
+          ? `<div class="ask-answer-heading"><span class="ask-answer-question">${uaEsc(opts.previewQuestion)}</span><span class="ask-answer-preset">(${uaEsc(displayLabel)})</span></div>`
+          : `<div class="ask-answer-label">${uaEsc(displayLabel)}</div>`;
         return `<div class="ask-answer-card">
           ${errLabelHtml}
           <p class="ask-error">${uaEsc(res.error)}</p>
@@ -7505,8 +7569,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // (modal, Compare grid) has nowhere to put a question this way and
       // keeps the original plain-label line.
       const labelHtml = opts.previewQuestion
-        ? `<div class="ask-answer-heading"><span class="ask-answer-question">${uaEsc(opts.previewQuestion)}</span><span class="ask-answer-preset">(${uaEsc(label)})</span>${abstainBadge}</div>`
-        : `<div class="ask-answer-label">${uaEsc(label)}${abstainBadge}</div>`;
+        ? `<div class="ask-answer-heading"><span class="ask-answer-question">${uaEsc(opts.previewQuestion)}</span><span class="ask-answer-preset">(${uaEsc(displayLabel)})</span>${abstainBadge}</div>`
+        : `<div class="ask-answer-label">${uaEsc(displayLabel)}${abstainBadge}</div>`;
       const answerHtml = `
         <div class="ask-answer-summary">${highlightAnswerTerm(mdLite(shownAnswer), res.highlightTerm)}</div>
         ${wasTrimmed ? '<button type="button" class="btn btn-ghost ask-view-full-btn" style="font-size:11px;padding:3px 8px;margin:-4px 0 8px">Show full answer</button>' : ""}
