@@ -453,6 +453,7 @@
     .ask-workflow-caption {
       font-size: 10.5px; color: var(--muted); min-height: 14px;
       margin: 0 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      text-align: right;
     }
     .ask-options-row {
       display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
@@ -2156,7 +2157,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.79.0">Releasetrain <em>v3.79.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.79.1">Releasetrain <em>v3.79.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3771,6 +3772,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-13</div>
+              <div class="cl-ver cl-ver-patch">v3.79.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Ask: right-align the live workflow caption</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The "Generating answer… Ns"-style caption under the workflow diagram now sits at the bottom right instead of flush left.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
