@@ -2157,7 +2157,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.80.0">Releasetrain <em>v3.80.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.81.0">Releasetrain <em>v3.81.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3772,6 +3772,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-13</div>
+              <div class="cl-ver cl-ver-minor">v3.81.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Ask: show a source link for the fallback web search too</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Whenever a run's own retrieval found zero evidence, the pipeline already falls back to a real web search (deterministicWebFallback) for every preset, but that attempt was invisible once the answer finished. A successful fallback find already shows up as a normal clickable source; a failed one (reported live: "What's the latest powershell version?" abstained after this fallback's own search came up empty) now shows a brief note naming exactly what was searched, plus a one-click link to run the same search manually and verify, since the search engines this tool scrapes can intermittently block an automated request without blocking a real browser.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -7380,10 +7393,30 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
       </div>`;
     }
-    function askRenderSources(sources, webEvidence) {
+    // Brief, deliberately: deterministicWebFallback's own zero-evidence
+    // retrieval fallback (see ask.js) is a plain search_web call, not a
+    // vendor-verification judgment like askRenderWebVerification above,
+    // so there's no candidate/verdict to show, just proof a real search
+    // was attempted. Only rendered when it found NOTHING -- a successful
+    // find already shows up as a normal clickable "web"-kind source in
+    // the Discussion group below, so a separate block for that case
+    // would just duplicate it. A manual-verification link (a plain
+    // Google search URL) is included since the automated search engines
+    // this tool scrapes can intermittently block automated requests
+    // (see webSearch.js's own header comment) without blocking a real
+    // browser, so a human can often verify in one click when the
+    // automated attempt came up empty.
+    function askRenderWebSearchFallback(webSearchFallback) {
+      if (!webSearchFallback || webSearchFallback.resultCount > 0) return "";
+      const q = webSearchFallback.query || "";
+      const href = `https://www.google.com/search?q=${encodeURIComponent(q)}`;
+      return `<p class="ask-muted">Web search for "${uaEsc(q)}" found no results. <a href="${uaEsc(href)}" target="_blank" rel="noopener">Search manually to verify</a>.</p>`;
+    }
+    function askRenderSources(sources, webEvidence, webSearchFallback) {
       const webVerifyHtml = askRenderWebVerification(webEvidence);
+      const webFallbackHtml = askRenderWebSearchFallback(webSearchFallback);
       if (!sources || !sources.length) {
-        return webVerifyHtml || '<p class="ask-muted">No sources were found for this question.</p>';
+        return webVerifyHtml || webFallbackHtml || '<p class="ask-muted">No sources were found for this question.</p>';
       }
       // "stackoverflow" was previously indistinguishable from "reddit":
       // the server used to hardcode kind:'reddit' for every doc in the
@@ -7409,7 +7442,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const group = (label, list) => list.length
         ? `<div class="ask-source-group"><div class="ask-source-heading">${label}</div><ul class="ask-sources">${list.map(renderItem).join("")}</ul></div>`
         : "";
-      return webVerifyHtml + group("Documented", documented) + group("Discussion", discussion);
+      return webVerifyHtml + webFallbackHtml + group("Documented", documented) + group("Discussion", discussion);
     }
 
     // Meta chips (vendor/intent/temporal) plus a collapsible technical
@@ -7638,7 +7671,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           ${answerHtml}
         </div>
         <div class="ask-rail-panel" data-panel="sources" hidden>
-          ${askRenderSources(mergedSources, primary && primary.vendorWebEvidence)}
+          ${askRenderSources(mergedSources, primary && primary.vendorWebEvidence, primary && primary.webSearchFallback)}
         </div>
         <div class="ask-rail-panel" data-panel="benchmark" hidden>
           <details class="ask-bm-legend-details">
@@ -7710,7 +7743,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           ${labelHtml}
           ${answerHtml}
           ${askRenderMetaChips(res)}
-          ${askRenderSources(res.sources, res.vendorWebEvidence)}
+          ${askRenderSources(res.sources, res.vendorWebEvidence, res.webSearchFallback)}
           ${askRenderDetails(res)}
         </div>`;
       }
@@ -7729,7 +7762,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="ask-rail-panel" data-panel="sources" hidden>
           ${askRenderMetaChips(res)}
-          ${askRenderSources(res.sources, res.vendorWebEvidence)}
+          ${askRenderSources(res.sources, res.vendorWebEvidence, res.webSearchFallback)}
           ${askRenderDetails(res)}
         </div>
         <div class="ask-rail-panel" data-panel="benchmark" hidden>
