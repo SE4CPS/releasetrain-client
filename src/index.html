@@ -654,6 +654,19 @@
     .ask-muted { color: var(--muted); font-size: 12px; }
 
     /* ── Eval (admin research tool) ───────────────────────────── */
+    /* Every view is its own scroll region (html/body disable page
+       scroll entirely; see the comment above #usersView), so #evalView
+       needs the same sticky/height/overflow-y:auto treatment every
+       other view gets, or a session with several questions' worth of
+       answers has nowhere to scroll at all. */
+    #evalView {
+      max-width: min(1100px, 96vw); padding: 14px 16px;
+      position: sticky; top: calc(var(--topbar-h) + 16px);
+      height: calc(100vh - var(--topbar-h) - 24px);
+      overflow-y: auto; overscroll-behavior: contain;
+      box-sizing: border-box;
+    }
+    @media (max-width: 640px) { #evalView { position: static; height: auto; overflow-y: visible; padding: 12px; } }
     .eval-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .eval-n-label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
     .eval-question-block {
@@ -2172,7 +2185,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.74.0">Releasetrain <em>v3.74.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.74.1">Releasetrain <em>v3.74.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3793,6 +3806,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-13</div>
+              <div class="cl-ver cl-ver-patch">v3.74.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Fixed: Eval page had no way to scroll</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <code>#evalView</code> was missing the sticky/height/<code>overflow-y:auto</code> treatment every other view already has (page-level scrolling is disabled entirely, so each view has to be its own scroll region). A session with more than a screen's worth of questions had no way to scroll down to see the rest.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
