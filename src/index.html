@@ -647,6 +647,19 @@
       font: 700 10px/1 inherit; text-transform: uppercase; letter-spacing: .4px;
       color: var(--muted); margin-bottom: 6px;
     }
+    /* The evidence behind a pipeline escalation (see verifyVendorViaWeb on
+       the server): left column is what was searched and the verdict, right
+       column is the actual raw results that verdict was judged from. Wraps
+       to a single stacked column once the rail is too narrow for both. */
+    .ask-webverify-grid { display: flex; flex-wrap: wrap; gap: 14px; }
+    .ask-webverify-col { flex: 1 1 220px; min-width: 180px; font-size: 12px; line-height: 1.5; }
+    .ask-webverify-col > div { margin-bottom: 4px; }
+    .ask-webverify-results { list-style: none; margin: 0; padding: 0; }
+    .ask-webverify-result { margin-bottom: 8px; }
+    .ask-webverify-result:last-child { margin-bottom: 0; }
+    .ask-webverify-result a { color: var(--text); text-decoration: none; font-size: 12px; }
+    .ask-webverify-result a:hover { text-decoration: underline; color: var(--brand); }
+    .ask-webverify-snippet { color: var(--muted); font-size: 11px; line-height: 1.4; margin-top: 2px; }
     .ask-rate-row { display: flex; align-items: center; gap: 6px; }
     .ask-rate-btn { font-size: 11px; padding: 4px 8px; }
     .ask-rate-btn.ask-rate-chosen { background: var(--brand-light); color: var(--brand); border-color: var(--brand); }
@@ -2143,7 +2156,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.78.0">Releasetrain <em>v3.78.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.78.1">Releasetrain <em>v3.78.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3758,6 +3771,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-13</div>
+              <div class="cl-ver cl-ver-patch">v3.78.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Ask: fix vendor web verification search, show its evidence</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> verifyVendorViaWeb was searching the raw question text ("Whats the latest gradle version?") instead of the extracted product name, which came back noisy enough to fail verification for a real, well-known product (Gradle). It now searches the extracted candidate plus "software" (e.g. "gradle software"), the same suffix trick the Wikipedia bot's own search variants already rely on, per the established "software gives the search better results" rule.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Added a "Web Verification" section to the Sources tab whenever a run's vendor resolution escalated to a real web search, showing exactly what was searched and the raw results it was judged from, left and right, including on a "no vendor detected" abstain where it's the only way to see why.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -7256,9 +7283,42 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // community discussion the model also drew on. Splitting them makes
     // it obvious at a glance which kind of source a given claim rests on,
     // instead of the two reading as one undifferentiated pile.
-    function askRenderSources(sources) {
+    // Surfaces exactly what verifyVendorViaWeb searched and found on the
+    // server (see ask.js), not just the bare fact that a pipeline
+    // escalated -- including on a "no vendor detected" abstain, where
+    // this evidence block is the only way to see why. webEvidence is
+    // null on any run that never needed escalation at all.
+    function askRenderWebVerification(webEvidence) {
+      if (!webEvidence || !webEvidence.candidate) return "";
+      const results = webEvidence.results || [];
+      const resultsHtml = results.length
+        ? `<ol class="ask-webverify-results">${results.map(r => {
+            const titleHtml = `<strong>${uaEsc(r.title || r.url || "")}</strong>`;
+            const linked = r.url
+              ? `<a href="${uaEsc(r.url)}" target="_blank" rel="noopener">${titleHtml}</a>`
+              : titleHtml;
+            return `<li class="ask-webverify-result">${linked}${r.snippet ? `<div class="ask-webverify-snippet">${uaEsc(r.snippet)}</div>` : ""}</li>`;
+          }).join("")}</ol>`
+        : `<p class="ask-muted">The search returned no results.</p>`;
+      const verdictHtml = webEvidence.verified
+        ? `✅ verified${webEvidence.name ? ` as "${uaEsc(webEvidence.name)}"` : ""}`
+        : `⛔ not verified`;
+      return `<div class="ask-source-group ask-webverify-group">
+        <div class="ask-source-heading">Web Verification</div>
+        <div class="ask-webverify-grid">
+          <div class="ask-webverify-col">
+            <div><strong>Candidate:</strong> ${uaEsc(webEvidence.candidate)}</div>
+            <div><strong>Searched:</strong> ${uaEsc(webEvidence.searchQuery || webEvidence.candidate)}</div>
+            <div><strong>Verdict:</strong> ${verdictHtml}</div>
+          </div>
+          <div class="ask-webverify-col">${resultsHtml}</div>
+        </div>
+      </div>`;
+    }
+    function askRenderSources(sources, webEvidence) {
+      const webVerifyHtml = askRenderWebVerification(webEvidence);
       if (!sources || !sources.length) {
-        return '<p class="ask-muted">No sources were found for this question.</p>';
+        return webVerifyHtml || '<p class="ask-muted">No sources were found for this question.</p>';
       }
       // "stackoverflow" was previously indistinguishable from "reddit":
       // the server used to hardcode kind:'reddit' for every doc in the
@@ -7284,7 +7344,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const group = (label, list) => list.length
         ? `<div class="ask-source-group"><div class="ask-source-heading">${label}</div><ul class="ask-sources">${list.map(renderItem).join("")}</ul></div>`
         : "";
-      return group("Documented", documented) + group("Discussion", discussion);
+      return webVerifyHtml + group("Documented", documented) + group("Discussion", discussion);
     }
 
     // Meta chips (vendor/intent/temporal) plus a collapsible technical
@@ -7513,7 +7573,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           ${answerHtml}
         </div>
         <div class="ask-rail-panel" data-panel="sources" hidden>
-          ${askRenderSources(mergedSources)}
+          ${askRenderSources(mergedSources, primary && primary.vendorWebEvidence)}
         </div>
         <div class="ask-rail-panel" data-panel="benchmark" hidden>
           <details class="ask-bm-legend-details">
@@ -7585,7 +7645,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           ${labelHtml}
           ${answerHtml}
           ${askRenderMetaChips(res)}
-          ${askRenderSources(res.sources)}
+          ${askRenderSources(res.sources, res.vendorWebEvidence)}
           ${askRenderDetails(res)}
         </div>`;
       }
@@ -7604,7 +7664,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="ask-rail-panel" data-panel="sources" hidden>
           ${askRenderMetaChips(res)}
-          ${askRenderSources(res.sources)}
+          ${askRenderSources(res.sources, res.vendorWebEvidence)}
           ${askRenderDetails(res)}
         </div>
         <div class="ask-rail-panel" data-panel="benchmark" hidden>
