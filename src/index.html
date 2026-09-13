@@ -668,6 +668,15 @@
     }
     @media (max-width: 640px) { #evalView { position: static; height: auto; overflow-y: visible; padding: 12px; } }
     .eval-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .eval-compose { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 14px; }
+    .eval-compose-col { flex: 1 1 320px; min-width: 0; }
+    .eval-compose-col textarea {
+      width: 100%; min-height: 90px; font: inherit; font-size: 12px; padding: 8px 10px;
+      border: 1px solid var(--border); border-radius: var(--radius-sm); resize: vertical;
+      box-sizing: border-box;
+    }
+    .eval-compose-actions { display: flex; align-items: center; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+    .eval-compose-footer { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
     .eval-n-label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
     .eval-question-block {
       border: 1px solid var(--border); border-radius: var(--radius);
@@ -2185,7 +2194,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.75.0">Releasetrain <em>v3.75.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.76.0">Releasetrain <em>v3.76.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3806,6 +3815,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-13</div>
+              <div class="cl-ver cl-ver-minor">v3.76.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Eval: simplified to one question at a time</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Reworked the Eval page's toolbar into a single compose panel: a question box (type your own, or click "Suggest a random question" to fill it in, still freely editable) side by side with an expected-answer box, plus a Name field and one Run button. Replaces the old "N random questions at once" batch mode and the separate candidate-picker dropdown, both dropped as unnecessary complexity once real usage settled on evaluating one deliberately-chosen question per session.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> An expected answer typed into the compose box is now saved immediately when the session starts, not only after it finishes.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5980,39 +6003,50 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
       </div><!-- /#networkView -->
 
-      <!-- Admin-only research tool: samples N real Reddit questions and
-           runs each through every pipeline preset (see evalRunner.js on
-           the server), for a human to rate side by side. Not a general
+      <!-- Admin-only research tool: run one real question at a time
+           (written by hand or picked at random) through every pipeline
+           preset (see evalRunner.js on the server), for a human to rate
+           side by side against an expected answer. Not a general
            user-facing feature; #evalLink itself stays hidden for anyone
            but a signed-in admin (see uaRender), and every /api/eval/*
            call is requireAdmin server-side regardless. -->
       <div id="evalView" style="display:none">
         <div class="eval-toolbar">
-          <label class="eval-n-label">Name (optional):
-            <input id="eval-name" type="text" maxlength="200" placeholder="e.g. CVE-question pilot" class="ask-preset-select" style="width:180px" />
-          </label>
-          <label class="eval-n-label">Questions:
-            <input id="eval-n" type="number" min="1" max="20" value="10" class="ask-preset-select" style="width:64px" />
-          </label>
-          <button id="eval-run-btn" class="btn btn-primary" type="button">Run new evaluation</button>
           <label class="eval-n-label">Past sessions:
             <select id="eval-session-select" class="ask-preset-select"></select>
           </label>
           <button id="eval-refresh-list-btn" class="btn btn-ghost" type="button">Refresh list</button>
         </div>
-        <!-- "Pick a specific question" mode: a pool of randomly-sampled
-             candidates, each labeled with its real classified question
-             type, so an admin can deliberately cover a type instead of
-             trusting it turns up in the random-N flow above. Runs a
-             1-question session on exactly the selected candidate. -->
-        <div class="eval-toolbar" style="margin-top:8px">
-          <span class="ask-source-heading" style="margin:0">Or pick a specific question:</span>
-          <button id="eval-load-candidates-btn" class="btn btn-ghost" type="button">Load random candidates</button>
-          <select id="eval-candidate-select" class="ask-preset-select" style="min-width:280px" disabled>
-            <option value="">Load candidates first…</option>
-          </select>
-          <button id="eval-run-candidate-btn" class="btn btn-primary" type="button" disabled>Run this question</button>
+
+        <!-- Compose one new session: a question (typed by hand or
+             filled in via "Suggest a random question", still freely
+             editable either way) paired with an expected answer, side
+             by side. Kept to exactly one question per session on
+             purpose: this used to also support a "run N random
+             questions at once" batch mode, dropped as unnecessary
+             complexity once real usage settled on evaluating one
+             deliberately-chosen question at a time. -->
+        <div class="eval-compose">
+          <div class="eval-compose-col">
+            <div class="ask-source-heading" style="margin:0 0 6px">Question</div>
+            <textarea id="eval-compose-question" placeholder="Type a question, or click Suggest a random question below…"></textarea>
+            <div class="eval-compose-actions">
+              <button id="eval-suggest-btn" class="btn btn-ghost" type="button" style="font-size:11px;padding:3px 8px">🎲 Suggest a random question</button>
+              <span id="eval-compose-type" class="ua-muted" style="font-size:11px"></span>
+            </div>
+          </div>
+          <div class="eval-compose-col">
+            <div class="ask-source-heading" style="margin:0 0 6px">Expected answer (your ground truth)</div>
+            <textarea id="eval-compose-expected" placeholder="Optional: type what you'd consider the correct answer. You can also fill this in after running, once you've seen the community comments/CVE records."></textarea>
+          </div>
         </div>
+        <div class="eval-compose-footer">
+          <label class="eval-n-label">Name (optional):
+            <input id="eval-name" type="text" maxlength="200" placeholder="e.g. CVE-question pilot" class="ask-preset-select" style="width:200px" />
+          </label>
+          <button id="eval-run-btn" class="btn btn-primary" type="button">Run evaluation</button>
+        </div>
+
         <div id="eval-status" class="ua-muted" style="font-size:12px;margin:10px 0"></div>
         <div id="eval-session-name-row" style="margin:0 0 10px"></div>
         <div id="eval-body"></div>
@@ -12306,86 +12340,77 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       }
     }
 
-    async function evalRunNew() {
-      const runBtn = document.getElementById("eval-run-btn");
-      const nInput = document.getElementById("eval-n");
-      const name = document.getElementById("eval-name").value.trim();
-      const n = Math.max(1, Math.min(20, parseInt(nInput.value, 10) || 10));
-      runBtn.disabled = true;
-      uaShowMsg("eval-status", "Starting evaluation...");
-      try {
-        const res = await uaRequest("eval/run", { method: "POST", body: JSON.stringify({ n, name: name || undefined }) });
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.error || res.status);
-        }
-        const { evalId } = await res.json();
-        await evalLoadSessionList(evalId);
-      } catch (err) {
-        uaShowMsg("eval-status", "Failed to start evaluation: " + (err.message || err));
-      } finally {
-        runBtn.disabled = false;
-      }
-    }
+    // Backs the "Suggest a random question" button: pulls one random
+    // candidate (real question + its classified type, see
+    // evalRunner.js's listCandidateQuestions) and drops it straight
+    // into the question textarea, still freely editable afterward.
+    // EVAL_SUGGESTED tracks the exact candidate object (redditId/url/
+    // subreddit included) so evalRunCompose can tell whether the
+    // textarea still holds that same real post verbatim, or whether the
+    // admin has edited/replaced it with their own text; only in the
+    // unedited case does it make sense to attach that post's own real
+    // Reddit comments as ground truth (see evalRunCompose below).
+    let EVAL_SUGGESTED = null;
 
-    // "Pick a specific question" mode: a pool of randomly-sampled
-    // candidates, each labeled with its real classified question type
-    // (see evalRunner.js's listCandidateQuestions), so an admin can
-    // deliberately cover a type instead of trusting it turns up in the
-    // random-N flow above. EVAL_CANDIDATES keeps the full objects
-    // (redditId/url/subreddit included) since the <select>'s own value
-    // is just an index; the option text alone isn't enough to run it.
-    let EVAL_CANDIDATES = [];
-
-    async function evalLoadCandidates() {
-      const btn = document.getElementById("eval-load-candidates-btn");
-      const sel = document.getElementById("eval-candidate-select");
-      const runBtn = document.getElementById("eval-run-candidate-btn");
+    async function evalSuggestQuestion() {
+      const btn = document.getElementById("eval-suggest-btn");
+      const textarea = document.getElementById("eval-compose-question");
+      const typeEl = document.getElementById("eval-compose-type");
       btn.disabled = true;
-      sel.disabled = true;
-      runBtn.disabled = true;
-      sel.innerHTML = '<option value="">Loading candidates...</option>';
+      typeEl.textContent = "Loading…";
       try {
-        const res = await uaRequest("eval/candidates?n=20");
+        const res = await uaRequest("eval/candidates?n=1");
         if (!res.ok) throw new Error(res.status);
         const { data } = await res.json();
-        EVAL_CANDIDATES = data || [];
-        if (!EVAL_CANDIDATES.length) {
-          sel.innerHTML = '<option value="">No candidates found</option>';
-          return;
-        }
-        sel.innerHTML = EVAL_CANDIDATES.map((c, i) => {
-          const q = c.question.length > 90 ? c.question.slice(0, 90) + "…" : c.question;
-          return `<option value="${i}">[${uaEsc(c.questionTypeLabel || c.questionType)}] ${uaEsc(q)}</option>`;
-        }).join("");
-        sel.disabled = false;
-        runBtn.disabled = false;
-      } catch (err) {
-        sel.innerHTML = '<option value="">Failed to load candidates</option>';
+        const candidate = data && data[0];
+        if (!candidate) { typeEl.textContent = "No candidates found."; return; }
+        EVAL_SUGGESTED = candidate;
+        textarea.value = candidate.question;
+        typeEl.textContent = `Suggested type: ${candidate.questionTypeLabel || candidate.questionType}`;
+      } catch {
+        typeEl.textContent = "Failed to load a suggestion.";
       } finally {
         btn.disabled = false;
       }
     }
 
-    async function evalRunCandidate() {
-      const sel = document.getElementById("eval-candidate-select");
-      const runBtn = document.getElementById("eval-run-candidate-btn");
-      const idx = Number(sel.value);
-      const question = EVAL_CANDIDATES[idx];
-      if (!question) return;
+    async function evalRunCompose() {
+      const runBtn = document.getElementById("eval-run-btn");
+      const questionText = document.getElementById("eval-compose-question").value.trim();
+      const expectedAnswer = document.getElementById("eval-compose-expected").value.trim();
       const name = document.getElementById("eval-name").value.trim();
+      if (!questionText) { uaShowMsg("eval-status", "Type or suggest a question first."); return; }
+      // Only reuse the suggested post's redditId/url/subreddit (and with
+      // it, that post's own real Reddit comments as ground truth) when
+      // the textarea still holds that exact suggestion verbatim. Once
+      // edited, or written from scratch, it's treated as the admin's
+      // own question text with no specific post behind it.
+      const stillSuggested = EVAL_SUGGESTED && EVAL_SUGGESTED.question === questionText;
+      const question = {
+        question: questionText,
+        redditId: stillSuggested ? EVAL_SUGGESTED.redditId : null,
+        url: stillSuggested ? EVAL_SUGGESTED.url : null,
+        subreddit: stillSuggested ? EVAL_SUGGESTED.subreddit : null,
+      };
       runBtn.disabled = true;
-      uaShowMsg("eval-status", "Starting evaluation for the selected question...");
+      uaShowMsg("eval-status", "Starting evaluation...");
       try {
-        const res = await uaRequest("eval/run", {
-          method: "POST",
-          body: JSON.stringify({ name: name || undefined, question: { question: question.question, redditId: question.redditId, url: question.url, subreddit: question.subreddit } }),
-        });
+        const res = await uaRequest("eval/run", { method: "POST", body: JSON.stringify({ name: name || undefined, question }) });
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
           throw new Error(err.error || res.status);
         }
         const { evalId } = await res.json();
+        // Saved right away (not left for the admin to re-type after the
+        // session loads): the eval_runs doc's one question already
+        // exists by the time /run returns (see startEvalSession), so
+        // there's nothing to wait on here.
+        if (expectedAnswer) {
+          await uaRequest(`eval/${evalId}/expected`, {
+            method: "POST",
+            body: JSON.stringify({ questionIndex: 0, expectedAnswer }),
+          }).catch(() => {});
+        }
         await evalLoadSessionList(evalId);
       } catch (err) {
         uaShowMsg("eval-status", "Failed to start evaluation: " + (err.message || err));
@@ -12572,11 +12597,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       });
     }
 
-    document.getElementById("eval-run-btn").addEventListener("click", evalRunNew);
+    document.getElementById("eval-run-btn").addEventListener("click", evalRunCompose);
     document.getElementById("eval-refresh-list-btn").addEventListener("click", () => evalLoadSessionList());
     document.getElementById("eval-session-select").addEventListener("change", (e) => evalLoadSession(e.target.value));
-    document.getElementById("eval-load-candidates-btn").addEventListener("click", evalLoadCandidates);
-    document.getElementById("eval-run-candidate-btn").addEventListener("click", evalRunCandidate);
+    document.getElementById("eval-suggest-btn").addEventListener("click", evalSuggestQuestion);
 
     /************************* USER ACCOUNT MANAGEMENT *************************/
 
