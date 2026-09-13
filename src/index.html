@@ -2156,7 +2156,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.78.1">Releasetrain <em>v3.78.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.79.0">Releasetrain <em>v3.79.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3771,6 +3771,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-13</div>
+              <div class="cl-ver cl-ver-minor">v3.79.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Feed: a named component search skips the recency cap</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The 28-day (LOOKBACK_DAYS) recency cap used to apply to every result with no exceptions, including a named component search, so a link like <code>/?q=Hibernate,java</code> could come back empty for a component whose only tracked release predates that window. Searching for a specific vendor (typed into the search box, or pre-filled from a <code>?q=</code> URL) now shows everything tracked for it regardless of age; the default, no-search "Recent Updates" feed is unchanged.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -10087,28 +10100,31 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     function updateRangeKpi(items) {
       const fmt = d => d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
-      // Reflects what's actually displayed. Always inside LOOKBACK_DAYS
-      // now (see withinFeedWindow), so this range should never span
-      // wider than that window.
+      // Reflects what's actually displayed: inside LOOKBACK_DAYS for the
+      // default no-search feed, but a named component search can span
+      // further back than that window (see withinFeedWindow's own
+      // comment on skipRecencyCap), so this range legitimately widens
+      // once a search is active.
       const times = (items || []).map(versionTime).filter(Boolean);
       if (!times.length) { EL["kpi-range"].innerHTML = `📅 Range: <em>—</em>`; return; }
       const min = Math.min(...times), max = Math.max(...times);
       EL["kpi-range"].innerHTML = `📅 Range: <em>${fmt(new Date(min))} – ${fmt(new Date(max))}</em>`;
     }
 
-    // The recency window is a hard cap on the feed, no exceptions: a
-    // named component search or the LLM/Hypervisor toggles used to
-    // bypass it entirely (AI model releases especially are sparse enough
-    // in time that they were essentially never inside the default
-    // window otherwise), but that meant "Recent Updates" could quietly
-    // show a release from a year ago. Per explicit request, nothing
-    // older than LOOKBACK_DAYS is shown here regardless of how it was
-    // found; a search or toggle with nothing that recent now correctly
-    // shows no results rather than reaching further back.
-    function withinFeedWindow(v) {
+    // The recency window is a hard cap on the default, no-search "Recent
+    // Updates" feed: nothing older than LOOKBACK_DAYS shows up there
+    // regardless of the LLM/Hypervisor toggles, so that view can't
+    // quietly surface a release from a year ago. A named component
+    // search (STATE.filters.components, e.g. typed into the search box
+    // or pre-filled from a ?q=name,name URL like /?q=Hibernate,java) is
+    // the one exception: per explicit request, searching for a specific
+    // vendor means "show me everything about it," not "show me only
+    // what's recent enough for the front page," so skipRecencyCap is
+    // true whenever that filter is active.
+    function withinFeedWindow(v, skipRecencyCap) {
       const ts = versionTime(v);
       if (!ts) return false;
-      if (ts < LOOKBACK_AGO) return false;
+      if (!skipRecencyCap && ts < LOOKBACK_AGO) return false;
       if (ts > Date.now() && !v.isVendorPublished) return false;
       return true;
     }
@@ -10122,14 +10138,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // Extends the candidate pool with the full LLM / hypervisor
       // datasets whenever relevant, since STATE.rawVersions alone
       // doesn't necessarily include them. withinFeedWindow below still
-      // applies the same LOOKBACK_DAYS cap to every candidate regardless
-      // of which pool it came from, so this only widens WHERE a recent
-      // match can be found, not whether an old one can slip through.
+      // applies the LOOKBACK_DAYS cap to every candidate when there's no
+      // named component search active, regardless of which pool it came
+      // from, so the toggles alone only widen WHERE a recent match can
+      // be found, not whether an old one can slip through.
       const pool = (llmActive || hvActive || comps.length)
         ? dedupeByVersionId([STATE.rawVersions, STATE.llmVersions, STATE.hvVersions])
         : STATE.rawVersions;
       const candidates = pool.filter(v => {
-        if (!withinFeedWindow(v)) return false;
+        if (!withinFeedWindow(v, comps.length > 0)) return false;
         if (!comps.length) return true;
         const name = norm(v.versionProductName);
         const tags = (Array.isArray(v.versionSearchTags) ? v.versionSearchTags.join(",") : "").toLowerCase();
@@ -10180,20 +10197,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (STATE.groupsFiltered.length) {
         hideEmptyState();
       } else {
-        // Distinguish "this component exists but has nothing recent
-        // enough" (withinFeedWindow is what actually excluded it) from a
-        // genuinely empty/over-filtered result, since the day-window cap
-        // is by far the more common and more confusing reason a named
-        // search comes back blank (e.g. searching "Python" when its
-        // newest known release predates LOOKBACK_DAYS entirely).
-        const matchedOutsideWindow = comps.length && pool.some(v => {
+        // A named component search no longer has a day-window to blame
+        // (see withinFeedWindow's own comment: it's bypassed whenever
+        // comps.length), so "matched, but still empty" here now means
+        // something else excluded it -- most likely the Reddit/Stack
+        // Overflow risk toggles, occasionally a version with no usable
+        // timestamp at all. Distinguish that from a genuine no-match.
+        const matchedButFiltered = comps.length && pool.some(v => {
           const name = norm(v.versionProductName);
           const tags = (Array.isArray(v.versionSearchTags) ? v.versionSearchTags.join(",") : "").toLowerCase();
           return comps.some(t => name.includes(t) || tags.includes(t));
         });
-        showEmptyState(matchedOutsideWindow
-          ? `No results found for the last ${LOOKBACK_DAYS} days.`
-          : "No updates match the current filters.");
+        showEmptyState(matchedButFiltered
+          ? "Found matches for that search, but none match the other active filters."
+          : (comps.length ? "No versions found for that search." : "No updates match the current filters."));
       }
       // The header's own "(last N weeks, M components)" label now states
       // this same count. #status stays reserved for transient messages
@@ -10521,7 +10538,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     function filterVersions(vers) {
       const comps = STATE.filters.components;
       const candidates = vers.filter(v => {
-        if (!withinFeedWindow(v)) return false;
+        if (!withinFeedWindow(v, comps.length > 0)) return false;
         if (!comps.length) return true;
         const name = norm(v.versionProductName);
         const tags = (Array.isArray(v.versionSearchTags) ? v.versionSearchTags.join(",") : "").toLowerCase();
