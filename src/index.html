@@ -2157,7 +2157,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.81.0">Releasetrain <em>v3.81.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.82.0">Releasetrain <em>v3.82.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2320,6 +2320,9 @@
         <a id="ackLink" class="nav-link" href="#" title="Show acknowledgements (in-page)">🤝 Credits</a>
         <a id="usersLink" class="nav-link" href="#" title="User account management">👤 Account</a>
         <a id="networkLink" class="nav-link" href="#" title="Releases: publish and report production outcomes">🌐 Release</a>
+        <!-- Admin-only: hidden by default, shown in uaRender() only when
+             the signed-in user's role is "admin". -->
+        <a id="evalRewriterLink" class="nav-link" href="#" title="Admin: compare Retriever evidence with vs without the Rewriter" hidden>🧪 Eval Rewriter</a>
         <a class="nav-link" href="https://github.com/SE4CPS/releasetrain-client"
           target="_blank" rel="noopener noreferrer">⭐ GitHub</a>
       </nav>
@@ -2557,6 +2560,16 @@
             Sign in to save preferences. Admins can manage all users and roles.
           </p>
           <div id="ua-sidebar-status" style="font-size:12px;color:var(--muted)">Not signed in.</div>
+        </div>
+      </div>
+
+      <!-- ── Eval Rewriter controls (shown only in eval-rewriter view) ── -->
+      <div id="evalRewriterControls" style="display:none">
+        <div class="sidebar-section">
+          <div class="sidebar-label">Rewriter eval</div>
+          <p style="font-size:12px;color:var(--muted);line-height:1.6;margin:0 0 10px">
+            Admin only. Compares the Retriever's own evidence with the Rewriter's chosen search terms against the raw question text, vendor and tool access held constant. No automated grading; read both lists yourself.
+          </p>
         </div>
       </div>
 
@@ -3772,6 +3785,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-13</div>
+              <div class="cl-ver cl-ver-minor">v3.82.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>New admin-only Rewriter eval page</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Added <code>🧪 Eval Rewriter</code>, an admin-only nav item that runs the Retriever twice on the same question: once with the Rewriter's own chosen search terms, once with the raw question text instead, everything else (vendor, allowed tools, tool-call budget) held constant. Both real evidence lists render side by side; a "Sample a real question" button pulls a genuine, already-classified community question instead of a made-up one. No automated LLM grading picks a winner, unlike the earlier promptfoo-based Eval page removed this session for its memory cost; this just shows both lists for a human to read directly.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5765,6 +5791,31 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </ul>
       </div><!-- /#ackView -->
 
+      <!-- Admin-only: Rewriter A/B eval view. No LLM grading -- see
+           runRewriterAbEval's own comment in ask.js for why. -->
+      <div id="evalRewriterView" style="display:none">
+        <div class="eval-rewriter-wrap" style="max-width:1100px;margin:0 auto;padding:20px 16px 60px">
+          <h2 style="margin:0 0 4px">🧪 Rewriter Eval</h2>
+          <p class="ask-muted" style="margin:0 0 16px">
+            Admin only. Runs the Retriever twice on the same question: once with the
+            Rewriter's own chosen search terms, once with the raw question text instead,
+            everything else (vendor, allowed tools, tool-call budget) held constant. No
+            automated grading picks a winner; read both evidence lists yourself.
+          </p>
+          <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;margin-bottom:12px">
+            <textarea id="erQuestion" class="search-input" rows="2"
+              style="flex:1 1 320px;min-width:240px;resize:vertical"
+              placeholder="Type a question, or sample a real one..."></textarea>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <button type="button" id="erSampleBtn" class="btn btn-ghost">🎲 Sample a real question</button>
+              <button type="button" id="erRunBtn" class="btn btn-primary">Run comparison</button>
+            </div>
+          </div>
+          <div id="erStatus" class="ask-muted" style="margin-bottom:10px"></div>
+          <div id="erResults"></div>
+        </div>
+      </div><!-- /#evalRewriterView -->
+
       <!-- Account / user management view -->
       <div id="usersView" style="display:none">
 
@@ -6346,7 +6397,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       "btn-major", "btn-minor", "btn-patch", "btn-cve", "btn-llm", "btn-hv", "btn-potential-cve", "btn-reddit",
       "btn-reddit-risk", "btn-reddit-risk-latest", "btn-reddit-risk-cve", "btn-so-risk", "btn-so",
       "filterForm", "components", "clearBtn", "fixedToggles", "typeToggles",
-      "homeLink", "graphLink", "archLink", "cveLink", "dashboardLink", "docsLink", "changelogLink", "ackLink", "usersLink", "networkLink", "expandAllBtn", "feedSortSelect", "activeFilters", "afTags", "afClearAll", "emptyState", "emptyStateIcon", "emptyStateMsg", "emptyStateDetail"
+      "homeLink", "graphLink", "archLink", "cveLink", "dashboardLink", "docsLink", "changelogLink", "ackLink", "usersLink", "networkLink", "evalRewriterLink", "expandAllBtn", "feedSortSelect", "activeFilters", "afTags", "afClearAll", "emptyState", "emptyStateIcon", "emptyStateMsg", "emptyStateDetail"
     ].forEach(id => { EL[id] = document.getElementById(id); });
 
     const $ = s => document.querySelector(s);
@@ -8643,6 +8694,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     /* ── Graph view: show / hide ─────────────────────────────── */
     function activateGraph() {
+      if (ER_ACTIVE)  deactivateEvalRewriter();
       if (A_ACTIVE)   deactivateArch();
       if (CV_ACTIVE)  deactivateCve();
       if (DB_ACTIVE)  deactivateDashboard();
@@ -9378,6 +9430,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     /* ── Arch view: show / hide ───────────────────────────────── */
     function activateArch() {
+      if (ER_ACTIVE)  deactivateEvalRewriter();
       if (G_ACTIVE)   deactivateGraph();
       if (CV_ACTIVE)  deactivateCve();
       if (DB_ACTIVE)  deactivateDashboard();
@@ -9652,6 +9705,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     }
 
     function activateDocs() {
+      if (ER_ACTIVE)  deactivateEvalRewriter();
       if (G_ACTIVE)   deactivateGraph();
       if (A_ACTIVE)   deactivateArch();
       if (CV_ACTIVE)  deactivateCve();
@@ -9691,6 +9745,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     let CL_ACTIVE = false;
 
     function activateChangelog() {
+      if (ER_ACTIVE) deactivateEvalRewriter();
       if (G_ACTIVE)  deactivateGraph();
       if (A_ACTIVE)  deactivateArch();
       if (CV_ACTIVE) deactivateCve();
@@ -9728,6 +9783,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     let ACK_ACTIVE = false;
 
     function activateAck() {
+      if (ER_ACTIVE) deactivateEvalRewriter();
       if (G_ACTIVE)  deactivateGraph();
       if (A_ACTIVE)  deactivateArch();
       if (CV_ACTIVE) deactivateCve();
@@ -9760,6 +9816,101 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (ACK_ACTIVE) { deactivateAck(); return; }
       activateAck();
     });
+
+    /* ── Eval Rewriter (admin-only) ──────────────────────────────
+       No LLM grading picks a winner here -- see runRewriterAbEval's
+       own comment in ask.js for why (the earlier promptfoo-based Eval
+       page was removed this session for exactly the memory cost a
+       second automated judge risks repeating). Both real evidence
+       lists render via the same askRenderSources the Ask feature
+       itself uses, side by side, for a human to read directly. */
+    let ER_ACTIVE = false;
+    function activateEvalRewriter() {
+      if (G_ACTIVE)   deactivateGraph();
+      if (A_ACTIVE)   deactivateArch();
+      if (CV_ACTIVE)  deactivateCve();
+      if (DB_ACTIVE)  deactivateDashboard();
+      if (D_ACTIVE)   deactivateDocs();
+      if (ACK_ACTIVE) deactivateAck();
+      if (CL_ACTIVE)  deactivateChangelog();
+      if (UA_ACTIVE)  deactivateUsers();
+      if (NET_ACTIVE) deactivateNetwork();
+      ER_ACTIVE = true;
+      setViewParam("eval-rewriter");
+      document.getElementById("evalRewriterView").style.display = "block";
+      document.getElementById("feedPanel").style.display = "none";
+      document.getElementById("evalRewriterControls").style.display = "";
+      document.getElementById("feedSidebarSections").style.display = "none";
+      EL.evalRewriterLink.classList.add("nav-active");
+    }
+    function deactivateEvalRewriter() {
+      ER_ACTIVE = false;
+      setViewParam("");
+      document.getElementById("evalRewriterView").style.display = "none";
+      document.getElementById("feedPanel").style.display = "";
+      document.getElementById("evalRewriterControls").style.display = "none";
+      document.getElementById("feedSidebarSections").style.display = "";
+      EL.evalRewriterLink.classList.remove("nav-active");
+    }
+    EL.evalRewriterLink.addEventListener("click", e => {
+      e.preventDefault();
+      if (ER_ACTIVE) { deactivateEvalRewriter(); return; }
+      activateEvalRewriter();
+    });
+
+    async function erSampleQuestion() {
+      const status = document.getElementById("erStatus");
+      status.textContent = "Sampling a real question…";
+      try {
+        const res = await uaRequest("eval-rewriter/sample");
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Request failed.");
+        if (!data.question) { status.textContent = "No sample-able question found. Try again."; return; }
+        document.getElementById("erQuestion").value = data.question;
+        status.textContent = data.subreddit ? `Sampled from r/${data.subreddit}.` : "Sampled.";
+      } catch (e) {
+        status.textContent = friendlyFetchError(e).headline;
+      }
+    }
+
+    function erRenderSide(label, side, terms) {
+      return `<div class="ask-answer-card">
+        <div class="ask-answer-label">${uaEsc(label)}</div>
+        <p class="ask-muted" style="font-size:12px;margin:0 0 8px">
+          ${terms ? `Terms: ${uaEsc(terms.join(", "))}` : "Terms: the raw question text"}
+          &middot; ${side.toolCallsUsed} tool call(s) &middot; ${side.sources.length} source(s)
+        </p>
+        ${askRenderSources(side.sources)}
+      </div>`;
+    }
+
+    async function erRunComparison() {
+      const question = document.getElementById("erQuestion").value.trim();
+      if (!question) { document.getElementById("erStatus").textContent = "Type or sample a question first."; return; }
+      const runBtn = document.getElementById("erRunBtn");
+      const status = document.getElementById("erStatus");
+      const results = document.getElementById("erResults");
+      runBtn.disabled = true;
+      status.textContent = "Running both retrievals…";
+      results.innerHTML = "";
+      try {
+        const res = await uaRequest("eval-rewriter/run", { method: "POST", body: JSON.stringify({ question }) });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Request failed.");
+        status.textContent = `Vendor: ${data.vendor || "none resolved"}${data.intent ? " · Intent: " + data.intent : ""}`;
+        results.innerHTML = `<div style="display:flex;gap:16px;flex-wrap:wrap">
+          <div style="flex:1 1 380px;min-width:300px">${erRenderSide("With Rewriter", data.withRewriter, data.rewriterTerms)}</div>
+          <div style="flex:1 1 380px;min-width:300px">${erRenderSide("Without Rewriter", data.withoutRewriter, null)}</div>
+        </div>`;
+      } catch (e) {
+        status.textContent = friendlyFetchError(e).headline;
+      } finally {
+        runBtn.disabled = false;
+      }
+    }
+
+    document.getElementById("erSampleBtn").addEventListener("click", erSampleQuestion);
+    document.getElementById("erRunBtn").addEventListener("click", erRunComparison);
 
     /* ── Post helpers ─────────────────────────────────────────── */
     function getPostSource(p) {
@@ -11312,6 +11463,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         activateChangelog();
       } else if (view === "account") {
         activateUsers();
+      } else if (view === "eval-rewriter") {
+        // Admin-only: a shared/bookmarked URL from a non-admin session
+        // silently falls through to the normal feed instead of erroring.
+        const u = uaUser();
+        if (u && u.role === "admin") activateEvalRewriter();
       }
     });
 
@@ -11903,6 +12059,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     }
 
     function activateCve() {
+      if (ER_ACTIVE)  deactivateEvalRewriter();
       if (G_ACTIVE)   deactivateGraph();
       if (A_ACTIVE)   deactivateArch();
       if (DB_ACTIVE)  deactivateDashboard();
@@ -12125,6 +12282,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     }
 
     function activateDashboard() {
+      if (ER_ACTIVE)  deactivateEvalRewriter();
       if (G_ACTIVE)   deactivateGraph();
       if (A_ACTIVE)   deactivateArch();
       if (CV_ACTIVE)  deactivateCve();
@@ -12333,6 +12491,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     }
 
     function activateNetwork() {
+      if (ER_ACTIVE)  deactivateEvalRewriter();
       if (G_ACTIVE)   deactivateGraph();
       if (A_ACTIVE)   deactivateArch();
       if (CV_ACTIVE)  deactivateCve();
@@ -12515,6 +12674,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         } else {
           adminSection.style.display = "none";
         }
+        // Admin-only nav item, hidden from everyone else regardless of
+        // the separate site-wide VIEW_NAV_LINKS visibility toggles above
+        // (those are "show/hide for all visitors"; this is "admin role
+        // required," a different axis).
+        if (EL.evalRewriterLink) EL.evalRewriterLink.hidden = user.role !== "admin";
         uaLoadBookmarks();
         uaLoadInventoryFromServer();
         uaLoadProviderKeys();
@@ -13531,6 +13695,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     });
 
     function activateUsers() {
+      if (ER_ACTIVE) deactivateEvalRewriter();
       if (G_ACTIVE)  deactivateGraph();
       if (A_ACTIVE)  deactivateArch();
       if (CV_ACTIVE) deactivateCve();
