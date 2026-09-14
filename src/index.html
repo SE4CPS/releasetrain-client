@@ -2234,7 +2234,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.84.3">Releasetrain <em>v3.84.3</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.85.0">Releasetrain <em>v3.85.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3884,6 +3884,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-14</div>
+              <div class="cl-ver cl-ver-minor">v3.85.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Model vs Rules: fix a comparison-question contradiction</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> A comparison question ("Firefox or Chrome?") always runs a genuinely different, fully deterministic evidence pipeline, regardless of which preset is picked, but the table's fallback text didn't know that and blamed "single-agent architecture" for the missing Rewriter/Evaluator step even under Multi-agent (delegated). Every row now checks res.intent for this case and explains the real reason.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Every row now checks at least one box: a step that never ran still had something decide that deterministically (the preset's own architecture, an intent that skips agentic steps entirely, or an abstain gate), so an honest 0/0 is now reserved only for a role genuinely never reached at all (an opinion question bypassing vendor resolution, or vendor checking turned off).</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Vendor resolution's Model checkbox now also checks when a real web-verification call ran but came back negative (previously only a successful match counted), and Retriever no longer claims the model chose search tools for a comparison question, which is entirely fixed and deterministic.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -7880,54 +7895,132 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       return parts.length ? parts.join("") : fallback;
     }
     function askRenderModelVsRules(res) {
+      // A comparison question ("Firefox or Chrome?") always runs
+      // runComparisonAsk (ask.js), a genuinely different, entirely
+      // deterministic-evidence pipeline: it never calls a real Rewriter
+      // or Evaluator agent, and never lets the model choose which tool
+      // to call, REGARDLESS of which preset is selected (Single-agent,
+      // Multi-agent delegated, feedback loop, all identical here). This
+      // used to read the exact same fields the normal pipeline uses
+      // without checking for this case, so a comparison run under, say,
+      // Multi-agent (delegated) still showed the Evaluator row's fixed
+      // fallback text blaming "single-agent architecture", flatly
+      // contradicting the preset actually picked. See res.intent, set to
+      // the literal string "comparison" by classifyIntent().
+      const isComparison = res.intent === "comparison";
+
       // Vendor resolution: a catalog hit is a plain array lookup, zero
-      // model reasoning, so Model is checked ONLY when the vendor was
-      // actually run through verifyVendorViaWeb's real LLM judgment call
-      // (res.vendorWebVerified, ask.js:715), not just whenever a vendor
-      // resolved at all. Rule is checked for either resolution path: a
-      // catalog match IS the deterministic rule, and a web-verified
-      // vendor still only got there because the deterministic catalog
-      // miss triggered that fallback in the first place.
-      const vendorModel = !!res.vendorWebVerified;
-      const vendorRule = !!(res.vendorWebVerified || res.vendor);
-      const vendorMeaning = askMvrMeaning(vendorModel, vendorRule,
-        `A real web search was judged by the model to confirm "${uaEsc(res.vendor || "")}" as a real product.`,
-        res.vendorWebVerified
-          ? "A catalog miss deterministically triggered the web-verification fallback above."
-          : "Matched directly against the tracked vendor catalog, a fixed lookup with no model call involved.",
-        "No vendor resolved for this question.");
+      // model reasoning, so Model is checked ONLY when a real web
+      // verification LLM call actually ran (res.vendorWebEvidence is set
+      // the moment verifyVendorViaWeb is invoked, ask.js:715, regardless
+      // of whether it ended up confirming a vendor, unlike
+      // vendorWebVerified, which is only true on a POSITIVE outcome and
+      // would wrongly leave Model unchecked for a real model judgment
+      // call that came back negative). vendorRanCheck is false only for
+      // the rare case nothing was ever attempted at all (an opinion
+      // question bypasses vendor resolution entirely, or the "Vendor
+      // check" toggle is off): every row should show at least one
+      // checked box when a real mechanism produced its outcome, but a
+      // role that was never reached is a genuinely different, honest
+      // third state, not "Rule decided nothing."
+      const vendorModel = !!res.vendorWebEvidence;
+      const vendorRanCheck = !!res.vendor || vendorModel || res.abstainReason === "no_vendor_detected";
+      const vendorRule = vendorRanCheck;
+      const vendorMeaning = vendorRanCheck
+        ? askMvrMeaning(vendorModel, true,
+          `A real web search was judged by the model to confirm "${uaEsc(res.vendor || "")}" as a real product.`,
+          res.vendorWebVerified
+            ? "A catalog miss deterministically triggered the web-verification fallback above."
+            : res.vendor
+              ? "Matched directly against the tracked vendor catalog, a fixed lookup with no model call involved."
+              : "The tracked vendor catalog and a web-verification check were both consulted, but no match was found for this question.",
+          "")
+        : "The pipeline never reached vendor resolution for this question (an opinion question, or vendor checking turned off in this run's config).";
 
-      const rewriterMeaning = askMvrMeaning(!!res.evaluatorRan, false,
+      // Rewriter: only a genuinely delegated architecture (Multi-agent
+      // delegated / feedback loop) ever runs a real, separate Rewriter
+      // LLM call, res.evaluatorRan is true only once that SAME
+      // delegated pipeline's real evaluatorAgent() call has actually run
+      // (see its own top-of-function comment in ask.js: the two only
+      // ever happen together), reused here rather than adding a fourth
+      // field just for this row. Whenever it's false, something else
+      // still deterministically decided that: either this preset simply
+      // never includes a Rewriter step, or (a comparison question,
+      // regardless of preset) intent classification routed around the
+      // whole agentic pipeline before a Rewriter step could ever run.
+      // Either way that is a real Rule outcome, not "nothing happened."
+      const rewriterModel = !!res.evaluatorRan;
+      const rewriterRule = !rewriterModel;
+      const rewriterMeaning = askMvrMeaning(rewriterModel, rewriterRule,
         "The Rewriter agent (a separate LLM call) chose these search terms before retrieval started.",
-        null,
-        "No separate Rewriter step in this pipeline; the model picks its own search-tool arguments inline as part of one continuous loop.");
-
-      const retrieverFallback = !!(res.webSearchFallback && res.webSearchFallback.used);
-      const retrieverMeaning = askMvrMeaning(true, retrieverFallback,
-        "The model chose which internal tools to call and with what search terms.",
-        "Internal retrieval came up empty, so a deterministic fallback tried a real web search directly.",
+        isComparison
+          ? "A comparison question always skips the Rewriter and any other model-chosen tool selection, regardless of which preset is selected; a fixed set of deterministic searches runs instead (see Retriever)."
+          : "This preset's architecture never includes a separate Rewriter step; the model picks its own search-tool arguments inline as part of one continuous loop.",
         "");
 
-      const evaluatorMeaning = askMvrMeaning(!!res.evaluatorRan, !!res.evaluatorOverridden,
+      // Retriever: a comparison question's evidence gathering
+      // (comparisonEntityEvidence in ask.js) is entirely fixed, six
+      // deterministic searches per side, never the model choosing which
+      // tool to call or what to search for, unlike every other
+      // question type, where the model always makes that choice itself
+      // (Rule there only ADDS on top, when internal retrieval came up
+      // empty and a deterministic web fallback took over).
+      const retrieverModel = !isComparison;
+      const retrieverFallbackUsed = !!(res.webSearchFallback && res.webSearchFallback.used);
+      const retrieverRule = isComparison || retrieverFallbackUsed;
+      const retrieverMeaning = isComparison
+        ? askMvrMeaning(false, true, null,
+          "Every search is fixed and deterministic per side (recent updates, known vulnerabilities, community reports), never chosen by the model.",
+          "")
+        : askMvrMeaning(true, retrieverFallbackUsed,
+          "The model chose which internal tools to call and with what search terms.",
+          "Internal retrieval came up empty, so a deterministic fallback tried a real web search directly.",
+          "");
+
+      // Evaluator: same "only a real delegated architecture calls a
+      // separate Evaluator" logic as Rewriter above, so Rule is checked
+      // whenever it didn't run at all (architecture, or a comparison
+      // question) OR (on top of a real run) its verdict was overridden.
+      const evaluatorModel = !!res.evaluatorRan;
+      const evaluatorRule = !evaluatorModel || !!res.evaluatorOverridden;
+      const evaluatorMeaning = askMvrMeaning(evaluatorModel, evaluatorRule,
         res.evaluatorOverridden
           ? "A separate Evaluator LLM call judged the draft answer, but its verdict was overridden (see the Rule reason)."
           : "A separate Evaluator LLM call judged the draft answer sufficient; no override was needed.",
-        uaEsc(res.evaluatorOverrideReason || "Overridden by a deterministic check."),
-        "No separate Evaluator step in this pipeline (single-agent architecture).");
+        evaluatorModel
+          ? uaEsc(res.evaluatorOverrideReason || "Overridden by a deterministic check.")
+          : isComparison
+            ? "No separate Evaluator LLM call for a comparison question. A deterministic formula weighs known vulnerabilities, average and worst-case community risk scores, and report counts to compute which side is lower risk."
+            : "This preset's architecture never includes a separate Evaluator step; a different deterministic mechanism handles that role instead.",
+        "");
 
-      const orchestratorMeaning = res.abstained
-        ? "The pipeline declined to answer before reaching this step."
-        : askMvrMeaning(true, !!res.answerCorrected,
-          "The model's own generated answer text was used.",
-          "The model's own wording was replaced outright by a deterministic version-correctness rewrite.",
-          "");
+      // Orchestrator: abstaining is itself a deterministic gate (no
+      // evidence found, an opinion question, and so on), a real Rule
+      // outcome, not "nothing happened", so it checks Rule rather than
+      // leaving the row blank. Otherwise Model is checked when the
+      // model's own generated wording was used as written, and Rule
+      // instead whenever a deterministic check replaced it outright (a
+      // version-correctness rewrite in the normal pipeline, or a
+      // comparison answer that didn't correctly name the side the
+      // deterministic risk score computed as lower-risk, see
+      // answerCorrected's own comment in runComparisonAsk).
+      const orchestratorModel = !res.abstained && !res.answerCorrected;
+      const orchestratorRule = !!res.abstained || !!res.answerCorrected;
+      const orchestratorMeaning = askMvrMeaning(orchestratorModel, orchestratorRule,
+        "The model's own generated answer text was used.",
+        res.abstained
+          ? "The pipeline declined to answer before reaching this step."
+          : isComparison
+            ? "The model's wording did not correctly name the side the deterministic risk score computed as lower-risk, so it was replaced outright by a templated write-up of the same evidence."
+            : "The model's own wording was replaced outright by a deterministic version-correctness rewrite.",
+        "");
 
       const rows = [
         ["Vendor resolution", vendorModel, vendorRule, vendorMeaning],
-        ["Rewriter", !!res.evaluatorRan, false, rewriterMeaning],
-        ["Retriever", true, retrieverFallback, retrieverMeaning],
-        ["Evaluator", !!res.evaluatorRan, !!res.evaluatorOverridden, evaluatorMeaning],
-        ["Orchestrator", !res.abstained, !!res.answerCorrected, orchestratorMeaning],
+        ["Rewriter", rewriterModel, rewriterRule, rewriterMeaning],
+        ["Retriever", retrieverModel, retrieverRule, retrieverMeaning],
+        ["Evaluator", evaluatorModel, evaluatorRule, evaluatorMeaning],
+        ["Orchestrator", orchestratorModel, orchestratorRule, orchestratorMeaning],
       ];
       const body = rows.map(([label, model, rule, meaning]) => `<tr>
         <td>${uaEsc(label)}</td>
