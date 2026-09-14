@@ -455,6 +455,12 @@
       margin: 0 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       text-align: right;
     }
+    /* Once a run finishes, renderAskWorkflowCaption() sets this back to
+       "" (see its own comment) rather than leaving a stale "Done" label
+       on screen, so an empty caption is the normal, common end state,
+       not an edge case, and shouldn't still reserve its min-height/
+       margin-bottom as if real text were there. */
+    .ask-workflow-caption:empty { min-height: 0; margin: 0; }
     .ask-options-row {
       display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
       font-size: 11px; color: var(--muted);
@@ -2221,7 +2227,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.84.1">Releasetrain <em>v3.84.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.84.2">Releasetrain <em>v3.84.2</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3871,6 +3877,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-14</div>
+              <div class="cl-ver cl-ver-patch">v3.84.2</div>
+            </div>
+            <div class="cl-content">
+              <h3>Answer card: close the gap under the workflow diagram</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Mermaid's own viewBox reserved space below the rendered Rewriter/Retriever/Evaluator/Orchestrator row (its default padding, plus room for the curved "retry" edge), which scaled up along with everything else once stretched to the card's full width and read as a real gap between the diagram and the answer text. The viewBox is now re-tightened to the diagram's own rendered bounding box after every render.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The phase caption under the diagram (e.g. "Generating answer... 1.4s") no longer reserves its min-height/margin once it's cleared back to empty at the end of a run, which was adding its own fixed gap on top.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -7140,7 +7160,29 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         // rendered narrower than its column instead of stretching to
         // fill it. Clearing it lets the external rule actually apply.
         const svgEl = el.querySelector("svg");
-        if (svgEl) svgEl.style.maxWidth = "none";
+        if (svgEl) {
+          svgEl.style.maxWidth = "none";
+          // Mermaid's own viewBox reserves extra space below the visibly
+          // rendered boxes (its default diagram padding, plus room for
+          // the curved dotted "retry" edge, which dips below the main
+          // Retriever/Evaluator row). Stretched to the card's full width
+          // via width:100%, that empty space scales up right along with
+          // the real content, since height:auto derives the rendered
+          // height from the viewBox's own aspect ratio, not from what's
+          // actually drawn, reading on screen as a real gap between the
+          // diagram and the answer text below it. Re-tighten the viewBox
+          // to the rendered content's own bounding box (plus a small
+          // margin) so the aspect ratio, and therefore the auto height,
+          // reflects only what's actually visible.
+          try {
+            const bbox = svgEl.getBBox();
+            const pad = 6;
+            svgEl.setAttribute("viewBox", `${bbox.x - pad} ${bbox.y - pad} ${bbox.width + pad * 2} ${bbox.height + pad * 2}`);
+          } catch (e) {
+            // getBBox can throw if the element isn't laid out yet;
+            // mermaid's own viewBox is a safe fallback either way.
+          }
+        }
       } catch (e) {
         console.error("[ASK] workflow diagram failed to render:", e);
       }
