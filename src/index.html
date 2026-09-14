@@ -663,14 +663,16 @@
     .ask-webverify-snippet { color: var(--muted); font-size: 11px; line-height: 1.4; margin-top: 2px; }
     /* Eval Rewriter (admin-only): a real two-column grid, not flex-wrap,
        so the split is reliable rather than depending on how much width
-       happens to be left over; stacks under 700px. Each card gets its
-       own capped-height scroll region so a long source list on one side
-       doesn't force the whole page to grow just to keep both columns
-       readable at a glance, and the two columns stay visually aligned
-       for comparison regardless of how many sources either one found. */
+       happens to be left over; stacks under 700px. */
     .er-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
     @media (max-width: 700px) { .er-grid { grid-template-columns: 1fr; } }
-    .er-grid .ask-answer-card { max-height: 420px; overflow-y: auto; }
+    /* Only the final With/Without Rewriter columns get this: one scroll
+       region for the WHOLE side (label, subtitle, and its entire source
+       list together), not a separate scrollbar per card inside it. A
+       long list on one side no longer forces the page to grow just to
+       keep both columns aligned for comparison. The Delta/Common summary
+       boxes above stay their natural (usually much shorter) height. */
+    .er-col { max-height: 480px; overflow-y: auto; }
     /* Denser than the normal Ask rail's own source chips: two full
        evidence lists side by side is the whole point of this page, so
        more sources visible per screen matters more here than it does
@@ -2174,7 +2176,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.82.1">Releasetrain <em>v3.82.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.82.2">Releasetrain <em>v3.82.2</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3802,6 +3804,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-13</div>
+              <div class="cl-ver cl-ver-patch">v3.82.2</div>
+            </div>
+            <div class="cl-content">
+              <h3>Rewriter Eval: delta leads, one scroll per side</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Delta now leads the results (renamed "Delta: what changed," a clear two-column Only-with/Only-without layout), Common comes next, and the two full evidence lists come last. The comparison itself, not the raw lists, is now the first thing you see.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The With/Without Rewriter columns each scroll as one whole unit (label, subtitle, and its entire source list together) instead of the source list scrolling separately inside a fixed-height card.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Both columns now show the actual question text, not just their own search terms.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The question input, Sample, and Run controls sit on one line; the buttons are relabeled to just "Sample" and "Run".</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5827,14 +5845,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       <div id="evalRewriterView" style="display:none">
         <div class="eval-rewriter-wrap" style="max-width:1100px;margin:0 auto;padding:20px 16px 60px">
           <h2 style="margin:0 0 12px">🧪 Rewriter Eval</h2>
-          <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;margin-bottom:12px">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
             <input id="erQuestion" type="text" class="search-input"
               style="flex:1 1 320px;min-width:240px"
               placeholder="Type a question, or sample a real one...">
-            <div style="display:flex;flex-direction:column;gap:6px">
-              <button type="button" id="erSampleBtn" class="btn btn-ghost">🎲 Sample a real question</button>
-              <button type="button" id="erRunBtn" class="btn btn-primary">Run comparison</button>
-            </div>
+            <button type="button" id="erSampleBtn" class="btn btn-ghost">🎲 Sample</button>
+            <button type="button" id="erRunBtn" class="btn btn-primary">Run</button>
           </div>
           <div id="erStatus" class="ask-muted" style="margin-bottom:10px"></div>
           <div id="erResults"></div>
@@ -9941,23 +9957,30 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const commonHtml = common.length
           ? askRenderSources(common)
           : `<p class="ask-muted">No overlapping sources between the two runs.</p>`;
-        const deltaHtml = (onlyWith.length || onlyWithout.length)
-          ? `<div class="ask-source-group"><div class="ask-source-heading">Only with Rewriter (${onlyWith.length})</div>${askRenderSources(onlyWith)}</div>
-             <div class="ask-source-group"><div class="ask-source-heading">Only without Rewriter (${onlyWithout.length})</div>${askRenderSources(onlyWithout)}</div>`
-          : `<p class="ask-muted">Identical evidence on both sides.</p>`;
+        const qLine = `Question: ${uaEsc(question)}<br>`;
 
         results.innerHTML = `<div class="er-compare">
-          <div class="er-grid">
-            ${erRenderBox("With Rewriter",
-              `Terms: ${uaEsc(data.rewriterTerms.join(", "))} &middot; ${data.withRewriter.toolCallsUsed} tool call(s) &middot; ${withSources.length} source(s)`,
-              askRenderSources(withSources))}
-            ${erRenderBox("Without Rewriter",
-              `Terms: the raw question text &middot; ${data.withoutRewriter.toolCallsUsed} tool call(s) &middot; ${withoutSources.length} source(s)`,
-              askRenderSources(withoutSources))}
+          <div class="ask-answer-card" style="margin-bottom:16px">
+            <div class="ask-answer-label">Delta: what changed</div>
+            <div class="er-grid" style="margin-bottom:0">
+              <div>
+                <div class="ask-source-heading">Only with Rewriter (${onlyWith.length})</div>
+                ${onlyWith.length ? askRenderSources(onlyWith) : `<p class="ask-muted">None.</p>`}
+              </div>
+              <div>
+                <div class="ask-source-heading">Only without Rewriter (${onlyWithout.length})</div>
+                ${onlyWithout.length ? askRenderSources(onlyWithout) : `<p class="ask-muted">None.</p>`}
+              </div>
+            </div>
           </div>
+          ${erRenderBox("Common", `${common.length} source(s) found on both sides`, commonHtml)}
           <div class="er-grid">
-            ${erRenderBox("Common", `${common.length} source(s) found on both sides`, commonHtml)}
-            ${erRenderBox("Delta", "What differs between the two runs", deltaHtml)}
+            <div class="er-col">${erRenderBox("With Rewriter",
+              qLine + `Terms: ${uaEsc(data.rewriterTerms.join(", "))} &middot; ${data.withRewriter.toolCallsUsed} tool call(s) &middot; ${withSources.length} source(s)`,
+              askRenderSources(withSources))}</div>
+            <div class="er-col">${erRenderBox("Without Rewriter",
+              qLine + `Terms: the raw question text &middot; ${data.withoutRewriter.toolCallsUsed} tool call(s) &middot; ${withoutSources.length} source(s)`,
+              askRenderSources(withoutSources))}</div>
           </div>
         </div>`;
       } catch (e) {
