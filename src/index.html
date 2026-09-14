@@ -670,9 +670,14 @@
     #evalRewriterView {
       position: sticky; top: calc(var(--topbar-h) + 16px);
       height: calc(100vh - var(--topbar-h) - 32px);
-      overflow-y: auto; overscroll-behavior: contain;
+      overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain;
     }
     @media (max-width: 640px) { #evalRewriterView { position: static; height: auto; overflow-y: visible; } }
+    /* Global rule for this page: vertical scroll only, never horizontal.
+       Anything long enough to otherwise force a sideways scrollbar
+       (a long unbroken Rewriter Prompt line, a URL with no spaces)
+       breaks onto another line instead. */
+    .eval-rewriter-wrap { overflow-wrap: anywhere; }
     /* Eval Rewriter (admin-only): a real two-column grid, not flex-wrap,
        so the split is reliable rather than depending on how much width
        happens to be left over; stacks under 700px. */
@@ -2190,7 +2195,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.82.4">Releasetrain <em>v3.82.4</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.82.5">Releasetrain <em>v3.82.5</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3818,6 +3823,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-13</div>
+              <div class="cl-ver cl-ver-patch">v3.82.5</div>
+            </div>
+            <div class="cl-content">
+              <h3>Rewriter Eval: shorter labels, vertical-only scroll</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Prompt section's labels shortened to "Original:" and "Rewriter Prompt:", dropping the explanatory parentheticals now that the section's own heading already makes clear what each line is.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The view only ever scrolls vertically now; anything long enough to otherwise force a sideways scrollbar breaks onto another line instead.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -10037,8 +10056,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         results.innerHTML = `<div class="er-compare">
           <div class="ask-answer-card" style="margin-bottom:16px">
             <div class="ask-answer-label">Prompt</div>
-            <p class="ask-muted" style="font-size:12px;margin:0 0 4px">Question (unchanged, exactly as typed): ${uaEsc(question)}</p>
-            <p class="ask-muted" style="font-size:12px;margin:0">Rewriter's terms (its actual output, this is the delta): ${uaEsc(data.rewriterTerms.join(", "))}</p>
+            <p class="ask-muted" style="font-size:12px;margin:0 0 4px">Original: ${uaEsc(question)}</p>
+            <p class="ask-muted" style="font-size:12px;margin:0">Rewriter Prompt: ${uaEsc(data.rewriterTerms.join(", "))}</p>
           </div>
           <div class="ask-answer-card" style="margin-bottom:16px">
             <div class="ask-answer-label">Sources</div>
