@@ -661,6 +661,23 @@
     .ask-webverify-result a { color: var(--text); text-decoration: none; font-size: 12px; }
     .ask-webverify-result a:hover { text-decoration: underline; color: var(--brand); }
     .ask-webverify-snippet { color: var(--muted); font-size: 11px; line-height: 1.4; margin-top: 2px; }
+    /* Eval Rewriter (admin-only): a real two-column grid, not flex-wrap,
+       so the split is reliable rather than depending on how much width
+       happens to be left over; stacks under 700px. Each card gets its
+       own capped-height scroll region so a long source list on one side
+       doesn't force the whole page to grow just to keep both columns
+       readable at a glance, and the two columns stay visually aligned
+       for comparison regardless of how many sources either one found. */
+    .er-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    @media (max-width: 700px) { .er-grid { grid-template-columns: 1fr; } }
+    .er-grid .ask-answer-card { max-height: 420px; overflow-y: auto; }
+    /* Denser than the normal Ask rail's own source chips: two full
+       evidence lists side by side is the whole point of this page, so
+       more sources visible per screen matters more here than it does
+       for a single answer's citations. */
+    .er-compare .ask-sources li { font-size: 10.5px; }
+    .er-compare .ask-source-row { padding: 2px 7px; }
+    .er-compare .ask-source-heading { margin-bottom: 4px; }
     .ask-rate-row { display: flex; align-items: center; gap: 6px; }
     .ask-rate-btn { font-size: 11px; padding: 4px 8px; }
     .ask-rate-btn.ask-rate-chosen { background: var(--brand-light); color: var(--brand); border-color: var(--brand); }
@@ -2157,7 +2174,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.82.0">Releasetrain <em>v3.82.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.82.1">Releasetrain <em>v3.82.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3785,6 +3802,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-13</div>
+              <div class="cl-ver cl-ver-patch">v3.82.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Rewriter Eval: Common/Delta boxes, denser layout</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Added Common (sources both runs found) and Delta (sources only one side found) boxes below the two full evidence lists, so the actual effect of the Rewriter's search terms is visible at a glance instead of eyeballing two long lists by hand.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The four boxes now sit in a real two-column grid (was flex-wrap, which could stack unpredictably depending on available width), each with its own capped-height scroll region so a long source list on one side doesn't force the page to grow just to keep both columns aligned. Source chips are smaller here than the normal Ask rail's, since fitting more per screen matters more for a side-by-side comparison. Question box is a plain single-line input instead of a textarea, and the explanatory paragraph under the heading is gone.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5795,17 +5826,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
            runRewriterAbEval's own comment in ask.js for why. -->
       <div id="evalRewriterView" style="display:none">
         <div class="eval-rewriter-wrap" style="max-width:1100px;margin:0 auto;padding:20px 16px 60px">
-          <h2 style="margin:0 0 4px">🧪 Rewriter Eval</h2>
-          <p class="ask-muted" style="margin:0 0 16px">
-            Admin only. Runs the Retriever twice on the same question: once with the
-            Rewriter's own chosen search terms, once with the raw question text instead,
-            everything else (vendor, allowed tools, tool-call budget) held constant. No
-            automated grading picks a winner; read both evidence lists yourself.
-          </p>
+          <h2 style="margin:0 0 12px">🧪 Rewriter Eval</h2>
           <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;margin-bottom:12px">
-            <textarea id="erQuestion" class="search-input" rows="2"
-              style="flex:1 1 320px;min-width:240px;resize:vertical"
-              placeholder="Type a question, or sample a real one..."></textarea>
+            <input id="erQuestion" type="text" class="search-input"
+              style="flex:1 1 320px;min-width:240px"
+              placeholder="Type a question, or sample a real one...">
             <div style="display:flex;flex-direction:column;gap:6px">
               <button type="button" id="erSampleBtn" class="btn btn-ghost">🎲 Sample a real question</button>
               <button type="button" id="erRunBtn" class="btn btn-primary">Run comparison</button>
@@ -9873,15 +9898,25 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       }
     }
 
-    function erRenderSide(label, side, terms) {
+    function erRenderBox(label, subtitle, bodyHtml) {
       return `<div class="ask-answer-card">
         <div class="ask-answer-label">${uaEsc(label)}</div>
-        <p class="ask-muted" style="font-size:12px;margin:0 0 8px">
-          ${terms ? `Terms: ${uaEsc(terms.join(", "))}` : "Terms: the raw question text"}
-          &middot; ${side.toolCallsUsed} tool call(s) &middot; ${side.sources.length} source(s)
-        </p>
-        ${askRenderSources(side.sources)}
+        <p class="ask-muted" style="font-size:12px;margin:0 0 8px">${subtitle}</p>
+        ${bodyHtml}
       </div>`;
+    }
+
+    // Same "dedupe by URL, title when a source has none" key
+    // askRenderCompareBody's own mergedSources already uses.
+    function erSourceKey(s) { return s.url || s.title || ""; }
+    function erSplitCommonDelta(withSources, withoutSources) {
+      const wKeys = new Set(withSources.map(erSourceKey));
+      const woKeys = new Set(withoutSources.map(erSourceKey));
+      return {
+        common: withSources.filter(s => woKeys.has(erSourceKey(s))),
+        onlyWith: withSources.filter(s => !woKeys.has(erSourceKey(s))),
+        onlyWithout: withoutSources.filter(s => !wKeys.has(erSourceKey(s))),
+      };
     }
 
     async function erRunComparison() {
@@ -9898,9 +9933,32 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Request failed.");
         status.textContent = `Vendor: ${data.vendor || "none resolved"}${data.intent ? " · Intent: " + data.intent : ""}`;
-        results.innerHTML = `<div style="display:flex;gap:16px;flex-wrap:wrap">
-          <div style="flex:1 1 380px;min-width:300px">${erRenderSide("With Rewriter", data.withRewriter, data.rewriterTerms)}</div>
-          <div style="flex:1 1 380px;min-width:300px">${erRenderSide("Without Rewriter", data.withoutRewriter, null)}</div>
+
+        const withSources = data.withRewriter.sources;
+        const withoutSources = data.withoutRewriter.sources;
+        const { common, onlyWith, onlyWithout } = erSplitCommonDelta(withSources, withoutSources);
+
+        const commonHtml = common.length
+          ? askRenderSources(common)
+          : `<p class="ask-muted">No overlapping sources between the two runs.</p>`;
+        const deltaHtml = (onlyWith.length || onlyWithout.length)
+          ? `<div class="ask-source-group"><div class="ask-source-heading">Only with Rewriter (${onlyWith.length})</div>${askRenderSources(onlyWith)}</div>
+             <div class="ask-source-group"><div class="ask-source-heading">Only without Rewriter (${onlyWithout.length})</div>${askRenderSources(onlyWithout)}</div>`
+          : `<p class="ask-muted">Identical evidence on both sides.</p>`;
+
+        results.innerHTML = `<div class="er-compare">
+          <div class="er-grid">
+            ${erRenderBox("With Rewriter",
+              `Terms: ${uaEsc(data.rewriterTerms.join(", "))} &middot; ${data.withRewriter.toolCallsUsed} tool call(s) &middot; ${withSources.length} source(s)`,
+              askRenderSources(withSources))}
+            ${erRenderBox("Without Rewriter",
+              `Terms: the raw question text &middot; ${data.withoutRewriter.toolCallsUsed} tool call(s) &middot; ${withoutSources.length} source(s)`,
+              askRenderSources(withoutSources))}
+          </div>
+          <div class="er-grid">
+            ${erRenderBox("Common", `${common.length} source(s) found on both sides`, commonHtml)}
+            ${erRenderBox("Delta", "What differs between the two runs", deltaHtml)}
+          </div>
         </div>`;
       } catch (e) {
         status.textContent = friendlyFetchError(e).headline;
