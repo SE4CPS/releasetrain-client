@@ -448,7 +448,14 @@
        only the node states differ, so a preset with no real role
        delegation (Single-agent) just leaves every node idle instead of
        hiding or reshaping the diagram itself. */
-    .ask-workflow-diagram { margin: 2px 0 2px; min-height: 100px; }
+    /* min-height only matters before the diagram has actually rendered
+       (mermaid.render() is async, so this avoids a layout jump while it
+       loads); renderAskWorkflowDiagram() clears it back to 0 the moment
+       real content lands, so a diagram genuinely shorter than this
+       placeholder height (the common case after its viewBox is tightened
+       to content, see that function's own comment) doesn't keep the
+       container artificially tall and push the answer text down. */
+    .ask-workflow-diagram { margin: 2px 0 2px; min-height: 56px; }
     .ask-workflow-diagram svg { width: 100%; height: auto; display: block; }
     .ask-workflow-caption {
       font-size: 10.5px; color: var(--muted); min-height: 14px;
@@ -2227,7 +2234,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.84.2">Releasetrain <em>v3.84.2</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.84.3">Releasetrain <em>v3.84.3</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3877,6 +3884,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-14</div>
+              <div class="cl-ver cl-ver-patch">v3.84.3</div>
+            </div>
+            <div class="cl-content">
+              <h3>Workflow diagram: drop its placeholder min-height once loaded</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> .ask-workflow-diagram's min-height (there only to avoid a layout jump while mermaid.render() is still loading) stayed in effect even after the diagram finished rendering, keeping the container floored at a fixed height regardless of how short the actual (now viewBox-tightened) content was. Cleared back to 0 the moment real content lands, so the answer text below moves up to meet it instead of leaving a fixed gap on top of the v3.84.2 viewBox fix.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -7152,6 +7172,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const { svg } = await window.mermaid.render("askWorkflowSvg" + mySeq, askWorkflowMermaidSource(askWorkflowState));
         if (mySeq !== askWorkflowRenderSeq) return; // a newer render already started
         el.innerHTML = svg;
+        // .ask-workflow-diagram's own min-height only exists to avoid a
+        // layout jump while mermaid.render() is still loading (it's
+        // async); real content has now landed, so drop it and let the
+        // container collapse to whatever height the (now viewBox-
+        // tightened, see below) SVG actually needs, rather than staying
+        // floored at the placeholder height regardless of content.
+        el.style.minHeight = "0";
         // Mermaid stamps its own computed width as an inline
         // style="max-width:NNNpx" on the <svg> it returns, which wins
         // over .ask-workflow-diagram svg's external width:100% rule at
