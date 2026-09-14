@@ -661,6 +661,18 @@
     .ask-webverify-result a { color: var(--text); text-decoration: none; font-size: 12px; }
     .ask-webverify-result a:hover { text-decoration: underline; color: var(--brand); }
     .ask-webverify-snippet { color: var(--muted); font-size: 11px; line-height: 1.4; margin-top: 2px; }
+    /* html/body disable native page scroll (see the global `overflow:
+       hidden` rule). Every other view supplies its own scroll region
+       (see #ackView's identical shape) and this one needs the same
+       treatment, or its content just gets clipped with no way to reach
+       it once it grows past one screen (reported live: 13+ delta
+       sources on one side). */
+    #evalRewriterView {
+      position: sticky; top: calc(var(--topbar-h) + 16px);
+      height: calc(100vh - var(--topbar-h) - 32px);
+      overflow-y: auto; overscroll-behavior: contain;
+    }
+    @media (max-width: 640px) { #evalRewriterView { position: static; height: auto; overflow-y: visible; } }
     /* Eval Rewriter (admin-only): a real two-column grid, not flex-wrap,
        so the split is reliable rather than depending on how much width
        happens to be left over; stacks under 700px. */
@@ -680,6 +692,15 @@
     .er-compare .ask-sources li { font-size: 10.5px; }
     .er-compare .ask-source-row { padding: 2px 7px; }
     .er-compare .ask-source-heading { margin-bottom: 4px; }
+    /* One source per line here (the shared .ask-sources default flows
+       them as wrapping chips, several per line), each truncated to a
+       single line with an ellipsis instead of wrapping its title across
+       several. A dense side-by-side comparison reads far easier as a
+       short scannable list than a wall of multi-line chips. */
+    .er-compare .ask-sources { display: block; }
+    .er-compare .ask-sources li { display: block; margin-bottom: 2px; max-width: 100%; }
+    .er-compare .ask-source-row { display: flex; width: 100%; box-sizing: border-box; }
+    .er-compare .ask-source-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .ask-rate-row { display: flex; align-items: center; gap: 6px; }
     .ask-rate-btn { font-size: 11px; padding: 4px 8px; }
     .ask-rate-btn.ask-rate-chosen { background: var(--brand-light); color: var(--brand); border-color: var(--brand); }
@@ -2176,7 +2197,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.82.2">Releasetrain <em>v3.82.2</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.82.3">Releasetrain <em>v3.82.3</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3804,6 +3825,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-13</div>
+              <div class="cl-ver cl-ver-patch">v3.82.3</div>
+            </div>
+            <div class="cl-content">
+              <h3>Rewriter Eval: page scroll, relative dates, tighter rows</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The view had no scroll region of its own on a page that disables native body scroll, so a long Delta list (13+ sources on one side, reported live) just got clipped with no way to reach the rest. Now scrolls like every other view (#ackView's own pattern).</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Removed the "Delta: what changed" label (the two sub-headings already say what it is); added a "Question: ..." line to the top of the Delta and Common boxes too, matching the two full-list boxes below them.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Every source's long timestamp is now a short "Nd ago" (or "today"), and every list sorts newest-first, so comparing and scanning don't require parsing an ISO date by eye.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Each source is its own single-line row, truncated with an ellipsis instead of wrapping a long title across several lines.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -9935,6 +9972,35 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       };
     }
 
+    // A long ISO timestamp ("2025-12-14T10:03:28") is hard to compare
+    // across a list at a glance; "Nd ago" (or "today") is not, and is
+    // all this page actually needs it for. null/unparseable dates
+    // (every 'web' source: webSearch.js never sets one) render as "".
+    // A future-dated one (isVendorPublished content posted ahead of its
+    // own release date) shows "in Nd" instead of a confusing negative.
+    function erDaysAgoLabel(dateStr) {
+      if (!dateStr) return "";
+      const d = new Date(dateStr);
+      if (isNaN(d)) return "";
+      const days = Math.floor((Date.now() - d.getTime()) / 86400000);
+      if (days === 0) return "today";
+      return days > 0 ? `${days}d ago` : `in ${-days}d`;
+    }
+    // Sorts newest-first (undated sources last, so they don't scatter
+    // through an otherwise chronological list) and swaps each source's
+    // own long date string for the short relative label above. Both were
+    // asked for together, so a reader can scan a list top-to-bottom in
+    // real chronological order instead of hunting for the newest one.
+    function erPrep(sources) {
+      return [...sources]
+        .sort((a, b) => {
+          const ta = a.date ? new Date(a.date).getTime() : -Infinity;
+          const tb = b.date ? new Date(b.date).getTime() : -Infinity;
+          return (isNaN(tb) ? -Infinity : tb) - (isNaN(ta) ? -Infinity : ta);
+        })
+        .map(s => ({ ...s, date: erDaysAgoLabel(s.date) }));
+    }
+
     async function erRunComparison() {
       const question = document.getElementById("erQuestion").value.trim();
       if (!question) { document.getElementById("erStatus").textContent = "Type or sample a question first."; return; }
@@ -9955,32 +10021,32 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const { common, onlyWith, onlyWithout } = erSplitCommonDelta(withSources, withoutSources);
 
         const commonHtml = common.length
-          ? askRenderSources(common)
+          ? askRenderSources(erPrep(common))
           : `<p class="ask-muted">No overlapping sources between the two runs.</p>`;
         const qLine = `Question: ${uaEsc(question)}<br>`;
 
         results.innerHTML = `<div class="er-compare">
           <div class="ask-answer-card" style="margin-bottom:16px">
-            <div class="ask-answer-label">Delta: what changed</div>
+            <p class="ask-muted" style="font-size:12px;margin:0 0 8px">${qLine}</p>
             <div class="er-grid" style="margin-bottom:0">
               <div>
                 <div class="ask-source-heading">Only with Rewriter (${onlyWith.length})</div>
-                ${onlyWith.length ? askRenderSources(onlyWith) : `<p class="ask-muted">None.</p>`}
+                ${onlyWith.length ? askRenderSources(erPrep(onlyWith)) : `<p class="ask-muted">None.</p>`}
               </div>
               <div>
                 <div class="ask-source-heading">Only without Rewriter (${onlyWithout.length})</div>
-                ${onlyWithout.length ? askRenderSources(onlyWithout) : `<p class="ask-muted">None.</p>`}
+                ${onlyWithout.length ? askRenderSources(erPrep(onlyWithout)) : `<p class="ask-muted">None.</p>`}
               </div>
             </div>
           </div>
-          ${erRenderBox("Common", `${common.length} source(s) found on both sides`, commonHtml)}
+          ${erRenderBox("Common", qLine + `${common.length} source(s) found on both sides`, commonHtml)}
           <div class="er-grid">
             <div class="er-col">${erRenderBox("With Rewriter",
               qLine + `Terms: ${uaEsc(data.rewriterTerms.join(", "))} &middot; ${data.withRewriter.toolCallsUsed} tool call(s) &middot; ${withSources.length} source(s)`,
-              askRenderSources(withSources))}</div>
+              askRenderSources(erPrep(withSources)))}</div>
             <div class="er-col">${erRenderBox("Without Rewriter",
               qLine + `Terms: the raw question text &middot; ${data.withoutRewriter.toolCallsUsed} tool call(s) &middot; ${withoutSources.length} source(s)`,
-              askRenderSources(withoutSources))}</div>
+              askRenderSources(erPrep(withoutSources)))}</div>
           </div>
         </div>`;
       } catch (e) {
