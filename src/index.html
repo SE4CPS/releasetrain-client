@@ -677,6 +677,8 @@
     .ask-mvr-table th:nth-child(3), .ask-mvr-table td:nth-child(3) { text-align: center; width: 52px; }
     .ask-mvr-table td:nth-child(4) { color: var(--muted); line-height: 1.4; }
     .ask-mvr-table input[type="checkbox"] { width: 15px; height: 15px; }
+    .ask-mvr-reason + .ask-mvr-reason { margin-top: 4px; }
+    .ask-mvr-reason strong { color: var(--text); }
     /* html/body disable native page scroll (see the global `overflow:
        hidden` rule). Every other view supplies its own scroll region
        (see #ackView's identical shape) and this one needs the same
@@ -2219,7 +2221,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.84.0">Releasetrain <em>v3.84.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.84.1">Releasetrain <em>v3.84.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3869,6 +3871,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-14</div>
+              <div class="cl-ver cl-ver-patch">v3.84.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Model vs Rules: fix vendor resolution's checkboxes</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The Vendor resolution row hardcoded both the Model and Rule checkboxes checked, even for a plain catalog-match vendor, which involves no model call at all. Now Model is checked only when the vendor was actually run through a real web-verification LLM judgment call; a catalog hit alone checks Rule only.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The Meaning column now states the reason for each box that is actually checked (labeled "Model:"/"Rule:"), instead of one sentence describing the row regardless of which boxes are checked.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -7781,32 +7797,66 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     function askMvrCheckbox(checked) {
       return `<input type="checkbox" disabled ${checked ? "checked" : ""}>`;
     }
+    // Renders only the reason for whichever box in a row is actually
+    // checked, never a blended sentence that reads the same regardless
+    // of check state (the bug that let "Vendor resolution" show a
+    // checked Model box next to text describing a pure catalog lookup,
+    // which involves no model call at all). modelReason/ruleReason are
+    // null when that box is unchecked, so nothing renders for it; a row
+    // where neither box is checked falls back to `fallback`.
+    function askMvrMeaning(model, rule, modelReason, ruleReason, fallback) {
+      const parts = [];
+      if (model && modelReason) parts.push(`<div class="ask-mvr-reason"><strong>Model:</strong> ${modelReason}</div>`);
+      if (rule && ruleReason) parts.push(`<div class="ask-mvr-reason"><strong>Rule:</strong> ${ruleReason}</div>`);
+      return parts.length ? parts.join("") : fallback;
+    }
     function askRenderModelVsRules(res) {
-      const vendorMeaning = res.vendorWebVerified
-        ? `A real web search verified "${uaEsc(res.vendor || "")}" before continuing (verifyVendorViaWeb).`
-        : res.vendor
-          ? "Matched directly against the tracked vendor catalog, no web search needed."
-          : "No vendor resolved for this question.";
-      const rewriterMeaning = res.evaluatorRan
-        ? "The Rewriter agent chose these search terms before retrieval started."
-        : "No separate Rewriter step in this pipeline; the model picks its own search-tool arguments inline as part of one continuous loop.";
-      const retrieverMeaning = res.webSearchFallback && res.webSearchFallback.used
-        ? "The model chose which internal tools to call and with what search terms. When that came up empty, a deterministic fallback tried a real web search directly."
-        : "The model chose which internal tools to call and with what search terms.";
-      const evaluatorMeaning = !res.evaluatorRan
-        ? "No separate Evaluator step in this pipeline (single-agent architecture)."
-        : res.evaluatorOverridden
-          ? uaEsc(res.evaluatorOverrideReason || "Overridden by a deterministic check.")
-          : "The model's own sufficiency verdict stood; no override was needed.";
+      // Vendor resolution: a catalog hit is a plain array lookup, zero
+      // model reasoning, so Model is checked ONLY when the vendor was
+      // actually run through verifyVendorViaWeb's real LLM judgment call
+      // (res.vendorWebVerified, ask.js:715), not just whenever a vendor
+      // resolved at all. Rule is checked for either resolution path: a
+      // catalog match IS the deterministic rule, and a web-verified
+      // vendor still only got there because the deterministic catalog
+      // miss triggered that fallback in the first place.
+      const vendorModel = !!res.vendorWebVerified;
+      const vendorRule = !!(res.vendorWebVerified || res.vendor);
+      const vendorMeaning = askMvrMeaning(vendorModel, vendorRule,
+        `A real web search was judged by the model to confirm "${uaEsc(res.vendor || "")}" as a real product.`,
+        res.vendorWebVerified
+          ? "A catalog miss deterministically triggered the web-verification fallback above."
+          : "Matched directly against the tracked vendor catalog, a fixed lookup with no model call involved.",
+        "No vendor resolved for this question.");
+
+      const rewriterMeaning = askMvrMeaning(!!res.evaluatorRan, false,
+        "The Rewriter agent (a separate LLM call) chose these search terms before retrieval started.",
+        null,
+        "No separate Rewriter step in this pipeline; the model picks its own search-tool arguments inline as part of one continuous loop.");
+
+      const retrieverFallback = !!(res.webSearchFallback && res.webSearchFallback.used);
+      const retrieverMeaning = askMvrMeaning(true, retrieverFallback,
+        "The model chose which internal tools to call and with what search terms.",
+        "Internal retrieval came up empty, so a deterministic fallback tried a real web search directly.",
+        "");
+
+      const evaluatorMeaning = askMvrMeaning(!!res.evaluatorRan, !!res.evaluatorOverridden,
+        res.evaluatorOverridden
+          ? "A separate Evaluator LLM call judged the draft answer, but its verdict was overridden (see the Rule reason)."
+          : "A separate Evaluator LLM call judged the draft answer sufficient; no override was needed.",
+        uaEsc(res.evaluatorOverrideReason || "Overridden by a deterministic check."),
+        "No separate Evaluator step in this pipeline (single-agent architecture).");
+
       const orchestratorMeaning = res.abstained
         ? "The pipeline declined to answer before reaching this step."
-        : res.answerCorrected
-          ? "The model's own wording was replaced outright by a deterministic version-correctness rewrite."
-          : "The model's own generated answer was used as written.";
+        : askMvrMeaning(true, !!res.answerCorrected,
+          "The model's own generated answer text was used.",
+          "The model's own wording was replaced outright by a deterministic version-correctness rewrite.",
+          "");
+
       const rows = [
-        ["Vendor resolution", true, true, vendorMeaning],
+        ["Vendor resolution", vendorModel, vendorRule, vendorMeaning],
         ["Rewriter", !!res.evaluatorRan, false, rewriterMeaning],
-        ["Retriever", true, !!(res.webSearchFallback && res.webSearchFallback.used), retrieverMeaning],
+        ["Retriever", true, retrieverFallback, retrieverMeaning],
         ["Evaluator", !!res.evaluatorRan, !!res.evaluatorOverridden, evaluatorMeaning],
         ["Orchestrator", !res.abstained, !!res.answerCorrected, orchestratorMeaning],
       ];
