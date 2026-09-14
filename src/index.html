@@ -661,6 +661,22 @@
     .ask-webverify-result a { color: var(--text); text-decoration: none; font-size: 12px; }
     .ask-webverify-result a:hover { text-decoration: underline; color: var(--brand); }
     .ask-webverify-snippet { color: var(--muted); font-size: 11px; line-height: 1.4; margin-top: 2px; }
+    /* "Model vs Rules" tab: which part of each role actually ran on this
+       one answer, the model or a deterministic check (see
+       askRenderModelVsRules). Meaning column wraps normally (real
+       sentences, not a short label like the other two), so the table
+       itself gets its own scroll container rather than ever forcing the
+       whole card wider than its column. */
+    .ask-mvr-wrap { overflow-x: auto; }
+    .ask-mvr-table { width: 100%; min-width: 420px; border-collapse: collapse; font-size: 12px; }
+    .ask-mvr-table th { text-align: left; padding: 6px 8px; border-bottom: 2px solid var(--border); color: var(--muted); font-weight: 600; white-space: nowrap; }
+    .ask-mvr-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .ask-mvr-table tr:last-child td { border-bottom: none; }
+    .ask-mvr-table th:nth-child(1), .ask-mvr-table td:nth-child(1) { white-space: nowrap; }
+    .ask-mvr-table th:nth-child(2), .ask-mvr-table td:nth-child(2),
+    .ask-mvr-table th:nth-child(3), .ask-mvr-table td:nth-child(3) { text-align: center; width: 52px; }
+    .ask-mvr-table td:nth-child(4) { color: var(--muted); line-height: 1.4; }
+    .ask-mvr-table input[type="checkbox"] { width: 15px; height: 15px; }
     /* html/body disable native page scroll (see the global `overflow:
        hidden` rule). Every other view supplies its own scroll region
        (see #ackView's identical shape) and this one needs the same
@@ -2203,7 +2219,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.83.0">Releasetrain <em>v3.83.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.84.0">Releasetrain <em>v3.84.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3853,6 +3869,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-14</div>
+              <div class="cl-ver cl-ver-minor">v3.84.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Ask: a "Model vs Rules" tab on every real answer</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> New fourth tab on the answer rail, next to Answer/Sources/Benchmark: a table naming each role (vendor resolution, Rewriter, Retriever, Evaluator, Orchestrator) with a Model column and a Rule column (both plain disabled checkboxes, an indicator not a setting) and a plain-language Meaning column explaining what happened for either case. Driven entirely off this specific answer's own real fields, not a fixed description of the architecture: single_agent correctly shows no separate Rewriter/Evaluator step, a web-verified vendor shows the real search that confirmed it, and an Evaluator/answer override shows the actual reason it fired.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Server-side: runAsk and runDelegatedAsk already computed whether the Evaluator's verdict or the final answer text got overridden by a deterministic check, but never exposed it. Threaded through as evaluatorRan/evaluatorOverridden/evaluatorOverrideReason/answerCorrected, same pattern as vendorWebVerified.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -7739,6 +7769,61 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       </details>`;
     }
 
+    // A checkbox column reads as a real, at-a-glance yes/no per role,
+    // for THIS specific run, not a general claim about the pipeline's
+    // architecture, which is why every row is driven off the actual
+    // response fields (evaluatorRan, evaluatorOverridden, answerCorrected,
+    // vendorWebVerified, webSearchFallback), not a fixed table. disabled,
+    // not interactive: these are indicators, not settings. See ask.js's
+    // own comments on each field (evaluatorRan in particular: false, not
+    // true, for single_agent: that architecture never calls a separate
+    // evaluatorAgent at all, a different mechanism handles that role).
+    function askMvrCheckbox(checked) {
+      return `<input type="checkbox" disabled ${checked ? "checked" : ""}>`;
+    }
+    function askRenderModelVsRules(res) {
+      const vendorMeaning = res.vendorWebVerified
+        ? `A real web search verified "${uaEsc(res.vendor || "")}" before continuing (verifyVendorViaWeb).`
+        : res.vendor
+          ? "Matched directly against the tracked vendor catalog, no web search needed."
+          : "No vendor resolved for this question.";
+      const rewriterMeaning = res.evaluatorRan
+        ? "The Rewriter agent chose these search terms before retrieval started."
+        : "No separate Rewriter step in this pipeline; the model picks its own search-tool arguments inline as part of one continuous loop.";
+      const retrieverMeaning = res.webSearchFallback && res.webSearchFallback.used
+        ? "The model chose which internal tools to call and with what search terms. When that came up empty, a deterministic fallback tried a real web search directly."
+        : "The model chose which internal tools to call and with what search terms.";
+      const evaluatorMeaning = !res.evaluatorRan
+        ? "No separate Evaluator step in this pipeline (single-agent architecture)."
+        : res.evaluatorOverridden
+          ? uaEsc(res.evaluatorOverrideReason || "Overridden by a deterministic check.")
+          : "The model's own sufficiency verdict stood; no override was needed.";
+      const orchestratorMeaning = res.abstained
+        ? "The pipeline declined to answer before reaching this step."
+        : res.answerCorrected
+          ? "The model's own wording was replaced outright by a deterministic version-correctness rewrite."
+          : "The model's own generated answer was used as written.";
+      const rows = [
+        ["Vendor resolution", true, true, vendorMeaning],
+        ["Rewriter", !!res.evaluatorRan, false, rewriterMeaning],
+        ["Retriever", true, !!(res.webSearchFallback && res.webSearchFallback.used), retrieverMeaning],
+        ["Evaluator", !!res.evaluatorRan, !!res.evaluatorOverridden, evaluatorMeaning],
+        ["Orchestrator", !res.abstained, !!res.answerCorrected, orchestratorMeaning],
+      ];
+      const body = rows.map(([label, model, rule, meaning]) => `<tr>
+        <td>${uaEsc(label)}</td>
+        <td>${askMvrCheckbox(model)}</td>
+        <td>${askMvrCheckbox(rule)}</td>
+        <td>${meaning}</td>
+      </tr>`).join("");
+      return `<div class="ask-mvr-wrap">
+        <table class="ask-mvr-table">
+          <thead><tr><th>Component</th><th>Model</th><th>Rule</th><th>Meaning</th></tr></thead>
+          <tbody>${body}</tbody>
+        </table>
+      </div>`;
+    }
+
     // Light markdown rendering for the model's own answer text: escape
     // first (uaEsc), THEN apply markdown on the already-escaped string,
     // so nothing in the model's output can inject real HTML. Only the
@@ -8010,6 +8095,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           ${askRenderMetaChips(res)}
           ${askRenderSources(res.sources, res.vendorWebEvidence, res.webSearchFallback)}
           ${askRenderDetails(res)}
+          ${askRenderModelVsRules(res)}
         </div>`;
       }
       return `<div class="ask-answer-card${res.abstained ? " ask-answer-abstained" : ""}" data-run-id="${uaEsc(res.runId || "")}">
@@ -8018,6 +8104,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <button type="button" class="ask-rail-tab active" data-tab="answer" role="tab" aria-selected="true">Answer</button>
           <button type="button" class="ask-rail-tab" data-tab="sources" role="tab" aria-selected="false">Sources</button>
           <button type="button" class="ask-rail-tab" data-tab="benchmark" role="tab" aria-selected="false">Benchmark</button>
+          <button type="button" class="ask-rail-tab" data-tab="modelrules" role="tab" aria-selected="false">Model vs Rules</button>
         </div>
         <div class="ask-rail-panel" data-panel="answer">
           ${opts.previewQuestion ? askQueryPreviewBlockHtml(opts.previewQuestion) : ""}
@@ -8033,6 +8120,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         <div class="ask-rail-panel" data-panel="benchmark" hidden>
           <p class="ask-muted">See how every pipeline (Single-agent, Multi-agent buggy/fixed/delegated/feedback loop) answers this exact question, side by side.</p>
           <button type="button" class="btn btn-primary ask-run-compare-btn" style="font-size:12px">Compare all 5 now</button>
+        </div>
+        <div class="ask-rail-panel" data-panel="modelrules" hidden>
+          <p class="ask-muted" style="margin:0 0 10px">Which part of each role actually ran on this exact answer, the model or a deterministic check.</p>
+          ${askRenderModelVsRules(res)}
         </div>
       </div>`;
     }
