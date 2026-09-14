@@ -590,14 +590,14 @@
     /* Rail-only alternative to .ask-answer-label: the actual question,
        moved inside the card per explicit request (it used to sit
        outside, in the rail's own static header), plus the pipeline name
-       right next to it in brackets instead of as its own separate
-       uppercase line. */
+       right next to it (no brackets, see askRenderCard's own comment)
+       instead of as its own separate uppercase line. */
     /* nowrap, not wrap: a long question plus a long preset name (e.g.
-       "Multi-agent (feedback loop)") wrapped to a second line, costing
-       real vertical space in a column already tight on it. The question
-       truncates with an ellipsis instead (min-width:0 on the flex item,
-       overflow/text-overflow on the text itself); the preset stays
-       flex-shrink:0 so it's always fully visible on that same line. */
+       "Multi-agent, feedback loop · 4 agents") wrapped to a second line,
+       costing real vertical space in a column already tight on it. The
+       question truncates with an ellipsis instead (min-width:0 on the
+       flex item, overflow/text-overflow on the text itself); the preset
+       stays flex-shrink:0 so it's always fully visible on that same line. */
     .ask-answer-heading {
       display: flex; align-items: baseline; gap: 6px; flex-wrap: nowrap;
       margin-bottom: 6px;
@@ -1617,7 +1617,7 @@
       font: inherit; font-size: 13px; background: var(--bg); color: var(--text);
     }
     /* An enum setting's <select> needs real width for its longer option
-       labels (e.g. "Multi-agent (feedback loop)"); the 80px default above
+       labels (e.g. "Multi-agent, feedback loop"); the 80px default above
        (sized for a short number input) would just clip the closed-state
        text. A boolean setting's checkbox needs the opposite: its
        intrinsic small square, not a stretched 80px-wide box. */
@@ -2234,7 +2234,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.85.0">Releasetrain <em>v3.85.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.85.1">Releasetrain <em>v3.85.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3884,6 +3884,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-14</div>
+              <div class="cl-ver cl-ver-patch">v3.85.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Answer badge: no round brackets, shows agent count</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The pipeline badge next to a question (e.g. "(MULTI-AGENT (FEEDBACK LOOP))") nested a bracket inside a bracket once a preset's own name carried a parenthetical qualifier. Preset names now use a comma ("Multi-agent, feedback loop") and the outer wrap is dropped entirely; the badge's own bold, uppercase, colored styling already sets it apart from the question next to it.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The badge now also states how many distinct model calls actually produced this answer (e.g. "Multi-agent, feedback loop &middot; 4 agents"), computed per run rather than assumed from the preset name: a comparison question always collapses to 1 regardless of preset, a genuinely delegated architecture is 4, everything else is 1, plus 1 more when a real web-verification call fired.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -6793,12 +6807,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
        card or - in Compare mode - one card per pipeline side by side,
        for judging which one actually answers better. See
        releasetrain-server's src/ask.js for the pipeline itself. */
+    // No round brackets: a bracket nested inside another bracket (the
+    // literal "(MULTI-AGENT (FEEDBACK LOOP))" this used to render as,
+    // once the outer wrap in askRenderCard added its own pair around
+    // this string's own inner pair) read as noisy rather than technical.
+    // A comma reads as plainly as a parenthetical aside without the
+    // nesting risk.
     const ASK_PRESET_LABELS = {
       single_agent: "Single-agent",
-      multi_agent_buggy: "Multi-agent (buggy)",
-      multi_agent_fixed: "Multi-agent (fixed)",
-      multi_agent: "Multi-agent (delegated)",
-      multi_agent_feedback: "Multi-agent (feedback loop)",
+      multi_agent_buggy: "Multi-agent, buggy",
+      multi_agent_fixed: "Multi-agent, fixed",
+      multi_agent: "Multi-agent, delegated",
+      multi_agent_feedback: "Multi-agent, feedback loop",
       // Defensive fallback only: the server always resolves "auto" to a
       // concrete preset before an answer comes back (see /api/ask),
       // so this should never actually render.
@@ -8267,10 +8287,23 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // diagram at all. Applied uniformly to whichever preset actually ran
       // it (not just single_agent) -- see ASK_WORKFLOW_PHASE_NODE's own
       // comment on the same "not gated by preset" reasoning.
-      const displayLabel = res.vendorWebVerified ? `${label} + Web Verification` : label;
+      // How many distinct model calls (agents) actually produced THIS
+      // answer, not a fixed property of the preset name alone: a
+      // comparison question always collapses to one write-up call
+      // regardless of preset (runComparisonAsk never calls a separate
+      // Rewriter/Evaluator), a genuinely delegated architecture
+      // (res.evaluatorRan true, see its own comment in ask.js) runs four
+      // (Rewriter, Retriever, Evaluator, Orchestrator), and every other
+      // architecture is one continuous loop, plus one more whenever a
+      // real web-verification call actually confirmed the vendor
+      // (res.vendorWebVerified), the same escalation already named in
+      // the "+ Web Verification" suffix below.
+      const agentCount = (res.intent === "comparison" ? 1 : (res.evaluatorRan ? 4 : 1)) + (res.vendorWebVerified ? 1 : 0);
+      const agentSuffix = `${agentCount} agent${agentCount === 1 ? "" : "s"}`;
+      const displayLabel = `${label}${res.vendorWebVerified ? " + Web Verification" : ""} · ${agentSuffix}`;
       if (res.error) {
         const errLabelHtml = opts.previewQuestion
-          ? `<div class="ask-answer-heading"><span class="ask-answer-question">${uaEsc(opts.previewQuestion)}</span><span class="ask-answer-preset">(${uaEsc(displayLabel)})</span></div>`
+          ? `<div class="ask-answer-heading"><span class="ask-answer-question">${uaEsc(opts.previewQuestion)}</span><span class="ask-answer-preset">${uaEsc(displayLabel)}</span></div>`
           : `<div class="ask-answer-label">${uaEsc(displayLabel)}</div>`;
         return `<div class="ask-answer-card">
           ${errLabelHtml}
@@ -8282,14 +8315,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const shownAnswer = wasTrimmed ? truncate(fullAnswer, opts.trimAnswer) : fullAnswer;
       const abstainBadge = res.abstained ? `<span class="ask-abstain-badge">⛔ ${uaEsc(ASK_ABSTAIN_REASON_LABELS[res.abstainReason] || "Abstained")}</span>` : "";
       // The rail passes the actual question in as opts.previewQuestion so
-      // it can render inside the card, right next to the pipeline label
-      // in brackets, per explicit request (previously the question sat
-      // outside the card entirely, in the rail's own static header, with
-      // just the bare uppercase label inside). Every other caller
-      // (modal, Compare grid) has nowhere to put a question this way and
-      // keeps the original plain-label line.
+      // it can render inside the card, right next to the pipeline label,
+      // per explicit request (previously the question sat outside the
+      // card entirely, in the rail's own static header, with just the
+      // bare uppercase label inside). No brackets around the label
+      // itself: plain, uppercase, colored text next to the question
+      // reads as its own distinct badge already, without needing a
+      // bracket pair (or worse, a bracket nested inside one, when
+      // displayLabel's own preset name used to carry a parenthetical
+      // qualifier too) to set it apart. Every other caller (modal,
+      // Compare grid) has nowhere to put a question this way and keeps
+      // the original plain-label line.
       const labelHtml = opts.previewQuestion
-        ? `<div class="ask-answer-heading"><span class="ask-answer-question">${uaEsc(opts.previewQuestion)}</span><span class="ask-answer-preset">(${uaEsc(displayLabel)})</span>${abstainBadge}</div>`
+        ? `<div class="ask-answer-heading"><span class="ask-answer-question">${uaEsc(opts.previewQuestion)}</span><span class="ask-answer-preset">${uaEsc(displayLabel)}</span>${abstainBadge}</div>`
         : `<div class="ask-answer-label">${uaEsc(displayLabel)}${abstainBadge}</div>`;
       const answerHtml = `
         <div class="ask-answer-summary">${highlightAnswerTerm(mdLite(shownAnswer), res.highlightTerm)}</div>
