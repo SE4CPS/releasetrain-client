@@ -678,13 +678,6 @@
        happens to be left over; stacks under 700px. */
     .er-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
     @media (max-width: 700px) { .er-grid { grid-template-columns: 1fr; } }
-    /* Only the final With/Without Rewriter columns get this: one scroll
-       region for the WHOLE side (label, subtitle, and its entire source
-       list together), not a separate scrollbar per card inside it. A
-       long list on one side no longer forces the page to grow just to
-       keep both columns aligned for comparison. The Delta/Common summary
-       boxes above stay their natural (usually much shorter) height. */
-    .er-col { max-height: 480px; overflow-y: auto; }
     /* Denser than the normal Ask rail's own source chips: two full
        evidence lists side by side is the whole point of this page, so
        more sources visible per screen matters more here than it does
@@ -2197,7 +2190,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.82.3">Releasetrain <em>v3.82.3</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.82.4">Releasetrain <em>v3.82.4</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3825,6 +3818,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-13</div>
+              <div class="cl-ver cl-ver-patch">v3.82.4</div>
+            </div>
+            <div class="cl-content">
+              <h3>Rewriter Eval: cut the duplication, add a Prompt section</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Reported live as "too much": the full With/Without Rewriter lists repeated every source already shown once, split between the Delta and Common sections below them, for no added information. Removed both full lists; a compact summary line ("With Rewriter: N tool calls, N sources &middot; Without: ...") replaces them.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Added a Prompt section at the top: the raw question exactly as typed, right next to the Rewriter's own actual output. That output <em>is</em> the delta being tested here, previously only visible several sections further down.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Common now sits inside a closed, click-to-expand <code>&lt;details&gt;</code> block instead of always being fully shown; it's the least differentiating part of the comparison, so it no longer has to be scrolled past by default.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -9951,14 +9959,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       }
     }
 
-    function erRenderBox(label, subtitle, bodyHtml) {
-      return `<div class="ask-answer-card">
-        <div class="ask-answer-label">${uaEsc(label)}</div>
-        <p class="ask-muted" style="font-size:12px;margin:0 0 8px">${subtitle}</p>
-        ${bodyHtml}
-      </div>`;
-    }
-
     // Same "dedupe by URL, title when a source has none" key
     // askRenderCompareBody's own mergedSources already uses.
     function erSourceKey(s) { return s.url || s.title || ""; }
@@ -10023,11 +10023,26 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const commonHtml = common.length
           ? askRenderSources(erPrep(common))
           : `<p class="ask-muted">No overlapping sources between the two runs.</p>`;
-        const qLine = `Question: ${uaEsc(question)}<br>`;
+
+        // With = onlyWith + common, Without = onlyWithout + common: the
+        // Delta and Common sections below already fully reconstruct both
+        // full lists between them, just organized by what actually
+        // differs instead of repeating the overlap twice. Only their
+        // summary counts are worth restating on their own; the full
+        // lists themselves were pure duplication of content already
+        // shown once, reported live as "too much."
+        const summaryLine = `With Rewriter: ${data.withRewriter.toolCallsUsed} tool call(s), ${withSources.length} source(s) &middot; `
+          + `Without: ${data.withoutRewriter.toolCallsUsed} tool call(s), ${withoutSources.length} source(s)`;
 
         results.innerHTML = `<div class="er-compare">
           <div class="ask-answer-card" style="margin-bottom:16px">
-            <p class="ask-muted" style="font-size:12px;margin:0 0 8px">${qLine}</p>
+            <div class="ask-answer-label">Prompt</div>
+            <p class="ask-muted" style="font-size:12px;margin:0 0 4px">Question (unchanged, exactly as typed): ${uaEsc(question)}</p>
+            <p class="ask-muted" style="font-size:12px;margin:0">Rewriter's terms (its actual output, this is the delta): ${uaEsc(data.rewriterTerms.join(", "))}</p>
+          </div>
+          <div class="ask-answer-card" style="margin-bottom:16px">
+            <div class="ask-answer-label">Sources</div>
+            <p class="ask-muted" style="font-size:12px;margin:0 0 8px">${summaryLine}</p>
             <div class="er-grid" style="margin-bottom:0">
               <div>
                 <div class="ask-source-heading">Only with Rewriter (${onlyWith.length})</div>
@@ -10039,15 +10054,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               </div>
             </div>
           </div>
-          ${erRenderBox("Common", qLine + `${common.length} source(s) found on both sides`, commonHtml)}
-          <div class="er-grid">
-            <div class="er-col">${erRenderBox("With Rewriter",
-              qLine + `Terms: ${uaEsc(data.rewriterTerms.join(", "))} &middot; ${data.withRewriter.toolCallsUsed} tool call(s) &middot; ${withSources.length} source(s)`,
-              askRenderSources(erPrep(withSources)))}</div>
-            <div class="er-col">${erRenderBox("Without Rewriter",
-              qLine + `Terms: the raw question text &middot; ${data.withoutRewriter.toolCallsUsed} tool call(s) &middot; ${withoutSources.length} source(s)`,
-              askRenderSources(erPrep(withoutSources)))}</div>
-          </div>
+          <details class="ask-answer-card">
+            <summary class="ask-answer-label" style="cursor:pointer">Common (${common.length}): found on both sides</summary>
+            <div style="margin-top:8px">${commonHtml}</div>
+          </details>
         </div>`;
       } catch (e) {
         status.textContent = friendlyFetchError(e).headline;
