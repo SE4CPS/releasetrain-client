@@ -683,6 +683,12 @@
        happens to be left over; stacks under 700px. */
     .er-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
     @media (max-width: 700px) { .er-grid { grid-template-columns: 1fr; } }
+    /* A grid item's default min-width is auto, not 0 like a flex item's -
+       it won't shrink below its content's own natural width, which
+       silently defeats a descendant's text-overflow:ellipsis (there's
+       nothing to truncate against if the column just grows to fit the
+       long text instead). Every direct .er-grid child needs this. */
+    .er-grid > div { min-width: 0; }
     /* Denser than the normal Ask rail's own source chips: two full
        evidence lists side by side is the whole point of this page, so
        more sources visible per screen matters more here than it does
@@ -2195,7 +2201,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.82.5">Releasetrain <em>v3.82.5</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.82.6">Releasetrain <em>v3.82.6</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3823,6 +3829,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-13</div>
+              <div class="cl-ver cl-ver-patch">v3.82.6</div>
+            </div>
+            <div class="cl-content">
+              <h3>Rewriter Eval: flat source lists, ellipsis actually works</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Removed the redundant "Original:" line from the Prompt section (the question box right above it already shows it); the section is just the Rewriter's actual output now.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> "Only with/without Rewriter" shortened to "With Rewrite"/"Without Rewrite", and their source lists (plus Common's) are now flat, with no separate Documented/Discussion group heading on top: each item's own icon (📦/🔴 vs 💬/🟧/🌐) already says which one it is. New shared askRenderSourceItems helper, factored out of askRenderSources' own per-item rendering.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> A long source title inside a Delta column could grow that whole column wider than intended instead of actually truncating with an ellipsis (a CSS Grid item's default min-width is auto, not 0 like a flex item's, so there was nothing to truncate against). Ellipsis truncation now works as originally intended.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -7574,31 +7595,42 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (!sources || !sources.length) {
         return webVerifyHtml || webFallbackHtml || '<p class="ask-muted">No sources were found for this question.</p>';
       }
-      // "stackoverflow" was previously indistinguishable from "reddit":
-      // the server used to hardcode kind:'reddit' for every doc in the
-      // shared collection regardless of its real source field, so a
-      // genuine Stack Overflow citation had no way to look like one.
-      // 🟧 matches the same emoji the feed's own "SO" summary chip uses.
-      const icon = k => k === "cve" ? "🔴" : k === "reddit" ? "💬" : k === "stackoverflow" ? "🟧" : k === "web" ? "🌐" : "📦";
-      // Icon/title/date each their own grid cell (see .ask-source-row's
-      // own CSS comment) so every row's date lines up in the same
-      // column, instead of trailing right after each row's own
-      // differently-long title.
+      const documented = sources.filter(s => s.kind === "cve" || s.kind === "release");
+      const discussion = sources.filter(s => s.kind !== "cve" && s.kind !== "release");
+      const group = (label, list) => list.length
+        ? `<div class="ask-source-group"><div class="ask-source-heading">${label}</div>${askRenderSourceItems(list)}</div>`
+        : "";
+      return webVerifyHtml + webFallbackHtml + group("Documented", documented) + group("Discussion", discussion);
+    }
+
+    // "stackoverflow" was previously indistinguishable from "reddit": the
+    // server used to hardcode kind:'reddit' for every doc in the shared
+    // collection regardless of its real source field, so a genuine Stack
+    // Overflow citation had no way to look like one. 🟧 matches the same
+    // emoji the feed's own "SO" summary chip uses. The icon alone already
+    // tells a documented source (📦/🔴) apart from a discussion one
+    // (💬/🟧/🌐), which is what lets askRenderSourceItems below skip a
+    // separate Documented/Discussion group heading when a caller (Eval
+    // Rewriter's own dense lists) wants a flat list instead.
+    function askSourceIcon(kind) {
+      return kind === "cve" ? "🔴" : kind === "reddit" ? "💬" : kind === "stackoverflow" ? "🟧" : kind === "web" ? "🌐" : "📦";
+    }
+    // Icon/title/date each their own grid cell (see .ask-source-row's own
+    // CSS comment) so every row's date lines up in the same column,
+    // instead of trailing right after each row's own differently-long
+    // title. Shared by askRenderSources' own grouped rendering above and
+    // any caller that wants the plain flat list on its own.
+    function askRenderSourceItems(sources) {
       const renderItem = s => {
         const dateStr = s.date ? String(s.date) : "";
-        const cells = `<span class="ask-source-icon">${icon(s.kind)}</span>` +
+        const cells = `<span class="ask-source-icon">${askSourceIcon(s.kind)}</span>` +
           `<span class="ask-source-title"><strong>${uaEsc(s.title)}</strong></span>` +
           `<span class="ask-source-date">${dateStr ? "· " + uaEsc(dateStr) : ""}</span>`;
         return `<li>${s.url
           ? `<a class="ask-source-row" href="${uaEsc(s.url)}" target="_blank" rel="noopener">${cells}</a>`
           : `<span class="ask-source-row">${cells}</span>`}</li>`;
       };
-      const documented = sources.filter(s => s.kind === "cve" || s.kind === "release");
-      const discussion = sources.filter(s => s.kind !== "cve" && s.kind !== "release");
-      const group = (label, list) => list.length
-        ? `<div class="ask-source-group"><div class="ask-source-heading">${label}</div><ul class="ask-sources">${list.map(renderItem).join("")}</ul></div>`
-        : "";
-      return webVerifyHtml + webFallbackHtml + group("Documented", documented) + group("Discussion", discussion);
+      return `<ul class="ask-sources">${sources.map(renderItem).join("")}</ul>`;
     }
 
     // Meta chips (vendor/intent/temporal) plus a collapsible technical
@@ -10040,7 +10072,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const { common, onlyWith, onlyWithout } = erSplitCommonDelta(withSources, withoutSources);
 
         const commonHtml = common.length
-          ? askRenderSources(erPrep(common))
+          ? askRenderSourceItems(erPrep(common))
           : `<p class="ask-muted">No overlapping sources between the two runs.</p>`;
 
         // With = onlyWith + common, Without = onlyWithout + common: the
@@ -10056,7 +10088,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         results.innerHTML = `<div class="er-compare">
           <div class="ask-answer-card" style="margin-bottom:16px">
             <div class="ask-answer-label">Prompt</div>
-            <p class="ask-muted" style="font-size:12px;margin:0 0 4px">Original: ${uaEsc(question)}</p>
             <p class="ask-muted" style="font-size:12px;margin:0">Rewriter Prompt: ${uaEsc(data.rewriterTerms.join(", "))}</p>
           </div>
           <div class="ask-answer-card" style="margin-bottom:16px">
@@ -10064,12 +10095,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <p class="ask-muted" style="font-size:12px;margin:0 0 8px">${summaryLine}</p>
             <div class="er-grid" style="margin-bottom:0">
               <div>
-                <div class="ask-source-heading">Only with Rewriter (${onlyWith.length})</div>
-                ${onlyWith.length ? askRenderSources(erPrep(onlyWith)) : `<p class="ask-muted">None.</p>`}
+                <div class="ask-source-heading">With Rewrite (${onlyWith.length})</div>
+                ${onlyWith.length ? askRenderSourceItems(erPrep(onlyWith)) : `<p class="ask-muted">None.</p>`}
               </div>
               <div>
-                <div class="ask-source-heading">Only without Rewriter (${onlyWithout.length})</div>
-                ${onlyWithout.length ? askRenderSources(erPrep(onlyWithout)) : `<p class="ask-muted">None.</p>`}
+                <div class="ask-source-heading">Without Rewrite (${onlyWithout.length})</div>
+                ${onlyWithout.length ? askRenderSourceItems(erPrep(onlyWithout)) : `<p class="ask-muted">None.</p>`}
               </div>
             </div>
           </div>
