@@ -667,12 +667,14 @@
        treatment, or its content just gets clipped with no way to reach
        it once it grows past one screen (reported live: 13+ delta
        sources on one side). */
-    #evalRewriterView {
+    #evalRewriterView, #evalEvaluatorView, #evalOrchestratorView {
       position: sticky; top: calc(var(--topbar-h) + 16px);
       height: calc(100vh - var(--topbar-h) - 32px);
       overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain;
     }
-    @media (max-width: 640px) { #evalRewriterView { position: static; height: auto; overflow-y: visible; } }
+    @media (max-width: 640px) {
+      #evalRewriterView, #evalEvaluatorView, #evalOrchestratorView { position: static; height: auto; overflow-y: visible; }
+    }
     /* Global rule for this page: vertical scroll only, never horizontal.
        Anything long enough to otherwise force a sideways scrollbar
        (a long unbroken Rewriter Prompt line, a URL with no spaces)
@@ -2201,7 +2203,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.82.6">Releasetrain <em>v3.82.6</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.83.0">Releasetrain <em>v3.83.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2367,6 +2369,8 @@
         <!-- Admin-only: hidden by default, shown in uaRender() only when
              the signed-in user's role is "admin". -->
         <a id="evalRewriterLink" class="nav-link" href="#" title="Admin: compare Retriever evidence with vs without the Rewriter" hidden>🧪 Eval Rewriter</a>
+        <a id="evalEvaluatorLink" class="nav-link" href="#" title="Admin: compare the Evaluator's raw verdict vs the deterministic override" hidden>🧪 Eval Evaluator</a>
+        <a id="evalOrchestratorLink" class="nav-link" href="#" title="Admin: compare the Orchestrator's raw answer vs the corrected answer" hidden>🧪 Eval Orchestrator</a>
         <a class="nav-link" href="https://github.com/SE4CPS/releasetrain-client"
           target="_blank" rel="noopener noreferrer">⭐ GitHub</a>
       </nav>
@@ -2613,6 +2617,26 @@
           <div class="sidebar-label">Rewriter eval</div>
           <p style="font-size:12px;color:var(--muted);line-height:1.6;margin:0 0 10px">
             Admin only. Compares the Retriever's own evidence with the Rewriter's chosen search terms against the raw question text, vendor and tool access held constant. No automated grading; read both lists yourself.
+          </p>
+        </div>
+      </div>
+
+      <!-- ── Eval Evaluator controls (shown only in eval-evaluator view) ── -->
+      <div id="evalEvaluatorControls" style="display:none">
+        <div class="sidebar-section">
+          <div class="sidebar-label">Evaluator eval</div>
+          <p style="font-size:12px;color:var(--muted);line-height:1.6;margin:0 0 10px">
+            Admin only. Compares the Evaluator's own raw sufficiency verdict with the final verdict after the deterministic override (a real search_web hit, or a real release document naming the vendor and version) can force it to sufficient.
+          </p>
+        </div>
+      </div>
+
+      <!-- ── Eval Orchestrator controls (shown only in eval-orchestrator view) ── -->
+      <div id="evalOrchestratorControls" style="display:none">
+        <div class="sidebar-section">
+          <div class="sidebar-label">Orchestrator eval</div>
+          <p style="font-size:12px;color:var(--muted);line-height:1.6;margin:0 0 10px">
+            Admin only. Compares the Orchestrator's own raw generated answer with the final answer after the deterministic version-correctness check can replace it.
           </p>
         </div>
       </div>
@@ -3829,6 +3853,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-13</div>
+              <div class="cl-ver cl-ver-minor">v3.83.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Two new admin-only eval pages: Evaluator and Orchestrator</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <code>🧪 Eval Evaluator</code>: runs the real retrieval path, then shows the Evaluator's own raw sufficiency verdict next to the final verdict after the deterministic override (a real search_web hit, or a real release document naming the vendor and version) can force it to sufficient, exactly the same two checks and wording production uses.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> <code>🧪 Eval Orchestrator</code>: same retrieval and Evaluator gate, then the Orchestrator's own raw generated answer next to the final answer after the deterministic version-correctness rewrite can replace it. An abstained Evaluator verdict shows the abstain message directly, since there's nothing for the Orchestrator to write from, same as production.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Both reuse Eval Rewriter's own "Sample a real question," flat source list, and vertical-only-scroll treatment, so all three eval pages look and behave the same way.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -5925,7 +5964,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </ul>
       </div><!-- /#ackView -->
 
-      <!-- Admin-only: Rewriter A/B eval view. No LLM grading -- see
+      <!-- Admin-only: Rewriter A/B eval view. No LLM grading, see
            runRewriterAbEval's own comment in ask.js for why. -->
       <div id="evalRewriterView" style="display:none">
         <div class="eval-rewriter-wrap" style="max-width:1100px;margin:0 auto;padding:20px 16px 60px">
@@ -5941,6 +5980,44 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div id="erResults"></div>
         </div>
       </div><!-- /#evalRewriterView -->
+
+      <!-- Admin-only: Evaluator eval view. No LLM grading beyond the
+           Evaluator's own single call, see runEvaluatorEval's own
+           comment in ask.js. Shares evalRewriterView's own CSS scope
+           (.eval-rewriter-wrap/.er-grid/.er-compare) rather than a
+           near-duplicate set of rules for the same layout shape. -->
+      <div id="evalEvaluatorView" style="display:none">
+        <div class="eval-rewriter-wrap" style="max-width:1100px;margin:0 auto;padding:20px 16px 60px">
+          <h2 style="margin:0 0 12px">🧪 Evaluator Eval</h2>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+            <input id="eeQuestion" type="text" class="search-input"
+              style="flex:1 1 320px;min-width:240px"
+              placeholder="Type a question, or sample a real one...">
+            <button type="button" id="eeSampleBtn" class="btn btn-ghost">🎲 Sample</button>
+            <button type="button" id="eeRunBtn" class="btn btn-primary">Run</button>
+          </div>
+          <div id="eeStatus" class="ask-muted" style="margin-bottom:10px"></div>
+          <div id="eeResults"></div>
+        </div>
+      </div><!-- /#evalEvaluatorView -->
+
+      <!-- Admin-only: Orchestrator eval view. See runOrchestratorEval's
+           own comment in ask.js. Same shared CSS scope as the two views
+           above. -->
+      <div id="evalOrchestratorView" style="display:none">
+        <div class="eval-rewriter-wrap" style="max-width:1100px;margin:0 auto;padding:20px 16px 60px">
+          <h2 style="margin:0 0 12px">🧪 Orchestrator Eval</h2>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+            <input id="eoQuestion" type="text" class="search-input"
+              style="flex:1 1 320px;min-width:240px"
+              placeholder="Type a question, or sample a real one...">
+            <button type="button" id="eoSampleBtn" class="btn btn-ghost">🎲 Sample</button>
+            <button type="button" id="eoRunBtn" class="btn btn-primary">Run</button>
+          </div>
+          <div id="eoStatus" class="ask-muted" style="margin-bottom:10px"></div>
+          <div id="eoResults"></div>
+        </div>
+      </div><!-- /#evalOrchestratorView -->
 
       <!-- Account / user management view -->
       <div id="usersView" style="display:none">
@@ -6523,7 +6600,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       "btn-major", "btn-minor", "btn-patch", "btn-cve", "btn-llm", "btn-hv", "btn-potential-cve", "btn-reddit",
       "btn-reddit-risk", "btn-reddit-risk-latest", "btn-reddit-risk-cve", "btn-so-risk", "btn-so",
       "filterForm", "components", "clearBtn", "fixedToggles", "typeToggles",
-      "homeLink", "graphLink", "archLink", "cveLink", "dashboardLink", "docsLink", "changelogLink", "ackLink", "usersLink", "networkLink", "evalRewriterLink", "expandAllBtn", "feedSortSelect", "activeFilters", "afTags", "afClearAll", "emptyState", "emptyStateIcon", "emptyStateMsg", "emptyStateDetail"
+      "homeLink", "graphLink", "archLink", "cveLink", "dashboardLink", "docsLink", "changelogLink", "ackLink", "usersLink", "networkLink", "evalRewriterLink", "evalEvaluatorLink", "evalOrchestratorLink", "expandAllBtn", "feedSortSelect", "activeFilters", "afTags", "afClearAll", "emptyState", "emptyStateIcon", "emptyStateMsg", "emptyStateDetail"
     ].forEach(id => { EL[id] = document.getElementById(id); });
 
     const $ = s => document.querySelector(s);
@@ -8832,6 +8909,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     /* ── Graph view: show / hide ─────────────────────────────── */
     function activateGraph() {
       if (ER_ACTIVE)  deactivateEvalRewriter();
+      if (EE_ACTIVE)  deactivateEvalEvaluator();
+      if (EO_ACTIVE)  deactivateEvalOrchestrator();
       if (A_ACTIVE)   deactivateArch();
       if (CV_ACTIVE)  deactivateCve();
       if (DB_ACTIVE)  deactivateDashboard();
@@ -9568,6 +9647,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     /* ── Arch view: show / hide ───────────────────────────────── */
     function activateArch() {
       if (ER_ACTIVE)  deactivateEvalRewriter();
+      if (EE_ACTIVE)  deactivateEvalEvaluator();
+      if (EO_ACTIVE)  deactivateEvalOrchestrator();
       if (G_ACTIVE)   deactivateGraph();
       if (CV_ACTIVE)  deactivateCve();
       if (DB_ACTIVE)  deactivateDashboard();
@@ -9843,6 +9924,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     function activateDocs() {
       if (ER_ACTIVE)  deactivateEvalRewriter();
+      if (EE_ACTIVE)  deactivateEvalEvaluator();
+      if (EO_ACTIVE)  deactivateEvalOrchestrator();
       if (G_ACTIVE)   deactivateGraph();
       if (A_ACTIVE)   deactivateArch();
       if (CV_ACTIVE)  deactivateCve();
@@ -9883,6 +9966,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     function activateChangelog() {
       if (ER_ACTIVE) deactivateEvalRewriter();
+      if (EE_ACTIVE) deactivateEvalEvaluator();
+      if (EO_ACTIVE) deactivateEvalOrchestrator();
       if (G_ACTIVE)  deactivateGraph();
       if (A_ACTIVE)  deactivateArch();
       if (CV_ACTIVE) deactivateCve();
@@ -9921,6 +10006,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     function activateAck() {
       if (ER_ACTIVE) deactivateEvalRewriter();
+      if (EE_ACTIVE) deactivateEvalEvaluator();
+      if (EO_ACTIVE) deactivateEvalOrchestrator();
       if (G_ACTIVE)  deactivateGraph();
       if (A_ACTIVE)  deactivateArch();
       if (CV_ACTIVE) deactivateCve();
@@ -9972,6 +10059,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (CL_ACTIVE)  deactivateChangelog();
       if (UA_ACTIVE)  deactivateUsers();
       if (NET_ACTIVE) deactivateNetwork();
+      if (EE_ACTIVE)  deactivateEvalEvaluator();
+      if (EO_ACTIVE)  deactivateEvalOrchestrator();
       ER_ACTIVE = true;
       setViewParam("eval-rewriter");
       document.getElementById("evalRewriterView").style.display = "block";
@@ -9993,6 +10082,88 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       e.preventDefault();
       if (ER_ACTIVE) { deactivateEvalRewriter(); return; }
       activateEvalRewriter();
+    });
+
+    /* ── Eval Evaluator (admin-only) ──────────────────────────────
+       Same reasoning and shape as Eval Rewriter above: no LLM grading,
+       just the real raw model output next to the deterministic override
+       that can replace it in production, for a human to read directly.
+       See runEvaluatorEval's own comment in ask.js. */
+    let EE_ACTIVE = false;
+    function activateEvalEvaluator() {
+      if (G_ACTIVE)   deactivateGraph();
+      if (A_ACTIVE)   deactivateArch();
+      if (CV_ACTIVE)  deactivateCve();
+      if (DB_ACTIVE)  deactivateDashboard();
+      if (D_ACTIVE)   deactivateDocs();
+      if (ACK_ACTIVE) deactivateAck();
+      if (CL_ACTIVE)  deactivateChangelog();
+      if (UA_ACTIVE)  deactivateUsers();
+      if (NET_ACTIVE) deactivateNetwork();
+      if (ER_ACTIVE)  deactivateEvalRewriter();
+      if (EO_ACTIVE)  deactivateEvalOrchestrator();
+      EE_ACTIVE = true;
+      setViewParam("eval-evaluator");
+      document.getElementById("evalEvaluatorView").style.display = "block";
+      document.getElementById("feedPanel").style.display = "none";
+      document.getElementById("evalEvaluatorControls").style.display = "";
+      document.getElementById("feedSidebarSections").style.display = "none";
+      EL.evalEvaluatorLink.classList.add("nav-active");
+    }
+    function deactivateEvalEvaluator() {
+      EE_ACTIVE = false;
+      setViewParam("");
+      document.getElementById("evalEvaluatorView").style.display = "none";
+      document.getElementById("feedPanel").style.display = "";
+      document.getElementById("evalEvaluatorControls").style.display = "none";
+      document.getElementById("feedSidebarSections").style.display = "";
+      EL.evalEvaluatorLink.classList.remove("nav-active");
+    }
+    EL.evalEvaluatorLink.addEventListener("click", e => {
+      e.preventDefault();
+      if (EE_ACTIVE) { deactivateEvalEvaluator(); return; }
+      activateEvalEvaluator();
+    });
+
+    /* ── Eval Orchestrator (admin-only) ───────────────────────────
+       Same reasoning and shape again: the Orchestrator's own raw
+       generated answer next to the final answer after the deterministic
+       version-correctness check can replace it. See runOrchestratorEval's
+       own comment in ask.js. */
+    let EO_ACTIVE = false;
+    function activateEvalOrchestrator() {
+      if (G_ACTIVE)   deactivateGraph();
+      if (A_ACTIVE)   deactivateArch();
+      if (CV_ACTIVE)  deactivateCve();
+      if (DB_ACTIVE)  deactivateDashboard();
+      if (D_ACTIVE)   deactivateDocs();
+      if (ACK_ACTIVE) deactivateAck();
+      if (CL_ACTIVE)  deactivateChangelog();
+      if (UA_ACTIVE)  deactivateUsers();
+      if (NET_ACTIVE) deactivateNetwork();
+      if (ER_ACTIVE)  deactivateEvalRewriter();
+      if (EE_ACTIVE)  deactivateEvalEvaluator();
+      EO_ACTIVE = true;
+      setViewParam("eval-orchestrator");
+      document.getElementById("evalOrchestratorView").style.display = "block";
+      document.getElementById("feedPanel").style.display = "none";
+      document.getElementById("evalOrchestratorControls").style.display = "";
+      document.getElementById("feedSidebarSections").style.display = "none";
+      EL.evalOrchestratorLink.classList.add("nav-active");
+    }
+    function deactivateEvalOrchestrator() {
+      EO_ACTIVE = false;
+      setViewParam("");
+      document.getElementById("evalOrchestratorView").style.display = "none";
+      document.getElementById("feedPanel").style.display = "";
+      document.getElementById("evalOrchestratorControls").style.display = "none";
+      document.getElementById("feedSidebarSections").style.display = "";
+      EL.evalOrchestratorLink.classList.remove("nav-active");
+    }
+    EL.evalOrchestratorLink.addEventListener("click", e => {
+      e.preventDefault();
+      if (EO_ACTIVE) { deactivateEvalOrchestrator(); return; }
+      activateEvalOrchestrator();
     });
 
     async function erSampleQuestion() {
@@ -10118,6 +10289,144 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     document.getElementById("erSampleBtn").addEventListener("click", erSampleQuestion);
     document.getElementById("erRunBtn").addEventListener("click", erRunComparison);
+
+    /* ── Eval Evaluator (admin-only) ──────────────────────────────
+       Reuses GET /api/eval-rewriter/sample (see its own comment: not
+       specific to any one eval page) and the same erPrep/erDaysAgoLabel
+       date handling and askRenderSourceItems flat rendering Eval
+       Rewriter already established. */
+    async function eeSampleQuestion() {
+      const status = document.getElementById("eeStatus");
+      status.textContent = "Sampling a real question…";
+      try {
+        const res = await uaRequest("eval-rewriter/sample");
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Request failed.");
+        if (!data.question) { status.textContent = "No sample-able question found. Try again."; return; }
+        document.getElementById("eeQuestion").value = data.question;
+        status.textContent = data.subreddit ? `Sampled from r/${data.subreddit}.` : "Sampled.";
+      } catch (e) {
+        status.textContent = friendlyFetchError(e).headline;
+      }
+    }
+
+    function eeRenderVerdict(label, verdict) {
+      const icon = verdict.sufficient ? "✅" : "⛔";
+      return `<div class="ask-answer-card">
+        <div class="ask-answer-label">${uaEsc(label)}</div>
+        <p style="font-size:13px;margin:0 0 4px">${icon} ${verdict.sufficient ? "Sufficient" : "Insufficient"}</p>
+        <p class="ask-muted" style="font-size:12px;margin:0">${uaEsc(verdict.reason || "")}</p>
+      </div>`;
+    }
+
+    async function eeRunComparison() {
+      const question = document.getElementById("eeQuestion").value.trim();
+      if (!question) { document.getElementById("eeStatus").textContent = "Type or sample a question first."; return; }
+      const runBtn = document.getElementById("eeRunBtn");
+      const status = document.getElementById("eeStatus");
+      const results = document.getElementById("eeResults");
+      runBtn.disabled = true;
+      status.textContent = "Running retrieval and the Evaluator…";
+      results.innerHTML = "";
+      try {
+        const res = await uaRequest("eval-evaluator/run", { method: "POST", body: JSON.stringify({ question }) });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Request failed.");
+        status.textContent = `Vendor: ${data.vendor || "none resolved"}${data.intent ? " · Intent: " + data.intent : ""}`
+          + (data.overridden ? " · Overridden by the deterministic check" : " · Not overridden, the model's own verdict stood");
+
+        results.innerHTML = `<div class="er-compare">
+          <div class="ask-answer-card" style="margin-bottom:16px">
+            <div class="ask-answer-label">Prompt</div>
+            <p class="ask-muted" style="font-size:12px;margin:0">Rewriter Prompt: ${uaEsc(data.rewriterTerms.join(", "))}</p>
+          </div>
+          <div class="ask-answer-card" style="margin-bottom:16px">
+            <div class="ask-answer-label">Sources (${data.sources.length})</div>
+            ${data.sources.length ? askRenderSourceItems(erPrep(data.sources)) : `<p class="ask-muted">None.</p>`}
+          </div>
+          <div class="er-grid">
+            ${eeRenderVerdict("Raw Evaluator Verdict", data.rawVerdict)}
+            ${eeRenderVerdict("Final Verdict", data.finalVerdict)}
+          </div>
+        </div>`;
+      } catch (e) {
+        status.textContent = friendlyFetchError(e).headline;
+      } finally {
+        runBtn.disabled = false;
+      }
+    }
+
+    document.getElementById("eeSampleBtn").addEventListener("click", eeSampleQuestion);
+    document.getElementById("eeRunBtn").addEventListener("click", eeRunComparison);
+
+    /* ── Eval Orchestrator (admin-only) ───────────────────────────
+       Same shared helpers as Eval Evaluator above. */
+    async function eoSampleQuestion() {
+      const status = document.getElementById("eoStatus");
+      status.textContent = "Sampling a real question…";
+      try {
+        const res = await uaRequest("eval-rewriter/sample");
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Request failed.");
+        if (!data.question) { status.textContent = "No sample-able question found. Try again."; return; }
+        document.getElementById("eoQuestion").value = data.question;
+        status.textContent = data.subreddit ? `Sampled from r/${data.subreddit}.` : "Sampled.";
+      } catch (e) {
+        status.textContent = friendlyFetchError(e).headline;
+      }
+    }
+
+    function eoRenderAnswer(label, text) {
+      return `<div class="ask-answer-card">
+        <div class="ask-answer-label">${uaEsc(label)}</div>
+        <p style="font-size:13px;margin:0">${uaEsc(text)}</p>
+      </div>`;
+    }
+
+    async function eoRunComparison() {
+      const question = document.getElementById("eoQuestion").value.trim();
+      if (!question) { document.getElementById("eoStatus").textContent = "Type or sample a question first."; return; }
+      const runBtn = document.getElementById("eoRunBtn");
+      const status = document.getElementById("eoStatus");
+      const results = document.getElementById("eoResults");
+      runBtn.disabled = true;
+      status.textContent = "Running retrieval, the Evaluator, and the Orchestrator…";
+      results.innerHTML = "";
+      try {
+        const res = await uaRequest("eval-orchestrator/run", { method: "POST", body: JSON.stringify({ question }) });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Request failed.");
+        status.textContent = `Vendor: ${data.vendor || "none resolved"}${data.intent ? " · Intent: " + data.intent : ""}`
+          + (data.abstained ? " · Evaluator gate abstained, nothing for the Orchestrator to write from"
+             : data.overridden ? " · Overridden by the deterministic version check" : " · Not overridden, the model's own answer stood");
+
+        const answerHtml = data.abstained
+          ? `<div class="ask-answer-card"><div class="ask-answer-label">Answer</div><p style="font-size:13px;margin:0">${uaEsc(data.finalAnswer)}</p></div>`
+          : `<div class="er-grid">
+              ${eoRenderAnswer("Raw Orchestrator Answer", data.rawAnswer)}
+              ${eoRenderAnswer("Final Answer", data.finalAnswer)}
+            </div>`;
+
+        results.innerHTML = `<div class="er-compare">
+          <div class="ask-answer-card" style="margin-bottom:16px">
+            <div class="ask-answer-label">Prompt</div>
+            <p class="ask-muted" style="font-size:12px;margin:0">Rewriter Prompt: ${uaEsc(data.rewriterTerms.join(", "))}</p>
+          </div>
+          <div class="ask-answer-card" style="margin-bottom:16px">
+            <div class="ask-answer-label">Sources (${data.sources.length})</div>
+            ${data.sources.length ? askRenderSourceItems(erPrep(data.sources)) : `<p class="ask-muted">None.</p>`}
+          </div>
+          ${answerHtml}
+        </div>`;
+      } catch (e) {
+        status.textContent = friendlyFetchError(e).headline;
+      } finally {
+        runBtn.disabled = false;
+      }
+    }
+
+    document.getElementById("eoSampleBtn").addEventListener("click", eoSampleQuestion);
+    document.getElementById("eoRunBtn").addEventListener("click", eoRunComparison);
 
     /* ── Post helpers ─────────────────────────────────────────── */
     function getPostSource(p) {
@@ -11675,6 +11984,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         // silently falls through to the normal feed instead of erroring.
         const u = uaUser();
         if (u && u.role === "admin") activateEvalRewriter();
+      } else if (view === "eval-evaluator") {
+        const u = uaUser();
+        if (u && u.role === "admin") activateEvalEvaluator();
+      } else if (view === "eval-orchestrator") {
+        const u = uaUser();
+        if (u && u.role === "admin") activateEvalOrchestrator();
       }
     });
 
@@ -12267,6 +12582,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     function activateCve() {
       if (ER_ACTIVE)  deactivateEvalRewriter();
+      if (EE_ACTIVE)  deactivateEvalEvaluator();
+      if (EO_ACTIVE)  deactivateEvalOrchestrator();
       if (G_ACTIVE)   deactivateGraph();
       if (A_ACTIVE)   deactivateArch();
       if (DB_ACTIVE)  deactivateDashboard();
@@ -12490,6 +12807,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     function activateDashboard() {
       if (ER_ACTIVE)  deactivateEvalRewriter();
+      if (EE_ACTIVE)  deactivateEvalEvaluator();
+      if (EO_ACTIVE)  deactivateEvalOrchestrator();
       if (G_ACTIVE)   deactivateGraph();
       if (A_ACTIVE)   deactivateArch();
       if (CV_ACTIVE)  deactivateCve();
@@ -12699,6 +13018,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     function activateNetwork() {
       if (ER_ACTIVE)  deactivateEvalRewriter();
+      if (EE_ACTIVE)  deactivateEvalEvaluator();
+      if (EO_ACTIVE)  deactivateEvalOrchestrator();
       if (G_ACTIVE)   deactivateGraph();
       if (A_ACTIVE)   deactivateArch();
       if (CV_ACTIVE)  deactivateCve();
@@ -12886,6 +13207,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         // (those are "show/hide for all visitors"; this is "admin role
         // required," a different axis).
         if (EL.evalRewriterLink) EL.evalRewriterLink.hidden = user.role !== "admin";
+        if (EL.evalEvaluatorLink) EL.evalEvaluatorLink.hidden = user.role !== "admin";
+        if (EL.evalOrchestratorLink) EL.evalOrchestratorLink.hidden = user.role !== "admin";
         uaLoadBookmarks();
         uaLoadInventoryFromServer();
         uaLoadProviderKeys();
@@ -13903,6 +14226,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     function activateUsers() {
       if (ER_ACTIVE) deactivateEvalRewriter();
+      if (EE_ACTIVE) deactivateEvalEvaluator();
+      if (EO_ACTIVE) deactivateEvalOrchestrator();
       if (G_ACTIVE)  deactivateGraph();
       if (A_ACTIVE)  deactivateArch();
       if (CV_ACTIVE) deactivateCve();
