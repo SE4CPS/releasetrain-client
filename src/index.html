@@ -2234,7 +2234,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.89.0">Releasetrain <em>v3.89.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.89.1">Releasetrain <em>v3.89.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3996,6 +3996,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-15</div>
+              <div class="cl-ver cl-ver-patch">v3.89.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Ask intro panel: related work as a table, not a paragraph</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-docs">docs</span> The "Related work" section now reads each paper's actual text (fetched live, not just summarized secondhand) into a compact 5-column table: Paper, Goal, Similar, Different, Example question, one key word bolded per cell. Replaces the earlier single paragraph with the same five papers now individually comparable at a glance.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -6814,7 +6827,16 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       <h4>Multi-agent concept</h4>
       <p>"Multi-agent" means four roles genuinely run as separate model calls, only under the delegated presets (Multi-agent delegated, feedback loop): a Rewriter reformulates the question into search terms, a Retriever searches release notes/CVEs/community discussion, an Evaluator judges whether the evidence is sufficient (retrying once under the feedback-loop preset), and an Orchestrator writes the final answer. Single-agent and the two buggy/fixed presets simulate the same four roles inside one continuous tool-use loop instead, no separate agent calls at all. A preset's name is a request, not a guarantee: each answer's own Model vs Rules tab shows which parts of that specific run were actually model-decided versus a deterministic rule.</p>
       <h4>Related work</h4>
-      <p>Builds on and is benchmarked against recent multi-agent RAG research: <a href="https://arxiv.org/abs/2505.20096" target="_blank" rel="noopener">MA-RAG</a>, <a href="https://arxiv.org/abs/2506.16988" target="_blank" rel="noopener">RAGentA</a>, <a href="https://arxiv.org/abs/2504.05312" target="_blank" rel="noopener">Amber</a>, <a href="https://arxiv.org/abs/2606.21553" target="_blank" rel="noopener">Dissecting Agentic RAG</a>, and the <a href="https://arxiv.org/abs/2603.07379" target="_blank" rel="noopener">SoK: Agentic RAG</a> survey. The headline finding this system's own Rewriter fix is grounded in, a query rewrite silently replacing rather than adding to the original search terms, was caught live in production, not in a benchmark ablation.</p>
+      <table class="ask-intro-table">
+        <thead><tr><th>Paper</th><th>Goal</th><th>Similar</th><th>Different</th><th>Example question</th></tr></thead>
+        <tbody>
+          <tr><td><a href="https://arxiv.org/abs/2505.20096" target="_blank" rel="noopener">MA-RAG</a></td><td><strong>Decompose</strong> multi-hop questions, 4 agents</td><td>Staged agents, small model</td><td>Static QA, no live corpus</td><td>"Who directed the spouse's film?"</td></tr>
+          <tr><td><a href="https://arxiv.org/abs/2506.16988" target="_blank" rel="noopener">RAGentA</a></td><td><strong>Attributed</strong>, cited answers</td><td>Filter + reformulate loop</td><td>Reformulates <em>after</em> a draft, not before</td><td>"What caused City X's growth?"</td></tr>
+          <tr><td><a href="https://arxiv.org/abs/2504.05312" target="_blank" rel="noopener">Amber</a></td><td><strong>Adaptive</strong> memory across retrieval</td><td>Closest memory analog</td><td>Memory resets per question</td><td>"Summarize recent findings on X"</td></tr>
+          <tr><td><a href="https://arxiv.org/abs/2606.21553" target="_blank" rel="noopener">Dissecting Agentic RAG</a></td><td>Which parts <strong>actually help</strong></td><td>Same stages, same conclusion</td><td>An ablation, not a live defect</td><td>"What year did event X happen?"</td></tr>
+          <tr><td><a href="https://arxiv.org/abs/2603.07379" target="_blank" rel="noopener">SoK: Agentic RAG</a></td><td><strong>Taxonomy</strong> + risk survey</td><td>We match 3 of its 4 axes</td><td>A survey, zero experiments</td><td><em>Type: how to design/evaluate an agentic loop</em></td></tr>
+        </tbody>
+      </table>
     </aside>
     </div><!-- /.ask-rail-col -->
 
