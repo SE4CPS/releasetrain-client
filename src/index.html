@@ -984,22 +984,32 @@
        has no `root` set, so it already watches the real viewport. */
     @media (max-width: 640px) { #feedPanel { position: static; max-height: none; overflow: visible; } }
     .panel-header {
-      display: flex; align-items: center; gap: 8px;
-      padding: 9px 14px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 12px; border-bottom: 1px solid var(--border);
     }
-    .panel-header h2 { margin: 0; font-size: 13px; font-weight: 700; flex: 1; }
-    .panel-header h2 small { font-weight: 400; color: var(--muted); font-size: 11px; }
+    /* min-width:0 lets a flex:1 heading actually shrink/wrap inside its
+       own share of the row instead of forcing the row wider than the
+       (now narrower, 40%-column) panel and pushing the sort/expand
+       controls to wrap onto their own line too. */
+    .panel-header h2 { margin: 0; font-size: 12px; font-weight: 700; flex: 1; min-width: 0; }
+    .panel-header h2 small { font-weight: 400; color: var(--muted); font-size: 10px; }
     /* Native <select> chrome renders taller than a plain .btn at the same
        font-size (its own UA line-height + dropdown-arrow padding), so an
        explicit shared height on both is the only reliable way to line
        them up, matched to whichever is naturally shorter (the button). */
     #feedSortSelect, #expandAllBtn {
-      height: 26px;
+      height: 24px;
     }
     #feedSortSelect {
-      font: inherit; font-size: 12px; line-height: 1; padding: 0 8px; border: 1px solid var(--border);
+      font: inherit; font-size: 11px; line-height: 1; padding: 0 6px; border: 1px solid var(--border);
       border-radius: var(--radius-sm); background: var(--surface); color: var(--text); cursor: pointer;
     }
+    /* Tighter than .btn's own site-wide default padding (5px 12px), just
+       for this instance: reported live as crowding out the "Recent
+       Updates" heading beside it in the panel's now-narrower (40%)
+       column, wrapping the heading's own "components)" onto a second
+       line. */
+    #expandAllBtn { padding: 0 8px; font-size: 11px; }
     #status { color: var(--muted); font-size: 12px; }
 
     /* ── Empty state ────────────────────────────────────────── */
@@ -2262,7 +2272,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.93.0">Releasetrain <em>v3.93.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.94.0">Releasetrain <em>v3.94.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4046,6 +4056,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-15</div>
+              <div class="cl-ver cl-ver-minor">v3.94.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Feed panel header: fix crowding at the new 40% column width</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Reported live: at the left column's new, narrower 40% width, the "Recent Updates" heading wrapped onto a second line ("components)" alone) while the Sort dropdown and "Expand all" button stayed full size beside it, reading as cramped. The sort dropdown's own option text dropped its redundant "Sort: " prefix (e.g. "Sort: Most activity" &rarr; "Most activity", still exposed to screen readers via the select's own <code>aria-label</code>), the button's padding tightened to its own instance, and the heading/controls all shrank a notch, so the row comfortably fits at this width.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -6833,13 +6856,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       <section class="panel" id="feedPanel" aria-label="Updates feed">
         <header class="panel-header">
           <h2>📋 Recent Updates <small id="feedWindowLabel">(last 2 weeks)</small></h2>
-          <select id="feedSortSelect" title="Sort the feed">
-            <option value="recency">Sort: Recent</option>
-            <option value="alpha">Sort: A-Z</option>
-            <option value="cve">Sort: Most CVEs</option>
-            <option value="risk">Sort: Highest risk</option>
-            <option value="activity">Sort: Most activity</option>
-            <option value="sources">Sort: Most sources</option>
+          <select id="feedSortSelect" title="Sort the feed" aria-label="Sort the feed">
+            <option value="recency">Recent</option>
+            <option value="alpha">A-Z</option>
+            <option value="cve">Most CVEs</option>
+            <option value="risk">Highest risk</option>
+            <option value="activity">Most activity</option>
+            <option value="sources">Most sources</option>
           </select>
           <button class="btn btn-ghost" type="button" id="expandAllBtn"
             title="Expand or collapse all components">Expand all</button>
