@@ -2234,7 +2234,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.87.0">Releasetrain <em>v3.87.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.88.0">Releasetrain <em>v3.88.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3438,9 +3438,11 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
 
 <section class="block" id="d-admin">
 <h2>Admin</h2>
-<div class="callout"><h3>Admin at a glance</h3><p class="small">Operational and moderation endpoints for the admin dashboard: bot freshness, data quality attribution, MongoDB Atlas storage headroom, and a generic runtime settings store shared by the Ask pipeline defaults, nav-view visibility, and the eval tools' access levels.</p></div>
+<div class="callout"><h3>Admin at a glance</h3><p class="small">Operational and moderation endpoints for the admin dashboard: bot freshness (plus its per-bot cadence thresholds), data quality attribution, MongoDB Atlas storage headroom, vendor-catalog alias curation and manual gap-fill, and a generic runtime settings store shared by the Ask pipeline defaults, the global rate limit, the registration email allowlist, nav-view visibility, and the eval tools' access levels.</p></div>
 <p class="section-sort-note">Endpoints collapsed by default, ordered method-first then route.</p>
 <div class="api-grid">
+<details class="endpoint method-delete"><summary class="endpoint-head"><span class="method delete">DELETE</span><span class="path">/api/admin/vendor-aliases/:id</span></summary><div class="endpoint-body"><p>Remove a vendor alias by Mongo ObjectId.</p><div><span class="tag">admin only</span></div><pre><code>curl -X DELETE "https://releasetrain.io/api/admin/vendor-aliases/660c38fce3cba9423e4f8f23" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "ok": true }</code></pre></div></details>
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/admin/bot-cadence</span></summary><div class="endpoint-body"><p>Each collector bot's default expected-update cadence (in days, the same values <code class="inline">/api/admin/bot-health</code> checks against), plus any admin-set override that replaces a bot's default. The System overview panel's Bot health card always reflects the effective value (override if set, else default).</p><div><span class="tag">admin only</span></div><pre><code>curl "https://releasetrain.io/api/admin/bot-cadence" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "defaults": { "chrome.py": 21, "firefox.py": 21, "mysql.py": 120 }, "overrides": { "mysql.py": 90 } }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/admin/bot-health</span></summary><div class="endpoint-body"><p>Checks how recently each collector bot has actually written new data, against a per-bot expected cadence (e.g. Chrome/Firefox every 21 days, MySQL every 120). Flags any bot past its cadence as stale.</p><div><span class="tag">admin only</span></div><pre><code>curl "https://releasetrain.io/api/admin/bot-health" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "checkedAt": "2026-03-25T17:00:00.000Z", "stale": [ { "bot": "mysql.py", "lastSeen": "2025-11-01", "ageDays": 144, "maxDays": 120 } ], "healthy": [ { "bot": "chrome.py", "lastSeen": "2026-03-24", "ageDays": 1, "maxDays": 21 } ], "noData": [] }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/admin/overview</span></summary><div class="endpoint-body"><p>Bundles bot health, source attribution, storage usage, top-line collection counts, user growth, and search/ask query volume into one response, so the admin dashboard's first screen is a single request.</p><div><span class="tag">admin only</span></div><pre><code>curl "https://releasetrain.io/api/admin/overview" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{
   "checkedAt": "2026-03-25T17:00:00.000Z",
@@ -3452,11 +3454,15 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
   "queries": { "total": 8340, "last7Days": 412 },
   "botGapLog": { "total": 18, "success": 11, "recent": [ "..." ] }
 }</code></pre></div></details>
-<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/admin/settings</span></summary><div class="endpoint-body"><p>Current values of every admin-tunable runtime setting: the Ask pipeline defaults, which nav views are visible, and each eval tool's access level.</p><div><span class="tag">admin only</span></div><pre><code>curl "https://releasetrain.io/api/admin/settings" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "askRecentWindowDays": 14, "askDefaultPreset": "auto", "askDefaultProvider": "ollama", "askDefaultSize": "medium", "viewGraphVisible": true, "viewDocsVisible": true, "evalRewriterAccess": "admin", "evalEvaluatorAccess": "admin", "evalOrchestratorAccess": "admin" }</code></pre></div></details>
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/admin/settings</span></summary><div class="endpoint-body"><p>Current values of every admin-tunable runtime setting: the Ask pipeline defaults, the global per-IP rate limit, the registration email domain allowlist, which nav views are visible, and each eval tool's access level.</p><div><span class="tag">admin only</span></div><pre><code>curl "https://releasetrain.io/api/admin/settings" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "askRecentWindowDays": 14, "askDefaultPreset": "auto", "askDefaultProvider": "ollama", "askDefaultSize": "medium", "rateLimitPerMinute": 120, "allowedEmailDomains": "gmail.com,outlook.com", "viewGraphVisible": true, "viewDocsVisible": true, "evalRewriterAccess": "admin", "evalEvaluatorAccess": "admin", "evalOrchestratorAccess": "admin" }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/admin/source-attribution</span></summary><div class="endpoint-body"><p>What fraction of the <code class="inline">versions</code> collection has no confident <code class="inline">sourceBot</code> attribution (<code class="inline">"unknown"</code> or missing entirely). A rising percentage signals a bot's source-inference rule needs updating.</p><div><span class="tag">admin only</span></div><pre><code>curl "https://releasetrain.io/api/admin/source-attribution" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "total": 54210, "unknown": 780, "missing": 32, "pct": 1.5, "byBot": [ { "_id": "chrome.py", "count": 4210 }, { "_id": "unknown", "count": 780 } ] }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/admin/storage</span></summary><div class="endpoint-body"><p>MongoDB Atlas storage/data/index size against the M0 free-tier's 512MB shared cap.</p><div><span class="tag">admin only</span></div><pre><code>curl "https://releasetrain.io/api/admin/storage" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "storageMb": 210.4, "dataMb": 180.2, "indexMb": 22.1, "limitMb": 512, "pct": 0.411, "collections": 8, "objects": 1204830 }</code></pre></div></details>
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/admin/vendor-aliases</span></summary><div class="endpoint-body"><p>Every manually-curated vendor alias, correcting or adding a vendor name the automatic catalog (built from tracked release data and Reddit subreddit names) doesn't resolve on its own.</p><div><span class="tag">admin only</span></div><pre><code>curl "https://releasetrain.io/api/admin/vendor-aliases" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "data": [ { "_id": "660c38fce3cba9423e4f8f23", "alias": "ada", "canonicalName": "Ada", "createdAt": "2026-09-15T17:00:00.000Z" } ] }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/views/visibility</span></summary><div class="endpoint-body"><p>Public: which nav-menu views are currently enabled, so a signed-out visitor's page load can hide a disabled view's link too. <code class="inline">home</code> and <code class="inline">users</code> can't be hidden by design.</p><pre><code>curl "https://releasetrain.io/api/views/visibility"</code></pre><pre><code>{ "viewGraphVisible": true, "viewArchVisible": true, "viewCveVisible": true, "viewDashboardVisible": true, "viewDocsVisible": true, "viewChangelogVisible": true, "viewAckVisible": true, "viewNetworkVisible": true }</code></pre></div></details>
-<details class="endpoint method-put"><summary class="endpoint-head"><span class="method put">PUT</span><span class="path">/api/admin/settings</span></summary><div class="endpoint-body"><p>Patch one or more runtime settings. Applies immediately, no restart needed, and persists to the <code class="inline">settings</code> collection. Unrecognized keys are ignored; each known value is validated/clamped (e.g. <code class="inline">askRecentWindowDays</code> to 1-90) before being applied and returned.</p><div><span class="tag">admin only</span></div><pre><code>curl -X PUT "https://releasetrain.io/api/admin/settings" -H "Authorization: Bearer YOUR_JWT_TOKEN" -H "Content-Type: application/json" -d '{"askRecentWindowDays":30,"evalRewriterAccess":"auth"}'</code></pre><pre><code>{ "askRecentWindowDays": 30, "askDefaultPreset": "auto", "evalRewriterAccess": "auth", "evalEvaluatorAccess": "admin", "evalOrchestratorAccess": "admin" }</code></pre></div></details>
+<details class="endpoint method-post"><summary class="endpoint-head"><span class="method post">POST</span><span class="path">/api/admin/vendor-aliases</span></summary><div class="endpoint-body"><p>Add a vendor alias mapping one alternate spelling/name to its canonical name.</p><div><span class="tag">admin only</span></div><pre><code>curl -X POST "https://releasetrain.io/api/admin/vendor-aliases" -H "Authorization: Bearer YOUR_JWT_TOKEN" -H "Content-Type: application/json" -d '{"alias":"ada","canonicalName":"Ada"}'</code></pre><pre><code>{ "data": { "_id": "660c38fce3cba9423e4f8f23", "alias": "ada", "canonicalName": "Ada", "createdAt": "2026-09-15T17:00:00.000Z" } }</code></pre></div></details>
+<details class="endpoint method-post"><summary class="endpoint-head"><span class="method post">POST</span><span class="path">/api/admin/vendor-gap-fill</span></summary><div class="endpoint-body"><p>Manually runs the same automatic-catalog gap-fill a bot's own fallback triggers for a real, web-verified vendor with zero tracked evidence (see the <code class="inline">botGapLog</code> field on <code class="inline">GET /api/admin/overview</code>). The attempt is logged the same as an automatic one, so it also shows up in that response's <code class="inline">botGapLog.recent</code> list.</p><div><span class="tag">admin only</span></div><pre><code>curl -X POST "https://releasetrain.io/api/admin/vendor-gap-fill" -H "Authorization: Bearer YOUR_JWT_TOKEN" -H "Content-Type: application/json" -d '{"vendorName":"ada"}'</code></pre><pre><code>{ "success": true }</code></pre></div></details>
+<details class="endpoint method-put"><summary class="endpoint-head"><span class="method put">PUT</span><span class="path">/api/admin/bot-cadence</span></summary><div class="endpoint-body"><p>Set (or clear) one bot's cadence override. <code class="inline">maxDays</code> is a number from 1-365, or <code class="inline">null</code> to remove the override and fall back to that bot's default. Applies immediately, no restart needed, and is picked up by <code class="inline">/api/admin/bot-health</code>'s next check.</p><div><span class="tag">admin only</span></div><pre><code>curl -X PUT "https://releasetrain.io/api/admin/bot-cadence" -H "Authorization: Bearer YOUR_JWT_TOKEN" -H "Content-Type: application/json" -d '{"bot":"mysql.py","maxDays":90}'</code></pre><pre><code>{ "defaults": { "chrome.py": 21, "firefox.py": 21, "mysql.py": 120 }, "overrides": { "mysql.py": 90 } }</code></pre></div></details>
+<details class="endpoint method-put"><summary class="endpoint-head"><span class="method put">PUT</span><span class="path">/api/admin/settings</span></summary><div class="endpoint-body"><p>Patch one or more runtime settings. Applies immediately, no restart needed, and persists to the <code class="inline">settings</code> collection. Unrecognized keys are ignored; each known value is validated/clamped (e.g. <code class="inline">askRecentWindowDays</code> to 1-90, <code class="inline">rateLimitPerMinute</code> to 10-2000) before being applied and returned. <code class="inline">allowedEmailDomains</code> takes a comma-separated string; any <code class="inline">.edu</code> (or <code class="inline">.edu.&lt;country&gt;</code>) address is always allowed regardless of this list.</p><div><span class="tag">admin only</span></div><pre><code>curl -X PUT "https://releasetrain.io/api/admin/settings" -H "Authorization: Bearer YOUR_JWT_TOKEN" -H "Content-Type: application/json" -d '{"askRecentWindowDays":30,"rateLimitPerMinute":200,"allowedEmailDomains":"gmail.com,outlook.com"}'</code></pre><pre><code>{ "askRecentWindowDays": 30, "askDefaultPreset": "auto", "rateLimitPerMinute": 200, "allowedEmailDomains": "gmail.com,outlook.com", "evalRewriterAccess": "auth", "evalEvaluatorAccess": "admin", "evalOrchestratorAccess": "admin" }</code></pre></div></details>
 </div><a class="toplink" href="#">↑ Back to top</a></section>
 
 <section class="block" id="d-testing">
@@ -3990,6 +3996,23 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-15</div>
+              <div class="cl-ver cl-ver-minor">v3.88.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Account: rate limiting, email allowlist, bot cadence, and vendor catalog admin controls</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> New Settings entry: global rate limit (requests/min per IP), applied to every API route except <code>/api/health</code>.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> New Settings entry: allowed registration email domains, a comma-separated allowlist. Any <code>.edu</code> (or <code>.edu.&lt;country&gt;</code>) address is always allowed regardless of this list.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> New <strong>Bot health thresholds</strong> section in the Account view's admin area: an editable per-bot cadence override (with a "Reset to default" option) for every bot <code>/api/admin/bot-health</code> tracks, backed by the server's new <code>GET</code>/<code>PUT /api/admin/bot-cadence</code>.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> New <strong>Vendor catalog</strong> section in the Account view's admin area: an alias manager (add/list/delete a manual vendor-name correction for the automatic catalog) plus a manual gap-fill trigger, backed by the server's new <code>/api/admin/vendor-aliases</code> and <code>POST /api/admin/vendor-gap-fill</code>.</li>
+                <li><span class="cl-tag cl-tag-docs">docs</span> API Reference: documented all 6 new/changed admin routes above, and noted the two new Settings fields on the existing <code>GET</code>/<code>PUT /api/admin/settings</code> entries.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -6515,6 +6538,58 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                 <div id="ua-settings-list" class="ua-settings-list">
                   <p class="ua-muted" style="font-size:12px;padding:8px 0">Loading…</p>
                 </div>
+              </div>
+            </details>
+            <!-- Bot cadence thresholds: too many rows (~21 bots) for the
+                 flat UA_SETTINGS_META list above, so this is its own
+                 section backed by GET/PUT /api/admin/bot-cadence instead.
+                 Loaded eagerly alongside the other admin sections (see
+                 uaRender below) so its count is accurate before it's
+                 ever opened, same reasoning as every other section here. -->
+            <details class="ua-admin-details">
+              <summary class="ua-admin-header">
+                <span style="font-weight:700;font-size:13px">Bot health thresholds</span>
+                <span id="ua-cadence-count" class="ua-muted" style="font-size:12px"></span>
+                <button id="ua-refresh-cadence" class="btn btn-ghost" style="font-size:12px;padding:4px 10px;margin-left:auto">Refresh</button>
+              </summary>
+              <div id="ua-cadence-section">
+                <p class="ua-muted" style="font-size:12px;margin:8px 0 6px">How many days a bot may go quiet before the System overview panel's Bot health card flags it stale. Leave a row at its default unless that bot's normal update cadence genuinely differs.</p>
+                <div id="ua-cadence-list" class="ua-settings-list">
+                  <p class="ua-muted" style="font-size:12px;padding:8px 0">Loading…</p>
+                </div>
+              </div>
+            </details>
+            <!-- Vendor catalog curation: corrects/adds a vendor name the
+                 automatic catalog (built from tracked release data and
+                 Reddit subreddit names) doesn't resolve on its own, plus
+                 a manual trigger for the same gap-fill a bot's own
+                 fallback runs automatically. -->
+            <details class="ua-admin-details">
+              <summary class="ua-admin-header">
+                <span style="font-weight:700;font-size:13px">Vendor catalog</span>
+                <span id="ua-vendor-alias-count" class="ua-muted" style="font-size:12px"></span>
+                <button id="ua-refresh-vendor-aliases" class="btn btn-ghost" style="font-size:12px;padding:4px 10px;margin-left:auto">Refresh</button>
+              </summary>
+              <div id="ua-vendor-catalog-body">
+                <p class="ua-muted" style="font-size:12px;margin:8px 0 10px">Corrects or adds a vendor name the automatic catalog (built from tracked release data and Reddit subreddit names) doesn't resolve on its own, e.g. mapping "ada" to "Ada" when a real product's automatic verification is ambiguous.</p>
+                <div id="ua-vendor-alias-error" class="ua-msg ua-msg-error" style="display:none"></div>
+                <form id="ua-vendor-alias-form" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+                  <input id="ua-vendor-alias-input" class="search-input" placeholder="Alias (e.g. ada)" maxlength="64" autocomplete="off" required style="flex:1 1 140px;min-width:0" />
+                  <input id="ua-vendor-canonical-input" class="search-input" placeholder="Canonical name (e.g. Ada)" maxlength="64" autocomplete="off" required style="flex:1 1 140px;min-width:0" />
+                  <button class="btn btn-primary" type="submit" style="font-size:12px">Add alias</button>
+                </form>
+                <div id="ua-vendor-alias-empty" class="ua-muted" style="font-size:12px;display:none">No aliases yet.</div>
+                <div id="ua-vendor-alias-list" class="ua-bm-list"></div>
+
+                <hr style="border:none;border-top:1px solid var(--border);margin:16px 0" />
+
+                <p style="font-weight:700;font-size:13px;margin:0 0 4px">Manual gap-fill trigger</p>
+                <p class="ua-muted" style="font-size:12px;margin:0 0 10px">Manually run the same automatic-catalog gap-fill a bot's own fallback triggers for a vendor with zero tracked evidence. The result also shows up in the System overview panel's "Recent vendor gap-fills" list above.</p>
+                <div id="ua-vendor-gapfill-msg" class="ua-msg" style="display:none"></div>
+                <form id="ua-vendor-gapfill-form" style="display:flex;gap:6px;flex-wrap:wrap">
+                  <input id="ua-vendor-gapfill-input" class="search-input" placeholder="Vendor name (e.g. ada)" maxlength="64" autocomplete="off" required style="flex:1 1 200px;min-width:0" />
+                  <button class="btn btn-primary" type="submit" style="font-size:12px">Run gap-fill</button>
+                </form>
               </div>
             </details>
             <details class="ua-admin-details">
@@ -13708,6 +13783,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           adminSection.style.display = "";
           uaLoadDashboard();
           uaLoadSettings();
+          uaLoadBotCadence();
+          uaLoadVendorAliases();
           uaLoadUsers();
           uaLoadSearchEvents();
         } else {
@@ -14066,6 +14143,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           { value: "public", label: "Public (no login)" },
         ],
       },
+      // Plain finite-number and plain-string values both already fall
+      // through to this renderer's generic number-input/text-input
+      // fallback (see the inputHtml ternary in uaLoadSettings below), so
+      // these two need no new markup or renderer branch, just metadata.
+      rateLimitPerMinute: {
+        label: "Global rate limit (requests/min per IP)",
+        hint: "Applies to every API route except /api/health. Takes effect immediately, no restart needed.",
+        min: 10, max: 2000,
+      },
+      allowedEmailDomains: {
+        label: "Allowed registration email domains",
+        hint: "Comma-separated (e.g. gmail.com,outlook.com). Any .edu (or .edu.<country>) address is always allowed regardless of this list.",
+      },
     };
     async function uaLoadSettings() {
       const listEl = document.getElementById("ua-settings-list");
@@ -14137,6 +14227,200 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             btn.disabled = false;
           }
         });
+      });
+    }
+
+    // Bot health cadence thresholds (GET/PUT /api/admin/bot-cadence).
+    // Kept separate from the generic UA_SETTINGS_META list above since
+    // it's ~21 rows deep, not a handful of flat scalars. A dedicated
+    // per-bot list reads better than 21 near-identical entries mixed
+    // into Settings. Each row's effective value is overrides[bot] when
+    // set, else defaults[bot]; "Reset to default" (PUT with
+    // maxDays: null) only shows once a row actually has an override.
+    async function uaLoadBotCadence() {
+      const listEl = document.getElementById("ua-cadence-list");
+      const countEl = document.getElementById("ua-cadence-count");
+      if (!listEl) return;
+      const res = await uaRequest("admin/bot-cadence").catch(() => null);
+      if (!res || !res.ok) {
+        listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">Could not load bot cadence thresholds.</p>`;
+        return;
+      }
+      const { defaults, overrides } = await res.json();
+      const bots = Object.keys(defaults || {}).sort();
+      if (countEl) countEl.textContent = bots.length ? "(" + bots.length + ")" : "";
+      if (!bots.length) {
+        listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">No bots defined yet.</p>`;
+        return;
+      }
+      listEl.innerHTML = bots.map(bot => {
+        const def = defaults[bot];
+        const ov = overrides ? overrides[bot] : null;
+        const hasOverride = Number.isFinite(ov);
+        const effective = hasOverride ? ov : def;
+        return `<div class="ua-bot-row" data-bot="${uaEsc(bot)}">
+          <span class="ua-bot-row-name">${uaEsc(bot)}</span>
+          <span class="ua-bot-row-detail">default ${def}d</span>
+          <input type="number" class="ua-settings-input ua-cadence-input" data-bot="${uaEsc(bot)}" value="${effective}" min="1" max="365" style="width:70px">
+          <button type="button" class="btn btn-ghost ua-cadence-save" data-bot="${uaEsc(bot)}" style="font-size:12px;padding:4px 10px">Save</button>
+          <button type="button" class="btn btn-ghost ua-cadence-reset" data-bot="${uaEsc(bot)}" style="font-size:11px;padding:4px 8px${hasOverride ? "" : ";display:none"}">Reset to default</button>
+        </div>`;
+      }).join("");
+
+      listEl.querySelectorAll(".ua-cadence-save").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const bot = btn.dataset.bot;
+          const input = listEl.querySelector(`.ua-cadence-input[data-bot="${CSS.escape(bot)}"]`);
+          if (!input) return;
+          const maxDays = Number(input.value);
+          btn.disabled = true;
+          const prevText = btn.textContent;
+          btn.textContent = "Saving…";
+          try {
+            const putRes = await uaRequest("admin/bot-cadence", { method: "PUT", body: JSON.stringify({ bot, maxDays }) });
+            if (!putRes.ok) throw new Error((await putRes.json().catch(() => ({}))).error || "Save failed.");
+            btn.textContent = "Saved";
+            setTimeout(() => { btn.textContent = prevText; btn.disabled = false; }, 1200);
+            const resetBtn = listEl.querySelector(`.ua-cadence-reset[data-bot="${CSS.escape(bot)}"]`);
+            if (resetBtn) resetBtn.style.display = "";
+          } catch (err) {
+            alert(err.message || "Save failed.");
+            btn.textContent = prevText;
+            btn.disabled = false;
+          }
+        });
+      });
+
+      listEl.querySelectorAll(".ua-cadence-reset").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const bot = btn.dataset.bot;
+          const input = listEl.querySelector(`.ua-cadence-input[data-bot="${CSS.escape(bot)}"]`);
+          btn.disabled = true;
+          try {
+            const putRes = await uaRequest("admin/bot-cadence", { method: "PUT", body: JSON.stringify({ bot, maxDays: null }) });
+            if (!putRes.ok) throw new Error((await putRes.json().catch(() => ({}))).error || "Reset failed.");
+            const applied = await putRes.json();
+            const def = applied.defaults ? applied.defaults[bot] : undefined;
+            if (input && Number.isFinite(def)) input.value = def;
+            btn.style.display = "none";
+          } catch (err) {
+            alert(err.message || "Reset failed.");
+          } finally {
+            btn.disabled = false;
+          }
+        });
+      });
+    }
+
+    const uaRefreshCadenceBtn = document.getElementById("ua-refresh-cadence");
+    if (uaRefreshCadenceBtn) uaRefreshCadenceBtn.addEventListener("click", uaLoadBotCadence);
+
+    // Vendor catalog: alias manager (GET/POST/DELETE
+    // /api/admin/vendor-aliases) plus a separate manual gap-fill
+    // trigger (POST /api/admin/vendor-gap-fill) below it. Deleting an
+    // alias just removes its row on success rather than reloading the
+    // whole list.
+    async function uaLoadVendorAliases() {
+      const listEl = document.getElementById("ua-vendor-alias-list");
+      const emptyEl = document.getElementById("ua-vendor-alias-empty");
+      const countEl = document.getElementById("ua-vendor-alias-count");
+      if (!listEl) return;
+      const res = await uaRequest("admin/vendor-aliases").catch(() => null);
+      if (!res || !res.ok) {
+        listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">Could not load vendor aliases.</p>`;
+        if (emptyEl) emptyEl.style.display = "none";
+        return;
+      }
+      const { data } = await res.json();
+      const rows = data || [];
+      if (countEl) countEl.textContent = rows.length ? "(" + rows.length + ")" : "";
+      if (emptyEl) emptyEl.style.display = rows.length ? "none" : "";
+      listEl.innerHTML = rows.map(a => `<div class="ua-bm-item" data-id="${uaEsc(a._id)}">
+        <span class="ua-bm-name">${uaEsc(a.alias)} &rarr; ${uaEsc(a.canonicalName)}</span>
+        <div class="ua-bm-actions">
+          <button class="btn btn-ghost ua-vendor-alias-del" data-id="${uaEsc(a._id)}" style="font-size:12px;padding:4px 10px;color:var(--cve);border-color:#fca5a5">Delete</button>
+        </div>
+      </div>`).join("");
+
+      listEl.querySelectorAll(".ua-vendor-alias-del").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          if (!confirm("Delete this alias?")) return;
+          const id = btn.dataset.id;
+          btn.disabled = true;
+          const res = await uaRequest("admin/vendor-aliases/" + id, { method: "DELETE" }).catch(() => null);
+          if (res && res.ok) {
+            const row = listEl.querySelector(`[data-id="${CSS.escape(id)}"]`);
+            if (row) row.remove();
+            const remaining = listEl.children.length;
+            if (countEl) countEl.textContent = remaining ? "(" + remaining + ")" : "";
+            if (emptyEl) emptyEl.style.display = remaining ? "none" : "";
+          } else {
+            alert("Failed to delete alias.");
+            btn.disabled = false;
+          }
+        });
+      });
+    }
+
+    const uaRefreshVendorAliasesBtn = document.getElementById("ua-refresh-vendor-aliases");
+    if (uaRefreshVendorAliasesBtn) uaRefreshVendorAliasesBtn.addEventListener("click", uaLoadVendorAliases);
+
+    const uaVendorAliasForm = document.getElementById("ua-vendor-alias-form");
+    if (uaVendorAliasForm) {
+      uaVendorAliasForm.addEventListener("submit", async e => {
+        e.preventDefault();
+        const aliasInput = document.getElementById("ua-vendor-alias-input");
+        const canonicalInput = document.getElementById("ua-vendor-canonical-input");
+        const alias = aliasInput.value.trim();
+        const canonicalName = canonicalInput.value.trim();
+        if (!alias || !canonicalName) return;
+        const btn = uaVendorAliasForm.querySelector("button[type=submit]");
+        btn.disabled = true;
+        try {
+          const res = await uaRequest("admin/vendor-aliases", { method: "POST", body: JSON.stringify({ alias, canonicalName }) });
+          if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Failed to add alias.");
+          aliasInput.value = "";
+          canonicalInput.value = "";
+          uaShowMsg("ua-vendor-alias-error", "");
+          await uaLoadVendorAliases();
+        } catch (err) {
+          uaShowMsg("ua-vendor-alias-error", err.message || "Failed to add alias.");
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    }
+
+    // Manual gap-fill trigger: a separate small form, its own inline
+    // success/failure message (re-classed ua-msg-ok/ua-msg-error per
+    // result, same as the password/keys/org forms above).
+    const uaVendorGapfillForm = document.getElementById("ua-vendor-gapfill-form");
+    if (uaVendorGapfillForm) {
+      uaVendorGapfillForm.addEventListener("submit", async e => {
+        e.preventDefault();
+        const input = document.getElementById("ua-vendor-gapfill-input");
+        const vendorName = input.value.trim();
+        if (!vendorName) return;
+        const msgEl = document.getElementById("ua-vendor-gapfill-msg");
+        const btn = uaVendorGapfillForm.querySelector("button[type=submit]");
+        btn.disabled = true;
+        const prevText = btn.textContent;
+        btn.textContent = "Running…";
+        try {
+          const res = await uaRequest("admin/vendor-gap-fill", { method: "POST", body: JSON.stringify({ vendorName }) });
+          if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Request failed.");
+          const data = await res.json();
+          msgEl.className = "ua-msg " + (data.success ? "ua-msg-ok" : "ua-msg-error");
+          uaShowMsg("ua-vendor-gapfill-msg", data.success
+            ? "Resolved."
+            : "Did not resolve, a search-term variant may be needed, or add it as an alias above instead.");
+        } catch (err) {
+          msgEl.className = "ua-msg ua-msg-error";
+          uaShowMsg("ua-vendor-gapfill-msg", err.message || "Request failed.");
+        } finally {
+          btn.textContent = prevText;
+          btn.disabled = false;
+        }
       });
     }
 
