@@ -2234,7 +2234,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.89.1">Releasetrain <em>v3.89.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.90.0">Releasetrain <em>v3.90.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3458,7 +3458,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/admin/source-attribution</span></summary><div class="endpoint-body"><p>What fraction of the <code class="inline">versions</code> collection has no confident <code class="inline">sourceBot</code> attribution (<code class="inline">"unknown"</code> or missing entirely). A rising percentage signals a bot's source-inference rule needs updating.</p><div><span class="tag">admin only</span></div><pre><code>curl "https://releasetrain.io/api/admin/source-attribution" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "total": 54210, "unknown": 780, "missing": 32, "pct": 1.5, "byBot": [ { "_id": "chrome.py", "count": 4210 }, { "_id": "unknown", "count": 780 } ] }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/admin/storage</span></summary><div class="endpoint-body"><p>MongoDB Atlas storage/data/index size against the M0 free-tier's 512MB shared cap.</p><div><span class="tag">admin only</span></div><pre><code>curl "https://releasetrain.io/api/admin/storage" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "storageMb": 210.4, "dataMb": 180.2, "indexMb": 22.1, "limitMb": 512, "pct": 0.411, "collections": 8, "objects": 1204830 }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/admin/vendor-aliases</span></summary><div class="endpoint-body"><p>Every manually-curated vendor alias, correcting or adding a vendor name the automatic catalog (built from tracked release data and Reddit subreddit names) doesn't resolve on its own.</p><div><span class="tag">admin only</span></div><pre><code>curl "https://releasetrain.io/api/admin/vendor-aliases" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "data": [ { "_id": "660c38fce3cba9423e4f8f23", "alias": "ada", "canonicalName": "Ada", "createdAt": "2026-09-15T17:00:00.000Z" } ] }</code></pre></div></details>
-<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/views/visibility</span></summary><div class="endpoint-body"><p>Public: which nav-menu views are currently enabled, so a signed-out visitor's page load can hide a disabled view's link too. <code class="inline">home</code> and <code class="inline">users</code> can't be hidden by design.</p><pre><code>curl "https://releasetrain.io/api/views/visibility"</code></pre><pre><code>{ "viewGraphVisible": true, "viewArchVisible": true, "viewCveVisible": true, "viewDashboardVisible": true, "viewDocsVisible": true, "viewChangelogVisible": true, "viewAckVisible": true, "viewNetworkVisible": true }</code></pre></div></details>
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/views/visibility</span></summary><div class="endpoint-body"><p>Public: which nav-menu views are currently enabled, so a signed-out visitor's page load can hide a disabled view's link too. <code class="inline">home</code> and <code class="inline">users</code> can't be hidden by design.</p><pre><code>curl "https://releasetrain.io/api/views/visibility"</code></pre><pre><code>{ "viewGraphVisible": true, "viewArchVisible": true, "viewCveVisible": true, "viewDashboardVisible": true, "viewDocsVisible": true, "viewChangelogVisible": true, "viewAckVisible": true, "viewNetworkVisible": true, "viewEvalRewriterVisible": true, "viewEvalEvaluatorVisible": true, "viewEvalOrchestratorVisible": true }</code></pre></div></details>
 <details class="endpoint method-post"><summary class="endpoint-head"><span class="method post">POST</span><span class="path">/api/admin/vendor-aliases</span></summary><div class="endpoint-body"><p>Add a vendor alias mapping one alternate spelling/name to its canonical name.</p><div><span class="tag">admin only</span></div><pre><code>curl -X POST "https://releasetrain.io/api/admin/vendor-aliases" -H "Authorization: Bearer YOUR_JWT_TOKEN" -H "Content-Type: application/json" -d '{"alias":"ada","canonicalName":"Ada"}'</code></pre><pre><code>{ "data": { "_id": "660c38fce3cba9423e4f8f23", "alias": "ada", "canonicalName": "Ada", "createdAt": "2026-09-15T17:00:00.000Z" } }</code></pre></div></details>
 <details class="endpoint method-post"><summary class="endpoint-head"><span class="method post">POST</span><span class="path">/api/admin/vendor-gap-fill</span></summary><div class="endpoint-body"><p>Manually runs the same automatic-catalog gap-fill a bot's own fallback triggers for a real, web-verified vendor with zero tracked evidence (see the <code class="inline">botGapLog</code> field on <code class="inline">GET /api/admin/overview</code>). The attempt is logged the same as an automatic one, so it also shows up in that response's <code class="inline">botGapLog.recent</code> list.</p><div><span class="tag">admin only</span></div><pre><code>curl -X POST "https://releasetrain.io/api/admin/vendor-gap-fill" -H "Authorization: Bearer YOUR_JWT_TOKEN" -H "Content-Type: application/json" -d '{"vendorName":"ada"}'</code></pre><pre><code>{ "success": true }</code></pre></div></details>
 <details class="endpoint method-put"><summary class="endpoint-head"><span class="method put">PUT</span><span class="path">/api/admin/bot-cadence</span></summary><div class="endpoint-body"><p>Set (or clear) one bot's cadence override. <code class="inline">maxDays</code> is a number from 1-365, or <code class="inline">null</code> to remove the override and fall back to that bot's default. Applies immediately, no restart needed, and is picked up by <code class="inline">/api/admin/bot-health</code>'s next check.</p><div><span class="tag">admin only</span></div><pre><code>curl -X PUT "https://releasetrain.io/api/admin/bot-cadence" -H "Authorization: Bearer YOUR_JWT_TOKEN" -H "Content-Type: application/json" -d '{"bot":"mysql.py","maxDays":90}'</code></pre><pre><code>{ "defaults": { "chrome.py": 21, "firefox.py": 21, "mysql.py": 120 }, "overrides": { "mysql.py": 90 } }</code></pre></div></details>
@@ -3996,6 +3996,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-15</div>
+              <div class="cl-ver cl-ver-minor">v3.90.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Settings: hide the three Eval tool nav links entirely</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Three new Settings entries: Show Eval Rewriter/Evaluator/Orchestrator in the menu, using the same view-visibility mechanism already covering Graph/Arch/CVE/Risk Report/Docs/Changelog/Credits/Release. Hides the nav link entirely, for every viewer including admins, all default to visible. Separate from each tool's own API access level (Disabled/Admin only/Any signed-in user/Public): hiding the nav link doesn't change whether the raw endpoint still responds.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -7021,6 +7034,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       viewGraphVisible: "graphLink", viewArchVisible: "archLink", viewCveVisible: "cveLink",
       viewDashboardVisible: "dashboardLink", viewDocsVisible: "docsLink", viewChangelogVisible: "changelogLink",
       viewAckVisible: "ackLink", viewNetworkVisible: "networkLink",
+      // Layered on top of (not a replacement for) the admin-only role
+      // check further down (EL.evalRewriterLink.hidden = user.role !==
+      // "admin"): this hides the link from literally everyone, admins
+      // included, once disabled, same as every other entry above; the
+      // role check still separately keeps it from a non-admin regardless
+      // of this setting.
+      viewEvalRewriterVisible: "evalRewriterLink", viewEvalEvaluatorVisible: "evalEvaluatorLink",
+      viewEvalOrchestratorVisible: "evalOrchestratorLink",
     };
     fetch(API_BASE + "views/visibility").then(r => r.ok ? r.json() : {}).then(flags => {
       for (const [key, elId] of Object.entries(VIEW_NAV_LINKS)) {
@@ -14163,6 +14184,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       viewChangelogVisible: { label: "Show Changelog in the menu", type: "boolean" },
       viewAckVisible: { label: "Show Credits in the menu", type: "boolean" },
       viewNetworkVisible: { label: "Show Release in the menu", type: "boolean" },
+      // Hides the nav link entirely, for every viewer including admins;
+      // separate from evalRewriterAccess/evalEvaluatorAccess/
+      // evalOrchestratorAccess below, which gate the raw HTTP API and
+      // don't affect the nav link's own visibility.
+      viewEvalRewriterVisible: { label: "Show Eval Rewriter in the menu", type: "boolean" },
+      viewEvalEvaluatorVisible: { label: "Show Eval Evaluator in the menu", type: "boolean" },
+      viewEvalOrchestratorVisible: { label: "Show Eval Orchestrator in the menu", type: "boolean" },
       // Eval tool API access: each of these calls a real LLM and runs a
       // real retrieval pass, so how open its raw HTTP endpoint is (not
       // the Eval Rewriter/Evaluator/Orchestrator nav link's own
