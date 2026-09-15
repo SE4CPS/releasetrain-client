@@ -2234,7 +2234,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.85.3">Releasetrain <em>v3.85.3</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.86.0">Releasetrain <em>v3.86.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3884,6 +3884,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-14</div>
+              <div class="cl-ver cl-ver-minor">v3.86.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Settings: per-endpoint access control for eval tool APIs</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Three new Settings panel entries: Eval Rewriter/Evaluator/Orchestrator API access, each a Disabled / Admin only / Any signed-in user / Public choice, backed by releasetrain-server's new admin-configurable access-level mechanism (no code deploy needed to change it). All three default to Admin only, matching their previous hardcoded behavior exactly. This is separate from, and does not affect, the Eval tools' own admin-only nav link visibility.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -13895,6 +13908,45 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       viewChangelogVisible: { label: "Show Changelog in the menu", type: "boolean" },
       viewAckVisible: { label: "Show Credits in the menu", type: "boolean" },
       viewNetworkVisible: { label: "Show Release in the menu", type: "boolean" },
+      // Eval tool API access: each of these calls a real LLM and runs a
+      // real retrieval pass, so how open its raw HTTP endpoint is (not
+      // the Eval Rewriter/Evaluator/Orchestrator nav link's own
+      // admin-only visibility, which is unaffected by this) is its own
+      // admin-tunable setting, server-validated against the same
+      // disabled/admin/auth/public levels agenticGate accepts (see its
+      // own comment in app.js). "Public" has no rate limiting behind
+      // it anywhere in this codebase; only pick it deliberately, e.g.
+      // to let an external script call it with no login step.
+      evalRewriterAccess: {
+        label: "Eval Rewriter API access",
+        hint: "Who can call /api/eval-rewriter directly (not the admin-only nav link's own visibility). \"Public\" has no rate limiting behind it.",
+        options: [
+          { value: "disabled", label: "Disabled" },
+          { value: "admin", label: "Admin only" },
+          { value: "auth", label: "Any signed-in user" },
+          { value: "public", label: "Public (no login)" },
+        ],
+      },
+      evalEvaluatorAccess: {
+        label: "Eval Evaluator API access",
+        hint: "Who can call /api/eval-evaluator directly. Same access levels and caution as Eval Rewriter above.",
+        options: [
+          { value: "disabled", label: "Disabled" },
+          { value: "admin", label: "Admin only" },
+          { value: "auth", label: "Any signed-in user" },
+          { value: "public", label: "Public (no login)" },
+        ],
+      },
+      evalOrchestratorAccess: {
+        label: "Eval Orchestrator API access",
+        hint: "Who can call /api/eval-orchestrator directly. Same access levels and caution as Eval Rewriter above.",
+        options: [
+          { value: "disabled", label: "Disabled" },
+          { value: "admin", label: "Admin only" },
+          { value: "auth", label: "Any signed-in user" },
+          { value: "public", label: "Public (no login)" },
+        ],
+      },
     };
     async function uaLoadSettings() {
       const listEl = document.getElementById("ua-settings-list");
