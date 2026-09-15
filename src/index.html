@@ -2234,7 +2234,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.85.2">Releasetrain <em>v3.85.2</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.85.3">Releasetrain <em>v3.85.3</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3884,6 +3884,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-14</div>
+              <div class="cl-ver cl-ver-minor">v3.85.3</div>
+            </div>
+            <div class="cl-content">
+              <h3>Account: a System overview card for vendor gap-fills</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> New "Vendor gap-fills" card in the admin System overview panel, backed by a new GET /api/admin/overview field: how many times ask.js's automatic wikipedia.py fallback (triggered when a real, web-verified vendor still has zero tracked evidence) actually resolved, plus the 10 most recent attempts with their outcome. This data was already being logged to a bot_gap_log collection; nothing ever read it back until now.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -6353,6 +6366,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                   <p class="ua-muted" style="font-size:12px;padding:8px 0">Loading…</p>
                 </div>
                 <div id="ua-dash-bots"></div>
+                <div id="ua-dash-botgap"></div>
               </div>
             </details>
             <!-- Runtime settings / feature flags. One generic list, not
@@ -13718,18 +13732,48 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       ].filter(Boolean).join("");
     }
 
+    // botGapLog.recent's rows (tryWikipediaFallback's own log, see its
+    // comment in botVendorFallback.js) reuse the exact same .ua-bot-row
+    // styling as bot-health, just repurposing stale/healthy's red/green
+    // border-left for failed/succeeded instead of overdue/on-time, one
+    // consistent "list of dated attempts, colored by outcome" visual
+    // language across both sections rather than a second one invented
+    // just for this. A row with no vendorName is skipped defensively
+    // (shouldn't happen; every real log entry sets it) rather than
+    // rendering a blank name.
+    function uaRenderBotGapRecent(entries) {
+      const rows = (entries || []).filter(e => e && e.vendorName);
+      if (!rows.length) return "";
+      const rowsHtml = rows.map(e => {
+        const when = e.startedAt ? new Date(e.startedAt).toLocaleString() : "unknown time";
+        const detail = e.success
+          ? `resolved as "${uaEsc(e.resolvedTerm || e.vendorName)}"`
+          : uaEsc(e.error || e.reason || "did not resolve");
+        return `<div class="ua-bot-row ${e.success ? "ua-bot-row-healthy" : "ua-bot-row-stale"}">
+          <span class="ua-bot-row-name">${uaEsc(e.vendorName)}</span>
+          <span class="ua-bot-row-detail">${detail} &middot; ${uaEsc(when)}</span>
+        </div>`;
+      }).join("");
+      return `<div class="ua-dash-bot-group">
+        <div class="ua-dash-bot-group-title"><span>🔎</span> Recent vendor gap-fills (${rows.length})</div>
+        ${rowsHtml}
+      </div>`;
+    }
+
     async function uaLoadDashboard() {
       const gridEl = document.getElementById("ua-dash-grid");
       const botsEl = document.getElementById("ua-dash-bots");
+      const botGapEl = document.getElementById("ua-dash-botgap");
       const updatedEl = document.getElementById("ua-dash-updated");
       const res = await uaRequest("admin/overview").catch(() => null);
       if (!res || !res.ok) {
         gridEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">Could not load system overview.</p>`;
         botsEl.innerHTML = "";
+        if (botGapEl) botGapEl.innerHTML = "";
         return;
       }
       const data = await res.json();
-      const { botHealth, sourceAttribution, storage, counts, users, queries } = data;
+      const { botHealth, sourceAttribution, storage, counts, users, queries, botGapLog } = data;
 
       if (updatedEl) updatedEl.textContent = data.checkedAt ? "as of " + new Date(data.checkedAt).toLocaleTimeString() : "";
       uaRenderRegistrationNotice(users, queries, counts, botHealth, storage);
@@ -13737,6 +13781,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const staleCount = (botHealth.stale || []).length;
       const storagePct = Math.round((storage.pct || 0) * 100);
       const attrPct = sourceAttribution.pct || 0;
+      const gap = botGapLog || { total: 0, success: 0, recent: [] };
+      const gapFailRate = gap.total ? Math.round(((gap.total - gap.success) / gap.total) * 100) : 0;
 
       gridEl.innerHTML = `
         <div class="ua-dash-card ${staleCount ? "ua-dash-card-alert" : "ua-dash-card-ok"}">
@@ -13759,10 +13805,16 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="ua-dash-card-label">Collection totals</div>
           <div class="ua-dash-card-value">${counts.versionsTotal}</div>
           <div class="ua-dash-card-sub">${counts.cveTotal} CVE · ${counts.releaseNotesTotal} release · ${counts.redditTotal} reddit · ${counts.stackoverflowTotal} SO</div>
+        </div>
+        <div class="ua-dash-card ${gap.total && gapFailRate >= 50 ? "ua-dash-card-alert" : ""}">
+          <div class="ua-dash-card-label">Vendor gap-fills</div>
+          <div class="ua-dash-card-value">${gap.total ? gap.success + "/" + gap.total : "None yet"}</div>
+          <div class="ua-dash-card-sub">${gap.total ? "resolved, wikipedia.py auto-fallback" : "no web-verified vendor has had zero tracked data yet"}</div>
         </div>`;
 
       botsEl.innerHTML = uaRenderBotGroups(botHealth) ||
         `<p class="ua-muted" style="font-size:12px;padding:8px 0">No bot health data available.</p>`;
+      if (botGapEl) botGapEl.innerHTML = uaRenderBotGapRecent(gap.recent);
     }
 
     const uaRefreshDashBtn = document.getElementById("ua-refresh-dash");
