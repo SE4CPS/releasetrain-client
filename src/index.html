@@ -593,7 +593,7 @@
        right next to it (no brackets, see askRenderCard's own comment)
        instead of as its own separate uppercase line. */
     /* nowrap, not wrap: a long question plus a long preset name (e.g.
-       "Multi-agent, feedback loop · 4 agents") wrapped to a second line,
+       "Multi-agent, feedback loop &middot; 4 agents") wrapped to a second line,
        costing real vertical space in a column already tight on it. The
        question truncates with an ellipsis instead (min-width:0 on the
        flex item, overflow/text-overflow on the text itself); the preset
@@ -692,6 +692,8 @@
     .ask-mvr-table input[type="checkbox"] { width: 15px; height: 15px; }
     .ask-mvr-reason + .ask-mvr-reason { margin-top: 4px; }
     .ask-mvr-reason strong { color: var(--text); }
+    .ask-mvr-note { font-size: 12px; color: var(--muted); line-height: 1.4; margin: 0 0 8px; }
+    .ask-mvr-note strong { color: var(--text); }
     /* html/body disable native page scroll (see the global `overflow:
        hidden` rule). Every other view supplies its own scroll region
        (see #ackView's identical shape) and this one needs the same
@@ -2243,7 +2245,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.91.0">Releasetrain <em>v3.91.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.92.0">Releasetrain <em>v3.92.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4027,6 +4029,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-15</div>
+              <div class="cl-ver cl-ver-minor">v3.92.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Workflow diagram: fix a "Rewriter ran" contradiction, plus a CVE-count highlight</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The live per-answer workflow diagram mapped vendor resolution (a plain catalog lookup, on every preset) onto the same "Rewriter" node as a real Rewriter LLM call, so a single-loop preset (Single-agent, Multi-agent buggy/fixed, no real Rewriter step at all) still showed a "Rewriter" box completing with a real elapsed time, flatly contradicting the Model vs Rules tab's own "this preset's architecture never includes a separate Rewriter step" right next to it. Vendor resolution now gets its own node in the diagram, ahead of Rewriter.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Reported live: a single-loop run's Model vs Rules tab typically checks Model on both Retriever and Orchestrator, which reads as "2 agents" sitting right under the answer badge's own "1 agent." Both numbers are correct, they just answer different questions (roles the model fulfilled vs. distinct agents involved); the tab now says so in a short note rather than leaving the two counts to silently disagree.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The Ask pipeline diagram already added to the Docs page is now also shown in the Ask intro sidebar, before a question is asked.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> A CVE question's answer now highlights the stated count ("six CVEs") when the model's own text gives one, rather than an arbitrary single CVE ID plucked out of a list of several: the count is the fact that actually answers an "are there any recent CVEs" question. Falls back to a single ID, then a version number, exactly as before, when no count is stated.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -6857,6 +6875,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       <p>A bare vendor/category name (e.g. "mysql", "llm") browses directly, no model call. A real question needs <a href="#" id="askIntroSignInLink" target="_self">sign-in</a>; a name lookup doesn't.</p>
       <h4>Pipeline</h4>
       <p>Picks how the question is answered: one continuous tool-use loop (Single-agent, Multi-agent buggy/fixed) or real role delegation (Multi-agent delegated, optional feedback loop). "Compare all 5" runs all five side by side.</p>
+      <div id="askIntroPipelineDiagram" class="ask-intro-diagram" aria-label="Ask pipeline flowchart"></div>
       <h4>Auto: which process, by question type</h4>
       <!-- Replaces the old plain "Try asking" list: the same clickable
            sample questions (still wired via the delegated [data-ask-sample]
@@ -7413,7 +7432,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const hasAttempt = isMultiAgent && meta && Number.isInteger(meta.attempt);
       const tag = (name) => hasAttempt ? `${name} #${meta.attempt}` : name;
       const role = (name) => isMultiAgent ? `${tag(name)}: ` : "";
-      if (phase === "resolving_vendor") return `${role("Rewriter")}Resolving vendor`;
+      // Never a role() prefix here: vendor resolution is a plain catalog
+      // lookup on every preset, not a Rewriter LLM call (see the Vendor
+      // node's own comment above ASK_WORKFLOW_PHASE_NODE).
+      if (phase === "resolving_vendor") return "Resolving vendor";
       // "rewriting"/"evaluating"/"retrying" only ever fire on multi_agent/
       // multi_agent_feedback (see runDelegatedAsk on the server), where
       // each role really is its own separate model call, not just a
@@ -7434,7 +7456,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       return phase;
     }
     // ── Agent workflow diagram (live phase → node highlighting) ─────
-    // Always the same 4-node shape: Rewriter, Retriever, Evaluator,
+    // Always the same 5-node shape: Vendor, Rewriter, Retriever, Evaluator,
     // Orchestrator, with a feedback edge back to Retriever. The real
     // multi-agent-with-feedback architecture end to end. A preset that
     // doesn't genuinely delegate to separate roles (Single-agent,
@@ -7442,23 +7464,33 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // Rewriter/Evaluator, so those two just stay idle the whole run:
     // "highlight only the roles actually used" falls out naturally from
     // which phase events actually arrive, no per-preset case needed.
+    // Vendor resolution gets its own node, separate from Rewriter, even
+    // though it's the very first thing to run: it's a plain deterministic
+    // catalog lookup on EVERY architecture (see the "Vendor resolution"
+    // row of the Model vs Rules tab, askRenderModelVsRules), never a real
+    // Rewriter LLM call. A prior version mapped resolving_vendor onto the
+    // same "rewriter" node, so a single-loop run (no real Rewriter step at
+    // all, confirmed by that same tab) still showed a "Rewriter" box
+    // completing with a real elapsed time, reported live as a flat
+    // contradiction between this diagram and the Model vs Rules tab right
+    // next to it.
     // Replaces the old top-of-page text ticker (#askPipelineStatus):
     // this lives in the answer rail instead, next to the answer itself.
     // websearch/verify only ever leave "idle" on a run that actually
     // escalates vendor resolution out to a real web search (see
     // verifyVendorViaWeb on the server) -- a normal, non-escalating
     // question never touches them, which is what lets
-    // askWorkflowMermaidSource keep rendering the plain 4-node single-agent
+    // askWorkflowMermaidSource keep rendering the plain 5-node single-agent
     // diagram unchanged for every other question.
-    let askWorkflowState = null;      // { rewriter, retriever, evaluator, orchestrator, websearch, verify } -> idle|active|done
-    let askWorkflowTiming = null;     // { rewriter, retriever, evaluator, orchestrator, websearch, verify } -> { startedAt, doneMs } | null
+    let askWorkflowState = null;      // { vendor, rewriter, retriever, evaluator, orchestrator, websearch, verify } -> idle|active|done
+    let askWorkflowTiming = null;     // { vendor, rewriter, retriever, evaluator, orchestrator, websearch, verify } -> { startedAt, doneMs } | null
     let askWorkflowLabel = "";        // current phase's own label (askPhaseLabel), shown under the diagram
     let askWorkflowStartedAt = null;  // for the caption's live elapsed-seconds tick
     let askWorkflowTickTimer = null;
     let askWorkflowRenderSeq = 0;     // guards a slow mermaid render from clobbering a newer one
 
     const ASK_WORKFLOW_PHASE_NODE = {
-      resolving_vendor: "rewriter", rewriting: "rewriter",
+      resolving_vendor: "vendor", rewriting: "rewriter",
       searching: "retriever",
       evaluating: "evaluator", retrying: "evaluator", widening: "evaluator",
       generating: "orchestrator",
@@ -7479,6 +7511,54 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       });
       return _askMermaidLoadPromise;
     }
+
+    // Static overview of the whole Ask pipeline, for #askIntroPanel's own
+    // sidebar (shown before a question is asked). Kept in sync by hand
+    // with the identical diagram in the Docs page's own Ask section
+    // (search that page for "Classify<br/>intent" to find its copy) --
+    // that one renders via #docsView's generic .mermaid auto-scan
+    // (runMermaid), but this sidebar isn't inside #docsView, so it
+    // renders through the same ensureAskMermaidLoaded()/mermaid.render()
+    // pattern the live answer workflow diagram below already uses.
+    const ASK_PIPELINE_OVERVIEW_MERMAID_SOURCE = `flowchart LR
+    Q["User question"] --> INTENT{"Classify<br/>intent"}
+    INTENT -->|"opinion"| DECLINE["Declined<br/>no retrieval"]
+    INTENT -->|"comparison"| CMP["Fixed evidence gather<br/>per side, no agents"]
+    CMP --> CMPANS(["Answer"])
+    INTENT -->|"version · cve · patch · general"| ARCH{"Architecture"}
+    ARCH -->|"single-agent · buggy · fixed"| LOOP["One continuous<br/>tool-use loop"]
+    LOOP --> LOOPANS(["Answer<br/>deterministic version fix"])
+    ARCH -->|"delegated · feedback loop"| RW["Rewriter"] --> RT["Retriever"] --> EV{"Evaluator"}
+    EV -.->|"insufficient, feedback preset only"| RT
+    EV -->|"sufficient"| OR["Orchestrator"] --> AGANS(["Answer"])
+    classDef decision fill:#eff6ff,stroke:#93c5fd,color:#0f172a
+    classDef agent fill:#fffbeb,stroke:#fde68a,color:#0f172a
+    classDef flat fill:#f1f5f9,stroke:#e2e8f0,color:#0f172a
+    classDef done fill:#f0fdf4,stroke:#86efac,color:#0f172a
+    class INTENT,ARCH,EV decision
+    class RW,RT,OR agent
+    class DECLINE,CMP,LOOP flat
+    class CMPANS,LOOPANS,AGANS done`;
+    async function renderAskIntroPipelineDiagram() {
+      const el = document.getElementById("askIntroPipelineDiagram");
+      if (!el) return;
+      try {
+        await ensureAskMermaidLoaded();
+        const { svg } = await window.mermaid.render("askIntroPipelineSvg", ASK_PIPELINE_OVERVIEW_MERMAID_SOURCE);
+        el.innerHTML = svg;
+        // See renderAskWorkflowDiagram's own identical comment: mermaid
+        // stamps its own computed width as an inline
+        // style="max-width:NNNpx", which wins over .ask-intro-diagram
+        // svg's own width:100% rule at equal specificity regardless of
+        // source order.
+        const svgEl = el.querySelector("svg");
+        if (svgEl) svgEl.style.maxWidth = "none";
+      } catch (e) {
+        console.error("[ASK] intro pipeline diagram failed to render:", e);
+      }
+    }
+    renderAskIntroPipelineDiagram();
+
     // Flat fills, no gradient/shadow, kept legible at this diagram's
     // small size. Short single-word node labels (plus a second line for
     // elapsed seconds, once a node has any) so mermaid's own auto-sizing
@@ -7525,12 +7605,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         "flowchart LR",
       ];
       if (escalated) {
-        // Spliced in between Rewriter and Retriever, since vendor
-        // resolution (and its possible escalation to a real web search)
-        // happens right there, before retrieval ever starts.
+        // Web Search/Verify spliced in between Vendor and Rewriter, since
+        // vendor resolution's escalation to a real web search happens
+        // right there, before retrieval ever starts.
         lines.push(
-          `  RW("${label("rewriter", "Rewriter")}") --> WS("${label("websearch", "Web Search")}") --> VF("${label("verify", "Verify")}") --> RT("${label("retriever", "Retriever")}") --> EV("${label("evaluator", "Evaluator")}") --> OR("${label("orchestrator", "Orchestrator")}")`,
+          `  VN("${label("vendor", "Vendor")}") --> RW("${label("rewriter", "Rewriter")}") --> WS("${label("websearch", "Web Search")}") --> VF("${label("verify", "Verify")}") --> RT("${label("retriever", "Retriever")}") --> EV("${label("evaluator", "Evaluator")}") --> OR("${label("orchestrator", "Orchestrator")}")`,
           "  EV -. retry .-> RT",
+          `  style VN ${style("vendor")}`,
           `  style RW ${style("rewriter")}`,
           `  style WS ${style("websearch")}`,
           `  style VF ${style("verify")}`,
@@ -7540,8 +7621,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         );
       } else {
         lines.push(
-          `  RW("${label("rewriter", "Rewriter")}") --> RT("${label("retriever", "Retriever")}") --> EV("${label("evaluator", "Evaluator")}") --> OR("${label("orchestrator", "Orchestrator")}")`,
+          `  VN("${label("vendor", "Vendor")}") --> RW("${label("rewriter", "Rewriter")}") --> RT("${label("retriever", "Retriever")}") --> EV("${label("evaluator", "Evaluator")}") --> OR("${label("orchestrator", "Orchestrator")}")`,
           "  EV -. retry .-> RT",
+          `  style VN ${style("vendor")}`,
           `  style RW ${style("rewriter")}`,
           `  style RT ${style("retriever")}`,
           `  style EV ${style("evaluator")}`,
@@ -7621,8 +7703,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // by the next phase's render racing past it (see renderAskWorkflowDiagram's
     // own askWorkflowRenderSeq guard).
     function startAskWorkflow() {
-      askWorkflowState = { rewriter: "idle", retriever: "idle", evaluator: "idle", orchestrator: "idle", websearch: "idle", verify: "idle" };
-      askWorkflowTiming = { rewriter: null, retriever: null, evaluator: null, orchestrator: null, websearch: null, verify: null };
+      askWorkflowState = { vendor: "idle", rewriter: "idle", retriever: "idle", evaluator: "idle", orchestrator: "idle", websearch: "idle", verify: "idle" };
+      askWorkflowTiming = { vendor: null, rewriter: null, retriever: null, evaluator: null, orchestrator: null, websearch: null, verify: null };
       askWorkflowLabel = ""; askWorkflowStartedAt = null;
       if (askWorkflowTickTimer) clearInterval(askWorkflowTickTimer);
       askWorkflowTickTimer = setInterval(() => { renderAskWorkflowCaption(); renderAskWorkflowDiagram(); }, 250);
@@ -8407,7 +8489,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         <td>${askMvrCheckbox(rule)}</td>
         <td>${meaning}</td>
       </tr>`).join("");
+      // A single-loop preset (not delegated, not a comparison) typically
+      // checks Model on BOTH Retriever and Orchestrator here, since the
+      // one loop chooses its own tools and writes its own final text:
+      // two roles, genuinely fulfilled by the model. Reported live as a
+      // fresh contradiction: the answer badge right above this tab says
+      // "1 agent" for the same run (see agentCount's own comment in
+      // askRenderCard), and two Model checkmarks read as "2 agents" next
+      // to it. Both numbers are correct; they just answer different
+      // questions. This note says so explicitly instead of leaving a
+      // reader to guess which one is "wrong".
+      const isSingleLoop = !isComparison && !res.evaluatorRan;
+      const singleLoopNote = isSingleLoop
+        ? `<p class="ask-mvr-note">This preset runs one continuous agent loop, so every row checked <strong>Model</strong> above was decided by that same single agent, not by a separate agent per row. See the answer badge above for the real count of distinct agents.</p>`
+        : "";
       return `<div class="ask-mvr-wrap">
+        ${singleLoopNote}
         <table class="ask-mvr-table">
           <thead><tr><th>Component</th><th>Model</th><th>Rule</th><th>Meaning</th></tr></thead>
           <tbody>${body}</tbody>
