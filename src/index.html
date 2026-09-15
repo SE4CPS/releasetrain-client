@@ -1749,6 +1749,15 @@
     #docsView .note { border-left: 4px solid #cbd5e1; padding-left: .75rem; margin-top: .5rem; color: #64748b; }
     #docsView .toplink { display: inline-block; margin-top: .3rem; font-size: .85rem; color: #2563eb; }
     #docsView .mermaid { text-align: center; margin: .8rem 0 1.2rem; overflow-x: auto; }
+    /* Mermaid's own computed width lands as an inline style="max-width:
+       NNNpx" on the <svg> it renders, which wins over this width:100%
+       rule at equal specificity regardless of source order (same root
+       cause already documented for the live Ask answer workflow
+       diagram, see renderAskWorkflowDiagram's own comment) -- runMermaid
+       below clears that inline max-width right after rendering so this
+       rule can actually apply and the diagram stretches to fill its
+       column instead of rendering narrower than the space available. */
+    #docsView .mermaid svg { width: 100%; height: auto; }
     /* arch-sub: collapsible details blocks inside #d-architecture */
     #docsView details.arch-sub { border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; margin-top: .6rem; overflow: hidden; }
     #docsView summary.d-arch-sum { list-style: none; display: flex !important; flex-direction: row !important; align-items: center !important; gap: .45rem !important; padding: .58rem .8rem !important; cursor: pointer; font-size: .88rem !important; font-weight: 700 !important; color: #0f172a !important; background: #f1f5f9 !important; border-bottom: 1px solid transparent; transition: background .12s !important; }
@@ -2234,7 +2243,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.90.0">Releasetrain <em>v3.90.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.91.0">Releasetrain <em>v3.91.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3476,6 +3485,28 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
 <section class="block" id="d-ask">
 <h2>Ask (AI Q&amp;A)</h2>
 <div class="callout"><h3>Ask at a glance</h3><p class="small">Retrieval-augmented Q&amp;A over the same versions/reddit corpus the rest of the API reads. A plain vendor/category name (e.g. "chrome") short-circuits to a document lookup with no model call and no sign-in required; a real question streams back live progress over Server-Sent Events and requires sign-in, since each one is a real, billed LLM call.</p></div>
+<p class="small muted" style="margin:.25rem 0 .5rem">Which path a question actually takes: intent decides it first, then, for everything that isn't declined or a comparison, the preset's own architecture decides whether four roles run as genuinely separate model calls or one continuous tool-use loop.</p>
+<div class="mermaid">
+flowchart LR
+    Q["User question"] --> INTENT{"Classify<br/>intent"}
+    INTENT -->|"opinion"| DECLINE["Declined<br/>no retrieval"]
+    INTENT -->|"comparison"| CMP["Fixed evidence gather<br/>per side, no agents"]
+    CMP --> CMPANS(["Answer"])
+    INTENT -->|"version · cve · patch · general"| ARCH{"Architecture"}
+    ARCH -->|"single-agent · buggy · fixed"| LOOP["One continuous<br/>tool-use loop"]
+    LOOP --> LOOPANS(["Answer<br/>deterministic version fix"])
+    ARCH -->|"delegated · feedback loop"| RW["Rewriter"] --> RT["Retriever"] --> EV{"Evaluator"}
+    EV -.->|"insufficient, feedback preset only"| RT
+    EV -->|"sufficient"| OR["Orchestrator"] --> AGANS(["Answer"])
+    classDef decision fill:#eff6ff,stroke:#93c5fd,color:#0f172a
+    classDef agent fill:#fffbeb,stroke:#fde68a,color:#0f172a
+    classDef flat fill:#f1f5f9,stroke:#e2e8f0,color:#0f172a
+    classDef done fill:#f0fdf4,stroke:#86efac,color:#0f172a
+    class INTENT,ARCH,EV decision
+    class RW,RT,OR agent
+    class DECLINE,CMP,LOOP flat
+    class CMPANS,LOOPANS,AGANS done
+</div>
 <p class="section-sort-note">Endpoints collapsed by default, ordered method-first then route.</p>
 <div class="api-grid">
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/ask/compare</span></summary><div class="endpoint-body"><p>Runs the same question through up to 5 presets in parallel, for side-by-side accuracy comparison. Defaults to <code class="inline">single_agent,multi_agent_buggy,multi_agent_fixed</code> if <code class="inline">presets</code> is omitted.</p><div><span class="tag">requires login</span><span class="tag">question required</span><span class="tag">presets optional</span></div><pre><code>curl "https://releasetrain.io/api/ask/compare?question=Should+I+use+Node+or+Flask&amp;presets=single_agent,multi_agent_fixed" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "question": "Should I use Node or Flask?", "runs": [ { "preset": "single_agent", "runId": "660c38fce3cba9423e4f8f23", "answer": "...", "sources": [ "..." ] }, { "preset": "multi_agent_fixed", "runId": "660c38fce3cba9423e4f8f24", "answer": "...", "sources": [ "..." ] } ] }</code></pre></div></details>
@@ -3996,6 +4027,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-15</div>
+              <div class="cl-ver cl-ver-minor">v3.91.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Docs: a Mermaid diagram for the Ask pipeline</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> New flowchart at the top of the Ask (AI Q&amp;A) docs section: how a question's classified intent picks its path (declined, the fixed comparison evidence gather, or the general pipeline), and, for the general path, whether the preset's architecture runs the Rewriter/Retriever/Evaluator/Orchestrator as genuinely separate model calls (with the feedback-loop retry edge) or one continuous tool-use loop.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Every Mermaid diagram in the Docs page (this new one and the six existing System Architecture diagrams) now actually stretches to fill its column: Mermaid stamps its own computed width as an inline <code>style="max-width:NNNpx"</code>, which silently won over the page's own <code>width:100%</code> rule at equal specificity, same root cause already fixed for the live Ask answer workflow diagram.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -10495,7 +10540,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       function runMermaid() {
         if (typeof window.mermaid !== "undefined") {
           const nodes = Array.from(scope.querySelectorAll(".mermaid:not([data-processed])"));
-          if (nodes.length) window.mermaid.run({ nodes });
+          if (nodes.length) {
+            // mermaid.run() is async; the rendered <svg> only exists in
+            // the DOM once it resolves. See the #docsView .mermaid svg
+            // CSS rule's own comment for why clearing this inline
+            // max-width matters.
+            window.mermaid.run({ nodes }).then(() => {
+              nodes.forEach(n => {
+                const svg = n.querySelector("svg");
+                if (svg) svg.style.maxWidth = "none";
+              });
+            });
+          }
         }
       }
       if (typeof window.mermaid !== "undefined") {
