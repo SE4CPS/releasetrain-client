@@ -17,6 +17,16 @@ always reflect the current, real conventions of the repo, not lag behind what's 
   `.cl-release` block at the top of the in-app changelog list (`.cl-ver-minor` for a feature, `.cl-ver-patch`
   for a fix/tweak; reuse whichever existing `cl-tag-*` classes fit: `feat`/`fix`/`ux`/`perf`/`docs`).
   Never skip this, even for a small fix.
+- **GLOBAL RULE — whenever a server API endpoint changes (added, removed, params/auth/response shape
+  changed), update the Docs view (`#docsView` in `src/index.html`) in the same turn, not as a follow-up
+  someone has to remember to ask for.** This applies whether the change was made in `releasetrain-server`
+  during the same session or reported by the user; mirrored in that repo's own CLAUDE.md so either side of
+  a cross-repo change reminds the other. Flagged after a full audit found roughly half of the server's ~88
+  real routes undocumented (entire categories: auth, user accounts, bookmarks, all of `/api/ask/*`, all
+  three eval tools, every `/api/admin/*` route, knowledge base, search events), silently drifted out of
+  sync over many endpoint additions with no single turn ever catching up the backlog. Each entry needs its
+  auth requirement noted too (`requireAuth` → "requires login", `requireAdmin` → "admin only",
+  `agenticGate(key)` → the runtime-configurable access level and its default), not just path/params/response.
 - **No dash used as emphasis** in code, comments, commit messages, or user-visible copy: split into two
   sentences or use a colon/semicolon/comma instead. Legitimate uses stay: arithmetic
   (`Date.now() - t.startedAt`), numeric ranges, hyphenated compound words, and a bare `&mdash;`/`—` used as
