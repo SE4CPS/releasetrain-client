@@ -195,10 +195,17 @@
     .ask-answer-rail, .ask-intro-panel { display: none; }
     @media (min-width: 900px) {
       .layout { display: flex; align-items: flex-start; gap: 20px; max-width: 1700px; }
-      .layout > .feed-main { flex: 1 1 0; min-width: 0; }
+      /* 40/60 split (left/right), not the even 1:1 this used to be:
+         reported live, the right rail's own content (the pipeline
+         diagram, the Model vs Rules table's 420px min-width) wants more
+         room than the left column's plain scrolling feed/card content
+         needs. Ratios via flex-grow with a 0 basis, not literal
+         width:40%/60%, so the split stays proportional and the gap
+         above doesn't need its own calc() correction. */
+      .layout > .feed-main { flex: 2 1 0; min-width: 0; }
       .layout .ask-rail-col {
         display: block;
-        flex: 1 1 0; min-width: 0;
+        flex: 3 1 0; min-width: 0;
         position: sticky;
         top: calc(var(--topbar-h) + 12px);
         max-height: calc(100vh - var(--topbar-h) - 24px);
@@ -933,6 +940,16 @@
 
     /* ── Feed main (right column) ───────────────────────────── */
     .feed-main { min-width: 0; }
+    /* Now the narrower (40%) column of the two-column layout above; a
+       modest base-size drop (13px body default down to 12px) keeps its
+       plain-prose content comfortable at that width. Only affects text
+       that inherits font-size rather than setting its own explicit px
+       value: most feed/card/prose text here does. A handful of
+       already-explicitly-sized elements (e.g. .kpi's own numbers)
+       won't shrink further from this alone. */
+    @media (min-width: 900px) {
+      #main-content { font-size: 12px; }
+    }
 
     /* ── Panel ──────────────────────────────────────────────── */
     .panel {
@@ -2245,7 +2262,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.92.0">Releasetrain <em>v3.92.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.93.0">Releasetrain <em>v3.93.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4029,6 +4046,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-15</div>
+              <div class="cl-ver cl-ver-minor">v3.93.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Layout: give the right rail more room</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The two-column layout (main content left, the Ask intro/answer rail right) is now a 40/60 split instead of an even 50/50, so the rail's own wider content (the pipeline diagram, the Model vs Rules table) has more room to breathe.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The narrower left column's base font size drops slightly (13px to 12px) to keep its plain-prose content comfortable at the new width.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
