@@ -2234,7 +2234,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.88.0">Releasetrain <em>v3.88.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.88.1">Releasetrain <em>v3.88.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3996,6 +3996,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-15</div>
+              <div class="cl-ver cl-ver-patch">v3.88.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Eval Rewriter: show the source URL, not the title</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Eval Rewriter's With/Without/Common source lists now show each result's raw URL instead of its title, so a reader can see exactly where a result came from at a glance in this debugging/comparison view. The main answer's own Sources tab is unaffected and still shows the title.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -8081,11 +8094,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // instead of trailing right after each row's own differently-long
     // title. Shared by askRenderSources' own grouped rendering above and
     // any caller that wants the plain flat list on its own.
-    function askRenderSourceItems(sources) {
+    // showUrl (default false): the eval tools' own source lists (Eval
+    // Rewriter's with/without/common columns) show the raw URL instead
+    // of the title, per explicit request, since a debugging/comparison
+    // view benefits more from seeing exactly where a result actually
+    // came from than a possibly-truncated headline; the main answer's
+    // own Sources tab keeps the title, unaffected.
+    function askRenderSourceItems(sources, showUrl) {
       const renderItem = s => {
         const dateStr = s.date ? String(s.date) : "";
+        const label = showUrl ? (s.url || s.title) : s.title;
         const cells = `<span class="ask-source-icon">${askSourceIcon(s.kind)}</span>` +
-          `<span class="ask-source-title"><strong>${uaEsc(s.title)}</strong></span>` +
+          `<span class="ask-source-title"><strong>${uaEsc(label)}</strong></span>` +
           `<span class="ask-source-date">${dateStr ? "· " + uaEsc(dateStr) : ""}</span>`;
         return `<li>${s.url
           ? `<a class="ask-source-row" href="${uaEsc(s.url)}" target="_blank" rel="noopener">${cells}</a>`
@@ -10829,7 +10849,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const { common, onlyWith, onlyWithout } = erSplitCommonDelta(withSources, withoutSources);
 
         const commonHtml = common.length
-          ? askRenderSourceItems(erPrep(common))
+          ? askRenderSourceItems(erPrep(common), true)
           : `<p class="ask-muted">No overlapping sources between the two runs.</p>`;
 
         // With = onlyWith + common, Without = onlyWithout + common: the
@@ -10853,11 +10873,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <div class="er-grid" style="margin-bottom:0">
               <div>
                 <div class="ask-source-heading">With Rewrite (${onlyWith.length})</div>
-                ${onlyWith.length ? askRenderSourceItems(erPrep(onlyWith)) : `<p class="ask-muted">None.</p>`}
+                ${onlyWith.length ? askRenderSourceItems(erPrep(onlyWith), true) : `<p class="ask-muted">None.</p>`}
               </div>
               <div>
                 <div class="ask-source-heading">Without Rewrite (${onlyWithout.length})</div>
-                ${onlyWithout.length ? askRenderSourceItems(erPrep(onlyWithout)) : `<p class="ask-muted">None.</p>`}
+                ${onlyWithout.length ? askRenderSourceItems(erPrep(onlyWithout), true) : `<p class="ask-muted">None.</p>`}
               </div>
             </div>
           </div>
