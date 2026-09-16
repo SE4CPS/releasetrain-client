@@ -1641,6 +1641,11 @@
     .ua-settings-info { display: flex; flex-direction: column; gap: 2px; flex: 1 1 200px; min-width: 0; }
     .ua-settings-info strong { font-weight: 600; }
     .ua-settings-info .ua-muted { font-size: 11px; }
+    /* Per-answer Guardrails tab only (askRenderGuardrailsTab): a
+       guardrail that actually did something for THIS specific answer,
+       not just "is enabled in general". */
+    .ask-guardrail-used { font-size: 11px; color: var(--ok, #16a34a); margin-top: 2px; }
+    .ask-guardrail-used a { color: inherit; text-decoration: underline; margin-left: 2px; }
     .ua-settings-input {
       width: 80px; padding: 4px 6px; border: 1px solid var(--border); border-radius: var(--radius-sm);
       font: inherit; font-size: 13px; background: var(--bg); color: var(--text);
@@ -2272,7 +2277,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.95.0">Releasetrain <em>v3.95.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.96.0">Releasetrain <em>v3.96.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3566,7 +3571,7 @@ flowchart LR
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/ask/quota</span></summary><div class="endpoint-body"><p>Last-seen rate-limit headers per provider (Anthropic, Groq) plus how many calls this server process has made today. A snapshot from the last real <code class="inline">/api/ask</code> call, not a live check.</p><pre><code>curl "https://releasetrain.io/api/ask/quota"</code></pre><pre><code>{ "anthropic": { "remaining": 48, "limit": 50, "rateLimitedSecondsLeft": null }, "groq": { "remaining": 14400, "limit": 14400, "rateLimitedSecondsLeft": null } }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/ask/recent-window-days</span></summary><div class="endpoint-body"><p>Public: the current admin-configured recency window (in days) Ask applies by default, so the feed's own lookback can track the same window instead of a separately hardcoded value.</p><pre><code>curl "https://releasetrain.io/api/ask/recent-window-days"</code></pre><pre><code>{ "askRecentWindowDays": 14 }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/guardrails</span></summary><div class="endpoint-body"><p>Public, with optional auth: every guardrail applied to Ask answers, each with the admin's raw <code class="inline">enabled</code> setting, the <code class="inline">effective</code> value that actually applies to the calling user right now (a mandatory guardrail's <code class="inline">effective</code> always equals <code class="inline">enabled</code>; an optional one's is the caller's own saved preference if signed in and set, else the admin default), and <code class="inline">configurable</code> (true only when the guardrail is <code class="inline">tier: "optional"</code> and the caller is signed in). Send <code class="inline">Authorization: Bearer &lt;token&gt;</code> to get a signed-in caller's own <code class="inline">effective</code>/<code class="inline">configurable</code> values; omit it for the signed-out view.</p><pre><code>curl "https://releasetrain.io/api/guardrails" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "guardrails": [ { "id": "toolResultInjectionScan", "tier": "mandatory", "label": "Scan retrieved content for prompt injection", "description": "Flags tool results that try to redirect the model's own instructions before they reach it.", "enabled": true, "effective": true, "configurable": false }, { "id": "vendorCheck", "tier": "optional", "label": "Require a resolvable vendor/product", "description": "Declines outright if the question names no vendor/product this system tracks.", "enabled": true, "effective": false, "configurable": true } ] }</code></pre></div></details>
-<details class="endpoint method-post"><summary class="endpoint-head"><span class="method post">POST</span><span class="path">/api/ask</span></summary><div class="endpoint-body"><p>Ask a question. A bare vendor/category name resolves instantly as plain JSON (<code class="inline">{"intent":"documents",...}</code>), no sign-in needed. A real question streams back <code class="inline">text/event-stream</code> progress events ending in one <code class="inline">result</code> (or <code class="inline">error</code>) event, and requires sign-in. <code class="inline">config</code> accepts <code class="inline">preset</code> (or <code class="inline">"auto"</code> to classify intent server-side), <code class="inline">provider</code>, <code class="inline">size</code>, and the <code class="inline">vendorCheck</code>/<code class="inline">temporalFilter</code>/<code class="inline">intentFilter</code> toggles. Question is capped at 500 characters.</p><pre><code>curl -N -X POST "https://releasetrain.io/api/ask" -H "Authorization: Bearer YOUR_JWT_TOKEN" -H "Content-Type: application/json" -d '{"question":"Was the WebView bug patched?","config":{"preset":"auto"}}'</code></pre><pre><code>data: { "type": "progress", "phase": "retrieving", "detail": "Searching versions and reddit" }
+<details class="endpoint method-post"><summary class="endpoint-head"><span class="method post">POST</span><span class="path">/api/ask</span></summary><div class="endpoint-body"><p>Ask a question. A bare vendor/category name resolves instantly as plain JSON (<code class="inline">{"intent":"documents",...}</code>), no sign-in needed. A real question streams back <code class="inline">text/event-stream</code> progress events ending in one <code class="inline">result</code> (or <code class="inline">error</code>) event, and requires sign-in. <code class="inline">config</code> accepts <code class="inline">preset</code> (or <code class="inline">"auto"</code> to classify intent server-side), <code class="inline">provider</code>, <code class="inline">size</code>, and the <code class="inline">vendorCheck</code>/<code class="inline">temporalFilter</code>/<code class="inline">intentFilter</code> toggles. Question is capped at 500 characters. The <code class="inline">result</code> event also carries <code class="inline">guardrailActivity</code> (which of the mandatory guardrails, see <code class="inline">GET /api/guardrails</code>, actually did something for this specific answer) and, on any source a guardrail is responsible for surfacing, a <code class="inline">guardrail</code> field naming it.</p><pre><code>curl -N -X POST "https://releasetrain.io/api/ask" -H "Authorization: Bearer YOUR_JWT_TOKEN" -H "Content-Type: application/json" -d '{"question":"Was the WebView bug patched?","config":{"preset":"auto"}}'</code></pre><pre><code>data: { "type": "progress", "phase": "retrieving", "detail": "Searching versions and reddit" }
 
 data: { "type": "result", "runId": "660c38fce3cba9423e4f8f23", "answer": "...", "sources": [ "..." ], "abstained": false }</code></pre></div></details>
 <details class="endpoint method-post"><summary class="endpoint-head"><span class="method post">POST</span><span class="path">/api/ask/:runId/rate</span></summary><div class="endpoint-body"><p>Rate one of the caller's own past runs helpful (<code class="inline">1</code>) or not helpful (<code class="inline">-1</code>).</p><div><span class="tag">requires login</span></div><pre><code>curl -X POST "https://releasetrain.io/api/ask/660c38fce3cba9423e4f8f23/rate" -H "Authorization: Bearer YOUR_JWT_TOKEN" -H "Content-Type: application/json" -d '{"rating":1}'</code></pre><pre><code>{ "success": true }</code></pre></div></details>
@@ -4078,6 +4083,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-16</div>
+              <div class="cl-ver cl-ver-minor">v3.96.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>A Guardrails tab on every answer</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The answer rail gets a fifth tab, Guardrails, next to Answer/Sources/Benchmark/Model vs Rules: the same Mandatory (admin-set, disabled here) and Optional (a signed-in user's own saved preference) list already in the Ask options panel, plus, unique to this tab, a plain-language note on any guardrail that actually did something for THIS specific answer (dropped a suspicious search result, verified a version number, forced a live web search, blocked a leaked answer), with a link that jumps to the affected source in the Sources tab when there is one.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The server's own per-run "did this guardrail apply" flag was keyed only on whether the answer's text got rewritten, which missed the common case where a guardrail's seeded evidence alone already steered the model to the right answer with no rewrite needed. Verified live: "What is the latest version of MySQL?" with versionCorrectionRewrite off produced an unverified answer with no guardrail tag; re-enabled, the same question was correctly tagged.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -7609,6 +7628,111 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       });
     }
 
+    // Per-answer Guardrails tab (askRenderCard's own [data-panel="guardrails"]):
+    // same GET /api/guardrails list askLoadGuardrails above renders, plus
+    // (unique to this tab) a plain-language "Used for this answer" note
+    // on any guardrail that actually did something for THIS specific
+    // result -- res.guardrailActivity and the res.sources[].guardrail tag
+    // a source-affecting guardrail leaves behind, both already embedded
+    // by askRenderCard as this panel's own data-* attributes (no second
+    // per-answer endpoint needed). Lazily rendered the first time this
+    // tab is actually opened (see askWireRailTabs below), same reasoning
+    // as the pre-question panel: most answers are never checked.
+    function askGuardrailUsedNoteHtml(id, activity, taggedTitles) {
+      const a = activity && activity[id];
+      if (!a) return "";
+      let text = "";
+      if (id === "toolResultInjectionScan" && a.dropped > 0) {
+        text = `Dropped ${a.dropped} suspicious result${a.dropped === 1 ? "" : "s"} for this answer.`;
+      } else if (id === "outputLeakScan" && a.applied) {
+        text = "Blocked this answer's original wording (flagged content).";
+      } else if (id === "versionCorrectionRewrite" && a.applied) {
+        text = "Verified the version number stated in this answer.";
+      } else if (id === "evaluatorWebOverride" && a.applied) {
+        text = "Trusted a live web result the Evaluator judged insufficient for this answer.";
+      } else if (id === "deterministicWebFallback" && a.applied) {
+        text = "Ran a live web search for this answer since internal retrieval found nothing.";
+      }
+      if (!text) return "";
+      const link = (taggedTitles && taggedTitles.length) ? ` <a href="#" class="ask-guardrail-goto-sources">View source</a>` : "";
+      return `<div class="ask-guardrail-used">&#9989; ${uaEsc(text)}${link}</div>`;
+    }
+    async function askRenderGuardrailsTab(panel) {
+      let activity = {}, taggedSources = [];
+      try { activity = JSON.parse(panel.dataset.guardrailActivity || "{}"); } catch { /* keep {} */ }
+      try { taggedSources = JSON.parse(panel.dataset.guardrailSources || "[]"); } catch { /* keep [] */ }
+      const res = await uaRequest("guardrails").catch(() => null);
+      if (!res || !res.ok) {
+        panel.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">Could not load guardrails.</p>`;
+        return;
+      }
+      const data = await res.json();
+      const guardrails = Array.isArray(data.guardrails) ? data.guardrails : [];
+      const mandatory = guardrails.filter(g => g.tier === "mandatory");
+      const optional = guardrails.filter(g => g.tier !== "mandatory");
+      const signedIn = !!uaToken();
+      const rowHtml = (g, interactive) => {
+        const mine = taggedSources.filter(s => s.guardrail === g.id).map(s => s.title);
+        return `<div class="ua-settings-row" style="font-size:11px;padding:8px 10px">
+            <div class="ua-settings-info">
+              <strong>${interactive ? "" : "&#128274; "}${uaEsc(g.label || g.id)}</strong>
+              <span class="ua-muted">${uaEsc(g.description || "")}</span>
+              ${askGuardrailUsedNoteHtml(g.id, activity, mine)}
+            </div>
+            ${interactive
+              ? `<input type="checkbox" class="ask-guardrail-input" data-id="${uaEsc(g.id)}"${g.effective ? " checked" : ""}${g.configurable ? "" : " disabled"}>
+                 <span id="ask-guardrail-tab-msg-${uaEsc(g.id)}" class="ua-muted" style="font-size:10px;display:none">Saved</span>`
+              : `<input type="checkbox" disabled${g.enabled ? " checked" : ""}>`}
+          </div>`;
+      };
+      const mandatoryHtml = mandatory.length ? mandatory.map(g => rowHtml(g, false)).join("")
+        : `<p class="ua-muted" style="font-size:11px;margin:0">None defined yet.</p>`;
+      const optionalHtml = optional.length ? optional.map(g => rowHtml(g, true)).join("")
+        : `<p class="ua-muted" style="font-size:11px;margin:0">None defined yet.</p>`;
+      panel.innerHTML = `
+        <p class="ask-muted" style="margin:0 0 10px">Which safety/correctness checks applied to this exact answer, and what each is set to.</p>
+        <p style="font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin:0 0 4px;color:var(--muted)">Mandatory (admin-set, disabled here)</p>
+        <div class="ua-settings-list" style="margin-top:0">${mandatoryHtml}</div>
+        <p style="font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin:12px 0 4px;color:var(--muted)">Optional</p>
+        ${signedIn ? "" : `<p class="ua-muted" style="font-size:11px;margin:0 0 6px">Sign in (<a href="#" id="askGuardrailsTabSignInLink" target="_self">Account view</a>) to customize these for your own questions.</p>`}
+        <div class="ua-settings-list" style="margin-top:0">${optionalHtml}</div>
+      `;
+      const signInLink = panel.querySelector("#askGuardrailsTabSignInLink");
+      if (signInLink) signInLink.addEventListener("click", e => { e.preventDefault(); activateUsers(); });
+      // "View source": switches this same card to its own Sources tab
+      // rather than duplicating the Sources panel's own rendering here.
+      panel.querySelectorAll(".ask-guardrail-goto-sources").forEach(a => {
+        a.addEventListener("click", e => {
+          e.preventDefault();
+          const card = panel.closest(".ask-answer-card");
+          const sourcesTab = card && card.querySelector('.ask-rail-tab[data-tab="sources"]');
+          if (sourcesTab) sourcesTab.click();
+        });
+      });
+      panel.querySelectorAll(".ask-guardrail-input").forEach(input => {
+        input.addEventListener("change", async () => {
+          if (input.disabled) return;
+          const id = input.dataset.id;
+          const checked = input.checked;
+          const msgEl = panel.querySelector("#ask-guardrail-tab-msg-" + id);
+          input.disabled = true;
+          try {
+            const putRes = await uaRequest("account/guardrails", { method: "PUT", body: JSON.stringify({ guardrailPrefs: { [id]: checked } }) });
+            if (!putRes.ok) throw new Error((await putRes.json().catch(() => ({}))).error || "Save failed.");
+            if (msgEl) {
+              msgEl.style.display = "";
+              setTimeout(() => { msgEl.style.display = "none"; }, 1200);
+            }
+          } catch (err) {
+            input.checked = !checked;
+            alert(err.message || "Save failed.");
+          } finally {
+            input.disabled = false;
+          }
+        });
+      });
+    }
+
     // A "which pipeline step is this" ticker above the input while a real
     // question is in flight, built from actual progress events the server
     // sends over the response stream (see the fetch/SSE handling in the
@@ -9032,6 +9156,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <button type="button" class="ask-rail-tab" data-tab="sources" role="tab" aria-selected="false">Sources</button>
           <button type="button" class="ask-rail-tab" data-tab="benchmark" role="tab" aria-selected="false">Benchmark</button>
           <button type="button" class="ask-rail-tab" data-tab="modelrules" role="tab" aria-selected="false">Model vs Rules</button>
+          <button type="button" class="ask-rail-tab" data-tab="guardrails" role="tab" aria-selected="false">Guardrails</button>
         </div>
         <div class="ask-rail-panel" data-panel="answer">
           ${opts.previewQuestion ? askQueryPreviewBlockHtml(opts.previewQuestion) : ""}
@@ -9051,6 +9176,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         <div class="ask-rail-panel" data-panel="modelrules" hidden>
           <p class="ask-muted" style="margin:0 0 10px">Which part of each role actually ran on this exact answer, the model or a deterministic check.</p>
           ${askRenderModelVsRules(res)}
+        </div>
+        <div class="ask-rail-panel" data-panel="guardrails" hidden
+          data-guardrail-activity='${uaEsc(JSON.stringify(res.guardrailActivity || {}))}'
+          data-guardrail-sources='${uaEsc(JSON.stringify((res.sources || []).filter(s => s.guardrail).map(s => ({ title: s.title, guardrail: s.guardrail }))))}'>
+          <p class="ask-muted" style="font-size:12px;padding:8px 0">Loading…</p>
         </div>
       </div>`;
     }
@@ -9083,6 +9213,17 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             t.setAttribute("aria-selected", on ? "true" : "false");
           });
           root.querySelectorAll(".ask-rail-panel").forEach(p => { p.hidden = p.dataset.panel !== tab.dataset.tab; });
+          // Guardrails tab content is fetched once, the first time it's
+          // actually opened (see askRenderGuardrailsTab's own comment) -
+          // most answers are never checked, so this avoids a GET
+          // /api/guardrails call on every single answer by default.
+          if (tab.dataset.tab === "guardrails") {
+            const panel = root.querySelector('.ask-rail-panel[data-panel="guardrails"]');
+            if (panel && !panel.dataset.loaded) {
+              panel.dataset.loaded = "1";
+              askRenderGuardrailsTab(panel);
+            }
+          }
         });
       });
     }
