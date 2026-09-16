@@ -2272,7 +2272,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.94.0">Releasetrain <em>v3.94.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.95.0">Releasetrain <em>v3.95.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2396,6 +2396,25 @@
                 <input type="checkbox" id="askIntentFilter" checked /> Intent filter
               </label>
             </div>
+            <!-- Guardrails: releasetrain-server's unified admin-configurable
+                 registry of deterministic safety/correctness checks applied
+                 to every Ask answer (GET /api/guardrails), separate from the
+                 three per-question ablation toggles above (Vendor check/
+                 Temporal filter/Intent filter, which stay exactly as they
+                 are: a different, existing purpose). Reuses .sb-details
+                 (the same collapsed-by-default chevron summary already
+                 used for Graph/CVE view option groups) rather than a new
+                 component, and flex:1 0 100% the same way .ask-toggle-group's
+                 sibling .toggle-more block spans the full row when it wraps.
+                 Collapsed by default; askLoadGuardrails only fetches on
+                 first open, not on every page load (see the "toggle"
+                 listener wired further down in this same script). -->
+            <details class="sb-details" id="askGuardrailsDetails" style="flex:1 0 100%;margin-top:2px">
+              <summary>Guardrails</summary>
+              <div class="sidebar-section" id="askGuardrailsBody" style="padding:8px 0 0">
+                <p class="ua-muted" style="font-size:11px;margin:0">Loading…</p>
+              </div>
+            </details>
           </div>
         </div>
       </form>
@@ -3331,8 +3350,10 @@ sequenceDiagram
 <p class="section-sort-note">Endpoints collapsed by default, ordered method-first then route.</p>
 <div class="api-grid">
 <details class="endpoint method-delete"><summary class="endpoint-head"><span class="method delete">DELETE</span><span class="path">/api/users/:id</span></summary><div class="endpoint-body"><p>Delete a user account by Mongo ObjectId.</p><div><span class="tag">admin only</span></div><pre><code>curl -X DELETE "https://releasetrain.io/api/users/660c38fce3cba9423e4f8f23" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "success": true }</code></pre></div></details>
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/account/guardrails</span></summary><div class="endpoint-body"><p>The signed-in user's own saved per-guardrail overrides. Only ever contains keys for a guardrail that's actually <code class="inline">tier: "optional"</code> (see <code class="inline">GET /api/guardrails</code>) and that this user has explicitly set; a guardrail with no saved preference simply isn't a key here, and falls back to the admin default (that same endpoint's own <code class="inline">effective</code> field).</p><div><span class="tag">requires login</span></div><pre><code>curl "https://releasetrain.io/api/account/guardrails" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "guardrailPrefs": { "vendorCheck": false } }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/users/</span></summary><div class="endpoint-body"><p>Paginated list of all users, password hashes excluded.</p><div><span class="tag">admin only</span><span class="tag">limit max 100</span><span class="tag">page</span></div><pre><code>curl "https://releasetrain.io/api/users/?limit=50&amp;page=1" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "total": 214, "data": [ { "_id": "660c38fce3cba9423e4f8f23", "email": "user@example.com", "role": "user", "orgs": [], "inventory": [] } ] }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/users/me</span></summary><div class="endpoint-body"><p>The signed-in user's own profile, password hash excluded. Any bring-your-own provider API key (Anthropic, Groq, Ollama) is returned masked, as a last-4 preview plus a set/not-set flag, never in full.</p><div><span class="tag">requires login</span></div><pre><code>curl "https://releasetrain.io/api/users/me" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "_id": "660c38fce3cba9423e4f8f23", "email": "user@example.com", "role": "user", "orgs": [], "inventory": [], "anthropicKeySet": false, "anthropicKeyPreview": null }</code></pre></div></details>
+<details class="endpoint method-put"><summary class="endpoint-head"><span class="method put">PUT</span><span class="path">/api/account/guardrails</span></summary><div class="endpoint-body"><p>Save the signed-in user's own per-guardrail overrides, persisted to their account (not global). Rejects with <code class="inline">400</code> if any given <code class="inline">id</code> is not <code class="inline">tier: "optional"</code> (see <code class="inline">GET /api/guardrails</code>): a mandatory guardrail can only be changed admin-side, via <code class="inline">PUT /api/admin/settings</code>. Returns the same <code class="inline">{"guardrailPrefs"}</code> shape reflecting what was actually saved.</p><div><span class="tag">requires login</span></div><pre><code>curl -X PUT "https://releasetrain.io/api/account/guardrails" -H "Authorization: Bearer YOUR_JWT_TOKEN" -H "Content-Type: application/json" -d '{"guardrailPrefs":{"vendorCheck":false}}'</code></pre><pre><code>{ "guardrailPrefs": { "vendorCheck": false } }</code></pre></div></details>
 <details class="endpoint method-put"><summary class="endpoint-head"><span class="method put">PUT</span><span class="path">/api/users/:id</span></summary><div class="endpoint-body"><p>Update a user. A user may update their own <code class="inline">name</code>, password, provider API keys, <code class="inline">orgs</code> (max 2 alphanumeric/dash/underscore slugs) and <code class="inline">inventory</code> (installed-versions list, max 300 entries). Only an admin may target another user's ID or change <code class="inline">role</code>.</p><div><span class="tag">requires login</span></div><pre><code>curl -X PUT "https://releasetrain.io/api/users/660c38fce3cba9423e4f8f23" -H "Authorization: Bearer YOUR_JWT_TOKEN" -H "Content-Type: application/json" -d '{"name":"Ada Lovelace","orgs":["pacific"]}'</code></pre><pre><code>{ "success": true }</code></pre></div></details>
 </div><a class="toplink" href="#">↑ Back to top</a></section>
 
@@ -3492,7 +3513,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
   "queries": { "total": 8340, "last7Days": 412 },
   "botGapLog": { "total": 18, "success": 11, "recent": [ "..." ] }
 }</code></pre></div></details>
-<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/admin/settings</span></summary><div class="endpoint-body"><p>Current values of every admin-tunable runtime setting: the Ask pipeline defaults, the global per-IP rate limit, the registration email domain allowlist, which nav views are visible, and each eval tool's access level.</p><div><span class="tag">admin only</span></div><pre><code>curl "https://releasetrain.io/api/admin/settings" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "askRecentWindowDays": 14, "askDefaultPreset": "auto", "askDefaultProvider": "ollama", "askDefaultSize": "medium", "rateLimitPerMinute": 120, "allowedEmailDomains": "gmail.com,outlook.com", "viewGraphVisible": true, "viewDocsVisible": true, "evalRewriterAccess": "admin", "evalEvaluatorAccess": "admin", "evalOrchestratorAccess": "admin" }</code></pre></div></details>
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/admin/settings</span></summary><div class="endpoint-body"><p>Current values of every admin-tunable runtime setting: the Ask pipeline defaults, the global per-IP rate limit, the registration email domain allowlist, which nav views are visible, each eval tool's access level, and the <code class="inline">guardrails</code> registry (every deterministic safety/correctness check applied to Ask answers, each with its <code class="inline">tier</code> of <code class="inline">"mandatory"</code> or <code class="inline">"optional"</code> and its current admin-set <code class="inline">enabled</code> value; see the public <code class="inline">GET /api/guardrails</code> below for the per-caller effective view of the same list).</p><div><span class="tag">admin only</span></div><pre><code>curl "https://releasetrain.io/api/admin/settings" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "askRecentWindowDays": 14, "askDefaultPreset": "auto", "askDefaultProvider": "ollama", "askDefaultSize": "medium", "rateLimitPerMinute": 120, "allowedEmailDomains": "gmail.com,outlook.com", "viewGraphVisible": true, "viewDocsVisible": true, "evalRewriterAccess": "admin", "evalEvaluatorAccess": "admin", "evalOrchestratorAccess": "admin", "guardrails": [ { "id": "toolResultInjectionScan", "tier": "mandatory", "label": "Scan retrieved content for prompt injection", "description": "Flags tool results that try to redirect the model's own instructions before they reach it.", "enabled": true }, { "id": "vendorCheck", "tier": "optional", "label": "Require a resolvable vendor/product", "description": "Declines outright if the question names no vendor/product this system tracks.", "enabled": true } ] }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/admin/source-attribution</span></summary><div class="endpoint-body"><p>What fraction of the <code class="inline">versions</code> collection has no confident <code class="inline">sourceBot</code> attribution (<code class="inline">"unknown"</code> or missing entirely). A rising percentage signals a bot's source-inference rule needs updating.</p><div><span class="tag">admin only</span></div><pre><code>curl "https://releasetrain.io/api/admin/source-attribution" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "total": 54210, "unknown": 780, "missing": 32, "pct": 1.5, "byBot": [ { "_id": "chrome.py", "count": 4210 }, { "_id": "unknown", "count": 780 } ] }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/admin/storage</span></summary><div class="endpoint-body"><p>MongoDB Atlas storage/data/index size against the M0 free-tier's 512MB shared cap.</p><div><span class="tag">admin only</span></div><pre><code>curl "https://releasetrain.io/api/admin/storage" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "storageMb": 210.4, "dataMb": 180.2, "indexMb": 22.1, "limitMb": 512, "pct": 0.411, "collections": 8, "objects": 1204830 }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/admin/vendor-aliases</span></summary><div class="endpoint-body"><p>Every manually-curated vendor alias, correcting or adding a vendor name the automatic catalog (built from tracked release data and Reddit subreddit names) doesn't resolve on its own.</p><div><span class="tag">admin only</span></div><pre><code>curl "https://releasetrain.io/api/admin/vendor-aliases" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "data": [ { "_id": "660c38fce3cba9423e4f8f23", "alias": "ada", "canonicalName": "Ada", "createdAt": "2026-09-15T17:00:00.000Z" } ] }</code></pre></div></details>
@@ -3500,7 +3521,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
 <details class="endpoint method-post"><summary class="endpoint-head"><span class="method post">POST</span><span class="path">/api/admin/vendor-aliases</span></summary><div class="endpoint-body"><p>Add a vendor alias mapping one alternate spelling/name to its canonical name.</p><div><span class="tag">admin only</span></div><pre><code>curl -X POST "https://releasetrain.io/api/admin/vendor-aliases" -H "Authorization: Bearer YOUR_JWT_TOKEN" -H "Content-Type: application/json" -d '{"alias":"ada","canonicalName":"Ada"}'</code></pre><pre><code>{ "data": { "_id": "660c38fce3cba9423e4f8f23", "alias": "ada", "canonicalName": "Ada", "createdAt": "2026-09-15T17:00:00.000Z" } }</code></pre></div></details>
 <details class="endpoint method-post"><summary class="endpoint-head"><span class="method post">POST</span><span class="path">/api/admin/vendor-gap-fill</span></summary><div class="endpoint-body"><p>Manually runs the same automatic-catalog gap-fill a bot's own fallback triggers for a real, web-verified vendor with zero tracked evidence (see the <code class="inline">botGapLog</code> field on <code class="inline">GET /api/admin/overview</code>). The attempt is logged the same as an automatic one, so it also shows up in that response's <code class="inline">botGapLog.recent</code> list.</p><div><span class="tag">admin only</span></div><pre><code>curl -X POST "https://releasetrain.io/api/admin/vendor-gap-fill" -H "Authorization: Bearer YOUR_JWT_TOKEN" -H "Content-Type: application/json" -d '{"vendorName":"ada"}'</code></pre><pre><code>{ "success": true }</code></pre></div></details>
 <details class="endpoint method-put"><summary class="endpoint-head"><span class="method put">PUT</span><span class="path">/api/admin/bot-cadence</span></summary><div class="endpoint-body"><p>Set (or clear) one bot's cadence override. <code class="inline">maxDays</code> is a number from 1-365, or <code class="inline">null</code> to remove the override and fall back to that bot's default. Applies immediately, no restart needed, and is picked up by <code class="inline">/api/admin/bot-health</code>'s next check.</p><div><span class="tag">admin only</span></div><pre><code>curl -X PUT "https://releasetrain.io/api/admin/bot-cadence" -H "Authorization: Bearer YOUR_JWT_TOKEN" -H "Content-Type: application/json" -d '{"bot":"mysql.py","maxDays":90}'</code></pre><pre><code>{ "defaults": { "chrome.py": 21, "firefox.py": 21, "mysql.py": 120 }, "overrides": { "mysql.py": 90 } }</code></pre></div></details>
-<details class="endpoint method-put"><summary class="endpoint-head"><span class="method put">PUT</span><span class="path">/api/admin/settings</span></summary><div class="endpoint-body"><p>Patch one or more runtime settings. Applies immediately, no restart needed, and persists to the <code class="inline">settings</code> collection. Unrecognized keys are ignored; each known value is validated/clamped (e.g. <code class="inline">askRecentWindowDays</code> to 1-90, <code class="inline">rateLimitPerMinute</code> to 10-2000) before being applied and returned. <code class="inline">allowedEmailDomains</code> takes a comma-separated string; any <code class="inline">.edu</code> (or <code class="inline">.edu.&lt;country&gt;</code>) address is always allowed regardless of this list.</p><div><span class="tag">admin only</span></div><pre><code>curl -X PUT "https://releasetrain.io/api/admin/settings" -H "Authorization: Bearer YOUR_JWT_TOKEN" -H "Content-Type: application/json" -d '{"askRecentWindowDays":30,"rateLimitPerMinute":200,"allowedEmailDomains":"gmail.com,outlook.com"}'</code></pre><pre><code>{ "askRecentWindowDays": 30, "askDefaultPreset": "auto", "rateLimitPerMinute": 200, "allowedEmailDomains": "gmail.com,outlook.com", "evalRewriterAccess": "auth", "evalEvaluatorAccess": "admin", "evalOrchestratorAccess": "admin" }</code></pre></div></details>
+<details class="endpoint method-put"><summary class="endpoint-head"><span class="method put">PUT</span><span class="path">/api/admin/settings</span></summary><div class="endpoint-body"><p>Patch one or more runtime settings. Applies immediately, no restart needed, and persists to the <code class="inline">settings</code> collection. Unrecognized keys are ignored; each known value is validated/clamped (e.g. <code class="inline">askRecentWindowDays</code> to 1-90, <code class="inline">rateLimitPerMinute</code> to 10-2000) before being applied and returned. <code class="inline">allowedEmailDomains</code> takes a comma-separated string; any <code class="inline">.edu</code> (or <code class="inline">.edu.&lt;country&gt;</code>) address is always allowed regardless of this list. <code class="inline">guardrails</code> takes an array of <code class="inline">{"id","enabled"}</code> patches merged into the existing registry by <code class="inline">id</code>; an unknown <code class="inline">id</code> is ignored. The response always echoes back the full merged settings object, including the full updated <code class="inline">guardrails</code> array.</p><div><span class="tag">admin only</span></div><pre><code>curl -X PUT "https://releasetrain.io/api/admin/settings" -H "Authorization: Bearer YOUR_JWT_TOKEN" -H "Content-Type: application/json" -d '{"askRecentWindowDays":30,"rateLimitPerMinute":200,"allowedEmailDomains":"gmail.com,outlook.com","guardrails":[{"id":"vendorCheck","enabled":false}]}'</code></pre><pre><code>{ "askRecentWindowDays": 30, "askDefaultPreset": "auto", "rateLimitPerMinute": 200, "allowedEmailDomains": "gmail.com,outlook.com", "evalRewriterAccess": "auth", "evalEvaluatorAccess": "admin", "evalOrchestratorAccess": "admin", "guardrails": [ { "id": "vendorCheck", "tier": "optional", "label": "Require a resolvable vendor/product", "description": "Declines outright if the question names no vendor/product this system tracks.", "enabled": false } ] }</code></pre></div></details>
 </div><a class="toplink" href="#">↑ Back to top</a></section>
 
 <section class="block" id="d-testing">
@@ -3544,6 +3565,7 @@ flowchart LR
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/ask/providers</span></summary><div class="endpoint-body"><p>Available LLM providers (Anthropic, Groq, Ollama Cloud) and each one's small/medium/large model sizes, plus the current default preset/provider/size a new visitor's Ask form should start on.</p><pre><code>curl "https://releasetrain.io/api/ask/providers"</code></pre><pre><code>{ "providers": [ { "id": "anthropic", "label": "Anthropic", "sizes": [ { "id": "small", "label": "Small" } ] } ], "defaultPreset": "auto", "defaultProvider": "ollama", "defaultSize": "medium" }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/ask/quota</span></summary><div class="endpoint-body"><p>Last-seen rate-limit headers per provider (Anthropic, Groq) plus how many calls this server process has made today. A snapshot from the last real <code class="inline">/api/ask</code> call, not a live check.</p><pre><code>curl "https://releasetrain.io/api/ask/quota"</code></pre><pre><code>{ "anthropic": { "remaining": 48, "limit": 50, "rateLimitedSecondsLeft": null }, "groq": { "remaining": 14400, "limit": 14400, "rateLimitedSecondsLeft": null } }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/ask/recent-window-days</span></summary><div class="endpoint-body"><p>Public: the current admin-configured recency window (in days) Ask applies by default, so the feed's own lookback can track the same window instead of a separately hardcoded value.</p><pre><code>curl "https://releasetrain.io/api/ask/recent-window-days"</code></pre><pre><code>{ "askRecentWindowDays": 14 }</code></pre></div></details>
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/guardrails</span></summary><div class="endpoint-body"><p>Public, with optional auth: every guardrail applied to Ask answers, each with the admin's raw <code class="inline">enabled</code> setting, the <code class="inline">effective</code> value that actually applies to the calling user right now (a mandatory guardrail's <code class="inline">effective</code> always equals <code class="inline">enabled</code>; an optional one's is the caller's own saved preference if signed in and set, else the admin default), and <code class="inline">configurable</code> (true only when the guardrail is <code class="inline">tier: "optional"</code> and the caller is signed in). Send <code class="inline">Authorization: Bearer &lt;token&gt;</code> to get a signed-in caller's own <code class="inline">effective</code>/<code class="inline">configurable</code> values; omit it for the signed-out view.</p><pre><code>curl "https://releasetrain.io/api/guardrails" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "guardrails": [ { "id": "toolResultInjectionScan", "tier": "mandatory", "label": "Scan retrieved content for prompt injection", "description": "Flags tool results that try to redirect the model's own instructions before they reach it.", "enabled": true, "effective": true, "configurable": false }, { "id": "vendorCheck", "tier": "optional", "label": "Require a resolvable vendor/product", "description": "Declines outright if the question names no vendor/product this system tracks.", "enabled": true, "effective": false, "configurable": true } ] }</code></pre></div></details>
 <details class="endpoint method-post"><summary class="endpoint-head"><span class="method post">POST</span><span class="path">/api/ask</span></summary><div class="endpoint-body"><p>Ask a question. A bare vendor/category name resolves instantly as plain JSON (<code class="inline">{"intent":"documents",...}</code>), no sign-in needed. A real question streams back <code class="inline">text/event-stream</code> progress events ending in one <code class="inline">result</code> (or <code class="inline">error</code>) event, and requires sign-in. <code class="inline">config</code> accepts <code class="inline">preset</code> (or <code class="inline">"auto"</code> to classify intent server-side), <code class="inline">provider</code>, <code class="inline">size</code>, and the <code class="inline">vendorCheck</code>/<code class="inline">temporalFilter</code>/<code class="inline">intentFilter</code> toggles. Question is capped at 500 characters.</p><pre><code>curl -N -X POST "https://releasetrain.io/api/ask" -H "Authorization: Bearer YOUR_JWT_TOKEN" -H "Content-Type: application/json" -d '{"question":"Was the WebView bug patched?","config":{"preset":"auto"}}'</code></pre><pre><code>data: { "type": "progress", "phase": "retrieving", "detail": "Searching versions and reddit" }
 
 data: { "type": "result", "runId": "660c38fce3cba9423e4f8f23", "answer": "...", "sources": [ "..." ], "abstained": false }</code></pre></div></details>
@@ -4056,6 +4078,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-16</div>
+              <div class="cl-ver cl-ver-minor">v3.95.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Guardrails: a client UI for the server's new safety/correctness registry</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> New <strong>Guardrails</strong> section in the Account view's admin area, alongside the other admin sections: every guardrail releasetrain-server now tracks (backed by the existing <code>GET</code>/<code>PUT /api/admin/settings</code>, which now also carries a <code>guardrails</code> array), split into Mandatory (an admin can turn one off, at the cost of a specific documented safety/correctness fix) and Optional (the admin-set default a signed-in user may override for themselves), each with a checkbox and an explicit Save button.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> New collapsed-by-default <strong>Guardrails</strong> panel in the live Ask options row, right next to the existing Vendor check/Temporal filter/Intent filter toggles (which are unchanged and serve a different, existing purpose: quick one-off per-question testing). Backed by the new public <code>GET /api/guardrails</code>: every mandatory guardrail is listed read-only with a lock icon, and every optional one shows a checkbox reflecting what's actually in effect for the viewer right now. Signed in, that checkbox is yours to flip, saved immediately to your account via the new <code>GET</code>/<code>PUT /api/account/guardrails</code>; signed out, it's shown disabled at the admin default, with a link to sign in and customize it.</li>
+                <li><span class="cl-tag cl-tag-docs">docs</span> API Reference: documented the new <code>GET /api/guardrails</code> and <code>GET</code>/<code>PUT /api/account/guardrails</code> routes, and noted the new <code>guardrails</code> field on the existing <code>GET</code>/<code>PUT /api/admin/settings</code> entries.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -6693,6 +6730,34 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                 <div id="ua-dash-botgap"></div>
               </div>
             </details>
+            <!-- Guardrails: releasetrain-server's unified registry of
+                 deterministic safety/correctness checks applied to Ask
+                 answers. Same GET/PUT /api/admin/settings round-trip as
+                 the generic Settings list below (a `guardrails` array
+                 embedded in that same flat response), just rendered as
+                 its own two-group list (Mandatory/Optional) since each
+                 entry carries a full description and a tier that a plain
+                 UA_SETTINGS_META label+hint pair doesn't. Placed right
+                 after System overview, ahead of the generic Settings and
+                 Bot health thresholds sections, since this is a
+                 safety-relevant setting worth surfacing prominently. -->
+            <details class="ua-admin-details">
+              <summary class="ua-admin-header">
+                <span style="font-weight:700;font-size:13px">Guardrails</span>
+                <span id="ua-guardrails-count" class="ua-muted" style="font-size:12px"></span>
+                <button id="ua-refresh-guardrails" class="btn btn-ghost" style="font-size:12px;padding:4px 10px;margin-left:auto">Refresh</button>
+              </summary>
+              <div id="ua-guardrails-section">
+                <p style="font-weight:700;font-size:12px;margin:10px 0 2px">Mandatory</p>
+                <p class="ua-muted" style="font-size:12px;margin:0 0 6px">Always applied; only an admin can turn one off, and doing so removes a specific, documented safety or correctness fix.</p>
+                <div id="ua-guardrails-mandatory-list" class="ua-settings-list">
+                  <p class="ua-muted" style="font-size:12px;padding:8px 0">Loading…</p>
+                </div>
+                <p style="font-weight:700;font-size:12px;margin:16px 0 2px">Optional</p>
+                <p class="ua-muted" style="font-size:12px;margin:0 0 6px">Applied by default at the setting below; a signed-in user may override this for their own questions.</p>
+                <div id="ua-guardrails-optional-list" class="ua-settings-list"></div>
+              </div>
+            </details>
             <!-- Runtime settings / feature flags. One generic list, not
                  a hardcoded form per setting: each row is rendered from
                  whatever GET /api/admin/settings actually returns, so a
@@ -7452,6 +7517,97 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     const askVendorCheckEl = document.getElementById("askVendorCheck");
     const askTemporalFilterEl = document.getElementById("askTemporalFilter");
     const askIntentFilterEl = document.getElementById("askIntentFilter");
+
+    // Guardrails: releasetrain-server's unified admin-configurable
+    // registry of deterministic safety/correctness checks applied to
+    // every Ask answer (GET /api/guardrails, public with optional auth;
+    // GET/PUT /api/account/guardrails for a signed-in user's own
+    // per-guardrail override). Distinct from askVendorCheck/
+    // askTemporalFilter/askIntentFilter above, which keep their own
+    // separate, existing purpose (quick one-off testing, sent
+    // explicitly on every ask request) and are untouched. Fetched lazily
+    // each time #askGuardrailsDetails is opened (see the "toggle"
+    // listener below), not on page load, and re-fetched on every open
+    // rather than cached once, so a visitor who signs in without
+    // reloading the page still sees the correct configurable state the
+    // next time they open it.
+    async function askLoadGuardrails() {
+      const bodyEl = document.getElementById("askGuardrailsBody");
+      if (!bodyEl) return;
+      bodyEl.innerHTML = `<p class="ua-muted" style="font-size:11px;margin:0">Loading…</p>`;
+      const res = await uaRequest("guardrails").catch(() => null);
+      if (!res || !res.ok) {
+        bodyEl.innerHTML = `<p class="ua-muted" style="font-size:11px;margin:0">Could not load guardrails.</p>`;
+        return;
+      }
+      const data = await res.json();
+      const guardrails = Array.isArray(data.guardrails) ? data.guardrails : [];
+      const mandatory = guardrails.filter(g => g.tier === "mandatory");
+      const optional = guardrails.filter(g => g.tier !== "mandatory");
+      const signedIn = !!uaToken();
+      // Mandatory: informational only, no checkbox at all, just a plain
+      // lock icon (same bare-emoji convention this file already uses for
+      // the warning icon elsewhere) next to the label/description.
+      const mandatoryHtml = mandatory.length
+        ? mandatory.map(g => `<div class="ua-settings-row" style="font-size:11px;padding:8px 10px">
+            <div class="ua-settings-info">
+              <strong>&#128274; ${uaEsc(g.label || g.id)}</strong>
+              <span class="ua-muted">${uaEsc(g.description || "")}</span>
+            </div>
+          </div>`).join("")
+        : `<p class="ua-muted" style="font-size:11px;margin:0">None defined yet.</p>`;
+      // Optional: a real checkbox reflecting `effective`, interactive
+      // only when the server says this specific caller can change it
+      // (`configurable`, true only for a signed-in visitor); otherwise
+      // rendered disabled at the admin default, per g.configurable.
+      const optionalHtml = optional.length
+        ? optional.map(g => `<div class="ua-settings-row" style="font-size:11px;padding:8px 10px">
+            <div class="ua-settings-info">
+              <strong>${uaEsc(g.label || g.id)}</strong>
+              <span class="ua-muted">${uaEsc(g.description || "")}</span>
+            </div>
+            <input type="checkbox" class="ask-guardrail-input" data-id="${uaEsc(g.id)}"${g.effective ? " checked" : ""}${g.configurable ? "" : " disabled"}>
+            <span id="ask-guardrail-msg-${uaEsc(g.id)}" class="ua-muted" style="font-size:10px;display:none">Saved</span>
+          </div>`).join("")
+        : `<p class="ua-muted" style="font-size:11px;margin:0">None defined yet.</p>`;
+      bodyEl.innerHTML = `
+        <p style="font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin:0 0 4px;color:var(--muted)">Mandatory protections</p>
+        <div class="ua-settings-list" style="margin-top:0">${mandatoryHtml}</div>
+        <p style="font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin:12px 0 4px;color:var(--muted)">Optional</p>
+        ${signedIn ? "" : `<p class="ua-muted" style="font-size:11px;margin:0 0 6px">Sign in (<a href="#" id="askGuardrailsSignInLink" target="_self">Account view</a>) to customize these for your own questions.</p>`}
+        <div class="ua-settings-list" style="margin-top:0">${optionalHtml}</div>
+      `;
+      const signInLink = document.getElementById("askGuardrailsSignInLink");
+      if (signInLink) signInLink.addEventListener("click", e => { e.preventDefault(); activateUsers(); });
+      bodyEl.querySelectorAll(".ask-guardrail-input").forEach(input => {
+        input.addEventListener("change", async () => {
+          if (input.disabled) return;
+          const id = input.dataset.id;
+          const checked = input.checked;
+          const msgEl = document.getElementById("ask-guardrail-msg-" + id);
+          input.disabled = true;
+          try {
+            const putRes = await uaRequest("account/guardrails", { method: "PUT", body: JSON.stringify({ guardrailPrefs: { [id]: checked } }) });
+            if (!putRes.ok) throw new Error((await putRes.json().catch(() => ({}))).error || "Save failed.");
+            if (msgEl) {
+              msgEl.style.display = "";
+              setTimeout(() => { msgEl.style.display = "none"; }, 1200);
+            }
+          } catch (err) {
+            input.checked = !checked;
+            alert(err.message || "Save failed.");
+          } finally {
+            input.disabled = false;
+          }
+        });
+      });
+    }
+    const askGuardrailsDetailsEl = document.getElementById("askGuardrailsDetails");
+    if (askGuardrailsDetailsEl) {
+      askGuardrailsDetailsEl.addEventListener("toggle", () => {
+        if (askGuardrailsDetailsEl.open) askLoadGuardrails();
+      });
+    }
 
     // A "which pipeline step is this" ticker above the input while a real
     // question is in flight, built from actual progress events the server
@@ -14070,6 +14226,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           adminSection.style.display = "";
           uaLoadDashboard();
           uaLoadSettings();
+          uaLoadGuardrails();
           uaLoadBotCadence();
           uaLoadVendorAliases();
           uaLoadUsers();
@@ -14523,6 +14680,74 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         });
       });
     }
+
+    // Guardrails (also GET/PUT /api/admin/settings, same endpoint as
+    // uaLoadSettings above, just its `guardrails` key): a fixed list of
+    // { id, tier, label, description, enabled } entries, each rendered
+    // into a Mandatory or Optional group rather than mixed into the flat
+    // UA_SETTINGS_META list, since a guardrail carries a full sentence
+    // description and a tier grouping that a plain label+hint pair
+    // doesn't. Each row keeps its own explicit Save button rather than
+    // saving on checkbox change, matching this same tab's existing
+    // boolean-setting convention (see uaLoadSettings's checkbox rows
+    // above, e.g. viewGraphVisible: a checkbox plus an explicit Save
+    // button, not immediate-save on change).
+    async function uaLoadGuardrails() {
+      const mandatoryEl = document.getElementById("ua-guardrails-mandatory-list");
+      const optionalEl = document.getElementById("ua-guardrails-optional-list");
+      const countEl = document.getElementById("ua-guardrails-count");
+      if (!mandatoryEl || !optionalEl) return;
+      const res = await uaRequest("admin/settings").catch(() => null);
+      if (!res || !res.ok) {
+        mandatoryEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">Could not load guardrails.</p>`;
+        optionalEl.innerHTML = "";
+        return;
+      }
+      const settings = await res.json();
+      const guardrails = Array.isArray(settings.guardrails) ? settings.guardrails : [];
+      if (countEl) countEl.textContent = guardrails.length ? "(" + guardrails.length + ")" : "";
+      const rowHtml = g => `<div class="ua-settings-row">
+          <div class="ua-settings-info">
+            <strong>${uaEsc(g.label || g.id)}</strong>
+            <span class="ua-muted">${uaEsc(g.description || "")}</span>
+          </div>
+          <input type="checkbox" class="ua-settings-input ua-settings-checkbox ua-guardrail-input" data-id="${uaEsc(g.id)}"${g.enabled ? " checked" : ""}>
+          <button type="button" class="btn btn-ghost ua-guardrail-save" data-id="${uaEsc(g.id)}" style="font-size:12px;padding:4px 10px">Save</button>
+        </div>`;
+      const mandatory = guardrails.filter(g => g.tier === "mandatory");
+      const optional = guardrails.filter(g => g.tier !== "mandatory");
+      mandatoryEl.innerHTML = mandatory.length ? mandatory.map(rowHtml).join("")
+        : `<p class="ua-muted" style="font-size:12px;padding:8px 0">No mandatory guardrails defined yet.</p>`;
+      optionalEl.innerHTML = optional.length ? optional.map(rowHtml).join("")
+        : `<p class="ua-muted" style="font-size:12px;padding:8px 0">No optional guardrails defined yet.</p>`;
+
+      document.querySelectorAll("#ua-guardrails-section .ua-guardrail-save").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const id = btn.dataset.id;
+          const input = document.querySelector(`#ua-guardrails-section .ua-guardrail-input[data-id="${CSS.escape(id)}"]`);
+          if (!input) return;
+          btn.disabled = true;
+          const prevText = btn.textContent;
+          btn.textContent = "Saving…";
+          try {
+            const putRes = await uaRequest("admin/settings", { method: "PUT", body: JSON.stringify({ guardrails: [{ id, enabled: input.checked }] }) });
+            if (!putRes.ok) throw new Error((await putRes.json().catch(() => ({}))).error || "Save failed.");
+            const applied = await putRes.json();
+            const updated = Array.isArray(applied.guardrails) ? applied.guardrails.find(g => g.id === id) : null;
+            if (updated && typeof updated.enabled === "boolean") input.checked = updated.enabled;
+            btn.textContent = "Saved";
+            setTimeout(() => { btn.textContent = prevText; btn.disabled = false; }, 1200);
+          } catch (err) {
+            alert(err.message || "Save failed.");
+            btn.textContent = prevText;
+            btn.disabled = false;
+          }
+        });
+      });
+    }
+
+    const uaRefreshGuardrailsBtn = document.getElementById("ua-refresh-guardrails");
+    if (uaRefreshGuardrailsBtn) uaRefreshGuardrailsBtn.addEventListener("click", uaLoadGuardrails);
 
     // Bot health cadence thresholds (GET/PUT /api/admin/bot-cadence).
     // Kept separate from the generic UA_SETTINGS_META list above since
