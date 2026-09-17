@@ -15,7 +15,7 @@ async function stubApi(page) {
     let body = { data: [], nextCursor: null };
     if (/\/v\/count/.test(url)) body = { totalVersions: 0, cveCount: 0, nonCveCount: 0 };
     else if (/\/reddit\/count/.test(url))
-      body = { totalRedditPosts: 0, redditCount: 0, stackoverflowCount: 0 };
+      body = { totalRedditPosts: 0, redditCount: 0, stackoverflowCount: 0, serverfaultCount: 0 };
     else if (/\/c\/names/.test(url)) body = [];
     else if (/\/aggregate\//.test(url)) body = { days: [] };
     else if (/\/events\/search\/top/.test(url)) body = { data: [] };

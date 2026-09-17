@@ -2277,7 +2277,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.96.1">Releasetrain <em>v3.96.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.97.0">Releasetrain <em>v3.97.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2613,6 +2613,7 @@
               <div class="sb-stat-row"><span>Total</span><span id="dsb-r-total">…</span></div>
               <div class="sb-stat-row"><span>Reddit posts</span><span id="dsb-r-reddit">…</span></div>
               <div class="sb-stat-row"><span>Stack Overflow</span><span id="dsb-r-so">…</span></div>
+              <div class="sb-stat-row"><span>Server Fault</span><span id="dsb-r-sf">…</span></div>
               <hr class="sb-stat-divider">
               <div class="sb-stat-row size-row"><span>Est. size</span><span id="dsb-r-size">…</span></div>
             </div>
@@ -2953,6 +2954,7 @@
                 <div class="sb-stat-row"><span>Community total</span><span id="home-r-total">…</span></div>
                 <div class="sb-stat-row"><span>Reddit posts</span><span id="home-r-reddit">…</span></div>
                 <div class="sb-stat-row"><span>Stack Overflow</span><span id="home-r-so">…</span></div>
+                <div class="sb-stat-row"><span>Server Fault</span><span id="home-r-sf">…</span></div>
               </div>
             </details>
 
@@ -3479,9 +3481,9 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
   "topSubreddits": [{ "_id": "android", "count": 4120 }, { "_id": "chrome", "count": 2980 }],
   "score": { "avg": 14.3, "max": 4821, "totalWithPositiveScore": 19204 }
 }</code></pre></div></details>
-<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/reddit/count</span></summary><div class="endpoint-body"><p>Total post count plus Reddit vs Stack Overflow split for a date range.</p><div><span class="tag">start optional</span><span class="tag">end optional</span></div><pre><code>curl "https://releasetrain.io/api/aggregate/reddit/count?start=20250101&end=20251231"</code></pre><pre><code>{ "range": { "start": "20250101", "end": "20251231" }, "total": 14820, "redditCount": 11340, "stackoverflowCount": 3480 }</code></pre></div></details>
-<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/reddit/bySource</span></summary><div class="endpoint-body"><p>Counts grouped by <code class="inline">source</code> field. Documents without a source field are counted as <code class="inline">reddit</code>.</p><div><span class="tag">start optional</span><span class="tag">end optional</span></div><pre><code>curl "https://releasetrain.io/api/aggregate/reddit/bySource"</code></pre><pre><code>{ "range": { "start": "20240518", "end": "20260518" }, "total": 28340, "sources": { "reddit": 21050, "stackoverflow": 7290 } }</code></pre></div></details>
-<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/reddit/bySubreddit</span></summary><div class="endpoint-body"><p>Top subreddits or Stack Overflow components by post count, with average score. Filter by source to compare communities.</p><div><span class="tag">start optional</span><span class="tag">end optional</span><span class="tag">limit optional · default 20 · max 100</span><span class="tag">source optional · reddit | stackoverflow</span></div><pre><code>curl "https://releasetrain.io/api/aggregate/reddit/bySubreddit?limit=5&source=reddit"</code></pre><pre><code>{
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/reddit/count</span></summary><div class="endpoint-body"><p>Total post count plus Reddit vs Stack Overflow vs Server Fault split for a date range.</p><div><span class="tag">start optional</span><span class="tag">end optional</span></div><pre><code>curl "https://releasetrain.io/api/aggregate/reddit/count?start=20250101&end=20251231"</code></pre><pre><code>{ "range": { "start": "20250101", "end": "20251231" }, "total": 14820, "redditCount": 11340, "stackoverflowCount": 3070, "serverfaultCount": 410 }</code></pre></div></details>
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/reddit/bySource</span></summary><div class="endpoint-body"><p>Counts grouped by <code class="inline">source</code> field. Documents without a source field are counted as <code class="inline">reddit</code>.</p><div><span class="tag">start optional</span><span class="tag">end optional</span></div><pre><code>curl "https://releasetrain.io/api/aggregate/reddit/bySource"</code></pre><pre><code>{ "range": { "start": "20240518", "end": "20260518" }, "total": 28340, "sources": { "reddit": 21050, "stackoverflow": 6420, "serverfault": 870 } }</code></pre></div></details>
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/reddit/bySubreddit</span></summary><div class="endpoint-body"><p>Top subreddits or Stack Overflow components by post count, with average score. Filter by source to compare communities.</p><div><span class="tag">start optional</span><span class="tag">end optional</span><span class="tag">limit optional · default 20 · max 100</span><span class="tag">source optional · reddit | stackoverflow | serverfault</span></div><pre><code>curl "https://releasetrain.io/api/aggregate/reddit/bySubreddit?limit=5&source=reddit"</code></pre><pre><code>{
   "range": { "start": "20240518", "end": "20260518" },
   "source": "reddit", "limit": 5,
   "subreddits": [{ "_id": "android", "count": 4120, "avgScore": 18.4 }]
@@ -3961,6 +3963,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         <tr><td style="border:none;padding:2px 0;color:#64748b;width:58%">Total</td><td style="border:none;padding:2px 0;font-weight:800;color:#2563eb;font-size:1.1rem" id="d-stat-reddit">…</td></tr>
         <tr><td style="border:none;padding:2px 0;color:#64748b">Reddit posts</td><td style="border:none;padding:2px 0;font-weight:700;color:#64748b" id="d-stat-r-reddit">…</td></tr>
         <tr><td style="border:none;padding:2px 0;color:#64748b">Stack Overflow</td><td style="border:none;padding:2px 0;font-weight:700;color:#64748b" id="d-stat-r-so">…</td></tr>
+        <tr><td style="border:none;padding:2px 0;color:#64748b">Server Fault</td><td style="border:none;padding:2px 0;font-weight:700;color:#64748b" id="d-stat-r-sf">…</td></tr>
         <tr><td style="border:none;padding:3px 0 0;color:#64748b">Est. size</td><td style="border:none;padding:3px 0 0;font-weight:600;color:#475569;font-size:11px" id="d-stat-r-size">…</td></tr>
       </tbody>
     </table>
@@ -4083,6 +4086,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-17</div>
+              <div class="cl-ver cl-ver-minor">v3.97.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Server Fault split out from the community counts</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> releasetrain-bot's new serverfault.py posts into the same shared community collection as Reddit and Stack Overflow, tagged its own <code>source</code>. The admin dashboard's profile stat row, System overview cards, and bot-health freshness list now show Server Fault as its own line instead of it silently landing inside the Reddit count.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The server's reddit/stackoverflow split counted "Reddit" as everything that wasn't literally <code>source: stackoverflow</code>, so a doc from any other source landed in the Reddit bucket by default. Reddit, Stack Overflow, and Server Fault are now each counted explicitly across <code>/api/reddit/count</code> and every <code>/api/aggregate/reddit/*</code> endpoint.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -11085,17 +11102,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         }
 
         if (rData) {
-          const rTotal = rData.totalRedditPosts, rReddit = rData.redditCount ?? 0, rSO = rData.stackoverflowCount ?? 0;
+          const rTotal = rData.totalRedditPosts, rReddit = rData.redditCount ?? 0, rSO = rData.stackoverflowCount ?? 0, rSF = rData.serverfaultCount ?? 0;
           const rSize = fmtSize(rTotal * 2000);
           // main content
           set('d-stat-reddit', fmt(rTotal));
           set('d-stat-r-reddit', fmt(rReddit));
           set('d-stat-r-so', fmt(rSO));
+          set('d-stat-r-sf', fmt(rSF));
           set('d-stat-r-size', rSize + ' / 5 MB max');
           // sidebar
           set('dsb-r-total', fmt(rTotal));
           set('dsb-r-reddit', fmt(rReddit));
           set('dsb-r-so', fmt(rSO));
+          set('dsb-r-sf', fmt(rSF));
           set('dsb-r-size', rSize + ' / 5 MB');
         }
 
@@ -13119,13 +13138,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         }
         if (rData) {
           _homeRTotalNum = rData.totalRedditPosts;
-          const rReddit = rData.redditCount ?? 0, rSO = rData.stackoverflowCount ?? 0;
+          const rReddit = rData.redditCount ?? 0, rSO = rData.stackoverflowCount ?? 0, rSF = rData.serverfaultCount ?? 0;
           setHtml('home-r-total', fmt(_homeRTotalNum));
           setText('home-r-reddit', fmt(rReddit));
           setText('home-r-so', fmt(rSO));
+          setText('home-r-sf', fmt(rSF));
           setText('dsb-r-total', fmt(_homeRTotalNum));
           setText('dsb-r-reddit', fmt(rReddit));
           setText('dsb-r-so', fmt(rSO));
+          setText('dsb-r-sf', fmt(rSF));
           setText('dsb-r-size', fmtSize(_homeRTotalNum * 2000) + ' / 5 MB');
           updateCommunityBracket();
         }
@@ -14533,6 +14554,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         Number.isFinite(c.cveTotal) ? `<span><strong>${c.cveTotal.toLocaleString()}</strong> CVEs</span>` : "",
         Number.isFinite(c.redditTotal) ? `<span><strong>${c.redditTotal.toLocaleString()}</strong> Reddit</span>` : "",
         Number.isFinite(c.stackoverflowTotal) ? `<span><strong>${c.stackoverflowTotal.toLocaleString()}</strong> StackOverflow</span>` : "",
+        Number.isFinite(c.serverfaultTotal) ? `<span><strong>${c.serverfaultTotal.toLocaleString()}</strong> Server Fault</span>` : "",
         staleCount != null
           ? `<span class="${staleCount ? "ua-reg-stat-alert" : ""}"><strong>${staleCount}/${botsTotal}</strong> bots stale</span>`
           : "",
@@ -14612,7 +14634,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         <div class="ua-dash-card">
           <div class="ua-dash-card-label">Collection totals</div>
           <div class="ua-dash-card-value">${counts.versionsTotal}</div>
-          <div class="ua-dash-card-sub">${counts.cveTotal} CVE · ${counts.releaseNotesTotal} release · ${counts.redditTotal} reddit · ${counts.stackoverflowTotal} SO</div>
+          <div class="ua-dash-card-sub">${counts.cveTotal} CVE · ${counts.releaseNotesTotal} release · ${counts.redditTotal} reddit · ${counts.stackoverflowTotal} SO · ${counts.serverfaultTotal} SF</div>
         </div>
         <div class="ua-dash-card ${gap.total && gapFailRate >= 50 ? "ua-dash-card-alert" : ""}">
           <div class="ua-dash-card-label">Vendor gap-fills</div>
