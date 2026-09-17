@@ -2282,7 +2282,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.98.0">Releasetrain <em>v3.98.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.98.1">Releasetrain <em>v3.98.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4091,6 +4091,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-17</div>
+              <div class="cl-ver cl-ver-patch">v3.98.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Comparison answers: fixed counts, and a new guardrail</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Reported live: a comparison answer stated "Teams recorded 8 known vulnerabilities" when the real tracked total was 23. The server's evidence gathering was reading its own capped, 8-document fetch (sized to keep the LLM's prompt small) as if it were the true count; comparison answers now state the real, uncapped count of vulnerabilities, updates, and community reports.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> New mandatory guardrail, "Verify and correct the stated time window in comparison answers": a free-tier model can restate the recency window it was given wrong (seen live stating "a 90-day window since June 19" when the real window searched was 3 days since Sep 14); the real window is now appended deterministically instead. Shows up on that answer's own Guardrails tab when it fires.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -7725,6 +7739,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         text = "Trusted a live web result the Evaluator judged insufficient for this answer.";
       } else if (id === "deterministicWebFallback" && a.applied) {
         text = "Ran a live web search for this answer since internal retrieval found nothing.";
+      } else if (id === "comparisonWindowCorrection" && a.applied) {
+        text = "Corrected the stated time window for this comparison answer.";
       }
       if (!text) return "";
       const link = (taggedTitles && taggedTitles.length) ? ` <a href="#" class="ask-guardrail-goto-sources">View source</a>` : "";
