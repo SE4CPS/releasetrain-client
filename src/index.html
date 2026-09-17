@@ -2308,7 +2308,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.100.0">Releasetrain <em>v3.100.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.100.1">Releasetrain <em>v3.100.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4117,6 +4117,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-17</div>
+              <div class="cl-ver cl-ver-patch">v3.100.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Ask sign-in CTA now hides once you're actually signed in</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Reported live right after it shipped: the new "Sign in to ask a real question" button kept showing even after signing in. It was wired to uaRender(), which only runs after a login/logout submit or opening the Account view, not on a fresh page load with an already-valid session, the most common case for a returning signed-in visitor. Now also checked once at page bootstrap.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -14742,11 +14755,32 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       uaUpdateTopbar();
     }
 
+    // Ask intro panel's own sign-in call-to-action: pointless to a
+    // viewer already signed in (they can already ask a real question),
+    // reported live right after it shipped. A separate function, not
+    // inlined into uaRender() below, specifically so it can ALSO run at
+    // page bootstrap (see its own call next to uaUpdateSidebar() further
+    // down) - bootstrap deliberately calls the lighter uaUpdateSidebar()
+    // instead of full uaRender() (which would fire every admin-only
+    // dashboard/guardrails/etc. fetch on every single page load, not
+    // just when the Account view is actually opened), so a RETURNING
+    // signed-in visitor's already-valid session would otherwise leave
+    // this button visibly wrong (still inviting them to sign in) until
+    // they happened to log in/out again or open Account during this
+    // same page load, neither of which a returning user necessarily
+    // ever does.
+    function uaUpdateAskIntroSignin() {
+      const token = uaToken();
+      const user = uaUser();
+      const row = document.querySelector(".ask-intro-signin-row");
+      if (row) row.style.display = (token && user) ? "none" : "";
+    }
     function uaRender() {
       const token = uaToken();
       const user = uaUser();
       document.getElementById("ua-auth-panel").style.display = (!token || !user) ? "" : "none";
       document.getElementById("ua-profile-panel").style.display = (token && user) ? "" : "none";
+      uaUpdateAskIntroSignin();
       const saveBtn = document.getElementById("ua-bm-save-btn");
       if (saveBtn) saveBtn.style.display = (token && user) ? "" : "none";
       if (token && user) {
@@ -16297,6 +16331,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // Show save button if already logged in
     const _bsBtn = document.getElementById("ua-bm-save-btn");
     if (_bsBtn && uaToken()) _bsBtn.style.display = "";
+    // Hide the Ask intro panel's sign-in CTA if already logged in (see
+    // uaUpdateAskIntroSignin's own comment on why this needs its own
+    // bootstrap call, not just a ride on uaRender()).
+    uaUpdateAskIntroSignin();
 
   </script>
 </body>
