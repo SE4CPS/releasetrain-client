@@ -2282,7 +2282,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.99.0">Releasetrain <em>v3.99.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.99.1">Releasetrain <em>v3.99.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4091,6 +4091,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-17</div>
+              <div class="cl-ver cl-ver-patch">v3.99.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Feedback Loop tab and preset badge fixes</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Reported live: the Feedback Loop tab looked unchanged after last update's new Rewriter/Retriever/Evaluator/Orchestrator guardrails, since it only ever read the numeric feedbackLoopCount field, which only the two genuinely delegated presets (Multi-agent, delegated / Multi-agent, feedback loop) set. It now reports every pipeline-level retry guardrail that applies to this specific answer, with a plain explanation when a preset (e.g. Multi-agent, fixed) doesn't use a separate Rewriter/Retriever/Evaluator loop at all.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Reported live: a plain "recent CVEs affecting MySQL" question run under Multi-agent (fixed) showed the badge "Multi-agent, fixed &middot; 1 agent", reading as a flat contradiction the same way a comparison question's badge already had one fix for. Multi-agent (buggy)/(fixed) are genuinely single-continuous-loop architectures despite their own name (the paper's own naming: "buggy"/"fixed" describes that one loop's retrieval bug, not delegation), so the agent-count suffix is now suppressed for them instead of contradicting the label.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -7857,17 +7871,51 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // feedbackLoop.js's own comment server-side).
     async function askRenderFeedbackLoopTab(panel, runId) {
       // Set synchronously by askRenderCard as this panel's own data
-      // attribute (only multi_agent/multi_agent_feedback presets set
-      // it server-side; a single-agent or comparison answer has no
-      // Retriever/Evaluator round to count, so this stays blank there),
-      // same reasoning as Guardrails' data-guardrail-activity above --
-      // no separate round trip needed for a number already in `res`.
+      // attributes (same JSON already computed for the Guardrails panel,
+      // reused here rather than a second round trip). Reads every
+      // pipeline-level retry guardrail (retrieverRetry/rewriterRetry/
+      // evaluatorSelfCheck/orchestratorRevise), not just the numeric
+      // feedbackLoopCount: a viewer landing on a tab literally named
+      // "Feedback Loop" reasonably expects ALL of this system's feedback-
+      // loop mechanics here, not split silently between this tab and the
+      // separate Guardrails tab by an internal pipeline distinction they
+      // have no way to know about - reported live on a plain,
+      // non-comparison "recent CVEs affecting MySQL" question run under
+      // Multi-agent (fixed): this tab showed nothing at all about the new
+      // loops, since that preset never sets feedbackLoopCount (only the
+      // two genuinely delegated presets, multi_agent/multi_agent_feedback,
+      // do - see agentCount's own comment on evaluatorRan elsewhere in
+      // this file for why).
+      let activity = {};
+      try { activity = JSON.parse(panel.dataset.guardrailActivity || "{}"); } catch { /* keep {} */ }
+      // retrieverRetry/rewriterRetry/evaluatorSelfCheck only ever appear
+      // in guardrailActivity for a genuinely delegated run (see
+      // runDelegatedAsk's own guardrailActivity object server-side); a
+      // continuous-loop preset's guardrailActivity never has these keys
+      // at all, which is how this tells the two apart rather than
+      // guessing from the preset name.
+      const isDelegated = Object.prototype.hasOwnProperty.call(activity, "retrieverRetry");
       const loopCountRaw = panel.dataset.feedbackLoopCount;
       const loopCount = loopCountRaw ? Number(loopCountRaw) : null;
-      const loopCountHtml = loopCount
-        ? `<p style="font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin:0 0 4px;color:var(--muted)">This answer's loop count</p>
-           <p class="ask-muted" style="margin:0 0 10px">${loopCount} round${loopCount === 1 ? "" : "s"}${loopCount > 1 ? " (the feedback loop retried once)" : " (no retry needed, the first pass was already sufficient)"}</p>`
-        : "";
+      const loopLines = [];
+      if (isDelegated) {
+        if (loopCount) {
+          loopLines.push(`${loopCount} retrieval/evaluation round${loopCount === 1 ? "" : "s"} for this answer${loopCount > 1 ? " (the feedback loop retried)" : " (no retry needed, the first pass was already sufficient)"}.`);
+        }
+        if (activity.rewriterRetry && activity.rewriterRetry.applied) {
+          loopLines.push(`The Rewriter tried different search terms for this answer (${activity.rewriterRetry.attempts} attempts).`);
+        }
+        if (activity.evaluatorSelfCheck && activity.evaluatorSelfCheck.applied) {
+          loopLines.push("The Evaluator's response was retried after an earlier malformed reply.");
+        }
+      } else {
+        loopLines.push("This preset doesn't use a separate Rewriter/Retriever/Evaluator loop; only the delegated multi-agent presets (Multi-agent, delegated / Multi-agent, feedback loop) do.");
+      }
+      if (activity.orchestratorRevise && activity.orchestratorRevise.applied) {
+        loopLines.push("This answer was regenerated after an initial hedge despite real evidence.");
+      }
+      const loopCountHtml = `<p style="font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin:0 0 4px;color:var(--muted)">This answer's loop activity</p>
+           ${loopLines.map(t => `<p class="ask-muted" style="margin:0 0 10px">${uaEsc(t)}</p>`).join("")}`;
       if (!runId) {
         panel.innerHTML = `${loopCountHtml}<p class="ua-muted" style="font-size:12px;padding:8px 0">No saved answer to check yet.</p>`;
         return;
@@ -9291,9 +9339,25 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // live. The badge names what actually ran instead; which preset
       // was selected is still visible in full, with the real reason, on
       // the Model vs Rules tab.
+      // Same contradiction, a second real case: multi_agent_buggy/
+      // multi_agent_fixed are genuinely single-continuous-loop
+      // architectures (evaluatorRan is always false for them, see
+      // agentCount's own comment - only a truly delegated run ever
+      // reaches 4), but their own display label still says "Multi-agent"
+      // (the paper's own naming: that label's "buggy"/"fixed" wording is
+      // about a bug in, or fix to, that one loop's retrieval, not about
+      // delegation). Reported live on a plain, non-comparison "recent
+      // CVEs affecting MySQL" question run under Multi-agent (fixed):
+      // "Multi-agent, fixed · 1 agent" reads exactly as contradictory as
+      // the comparison case above. Suppressing just the "· N agent(s)"
+      // suffix here (not renaming the label, which would misrepresent
+      // this system's own citation of the paper's established
+      // terminology) fixes it without touching what the label itself says.
+      const labelSaysMultiAgent = /multi-agent/i.test(label);
+      const suffixContradicts = !isComparison && agentCount === 1 && labelSaysMultiAgent;
       const displayLabel = isComparison
         ? `Comparison · ${agentSuffix}`
-        : `${label}${res.vendorWebVerified ? " + Web Verification" : ""} · ${agentSuffix}`;
+        : `${label}${res.vendorWebVerified ? " + Web Verification" : ""}${suffixContradicts ? "" : ` · ${agentSuffix}`}`;
       if (res.error) {
         const errLabelHtml = opts.previewQuestion
           ? `<div class="ask-answer-heading"><span class="ask-answer-question">${uaEsc(opts.previewQuestion)}</span><span class="ask-answer-preset">${uaEsc(displayLabel)}</span></div>`
@@ -9376,7 +9440,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p class="ask-muted" style="font-size:12px;padding:8px 0">Loading…</p>
         </div>
         <div class="ask-rail-panel" data-panel="feedbackloop" hidden
-          data-feedback-loop-count="${Number.isFinite(res.feedbackLoopCount) ? res.feedbackLoopCount : ""}">
+          data-feedback-loop-count="${Number.isFinite(res.feedbackLoopCount) ? res.feedbackLoopCount : ""}"
+          data-guardrail-activity='${uaEsc(JSON.stringify(res.guardrailActivity || {}))}'>
           <p class="ask-muted" style="font-size:12px;padding:8px 0">Loading…</p>
         </div>
       </div>`;
