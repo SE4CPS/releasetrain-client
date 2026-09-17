@@ -1646,6 +1646,11 @@
        not just "is enabled in general". */
     .ask-guardrail-used { font-size: 11px; color: var(--ok, #16a34a); margin-top: 2px; }
     .ask-guardrail-used a { color: inherit; text-decoration: underline; margin-left: 2px; }
+    /* Per-answer Feedback Loop tab only (askRenderFeedbackLoopTab): a
+       vendor currently flagged by an admin-set threshold - a caution,
+       not a "this worked" note, so it gets --warn rather than
+       .ask-guardrail-used's --ok green. */
+    .ask-feedback-flagged { font-size: 11px; color: var(--warn, #b45309); margin-top: 2px; }
     .ua-settings-input {
       width: 80px; padding: 4px 6px; border: 1px solid var(--border); border-radius: var(--radius-sm);
       font: inherit; font-size: 13px; background: var(--bg); color: var(--text);
@@ -2277,7 +2282,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.97.0">Releasetrain <em>v3.97.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.98.0">Releasetrain <em>v3.98.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3566,7 +3571,7 @@ flowchart LR
 </div>
 <p class="section-sort-note">Endpoints collapsed by default, ordered method-first then route.</p>
 <div class="api-grid">
-<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/ask/compare</span></summary><div class="endpoint-body"><p>Runs the same question through up to 5 presets in parallel, for side-by-side accuracy comparison. Defaults to <code class="inline">single_agent,multi_agent_buggy,multi_agent_fixed</code> if <code class="inline">presets</code> is omitted.</p><div><span class="tag">requires login</span><span class="tag">question required</span><span class="tag">presets optional</span></div><pre><code>curl "https://releasetrain.io/api/ask/compare?question=Should+I+use+Node+or+Flask&amp;presets=single_agent,multi_agent_fixed" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "question": "Should I use Node or Flask?", "runs": [ { "preset": "single_agent", "runId": "660c38fce3cba9423e4f8f23", "answer": "...", "sources": [ "..." ] }, { "preset": "multi_agent_fixed", "runId": "660c38fce3cba9423e4f8f24", "answer": "...", "sources": [ "..." ] } ] }</code></pre></div></details>
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/ask/compare</span></summary><div class="endpoint-body"><p>Runs the same question through up to 5 presets in parallel, for side-by-side accuracy comparison. Defaults to <code class="inline">single_agent,multi_agent_buggy,multi_agent_fixed</code> if <code class="inline">presets</code> is omitted.</p><div><span class="tag">requires login</span><span class="tag">question required</span><span class="tag">presets optional</span></div><pre><code>curl "https://releasetrain.io/api/ask/compare?question=Should+I+use+Node+or+Flask&amp;presets=single_agent,multi_agent_fixed" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "question": "Should I use Node or Flask?", "runs": [ { "preset": "single_agent", "runId": "660c38fce3cba9423e4f8f23", "answer": "...", "sources": [ "..." ] }, { "preset": "multi_agent_fixed", "runId": "660c38fce3cba9423e4f8f24", "answer": "...", "sources": [ "..." ] } ] }</code></pre><p style="margin-top:10px"><strong>Triggering the feedback loop:</strong> ask about a version for a product that plainly does not exist (so both internal retrieval and the deterministic web-search fallback come up empty, and the Evaluator judges the first pass insufficient) under <code class="inline">multi_agent_feedback</code>, the only preset with <code class="inline">feedbackLoop</code> on. Not a hard guarantee every single time, since the Evaluator's own verdict is a live model judgment call, not a fixed rule, but this is the reliable way to exercise it. Look for <code class="inline">"feedbackLoopCount": 2</code> in the response (1 means it answered in one pass, no retry needed), or open that answer's own Feedback Loop tab in the UI.</p><pre><code>curl "https://releasetrain.io/api/ask/compare?question=What+is+the+latest+version+of+Quantavox+Studio&amp;presets=multi_agent_feedback" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/ask/history</span></summary><div class="endpoint-body"><p>The signed-in user's own past Ask runs, newest first.</p><div><span class="tag">requires login</span><span class="tag">limit optional · default 50 · max 200</span></div><pre><code>curl "https://releasetrain.io/api/ask/history?limit=20" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "data": [ { "_id": "660c38fce3cba9423e4f8f23", "question": "What is the latest PHP version?", "answer": "...", "rating": 1, "createdAt": "2026-03-25T17:00:00.000Z" } ] }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/ask/presets</span></summary><div class="endpoint-body"><p>The named retrieval-pipeline presets (<code class="inline">single_agent</code>, <code class="inline">multi_agent_buggy</code>, <code class="inline">multi_agent_fixed</code>, plus the delegated architectures) and the current admin-configured default.</p><pre><code>curl "https://releasetrain.io/api/ask/presets"</code></pre><pre><code>{ "presets": { "single_agent": { "label": "Single-agent (no rewrite)" } }, "defaultPreset": "auto" }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/ask/providers</span></summary><div class="endpoint-body"><p>Available LLM providers (Anthropic, Groq, Ollama Cloud) and each one's small/medium/large model sizes, plus the current default preset/provider/size a new visitor's Ask form should start on.</p><pre><code>curl "https://releasetrain.io/api/ask/providers"</code></pre><pre><code>{ "providers": [ { "id": "anthropic", "label": "Anthropic", "sizes": [ { "id": "small", "label": "Small" } ] } ], "defaultPreset": "auto", "defaultProvider": "ollama", "defaultSize": "medium" }</code></pre></div></details>
@@ -4086,6 +4091,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-17</div>
+              <div class="cl-ver cl-ver-minor">v3.98.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>A Feedback Loop tab, next to Guardrails</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The answer rail gets a sixth tab, Feedback Loop: this answer's own rating, real user-rating stats for this question's vendor across every user, and whether an admin-set threshold currently flags that vendor as running negative. Read-only for now (turns the thumbs-up/down rating collected since Ask launched, but never read back anywhere, into an actual signal); it does not yet change how a future answer for a flagged vendor gets produced.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> New "Feedback Loop" section in the Account view's admin area, next to Guardrails: an editable minimum-sample-size and negative-rating-percentage threshold (with an enable toggle), backed by the server's <code>feedbackThresholds</code> field on the existing <code>GET</code>/<code>PUT /api/admin/settings</code>.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The Feedback Loop tab also shows this exact answer's own loop count: how many retrieval/evaluation rounds the delegated multi-agent pipeline actually took (1 normally, 2 when the Evaluator judged the first pass insufficient and <code>multi_agent_feedback</code>'s own retry fired), a new structured <code>feedbackLoopCount</code> field instead of that fact only living inside a free-text summary.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -6808,6 +6828,28 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                 <div id="ua-guardrails-optional-list" class="ua-settings-list"></div>
               </div>
             </details>
+            <!-- Feedback Loop: turns the thumbs-up/down rating already
+                 collected on every answer (POST /api/ask/:runId/rate)
+                 into an admin-configurable threshold instead of a
+                 write-only field nobody reads back. Same GET/PUT
+                 /api/admin/settings round-trip as Guardrails above (a
+                 `feedbackThresholds` array in that same flat response).
+                 v1 is visibility-only: a flagged vendor shows up on its
+                 answers' own Feedback Loop tab, it does not yet change
+                 how a future answer for that vendor gets produced. -->
+            <details class="ua-admin-details">
+              <summary class="ua-admin-header">
+                <span style="font-weight:700;font-size:13px">Feedback Loop</span>
+                <span id="ua-feedback-thresholds-count" class="ua-muted" style="font-size:12px"></span>
+                <button id="ua-refresh-feedback-thresholds" class="btn btn-ghost" style="font-size:12px;padding:4px 10px;margin-left:auto">Refresh</button>
+              </summary>
+              <div id="ua-feedback-thresholds-section">
+                <p class="ua-muted" style="font-size:12px;margin:10px 0 6px">Flags a vendor on its answers' Feedback Loop tab once real user ratings run negative past these thresholds.</p>
+                <div id="ua-feedback-thresholds-list" class="ua-settings-list">
+                  <p class="ua-muted" style="font-size:12px;padding:8px 0">Loading…</p>
+                </div>
+              </div>
+            </details>
             <!-- Runtime settings / feature flags. One generic list, not
                  a hardcoded form per setting: each row is rendered from
                  whatever GET /api/admin/settings actually returns, so a
@@ -7760,6 +7802,85 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           } finally {
             input.disabled = false;
           }
+        });
+      });
+    }
+
+    // Per-answer Feedback Loop tab (askRenderCard's own
+    // [data-panel="feedbackloop"]): unlike Guardrails above, this needs
+    // its own per-answer fetch (GET /api/ask/:runId/feedback-loop) since
+    // the vendor-wide rating stats behind it aren't already embedded in
+    // res.* the way guardrailActivity is. Shows this run's own rating,
+    // the vendor's aggregate stats, and whether any admin threshold
+    // currently flags it -- read-only for now (v1 does not change how a
+    // future answer for a flagged vendor gets produced, see
+    // feedbackLoop.js's own comment server-side).
+    async function askRenderFeedbackLoopTab(panel, runId) {
+      // Set synchronously by askRenderCard as this panel's own data
+      // attribute (only multi_agent/multi_agent_feedback presets set
+      // it server-side; a single-agent or comparison answer has no
+      // Retriever/Evaluator round to count, so this stays blank there),
+      // same reasoning as Guardrails' data-guardrail-activity above --
+      // no separate round trip needed for a number already in `res`.
+      const loopCountRaw = panel.dataset.feedbackLoopCount;
+      const loopCount = loopCountRaw ? Number(loopCountRaw) : null;
+      const loopCountHtml = loopCount
+        ? `<p style="font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin:0 0 4px;color:var(--muted)">This answer's loop count</p>
+           <p class="ask-muted" style="margin:0 0 10px">${loopCount} round${loopCount === 1 ? "" : "s"}${loopCount > 1 ? " (the feedback loop retried once)" : " (no retry needed, the first pass was already sufficient)"}</p>`
+        : "";
+      if (!runId) {
+        panel.innerHTML = `${loopCountHtml}<p class="ua-muted" style="font-size:12px;padding:8px 0">No saved answer to check yet.</p>`;
+        return;
+      }
+      const res = await uaRequest(`ask/${runId}/feedback-loop`).catch(() => null);
+      if (!res) {
+        panel.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">Could not load feedback loop status.</p>`;
+        return;
+      }
+      if (res.status === 401) {
+        panel.innerHTML = `${loopCountHtml}<p class="ua-muted" style="font-size:12px;padding:8px 0">Sign in (<a href="#" id="askFeedbackLoopSignInLink" target="_self">Account view</a>) to see feedback loop status for your own answers.</p>`;
+        const signInLink = panel.querySelector("#askFeedbackLoopSignInLink");
+        if (signInLink) signInLink.addEventListener("click", e => { e.preventDefault(); activateUsers(); });
+        return;
+      }
+      if (!res.ok) {
+        panel.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">Could not load feedback loop status.</p>`;
+        return;
+      }
+      const data = await res.json();
+      const ratingText = data.thisRun && data.thisRun.rating === 1 ? "👍 You rated this Helpful"
+        : data.thisRun && data.thisRun.rating === -1 ? "👎 You rated this Not helpful"
+        : "Not rated yet";
+      const vendorText = data.vendor ? uaEsc(data.vendor) : "this question's vendor";
+      const statsHtml = data.totalRatings
+        ? `<p class="ask-muted" style="margin:0 0 10px">${data.totalRatings} rating${data.totalRatings === 1 ? "" : "s"} so far for <strong>${vendorText}</strong>, ${Math.round((data.negativeRatio || 0) * 100)}% negative.</p>`
+        : `<p class="ask-muted" style="margin:0 0 10px">No user ratings yet for <strong>${vendorText}</strong>.</p>`;
+      const thresholdsHtml = (data.thresholds || []).map(t => `<div class="ua-settings-row" style="font-size:11px;padding:8px 10px">
+          <div class="ua-settings-info">
+            <strong>&#128274; ${uaEsc(t.label || t.id)}</strong>
+            <span class="ua-muted">${uaEsc(t.description || "")}</span>
+            ${t.flagged ? `<div class="ask-feedback-flagged">&#9888;&#65039; ${vendorText} is currently flagged: at least ${t.minRatings} ratings, &ge;${Math.round(t.negativeRatio * 100)}% negative.</div>` : ""}
+          </div>
+          <input type="checkbox" disabled${t.enabled ? " checked" : ""}>
+        </div>`).join("") || `<p class="ua-muted" style="font-size:11px;margin:0">No feedback thresholds defined yet.</p>`;
+      panel.innerHTML = `
+        <p class="ask-muted" style="margin:0 0 10px">Real user ratings for this answer's vendor, and whether an admin-set threshold currently flags it. <a href="#" class="ask-feedbackloop-goto-answer">Rate this answer</a></p>
+        ${loopCountHtml}
+        <p style="font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin:0 0 4px;color:var(--muted)">This answer's rating</p>
+        <p class="ask-muted" style="margin:0 0 10px">${uaEsc(ratingText)}</p>
+        <p style="font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin:0 0 4px;color:var(--muted)">Vendor rating history</p>
+        ${statsHtml}
+        <p style="font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin:12px 0 4px;color:var(--muted)">Thresholds (admin-set, disabled here)</p>
+        <div class="ua-settings-list" style="margin-top:0">${thresholdsHtml}</div>
+      `;
+      // "Rate this answer": switches this same card to its Answer tab,
+      // same jump-to-tab pattern as Guardrails' "View source" above.
+      panel.querySelectorAll(".ask-feedbackloop-goto-answer").forEach(a => {
+        a.addEventListener("click", e => {
+          e.preventDefault();
+          const card = panel.closest(".ask-answer-card");
+          const answerTab = card && card.querySelector('.ask-rail-tab[data-tab="answer"]');
+          if (answerTab) answerTab.click();
         });
       });
     }
@@ -9188,6 +9309,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <button type="button" class="ask-rail-tab" data-tab="benchmark" role="tab" aria-selected="false">Benchmark</button>
           <button type="button" class="ask-rail-tab" data-tab="modelrules" role="tab" aria-selected="false">Model vs Rules</button>
           <button type="button" class="ask-rail-tab" data-tab="guardrails" role="tab" aria-selected="false">Guardrails</button>
+          <button type="button" class="ask-rail-tab" data-tab="feedbackloop" role="tab" aria-selected="false">Feedback Loop</button>
         </div>
         <div class="ask-rail-panel" data-panel="answer">
           ${opts.previewQuestion ? askQueryPreviewBlockHtml(opts.previewQuestion) : ""}
@@ -9211,6 +9333,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         <div class="ask-rail-panel" data-panel="guardrails" hidden
           data-guardrail-activity='${uaEsc(JSON.stringify(res.guardrailActivity || {}))}'
           data-guardrail-sources='${uaEsc(JSON.stringify((res.sources || []).filter(s => s.guardrail).map(s => ({ title: s.title, guardrail: s.guardrail }))))}'>
+          <p class="ask-muted" style="font-size:12px;padding:8px 0">Loading…</p>
+        </div>
+        <div class="ask-rail-panel" data-panel="feedbackloop" hidden
+          data-feedback-loop-count="${Number.isFinite(res.feedbackLoopCount) ? res.feedbackLoopCount : ""}">
           <p class="ask-muted" style="font-size:12px;padding:8px 0">Loading…</p>
         </div>
       </div>`;
@@ -9253,6 +9379,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             if (panel && !panel.dataset.loaded) {
               panel.dataset.loaded = "1";
               askRenderGuardrailsTab(panel);
+            }
+          }
+          // Same lazy-load-on-first-open reasoning as Guardrails above,
+          // plus this one needs the card's own runId (GET
+          // /api/ask/:runId/feedback-loop), unlike Guardrails' single
+          // shared GET /api/guardrails list.
+          if (tab.dataset.tab === "feedbackloop") {
+            const panel = root.querySelector('.ask-rail-panel[data-panel="feedbackloop"]');
+            const card = root.querySelector(".ask-answer-card");
+            if (panel && !panel.dataset.loaded) {
+              panel.dataset.loaded = "1";
+              askRenderFeedbackLoopTab(panel, card && card.dataset.runId);
             }
           }
         });
@@ -14403,6 +14541,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           uaLoadDashboard();
           uaLoadSettings();
           uaLoadGuardrails();
+          uaLoadFeedbackThresholds();
           uaLoadBotCadence();
           uaLoadVendorAliases();
           uaLoadUsers();
@@ -14937,6 +15076,78 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     const uaRefreshGuardrailsBtn = document.getElementById("ua-refresh-guardrails");
     if (uaRefreshGuardrailsBtn) uaRefreshGuardrailsBtn.addEventListener("click", uaLoadGuardrails);
+
+    // Feedback Loop thresholds (also GET/PUT /api/admin/settings, same
+    // endpoint as Guardrails above, just its `feedbackThresholds` key).
+    // negativeRatio is stored server-side as a 0-1 fraction but edited
+    // here as a whole-number percent, matching how an admin actually
+    // thinks about "40% negative" rather than "0.4".
+    async function uaLoadFeedbackThresholds() {
+      const listEl = document.getElementById("ua-feedback-thresholds-list");
+      const countEl = document.getElementById("ua-feedback-thresholds-count");
+      if (!listEl) return;
+      const res = await uaRequest("admin/settings").catch(() => null);
+      if (!res || !res.ok) {
+        listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">Could not load feedback thresholds.</p>`;
+        return;
+      }
+      const settings = await res.json();
+      const thresholds = Array.isArray(settings.feedbackThresholds) ? settings.feedbackThresholds : [];
+      if (countEl) countEl.textContent = thresholds.length ? "(" + thresholds.length + ")" : "";
+      if (!thresholds.length) {
+        listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">No feedback thresholds defined yet.</p>`;
+        return;
+      }
+      listEl.innerHTML = thresholds.map(t => `<div class="ua-settings-row" data-id="${uaEsc(t.id)}">
+          <div class="ua-settings-info">
+            <strong>${uaEsc(t.label || t.id)}</strong>
+            <span class="ua-muted">${uaEsc(t.description || "")}</span>
+          </div>
+          <label class="ua-muted" style="font-size:12px">min ratings
+            <input type="number" class="ua-settings-input ua-feedback-min-input" data-id="${uaEsc(t.id)}" value="${t.minRatings}" min="1" max="1000" style="width:60px">
+          </label>
+          <label class="ua-muted" style="font-size:12px">% negative
+            <input type="number" class="ua-settings-input ua-feedback-ratio-input" data-id="${uaEsc(t.id)}" value="${Math.round((t.negativeRatio || 0) * 100)}" min="0" max="100" style="width:55px">
+          </label>
+          <input type="checkbox" class="ua-settings-input ua-settings-checkbox ua-feedback-enabled-input" data-id="${uaEsc(t.id)}"${t.enabled ? " checked" : ""}>
+          <button type="button" class="btn btn-ghost ua-feedback-threshold-save" data-id="${uaEsc(t.id)}" style="font-size:12px;padding:4px 10px">Save</button>
+        </div>`).join("");
+
+      listEl.querySelectorAll(".ua-feedback-threshold-save").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const id = btn.dataset.id;
+          const esc = CSS.escape(id);
+          const minInput = listEl.querySelector(`.ua-feedback-min-input[data-id="${esc}"]`);
+          const ratioInput = listEl.querySelector(`.ua-feedback-ratio-input[data-id="${esc}"]`);
+          const enabledInput = listEl.querySelector(`.ua-feedback-enabled-input[data-id="${esc}"]`);
+          if (!minInput || !ratioInput || !enabledInput) return;
+          btn.disabled = true;
+          const prevText = btn.textContent;
+          btn.textContent = "Saving…";
+          try {
+            const patch = { id, enabled: enabledInput.checked, minRatings: Number(minInput.value), negativeRatio: Number(ratioInput.value) / 100 };
+            const putRes = await uaRequest("admin/settings", { method: "PUT", body: JSON.stringify({ feedbackThresholds: [patch] }) });
+            if (!putRes.ok) throw new Error((await putRes.json().catch(() => ({}))).error || "Save failed.");
+            const applied = await putRes.json();
+            const updated = Array.isArray(applied.feedbackThresholds) ? applied.feedbackThresholds.find(t => t.id === id) : null;
+            if (updated) {
+              minInput.value = updated.minRatings;
+              ratioInput.value = Math.round((updated.negativeRatio || 0) * 100);
+              enabledInput.checked = updated.enabled;
+            }
+            btn.textContent = "Saved";
+            setTimeout(() => { btn.textContent = prevText; btn.disabled = false; }, 1200);
+          } catch (err) {
+            alert(err.message || "Save failed.");
+            btn.textContent = prevText;
+            btn.disabled = false;
+          }
+        });
+      });
+    }
+
+    const uaRefreshFeedbackThresholdsBtn = document.getElementById("ua-refresh-feedback-thresholds");
+    if (uaRefreshFeedbackThresholdsBtn) uaRefreshFeedbackThresholdsBtn.addEventListener("click", uaLoadFeedbackThresholds);
 
     // Bot health cadence thresholds (GET/PUT /api/admin/bot-cadence).
     // Kept separate from the generic UA_SETTINGS_META list above since
