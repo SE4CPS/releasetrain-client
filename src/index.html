@@ -2282,7 +2282,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.98.1">Releasetrain <em>v3.98.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.99.0">Releasetrain <em>v3.99.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4091,6 +4091,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-17</div>
+              <div class="cl-ver cl-ver-minor">v3.99.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Feedback loops for every role: Rewriter, Retriever, Evaluator, Orchestrator</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The delegated multi-agent pipeline's single hardcoded retry (Retriever, then Evaluator again) is now an admin-configurable ceiling (new guardrail, "Retriever/Evaluator retry ceiling") instead of a fixed one-shot retry, and the per-answer Feedback Loop tab shows the real round count for that specific answer.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> New optional guardrail, "Let the Rewriter try different search terms on retry": off by default, a signed-in user can opt in for their own questions. When on, a retry regenerates a genuinely new set of search terms from the Rewriter agent instead of reusing the original terms with just the Evaluator's retry hint spliced on.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> New mandatory guardrail, "Retry a malformed Evaluator response": a response that failed to parse as the required JSON shape was previously treated the same as a real "insufficient" verdict, with no distinction between "the model judged this insufficient" and "the model's response was garbled." Now retried up to an admin-configurable ceiling before being accepted.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> New mandatory guardrail, "Regenerate a hedge answer written despite real evidence": the delegated pipeline had no rescue at all for an Orchestrator hedge ("I don't have enough evidence") written despite real, structured evidence already collected, unlike the single continuous-loop pipeline, which already had one, just unconditionally. Both pipelines now share the same named, admin-configurable check.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -7741,6 +7757,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         text = "Ran a live web search for this answer since internal retrieval found nothing.";
       } else if (id === "comparisonWindowCorrection" && a.applied) {
         text = "Corrected the stated time window for this comparison answer.";
+      } else if (id === "retrieverRetry" && a.applied) {
+        text = `Retried retrieval for this answer (${a.rounds} rounds total).`;
+      } else if (id === "rewriterRetry" && a.applied) {
+        text = `The Rewriter tried different search terms for this answer (${a.attempts} attempts).`;
+      } else if (id === "evaluatorSelfCheck" && a.applied) {
+        text = "Retried a malformed Evaluator response for this answer.";
+      } else if (id === "orchestratorRevise" && a.applied) {
+        text = "Regenerated this answer after an initial hedge despite real evidence.";
       }
       if (!text) return "";
       const link = (taggedTitles && taggedTitles.length) ? ` <a href="#" class="ask-guardrail-goto-sources">View source</a>` : "";
@@ -15050,11 +15074,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const settings = await res.json();
       const guardrails = Array.isArray(settings.guardrails) ? settings.guardrails : [];
       if (countEl) countEl.textContent = guardrails.length ? "(" + guardrails.length + ")" : "";
+      // A handful of guardrails (the retry-shaped ones: retrieverRetry,
+      // rewriterRetry, evaluatorSelfCheck, orchestratorRevise) also carry
+      // a maxAttempts ceiling, admin-only regardless of the guardrail's
+      // own tier (see guardrails.js's own comment on why this never goes
+      // through a user's per-request preference the way `enabled` can for
+      // an optional-tier one). Rendered only when the server actually
+      // sent one, same conditional-field pattern already used for
+      // Feedback Loop thresholds' own numeric inputs.
       const rowHtml = g => `<div class="ua-settings-row">
           <div class="ua-settings-info">
             <strong>${uaEsc(g.label || g.id)}</strong>
             <span class="ua-muted">${uaEsc(g.description || "")}</span>
           </div>
+          ${Number.isFinite(g.maxAttempts) ? `<label class="ua-muted" style="font-size:12px">max attempts
+            <input type="number" class="ua-settings-input ua-guardrail-maxattempts-input" data-id="${uaEsc(g.id)}" value="${g.maxAttempts}" min="1" max="${g.maxAttemptsCeiling || g.maxAttempts}" style="width:55px">
+          </label>` : ""}
           <input type="checkbox" class="ua-settings-input ua-settings-checkbox ua-guardrail-input" data-id="${uaEsc(g.id)}"${g.enabled ? " checked" : ""}>
           <button type="button" class="btn btn-ghost ua-guardrail-save" data-id="${uaEsc(g.id)}" style="font-size:12px;padding:4px 10px">Save</button>
         </div>`;
@@ -15068,17 +15103,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       document.querySelectorAll("#ua-guardrails-section .ua-guardrail-save").forEach(btn => {
         btn.addEventListener("click", async () => {
           const id = btn.dataset.id;
-          const input = document.querySelector(`#ua-guardrails-section .ua-guardrail-input[data-id="${CSS.escape(id)}"]`);
+          const esc = CSS.escape(id);
+          const input = document.querySelector(`#ua-guardrails-section .ua-guardrail-input[data-id="${esc}"]`);
+          const maxAttemptsInput = document.querySelector(`#ua-guardrails-section .ua-guardrail-maxattempts-input[data-id="${esc}"]`);
           if (!input) return;
           btn.disabled = true;
           const prevText = btn.textContent;
           btn.textContent = "Saving…";
           try {
-            const putRes = await uaRequest("admin/settings", { method: "PUT", body: JSON.stringify({ guardrails: [{ id, enabled: input.checked }] }) });
+            const patch = { id, enabled: input.checked };
+            if (maxAttemptsInput) patch.maxAttempts = Number(maxAttemptsInput.value);
+            const putRes = await uaRequest("admin/settings", { method: "PUT", body: JSON.stringify({ guardrails: [patch] }) });
             if (!putRes.ok) throw new Error((await putRes.json().catch(() => ({}))).error || "Save failed.");
             const applied = await putRes.json();
             const updated = Array.isArray(applied.guardrails) ? applied.guardrails.find(g => g.id === id) : null;
             if (updated && typeof updated.enabled === "boolean") input.checked = updated.enabled;
+            if (updated && maxAttemptsInput && Number.isFinite(updated.maxAttempts)) maxAttemptsInput.value = updated.maxAttempts;
             btn.textContent = "Saved";
             setTimeout(() => { btn.textContent = prevText; btn.disabled = false; }, 1200);
           } catch (err) {
