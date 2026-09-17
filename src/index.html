@@ -252,6 +252,32 @@
     .ask-intro-panel p { margin: 0 0 7px; }
     .ask-intro-panel h4 { font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); margin: 10px 0 5px; }
     .ask-intro-panel ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 3px; }
+    /* A real call-to-action, not the small inline text link this used
+       to be: reported live as too easy to miss next to the rest of the
+       panel's plain, technical copy, given signing in is what actually
+       unlocks the whole Ask feature. Sits above the tabs (not inside
+       any one of them) so it's visible regardless of which tab a
+       visitor has open. Same #askIntroSignInLink id as before, so the
+       existing delegated click handler (activateUsers) needs no change
+       at all, just a different element wired to it. */
+    .ask-intro-signin-row { margin: 4px 0 12px; }
+    .ask-intro-signin-btn {
+      display: block; width: 100%; text-align: center; font: 700 12.5px inherit;
+      background: var(--brand); color: #fff; border: none; border-radius: var(--radius-sm);
+      padding: 9px 12px; cursor: pointer;
+    }
+    .ask-intro-signin-btn:hover { background: #1d4ed8; }
+    /* Its own tab bar, not a reuse of .ask-rail-tabs: that class's
+       margin: -2px -14px 10px is a deliberate bleed-to-the-edge trick
+       that cancels out .ask-answer-card's own 14px padding (see its own
+       comment), which .ask-intro-panel never had to begin with -
+       reusing it as-is would push the bar 14px past this panel's real
+       content edges. .ask-rail-tab/.ask-rail-panel (the individual tab
+       button and panel, no padding-cancelling assumption baked in) are
+       still reused directly for a matching look. flex-wrap: six labels
+       in this panel's own narrow-sidebar width wrap to two rows rather
+       than overflow or force a horizontal scrollbar. */
+    .ask-intro-tabs { display: flex; flex-wrap: wrap; gap: 2px; margin: 8px 0 10px; border-bottom: 1px solid var(--border); }
     .ask-sample-btn {
       display: block; width: 100%; text-align: left; font: inherit; font-size: 11.5px; line-height: 1.35;
       background: var(--chip-bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
@@ -2282,7 +2308,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.99.1">Releasetrain <em>v3.99.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.100.0">Releasetrain <em>v3.100.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4091,6 +4117,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-17</div>
+              <div class="cl-ver cl-ver-minor">v3.100.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Ask panel: paper-shaped tabs, prominent sign-in</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The "About Ask" sidebar panel is now six tabs, structured like a paper (Intro, Related, Method, Result, Discussion, References), instead of one long flowing section. Existing content (the Pipeline diagram, the Multi-agent concept explanation, the Auto routing table, the related-work comparison table) moved into whichever tab it actually belongs under; new Result (the paper's own reported +17.2% 1-agent vs 4-agent retrieval-quality delta and zero-hallucination result), Discussion (known limits, how the Guardrails registry mitigates them), and References (the two papers this pipeline directly implements, plus the concurrent related work) tabs cover ground this panel never had anywhere before.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Reported live: the small inline "sign-in" text link was too easy to miss next to the rest of the panel's plain copy, given signing in is what unlocks the whole Ask feature. Replaced with a full-width call-to-action button, shown above the tabs so it's visible regardless of which one is open.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -7126,49 +7166,99 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
          actual model call and, for most questions, requires sign-in). -->
     <aside id="askIntroPanel" class="ask-intro-panel" aria-label="About Ask">
       <h3>Ask</h3>
-      <p>Runs your question through a real model call, with tool access to release notes, CVE records, Reddit/StackOverflow, plus a live web search fallback when internal data doesn't cover it.</p>
-      <p>A bare vendor/category name (e.g. "mysql", "llm") browses directly, no model call. A real question needs <a href="#" id="askIntroSignInLink" target="_self">sign-in</a>; a name lookup doesn't.</p>
-      <h4>Pipeline</h4>
-      <p>Picks how the question is answered: one continuous tool-use loop (Single-agent, Multi-agent buggy/fixed) or real role delegation (Multi-agent delegated, optional feedback loop). "Compare all 5" runs all five side by side.</p>
-      <div id="askIntroPipelineDiagram" class="ask-intro-diagram" aria-label="Ask pipeline flowchart"></div>
-      <h4>Auto: which process, by question type</h4>
-      <!-- Replaces the old plain "Try asking" list: the same clickable
-           sample questions (still wired via the delegated [data-ask-sample]
-           click listener below (a table cell qualifies exactly like a
-           <li> did), now shown against the real intent tag and the real
-           pipeline Auto picks for it (see pickAutoPipeline in ask.js,
-           the single source of truth this table's own wording is kept
-           in sync with by hand). Opinion's row honestly shows it
-           declines rather than reading like every other row that gets
-           a real answer. Research type: the general question-type
-           category each row corresponds to in the wider question-
-           classification literature (factoid/verify, decision-making,
-           how-to, review/opinion), not this system's own terms; no
-           inline citation markers or footnote, per request. -->
-      <table class="ask-intro-table">
-        <thead><tr><th>Research type</th><th>Type</th><th>Intent</th><th>Process</th><th>Example</th></tr></thead>
-        <tbody>
-          <tr><td>Decision-making</td><td>Comparison</td><td>comparison-question</td><td>Delegated+feedback</td><td><button type="button" class="ask-sample-btn" data-ask-sample="Should I use Node or Flask for a new API?">Node or Flask?</button></td></tr>
-          <tr><td>Factoid, verify</td><td>Security</td><td>cve-question</td><td>Union+rerank</td><td><button type="button" class="ask-sample-btn" data-ask-sample="Are there any recent CVEs affecting MySQL?">CVEs in MySQL?</button></td></tr>
-          <tr><td>Factoid, verify</td><td>Patch</td><td>patch-question</td><td>Union+rerank</td><td><button type="button" class="ask-sample-btn" data-ask-sample="Was the WebView bug fixed in a Chrome patch?">Chrome patched?</button></td></tr>
-          <tr><td>Factoid, numeric</td><td>Version</td><td>version-question</td><td>Single-agent</td><td><button type="button" class="ask-sample-btn" data-ask-sample="What's the latest PHP version?">Latest PHP?</button></td></tr>
-          <tr><td>How-to</td><td>General</td><td>general-question</td><td>Delegated</td><td><button type="button" class="ask-sample-btn" data-ask-sample="How do I roll back a bad Windows update?">Roll back update?</button></td></tr>
-          <tr><td>Review/opinion</td><td>Opinion</td><td>opinion</td><td>Declined, no retrieval</td><td><button type="button" class="ask-sample-btn" data-ask-sample="What's the best programming language?">Best language?</button></td></tr>
-        </tbody>
-      </table>
-      <h4>Multi-agent concept</h4>
-      <p>"Multi-agent" means four roles genuinely run as separate model calls, only under the delegated presets (Multi-agent delegated, feedback loop): a Rewriter reformulates the question into search terms, a Retriever searches release notes/CVEs/community discussion, an Evaluator judges whether the evidence is sufficient (retrying once under the feedback-loop preset), and an Orchestrator writes the final answer. Single-agent and the two buggy/fixed presets simulate the same four roles inside one continuous tool-use loop instead, no separate agent calls at all. A preset's name is a request, not a guarantee: each answer's own Model vs Rules tab shows which parts of that specific run were actually model-decided versus a deterministic rule.</p>
-      <h4>Related work</h4>
-      <table class="ask-intro-table">
-        <thead><tr><th>Paper</th><th>Goal</th><th>Similar</th><th>Different</th><th>Example question</th></tr></thead>
-        <tbody>
-          <tr><td><a href="https://arxiv.org/abs/2505.20096" target="_blank" rel="noopener">MA-RAG</a></td><td><strong>Decompose</strong> multi-hop questions, 4 agents</td><td>Staged agents, small model</td><td>Static QA, no live corpus</td><td>"Who directed the spouse's film?"</td></tr>
-          <tr><td><a href="https://arxiv.org/abs/2506.16988" target="_blank" rel="noopener">RAGentA</a></td><td><strong>Attributed</strong>, cited answers</td><td>Filter + reformulate loop</td><td>Reformulates <em>after</em> a draft, not before</td><td>"What caused City X's growth?"</td></tr>
-          <tr><td><a href="https://arxiv.org/abs/2504.05312" target="_blank" rel="noopener">Amber</a></td><td><strong>Adaptive</strong> memory across retrieval</td><td>Closest memory analog</td><td>Memory resets per question</td><td>"Summarize recent findings on X"</td></tr>
-          <tr><td><a href="https://arxiv.org/abs/2606.21553" target="_blank" rel="noopener">Dissecting Agentic RAG</a></td><td>Which parts <strong>actually help</strong></td><td>Same stages, same conclusion</td><td>An ablation, not a live defect</td><td>"What year did event X happen?"</td></tr>
-          <tr><td><a href="https://arxiv.org/abs/2603.07379" target="_blank" rel="noopener">SoK: Agentic RAG</a></td><td><strong>Taxonomy</strong> + risk survey</td><td>We match 3 of its 4 axes</td><td>A survey, zero experiments</td><td><em>Type: how to design/evaluate an agentic loop</em></td></tr>
-        </tbody>
-      </table>
+      <p>Runs your question through a real model call, with tool access to release notes, CVE records, Reddit/StackOverflow, plus a live web search fallback when internal data doesn't cover it. A bare vendor/category name (e.g. "mysql", "llm") browses directly, no model call.</p>
+      <div class="ask-intro-signin-row">
+        <button type="button" class="ask-intro-signin-btn" id="askIntroSignInLink">Sign in to ask a real question &rarr;</button>
+      </div>
+      <!-- Six tabs, paper-shaped, per explicit request: the panel's own
+           existing content (Pipeline/diagram/Multi-agent concept/Auto
+           table/Related work) already covered most of a paper's real
+           structure, just as one long flowing section with no framing
+           at all. Reorganized here, not rewritten: every existing
+           sentence/table row moved into whichever tab it actually
+           belongs under, plus new Result/Discussion/References content
+           this system didn't have anywhere before. Reuses .ask-rail-tab/
+           .ask-rail-panel (defined once, used elsewhere for the per-
+           answer Answer/Sources/Benchmark/... tabs) for a matching
+           look, wired by its own small askWireIntroTabs() below rather
+           than askWireRailTabs (that one's own lazy-load branches are
+           answer-specific and don't apply here). -->
+      <div class="ask-intro-tabs" role="tablist">
+        <button type="button" class="ask-rail-tab active" data-intro-tab="intro" role="tab" aria-selected="true">Intro</button>
+        <button type="button" class="ask-rail-tab" data-intro-tab="related" role="tab" aria-selected="false">Related</button>
+        <button type="button" class="ask-rail-tab" data-intro-tab="method" role="tab" aria-selected="false">Method</button>
+        <button type="button" class="ask-rail-tab" data-intro-tab="result" role="tab" aria-selected="false">Result</button>
+        <button type="button" class="ask-rail-tab" data-intro-tab="discussion" role="tab" aria-selected="false">Discussion</button>
+        <button type="button" class="ask-rail-tab" data-intro-tab="references" role="tab" aria-selected="false">References</button>
+      </div>
+
+      <div class="ask-rail-panel" data-intro-panel="intro">
+        <h4>Motivation</h4>
+        <p>"Stop drawing the architecture. Ask an LLM the update question, and make it abstain <i>before</i> it generates when the evidence is not there." A software update question ("did the latest patch fix the bug I hit?") is exactly the kind a small/free model answers confidently and wrong when it has no real evidence to check its own claim against, which is what the rest of this pipeline exists to prevent.</p>
+      </div>
+
+      <div class="ask-rail-panel" data-intro-panel="related" hidden>
+        <table class="ask-intro-table">
+          <thead><tr><th>Paper</th><th>Goal</th><th>Similar</th><th>Different</th><th>Example question</th></tr></thead>
+          <tbody>
+            <tr><td><a href="https://arxiv.org/abs/2505.20096" target="_blank" rel="noopener">MA-RAG</a></td><td><strong>Decompose</strong> multi-hop questions, 4 agents</td><td>Staged agents, small model</td><td>Static QA, no live corpus</td><td>"Who directed the spouse's film?"</td></tr>
+            <tr><td><a href="https://arxiv.org/abs/2506.16988" target="_blank" rel="noopener">RAGentA</a></td><td><strong>Attributed</strong>, cited answers</td><td>Filter + reformulate loop</td><td>Reformulates <em>after</em> a draft, not before</td><td>"What caused City X's growth?"</td></tr>
+            <tr><td><a href="https://arxiv.org/abs/2504.05312" target="_blank" rel="noopener">Amber</a></td><td><strong>Adaptive</strong> memory across retrieval</td><td>Closest memory analog</td><td>Memory resets per question</td><td>"Summarize recent findings on X"</td></tr>
+            <tr><td><a href="https://arxiv.org/abs/2606.21553" target="_blank" rel="noopener">Dissecting Agentic RAG</a></td><td>Which parts <strong>actually help</strong></td><td>Same stages, same conclusion</td><td>An ablation, not a live defect</td><td>"What year did event X happen?"</td></tr>
+            <tr><td><a href="https://arxiv.org/abs/2603.07379" target="_blank" rel="noopener">SoK: Agentic RAG</a></td><td><strong>Taxonomy</strong> + risk survey</td><td>We match 3 of its 4 axes</td><td>A survey, zero experiments</td><td><em>Type: how to design/evaluate an agentic loop</em></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="ask-rail-panel" data-intro-panel="method" hidden>
+        <h4>Pipeline</h4>
+        <p>Picks how the question is answered: one continuous tool-use loop (Single-agent, Multi-agent buggy/fixed) or real role delegation (Multi-agent delegated, optional feedback loop). "Compare all 5" runs all five side by side.</p>
+        <div id="askIntroPipelineDiagram" class="ask-intro-diagram" aria-label="Ask pipeline flowchart"></div>
+        <h4>Multi-agent concept</h4>
+        <p>"Multi-agent" means four roles genuinely run as separate model calls, only under the delegated presets (Multi-agent delegated, feedback loop): a Rewriter reformulates the question into search terms, a Retriever searches release notes/CVEs/community discussion, an Evaluator judges whether the evidence is sufficient (retrying under an admin-configurable ceiling), and an Orchestrator writes the final answer. Single-agent and the two buggy/fixed presets simulate the same four roles inside one continuous tool-use loop instead, no separate agent calls at all. A preset's name is a request, not a guarantee: each answer's own Model vs Rules tab shows which parts of that specific run were actually model-decided versus a deterministic rule.</p>
+      </div>
+
+      <div class="ask-rail-panel" data-intro-panel="result" hidden>
+        <p>From the papers this pipeline implements, not a live claim about this deployment's current traffic: retrieval quality averaged 0.680 with a single agent versus 0.798 with four (+17.2%, paired t-test across 50 queries, p = 0.020), and zero hallucinated outputs across 20 live evidence-gated queries.</p>
+        <h4>Auto: which process, by question type</h4>
+        <!-- Replaces the old plain "Try asking" list: the same clickable
+             sample questions (still wired via the delegated [data-ask-sample]
+             click listener below (a table cell qualifies exactly like a
+             <li> did), now shown against the real intent tag and the real
+             pipeline Auto picks for it (see pickAutoPipeline in ask.js,
+             the single source of truth this table's own wording is kept
+             in sync with by hand). Opinion's row honestly shows it
+             declines rather than reading like every other row that gets
+             a real answer. Research type: the general question-type
+             category each row corresponds to in the wider question-
+             classification literature (factoid/verify, decision-making,
+             how-to, review/opinion), not this system's own terms; no
+             inline citation markers or footnote, per request. -->
+        <table class="ask-intro-table">
+          <thead><tr><th>Research type</th><th>Type</th><th>Intent</th><th>Process</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td>Decision-making</td><td>Comparison</td><td>comparison-question</td><td>Delegated+feedback</td><td><button type="button" class="ask-sample-btn" data-ask-sample="Should I use Node or Flask for a new API?">Node or Flask?</button></td></tr>
+            <tr><td>Factoid, verify</td><td>Security</td><td>cve-question</td><td>Union+rerank</td><td><button type="button" class="ask-sample-btn" data-ask-sample="Are there any recent CVEs affecting MySQL?">CVEs in MySQL?</button></td></tr>
+            <tr><td>Factoid, verify</td><td>Patch</td><td>patch-question</td><td>Union+rerank</td><td><button type="button" class="ask-sample-btn" data-ask-sample="Was the WebView bug fixed in a Chrome patch?">Chrome patched?</button></td></tr>
+            <tr><td>Factoid, numeric</td><td>Version</td><td>version-question</td><td>Single-agent</td><td><button type="button" class="ask-sample-btn" data-ask-sample="What's the latest PHP version?">Latest PHP?</button></td></tr>
+            <tr><td>How-to</td><td>General</td><td>general-question</td><td>Delegated</td><td><button type="button" class="ask-sample-btn" data-ask-sample="How do I roll back a bad Windows update?">Roll back update?</button></td></tr>
+            <tr><td>Review/opinion</td><td>Opinion</td><td>opinion</td><td>Declined, no retrieval</td><td><button type="button" class="ask-sample-btn" data-ask-sample="What's the best programming language?">Best language?</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="ask-rail-panel" data-intro-panel="discussion" hidden>
+        <p>Small/free-tier models are unreliable at a few specific judgment calls this system leans on: comparing several simultaneously-current version branches, restating a number they were already given correctly, or judging their own evidence sufficient. A registry of deterministic guardrails (see the Guardrails tab on any answer) catches and corrects the ones already found live, instead of trusting the model to get each one right unsupervised.</p>
+        <p>The delegated architecture's own Rewriter/Retriever/Evaluator/Orchestrator retry now has an admin-configurable ceiling per role, not one fixed retry: more rounds can improve accuracy, at a real per-round cost, so the admin (or, for the Rewriter, a signed-in user) decides how much of that tradeoff to take.</p>
+        <p>Known limits: a comparison question's community-post matching is a loose keyword search and can include an unrelated post when a product name is also an ordinary word (e.g. "Teams"); an unresolved vendor still gets answered unless the optional "require a confirmed vendor" guardrail is turned on.</p>
+      </div>
+
+      <div class="ask-rail-panel" data-intro-panel="references" hidden>
+        <p>The two papers this pipeline directly implements:</p>
+        <p>F. Shaikh, S. Berhe. "A Hallucination-Resistant RAG System for Software Update Queries." <i>Procedia Computer Science</i> 280:913&ndash;920, EDI40 2026.</p>
+        <p>S. D. Pujari, S. Berhe. "An Adaptive Multi-Agent RAG Architecture for Software Ecosystem Update Monitoring." Workshop on Agentic Software Engineering (AgenticSE '26).</p>
+        <p>Concurrent related work (see the Related tab for how each one compares): <a href="https://arxiv.org/abs/2505.20096" target="_blank" rel="noopener">MA-RAG</a>, <a href="https://arxiv.org/abs/2506.16988" target="_blank" rel="noopener">RAGentA</a>, <a href="https://arxiv.org/abs/2504.05312" target="_blank" rel="noopener">Amber</a>, <a href="https://arxiv.org/abs/2606.21553" target="_blank" rel="noopener">Dissecting Agentic RAG</a>, <a href="https://arxiv.org/abs/2603.07379" target="_blank" rel="noopener">SoK: Agentic RAG</a>.</p>
+      </div>
     </aside>
     </div><!-- /.ask-rail-col -->
 
@@ -8132,6 +8222,34 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       }
     }
     renderAskIntroPipelineDiagram();
+
+    // Wires #askIntroPanel's own six paper-shaped tabs (Intro/Related/
+    // Method/Result/Discussion/References). A small, separate function
+    // rather than reusing askWireRailTabs: that one's own lazy-load
+    // branches (Guardrails/Feedback Loop) are specific to a rendered
+    // answer card and don't apply to this always-present intro panel,
+    // and its selectors (.ask-rail-tab[data-tab]) would collide with
+    // this panel's own [data-intro-tab]/[data-intro-panel] attributes
+    // if reused as-is. Runs once, on page load, since this panel's
+    // content is static (no per-answer data to lazy-fetch).
+    function askWireIntroTabs() {
+      const panelEl = document.getElementById("askIntroPanel");
+      if (!panelEl) return;
+      const tabs = Array.from(panelEl.querySelectorAll("[data-intro-tab]"));
+      tabs.forEach(tab => {
+        tab.addEventListener("click", () => {
+          tabs.forEach(t => {
+            const on = t === tab;
+            t.classList.toggle("active", on);
+            t.setAttribute("aria-selected", on ? "true" : "false");
+          });
+          panelEl.querySelectorAll("[data-intro-panel]").forEach(p => {
+            p.hidden = p.dataset.introPanel !== tab.dataset.introTab;
+          });
+        });
+      });
+    }
+    askWireIntroTabs();
 
     // Flat fills, no gradient/shadow, kept legible at this diagram's
     // small size. Short single-word node labels (plus a second line for
