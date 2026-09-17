@@ -2277,7 +2277,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.96.0">Releasetrain <em>v3.96.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.96.1">Releasetrain <em>v3.96.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3518,7 +3518,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
   "queries": { "total": 8340, "last7Days": 412 },
   "botGapLog": { "total": 18, "success": 11, "recent": [ "..." ] }
 }</code></pre></div></details>
-<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/admin/settings</span></summary><div class="endpoint-body"><p>Current values of every admin-tunable runtime setting: the Ask pipeline defaults, the global per-IP rate limit, the registration email domain allowlist, which nav views are visible, each eval tool's access level, and the <code class="inline">guardrails</code> registry (every deterministic safety/correctness check applied to Ask answers, each with its <code class="inline">tier</code> of <code class="inline">"mandatory"</code> or <code class="inline">"optional"</code> and its current admin-set <code class="inline">enabled</code> value; see the public <code class="inline">GET /api/guardrails</code> below for the per-caller effective view of the same list).</p><div><span class="tag">admin only</span></div><pre><code>curl "https://releasetrain.io/api/admin/settings" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "askRecentWindowDays": 14, "askDefaultPreset": "auto", "askDefaultProvider": "ollama", "askDefaultSize": "medium", "rateLimitPerMinute": 120, "allowedEmailDomains": "gmail.com,outlook.com", "viewGraphVisible": true, "viewDocsVisible": true, "evalRewriterAccess": "admin", "evalEvaluatorAccess": "admin", "evalOrchestratorAccess": "admin", "guardrails": [ { "id": "toolResultInjectionScan", "tier": "mandatory", "label": "Scan retrieved content for prompt injection", "description": "Flags tool results that try to redirect the model's own instructions before they reach it.", "enabled": true }, { "id": "vendorCheck", "tier": "optional", "label": "Require a resolvable vendor/product", "description": "Declines outright if the question names no vendor/product this system tracks.", "enabled": true } ] }</code></pre></div></details>
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/admin/settings</span></summary><div class="endpoint-body"><p>Current values of every admin-tunable runtime setting: the Ask pipeline defaults, the global per-IP rate limit (plus a separate, higher <code class="inline">adminRateLimitPerMinute</code> ceiling for a request whose own JWT has <code class="inline">role: "admin"</code>), the registration email domain allowlist, which nav views are visible, each eval tool's access level, and the <code class="inline">guardrails</code> registry (every deterministic safety/correctness check applied to Ask answers, each with its <code class="inline">tier</code> of <code class="inline">"mandatory"</code> or <code class="inline">"optional"</code> and its current admin-set <code class="inline">enabled</code> value; see the public <code class="inline">GET /api/guardrails</code> below for the per-caller effective view of the same list).</p><div><span class="tag">admin only</span></div><pre><code>curl "https://releasetrain.io/api/admin/settings" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "askRecentWindowDays": 14, "askDefaultPreset": "auto", "askDefaultProvider": "ollama", "askDefaultSize": "medium", "rateLimitPerMinute": 120, "allowedEmailDomains": "gmail.com,outlook.com", "viewGraphVisible": true, "viewDocsVisible": true, "evalRewriterAccess": "admin", "evalEvaluatorAccess": "admin", "evalOrchestratorAccess": "admin", "guardrails": [ { "id": "toolResultInjectionScan", "tier": "mandatory", "label": "Scan retrieved content for prompt injection", "description": "Flags tool results that try to redirect the model's own instructions before they reach it.", "enabled": true }, { "id": "vendorCheck", "tier": "optional", "label": "Require a resolvable vendor/product", "description": "Declines outright if the question names no vendor/product this system tracks.", "enabled": true } ] }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/admin/source-attribution</span></summary><div class="endpoint-body"><p>What fraction of the <code class="inline">versions</code> collection has no confident <code class="inline">sourceBot</code> attribution (<code class="inline">"unknown"</code> or missing entirely). A rising percentage signals a bot's source-inference rule needs updating.</p><div><span class="tag">admin only</span></div><pre><code>curl "https://releasetrain.io/api/admin/source-attribution" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "total": 54210, "unknown": 780, "missing": 32, "pct": 1.5, "byBot": [ { "_id": "chrome.py", "count": 4210 }, { "_id": "unknown", "count": 780 } ] }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/admin/storage</span></summary><div class="endpoint-body"><p>MongoDB Atlas storage/data/index size against the M0 free-tier's 512MB shared cap.</p><div><span class="tag">admin only</span></div><pre><code>curl "https://releasetrain.io/api/admin/storage" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "storageMb": 210.4, "dataMb": 180.2, "indexMb": 22.1, "limitMb": 512, "pct": 0.411, "collections": 8, "objects": 1204830 }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/admin/vendor-aliases</span></summary><div class="endpoint-body"><p>Every manually-curated vendor alias, correcting or adding a vendor name the automatic catalog (built from tracked release data and Reddit subreddit names) doesn't resolve on its own.</p><div><span class="tag">admin only</span></div><pre><code>curl "https://releasetrain.io/api/admin/vendor-aliases" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "data": [ { "_id": "660c38fce3cba9423e4f8f23", "alias": "ada", "canonicalName": "Ada", "createdAt": "2026-09-15T17:00:00.000Z" } ] }</code></pre></div></details>
@@ -4083,6 +4083,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
+
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-16</div>
+              <div class="cl-ver cl-ver-patch">v3.96.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Admin traffic gets its own rate limit</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Reported live: "Too many requests" on the Vendor catalog section, since the Account view's admin panel alone fires 6+ requests just loading one tab (dashboard, settings, guardrails, bot-cadence, vendor-aliases, users), sharing the same rate-limit bucket as anonymous public traffic. A signed-in admin now gets a separate, higher ceiling (the new Admin rate limit setting), so normal active admin use no longer competes with public traffic for the same budget.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The generic Settings list tried to render the <code>guardrails</code> array (added last update) through its plain number/text/checkbox fallback, showing a garbled "[object Object],[object Object]" row. The dedicated Guardrails section already renders it properly; the generic list now skips this one key.</li>
+              </ul>
+            </div>
+          </div>
 
           <div class="cl-release">
             <div class="cl-date-col">
@@ -14744,6 +14758,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         hint: "Applies to every API route except /api/health. Takes effect immediately, no restart needed.",
         min: 10, max: 2000,
       },
+      adminRateLimitPerMinute: {
+        label: "Admin rate limit (requests/min per IP)",
+        hint: "Applies instead of the global limit above when the request's own JWT has role \"admin\": this Account view's admin panel alone fires 6+ requests per tab, so normal active use needs more headroom than anonymous public traffic.",
+        min: 10, max: 5000,
+      },
       allowedEmailDomains: {
         label: "Allowed registration email domains",
         hint: "Comma-separated (e.g. gmail.com,outlook.com). Any .edu (or .edu.<country>) address is always allowed regardless of this list.",
@@ -14758,7 +14777,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         return;
       }
       const settings = await res.json();
-      const keys = Object.keys(settings);
+      // `guardrails` rides along in this same flat response (see
+      // getGuardrailSettings's own comment) but is an array of objects,
+      // not a scalar this generic list's number/text/checkbox renderer
+      // can meaningfully show. It fell through to the plain-text
+      // fallback as a garbled "[object Object],[object Object]" string
+      // before this filter existed. The dedicated Guardrails section
+      // above (uaLoadGuardrails) already renders it properly.
+      const keys = Object.keys(settings).filter(k => k !== "guardrails");
       if (countEl) countEl.textContent = keys.length ? "(" + keys.length + ")" : "";
       if (!keys.length) {
         listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">No settings defined yet.</p>`;
