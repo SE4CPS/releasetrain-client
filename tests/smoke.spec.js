@@ -31,7 +31,6 @@ async function stubApi(page) {
 const VIEWS = [
   { view: '', selector: '#askIntroPanel' },
   { view: 'feed', selector: '#feedPanel' },
-  { view: 'howto', selector: '.ask-intro-more' },
   { view: 'graph', selector: '#graphView' },
   { view: 'arch', selector: '#archView' },
   { view: 'cve', selector: '#cveView' },

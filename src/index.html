@@ -238,8 +238,7 @@
        the panel's own text never renders underneath the button. The
        question itself lives inside the card now, not here (see
        .ask-answer-heading/.ask-answer-question). */
-    .ask-rail-header { position: relative; padding-right: 30px; margin-bottom: 10px; }
-    #askRailClose { position: absolute; top: 0; right: 0; }
+    .ask-rail-header { position: relative; margin-bottom: 10px; }
     /* Ask-first home (desktop only). With no ?view= and no ?q=, body gets .view-home
        (see syncHomeClass in the script) and the two-column feed + rail layout collapses
        to one centered column: the prompt, the answer, and a short strip of the latest
@@ -261,42 +260,28 @@
       body.view-home #askHomeControls .ask-options-panel { flex-direction: column; align-items: stretch; gap: 8px; }
       body.view-home #askHomeControls .ask-toggle-group { flex-direction: column; align-items: flex-start; gap: 6px; }
       body.view-home #askHomeControls .ask-preset-select { width: 100%; }
-      body.view-home .ask-rail-header { min-height: 26px; }
+      body.view-home .ask-rail-header { display: none; }
       body.view-home .ask-home-samples { display: grid; grid-template-columns: repeat(2, 1fr); }
       body.view-home .ask-intro-panel { font-size: 13.5px; }
       body.view-home .ask-intro-panel h3 { font-size: 20px; }
     }
-    /* ?view=howto: the panel's paper-style tabs on their own page. The markup stays inside
-       #askIntroPanel (its tab wiring is scoped to it); this only decides what shows. */
+    /* ?view=feed (and a bare ?q= link): just the feed, nothing from Ask beside it. */
     body.view-feed .layout .ask-rail-col { display: none !important; }
     body.view-feed .layout > .feed-main { flex: 1 1 0; }
-    body.view-howto .feed-main { display: none; }
-    body.view-howto .layout .ask-rail-col { display: block; position: static; max-height: none; overflow: visible; flex: 1 1 0; max-width: 980px; margin: 0 auto; }
-    body.view-howto .layout .ask-intro-panel { display: block !important; font-size: 13.5px; }
-    body.view-howto .ask-answer-rail { display: none !important; }
-    body.view-howto .ask-intro-panel > :not(.ask-intro-more) { display: none; }
-    body.view-howto .ask-intro-more > summary { display: none; }
-    body.view-howto #filtersToggleBtn { display: none; }
-    body:not(.view-howto) .ask-intro-more { display: none; }
-    .ask-home-howto { margin: 6px 0 0; font-size: 12.5px; }
-    .ask-howto-back { margin: 0 0 8px; font-size: 12.5px; }
+    /* The answer in the rail has no outline or inner padding, and the tab bar no longer
+       bleeds past the card's padding (it was cancelling the 14px this removes). */
+    #askRailBody .ask-answer-card { border: none; background: transparent; padding: 0; }
+    #askRailBody .ask-rail-tabs { margin: 0 0 10px; padding: 0; }
     .ask-short-answer { font-size: 18px; line-height: 1.4; font-weight: 600; margin: 8px 0 6px; }
     .ask-short-hint { font-size: 11.5px; margin: 0; }
     .ask-home-controls { display: none; }
     .ask-home-controls > h4 { font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); margin: 0 0 8px; }
     .ask-home-samples { list-style: none; margin: 10px 0 14px; padding: 0; display: flex; flex-direction: column; gap: 4px; }
     .ask-home-latest { margin: 16px 0; }
-    .ask-home-latest h4 { display: flex; justify-content: space-between; align-items: baseline; }
-    .ask-home-latest h4 a { text-transform: none; letter-spacing: 0; font-size: 12px; }
     .ask-home-latest ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0; }
     .ask-home-latest li { display: flex; gap: 10px; align-items: baseline; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
-    .ask-home-latest li a { font-weight: 700; color: var(--text); text-decoration: none; }
-    .ask-home-latest li a:hover { color: var(--brand); text-decoration: underline; }
+    .ask-home-latest li strong { font-weight: 700; }
     .ask-home-latest li .m { color: var(--muted); }
-    .ask-intro-more { margin-top: 14px; }
-    .ask-intro-more > summary { cursor: pointer; font-weight: 700; font-size: 12.5px; color: var(--muted); }
-    .ask-feed-link-row { margin: 12px 0 2px; font-size: 12.5px; }
-    .ask-feed-link-row a { color: var(--brand); }
     /* Plain, technical copy. No marketing language, no imagery beyond
        a small heading. .ask-sample-btn reuses the feed's own muted
        chip-like styling so the samples read as inline, clickable
@@ -2369,7 +2354,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.103.3">Releasetrain <em>v3.103.3</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.103.4">Releasetrain <em>v3.103.4</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2550,7 +2535,6 @@
       <nav class="nav-links" id="navLinks" aria-label="Views">
         <a id="homeLink" class="nav-link" href="#" title="Return to the Ask home page">🏠 Home</a>
         <a id="feedLink" class="nav-link" href="#" title="Browse the recent updates feed">📋 Recent updates</a>
-        <a id="howtoLink" class="nav-link" href="/?view=howto" title="How Ask works: pipeline, related work, results">💡 How it works</a>
         <a id="graphLink" class="nav-link" href="#" title="Show component graph (in-page)">📊 Graph</a>
         <a id="archLink" class="nav-link" href="#" title="Show architecture diagram (in-page)">🏗 Arch</a>
         <a id="cveLink" class="nav-link" href="#" title="Show CVE discussions (in-page)">🔐 CVE</a>
@@ -4188,6 +4172,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-19</div>
+              <div class="cl-ver cl-ver-patch">v3.103.4</div>
+            </div>
+            <div class="cl-content">
+              <h3>How it works and the feed links removed</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Removed the <strong>How it works</strong> view (<code>?view=howto</code>), its menu and home links, and the paper-style tabs behind it (Intro, Related, Method, Result, Discussion, References, plus the pipeline overview diagram and its wiring). Mermaid now loads only when an answer's workflow diagram needs it, not at page load. The content is in git history at v3.103.3.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Removed the answer rail's <strong>&times;</strong> close button and the answer card's outline, so the answer sits higher, right under the prompt. The rail header is hidden on the Ask home, where the options live in the left column.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Removed the links that jumped to the feed from the Ask home: "Show these in the feed" under an answer, "Browse all", and the links on each latest-updates row. The feed is reached from Recent updates in the menu.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-19</div>
@@ -7332,7 +7330,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
            this row's first child on a wide screen, sharing the row with
            the close button rather than the button sitting alone. -->
       <div class="ask-rail-header">
-        <button type="button" id="askRailClose" class="btn btn-ghost" aria-label="Close answer" style="padding:2px 8px">✕</button>
       </div>
       <div id="askRailBody"></div>
     </aside>
@@ -7356,103 +7353,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         <li><button type="button" class="ask-sample-btn" data-ask-sample="Any recent CVEs in MySQL?">Any recent CVEs in MySQL?</button></li>
       </ul>
       <section id="askHomeLatest" class="ask-home-latest" aria-label="Latest updates" hidden>
-        <h4>Latest updates <a href="/?view=feed" id="askHomeFeedLink">Browse all</a></h4>
+        <h4>Latest updates</h4>
         <ul></ul>
       </section>
-      <p class="ask-home-howto"><a href="/?view=howto" id="askHowtoLink">How it works &rarr;</a></p>
-      <details class="ask-intro-more">
-      <summary>How it works</summary>
-      <p class="ask-howto-back"><a href="/">&larr; Back to Ask</a></p>
-      <!-- Six tabs, paper-shaped, per explicit request: the panel's own
-           existing content (Pipeline/diagram/Multi-agent concept/Auto
-           table/Related work) already covered most of a paper's real
-           structure, just as one long flowing section with no framing
-           at all. Reorganized here, not rewritten: every existing
-           sentence/table row moved into whichever tab it actually
-           belongs under, plus new Result/Discussion/References content
-           this system didn't have anywhere before. Reuses .ask-rail-tab/
-           .ask-rail-panel (defined once, used elsewhere for the per-
-           answer Answer/Sources/Benchmark/... tabs) for a matching
-           look, wired by its own small askWireIntroTabs() below rather
-           than askWireRailTabs (that one's own lazy-load branches are
-           answer-specific and don't apply here). -->
-      <div class="ask-intro-tabs" role="tablist">
-        <button type="button" class="ask-rail-tab active" data-intro-tab="intro" role="tab" aria-selected="true">Intro</button>
-        <button type="button" class="ask-rail-tab" data-intro-tab="related" role="tab" aria-selected="false">Related</button>
-        <button type="button" class="ask-rail-tab" data-intro-tab="method" role="tab" aria-selected="false">Method</button>
-        <button type="button" class="ask-rail-tab" data-intro-tab="result" role="tab" aria-selected="false">Result</button>
-        <button type="button" class="ask-rail-tab" data-intro-tab="discussion" role="tab" aria-selected="false">Discussion</button>
-        <button type="button" class="ask-rail-tab" data-intro-tab="references" role="tab" aria-selected="false">References</button>
-      </div>
-
-      <div class="ask-rail-panel" data-intro-panel="intro">
-        <h4>Motivation</h4>
-        <p>"Stop drawing the architecture. Ask an LLM the update question, and make it abstain <i>before</i> it generates when the evidence is not there." A software update question ("did the latest patch fix the bug I hit?") is exactly the kind a small/free model answers confidently and wrong when it has no real evidence to check its own claim against, which is what the rest of this pipeline exists to prevent.</p>
-      </div>
-
-      <div class="ask-rail-panel" data-intro-panel="related" hidden>
-        <table class="ask-intro-table">
-          <thead><tr><th>Paper</th><th>Goal</th><th>Similar</th><th>Different</th><th>Example question</th></tr></thead>
-          <tbody>
-            <tr><td><a href="https://arxiv.org/abs/2505.20096" target="_blank" rel="noopener">MA-RAG</a></td><td><strong>Decompose</strong> multi-hop questions, 4 agents</td><td>Staged agents, small model</td><td>Static QA, no live corpus</td><td>"Who directed the spouse's film?"</td></tr>
-            <tr><td><a href="https://arxiv.org/abs/2506.16988" target="_blank" rel="noopener">RAGentA</a></td><td><strong>Attributed</strong>, cited answers</td><td>Filter + reformulate loop</td><td>Reformulates <em>after</em> a draft, not before</td><td>"What caused City X's growth?"</td></tr>
-            <tr><td><a href="https://arxiv.org/abs/2504.05312" target="_blank" rel="noopener">Amber</a></td><td><strong>Adaptive</strong> memory across retrieval</td><td>Closest memory analog</td><td>Memory resets per question</td><td>"Summarize recent findings on X"</td></tr>
-            <tr><td><a href="https://arxiv.org/abs/2606.21553" target="_blank" rel="noopener">Dissecting Agentic RAG</a></td><td>Which parts <strong>actually help</strong></td><td>Same stages, same conclusion</td><td>An ablation, not a live defect</td><td>"What year did event X happen?"</td></tr>
-            <tr><td><a href="https://arxiv.org/abs/2603.07379" target="_blank" rel="noopener">SoK: Agentic RAG</a></td><td><strong>Taxonomy</strong> + risk survey</td><td>We match 3 of its 4 axes</td><td>A survey, zero experiments</td><td><em>Type: how to design/evaluate an agentic loop</em></td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="ask-rail-panel" data-intro-panel="method" hidden>
-        <h4>Pipeline</h4>
-        <p>Picks how the question is answered: one continuous tool-use loop (Single-agent, Multi-agent buggy/fixed) or real role delegation (Multi-agent delegated, optional feedback loop). "Compare all 5" runs all five side by side.</p>
-        <div id="askIntroPipelineDiagram" class="ask-intro-diagram" aria-label="Ask pipeline flowchart"></div>
-        <h4>Multi-agent concept</h4>
-        <p>"Multi-agent" means four roles genuinely run as separate model calls, only under the delegated presets (Multi-agent delegated, feedback loop): a Rewriter reformulates the question into search terms, a Retriever searches release notes/CVEs/community discussion, an Evaluator judges whether the evidence is sufficient (retrying under an admin-configurable ceiling), and an Orchestrator writes the final answer. Single-agent and the two buggy/fixed presets simulate the same four roles inside one continuous tool-use loop instead, no separate agent calls at all. A preset's name is a request, not a guarantee: each answer's own Model vs Rules tab shows which parts of that specific run were actually model-decided versus a deterministic rule.</p>
-      </div>
-
-      <div class="ask-rail-panel" data-intro-panel="result" hidden>
-        <p>From the papers this pipeline implements, not a live claim about this deployment's current traffic: retrieval quality averaged 0.680 with a single agent versus 0.798 with four (+17.2%, paired t-test across 50 queries, p = 0.020), and zero hallucinated outputs across 20 live evidence-gated queries.</p>
-        <h4>Auto: which process, by question type</h4>
-        <!-- Replaces the old plain "Try asking" list: the same clickable
-             sample questions (still wired via the delegated [data-ask-sample]
-             click listener below (a table cell qualifies exactly like a
-             <li> did), now shown against the real intent tag and the real
-             pipeline Auto picks for it (see pickAutoPipeline in ask.js,
-             the single source of truth this table's own wording is kept
-             in sync with by hand). Opinion's row honestly shows it
-             declines rather than reading like every other row that gets
-             a real answer. Research type: the general question-type
-             category each row corresponds to in the wider question-
-             classification literature (factoid/verify, decision-making,
-             how-to, review/opinion), not this system's own terms; no
-             inline citation markers or footnote, per request. -->
-        <table class="ask-intro-table">
-          <thead><tr><th>Research type</th><th>Type</th><th>Intent</th><th>Process</th><th>Example</th></tr></thead>
-          <tbody>
-            <tr><td>Decision-making</td><td>Comparison</td><td>comparison-question</td><td>Delegated+feedback</td><td><button type="button" class="ask-sample-btn" data-ask-sample="Should I use Node or Flask for a new API?">Node or Flask?</button></td></tr>
-            <tr><td>Factoid, verify</td><td>Security</td><td>cve-question</td><td>Union+rerank</td><td><button type="button" class="ask-sample-btn" data-ask-sample="Are there any recent CVEs affecting MySQL?">CVEs in MySQL?</button></td></tr>
-            <tr><td>Factoid, verify</td><td>Patch</td><td>patch-question</td><td>Union+rerank</td><td><button type="button" class="ask-sample-btn" data-ask-sample="Was the WebView bug fixed in a Chrome patch?">Chrome patched?</button></td></tr>
-            <tr><td>Factoid, numeric</td><td>Version</td><td>version-question</td><td>Single-agent</td><td><button type="button" class="ask-sample-btn" data-ask-sample="What's the latest PHP version?">Latest PHP?</button></td></tr>
-            <tr><td>How-to</td><td>General</td><td>general-question</td><td>Delegated</td><td><button type="button" class="ask-sample-btn" data-ask-sample="How do I roll back a bad Windows update?">Roll back update?</button></td></tr>
-            <tr><td>Review/opinion</td><td>Opinion</td><td>opinion</td><td>Declined, no retrieval</td><td><button type="button" class="ask-sample-btn" data-ask-sample="What's the best programming language?">Best language?</button></td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="ask-rail-panel" data-intro-panel="discussion" hidden>
-        <p>Small/free-tier models are unreliable at a few specific judgment calls this system leans on: comparing several simultaneously-current version branches, restating a number they were already given correctly, or judging their own evidence sufficient. A registry of deterministic guardrails (see the Guardrails tab on any answer) catches and corrects the ones already found live, instead of trusting the model to get each one right unsupervised.</p>
-        <p>The delegated architecture's own Rewriter/Retriever/Evaluator/Orchestrator retry now has an admin-configurable ceiling per role, not one fixed retry: more rounds can improve accuracy, at a real per-round cost, so the admin (or, for the Rewriter, a signed-in user) decides how much of that tradeoff to take.</p>
-        <p>Known limits: a comparison question's community-post matching is a loose keyword search and can include an unrelated post when a product name is also an ordinary word (e.g. "Teams"); an unresolved vendor still gets answered unless the optional "require a confirmed vendor" guardrail is turned on.</p>
-      </div>
-
-      <div class="ask-rail-panel" data-intro-panel="references" hidden>
-        <p>The two papers this pipeline directly implements:</p>
-        <p>F. Shaikh, S. Berhe. "A Hallucination-Resistant RAG System for Software Update Queries." <i>Procedia Computer Science</i> 280:913&ndash;920, EDI40 2026.</p>
-        <p>S. D. Pujari, S. Berhe. "An Adaptive Multi-Agent RAG Architecture for Software Ecosystem Update Monitoring." Workshop on Agentic Software Engineering (AgenticSE '26).</p>
-        <p>Concurrent related work (see the Related tab for how each one compares): <a href="https://arxiv.org/abs/2505.20096" target="_blank" rel="noopener">MA-RAG</a>, <a href="https://arxiv.org/abs/2506.16988" target="_blank" rel="noopener">RAGentA</a>, <a href="https://arxiv.org/abs/2504.05312" target="_blank" rel="noopener">Amber</a>, <a href="https://arxiv.org/abs/2606.21553" target="_blank" rel="noopener">Dissecting Agentic RAG</a>, <a href="https://arxiv.org/abs/2603.07379" target="_blank" rel="noopener">SoK: Agentic RAG</a>.</p>
-      </div>
-      </details>
     </aside>
     </div><!-- /.ask-rail-col -->
 
@@ -8379,81 +8282,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       });
       return _askMermaidLoadPromise;
     }
-
-    // Static overview of the whole Ask pipeline, for #askIntroPanel's own
-    // sidebar (shown before a question is asked). Kept in sync by hand
-    // with the identical diagram in the Docs page's own Ask section
-    // (search that page for "Classify<br/>intent" to find its copy) --
-    // that one renders via #docsView's generic .mermaid auto-scan
-    // (runMermaid), but this sidebar isn't inside #docsView, so it
-    // renders through the same ensureAskMermaidLoaded()/mermaid.render()
-    // pattern the live answer workflow diagram below already uses.
-    const ASK_PIPELINE_OVERVIEW_MERMAID_SOURCE = `flowchart LR
-    Q["User question"] --> INTENT{"Classify<br/>intent"}
-    INTENT -->|"opinion"| DECLINE["Declined<br/>no retrieval"]
-    INTENT -->|"comparison"| CMP["Fixed evidence gather<br/>per side, no agents"]
-    CMP --> CMPANS(["Answer"])
-    INTENT -->|"version · cve · patch · general"| ARCH{"Architecture"}
-    ARCH -->|"single-agent · buggy · fixed"| LOOP["One continuous<br/>tool-use loop"]
-    LOOP --> LOOPANS(["Answer<br/>deterministic version fix"])
-    ARCH -->|"delegated · feedback loop"| RW["Rewriter"] --> RT["Retriever"] --> EV{"Evaluator"}
-    EV -.->|"insufficient, feedback preset only"| RT
-    EV -->|"sufficient"| OR["Orchestrator"] --> AGANS(["Answer"])
-    classDef decision fill:#eff6ff,stroke:#93c5fd,color:#0f172a
-    classDef agent fill:#fffbeb,stroke:#fde68a,color:#0f172a
-    classDef flat fill:#f1f5f9,stroke:#e2e8f0,color:#0f172a
-    classDef done fill:#f0fdf4,stroke:#86efac,color:#0f172a
-    class INTENT,ARCH,EV decision
-    class RW,RT,OR agent
-    class DECLINE,CMP,LOOP flat
-    class CMPANS,LOOPANS,AGANS done`;
-    async function renderAskIntroPipelineDiagram() {
-      const el = document.getElementById("askIntroPipelineDiagram");
-      if (!el) return;
-      try {
-        await ensureAskMermaidLoaded();
-        const { svg } = await window.mermaid.render("askIntroPipelineSvg", ASK_PIPELINE_OVERVIEW_MERMAID_SOURCE);
-        el.innerHTML = svg;
-        // See renderAskWorkflowDiagram's own identical comment: mermaid
-        // stamps its own computed width as an inline
-        // style="max-width:NNNpx", which wins over .ask-intro-diagram
-        // svg's own width:100% rule at equal specificity regardless of
-        // source order.
-        const svgEl = el.querySelector("svg");
-        if (svgEl) svgEl.style.maxWidth = "none";
-      } catch (e) {
-        console.error("[ASK] intro pipeline diagram failed to render:", e);
-      }
-    }
-    renderAskIntroPipelineDiagram();
-
-    // Wires #askIntroPanel's own six paper-shaped tabs (Intro/Related/
-    // Method/Result/Discussion/References). A small, separate function
-    // rather than reusing askWireRailTabs: that one's own lazy-load
-    // branches (Guardrails/Feedback Loop) are specific to a rendered
-    // answer card and don't apply to this always-present intro panel,
-    // and its selectors (.ask-rail-tab[data-tab]) would collide with
-    // this panel's own [data-intro-tab]/[data-intro-panel] attributes
-    // if reused as-is. Runs once, on page load, since this panel's
-    // content is static (no per-answer data to lazy-fetch).
-    function askWireIntroTabs() {
-      const panelEl = document.getElementById("askIntroPanel");
-      if (!panelEl) return;
-      const tabs = Array.from(panelEl.querySelectorAll("[data-intro-tab]"));
-      tabs.forEach(tab => {
-        tab.addEventListener("click", () => {
-          tabs.forEach(t => {
-            const on = t === tab;
-            t.classList.toggle("active", on);
-            t.setAttribute("aria-selected", on ? "true" : "false");
-          });
-          panelEl.querySelectorAll("[data-intro-panel]").forEach(p => {
-            p.hidden = p.dataset.introPanel !== tab.dataset.introTab;
-          });
-        });
-      });
-    }
-    askWireIntroTabs();
 
     // Flat fills, no gradient/shadow, kept legible at this diagram's
     // small size. Short single-word node labels (plus a second line for
@@ -9933,7 +9761,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (fullBtn) fullBtn.addEventListener("click", () => {
         body.innerHTML = askRenderCard(askRailData.label, askRailData.res, { showWorkflow: true, previewQuestion: askRailData.question, activeTab: "answer" });
         wireAskRailBody(body);
-        askAppendFeedLink(body, askRailData.res);
         renderAskWorkflowDiagram();
       });
       // The Benchmark tab's own CTA on a normal single-pipeline answer:
@@ -9993,7 +9820,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const body = document.getElementById("askRailBody");
       body.innerHTML = askRenderCard(label, res, { trimAnswer: ASK_RAIL_ANSWER_TRIM, showWorkflow: true, previewQuestion: question });
       wireAskRailBody(body);
-      askAppendFeedLink(body, res);
       $(".layout").classList.add("has-ask-rail");
       // Paints the diagram into the freshly-built container. finishAskWorkflow
       // (called right after this, in the submit handler's `finally`) will
@@ -10010,14 +9836,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       body.innerHTML = askRenderCompareBody(question, data, { showQuestion: true });
       askWireRateButtons(body);
       askWireRailTabs(body);
-      askAppendFeedLink(body, (data.runs || []).find(r => !r.error));
       $(".layout").classList.add("has-ask-rail");
     }
     function hideAskRail() {
       $(".layout").classList.remove("has-ask-rail");
       askRailData = null;
     }
-    document.getElementById("askRailClose").addEventListener("click", hideAskRail);
 
     // A vendor/category resolved server-side (classifyAskLookup, or
     // runAsk's own vendor-check gate with Vendor check on) is replayed
@@ -10034,24 +9858,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // bare vendor/category label itself: the same best-effort result a
     // user typing that label into the old Search box would have gotten.
     // On the Ask home the feed is not on screen, so a question does not filter it (that
-    // also kept rewriting ?q= in the URL); each answer offers "Show these in the feed".
+    // also kept rewriting ?q= in the URL). The feed is the Recent updates view.
     function askHomeMode() { return document.body.classList.contains("view-home") && askRailMql.matches; }
     function enterFeedView() { setViewParam("feed"); }
-    function askAppendFeedLink(body, res) {
-      if (!askHomeMode() || !res || !res.vendor) return;
-      const row = document.createElement("div");
-      row.className = "ask-feed-link-row";
-      const a = document.createElement("a");
-      a.href = "#";
-      a.textContent = "Show these in the feed \u2192";
-      a.addEventListener("click", ev => {
-        ev.preventDefault();
-        enterFeedView();
-        applyVendorFeedFilter(res.vendor, res.categoryType, res.categoryMembers);
-      });
-      row.appendChild(a);
-      body.appendChild(row);
-    }
     function applyVendorFeedFilter(vendor, categoryType, categoryMembers) {
       if (askHomeMode()) return;
       const toggleKey = categoryType === "LLM" ? "llm" : categoryType === "Hypervisor" ? "hv" : null;
@@ -10132,8 +9941,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       e.preventDefault();
       const question = document.getElementById("askQuestion").value.trim();
       if (!question) return;
-      // The answer shows on the Ask home; the feed and How it works views have no answer area.
-      if (["feed", "howto"].includes(new URL(location.href).searchParams.get("view"))) setViewParam("");
+      // The answer shows on the Ask home; the feed view has no answer area.
+      if (new URL(location.href).searchParams.get("view") === "feed") setViewParam("");
       const preset = document.getElementById("askPreset").value;
       const provider = document.getElementById("askProvider").value;
       const size = document.getElementById("askSize").value;
@@ -10421,15 +10230,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       document.body.classList.toggle("view-home", !view && !u.searchParams.get("q"));
       const feedLink = document.getElementById("feedLink");
       if (feedLink) feedLink.classList.toggle("nav-active", view === "feed");
-      const howto = view === "howto";
       // ?view=feed, or a bare ?q= link, is the plain feed with nothing from Ask beside it.
       document.body.classList.toggle("view-feed", view === "feed" || (!view && !!u.searchParams.get("q")));
-      document.body.classList.toggle("view-howto", howto);
-      document.documentElement.classList.toggle("page-scroll", (!view && !u.searchParams.get("q")) || howto);
-      const more = document.querySelector(".ask-intro-more");
-      if (more) more.open = howto;
-      const howtoLink = document.getElementById("howtoLink");
-      if (howtoLink) howtoLink.classList.toggle("nav-active", howto);
+      document.documentElement.classList.toggle("page-scroll", !view && !u.searchParams.get("q"));
       relocateAskOptionsPanel();
     }
     syncHomeClass();
@@ -10820,7 +10623,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       else if (CL_ACTIVE) { e.preventDefault(); deactivateChangelog(); }
       else if (UA_ACTIVE) { e.preventDefault(); deactivateUsers(); }
       else if (NET_ACTIVE){ e.preventDefault(); deactivateNetwork(); }
-      else if (["feed", "howto"].includes(new URL(location.href).searchParams.get("view"))) { e.preventDefault(); setViewParam(""); }
+      else if (new URL(location.href).searchParams.get("view") === "feed") { e.preventDefault(); setViewParam(""); }
     });
 
     EL.homeLink.addEventListener("click", e => {
@@ -10834,29 +10637,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       else if (CL_ACTIVE) deactivateChangelog();
       else if (UA_ACTIVE) deactivateUsers();
       else if (NET_ACTIVE) deactivateNetwork();
-      else if (["feed", "howto"].includes(new URL(location.href).searchParams.get("view"))) setViewParam("");
-    });
-
-    // "How it works": the intro panel's paper-style tabs as their own view.
-    document.getElementById("howtoLink").addEventListener("click", e => {
-      e.preventDefault();
-      if (G_ACTIVE)   deactivateGraph();
-      else if (A_ACTIVE)  deactivateArch();
-      else if (CV_ACTIVE) deactivateCve();
-      else if (DB_ACTIVE) deactivateDashboard();
-      else if (D_ACTIVE)  deactivateDocs();
-      else if (ACK_ACTIVE) deactivateAck();
-      else if (CL_ACTIVE) deactivateChangelog();
-      else if (UA_ACTIVE) deactivateUsers();
-      else if (NET_ACTIVE) deactivateNetwork();
-      setViewParam("howto");
-    });
-    document.addEventListener("click", e => {
-      const a = e.target.closest("#askHowtoLink, .ask-howto-back a");
-      if (!a) return;
-      e.preventDefault();
-      setViewParam(a.id === "askHowtoLink" ? "howto" : "");
-      window.scrollTo(0, 0);
+      else if (new URL(location.href).searchParams.get("view") === "feed") setViewParam("");
     });
 
     // "Recent updates": the plain feed, as its own view (the Ask home no longer shows it).
@@ -13473,7 +13254,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       host.querySelector("ul").innerHTML = rows.map(({ name, v }) => {
         const d = String(v.versionReleaseDate || "");
         const date = d.length === 8 ? `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}` : "";
-        return `<li><a href="/?view=feed&q=${encodeURIComponent(name)}">${uaEsc(name)}</a>`
+        return `<li><strong>${uaEsc(name)}</strong>`
           + `<span class="m">${uaEsc(v.versionNumber || "")}</span>`
           + `<span class="m">${uaEsc(v.versionReleaseChannel || "")}</span>`
           + `<span class="m">${uaEsc(date)}</span></li>`;
