@@ -2308,7 +2308,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.100.1">Releasetrain <em>v3.100.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.101.0">Releasetrain <em>v3.101.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2430,6 +2430,12 @@
               </label>
               <label class="ask-toggle-inline" title="Checked: classifies the question (CVE/patch/version/general/opinion), only matching tools are used.&#10;&#10;Unchecked: every tool is available regardless of classification.">
                 <input type="checkbox" id="askIntentFilter" checked /> Intent filter
+              </label>
+              <label class="ask-toggle-inline" title="Checked: the Rewriter resolves a component type in a comparison question (for example &quot;browser&quot;) to the real tracked components, scores each, and recommends a stack.&#10;&#10;Unchecked: the type word is left as typed and only the two named products are compared.">
+                <input type="checkbox" id="askResolveVendor" checked /> Resolve vendor
+              </label>
+              <label class="ask-toggle-inline" title="Checked: a relative time phrase in the question (&quot;last 3 weeks&quot;, &quot;yesterday&quot;) becomes a concrete date window.&#10;&#10;Unchecked: only an explicit date, or the default recent window, applies.">
+                <input type="checkbox" id="askResolveTemporal" checked /> Resolve temporal constraints
               </label>
             </div>
             <!-- Guardrails: releasetrain-server's unified admin-configurable
@@ -3597,14 +3603,14 @@ flowchart LR
 </div>
 <p class="section-sort-note">Endpoints collapsed by default, ordered method-first then route.</p>
 <div class="api-grid">
-<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/ask/compare</span></summary><div class="endpoint-body"><p>Runs the same question through up to 5 presets in parallel, for side-by-side accuracy comparison. Defaults to <code class="inline">single_agent,multi_agent_buggy,multi_agent_fixed</code> if <code class="inline">presets</code> is omitted.</p><div><span class="tag">requires login</span><span class="tag">question required</span><span class="tag">presets optional</span></div><pre><code>curl "https://releasetrain.io/api/ask/compare?question=Should+I+use+Node+or+Flask&amp;presets=single_agent,multi_agent_fixed" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "question": "Should I use Node or Flask?", "runs": [ { "preset": "single_agent", "runId": "660c38fce3cba9423e4f8f23", "answer": "...", "sources": [ "..." ] }, { "preset": "multi_agent_fixed", "runId": "660c38fce3cba9423e4f8f24", "answer": "...", "sources": [ "..." ] } ] }</code></pre><p style="margin-top:10px"><strong>Triggering the feedback loop:</strong> ask about a version for a product that plainly does not exist (so both internal retrieval and the deterministic web-search fallback come up empty, and the Evaluator judges the first pass insufficient) under <code class="inline">multi_agent_feedback</code>, the only preset with <code class="inline">feedbackLoop</code> on. Not a hard guarantee every single time, since the Evaluator's own verdict is a live model judgment call, not a fixed rule, but this is the reliable way to exercise it. Look for <code class="inline">"feedbackLoopCount": 2</code> in the response (1 means it answered in one pass, no retry needed), or open that answer's own Feedback Loop tab in the UI.</p><pre><code>curl "https://releasetrain.io/api/ask/compare?question=What+is+the+latest+version+of+Quantavox+Studio&amp;presets=multi_agent_feedback" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre></div></details>
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/ask/compare</span></summary><div class="endpoint-body"><p>Runs the same question through up to 5 presets in parallel, for side-by-side accuracy comparison. Defaults to <code class="inline">single_agent,multi_agent_buggy,multi_agent_fixed</code> if <code class="inline">presets</code> is omitted. Also accepts <code class="inline">resolveVendor=false</code> and <code class="inline">resolveTemporal=false</code> to switch off the Rewriter toggles (both on by default), same as <code class="inline">POST /api/ask</code>.</p><div><span class="tag">requires login</span><span class="tag">question required</span><span class="tag">presets optional</span></div><pre><code>curl "https://releasetrain.io/api/ask/compare?question=Should+I+use+Node+or+Flask&amp;presets=single_agent,multi_agent_fixed" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "question": "Should I use Node or Flask?", "runs": [ { "preset": "single_agent", "runId": "660c38fce3cba9423e4f8f23", "answer": "...", "sources": [ "..." ] }, { "preset": "multi_agent_fixed", "runId": "660c38fce3cba9423e4f8f24", "answer": "...", "sources": [ "..." ] } ] }</code></pre><p style="margin-top:10px"><strong>Triggering the feedback loop:</strong> ask about a version for a product that plainly does not exist (so both internal retrieval and the deterministic web-search fallback come up empty, and the Evaluator judges the first pass insufficient) under <code class="inline">multi_agent_feedback</code>, the only preset with <code class="inline">feedbackLoop</code> on. Not a hard guarantee every single time, since the Evaluator's own verdict is a live model judgment call, not a fixed rule, but this is the reliable way to exercise it. Look for <code class="inline">"feedbackLoopCount": 2</code> in the response (1 means it answered in one pass, no retry needed), or open that answer's own Feedback Loop tab in the UI.</p><pre><code>curl "https://releasetrain.io/api/ask/compare?question=What+is+the+latest+version+of+Quantavox+Studio&amp;presets=multi_agent_feedback" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/ask/history</span></summary><div class="endpoint-body"><p>The signed-in user's own past Ask runs, newest first.</p><div><span class="tag">requires login</span><span class="tag">limit optional · default 50 · max 200</span></div><pre><code>curl "https://releasetrain.io/api/ask/history?limit=20" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "data": [ { "_id": "660c38fce3cba9423e4f8f23", "question": "What is the latest PHP version?", "answer": "...", "rating": 1, "createdAt": "2026-03-25T17:00:00.000Z" } ] }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/ask/presets</span></summary><div class="endpoint-body"><p>The named retrieval-pipeline presets (<code class="inline">single_agent</code>, <code class="inline">multi_agent_buggy</code>, <code class="inline">multi_agent_fixed</code>, plus the delegated architectures) and the current admin-configured default.</p><pre><code>curl "https://releasetrain.io/api/ask/presets"</code></pre><pre><code>{ "presets": { "single_agent": { "label": "Single-agent (no rewrite)" } }, "defaultPreset": "auto" }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/ask/providers</span></summary><div class="endpoint-body"><p>Available LLM providers (Anthropic, Groq, Ollama Cloud) and each one's small/medium/large model sizes, plus the current default preset/provider/size a new visitor's Ask form should start on.</p><pre><code>curl "https://releasetrain.io/api/ask/providers"</code></pre><pre><code>{ "providers": [ { "id": "anthropic", "label": "Anthropic", "sizes": [ { "id": "small", "label": "Small" } ] } ], "defaultPreset": "auto", "defaultProvider": "ollama", "defaultSize": "medium" }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/ask/quota</span></summary><div class="endpoint-body"><p>Last-seen rate-limit headers per provider (Anthropic, Groq) plus how many calls this server process has made today. A snapshot from the last real <code class="inline">/api/ask</code> call, not a live check.</p><pre><code>curl "https://releasetrain.io/api/ask/quota"</code></pre><pre><code>{ "anthropic": { "remaining": 48, "limit": 50, "rateLimitedSecondsLeft": null }, "groq": { "remaining": 14400, "limit": 14400, "rateLimitedSecondsLeft": null } }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/ask/recent-window-days</span></summary><div class="endpoint-body"><p>Public: the current admin-configured recency window (in days) Ask applies by default, so the feed's own lookback can track the same window instead of a separately hardcoded value.</p><pre><code>curl "https://releasetrain.io/api/ask/recent-window-days"</code></pre><pre><code>{ "askRecentWindowDays": 14 }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/guardrails</span></summary><div class="endpoint-body"><p>Public, with optional auth: every guardrail applied to Ask answers, each with the admin's raw <code class="inline">enabled</code> setting, the <code class="inline">effective</code> value that actually applies to the calling user right now (a mandatory guardrail's <code class="inline">effective</code> always equals <code class="inline">enabled</code>; an optional one's is the caller's own saved preference if signed in and set, else the admin default), and <code class="inline">configurable</code> (true only when the guardrail is <code class="inline">tier: "optional"</code> and the caller is signed in). Send <code class="inline">Authorization: Bearer &lt;token&gt;</code> to get a signed-in caller's own <code class="inline">effective</code>/<code class="inline">configurable</code> values; omit it for the signed-out view.</p><pre><code>curl "https://releasetrain.io/api/guardrails" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "guardrails": [ { "id": "toolResultInjectionScan", "tier": "mandatory", "label": "Scan retrieved content for prompt injection", "description": "Flags tool results that try to redirect the model's own instructions before they reach it.", "enabled": true, "effective": true, "configurable": false }, { "id": "vendorCheck", "tier": "optional", "label": "Require a resolvable vendor/product", "description": "Declines outright if the question names no vendor/product this system tracks.", "enabled": true, "effective": false, "configurable": true } ] }</code></pre></div></details>
-<details class="endpoint method-post"><summary class="endpoint-head"><span class="method post">POST</span><span class="path">/api/ask</span></summary><div class="endpoint-body"><p>Ask a question. A bare vendor/category name resolves instantly as plain JSON (<code class="inline">{"intent":"documents",...}</code>), no sign-in needed. A real question streams back <code class="inline">text/event-stream</code> progress events ending in one <code class="inline">result</code> (or <code class="inline">error</code>) event, and requires sign-in. <code class="inline">config</code> accepts <code class="inline">preset</code> (or <code class="inline">"auto"</code> to classify intent server-side), <code class="inline">provider</code>, <code class="inline">size</code>, and the <code class="inline">vendorCheck</code>/<code class="inline">temporalFilter</code>/<code class="inline">intentFilter</code> toggles. Question is capped at 500 characters. The <code class="inline">result</code> event also carries <code class="inline">guardrailActivity</code> (which of the mandatory guardrails, see <code class="inline">GET /api/guardrails</code>, actually did something for this specific answer) and, on any source a guardrail is responsible for surfacing, a <code class="inline">guardrail</code> field naming it.</p><pre><code>curl -N -X POST "https://releasetrain.io/api/ask" -H "Authorization: Bearer YOUR_JWT_TOKEN" -H "Content-Type: application/json" -d '{"question":"Was the WebView bug patched?","config":{"preset":"auto"}}'</code></pre><pre><code>data: { "type": "progress", "phase": "retrieving", "detail": "Searching versions and reddit" }
+<details class="endpoint method-post"><summary class="endpoint-head"><span class="method post">POST</span><span class="path">/api/ask</span></summary><div class="endpoint-body"><p>Ask a question. A bare vendor/category name resolves instantly as plain JSON (<code class="inline">{"intent":"documents",...}</code>), no sign-in needed. A real question streams back <code class="inline">text/event-stream</code> progress events ending in one <code class="inline">result</code> (or <code class="inline">error</code>) event, and requires sign-in. <code class="inline">config</code> accepts <code class="inline">preset</code> (or <code class="inline">"auto"</code> to classify intent server-side), <code class="inline">provider</code>, <code class="inline">size</code>, the <code class="inline">vendorCheck</code>/<code class="inline">temporalFilter</code>/<code class="inline">intentFilter</code> toggles, and the two Rewriter toggles <code class="inline">resolveVendor</code> (resolve a component type in a comparison question, such as "browser", to the real tracked components and recommend a stack) and <code class="inline">resolveTemporal</code> (turn a phrase like "last 3 weeks" into a date window), both on unless set to <code class="inline">false</code>. Question is capped at 500 characters. A comparison answer that resolved a component type also carries <code class="inline">resolvedComponents</code> (<code class="inline">{ type, members }</code>) and <code class="inline">stack</code> (the recommended app, the lowest-risk component, and each component's computed score). The <code class="inline">result</code> event also carries <code class="inline">guardrailActivity</code> (which of the mandatory guardrails, see <code class="inline">GET /api/guardrails</code>, actually did something for this specific answer) and, on any source a guardrail is responsible for surfacing, a <code class="inline">guardrail</code> field naming it.</p><pre><code>curl -N -X POST "https://releasetrain.io/api/ask" -H "Authorization: Bearer YOUR_JWT_TOKEN" -H "Content-Type: application/json" -d '{"question":"Was the WebView bug patched?","config":{"preset":"auto"}}'</code></pre><pre><code>data: { "type": "progress", "phase": "retrieving", "detail": "Searching versions and reddit" }
 
 data: { "type": "result", "runId": "660c38fce3cba9423e4f8f23", "answer": "...", "sources": [ "..." ], "abstained": false }</code></pre></div></details>
 <details class="endpoint method-post"><summary class="endpoint-head"><span class="method post">POST</span><span class="path">/api/ask/:runId/rate</span></summary><div class="endpoint-body"><p>Rate one of the caller's own past runs helpful (<code class="inline">1</code>) or not helpful (<code class="inline">-1</code>).</p><div><span class="tag">requires login</span></div><pre><code>curl -X POST "https://releasetrain.io/api/ask/660c38fce3cba9423e4f8f23/rate" -H "Authorization: Bearer YOUR_JWT_TOKEN" -H "Content-Type: application/json" -d '{"rating":1}'</code></pre><pre><code>{ "success": true }</code></pre></div></details>
@@ -4118,6 +4124,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-19</div>
+              <div class="cl-ver cl-ver-minor">v3.101.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Resolve vendor and Resolve temporal constraints toggles</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Two new Ask checkboxes next to Vendor check, Temporal filter and Intent filter, both on by default. <strong>Resolve vendor</strong>: a comparison question that names a component type, such as "Do you recommend browser-based Zoom or Teams for my important meeting?", now resolves "browser" to the real tracked browsers, scores each with the same formula as the two apps, and recommends a stack (the lower-risk app on the lowest-risk browser). The type qualifier is also stripped from the app names, so "browser-based zoom" resolves to Zoom. <strong>Resolve temporal constraints</strong>: a relative phrase such as "last 3 weeks", "past few days", "yesterday" or "this month" becomes the search window itself instead of falling back to the default recent window.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The query preview strip now shows the resolved window, for example "last 21 days, since 2026-08-29 (from "last 3 weeks")", and the flags are sent on both <code>POST /api/ask</code> and <code>GET /api/ask/compare</code>. <code>extractRelativeWindowDaysClient</code> mirrors the server's <code>extractRelativeWindowDays</code> by hand.</li>
+                <li><span class="cl-tag cl-tag-docs">docs</span> The Docs view describes both toggles and the new <code>resolvedComponents</code>/<code>stack</code> result fields.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-17</div>
@@ -7705,18 +7725,39 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (m) return `${m[1]}1231`;
       return null;
     }
+    // Mirrors extractRelativeWindowDays in releasetrain-server/src/ask.js (kept in
+    // sync by hand): "last 3 weeks", "past few days", "yesterday", "this month".
+    const ASK_RELATIVE_NUMBER_WORDS = { a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, couple: 2, few: 3 };
+    const ASK_RELATIVE_UNIT_DAYS = { day: 1, week: 7, month: 30 };
+    function extractRelativeWindowDaysClient(question) {
+      const text = String(question || "").toLowerCase();
+      const m = text.match(/\b(?:last|past|previous)\s+(?:(\d{1,3}|an?|one|two|three|four|five|six|seven|eight|nine|ten|couple\s+of|few)\s+)?(day|week|month)s?\b/);
+      if (m) {
+        const raw = (m[1] || "1").replace(/\s+of$/, "");
+        const n = /^\d+$/.test(raw) ? Number(raw) : (ASK_RELATIVE_NUMBER_WORDS[raw] || 1);
+        return { days: Math.max(1, Math.min(365, n * ASK_RELATIVE_UNIT_DAYS[m[2]])), phrase: m[0].trim() };
+      }
+      if (/\byesterday\b/.test(text)) return { days: 2, phrase: "yesterday" };
+      if (/\btoday\b/.test(text)) return { days: 1, phrase: "today" };
+      if (/\bthis\s+week\b/.test(text)) return { days: 7, phrase: "this week" };
+      if (/\bthis\s+month\b/.test(text)) return { days: Math.max(1, new Date().getUTCDate()), phrase: "this month" };
+      return null;
+    }
     const ASK_RECENT_WINDOW_DAYS = 3;
-    function previewTemporalConstraint(question) {
+    function previewTemporalConstraint(question, resolveRelative) {
       const explicit = extractDateConstraintClient(question);
       if (explicit) return { type: "as_of", date: explicit };
+      const rel = resolveRelative === false ? null : extractRelativeWindowDaysClient(question);
+      const days = rel ? rel.days : ASK_RECENT_WINDOW_DAYS;
       const cutoff = new Date();
-      cutoff.setUTCDate(cutoff.getUTCDate() - ASK_RECENT_WINDOW_DAYS);
+      cutoff.setUTCDate(cutoff.getUTCDate() - days);
       const date = `${cutoff.getUTCFullYear()}${askPad2(cutoff.getUTCMonth() + 1)}${askPad2(cutoff.getUTCDate())}`;
-      return { type: "recent", date };
+      return rel ? { type: "recent", date, windowDays: days, resolvedFrom: rel.phrase } : { type: "recent", date };
     }
     function formatTemporalConstraint(tc) {
       const iso = `${tc.date.slice(0, 4)}-${tc.date.slice(4, 6)}-${tc.date.slice(6, 8)}`;
-      return tc.type === "as_of" ? `as of ${iso}` : `last ${ASK_RECENT_WINDOW_DAYS} days, since ${iso}`;
+      if (tc.type === "as_of") return `as of ${iso}`;
+      return `last ${tc.windowDays || ASK_RECENT_WINDOW_DAYS} days, since ${iso}` + (tc.resolvedFrom ? ` (from "${tc.resolvedFrom}")` : "");
     }
     // Missing 'comparison' here left the preview strip printing a bare
     // "tag intent:" with nothing after the colon (uaEsc(undefined) ->
@@ -7756,6 +7797,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     const askVendorCheckEl = document.getElementById("askVendorCheck");
     const askTemporalFilterEl = document.getElementById("askTemporalFilter");
     const askIntentFilterEl = document.getElementById("askIntentFilter");
+    const askResolveVendorEl = document.getElementById("askResolveVendor");
+    const askResolveTemporalEl = document.getElementById("askResolveTemporal");
 
     // Guardrails: releasetrain-server's unified admin-configurable
     // registry of deterministic safety/correctness checks applied to
@@ -8524,7 +8567,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const terms = previewSearchTerms(question);
       const parts = [];
       if (terms.length) parts.push(`search: <strong>${uaEsc(terms.join(", "))}</strong>`);
-      if (askTemporalFilterEl.checked) parts.push(`window: ${uaEsc(formatTemporalConstraint(previewTemporalConstraint(question)))}`);
+      if (askTemporalFilterEl.checked) parts.push(`window: ${uaEsc(formatTemporalConstraint(previewTemporalConstraint(question, askResolveTemporalEl.checked)))}`);
       if (askIntentFilterEl.checked) parts.push(`intent: <strong>${uaEsc(ASK_INTENT_TAGS[intent || "general"])}</strong>`);
       if (askVendorCheckEl.checked) {
         const vendors = previewVendors(question);
@@ -9866,6 +9909,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const vendorCheck = document.getElementById("askVendorCheck").checked;
       const temporalFilter = document.getElementById("askTemporalFilter").checked;
       const intentFilter = document.getElementById("askIntentFilter").checked;
+      const resolveVendor = document.getElementById("askResolveVendor").checked;
+      const resolveTemporal = document.getElementById("askResolveTemporal").checked;
 
       // "Compare all 5" always runs five real model calls side by side -
       // there's no plain-lookup shortcut for it, so it keeps the old
@@ -9914,6 +9959,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           const params = new URLSearchParams({
             question, presets: "single_agent,multi_agent_buggy,multi_agent_fixed,multi_agent,multi_agent_feedback",
             vendorCheck: String(vendorCheck), temporalFilter: String(temporalFilter), intentFilter: String(intentFilter),
+            resolveVendor: String(resolveVendor), resolveTemporal: String(resolveTemporal),
             provider, size,
           });
           const res = await uaRequest("ask/compare?" + params.toString());
@@ -9935,7 +9981,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           return;
         }
 
-        const config = { preset, vendorCheck, temporalFilter, intentFilter, provider, size };
+        const config = { preset, vendorCheck, temporalFilter, intentFilter, resolveVendor, resolveTemporal, provider, size };
         const res = await uaRequest("ask", { method: "POST", body: JSON.stringify({ question, config }) });
         if (res.status === 401) {
           refreshQuotaAfter = false;
