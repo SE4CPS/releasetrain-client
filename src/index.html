@@ -75,6 +75,10 @@
     /* ── Reset ──────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; }
     html, body { margin: 0; height: 100%; overflow: hidden; }
+    /* The Ask home and How it works views scroll the page itself, vertically only
+       (syncHomeClass sets .page-scroll on <html>); other views keep their own panels. */
+    html.page-scroll { height: auto; min-height: 100%; overflow-y: auto; overflow-x: hidden; }
+    html.page-scroll body { height: auto; overflow: visible; }
     body {
       background: var(--bg);
       color: var(--text);
@@ -264,6 +268,8 @@
     }
     /* ?view=howto: the panel's paper-style tabs on their own page. The markup stays inside
        #askIntroPanel (its tab wiring is scoped to it); this only decides what shows. */
+    body.view-feed .layout .ask-rail-col { display: none !important; }
+    body.view-feed .layout > .feed-main { flex: 1 1 0; }
     body.view-howto .feed-main { display: none; }
     body.view-howto .layout .ask-rail-col { display: block; position: static; max-height: none; overflow: visible; flex: 1 1 0; max-width: 980px; margin: 0 auto; }
     body.view-howto .layout .ask-intro-panel { display: block !important; font-size: 13.5px; }
@@ -2363,7 +2369,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.103.0">Releasetrain <em>v3.103.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.103.2">Releasetrain <em>v3.103.2</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2503,10 +2509,11 @@
                  used for Graph/CVE view option groups) rather than a new
                  component, and flex:1 0 100% the same way .ask-toggle-group's
                  sibling .toggle-more block spans the full row when it wraps.
-                 Collapsed by default; askLoadGuardrails only fetches on
-                 first open, not on every page load (see the "toggle"
-                 listener wired further down in this same script). -->
-            <details class="sb-details" id="askGuardrailsDetails" style="flex:1 0 100%;margin-top:2px">
+                 Open by default, listing only the checks the visitor can
+                 change (the mandatory ones live in each answer's Guardrails
+                 tab); askLoadGuardrails runs once on load and again each
+                 time it is reopened (see the "toggle" listener below). -->
+            <details class="sb-details" id="askGuardrailsDetails" open style="flex:1 0 100%;margin-top:2px">
               <summary>Guardrails</summary>
               <div class="sidebar-section" id="askGuardrailsBody" style="padding:8px 0 0">
                 <p class="ua-muted" style="font-size:11px;margin:0">Loading…</p>
@@ -4181,6 +4188,31 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-19</div>
+              <div class="cl-ver cl-ver-patch">v3.103.2</div>
+            </div>
+            <div class="cl-content">
+              <h3>The Ask home and How it works scroll the page</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> On the Ask home and the How it works view the page itself now scrolls vertically when the content is taller than the window (<code>html.page-scroll</code>: <code>overflow-y:auto; overflow-x:hidden</code>), so a long answer or tab is no longer cut off. Horizontal scrolling stays off. Other views keep their own scrolling panels.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-19</div>
+              <div class="cl-ver cl-ver-patch">v3.103.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Guardrails you can change, in three words; feed view is just the feed</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The Guardrails block in the options column is open by default and lists only the checks a visitor can change, each as a short label ("Require known vendor", "Recent window only", "Classify question intent", "Retry new terms"), with the full description on hover. The mandatory, admin-set checks are read-only, so they now appear only in each answer's existing Guardrails tab.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> <code>?view=feed</code> (and a bare <code>?q=</code> link) shows just the feed: the Ask panel and answer no longer sit beside it. Asking a question from the feed or How it works view returns to the Ask home, where the answer shows.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-19</div>
@@ -7941,40 +7973,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       }
       const data = await res.json();
       const guardrails = Array.isArray(data.guardrails) ? data.guardrails : [];
-      const mandatory = guardrails.filter(g => g.tier === "mandatory");
       const optional = guardrails.filter(g => g.tier !== "mandatory");
       const signedIn = !!uaToken();
-      // Mandatory: informational only, no checkbox at all, just a plain
-      // lock icon (same bare-emoji convention this file already uses for
-      // the warning icon elsewhere) next to the label/description.
-      const mandatoryHtml = mandatory.length
-        ? mandatory.map(g => `<div class="ua-settings-row" style="font-size:11px;padding:8px 10px">
-            <div class="ua-settings-info">
-              <strong>&#128274; ${uaEsc(g.label || g.id)}</strong>
-              <span class="ua-muted">${uaEsc(g.description || "")}</span>
-            </div>
-          </div>`).join("")
-        : `<p class="ua-muted" style="font-size:11px;margin:0">None defined yet.</p>`;
-      // Optional: a real checkbox reflecting `effective`, interactive
-      // only when the server says this specific caller can change it
-      // (`configurable`, true only for a signed-in visitor); otherwise
-      // rendered disabled at the admin default, per g.configurable.
+      // Only the checks this visitor can control are listed here, each as a short label
+      // (hover for the full description). The mandatory, admin-set ones can't be changed,
+      // so they live in each answer's Guardrails tab instead.
+      const ASK_GUARDRAIL_SHORT = { vendorCheck: "Require known vendor", temporalFilter: "Recent window only", intentFilter: "Classify question intent", rewriterRetry: "Retry new terms" };
+      const shortLabel = g => ASK_GUARDRAIL_SHORT[g.id] || String(g.label || g.id).split(/\s+/).slice(0, 3).join(" ");
       const optionalHtml = optional.length
-        ? optional.map(g => `<div class="ua-settings-row" style="font-size:11px;padding:8px 10px">
-            <div class="ua-settings-info">
-              <strong>${uaEsc(g.label || g.id)}</strong>
-              <span class="ua-muted">${uaEsc(g.description || "")}</span>
-            </div>
-            <input type="checkbox" class="ask-guardrail-input" data-id="${uaEsc(g.id)}"${g.effective ? " checked" : ""}${g.configurable ? "" : " disabled"}>
+        ? optional.map(g => `<label class="ask-toggle-inline" title="${uaEsc(g.description || g.label || g.id)}">
+            <input type="checkbox" class="ask-guardrail-input" data-id="${uaEsc(g.id)}"${g.effective ? " checked" : ""}${g.configurable ? "" : " disabled"}> ${uaEsc(shortLabel(g))}
             <span id="ask-guardrail-msg-${uaEsc(g.id)}" class="ua-muted" style="font-size:10px;display:none">Saved</span>
-          </div>`).join("")
-        : `<p class="ua-muted" style="font-size:11px;margin:0">None defined yet.</p>`;
+          </label>`).join("")
+        : `<p class="ua-muted" style="font-size:11px;margin:0">None you can change.</p>`;
       bodyEl.innerHTML = `
-        <p style="font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin:0 0 4px;color:var(--muted)">Mandatory protections</p>
-        <div class="ua-settings-list" style="margin-top:0">${mandatoryHtml}</div>
-        <p style="font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin:12px 0 4px;color:var(--muted)">Optional</p>
-        ${signedIn ? "" : `<p class="ua-muted" style="font-size:11px;margin:0 0 6px">Sign in (<a href="#" id="askGuardrailsSignInLink" target="_self">Account view</a>) to customize these for your own questions.</p>`}
-        <div class="ua-settings-list" style="margin-top:0">${optionalHtml}</div>
+        ${signedIn ? "" : `<p class="ua-muted" style="font-size:11px;margin:0 0 6px"><a href="#" id="askGuardrailsSignInLink" target="_self">Sign in</a> to change these.</p>`}
+        <div style="display:flex;flex-direction:column;gap:6px">${optionalHtml}</div>
       `;
       const signInLink = document.getElementById("askGuardrailsSignInLink");
       if (signInLink) signInLink.addEventListener("click", e => { e.preventDefault(); activateUsers(); });
@@ -8006,6 +8020,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       askGuardrailsDetailsEl.addEventListener("toggle", () => {
         if (askGuardrailsDetailsEl.open) askLoadGuardrails();
       });
+      if (askGuardrailsDetailsEl.open) askLoadGuardrails();
     }
 
     // Per-answer Guardrails tab (askRenderCard's own [data-panel="guardrails"]):
@@ -10101,6 +10116,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       e.preventDefault();
       const question = document.getElementById("askQuestion").value.trim();
       if (!question) return;
+      // The answer shows on the Ask home; the feed and How it works views have no answer area.
+      if (["feed", "howto"].includes(new URL(location.href).searchParams.get("view"))) setViewParam("");
       const preset = document.getElementById("askPreset").value;
       const provider = document.getElementById("askProvider").value;
       const size = document.getElementById("askSize").value;
@@ -10389,7 +10406,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const feedLink = document.getElementById("feedLink");
       if (feedLink) feedLink.classList.toggle("nav-active", view === "feed");
       const howto = view === "howto";
+      // ?view=feed, or a bare ?q= link, is the plain feed with nothing from Ask beside it.
+      document.body.classList.toggle("view-feed", view === "feed" || (!view && !!u.searchParams.get("q")));
       document.body.classList.toggle("view-howto", howto);
+      document.documentElement.classList.toggle("page-scroll", (!view && !u.searchParams.get("q")) || howto);
       const more = document.querySelector(".ask-intro-more");
       if (more) more.open = howto;
       const howtoLink = document.getElementById("howtoLink");
