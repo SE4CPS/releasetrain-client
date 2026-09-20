@@ -2369,7 +2369,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.103.2">Releasetrain <em>v3.103.2</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.103.3">Releasetrain <em>v3.103.3</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4188,6 +4188,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-19</div>
+              <div class="cl-ver cl-ver-patch">v3.103.3</div>
+            </div>
+            <div class="cl-content">
+              <h3>No duplicate toggles under Guardrails</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> "Require known vendor", "Recent window only" and "Classify question intent" are gone from the options column's Guardrails block: they were the same settings as the Vendor check, Temporal filter and Intent filter checkboxes above them, which are sent with every question and always win, so changing the Guardrails copy had no visible effect. Only "Retry new terms" remains there.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-19</div>
@@ -7973,12 +7985,16 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       }
       const data = await res.json();
       const guardrails = Array.isArray(data.guardrails) ? data.guardrails : [];
-      const optional = guardrails.filter(g => g.tier !== "mandatory");
+      // vendorCheck, temporalFilter and intentFilter are the same settings as the Vendor
+      // check / Temporal filter / Intent filter checkboxes above, and those are sent with
+      // every question so they always win; listing them here too only duplicated them.
+      const ASK_DUPLICATED_TOGGLES = ["vendorCheck", "temporalFilter", "intentFilter"];
+      const optional = guardrails.filter(g => g.tier !== "mandatory" && !ASK_DUPLICATED_TOGGLES.includes(g.id));
       const signedIn = !!uaToken();
       // Only the checks this visitor can control are listed here, each as a short label
       // (hover for the full description). The mandatory, admin-set ones can't be changed,
       // so they live in each answer's Guardrails tab instead.
-      const ASK_GUARDRAIL_SHORT = { vendorCheck: "Require known vendor", temporalFilter: "Recent window only", intentFilter: "Classify question intent", rewriterRetry: "Retry new terms" };
+      const ASK_GUARDRAIL_SHORT = { rewriterRetry: "Retry new terms" };
       const shortLabel = g => ASK_GUARDRAIL_SHORT[g.id] || String(g.label || g.id).split(/\s+/).slice(0, 3).join(" ");
       const optionalHtml = optional.length
         ? optional.map(g => `<label class="ask-toggle-inline" title="${uaEsc(g.description || g.label || g.id)}">
