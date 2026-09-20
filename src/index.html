@@ -2354,7 +2354,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.103.4">Releasetrain <em>v3.103.4</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.103.5">Releasetrain <em>v3.103.5</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4172,6 +4172,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-19</div>
+              <div class="cl-ver cl-ver-patch">v3.103.5</div>
+            </div>
+            <div class="cl-content">
+              <h3>Short answer is one brief sentence; comparison entities stop at "with", "on", "in"</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The Short answer tab now gives only the claim: parentheticals, reason clauses ("because", "since", "which") and dates ("released on ...", "as of ...") are dropped, and it is capped near 140 characters. "I don't know." no longer drags its explanation along; the Answer tab keeps every detail.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The comparison-question entity trailer regex (<code>ASK_COMPARISON_TRAILER_RX</code>, mirrored from the server's <code>COMPARISON_TRAILER_RX</code>) now also cuts at with, on, in, using, under, inside, within, via and running, so "Flask or Django with a database" compares Flask and Django, not "django with". The server side resolves every component type (database, browser, os, IDE, LLM and the rest) into real components for a stack recommendation.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-19</div>
@@ -7670,7 +7683,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // fixes ("Do you recommend zoom or teams?" leaking "recommend zoom"
     // into the feed's own vendor filter).
     const ASK_COMPARISON_LEADIN_RX = /^(?:(?:do|does|would|will|can|could)\s+(?:you|we|i)\s+)?(?:should\s+(?:i|we)\s+(?:use|go\s+with|pick|choose)|(?:let'?s\s+)?use|using|choose|choosing|pick|picking|go(?:ing)?\s+with|prefer|recommend(?:ing)?)\s+/i;
-    const ASK_COMPARISON_TRAILER_RX = /\s+(?:for|to|when|while|during|tomorrow|today|tonight|this\s+\w+|next\s+\w+|which|that|who|whose|and|but)\b.*$/i;
+    const ASK_COMPARISON_TRAILER_RX = /\s+(?:for|to|when|while|during|tomorrow|today|tonight|this\s+\w+|next\s+\w+|which|that|who|whose|and|but|with|on|in|using|under|inside|within|via|running)\b.*$/i;
     const ASK_COMPARISON_DECISION_WORDS = new Set([
       "upgrade", "upgrading", "downgrade", "downgrading", "update", "updating",
       "install", "installing", "uninstall", "reinstall", "wait", "waiting",
@@ -9481,12 +9494,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (!text) return "";
       const SENTENCE = /^.+?[.!?](?=\s+[A-Z0-9("']|$)/;
       let first = (text.match(SENTENCE) || [text])[0];
-      // "I don't know." on its own says too little: keep the next sentence with it.
-      if (first.length < 25 && text.length > first.length) {
-        const rest = text.slice(first.length).trim();
-        first = `${first} ${(rest.match(SENTENCE) || [rest])[0]}`;
-      }
-      if (first.length > 220) first = `${first.slice(0, 217).replace(/\s+\S*$/, "")}…`;
+      // Brief on purpose: no parentheticals, no reason or time clauses (why, when, released),
+      // just the claim itself. The Answer tab keeps the details.
+      const MONTH = "(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\\.?";
+      const DATE = `(?:\\d{4}-\\d{2}-\\d{2}|\\d{1,2}\\/\\d{1,2}\\/\\d{2,4}|${MONTH}\\s+\\d{1,2}(?:,?\\s+\\d{4})?|\\d{1,2}\\s+${MONTH}(?:\\s+\\d{4})?|${MONTH}\\s+\\d{4})`;
+      first = first
+        .replace(/\s*\([^)]*\)/g, "")
+        .replace(/\s*;\s+.*$/, "")
+        .replace(/\s*[,;:]\s+(?:because|since|as|which|but|while|although|though|so|after|before|when|released|published|according|per|and)\b.*$/i, "")
+        .replace(new RegExp(`\\s+(?:was\\s+)?(?:released|published|updated|fixed|patched)?\\s*(?:on|as of|since|in|from)\\s+${DATE}`, "gi"), "")
+        .replace(/\s+(?:because|since|which|although|though)\b.*$/i, "")
+        .replace(/\s+([.,;:!?])/g, "$1")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+      if (!/[.!?]$/.test(first)) first += ".";
+      if (first.length > 140) first = `${first.slice(0, 137).replace(/\s+\S*$/, "")}\u2026`;
       return first;
     }
     function askShortTabHtml(res) {
