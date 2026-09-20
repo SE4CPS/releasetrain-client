@@ -236,6 +236,32 @@
        .ask-answer-heading/.ask-answer-question). */
     .ask-rail-header { position: relative; padding-right: 30px; margin-bottom: 10px; }
     #askRailClose { position: absolute; top: 0; right: 0; }
+    /* Ask-first home (desktop only). With no ?view= and no ?q=, body gets .view-home
+       (see syncHomeClass in the script) and the two-column feed + rail layout collapses
+       to one centered column: the prompt, the answer, and a short strip of the latest
+       updates. The feed itself moves to ?view=feed ("Recent updates" in the menu).
+       Below 900px nothing changes: the feed stays the home page and answers use the modal. */
+    @media (min-width: 900px) {
+      body.view-home .feed-main { display: none; }
+      body.view-home .layout { display: block; max-width: 860px; }
+      body.view-home .layout .ask-rail-col { position: static; max-height: none; overflow: visible; }
+      body.view-home #filtersToggleBtn { display: none; }
+      body.view-home .ask-intro-panel { font-size: 13.5px; }
+      body.view-home .ask-intro-panel h3 { font-size: 20px; }
+    }
+    .ask-home-samples { list-style: none; margin: 10px 0 14px; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+    .ask-home-latest { margin: 16px 0; }
+    .ask-home-latest h4 { display: flex; justify-content: space-between; align-items: baseline; }
+    .ask-home-latest h4 a { text-transform: none; letter-spacing: 0; font-size: 12px; }
+    .ask-home-latest ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0; }
+    .ask-home-latest li { display: flex; gap: 10px; align-items: baseline; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .ask-home-latest li a { font-weight: 700; color: var(--text); text-decoration: none; }
+    .ask-home-latest li a:hover { color: var(--brand); text-decoration: underline; }
+    .ask-home-latest li .m { color: var(--muted); }
+    .ask-intro-more { margin-top: 14px; }
+    .ask-intro-more > summary { cursor: pointer; font-weight: 700; font-size: 12.5px; color: var(--muted); }
+    .ask-feed-link-row { margin: 12px 0 2px; font-size: 12.5px; }
+    .ask-feed-link-row a { color: var(--brand); }
     /* Plain, technical copy. No marketing language, no imagery beyond
        a small heading. .ask-sample-btn reuses the feed's own muted
        chip-like styling so the samples read as inline, clickable
@@ -2308,7 +2334,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.101.0">Releasetrain <em>v3.101.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.102.0">Releasetrain <em>v3.102.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2486,7 +2512,8 @@
     <aside class="sidebar" id="sidebar" aria-label="Menu">
 
       <nav class="nav-links" id="navLinks" aria-label="Views">
-        <a id="homeLink" class="nav-link" href="#" title="Return to feed">🏠 Home</a>
+        <a id="homeLink" class="nav-link" href="#" title="Return to the Ask home page">🏠 Home</a>
+        <a id="feedLink" class="nav-link" href="#" title="Browse the recent updates feed">📋 Recent updates</a>
         <a id="graphLink" class="nav-link" href="#" title="Show component graph (in-page)">📊 Graph</a>
         <a id="archLink" class="nav-link" href="#" title="Show architecture diagram (in-page)">🏗 Arch</a>
         <a id="cveLink" class="nav-link" href="#" title="Show CVE discussions (in-page)">🔐 CVE</a>
@@ -4124,6 +4151,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-19</div>
+              <div class="cl-ver cl-ver-minor">v3.102.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Ask is now the home page on a wide screen</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> On a screen 900px or wider, the home page is one centered column: the prompt, four sample questions, a strip of the five latest updates, and the answer once a question is asked. The two-column layout with the feed on the left is gone from the home page. The panel's paper-style tabs (Intro, Related, Method, Result, Discussion, References) moved under a collapsed "How it works".</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The feed is its own view, <strong>Recent updates</strong> in the menu (<code>?view=feed</code>); a link with <code>?q=</code> still opens the filtered feed. A bare vendor or category lookup (for example "mysql") opens it too, and each answer offers "Show these in the feed" instead of silently filtering a feed that is no longer on screen.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Below 900px nothing changes: the feed is still the home page and answers still use the modal. The smoke tests now check the Ask home and the feed view separately.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-19</div>
@@ -7203,6 +7244,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       <div class="ask-intro-signin-row">
         <button type="button" class="ask-intro-signin-btn" id="askIntroSignInLink">Sign in to ask a real question &rarr;</button>
       </div>
+      <ul class="ask-home-samples" aria-label="Sample questions">
+        <li><button type="button" class="ask-sample-btn" data-ask-sample="Do you recommend browser-based Zoom or Teams for my important meeting?">Do you recommend browser-based Zoom or Teams for my important meeting?</button></li>
+        <li><button type="button" class="ask-sample-btn" data-ask-sample="What is the latest PHP version?">What is the latest PHP version?</button></li>
+        <li><button type="button" class="ask-sample-btn" data-ask-sample="Was the WebView bug patched?">Was the WebView bug patched?</button></li>
+        <li><button type="button" class="ask-sample-btn" data-ask-sample="Any recent CVEs in MySQL?">Any recent CVEs in MySQL?</button></li>
+      </ul>
+      <section id="askHomeLatest" class="ask-home-latest" aria-label="Latest updates" hidden>
+        <h4>Latest updates <a href="/?view=feed" id="askHomeFeedLink">Browse all</a></h4>
+        <ul></ul>
+      </section>
+      <details class="ask-intro-more">
+      <summary>How it works</summary>
       <!-- Six tabs, paper-shaped, per explicit request: the panel's own
            existing content (Pipeline/diagram/Multi-agent concept/Auto
            table/Related work) already covered most of a paper's real
@@ -7292,6 +7345,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         <p>S. D. Pujari, S. Berhe. "An Adaptive Multi-Agent RAG Architecture for Software Ecosystem Update Monitoring." Workshop on Agentic Software Engineering (AgenticSE '26).</p>
         <p>Concurrent related work (see the Related tab for how each one compares): <a href="https://arxiv.org/abs/2505.20096" target="_blank" rel="noopener">MA-RAG</a>, <a href="https://arxiv.org/abs/2506.16988" target="_blank" rel="noopener">RAGentA</a>, <a href="https://arxiv.org/abs/2504.05312" target="_blank" rel="noopener">Amber</a>, <a href="https://arxiv.org/abs/2606.21553" target="_blank" rel="noopener">Dissecting Agentic RAG</a>, <a href="https://arxiv.org/abs/2603.07379" target="_blank" rel="noopener">SoK: Agentic RAG</a>.</p>
       </div>
+      </details>
     </aside>
     </div><!-- /.ask-rail-col -->
 
@@ -9729,6 +9783,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (fullBtn) fullBtn.addEventListener("click", () => {
         body.innerHTML = askRenderCard(askRailData.label, askRailData.res, { showWorkflow: true, previewQuestion: askRailData.question });
         wireAskRailBody(body);
+        askAppendFeedLink(body, askRailData.res);
         renderAskWorkflowDiagram();
       });
       // The Benchmark tab's own CTA on a normal single-pipeline answer:
@@ -9788,6 +9843,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const body = document.getElementById("askRailBody");
       body.innerHTML = askRenderCard(label, res, { trimAnswer: ASK_RAIL_ANSWER_TRIM, showWorkflow: true, previewQuestion: question });
       wireAskRailBody(body);
+      askAppendFeedLink(body, res);
       $(".layout").classList.add("has-ask-rail");
       // Paints the diagram into the freshly-built container. finishAskWorkflow
       // (called right after this, in the submit handler's `finally`) will
@@ -9804,6 +9860,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       body.innerHTML = askRenderCompareBody(question, data, { showQuestion: true });
       askWireRateButtons(body);
       askWireRailTabs(body);
+      askAppendFeedLink(body, (data.runs || []).find(r => !r.error));
       $(".layout").classList.add("has-ask-rail");
     }
     function hideAskRail() {
@@ -9826,7 +9883,27 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // back empty. Any other large category falls back to searching the
     // bare vendor/category label itself: the same best-effort result a
     // user typing that label into the old Search box would have gotten.
+    // On the Ask home the feed is not on screen, so a question does not filter it (that
+    // also kept rewriting ?q= in the URL); each answer offers "Show these in the feed".
+    function askHomeMode() { return document.body.classList.contains("view-home") && askRailMql.matches; }
+    function enterFeedView() { setViewParam("feed"); }
+    function askAppendFeedLink(body, res) {
+      if (!askHomeMode() || !res || !res.vendor) return;
+      const row = document.createElement("div");
+      row.className = "ask-feed-link-row";
+      const a = document.createElement("a");
+      a.href = "#";
+      a.textContent = "Show these in the feed \u2192";
+      a.addEventListener("click", ev => {
+        ev.preventDefault();
+        enterFeedView();
+        applyVendorFeedFilter(res.vendor, res.categoryType, res.categoryMembers);
+      });
+      row.appendChild(a);
+      body.appendChild(row);
+    }
     function applyVendorFeedFilter(vendor, categoryType, categoryMembers) {
+      if (askHomeMode()) return;
       const toggleKey = categoryType === "LLM" ? "llm" : categoryType === "Hypervisor" ? "hv" : null;
       if (toggleKey) {
         const btn = document.querySelector(`#fixedToggles [data-key="${toggleKey}"]`);
@@ -9841,6 +9918,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // resolvable vendor and for a real question that didn't resolve one
     // either (Vendor check off, or genuinely nothing matched).
     function clearVendorFeedFilter() {
+      if (askHomeMode()) return;
       document.getElementById("components").value = "";
       document.getElementById("filterForm").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     }
@@ -9849,6 +9927,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // doesn't belong beside unrelated results, and the feed gets its
       // full width back.
       hideAskRail();
+      // A bare vendor/category lookup is a browse, so it opens the feed view.
+      if (askRailMql.matches) enterFeedView();
       if (data.vendor) applyVendorFeedFilter(data.vendor, data.categoryType, data.categoryMembers);
       else clearVendorFeedFilter();
     }
@@ -10179,7 +10259,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       else url.searchParams.delete("view");
       // URLSearchParams encodes commas as %2C; restore them for readability
       history.replaceState({}, "", url.toString().replace(/%2C/gi, ","));
+      syncHomeClass();
     }
+    // The Ask home is "no ?view= and no ?q=". body.view-home only changes the layout
+    // on a wide screen (see the .view-home CSS); ?view=feed is the Recent updates feed.
+    function syncHomeClass() {
+      const u = new URL(location.href);
+      const view = u.searchParams.get("view");
+      document.body.classList.toggle("view-home", !view && !u.searchParams.get("q"));
+      const feedLink = document.getElementById("feedLink");
+      if (feedLink) feedLink.classList.toggle("nav-active", view === "feed");
+    }
+    syncHomeClass();
 
     function setLinksHref() {
       /* archLink is now in-page (#); no href update needed */
@@ -10567,6 +10658,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       else if (CL_ACTIVE) { e.preventDefault(); deactivateChangelog(); }
       else if (UA_ACTIVE) { e.preventDefault(); deactivateUsers(); }
       else if (NET_ACTIVE){ e.preventDefault(); deactivateNetwork(); }
+      else if (new URL(location.href).searchParams.get("view") === "feed") { e.preventDefault(); setViewParam(""); }
     });
 
     EL.homeLink.addEventListener("click", e => {
@@ -10580,6 +10672,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       else if (CL_ACTIVE) deactivateChangelog();
       else if (UA_ACTIVE) deactivateUsers();
       else if (NET_ACTIVE) deactivateNetwork();
+      else if (new URL(location.href).searchParams.get("view") === "feed") setViewParam("");
+    });
+
+    // "Recent updates": the plain feed, as its own view (the Ask home no longer shows it).
+    document.getElementById("feedLink").addEventListener("click", e => {
+      e.preventDefault();
+      if (G_ACTIVE)   deactivateGraph();
+      else if (A_ACTIVE)  deactivateArch();
+      else if (CV_ACTIVE) deactivateCve();
+      else if (DB_ACTIVE) deactivateDashboard();
+      else if (D_ACTIVE)  deactivateDocs();
+      else if (ACK_ACTIVE) deactivateAck();
+      else if (CL_ACTIVE) deactivateChangelog();
+      else if (UA_ACTIVE) deactivateUsers();
+      else if (NET_ACTIVE) deactivateNetwork();
+      setViewParam("feed");
     });
 
     function gReRender() {
@@ -13162,6 +13270,33 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       EL.emptyState.classList.remove("show", "emptyState-error");
     }
 
+    // The five most recently released distinct components, shown under the prompt on the
+    // Ask home until a question is asked. Reads the same list the feed renders.
+    function renderHomeLatest() {
+      const host = document.getElementById("askHomeLatest");
+      if (!host) return;
+      const seen = new Set();
+      const rows = [];
+      for (const v of STATE.rawVersions) {
+        if (v.isCve) continue;
+        const name = String(v.versionProductName || v.sourceBot || "").trim();
+        if (!name || seen.has(name.toLowerCase())) continue;
+        seen.add(name.toLowerCase());
+        rows.push({ name, v });
+        if (rows.length >= 5) break;
+      }
+      if (!rows.length) { host.hidden = true; return; }
+      host.querySelector("ul").innerHTML = rows.map(({ name, v }) => {
+        const d = String(v.versionReleaseDate || "");
+        const date = d.length === 8 ? `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}` : "";
+        return `<li><a href="/?view=feed&q=${encodeURIComponent(name)}">${uaEsc(name)}</a>`
+          + `<span class="m">${uaEsc(v.versionNumber || "")}</span>`
+          + `<span class="m">${uaEsc(v.versionReleaseChannel || "")}</span>`
+          + `<span class="m">${uaEsc(date)}</span></li>`;
+      }).join("");
+      host.hidden = false;
+    }
+
     async function boot() {
       EL.status.textContent = "Loading…";
       EL.navLoader.classList.add("active");
@@ -13211,6 +13346,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         vers.sort((a, b) => (versionTime(b) || +new Date(b.versionTimestampLastUpdate || b.versionTimestamp || 0)) - (versionTime(a) || +new Date(a.versionTimestampLastUpdate || a.versionTimestamp || 0)));
         STATE.rawVersions = vers;
         applyFilters();
+        renderHomeLatest();
 
         // Reddit, LLM and hypervisor datasets load in background — never block the feed
         ensureRedditLoaded();

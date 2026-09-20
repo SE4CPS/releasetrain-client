@@ -29,7 +29,8 @@ async function stubApi(page) {
 }
 
 const VIEWS = [
-  { view: '', selector: '#feedPanel' },
+  { view: '', selector: '#askIntroPanel' },
+  { view: 'feed', selector: '#feedPanel' },
   { view: 'graph', selector: '#graphView' },
   { view: 'arch', selector: '#archView' },
   { view: 'cve', selector: '#cveView' },
@@ -42,7 +43,7 @@ const VIEWS = [
 ];
 
 for (const { view, selector } of VIEWS) {
-  const label = view || 'feed';
+  const label = view || 'home';
   test(`view "${label}" activates clean`, async ({ page }) => {
     const faults = [];
     page.on('pageerror', (err) => faults.push(`pageerror: ${err.message}`));
@@ -62,4 +63,14 @@ test('shareable filter params are applied on load', async ({ page }) => {
   await expect(page.locator('.toggle[data-key="hv"]')).toHaveAttribute('aria-pressed', 'true', {
     timeout: 20_000,
   });
+});
+
+test('narrow screen keeps the feed as the home page', async ({ page }) => {
+  const faults = [];
+  page.on('pageerror', (err) => faults.push(`pageerror: ${err.message}`));
+  await stubApi(page);
+  await page.setViewportSize({ width: 600, height: 900 });
+  await page.goto('/', { waitUntil: 'load' });
+  await expect(page.locator('#feedPanel')).toBeVisible({ timeout: 20_000 });
+  expect(faults, faults.join(String.fromCharCode(10))).toHaveLength(0);
 });
