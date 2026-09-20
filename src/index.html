@@ -262,6 +262,20 @@
       body.view-home .ask-intro-panel { font-size: 13.5px; }
       body.view-home .ask-intro-panel h3 { font-size: 20px; }
     }
+    /* ?view=howto: the panel's paper-style tabs on their own page. The markup stays inside
+       #askIntroPanel (its tab wiring is scoped to it); this only decides what shows. */
+    body.view-howto .feed-main { display: none; }
+    body.view-howto .layout .ask-rail-col { display: block; position: static; max-height: none; overflow: visible; flex: 1 1 0; max-width: 980px; margin: 0 auto; }
+    body.view-howto .layout .ask-intro-panel { display: block !important; font-size: 13.5px; }
+    body.view-howto .ask-answer-rail { display: none !important; }
+    body.view-howto .ask-intro-panel > :not(.ask-intro-more) { display: none; }
+    body.view-howto .ask-intro-more > summary { display: none; }
+    body.view-howto #filtersToggleBtn { display: none; }
+    body:not(.view-howto) .ask-intro-more { display: none; }
+    .ask-home-howto { margin: 6px 0 0; font-size: 12.5px; }
+    .ask-howto-back { margin: 0 0 8px; font-size: 12.5px; }
+    .ask-short-answer { font-size: 18px; line-height: 1.4; font-weight: 600; margin: 8px 0 6px; }
+    .ask-short-hint { font-size: 11.5px; margin: 0; }
     .ask-home-controls { display: none; }
     .ask-home-controls > h4 { font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); margin: 0 0 8px; }
     .ask-home-samples { list-style: none; margin: 10px 0 14px; padding: 0; display: flex; flex-direction: column; gap: 4px; }
@@ -2349,7 +2363,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.102.1">Releasetrain <em>v3.102.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.103.0">Releasetrain <em>v3.103.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2529,6 +2543,7 @@
       <nav class="nav-links" id="navLinks" aria-label="Views">
         <a id="homeLink" class="nav-link" href="#" title="Return to the Ask home page">🏠 Home</a>
         <a id="feedLink" class="nav-link" href="#" title="Browse the recent updates feed">📋 Recent updates</a>
+        <a id="howtoLink" class="nav-link" href="/?view=howto" title="How Ask works: pipeline, related work, results">💡 How it works</a>
         <a id="graphLink" class="nav-link" href="#" title="Show component graph (in-page)">📊 Graph</a>
         <a id="archLink" class="nav-link" href="#" title="Show architecture diagram (in-page)">🏗 Arch</a>
         <a id="cveLink" class="nav-link" href="#" title="Show CVE discussions (in-page)">🔐 CVE</a>
@@ -4166,6 +4181,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-19</div>
+              <div class="cl-ver cl-ver-minor">v3.103.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Short answer tab</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> A <strong>Short answer</strong> tab now comes before Answer on every single-pipeline answer and is the one shown first: one sentence that answers the question. A comparison states its verdict outright (for example "Zoom on Firefox looks like the lower-risk choice."); anything else uses the answer's own first sentence, with markdown and citation markers removed, capped near 220 characters. There is no extra model call. "Show full answer" keeps you on the Answer tab, and the workflow diagram is painted again when Answer is opened.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The paper-style tabs (Intro, Related, Method, Result, Discussion, References) are now their own view, <strong>How it works</strong> (<code>?view=howto</code>), linked from the Ask home and the menu, instead of a collapsed section on the home page. The markup did not move, so the tab wiring is unchanged; Home and the brand link leave it.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-19</div>
@@ -7287,8 +7315,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         <h4>Latest updates <a href="/?view=feed" id="askHomeFeedLink">Browse all</a></h4>
         <ul></ul>
       </section>
+      <p class="ask-home-howto"><a href="/?view=howto" id="askHowtoLink">How it works &rarr;</a></p>
       <details class="ask-intro-more">
       <summary>How it works</summary>
+      <p class="ask-howto-back"><a href="/">&larr; Back to Ask</a></p>
       <!-- Six tabs, paper-shaped, per explicit request: the panel's own
            existing content (Pipeline/diagram/Multi-agent concept/Auto
            table/Related work) already covered most of a paper's real
@@ -9567,6 +9597,48 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // plain single-block shape, since neither has a live phase stream
     // to drive the diagram (Compare fetches all runs at once, not as a
     // stream; the modal is the narrow-screen/Compare fallback).
+    // One short sentence that answers the question, for the "Short answer" tab that comes
+    // before the full Answer tab. No extra model call: a comparison already carries its
+    // verdict as data (the winning app, and the component when a stack was resolved);
+    // anything else uses the answer's own first sentence, with markdown, citation markers
+    // and links stripped, capped at about 220 characters.
+    function askShortAnswer(res) {
+      if (!res) return "";
+      const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
+      if (res.intent === "comparison" && !res.abstained) {
+        const st = res.stack;
+        if (st && st.app && st.bestMember) return cap(`${st.app} on ${st.bestMember} looks like the lower-risk choice.`);
+        if (res.highlightTerm) return cap(`${res.highlightTerm} looks like the lower-risk choice.`);
+      }
+      let text = String(res.answer || "");
+      text = text.replace(/```[\s\S]*?```/g, " ")
+        .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+        .replace(/\[\d+\]/g, "")
+        .replace(/[*_`#>]+/g, "")
+        .replace(/^\s*[-•]\s+/gm, "")
+        .replace(/\s+/g, " ")
+        .replace(/\s+([.,;:!?)])/g, "$1")
+        .trim();
+      if (!text) return "";
+      const SENTENCE = /^.+?[.!?](?=\s+[A-Z0-9("']|$)/;
+      let first = (text.match(SENTENCE) || [text])[0];
+      // "I don't know." on its own says too little: keep the next sentence with it.
+      if (first.length < 25 && text.length > first.length) {
+        const rest = text.slice(first.length).trim();
+        first = `${first} ${(rest.match(SENTENCE) || [rest])[0]}`;
+      }
+      if (first.length > 220) first = `${first.slice(0, 217).replace(/\s+\S*$/, "")}…`;
+      return first;
+    }
+    function askShortTabHtml(res) {
+      const sentence = askShortAnswer(res);
+      if (!sentence) return "";
+      return `<div class="ask-rail-panel" data-panel="short">
+          <p class="ask-short-answer">${uaEsc(sentence)}</p>
+          <p class="ask-muted ask-short-hint">The full answer, sources and checks are in the other tabs.</p>
+        </div>`;
+    }
+
     function askRenderCard(label, res, opts) {
       opts = opts || {};
       // Pipeline escalation, surfaced right in the preset badge: a run
@@ -9656,6 +9728,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <span class="ask-muted" style="margin-left:auto">${res.latencyMs ? Math.round(res.latencyMs / 1000) + "s" : ""}</span>
         </div>`;
 
+      // "Short answer" tab: one sentence, first and selected by default; the full Answer
+      // tab (opts.activeTab === "answer", e.g. after "Show full answer") keeps the old view.
+      const shortPanel = askShortTabHtml(res);
+      const activeTab = shortPanel && opts.activeTab !== "answer" ? "short" : "answer";
       if (!opts.showWorkflow) {
         return `<div class="ask-answer-card${res.abstained ? " ask-answer-abstained" : ""}" data-run-id="${uaEsc(res.runId || "")}">
           ${labelHtml}
@@ -9669,14 +9745,16 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       return `<div class="ask-answer-card${res.abstained ? " ask-answer-abstained" : ""}" data-run-id="${uaEsc(res.runId || "")}">
         ${labelHtml}
         <div class="ask-rail-tabs" role="tablist">
-          <button type="button" class="ask-rail-tab active" data-tab="answer" role="tab" aria-selected="true">Answer</button>
+          ${shortPanel ? `<button type="button" class="ask-rail-tab${activeTab === "short" ? " active" : ""}" data-tab="short" role="tab" aria-selected="${activeTab === "short"}">Short answer</button>` : ""}
+          <button type="button" class="ask-rail-tab${activeTab === "answer" ? " active" : ""}" data-tab="answer" role="tab" aria-selected="${activeTab === "answer"}">Answer</button>
           <button type="button" class="ask-rail-tab" data-tab="sources" role="tab" aria-selected="false">Sources</button>
           <button type="button" class="ask-rail-tab" data-tab="benchmark" role="tab" aria-selected="false">Benchmark</button>
           <button type="button" class="ask-rail-tab" data-tab="modelrules" role="tab" aria-selected="false">Model vs Rules</button>
           <button type="button" class="ask-rail-tab" data-tab="guardrails" role="tab" aria-selected="false">Guardrails</button>
           <button type="button" class="ask-rail-tab" data-tab="feedbackloop" role="tab" aria-selected="false">Feedback Loop</button>
         </div>
-        <div class="ask-rail-panel" data-panel="answer">
+        ${shortPanel ? shortPanel.replace('data-panel="short"', 'data-panel="short"' + (activeTab === "short" ? "" : " hidden")) : ""}
+        <div class="ask-rail-panel" data-panel="answer"${activeTab === "answer" ? "" : " hidden"}>
           ${opts.previewQuestion ? askQueryPreviewBlockHtml(opts.previewQuestion) : ""}
           <div id="askWorkflowDiagram" class="ask-workflow-diagram"></div>
           <div id="askWorkflowCaption" class="ask-workflow-caption"></div>
@@ -9736,6 +9814,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             t.setAttribute("aria-selected", on ? "true" : "false");
           });
           root.querySelectorAll(".ask-rail-panel").forEach(p => { p.hidden = p.dataset.panel !== tab.dataset.tab; });
+          // The workflow diagram measures its own bounding box, which a hidden panel can't
+          // give it (the Short answer tab is the default), so paint it again once it is shown.
+          if (tab.dataset.tab === "answer" && root.querySelector("#askWorkflowDiagram")) renderAskWorkflowDiagram();
           // Guardrails tab content is fetched once, the first time it's
           // actually opened (see askRenderGuardrailsTab's own comment) -
           // most answers are never checked, so this avoids a GET
@@ -9819,7 +9900,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       askWireRailTabs(body);
       const fullBtn = body.querySelector(".ask-view-full-btn");
       if (fullBtn) fullBtn.addEventListener("click", () => {
-        body.innerHTML = askRenderCard(askRailData.label, askRailData.res, { showWorkflow: true, previewQuestion: askRailData.question });
+        body.innerHTML = askRenderCard(askRailData.label, askRailData.res, { showWorkflow: true, previewQuestion: askRailData.question, activeTab: "answer" });
         wireAskRailBody(body);
         askAppendFeedLink(body, askRailData.res);
         renderAskWorkflowDiagram();
@@ -10307,6 +10388,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       document.body.classList.toggle("view-home", !view && !u.searchParams.get("q"));
       const feedLink = document.getElementById("feedLink");
       if (feedLink) feedLink.classList.toggle("nav-active", view === "feed");
+      const howto = view === "howto";
+      document.body.classList.toggle("view-howto", howto);
+      const more = document.querySelector(".ask-intro-more");
+      if (more) more.open = howto;
+      const howtoLink = document.getElementById("howtoLink");
+      if (howtoLink) howtoLink.classList.toggle("nav-active", howto);
       relocateAskOptionsPanel();
     }
     syncHomeClass();
@@ -10697,7 +10784,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       else if (CL_ACTIVE) { e.preventDefault(); deactivateChangelog(); }
       else if (UA_ACTIVE) { e.preventDefault(); deactivateUsers(); }
       else if (NET_ACTIVE){ e.preventDefault(); deactivateNetwork(); }
-      else if (new URL(location.href).searchParams.get("view") === "feed") { e.preventDefault(); setViewParam(""); }
+      else if (["feed", "howto"].includes(new URL(location.href).searchParams.get("view"))) { e.preventDefault(); setViewParam(""); }
     });
 
     EL.homeLink.addEventListener("click", e => {
@@ -10711,7 +10798,29 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       else if (CL_ACTIVE) deactivateChangelog();
       else if (UA_ACTIVE) deactivateUsers();
       else if (NET_ACTIVE) deactivateNetwork();
-      else if (new URL(location.href).searchParams.get("view") === "feed") setViewParam("");
+      else if (["feed", "howto"].includes(new URL(location.href).searchParams.get("view"))) setViewParam("");
+    });
+
+    // "How it works": the intro panel's paper-style tabs as their own view.
+    document.getElementById("howtoLink").addEventListener("click", e => {
+      e.preventDefault();
+      if (G_ACTIVE)   deactivateGraph();
+      else if (A_ACTIVE)  deactivateArch();
+      else if (CV_ACTIVE) deactivateCve();
+      else if (DB_ACTIVE) deactivateDashboard();
+      else if (D_ACTIVE)  deactivateDocs();
+      else if (ACK_ACTIVE) deactivateAck();
+      else if (CL_ACTIVE) deactivateChangelog();
+      else if (UA_ACTIVE) deactivateUsers();
+      else if (NET_ACTIVE) deactivateNetwork();
+      setViewParam("howto");
+    });
+    document.addEventListener("click", e => {
+      const a = e.target.closest("#askHowtoLink, .ask-howto-back a");
+      if (!a) return;
+      e.preventDefault();
+      setViewParam(a.id === "askHowtoLink" ? "howto" : "");
+      window.scrollTo(0, 0);
     });
 
     // "Recent updates": the plain feed, as its own view (the Ask home no longer shows it).
