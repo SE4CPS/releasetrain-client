@@ -243,12 +243,27 @@
        Below 900px nothing changes: the feed stays the home page and answers use the modal. */
     @media (min-width: 900px) {
       body.view-home .feed-main { display: none; }
-      body.view-home .layout { display: block; max-width: 860px; }
-      body.view-home .layout .ask-rail-col { position: static; max-height: none; overflow: visible; }
+      body.view-home .layout { max-width: none; padding-left: 16px; padding-right: 16px; }
+      body.view-home .layout .ask-rail-col { position: static; max-height: none; overflow: visible; flex: 1 1 0; }
       body.view-home #filtersToggleBtn { display: none; }
+      /* The model, pipeline and toggle controls live in a left column on the Ask home
+         (relocateAskOptionsPanel moves the real panel node here), so they are there
+         before the first question too, and the answer gets the rest of the width. */
+      body.view-home #askHomeControls {
+        display: block; flex: 0 0 270px; position: sticky; align-self: flex-start;
+        top: calc(var(--topbar-h) + 12px); max-height: calc(100vh - var(--topbar-h) - 24px);
+        overflow-y: auto; overflow-x: hidden;
+      }
+      body.view-home #askHomeControls .ask-options-panel { flex-direction: column; align-items: stretch; gap: 8px; }
+      body.view-home #askHomeControls .ask-toggle-group { flex-direction: column; align-items: flex-start; gap: 6px; }
+      body.view-home #askHomeControls .ask-preset-select { width: 100%; }
+      body.view-home .ask-rail-header { min-height: 26px; }
+      body.view-home .ask-home-samples { display: grid; grid-template-columns: repeat(2, 1fr); }
       body.view-home .ask-intro-panel { font-size: 13.5px; }
       body.view-home .ask-intro-panel h3 { font-size: 20px; }
     }
+    .ask-home-controls { display: none; }
+    .ask-home-controls > h4 { font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); margin: 0 0 8px; }
     .ask-home-samples { list-style: none; margin: 10px 0 14px; padding: 0; display: flex; flex-direction: column; gap: 4px; }
     .ask-home-latest { margin: 16px 0; }
     .ask-home-latest h4 { display: flex; justify-content: space-between; align-items: baseline; }
@@ -2334,7 +2349,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.102.0">Releasetrain <em>v3.102.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.102.1">Releasetrain <em>v3.102.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4151,6 +4166,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-19</div>
+              <div class="cl-ver cl-ver-patch">v3.102.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Ask home uses the full width, controls on the left</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The Ask home is no longer capped at 860px: a left column holds the model, size and pipeline selects plus the toggles (including Resolve vendor and Resolve temporal constraints), and the prompt, samples, latest updates and answer take the rest of the width. The controls are visible before the first question instead of only appearing once an answer exists. <code>relocateAskOptionsPanel</code> moves the same panel node into <code>#askHomeControls</code> on the Ask home and back into the answer header elsewhere, so no listener is lost.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-19</div>
@@ -7210,6 +7237,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
          exclusive panels below, so the whole column (options + whichever
          of intro/answer is showing) is one flex item that's sticky/
          scrollable together, not two separately-positioned ones. -->
+    <!-- Ask home only (see the .view-home CSS): the left column that
+         relocateAskOptionsPanel() moves #askOptionsPanel into. -->
+    <aside id="askHomeControls" class="ask-home-controls" aria-label="Ask options">
+      <h4>Options</h4>
+    </aside>
+
     <div class="ask-rail-col">
     <!-- Inline answer rail: a real question's answer, shown beside the
          feed instead of the popup modal, on a screen with room for it
@@ -9762,8 +9795,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const panel = document.getElementById("askOptionsPanel");
       if (!panel) return;
       if (askRailMql.matches) {
-        const header = document.querySelector(".ask-rail-header");
-        if (header && header.firstElementChild !== panel) header.insertBefore(panel, header.firstChild);
+        if (document.body.classList.contains("view-home")) {
+          const controls = document.getElementById("askHomeControls");
+          if (controls && panel.parentElement !== controls) controls.appendChild(panel);
+        } else {
+          const header = document.querySelector(".ask-rail-header");
+          if (header && header.firstElementChild !== panel) header.insertBefore(panel, header.firstChild);
+        }
       } else {
         // .ask-options-row holds nothing else (Clear/bookmark/submit
         // moved up to .ask-input-row, always on the input's own line,
@@ -10269,6 +10307,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       document.body.classList.toggle("view-home", !view && !u.searchParams.get("q"));
       const feedLink = document.getElementById("feedLink");
       if (feedLink) feedLink.classList.toggle("nav-active", view === "feed");
+      relocateAskOptionsPanel();
     }
     syncHomeClass();
 
