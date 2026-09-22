@@ -663,11 +663,21 @@
        real content lands, so a diagram genuinely shorter than this
        placeholder height (the common case after its viewBox is tightened
        to content, see that function's own comment) doesn't keep the
-       container artificially tall and push the answer text down. */
-    .ask-workflow-diagram { margin: 2px 0 2px; min-height: 56px; }
+       container artificially tall and push the answer text down.
+       Dark "hacker terminal" card (not the app's own light surface) per
+       explicit request, since the node colors themselves (see
+       ASK_WORKFLOW_NODE_STYLE) are now a green-on-black palette that
+       only reads correctly against a dark background. Now the first
+       thing in the card/rail (see askRenderCard/showAskRailRunning),
+       not just the answer tab's content, so it stays visible and
+       animating regardless of which tab is selected. */
+    .ask-workflow-diagram {
+      margin: 0 0 4px; min-height: 56px;
+      background: #050b06; border: 1px solid #123018; border-radius: 8px; padding: 8px 6px;
+    }
     .ask-workflow-diagram svg { width: 100%; height: auto; display: block; }
     .ask-workflow-caption {
-      font-size: 10.5px; color: var(--muted); min-height: 14px;
+      font-size: 10.5px; color: #39ff14; font-family: var(--mono); min-height: 14px;
       margin: 0 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       text-align: right;
     }
@@ -2535,7 +2545,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.111.0"><span class="brand-name">Releasetrain </span><em>v3.111.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.112.0"><span class="brand-name">Releasetrain </span><em>v3.112.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4422,6 +4432,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-22</div>
+              <div class="cl-ver cl-ver-minor">v3.112.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>The pipeline diagram moves to the top, in a "hacker" green-on-black palette</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The Rewriter/Retriever/Evaluator/Orchestrator workflow diagram now sits right under the question, above the Answer/Sources/Benchmark tabs, instead of living only inside the Answer tab's own panel. It stays visible and animating regardless of which tab is selected.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Restyled the diagram as a dark "hacker terminal" card: a node not yet reached stays dim, unlit green; the one node currently running lights up in classic bright terminal green; a finished node settles to a steadier green. The connecting arrows, the "retry" edge label, and the live phase caption below the diagram all match the same palette now instead of mermaid's own light-theme defaults, which were unreadable against the new dark card.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-22</div>
@@ -8652,10 +8675,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // small size. Short single-word node labels (plus a second line for
     // elapsed seconds, once a node has any) so mermaid's own auto-sizing
     // never has to cram text against a box edge.
+    // "Hacker terminal" palette per explicit request: a node not yet
+    // reached stays dim, unlit green on a near-black box (inactive); the
+    // one node currently running lights up in the classic bright
+    // terminal green, thicker stroke, against the same dark box
+    // (active); a finished node settles to a steadier, slightly less
+    // intense green so the one truly "active" node still reads as the
+    // brightest thing on screen. Renders against .ask-workflow-diagram's
+    // own dark card background (see its CSS comment), not the app's
+    // usual light surface; this palette only reads correctly there.
     const ASK_WORKFLOW_NODE_STYLE = {
-      idle: "fill:#e2eede,stroke:#c3d8c0,color:#5c6e59",
-      active: "fill:#2563eb,stroke:#2563eb,color:#fff",
-      done: "fill:#16a34a,stroke:#16a34a,color:#fff",
+      idle: "fill:#0b160b,stroke:#1f3d23,color:#3d6b45",
+      active: "fill:#001f00,stroke:#39ff14,color:#39ff14,stroke-width:2px",
+      done: "fill:#04270f,stroke:#00cc44,color:#33ff66",
     };
     // A node that completed in well under a second still deserves a
     // real, honest reading rather than "0.0s". One decimal place is
@@ -8689,8 +8721,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // the LR flow) that the dotted EV->RT retry edge routes through
       // below the main line; too small and its "retry" label sits on
       // top of that line instead of clearly under it.
+      // lineColor/edgeLabelBackground/textColor: only the per-node
+      // fill/stroke/color above are overridden per node (via the
+      // `style` lines below); the connecting arrows and the "retry"
+      // edge label still come from mermaid's own theme defaults, which
+      // assume a light background and would be unreadable against
+      // .ask-workflow-diagram's own dark "hacker terminal" card.
       const lines = [
-        "%%{init: {'themeVariables': {'fontSize': '11px'}, 'flowchart': {'nodeSpacing': 85, 'rankSpacing': 75}}}%%",
+        "%%{init: {'themeVariables': {'fontSize': '11px', 'lineColor': '#2f6b3f', 'edgeLabelBackground': '#050b06', 'textColor': '#39ff14'}, 'flowchart': {'nodeSpacing': 85, 'rankSpacing': 75}}}%%",
         "flowchart LR",
       ];
       if (escalated) {
@@ -9977,6 +10015,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       }
       return `<div class="ask-answer-card${res.abstained ? " ask-answer-abstained" : ""}" data-run-id="${uaEsc(res.runId || "")}">
         ${labelHtml}
+        <div id="askWorkflowDiagram" class="ask-workflow-diagram"></div>
+        <div id="askWorkflowCaption" class="ask-workflow-caption"></div>
         <div class="ask-rail-tabs" role="tablist">
           ${shortPanel ? `<button type="button" class="ask-rail-tab${activeTab === "short" ? " active" : ""}" data-tab="short" role="tab" aria-selected="${activeTab === "short"}">Short answer</button>` : ""}
           <button type="button" class="ask-rail-tab${activeTab === "answer" ? " active" : ""}" data-tab="answer" role="tab" aria-selected="${activeTab === "answer"}">Answer</button>
@@ -9989,8 +10029,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         ${shortPanel ? shortPanel.replace('data-panel="short"', 'data-panel="short"' + (activeTab === "short" ? "" : " hidden")) : ""}
         <div class="ask-rail-panel" data-panel="answer"${activeTab === "answer" ? "" : " hidden"}>
           ${opts.previewQuestion ? askQueryPreviewBlockHtml(opts.previewQuestion) : ""}
-          <div id="askWorkflowDiagram" class="ask-workflow-diagram"></div>
-          <div id="askWorkflowCaption" class="ask-workflow-caption"></div>
           ${answerHtml}
         </div>
         <div class="ask-rail-panel" data-panel="sources" hidden>
@@ -10283,15 +10321,17 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // redundant, one more line for no extra information.
       const answerPanel = isCompare
         ? `<p class="ask-muted">Running all 5 pipelines against the same question…</p>`
-        : `${askQueryPreviewBlockHtml(question)}
-           <div id="askWorkflowDiagram" class="ask-workflow-diagram"></div>
-           <div id="askWorkflowCaption" class="ask-workflow-caption"></div>`;
+        : askQueryPreviewBlockHtml(question);
       // No pipeline label yet (unresolved until the answer arrives,
       // especially for "Auto"), so just the question, no bracket. See
       // askRenderCard's own labelHtml for the question+label version
-      // used once there's a real answer.
+      // used once there's a real answer. The diagram itself sits right
+      // under the heading, above the tabs (see askRenderCard's own
+      // comment on this) so it's visible and animating regardless of
+      // which tab is selected, not just while "Answer" is active.
       body.innerHTML = `<div class="ask-answer-card">
         <div class="ask-answer-heading"><span class="ask-answer-question">${uaEsc(question)}</span></div>
+        ${!isCompare ? `<div id="askWorkflowDiagram" class="ask-workflow-diagram"></div><div id="askWorkflowCaption" class="ask-workflow-caption"></div>` : ""}
         <div class="ask-rail-tabs" role="tablist">
           <button type="button" class="ask-rail-tab active" data-tab="answer" role="tab" aria-selected="true">Answer</button>
           <button type="button" class="ask-rail-tab" data-tab="sources" role="tab" aria-selected="false">Sources</button>
