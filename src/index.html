@@ -266,17 +266,6 @@
       body.view-home .layout { max-width: none; padding-left: 16px; padding-right: 16px; }
       body.view-home .layout .ask-rail-col { position: static; max-height: none; overflow: visible; flex: 1 1 0; }
       body.view-home #filtersToggleBtn { display: none; }
-      /* The model, pipeline and toggle controls live in a left column on the Ask home
-         (relocateAskOptionsPanel moves the real panel node here), so they are there
-         before the first question too, and the answer gets the rest of the width. */
-      body.view-home #askHomeControls {
-        display: block; flex: 0 0 270px; position: sticky; align-self: flex-start;
-        top: calc(var(--topbar-h) + 12px); max-height: calc(100vh - var(--topbar-h) - 24px);
-        overflow-y: auto; overflow-x: hidden;
-      }
-      body.view-home #askHomeControls .ask-options-panel { flex-direction: column; align-items: stretch; gap: 8px; }
-      body.view-home #askHomeControls .ask-toggle-group { flex-direction: column; align-items: flex-start; gap: 6px; }
-      body.view-home #askHomeControls .ask-preset-select { width: 100%; }
       body.view-home .ask-rail-header { display: none; }
       body.view-home .ask-home-samples { display: grid; grid-template-columns: repeat(2, 1fr); }
       body.view-home .ask-intro-panel { font-size: 13.5px; }
@@ -495,8 +484,28 @@
          never sharing a flex line with them, since a sibling that wraps
          internally to 2-3 lines can't safely share a row with another
          item in the same flex container (the other item can end up
-         overlapping wherever the wrapped content lands). */
+         overlapping wherever the wrapped content lands). This flex-child
+         sizing only matters while #askForm is still inside .topbar-main
+         (a narrow screen): once relocateAskForm moves it into
+         #askFormDesktopSlot on a wide one, it's a plain block there and
+         these two properties are simply inert, not conflicting with
+         anything. */
       flex: 1 1 100%; min-width: 0;
+    }
+    /* Empty and hidden until relocateAskForm (in the script) moves the
+       real #askForm node in here on a wide screen; see that div's own
+       comment in the markup. A normal block in the page's own scroll
+       flow (not fixed), so "1/4 down the page" is just top padding, and
+       it naturally starts right of the persistent #sidebar the same way
+       .layout does, via body's own padding-left at this breakpoint. */
+    .ask-form-desktop-slot { display: none; }
+    @media (min-width: 900px) {
+      .ask-form-desktop-slot {
+        display: block;
+        max-width: 780px;
+        margin: 0 auto;
+        padding: 22vh 24px 0;
+      }
     }
     /* Every control on this row shares one height, so the bar reads as
        one aligned strip instead of inputs/buttons/select sitting at
@@ -2406,7 +2415,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.107.0">Releasetrain <em>v3.107.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.108.0">Releasetrain <em>v3.108.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2582,6 +2591,16 @@
       </form>
     </div>
   </header>
+
+  <!-- Landing spot for the real #askForm node on a wide screen (see
+       relocateAskForm's own comment in the script): moved here out of
+       the fixed topbar, which shrinks to just brand + sign-in as a
+       result, per explicit request ("make the header narrower", "move
+       the prompt ... 1/4 top" instead of glued to the very top edge).
+       Hidden and empty on a narrow screen, where the form stays in its
+       original spot in the topbar (always reachable without scrolling,
+       a deliberate choice for that width, unchanged). -->
+  <div id="askFormDesktopSlot" class="ask-form-desktop-slot" aria-label="Ask"></div>
 
   <div id="navLoader" role="progressbar" aria-label="Loading" aria-hidden="true"></div>
 
@@ -4246,6 +4265,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-22</div>
+              <div class="cl-ver cl-ver-minor">v3.108.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Ask controls move to the sidebar; the topbar shrinks to just the prompt</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> On the same 900px-and-up screen where the sidebar is now persistent, the model/size/pipeline selects, Advanced checks and Guardrails (<code>#askOptionsPanel</code>) live right below the nav links in the sidebar now, one constant home regardless of whether the home view or an existing answer is showing (previously two different spots depending on which). The now-empty <code>#askHomeControls</code> aside, and its own now-unreachable "Options" heading, are removed.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The question input (<code>#askForm</code>) moves out of the fixed topbar into the normal page flow at this same width, landing about a quarter of the way down the page instead of glued to the very top edge. The topbar itself shrinks to just the brand and the sign-in pill. Below 900px, both the controls and the input stay exactly where they were: in the topbar, always reachable without scrolling.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-22</div>
@@ -7447,12 +7479,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
          exclusive panels below, so the whole column (options + whichever
          of intro/answer is showing) is one flex item that's sticky/
          scrollable together, not two separately-positioned ones. -->
-    <!-- Ask home only (see the .view-home CSS): the left column that
-         relocateAskOptionsPanel() moves #askOptionsPanel into. -->
-    <aside id="askHomeControls" class="ask-home-controls" aria-label="Ask options">
-      <h4>Options</h4>
-    </aside>
-
     <div class="ask-rail-col">
     <!-- Inline answer rail: a real question's answer, shown beside the
          feed instead of the popup modal, on a screen with room for it
@@ -9917,29 +9943,25 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // Moves the real #askOptionsPanel node (never a clone; appendChild/
     // insertBefore on a node already in the document relocates it,
     // preserving every listener and its element identity) between the
-    // topbar's .ask-options-row and the top of .ask-rail-header as the
-    // viewport crosses ASK_RAIL_MIN_WIDTH, per explicit request to keep
-    // the agentic-AI-specific controls (model/size/pipeline, the
-    // evidence-gating toggles) beside the answer/diagram they configure
-    // on a screen with room for that, while a narrow screen (no rail at
-    // all, see canUseAskRail) still needs them reachable from the form
-    // itself. Landing inside .ask-rail-header specifically (not just
-    // .ask-rail-col) puts it on the same row as the close button, per
-    // request, instead of that button getting its own otherwise-empty
-    // row. Idempotent: checks where the node already is before moving
-    // it, so calling this on every resize event costs nothing once the
-    // viewport is already settled on one side.
+    // topbar's .ask-options-row and the persistent #sidebar (see its own
+    // CSS) as the viewport crosses ASK_RAIL_MIN_WIDTH, per explicit
+    // request ("left are the controls and everything"): the agentic-AI-
+    // specific controls (model/size/pipeline, the evidence-gating
+    // toggles) live on the left with the rest of the nav on a screen
+    // with room for that, one constant home regardless of whether the
+    // home view or an existing answer is showing (used to differ by
+    // which, and land in the now-removed #askHomeControls or the top of
+    // .ask-rail-header instead); a narrow screen (no persistent sidebar
+    // at all, see canUseAskRail) still needs them reachable from the
+    // form itself. Idempotent: checks where the node already is before
+    // moving it, so calling this on every resize event costs nothing
+    // once the viewport is already settled on one side.
     function relocateAskOptionsPanel() {
       const panel = document.getElementById("askOptionsPanel");
       if (!panel) return;
       if (askRailMql.matches) {
-        if (document.body.classList.contains("view-home")) {
-          const controls = document.getElementById("askHomeControls");
-          if (controls && panel.parentElement !== controls) controls.appendChild(panel);
-        } else {
-          const header = document.querySelector(".ask-rail-header");
-          if (header && header.firstElementChild !== panel) header.insertBefore(panel, header.firstChild);
-        }
+        const nav = document.getElementById("navLinks");
+        if (nav && nav.nextSibling !== panel) nav.parentElement.insertBefore(panel, nav.nextSibling);
       } else {
         // .ask-options-row holds nothing else (Clear/bookmark/submit
         // moved up to .ask-input-row, always on the input's own line,
@@ -9951,6 +9973,36 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     }
     relocateAskOptionsPanel();
     askRailMql.addEventListener("change", relocateAskOptionsPanel);
+    // Moves the real #askForm node itself (see relocateAskOptionsPanel's
+    // own comment on why moving the live node, not a clone, is safe)
+    // between its original spot in the fixed topbar and
+    // #askFormDesktopSlot in the normal page flow, at the same
+    // ASK_RAIL_MIN_WIDTH breakpoint. Per explicit request: the topbar
+    // shrinks to just brand + sign-in on a wide screen ("make the header
+    // narrower"), and the question input sits about a quarter of the
+    // way down the page instead of glued to the very top edge. A narrow
+    // screen keeps the original, deliberate "always reachable without
+    // scrolling" behavior: the form stays pinned in the topbar exactly
+    // as before. .topbar-main's ResizeObserver (further down) already
+    // recomputes --topbar-h whenever the topbar's own size changes, so
+    // the shorter header this produces needs no separate handling here.
+    function relocateAskForm() {
+      const form = document.getElementById("askForm");
+      const slot = document.getElementById("askFormDesktopSlot");
+      const topbarMain = document.querySelector(".topbar-main");
+      if (!form || !slot || !topbarMain) return;
+      if (askRailMql.matches) {
+        if (form.parentElement !== slot) slot.appendChild(form);
+      } else if (form.parentElement !== topbarMain) {
+        // #filterForm (hidden, internal-only, see its own comment) is
+        // #askForm's one fixed sibling and always comes first in the
+        // original markup; appending restores that same order rather
+        // than needing a specific insertBefore reference.
+        topbarMain.appendChild(form);
+      }
+    }
+    relocateAskForm();
+    askRailMql.addEventListener("change", relocateAskForm);
     let askRailData = null; // { label, res, question } backing "Show full answer": re-renders untrimmed from the same data, no second request
     function wireAskRailBody(body) {
       askWireRateButtons(body);
