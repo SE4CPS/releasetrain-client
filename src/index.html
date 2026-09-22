@@ -135,6 +135,12 @@
       flex-shrink: 0; text-decoration: none; color: var(--text);
     }
     .brand em { color: var(--brand); font-style: normal; }
+    /* Just the version number once .brand relocates into #sidebarFooter
+       (see relocateSidebarFooter's own comment in the script), per
+       explicit request: no need to also spell out "Releasetrain" next
+       to the app's own nav column. Still says the full name in the
+       topbar on a narrow screen, where .brand never moves. */
+    #sidebarFooter .brand .brand-name { display: none; }
 
     /* Line 1's right-aligned cluster (account chip + Search/Ask mode
        toggle), pushed to the row's far edge via margin-left:auto on
@@ -215,17 +221,32 @@
     .ask-rail-col { display: none; }
     .ask-answer-rail, .ask-intro-panel { display: none; }
     @media (min-width: 900px) {
-      .layout { display: flex; align-items: flex-start; gap: 20px; max-width: 1700px; }
-      /* 40/60 split (left/right), not the even 1:1 this used to be:
-         reported live, the right rail's own content (the pipeline
-         diagram, the Model vs Rules table's 420px min-width) wants more
-         room than the left column's plain scrolling feed/card content
-         needs. Ratios via flex-grow with a 0 basis, not literal
-         width:40%/60%, so the split stays proportional and the gap
-         above doesn't need its own calc() correction. */
-      .layout > .feed-main { flex: 2 1 0; min-width: 0; }
+      /* No max-width (was 1700px): with the persistent #sidebar now
+         providing the page's own left/right split, every view uses the
+         full width available to the right of it instead of centering
+         in a capped column on top of that, per explicit request.
+         body.view-home's own rule below already did this specially for
+         the Ask home; this makes it the general case. */
+      .layout { display: flex; align-items: flex-start; gap: 20px; max-width: none; }
+      /* No rail, feed-main at full width, by default now: the 40/60
+         split below only actually matters on body.view-home (its own
+         rule further down re-enables display:block here), where an
+         inline answer next to the prompt is the whole point. Every
+         other view (Docs, Graph, CVE, Dashboard, Account, the eval
+         tools, etc.) used to fall through to this same rule
+         unconditionally, squeezing its own real content into a 2/5-
+         width column beside an .ask-rail-col with nothing relevant in
+         it. Caught after #askOptionsPanel and #askForm both moved out
+         of it (see relocateAskOptionsPanel/relocateAskForm), making the
+         wasted space impossible to miss; body.view-feed already had its
+         own near-identical override for the same reason (a real
+         question's answer uses the modal there instead, per
+         canUseAskRail's own comment), just never generalized. Ratios via
+         flex-grow with a 0 basis, not literal width:40%/60%, so the
+         split (once re-enabled) stays proportional. */
+      .layout > .feed-main { flex: 1 1 0; min-width: 0; }
       .layout .ask-rail-col {
-        display: block;
+        display: none;
         flex: 3 1 0; min-width: 0;
         position: sticky;
         top: calc(var(--topbar-h) + 12px);
@@ -264,7 +285,7 @@
     @media (min-width: 900px) {
       body.view-home .feed-main { display: none; }
       body.view-home .layout { max-width: none; padding-left: 16px; padding-right: 16px; }
-      body.view-home .layout .ask-rail-col { position: static; max-height: none; overflow: visible; flex: 1 1 0; }
+      body.view-home .layout .ask-rail-col { display: block; position: static; max-height: none; overflow: visible; flex: 1 1 0; }
       body.view-home #filtersToggleBtn { display: none; }
       body.view-home .ask-rail-header { display: none; }
       body.view-home .ask-home-samples { display: grid; grid-template-columns: repeat(2, 1fr); }
@@ -432,12 +453,37 @@
       #sidebar { transform: none !important; box-shadow: none; }
       #sidebarOverlay { display: none !important; }
       #navToggle { display: none; }
-      .topbar { left: 300px; }
+      /* Nothing of the topbar's own content is left in it at this width
+         (relocateAskForm moves #askForm into #askFormDesktopSlot,
+         relocateSidebarFooter moves .brand/#filtersToggleBtn/
+         .topbar-right into #sidebarFooter, both in the script), so the
+         topbar itself is hidden entirely, per explicit request: the
+         right side is just the question input, and the version number
+         and sign-in live at the bottom of the sidebar instead. */
+      .topbar { display: none; }
       body { padding-left: 300px; }
     }
 
     .sidebar-section { padding: 8px; }
     .sidebar-section:last-child { padding-bottom: 12px; }
+    /* Landing spot for .brand/#filtersToggleBtn/.topbar-right on a wide
+       screen (see relocateSidebarFooter's own comment in the script).
+       Sticky to the bottom of #sidebar's own scroll area, not the whole
+       page: #sidebar is itself the nearest scrolling ancestor
+       (overflow-y:auto), so position:sticky works here with no need to
+       also wrap the sidebar's other, unrelated content in a flex column
+       just to pin this one. Empty and hidden on a narrow screen, where
+       all three stay in the topbar exactly as before. */
+    .sidebar-footer { display: none; }
+    @media (min-width: 900px) {
+      .sidebar-footer {
+        display: flex; align-items: center; gap: 8px;
+        position: sticky; bottom: 0;
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+        padding: 8px;
+      }
+    }
 
     /* Collapsible sidebar blocks */
     .sb-details { border-top: 1px solid var(--border); }
@@ -628,6 +674,22 @@
        apart from each other, flex-shrink:0 so the group as a whole is
        what wraps to the next line, not one toggle peeling off alone. */
     .ask-toggle-group { display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; flex-shrink: 0; }
+    /* #askOptionsPanel permanently lives in the narrow #sidebar column
+       now (relocateAskOptionsPanel, in the script), where the row/wrap
+       layout above (built for the wide topbar this used to sit in)
+       reads cramped: a ~300px column has no room for selects and
+       toggles to share a row. Stacks everything one item per line
+       instead, full width, per explicit request. Guardrails' own
+       checkbox list (#askGuardrailsBody) already renders as a column
+       via its own inline style, so it needs no separate rule here. */
+    @media (min-width: 900px) {
+      #sidebar .ask-options-panel {
+        display: flex; flex-direction: column; align-items: stretch; gap: 8px;
+        padding: 8px; margin-bottom: 0;
+      }
+      #sidebar .ask-toggle-group { flex-direction: column; align-items: flex-start; gap: 6px; }
+      #sidebar .ask-preset-select { width: 100%; }
+    }
     .ask-intent-badge {
       flex-shrink: 0; align-self: center;
       font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: var(--radius-full);
@@ -2415,7 +2477,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.108.0">Releasetrain <em>v3.108.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.109.0"><span class="brand-name">Releasetrain </span><em>v3.109.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2472,7 +2534,7 @@
           <div class="search-wrap">
             <span class="search-icon" aria-hidden="true">🔍</span>
             <input id="askQuestion" class="search-input" type="text" maxlength="500" autocomplete="off"
-              placeholder="aws, chrome, linux… or a real question, e.g. Are there known Firefox issues after the latest update?" aria-label="Search components or ask a question"
+              placeholder="What's the latest Linux version?" aria-label="Search components or ask a question"
               aria-autocomplete="list" aria-controls="askSuggestions" />
             <!-- Real past community questions, ranked by relevance to
                  what's typed (GET /api/reddit/query/questions/suggest) -
@@ -3017,6 +3079,17 @@
         <div id="nk-sidebar-status" style="font-size:11px;color:var(--muted);padding:0 2px"></div>
       </div>
 
+      <!-- Landing spot for .brand, #filtersToggleBtn and .topbar-right
+           (see relocateSidebarFooter's own comment in the script) on a
+           wide screen, per explicit request: the version number and
+           sign-in move down here, out of the topbar, leaving the right
+           side as just the question input. Sticky to the bottom of
+           #sidebar's own scroll area (not the whole page), so it stays
+           visible without needing #sidebar's other, possibly-taller
+           content wrapped in a flex column just to pin it. Empty and
+           unused on a narrow screen, where all three stay in the topbar
+           exactly as before. -->
+      <div id="sidebarFooter" class="sidebar-footer"></div>
     </aside>
 
     <!-- ── Filters panel: Filters + Stats, opened via the 🎚️ button,
@@ -4265,6 +4338,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-22</div>
+              <div class="cl-ver cl-ver-minor">v3.109.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>The topbar is gone; version and sign-in live at the sidebar's bottom; every view uses the full right side</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> <code>.brand</code> (the version number), <code>#filtersToggleBtn</code> and <code>.topbar-right</code> (sign-in/account) move out of the topbar into <code>#sidebarFooter</code>, sticky to the bottom of the persistent sidebar, at the same width as every other relocation in this file. With nothing left in it, <code>.topbar</code> itself is hidden entirely at this width, so the right side is just the question input, per explicit request. Below 900px, all three stay in the topbar exactly as before.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Every view other than the Ask home and the feed (Docs, Graph, Arch, CVE, Risk Report, Account, the eval tools, etc.) was silently squeezed into a 2/5-width column at this same breakpoint, beside an <code>.ask-rail-col</code> that had nothing relevant in it for those views. <code>.feed-main</code> is full width by default now; only <code>body.view-home</code> still enables the rail, for the inline answer beside the prompt it's actually for.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> <code>#askOptionsPanel</code>'s selects and toggle groups, and the "Advanced checks" list, now stack one per line at full width inside the sidebar, instead of the row/wrap layout built for the old, wider topbar. Guardrails already rendered as a column and needed no change.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Shortened the question input's placeholder to one real example ("What's the latest Linux version?") instead of a comma-separated list plus a longer sample question.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-22</div>
@@ -10003,6 +10091,41 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     }
     relocateAskForm();
     askRailMql.addEventListener("change", relocateAskForm);
+    // Moves .brand, #filtersToggleBtn and .topbar-right (version number,
+    // filters toggle, sign-in/account chip) between .topbar-main and
+    // #sidebarFooter at the bottom of the persistent sidebar, same
+    // breakpoint as every other relocation here. Per explicit request:
+    // once this and relocateAskForm have both run, .topbar's own rule
+    // (above) hides it entirely, since nothing of its content is left
+    // in it, leaving the right side as just the question input.
+    // #navToggle never relocates (just hidden via CSS at this width, see
+    // .topbar's own rule) and is used as the anchor for restoring the
+    // other three to their exact original relative order on a narrow
+    // screen: inserting each relative to the previous one this way stays
+    // correct regardless of what relocateAskForm's own listener (same
+    // askRailMql, registered separately) has or hasn't done to #askForm
+    // yet, since insertBefore only repositions the node given to it, not
+    // whatever else happens to be sitting in .topbar-main at the time.
+    function relocateSidebarFooter() {
+      const brand = document.querySelector(".brand");
+      const filtersBtn = document.getElementById("filtersToggleBtn");
+      const topbarRight = document.querySelector(".topbar-right");
+      const navToggle = document.getElementById("navToggle");
+      const footer = document.getElementById("sidebarFooter");
+      if (!brand || !filtersBtn || !topbarRight || !navToggle || !footer) return;
+      if (askRailMql.matches) {
+        if (brand.parentElement !== footer) footer.appendChild(brand);
+        if (filtersBtn.parentElement !== footer) footer.appendChild(filtersBtn);
+        if (topbarRight.parentElement !== footer) footer.appendChild(topbarRight);
+      } else {
+        const topbarMain = navToggle.parentElement;
+        if (filtersBtn.previousElementSibling !== navToggle) topbarMain.insertBefore(filtersBtn, navToggle.nextSibling);
+        if (brand.previousElementSibling !== filtersBtn) topbarMain.insertBefore(brand, filtersBtn.nextSibling);
+        if (topbarRight.previousElementSibling !== brand) topbarMain.insertBefore(topbarRight, brand.nextSibling);
+      }
+    }
+    relocateSidebarFooter();
+    askRailMql.addEventListener("change", relocateSidebarFooter);
     let askRailData = null; // { label, res, question } backing "Show full answer": re-renders untrimmed from the same data, no second request
     function wireAskRailBody(body) {
       askWireRateButtons(body);
