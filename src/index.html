@@ -34,11 +34,18 @@
       /* Cold, Gemini-like palette: cool gray page, white surfaces, a
          real Google-blue accent, superseding the earlier warm Claude-
          style cream/terracotta pass per explicit request ("make the
-         colors more cold"). Semantic colors below (--cve/--risk and
-         every view-scoped status color) are untouched on purpose, per
-         this block's own comment: those carry meaning and stay
+         colors more cold"). --bg darkened a step further per a later
+         follow-up ("make the theme a bit darker background"); --surface
+         stays white so cards/the sidebar read as a lighter layer on top
+         of it, not a flat single-tone dark mode (a genuine dark theme
+         would need its own, much larger pass: many specialized views
+         still assume a light background directly, e.g. hardcoded
+         #0f172a-on-white text and white card backgrounds, not routed
+         through these variables). Semantic colors below (--cve/--risk
+         and every view-scoped status color) are untouched on purpose,
+         per this block's own comment: those carry meaning and stay
          recognizable regardless of which brand accent is in effect. */
-      --bg: #f1f4f8;
+      --bg: #dfe3e8;
       --surface: #ffffff;
       --text: #1a1c1e;
       --muted: #5f6368;
@@ -476,13 +483,29 @@
        all three stay in the topbar exactly as before. */
     .sidebar-footer { display: none; }
     @media (min-width: 900px) {
+      /* Column, not row: .brand (the version), #filtersToggleBtn (when
+         a view other than the Ask home shows it) and .topbar-right
+         (sign-in/account) stack one per line in that same order, per
+         explicit request to put sign-in at the actual bottom rather
+         than sharing a row with the version number. */
       .sidebar-footer {
-        display: flex; align-items: center; gap: 8px;
+        display: flex; flex-direction: column; align-items: stretch; gap: 8px;
         position: sticky; bottom: 0;
         background: var(--surface);
         border-top: 1px solid var(--border);
         padding: 8px;
       }
+      /* Small and muted here specifically, not the bold brand-colored
+         look .brand normally has (still true in the topbar on a narrow
+         screen, where it never relocates) -- a footer detail, not a
+         heading, per explicit request ("make the version more subtle"). */
+      .sidebar-footer .brand { font-size: 11px; font-weight: 400; color: var(--muted); }
+      .sidebar-footer .brand em { color: var(--muted); }
+      /* Was margin-left:auto to push itself to the far right of a row;
+         inert in this column layout, and left, not right, is this
+         footer's own alignment (see align-items:stretch above), so it's
+         cleared explicitly rather than just left as unused dead weight. */
+      .sidebar-footer .topbar-right { margin-left: 0; }
     }
 
     /* Collapsible sidebar blocks */
@@ -695,6 +718,11 @@
       font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: var(--radius-full);
       background: var(--brand-light); color: var(--brand); white-space: nowrap;
     }
+    /* Left-aligned row under the input for #askIntentBadge (see its own
+       markup comment). display:flex so an empty/hidden badge collapses
+       this row to nothing, same reasoning already established for
+       .ask-options-row just below it. */
+    .ask-intent-badge-row { display: flex; margin-top: 4px; }
     /* Was a fixed full-width strip below the header (any real overlay
        needs the page's own top padding bumped to make room for it, see
        .layout's own history); moved per explicit request to sit inline
@@ -2087,7 +2115,7 @@
          Gemini-like palette above; --bad/--warn/--ok/--info/--reddit/
          --purple stay as they were, same "meaning over hue" reasoning as
          :root's own comment. */
-      --bg:       #f1f4f8;
+      --bg:       #dfe3e8;
       --panel:    #ffffff;
       --text:     #1a1c1e;
       --muted:    #5f6368;
@@ -2477,7 +2505,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.109.0"><span class="brand-name">Releasetrain </span><em>v3.109.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.110.0"><span class="brand-name">Releasetrain </span><em>v3.110.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2544,7 +2572,6 @@
                  close match) has already been discussed. -->
             <ul id="askSuggestions" role="listbox" aria-label="Similar existing questions"></ul>
           </div>
-          <span id="askIntentBadge" class="ask-intent-badge" hidden></span>
           <!-- Core form controls, not agentic-AI configuration, so they
                stay on the input's own row on every screen size (unlike
                #askOptionsPanel below, which relocates). Once that panel
@@ -2555,6 +2582,16 @@
           <button class="btn btn-ghost" type="button" id="clearBtn">Clear</button>
           <button class="btn btn-ghost" type="button" id="ua-bm-save-btn" style="display:none" title="Save current search as a bookmark">🔖</button>
           <button class="btn btn-icon btn-ghost" type="submit" id="askSubmitBtn" aria-label="Search or ask">➤</button>
+        </div>
+        <!-- Moved below the input, left-aligned, per explicit request
+             (used to sit inline in .ask-input-row itself, between the
+             search box and Clear/submit; see .ask-intent-badge's own
+             CSS comment for that earlier history). Its own row, not
+             folded into .ask-options-row below: unlike that row, this
+             one is never relocated and always stays right under the
+             input regardless of screen width. -->
+        <div class="ask-intent-badge-row">
+          <span id="askIntentBadge" class="ask-intent-badge" hidden></span>
         </div>
         <div class="ask-options-row">
           <!-- Agentic-AI-specific controls (model/size/pipeline, the
@@ -4338,6 +4375,23 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-22</div>
+              <div class="cl-ver cl-ver-minor">v3.110.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Sidebar footer cleanup; a real 502 handled gracefully; a darker background</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Guardrails is hidden entirely while signed out now: everything it showed for a signed-out visitor was a disabled, non-actionable checkbox or a second "Sign in" duplicating the one at the sidebar's own bottom. It reappears the moment there's a real account to save a preference to.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The sidebar footer is a column now, not a row: the version number (small and muted, not the bold brand-colored look it keeps in the topbar on a narrow screen) sits above sign-in, which is the actual bottom-most element, per explicit follow-up requests.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> A 502 from Nginx (the Node backend not responding) served its own HTML error page, which a plain <code>res.json()</code> in the Ask submit handler choked on with a raw "Unexpected token '&lt;' ... is not valid JSON" shown in the answer modal. New <code>askSafeJson</code> checks the content-type first and fails with a message someone can actually read and act on instead.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> <code>#askIntentBadge</code> ("Version question", etc.) moved to its own left-aligned row directly under the input, out of <code>.ask-input-row</code> itself, per explicit request; it no longer relocates on a wide screen, so it always stays right under the input regardless of width.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> <code>--bg</code> darkened a step (<code>#f1f4f8</code> to <code>#dfe3e8</code>) per a follow-up request; <code>--surface</code> stays white so cards and the sidebar still read as a lighter layer on top of it.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Removed the "✅ End of results" message at the bottom of an exhausted feed; it's a blank sentinel now instead, same treatment this file's own comment already gives the "no results" case right next to it.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-22</div>
@@ -10273,6 +10327,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // JSON response used before this endpoint could stream; an 'error'
     // event is thrown as a normal Error so the caller's own catch block
     // handles it the same way a failed fetch always has.
+    // A non-JSON body (most often Nginx's own HTML error page for a
+    // 502/504, when the Node backend isn't responding, or is mid-
+    // restart) makes a plain `res.json()` throw its own raw parse
+    // exception ("Unexpected token '<' ... is not valid JSON"), reported
+    // live as exactly that showing in the answer modal. Checking the
+    // content-type first turns that into a message someone can actually
+    // read and act on, without changing anything for the normal case.
+    async function askSafeJson(res) {
+      const contentType = res.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        throw new Error(res.ok
+          ? "The server sent back something unexpected. Try again in a moment."
+          : `Server error (HTTP ${res.status}). Try again in a moment.`);
+      }
+      return res.json();
+    }
     async function consumeAskEventStream(res, preset) {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
@@ -10379,7 +10449,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             provider, size,
           });
           const res = await uaRequest("ask/compare?" + params.toString());
-          const data = await res.json();
+          const data = await askSafeJson(res);
           if (!res.ok) throw new Error(data.error || "Request failed.");
           if (useRail) {
             showAskRailCompare(question, data);
@@ -10434,7 +10504,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         if (contentType.includes("text/event-stream")) {
           data = await consumeAskEventStream(res, preset);
         } else {
-          data = await res.json();
+          data = await askSafeJson(res);
           if (!res.ok) throw new Error(data.error || "Request failed.");
         }
 
@@ -13465,7 +13535,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         Api.versions(q, STATE.nextCursor).then(({ versions: newVers, nextCursor }) => {
           STATE.nextCursor = nextCursor;
           STATE.fetchingPage = false;
-          if (!newVers.length) { EL.sentinel.textContent = "✅ End of results"; return; }
+          if (!newVers.length) { EL.sentinel.textContent = ""; return; }
 
           STATE.rawVersions = STATE.rawVersions.concat(newVers);
           const newFiltered = filterVersions(newVers);
@@ -13484,7 +13554,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           updateRangeKpi(STATE.groupsFiltered.flatMap(g => g.items));
 
           if (brandNew.length) appendNextGroups();
-          else if (!nextCursor) EL.sentinel.textContent = "✅ End of results";
+          else if (!nextCursor) EL.sentinel.textContent = "";
         }).catch(e => {
           STATE.fetchingPage = false;
           console.error("[FEED] page fetch:", e);
@@ -13493,7 +13563,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         return;
       }
 
-      EL.sentinel.textContent = STATE.groupsFiltered.length ? "✅ End of results" : "🔍 No results";
+      EL.sentinel.textContent = STATE.groupsFiltered.length ? "" : "🔍 No results";
     }
 
     function setupObserver() {
@@ -15325,15 +15395,25 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     function uaUpdateAskIntroSignin() {
       const token = uaToken();
       const user = uaUser();
-      // #topSignInLink (topbar, top-right) is now the one sign-in entry
-      // point outside the Account view itself, opposite #ua-topbar-user
-      // (uaRender, further down, already shows/hides that one the same
-      // way). Kept as its own name/function rather than renamed, since
-      // this still runs at the same two points (bootstrap and every
-      // uaRender) for the same original reason described above.
+      // #topSignInLink (now at the bottom of the sidebar on a wide
+      // screen, in the topbar on a narrow one; see relocateSidebarFooter)
+      // is the one sign-in entry point outside the Account view itself,
+      // opposite #ua-topbar-user (uaRender, further down, already shows/
+      // hides that one the same way). Kept as its own name/function
+      // rather than renamed, since this still runs at the same two
+      // points (bootstrap and every uaRender) for the same original
+      // reason described above.
       const btn = document.getElementById("topSignInLink");
       if (btn) btn.style.display = (token && user) ? "none" : "";
       if (!token || !user) uaLoadAnonQuota();
+      // Guardrails is hidden entirely while signed out now, per explicit
+      // request: everything it showed for a signed-out visitor was
+      // either a disabled, non-actionable checkbox or a second "Sign in"
+      // prompt duplicating the one #topSignInLink already is. It becomes
+      // genuinely useful, and reappears, the moment there's a real
+      // account to save a preference to.
+      const guardrails = document.getElementById("askGuardrailsDetails");
+      if (guardrails) guardrails.style.display = (token && user) ? "" : "none";
     }
     function uaSetAnonQuotaNote(remaining, limit) {
       const el = document.getElementById("askAnonQuotaNote");
