@@ -736,6 +736,22 @@
     @media (min-width: 900px) {
       #askWorkflowTop { display: block; max-width: 780px; margin: 0 auto; padding: 24px 24px 0; }
     }
+    /* #viewCloseBtn: see its own markup comment. Same "reachable from
+       every view" breakpoint as #askWorkflowTop/#askFormDesktopSlot --
+       below 900px the topbar itself still shows Home directly, so there's
+       nothing extra to close back to. */
+    .view-close-btn { display: none; }
+    @media (min-width: 900px) {
+      .view-close-btn {
+        position: fixed; top: 14px; right: 16px; z-index: 500;
+        width: 30px; height: 30px; border-radius: 50%;
+        border: 1px solid var(--border); background: var(--surface); color: var(--muted);
+        font-size: 13px; line-height: 1; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+      }
+      .view-close-btn:hover { background: var(--chip-bg); color: var(--text); }
+      .view-close-btn[hidden] { display: none; }
+    }
     .ask-options-row {
       display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
       font-size: 11px; color: var(--muted);
@@ -2604,7 +2620,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.115.0"><span class="brand-name">Releasetrain </span><em>v3.115.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.116.0"><span class="brand-name">Releasetrain </span><em>v3.116.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2796,6 +2812,15 @@
       </form>
     </div>
   </header>
+
+  <!-- Fixed top-right, visible on every view except the Ask home itself
+       (see syncHomeClass's own comment on this element): a fast way back
+       to the Ask home, without having to open the now-collapsed Menu
+       first. Reported live: with the persistent input reachable from
+       every view, a viewer stuck on Account (or Docs, Graph, ...) had no
+       obvious way to get back except opening Menu and clicking Home. -->
+  <button id="viewCloseBtn" class="view-close-btn" type="button"
+    title="Close and return to the Ask home" aria-label="Close and return to the Ask home" hidden>&#10005;</button>
 
   <!-- The one persistent pipeline diagram: top center of the right side,
        above the input, per explicit request. Visible from page load in
@@ -4497,6 +4522,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-22</div>
+              <div class="cl-ver cl-ver-minor">v3.116.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>A close button to get back to the Ask home from any view</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> A small &#10005; button, fixed top-right, shows on every view except the Ask home itself and returns to it in one click. Reported live: with the question input reachable from every view, and the sidebar's own nav links now collapsed under Menu by default, there was no fast way back to the home view from, say, Account.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Refactored the Home link, the Recent updates link, the ask submit handler, and this new close button to all share one <code>deactivateActiveView()</code> helper instead of four near-identical copies of the same if/else-if chain.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-22</div>
@@ -10509,21 +10547,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // this, asking a question while on one of those other views left
       // that view's own content sitting there, with nothing to actually
       // show the running/finished rail: reported live from the Account
-      // view specifically. Same deactivate-whatever's-active chain
-      // EL.homeLink's own handler already uses to return to the Ask home.
-      if (ER_ACTIVE)       deactivateEvalRewriter();
-      else if (EE_ACTIVE)  deactivateEvalEvaluator();
-      else if (EO_ACTIVE)  deactivateEvalOrchestrator();
-      else if (G_ACTIVE)   deactivateGraph();
-      else if (A_ACTIVE)   deactivateArch();
-      else if (CV_ACTIVE)  deactivateCve();
-      else if (DB_ACTIVE)  deactivateDashboard();
-      else if (D_ACTIVE)   deactivateDocs();
-      else if (ACK_ACTIVE) deactivateAck();
-      else if (CL_ACTIVE)  deactivateChangelog();
-      else if (UA_ACTIVE)  deactivateUsers();
-      else if (NET_ACTIVE) deactivateNetwork();
-      else if (new URL(location.href).searchParams.get("view") === "feed") setViewParam("");
+      // view specifically. Same deactivateActiveView() EL.homeLink's own
+      // handler and #viewCloseBtn (see their own comments) both use to
+      // return to the Ask home.
+      deactivateActiveView();
+      if (new URL(location.href).searchParams.get("view") === "feed") setViewParam("");
       const preset = document.getElementById("askPreset").value;
       const provider = document.getElementById("askProvider").value;
       const size = document.getElementById("askSize").value;
@@ -10854,6 +10882,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // view that does have its own inner overflow:auto panel (e.g. the
       // sticky .ask-rail-col); nested scroll areas coexist fine.
       document.documentElement.classList.add("page-scroll");
+      // #viewCloseBtn (see its own comment): visible on any view other
+      // than the Ask home itself, since that's the only one with
+      // nowhere further to "close" back to.
+      const closeBtn = document.getElementById("viewCloseBtn");
+      if (closeBtn) closeBtn.hidden = document.body.classList.contains("view-home");
       relocateAskOptionsPanel();
     }
     syncHomeClass();
@@ -11247,33 +11280,45 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       else if (new URL(location.href).searchParams.get("view") === "feed") { e.preventDefault(); setViewParam(""); }
     });
 
+    // Shared by the Home link, the Recent updates link, the ask submit
+    // handler (see its own comment), and #viewCloseBtn: leaves whichever
+    // one alternate view is currently active, if any. At most one of
+    // these flags is ever true at a time (activateX always deactivates
+    // whatever came before it), so this is a plain if/else-if chain, not
+    // a series of independent checks.
+    function deactivateActiveView() {
+      if (ER_ACTIVE)       deactivateEvalRewriter();
+      else if (EE_ACTIVE)  deactivateEvalEvaluator();
+      else if (EO_ACTIVE)  deactivateEvalOrchestrator();
+      else if (G_ACTIVE)   deactivateGraph();
+      else if (A_ACTIVE)   deactivateArch();
+      else if (CV_ACTIVE)  deactivateCve();
+      else if (DB_ACTIVE)  deactivateDashboard();
+      else if (D_ACTIVE)   deactivateDocs();
+      else if (ACK_ACTIVE) deactivateAck();
+      else if (CL_ACTIVE)  deactivateChangelog();
+      else if (UA_ACTIVE)  deactivateUsers();
+      else if (NET_ACTIVE) deactivateNetwork();
+    }
     EL.homeLink.addEventListener("click", e => {
       e.preventDefault();
-      if (G_ACTIVE)   deactivateGraph();
-      else if (A_ACTIVE)  deactivateArch();
-      else if (CV_ACTIVE) deactivateCve();
-      else if (DB_ACTIVE) deactivateDashboard();
-      else if (D_ACTIVE)  deactivateDocs();
-      else if (ACK_ACTIVE) deactivateAck();
-      else if (CL_ACTIVE) deactivateChangelog();
-      else if (UA_ACTIVE) deactivateUsers();
-      else if (NET_ACTIVE) deactivateNetwork();
-      else if (new URL(location.href).searchParams.get("view") === "feed") setViewParam("");
+      deactivateActiveView();
+      if (new URL(location.href).searchParams.get("view") === "feed") setViewParam("");
     });
 
     // "Recent updates": the plain feed, as its own view (the Ask home no longer shows it).
     document.getElementById("feedLink").addEventListener("click", e => {
       e.preventDefault();
-      if (G_ACTIVE)   deactivateGraph();
-      else if (A_ACTIVE)  deactivateArch();
-      else if (CV_ACTIVE) deactivateCve();
-      else if (DB_ACTIVE) deactivateDashboard();
-      else if (D_ACTIVE)  deactivateDocs();
-      else if (ACK_ACTIVE) deactivateAck();
-      else if (CL_ACTIVE) deactivateChangelog();
-      else if (UA_ACTIVE) deactivateUsers();
-      else if (NET_ACTIVE) deactivateNetwork();
+      deactivateActiveView();
       setViewParam("feed");
+    });
+
+    // #viewCloseBtn (see its own markup comment): same effect as clicking
+    // Home, just reachable without opening the (now collapsed-by-default)
+    // Menu first.
+    document.getElementById("viewCloseBtn").addEventListener("click", () => {
+      deactivateActiveView();
+      if (new URL(location.href).searchParams.get("view") === "feed") setViewParam("");
     });
 
     function gReRender() {
