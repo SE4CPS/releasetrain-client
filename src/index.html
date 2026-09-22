@@ -457,7 +457,15 @@
        #filtersPanel, which shares that same overlay), even though
        #sidebar itself no longer moves. */
     @media (min-width: 900px) {
-      #sidebar { transform: none !important; box-shadow: none; }
+      /* display:flex so #sidebarFooter's own margin-top:auto (below) can
+         push it to the true bottom edge even when the rest of the
+         sidebar's content is shorter than the viewport. Position:sticky
+         alone (the footer's other rule) only kicks in once there's
+         something to scroll past, so a short sidebar left it sitting
+         right under the nav instead of at the visual bottom. Scoped to
+         #sidebar by id, not the shared .sidebar class, so #filtersPanel
+         (which also uses .sidebar) keeps its normal block layout. */
+      #sidebar { transform: none !important; box-shadow: none; display: flex; flex-direction: column; }
       #sidebarOverlay { display: none !important; }
       #navToggle { display: none; }
       /* Nothing of the topbar's own content is left in it at this width
@@ -490,7 +498,7 @@
          than sharing a row with the version number. */
       .sidebar-footer {
         display: flex; flex-direction: column; align-items: stretch; gap: 8px;
-        position: sticky; bottom: 0;
+        position: sticky; bottom: 0; margin-top: auto;
         background: var(--surface);
         border-top: 1px solid var(--border);
         padding: 8px;
@@ -697,6 +705,16 @@
        apart from each other, flex-shrink:0 so the group as a whole is
        what wraps to the next line, not one toggle peeling off alone. */
     .ask-toggle-group { display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; flex-shrink: 0; }
+    /* Was an inline style on each of the three top-level .sb-details
+       groups (Model & pipeline / Advanced checks / Guardrails). Moved
+       to a real rule so the #sidebar column-mode override below (higher
+       specificity, an id) can actually beat it. An inline style always
+       wins over any stylesheet rule regardless of specificity, so the
+       override had no effect while this lived as style="..." on the
+       elements themselves (caught live: every closed accordion still
+       claimed 100% of the column's height and wrapped into a separate
+       side-by-side "column" instead of stacking). */
+    .ask-options-panel > .sb-details { flex: 1 0 100%; margin-top: 2px; }
     /* #askOptionsPanel permanently lives in the narrow #sidebar column
        now (relocateAskOptionsPanel, in the script), where the row/wrap
        layout above (built for the wide topbar this used to sit in)
@@ -707,9 +725,21 @@
        via its own inline style, so it needs no separate rule here. */
     @media (min-width: 900px) {
       #sidebar .ask-options-panel {
-        display: flex; flex-direction: column; align-items: stretch; gap: 8px;
+        display: flex; flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 8px;
         padding: 8px; margin-bottom: 0;
       }
+      /* The three top-level groups (Model & pipeline / Advanced checks /
+         Guardrails, each a .sb-details) carry their own flex:1 0 100%
+         inline style for the narrow/row-wrap layout above, where basis
+         100% (of width, the main axis there) is what forces each onto
+         its own full-width row. In THIS column-direction context,
+         flex-basis instead sizes the main axis, which is now height --
+         a 100% basis forced every closed accordion to claim the panel's
+         full height, and (combined with the base rule's flex-wrap:wrap,
+         only now overridden above) made them wrap into side-by-side
+         "columns" instead of a plain vertical stack. Reset to auto
+         height here so each item is only as tall as its own content. */
+      #sidebar .ask-options-panel > .sb-details { flex: 0 0 auto; }
       #sidebar .ask-toggle-group { flex-direction: column; align-items: flex-start; gap: 6px; }
       #sidebar .ask-preset-select { width: 100%; }
     }
@@ -2505,7 +2535,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.110.0"><span class="brand-name">Releasetrain </span><em>v3.110.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.111.0"><span class="brand-name">Releasetrain </span><em>v3.111.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2606,31 +2636,38 @@
                event listener on these controls keeps working unchanged
                regardless of which parent currently holds it. -->
           <div id="askOptionsPanel" class="ask-options-panel">
-            <!-- Options populated live from GET /api/ask/providers (see
-                 askLoadProviders below) rather than hardcoded here. The
-                 server is the single source of truth for which providers/
-                 sizes actually exist. These two <option>s are just a
-                 same-render fallback in case that fetch hasn't completed
-                 yet. Only apply once a query turns out to be a real
-                 question; a plain vendor/category lookup ignores them. -->
-            <select id="askProvider" class="ask-preset-select" aria-label="Which model answers"
-              title="Which LLM answers a real question (Claude, Groq, or Ollama Cloud). No effect on a plain vendor/category lookup.">
-              <option value="anthropic">Claude (Anthropic)</option>
-              <option value="groq">Groq (free tier)</option>
-              <option value="ollama" selected>Ollama Cloud (free tier)</option>
-            </select>
-            <select id="askSize" class="ask-preset-select" aria-label="Model size"
-              title="Model size tier for the selected provider. Larger sizes trade speed for answer quality."></select>
-            <select id="askPreset" class="ask-preset-select" aria-label="Which pipeline to ask"
-              title="Which pipeline runs. Auto picks one from the question's own classified intent (a comparison, security, or plain version question each get a different pipeline) and the answer states why.&#10;&#10;Single-agent/Multi-agent buggy/fixed are one continuous model call with capability flags toggled on or off.&#10;&#10;Multi-agent (delegated) and Multi-agent (feedback loop) are genuine delegation: Rewriter, Retriever, and Evaluator are each their own separate model call.">
-              <option value="auto" selected>Auto (recommended)</option>
-              <option value="multi_agent_fixed">Multi-agent (fixed)</option>
-              <option value="single_agent">Single-agent</option>
-              <option value="multi_agent_buggy">Multi-agent (buggy)</option>
-              <option value="multi_agent">Multi-agent (delegated)</option>
-              <option value="multi_agent_feedback">Multi-agent (feedback loop)</option>
-              <option value="compare">Compare all 5</option>
-            </select>
+            <!-- Collapsed by default, same as every other .sb-details group
+                 in this sidebar. Options populated live from GET
+                 /api/ask/providers (see askLoadProviders below) rather than
+                 hardcoded here. The server is the single source of truth
+                 for which providers/sizes actually exist. These two
+                 <option>s are just a same-render fallback in case that
+                 fetch hasn't completed yet. Only apply once a query turns
+                 out to be a real question; a plain vendor/category lookup
+                 ignores them. -->
+            <details class="sb-details">
+              <summary>Model &amp; pipeline</summary>
+              <div class="ask-toggle-group" style="padding:8px 0 0">
+                <select id="askProvider" class="ask-preset-select" aria-label="Which model answers"
+                  title="Which LLM answers a real question (Claude, Groq, or Ollama Cloud). No effect on a plain vendor/category lookup.">
+                  <option value="anthropic">Claude (Anthropic)</option>
+                  <option value="groq">Groq (free tier)</option>
+                  <option value="ollama" selected>Ollama Cloud (free tier)</option>
+                </select>
+                <select id="askSize" class="ask-preset-select" aria-label="Model size"
+                  title="Model size tier for the selected provider. Larger sizes trade speed for answer quality."></select>
+                <select id="askPreset" class="ask-preset-select" aria-label="Which pipeline to ask"
+                  title="Which pipeline runs. Auto picks one from the question's own classified intent (a comparison, security, or plain version question each get a different pipeline) and the answer states why.&#10;&#10;Single-agent/Multi-agent buggy/fixed are one continuous model call with capability flags toggled on or off.&#10;&#10;Multi-agent (delegated) and Multi-agent (feedback loop) are genuine delegation: Rewriter, Retriever, and Evaluator are each their own separate model call.">
+                  <option value="auto" selected>Auto (recommended)</option>
+                  <option value="multi_agent_fixed">Multi-agent (fixed)</option>
+                  <option value="single_agent">Single-agent</option>
+                  <option value="multi_agent_buggy">Multi-agent (buggy)</option>
+                  <option value="multi_agent">Multi-agent (delegated)</option>
+                  <option value="multi_agent_feedback">Multi-agent (feedback loop)</option>
+                  <option value="compare">Compare all 5</option>
+                </select>
+              </div>
+            </details>
             <!-- Collapsed by default (unlike Guardrails below, left open):
                  these five are fine-grained per-question ablation
                  toggles, useful for testing but not something a visitor
@@ -2640,7 +2677,7 @@
                  behaviorally: every checkbox below still defaults
                  checked and is still sent exactly as before, whether
                  this is open or closed. -->
-            <details class="sb-details" id="askAdvancedChecksDetails" style="flex:1 0 100%;margin-top:2px">
+            <details class="sb-details" id="askAdvancedChecksDetails">
               <summary>Advanced checks</summary>
               <!-- Grouped so the three toggles wrap together as one unit
                  (all three on their line, or all three dropping to the
@@ -2679,7 +2716,7 @@
                  change (the mandatory ones live in each answer's Guardrails
                  tab); askLoadGuardrails runs once on load and again each
                  time it is reopened (see the "toggle" listener below). -->
-            <details class="sb-details" id="askGuardrailsDetails" open style="flex:1 0 100%;margin-top:2px">
+            <details class="sb-details" id="askGuardrailsDetails">
               <summary>Guardrails</summary>
               <div class="sidebar-section" id="askGuardrailsBody" style="padding:8px 0 0">
                 <p class="ua-muted" style="font-size:11px;margin:0">Loading…</p>
@@ -2723,26 +2760,36 @@
     <!-- ── Menu drawer: views + search/filters, opened via the ☰ button ── -->
     <aside class="sidebar" id="sidebar" aria-label="Menu">
 
-      <nav class="nav-links" id="navLinks" aria-label="Views">
-        <a id="homeLink" class="nav-link" href="#" title="Return to the Ask home page">🏠 Home</a>
-        <a id="feedLink" class="nav-link" href="#" title="Browse the recent updates feed">📋 Recent updates</a>
-        <a id="graphLink" class="nav-link" href="#" title="Show component graph (in-page)">📊 Graph</a>
-        <a id="archLink" class="nav-link" href="#" title="Show architecture diagram (in-page)">🏗 Arch</a>
-        <a id="cveLink" class="nav-link" href="#" title="Show CVE discussions (in-page)">🔐 CVE</a>
-        <a id="dashboardLink" class="nav-link" href="#" title="Show release risk report (in-page)">🛡 Risk Report</a>
-        <a id="docsLink" class="nav-link" href="#" title="Show API documentation (in-page)">📖 Docs</a>
-        <a id="changelogLink" class="nav-link" href="#" title="What's new: version history">📝 Changelog</a>
-        <a id="ackLink" class="nav-link" href="#" title="Show acknowledgements (in-page)">🤝 Credits</a>
-        <a id="usersLink" class="nav-link" href="#" title="User account management">👤 Account</a>
-        <a id="networkLink" class="nav-link" href="#" title="Releases: publish and report production outcomes">🌐 Release</a>
-        <!-- Admin-only: hidden by default, shown in uaRender() only when
-             the signed-in user's role is "admin". -->
-        <a id="evalRewriterLink" class="nav-link" href="#" title="Admin: compare Retriever evidence with vs without the Rewriter" hidden>🧪 Eval Rewriter</a>
-        <a id="evalEvaluatorLink" class="nav-link" href="#" title="Admin: compare the Evaluator's raw verdict vs the deterministic override" hidden>🧪 Eval Evaluator</a>
-        <a id="evalOrchestratorLink" class="nav-link" href="#" title="Admin: compare the Orchestrator's raw answer vs the corrected answer" hidden>🧪 Eval Orchestrator</a>
-        <a class="nav-link" href="https://github.com/SE4CPS/releasetrain-client"
-          target="_blank" rel="noopener noreferrer">⭐ GitHub</a>
-      </nav>
+      <!-- Collapsed by default, same as every other .sb-details group in
+           this sidebar (per explicit request to collapse everything on
+           this side); id kept stable (navLinksDetails) since
+           relocateAskOptionsPanel below anchors #askOptionsPanel right
+           after this wrapper, not after the bare <nav> anymore, so the
+           options panel lands as #sidebar's own direct child rather than
+           nesting inside this <details> too. -->
+      <details class="sb-details" id="navLinksDetails">
+        <summary>Menu</summary>
+        <nav class="nav-links" id="navLinks" aria-label="Views">
+          <a id="homeLink" class="nav-link" href="#" title="Return to the Ask home page">🏠 Home</a>
+          <a id="feedLink" class="nav-link" href="#" title="Browse the recent updates feed">📋 Recent updates</a>
+          <a id="graphLink" class="nav-link" href="#" title="Show component graph (in-page)">📊 Graph</a>
+          <a id="archLink" class="nav-link" href="#" title="Show architecture diagram (in-page)">🏗 Arch</a>
+          <a id="cveLink" class="nav-link" href="#" title="Show CVE discussions (in-page)">🔐 CVE</a>
+          <a id="dashboardLink" class="nav-link" href="#" title="Show release risk report (in-page)">🛡 Risk Report</a>
+          <a id="docsLink" class="nav-link" href="#" title="Show API documentation (in-page)">📖 Docs</a>
+          <a id="changelogLink" class="nav-link" href="#" title="What's new: version history">📝 Changelog</a>
+          <a id="ackLink" class="nav-link" href="#" title="Show acknowledgements (in-page)">🤝 Credits</a>
+          <a id="usersLink" class="nav-link" href="#" title="User account management">👤 Account</a>
+          <a id="networkLink" class="nav-link" href="#" title="Releases: publish and report production outcomes">🌐 Release</a>
+          <!-- Admin-only: hidden by default, shown in uaRender() only when
+               the signed-in user's role is "admin". -->
+          <a id="evalRewriterLink" class="nav-link" href="#" title="Admin: compare Retriever evidence with vs without the Rewriter" hidden>🧪 Eval Rewriter</a>
+          <a id="evalEvaluatorLink" class="nav-link" href="#" title="Admin: compare the Evaluator's raw verdict vs the deterministic override" hidden>🧪 Eval Evaluator</a>
+          <a id="evalOrchestratorLink" class="nav-link" href="#" title="Admin: compare the Orchestrator's raw answer vs the corrected answer" hidden>🧪 Eval Orchestrator</a>
+          <a class="nav-link" href="https://github.com/SE4CPS/releasetrain-client"
+            target="_blank" rel="noopener noreferrer">⭐ GitHub</a>
+        </nav>
+      </details>
 
       <!-- Filters/Stats moved to their own panel (#filtersPanel, toggled
            by the 🎚️ topbar button), separate from this ☰ menu drawer. -->
@@ -2751,7 +2798,7 @@
       <!-- ── Graph controls (shown only in graph view) ── -->
       <div id="graphControls" style="display:none">
 
-        <details class="sb-details" open>
+        <details class="sb-details">
           <summary>Layers</summary>
           <div class="sidebar-section" style="padding-bottom:10px">
             <div style="display:flex;flex-direction:column;gap:7px">
@@ -2872,7 +2919,7 @@
         <div class="sidebar-section" style="padding-bottom:6px;border-top:1px solid var(--border)">
           <div class="sidebar-label" style="margin-bottom:6px">Live Collection Stats</div>
 
-          <details class="sb-stat-group" open>
+          <details class="sb-stat-group">
             <summary class="sb-stat-head">📦 Versions</summary>
             <div class="sb-stat-body">
               <div class="sb-stat-row"><span>Total</span><span id="dsb-v-total">…</span></div>
@@ -2883,7 +2930,7 @@
             </div>
           </details>
 
-          <details class="sb-stat-group" open>
+          <details class="sb-stat-group">
             <summary class="sb-stat-head">💬 Community</summary>
             <div class="sb-stat-body">
               <div class="sb-stat-row"><span>Total</span><span id="dsb-r-total">…</span></div>
@@ -2896,7 +2943,7 @@
           </details>
         </div>
 
-        <details class="sb-details" open>
+        <details class="sb-details">
           <summary>API Reference</summary>
           <div class="sidebar-section" style="padding-bottom:4px">
             <ul class="d-toc">
@@ -4375,6 +4422,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-22</div>
+              <div class="cl-ver cl-ver-minor">v3.111.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Everything on the left collapses by default; every view can scroll</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The sidebar's nav links and the Model &amp; pipeline selects are now their own collapsed-by-default sections (matching Advanced checks/Guardrails), and every existing collapsible group in the sidebar (Layers, the Docs live-stats groups, API Reference) starts closed too, so the sidebar reads as a short list of headings instead of everything expanded at once.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The sidebar footer (version number, sign-in) now actually sits at the sidebar's true bottom edge on a wide screen; it used to land right under the nav with a lot of blank space below it, since position:sticky alone only engages once there's something to scroll past.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Every view (Docs, Account, Graph, etc.) can scroll again when its content runs taller than the window. Page scrolling used to be Ask-home-only; Docs and Account in particular had no scroll container of their own, so their own content past the first screenful was simply unreachable.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Fixed a real layout bug hit while building the above: moving the Model &amp; pipeline selects into their own collapsible section exposed a case where the sidebar's own column layout, combined with a leftover row-wrap rule, was wrapping closed accordions into side-by-side columns instead of stacking them.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-22</div>
@@ -10102,7 +10164,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const panel = document.getElementById("askOptionsPanel");
       if (!panel) return;
       if (askRailMql.matches) {
-        const nav = document.getElementById("navLinks");
+        // The <details> wrapper (see its own comment above the markup),
+        // not the bare #navLinks it now contains: anchoring on the
+        // inner <nav> would insert this panel inside that <details>,
+        // right along with the nav links it wraps.
+        const nav = document.getElementById("navLinksDetails");
         if (nav && nav.nextSibling !== panel) nav.parentElement.insertBefore(panel, nav.nextSibling);
       } else {
         // .ask-options-row holds nothing else (Clear/bookmark/submit
@@ -10708,7 +10774,16 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (feedLink) feedLink.classList.toggle("nav-active", view === "feed");
       // ?view=feed, or a bare ?q= link, is the plain feed with nothing from Ask beside it.
       document.body.classList.toggle("view-feed", view === "feed" || (!view && !!u.searchParams.get("q")));
-      document.documentElement.classList.toggle("page-scroll", !view && !u.searchParams.get("q"));
+      // Was Ask-home-only ("other views keep their own scrolling panels" --
+      // never actually true for every one of them: Docs and Account, at
+      // least, have no internal scroll container of their own, so their
+      // content just clipped invisibly against html/body's overflow:hidden
+      // with no way to reach the rest of the page). A page that can always
+      // scroll when its content runs taller than the viewport is strictly
+      // safer than one that silently clips, and doesn't interfere with a
+      // view that does have its own inner overflow:auto panel (e.g. the
+      // sticky .ask-rail-col); nested scroll areas coexist fine.
+      document.documentElement.classList.add("page-scroll");
       relocateAskOptionsPanel();
     }
     syncHomeClass();
