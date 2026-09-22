@@ -313,6 +313,11 @@
       padding: 9px 12px; cursor: pointer;
     }
     .ask-intro-signin-btn:hover { background: #1d4ed8; }
+    /* Set/updated by uaUpdateAskIntroSignin() below, from GET
+       /api/ask/anon-quota; hidden whenever anonymous questions are off
+       (limit 0) or the visitor is signed in. Inherits .ask-intro-panel's
+       own var(--muted) color, just needs its own spacing. */
+    .ask-anon-quota-note { display: block; text-align: center; margin-top: 6px; font-size: 11px; }
     /* Its own tab bar, not a reuse of .ask-rail-tabs: that class's
        margin: -2px -14px 10px is a deliberate bleed-to-the-edge trick
        that cancels out .ask-answer-card's own 14px padding (see its own
@@ -2354,7 +2359,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.103.5">Releasetrain <em>v3.103.5</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.104.0">Releasetrain <em>v3.104.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3605,7 +3610,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
   "queries": { "total": 8340, "last7Days": 412 },
   "botGapLog": { "total": 18, "success": 11, "recent": [ "..." ] }
 }</code></pre></div></details>
-<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/admin/settings</span></summary><div class="endpoint-body"><p>Current values of every admin-tunable runtime setting: the Ask pipeline defaults, the global per-IP rate limit (plus a separate, higher <code class="inline">adminRateLimitPerMinute</code> ceiling for a request whose own JWT has <code class="inline">role: "admin"</code>), the registration email domain allowlist, which nav views are visible, each eval tool's access level, and the <code class="inline">guardrails</code> registry (every deterministic safety/correctness check applied to Ask answers, each with its <code class="inline">tier</code> of <code class="inline">"mandatory"</code> or <code class="inline">"optional"</code> and its current admin-set <code class="inline">enabled</code> value; see the public <code class="inline">GET /api/guardrails</code> below for the per-caller effective view of the same list).</p><div><span class="tag">admin only</span></div><pre><code>curl "https://releasetrain.io/api/admin/settings" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "askRecentWindowDays": 14, "askDefaultPreset": "auto", "askDefaultProvider": "ollama", "askDefaultSize": "medium", "rateLimitPerMinute": 120, "allowedEmailDomains": "gmail.com,outlook.com", "viewGraphVisible": true, "viewDocsVisible": true, "evalRewriterAccess": "admin", "evalEvaluatorAccess": "admin", "evalOrchestratorAccess": "admin", "guardrails": [ { "id": "toolResultInjectionScan", "tier": "mandatory", "label": "Scan retrieved content for prompt injection", "description": "Flags tool results that try to redirect the model's own instructions before they reach it.", "enabled": true }, { "id": "vendorCheck", "tier": "optional", "label": "Require a resolvable vendor/product", "description": "Declines outright if the question names no vendor/product this system tracks.", "enabled": true } ] }</code></pre></div></details>
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/admin/settings</span></summary><div class="endpoint-body"><p>Current values of every admin-tunable runtime setting: the Ask pipeline defaults, the global per-IP rate limit (plus a separate, higher <code class="inline">adminRateLimitPerMinute</code> ceiling for a request whose own JWT has <code class="inline">role: "admin"</code>), the registration email domain allowlist, which nav views are visible, each eval tool's access level, how many real questions a signed-out visitor may ask per day before <code class="inline">POST /api/ask</code> requires sign-in (<code class="inline">anonymousAskEnabled</code>/<code class="inline">anonymousAskLimit</code>; a limit of 0, or the toggle off, both reproduce always requiring sign-in), and the <code class="inline">guardrails</code> registry (every deterministic safety/correctness check applied to Ask answers, each with its <code class="inline">tier</code> of <code class="inline">"mandatory"</code> or <code class="inline">"optional"</code> and its current admin-set <code class="inline">enabled</code> value; see the public <code class="inline">GET /api/guardrails</code> below for the per-caller effective view of the same list).</p><div><span class="tag">admin only</span></div><pre><code>curl "https://releasetrain.io/api/admin/settings" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "askRecentWindowDays": 14, "askDefaultPreset": "auto", "askDefaultProvider": "ollama", "askDefaultSize": "medium", "rateLimitPerMinute": 120, "allowedEmailDomains": "gmail.com,outlook.com", "viewGraphVisible": true, "viewDocsVisible": true, "evalRewriterAccess": "admin", "evalEvaluatorAccess": "admin", "evalOrchestratorAccess": "admin", "anonymousAskEnabled": true, "anonymousAskLimit": 3, "guardrails": [ { "id": "toolResultInjectionScan", "tier": "mandatory", "label": "Scan retrieved content for prompt injection", "description": "Flags tool results that try to redirect the model's own instructions before they reach it.", "enabled": true }, { "id": "vendorCheck", "tier": "optional", "label": "Require a resolvable vendor/product", "description": "Declines outright if the question names no vendor/product this system tracks.", "enabled": true } ] }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/admin/source-attribution</span></summary><div class="endpoint-body"><p>What fraction of the <code class="inline">versions</code> collection has no confident <code class="inline">sourceBot</code> attribution (<code class="inline">"unknown"</code> or missing entirely). A rising percentage signals a bot's source-inference rule needs updating.</p><div><span class="tag">admin only</span></div><pre><code>curl "https://releasetrain.io/api/admin/source-attribution" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "total": 54210, "unknown": 780, "missing": 32, "pct": 1.5, "byBot": [ { "_id": "chrome.py", "count": 4210 }, { "_id": "unknown", "count": 780 } ] }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/admin/storage</span></summary><div class="endpoint-body"><p>MongoDB Atlas storage/data/index size against the M0 free-tier's 512MB shared cap.</p><div><span class="tag">admin only</span></div><pre><code>curl "https://releasetrain.io/api/admin/storage" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "storageMb": 210.4, "dataMb": 180.2, "indexMb": 22.1, "limitMb": 512, "pct": 0.411, "collections": 8, "objects": 1204830 }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/admin/vendor-aliases</span></summary><div class="endpoint-body"><p>Every manually-curated vendor alias, correcting or adding a vendor name the automatic catalog (built from tracked release data and Reddit subreddit names) doesn't resolve on its own.</p><div><span class="tag">admin only</span></div><pre><code>curl "https://releasetrain.io/api/admin/vendor-aliases" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "data": [ { "_id": "660c38fce3cba9423e4f8f23", "alias": "ada", "canonicalName": "Ada", "createdAt": "2026-09-15T17:00:00.000Z" } ] }</code></pre></div></details>
@@ -3613,7 +3618,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
 <details class="endpoint method-post"><summary class="endpoint-head"><span class="method post">POST</span><span class="path">/api/admin/vendor-aliases</span></summary><div class="endpoint-body"><p>Add a vendor alias mapping one alternate spelling/name to its canonical name.</p><div><span class="tag">admin only</span></div><pre><code>curl -X POST "https://releasetrain.io/api/admin/vendor-aliases" -H "Authorization: Bearer YOUR_JWT_TOKEN" -H "Content-Type: application/json" -d '{"alias":"ada","canonicalName":"Ada"}'</code></pre><pre><code>{ "data": { "_id": "660c38fce3cba9423e4f8f23", "alias": "ada", "canonicalName": "Ada", "createdAt": "2026-09-15T17:00:00.000Z" } }</code></pre></div></details>
 <details class="endpoint method-post"><summary class="endpoint-head"><span class="method post">POST</span><span class="path">/api/admin/vendor-gap-fill</span></summary><div class="endpoint-body"><p>Manually runs the same automatic-catalog gap-fill a bot's own fallback triggers for a real, web-verified vendor with zero tracked evidence (see the <code class="inline">botGapLog</code> field on <code class="inline">GET /api/admin/overview</code>). The attempt is logged the same as an automatic one, so it also shows up in that response's <code class="inline">botGapLog.recent</code> list.</p><div><span class="tag">admin only</span></div><pre><code>curl -X POST "https://releasetrain.io/api/admin/vendor-gap-fill" -H "Authorization: Bearer YOUR_JWT_TOKEN" -H "Content-Type: application/json" -d '{"vendorName":"ada"}'</code></pre><pre><code>{ "success": true }</code></pre></div></details>
 <details class="endpoint method-put"><summary class="endpoint-head"><span class="method put">PUT</span><span class="path">/api/admin/bot-cadence</span></summary><div class="endpoint-body"><p>Set (or clear) one bot's cadence override. <code class="inline">maxDays</code> is a number from 1-365, or <code class="inline">null</code> to remove the override and fall back to that bot's default. Applies immediately, no restart needed, and is picked up by <code class="inline">/api/admin/bot-health</code>'s next check.</p><div><span class="tag">admin only</span></div><pre><code>curl -X PUT "https://releasetrain.io/api/admin/bot-cadence" -H "Authorization: Bearer YOUR_JWT_TOKEN" -H "Content-Type: application/json" -d '{"bot":"mysql.py","maxDays":90}'</code></pre><pre><code>{ "defaults": { "chrome.py": 21, "firefox.py": 21, "mysql.py": 120 }, "overrides": { "mysql.py": 90 } }</code></pre></div></details>
-<details class="endpoint method-put"><summary class="endpoint-head"><span class="method put">PUT</span><span class="path">/api/admin/settings</span></summary><div class="endpoint-body"><p>Patch one or more runtime settings. Applies immediately, no restart needed, and persists to the <code class="inline">settings</code> collection. Unrecognized keys are ignored; each known value is validated/clamped (e.g. <code class="inline">askRecentWindowDays</code> to 1-90, <code class="inline">rateLimitPerMinute</code> to 10-2000) before being applied and returned. <code class="inline">allowedEmailDomains</code> takes a comma-separated string; any <code class="inline">.edu</code> (or <code class="inline">.edu.&lt;country&gt;</code>) address is always allowed regardless of this list. <code class="inline">guardrails</code> takes an array of <code class="inline">{"id","enabled"}</code> patches merged into the existing registry by <code class="inline">id</code>; an unknown <code class="inline">id</code> is ignored. The response always echoes back the full merged settings object, including the full updated <code class="inline">guardrails</code> array.</p><div><span class="tag">admin only</span></div><pre><code>curl -X PUT "https://releasetrain.io/api/admin/settings" -H "Authorization: Bearer YOUR_JWT_TOKEN" -H "Content-Type: application/json" -d '{"askRecentWindowDays":30,"rateLimitPerMinute":200,"allowedEmailDomains":"gmail.com,outlook.com","guardrails":[{"id":"vendorCheck","enabled":false}]}'</code></pre><pre><code>{ "askRecentWindowDays": 30, "askDefaultPreset": "auto", "rateLimitPerMinute": 200, "allowedEmailDomains": "gmail.com,outlook.com", "evalRewriterAccess": "auth", "evalEvaluatorAccess": "admin", "evalOrchestratorAccess": "admin", "guardrails": [ { "id": "vendorCheck", "tier": "optional", "label": "Require a resolvable vendor/product", "description": "Declines outright if the question names no vendor/product this system tracks.", "enabled": false } ] }</code></pre></div></details>
+<details class="endpoint method-put"><summary class="endpoint-head"><span class="method put">PUT</span><span class="path">/api/admin/settings</span></summary><div class="endpoint-body"><p>Patch one or more runtime settings. Applies immediately, no restart needed, and persists to the <code class="inline">settings</code> collection. Unrecognized keys are ignored; each known value is validated/clamped (e.g. <code class="inline">askRecentWindowDays</code> to 1-90, <code class="inline">rateLimitPerMinute</code> to 10-2000, <code class="inline">anonymousAskLimit</code> to 0-50) before being applied and returned. <code class="inline">allowedEmailDomains</code> takes a comma-separated string; any <code class="inline">.edu</code> (or <code class="inline">.edu.&lt;country&gt;</code>) address is always allowed regardless of this list. <code class="inline">guardrails</code> takes an array of <code class="inline">{"id","enabled"}</code> patches merged into the existing registry by <code class="inline">id</code>; an unknown <code class="inline">id</code> is ignored. The response always echoes back the full merged settings object, including the full updated <code class="inline">guardrails</code> array.</p><div><span class="tag">admin only</span></div><pre><code>curl -X PUT "https://releasetrain.io/api/admin/settings" -H "Authorization: Bearer YOUR_JWT_TOKEN" -H "Content-Type: application/json" -d '{"askRecentWindowDays":30,"rateLimitPerMinute":200,"allowedEmailDomains":"gmail.com,outlook.com","guardrails":[{"id":"vendorCheck","enabled":false}]}'</code></pre><pre><code>{ "askRecentWindowDays": 30, "askDefaultPreset": "auto", "rateLimitPerMinute": 200, "allowedEmailDomains": "gmail.com,outlook.com", "evalRewriterAccess": "auth", "evalEvaluatorAccess": "admin", "evalOrchestratorAccess": "admin", "guardrails": [ { "id": "vendorCheck", "tier": "optional", "label": "Require a resolvable vendor/product", "description": "Declines outright if the question names no vendor/product this system tracks.", "enabled": false } ] }</code></pre></div></details>
 </div><a class="toplink" href="#">↑ Back to top</a></section>
 
 <section class="block" id="d-testing">
@@ -3657,8 +3662,9 @@ flowchart LR
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/ask/providers</span></summary><div class="endpoint-body"><p>Available LLM providers (Anthropic, Groq, Ollama Cloud) and each one's small/medium/large model sizes, plus the current default preset/provider/size a new visitor's Ask form should start on.</p><pre><code>curl "https://releasetrain.io/api/ask/providers"</code></pre><pre><code>{ "providers": [ { "id": "anthropic", "label": "Anthropic", "sizes": [ { "id": "small", "label": "Small" } ] } ], "defaultPreset": "auto", "defaultProvider": "ollama", "defaultSize": "medium" }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/ask/quota</span></summary><div class="endpoint-body"><p>Last-seen rate-limit headers per provider (Anthropic, Groq) plus how many calls this server process has made today. A snapshot from the last real <code class="inline">/api/ask</code> call, not a live check.</p><pre><code>curl "https://releasetrain.io/api/ask/quota"</code></pre><pre><code>{ "anthropic": { "remaining": 48, "limit": 50, "rateLimitedSecondsLeft": null }, "groq": { "remaining": 14400, "limit": 14400, "rateLimitedSecondsLeft": null } }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/ask/recent-window-days</span></summary><div class="endpoint-body"><p>Public: the current admin-configured recency window (in days) Ask applies by default, so the feed's own lookback can track the same window instead of a separately hardcoded value.</p><pre><code>curl "https://releasetrain.io/api/ask/recent-window-days"</code></pre><pre><code>{ "askRecentWindowDays": 14 }</code></pre></div></details>
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/ask/anon-quota</span></summary><div class="endpoint-body"><p>Public: how many real questions this caller's IP address has asked today, and the current admin-set limit (see <code class="inline">anonymousAskEnabled</code>/<code class="inline">anonymousAskLimit</code> on <code class="inline">GET</code>/<code class="inline">PUT /api/admin/settings</code>), so a signed-out visitor's page can show "N free questions left" before they type one. A signed-in caller (recognized via an optional <code class="inline">Authorization</code> header, same as <code class="inline">POST /api/ask</code>) gets <code class="inline">{"authenticated":true}</code> instead, since an authenticated question has no anonymous quota to report.</p><pre><code>curl "https://releasetrain.io/api/ask/anon-quota"</code></pre><pre><code>{ "authenticated": false, "enabled": true, "limit": 3, "used": 1, "remaining": 2 }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/guardrails</span></summary><div class="endpoint-body"><p>Public, with optional auth: every guardrail applied to Ask answers, each with the admin's raw <code class="inline">enabled</code> setting, the <code class="inline">effective</code> value that actually applies to the calling user right now (a mandatory guardrail's <code class="inline">effective</code> always equals <code class="inline">enabled</code>; an optional one's is the caller's own saved preference if signed in and set, else the admin default), and <code class="inline">configurable</code> (true only when the guardrail is <code class="inline">tier: "optional"</code> and the caller is signed in). Send <code class="inline">Authorization: Bearer &lt;token&gt;</code> to get a signed-in caller's own <code class="inline">effective</code>/<code class="inline">configurable</code> values; omit it for the signed-out view.</p><pre><code>curl "https://releasetrain.io/api/guardrails" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "guardrails": [ { "id": "toolResultInjectionScan", "tier": "mandatory", "label": "Scan retrieved content for prompt injection", "description": "Flags tool results that try to redirect the model's own instructions before they reach it.", "enabled": true, "effective": true, "configurable": false }, { "id": "vendorCheck", "tier": "optional", "label": "Require a resolvable vendor/product", "description": "Declines outright if the question names no vendor/product this system tracks.", "enabled": true, "effective": false, "configurable": true } ] }</code></pre></div></details>
-<details class="endpoint method-post"><summary class="endpoint-head"><span class="method post">POST</span><span class="path">/api/ask</span></summary><div class="endpoint-body"><p>Ask a question. A bare vendor/category name resolves instantly as plain JSON (<code class="inline">{"intent":"documents",...}</code>), no sign-in needed. A real question streams back <code class="inline">text/event-stream</code> progress events ending in one <code class="inline">result</code> (or <code class="inline">error</code>) event, and requires sign-in. <code class="inline">config</code> accepts <code class="inline">preset</code> (or <code class="inline">"auto"</code> to classify intent server-side), <code class="inline">provider</code>, <code class="inline">size</code>, the <code class="inline">vendorCheck</code>/<code class="inline">temporalFilter</code>/<code class="inline">intentFilter</code> toggles, and the two Rewriter toggles <code class="inline">resolveVendor</code> (resolve a component type in a comparison question, such as "browser", to the real tracked components and recommend a stack) and <code class="inline">resolveTemporal</code> (turn a phrase like "last 3 weeks" into a date window), both on unless set to <code class="inline">false</code>. Question is capped at 500 characters. A comparison answer that resolved a component type also carries <code class="inline">resolvedComponents</code> (<code class="inline">{ type, members }</code>) and <code class="inline">stack</code> (the recommended app, the lowest-risk component, and each component's computed score). The <code class="inline">result</code> event also carries <code class="inline">guardrailActivity</code> (which of the mandatory guardrails, see <code class="inline">GET /api/guardrails</code>, actually did something for this specific answer) and, on any source a guardrail is responsible for surfacing, a <code class="inline">guardrail</code> field naming it.</p><pre><code>curl -N -X POST "https://releasetrain.io/api/ask" -H "Authorization: Bearer YOUR_JWT_TOKEN" -H "Content-Type: application/json" -d '{"question":"Was the WebView bug patched?","config":{"preset":"auto"}}'</code></pre><pre><code>data: { "type": "progress", "phase": "retrieving", "detail": "Searching versions and reddit" }
+<details class="endpoint method-post"><summary class="endpoint-head"><span class="method post">POST</span><span class="path">/api/ask</span></summary><div class="endpoint-body"><p>Ask a question. A bare vendor/category name resolves instantly as plain JSON (<code class="inline">{"intent":"documents",...}</code>), no sign-in needed. A real question streams back <code class="inline">text/event-stream</code> progress events ending in one <code class="inline">result</code> (or <code class="inline">error</code>) event, and normally requires sign-in, except that a signed-out visitor gets a small, admin-configured number of free real questions per day first (see <code class="inline">anonymousAskEnabled</code>/<code class="inline">anonymousAskLimit</code> on <code class="inline">GET</code>/<code class="inline">PUT /api/admin/settings</code>; ships disabled in effect, at a limit of 0). Once that limit is used up, or if it's disabled, the <code class="inline">401</code> body carries <code class="inline">anonymousLimitReached: true</code> and the current <code class="inline">anonymousQuestionLimit</code>, so the client can tell that case apart from "sign-in has always been required." <code class="inline">config</code> accepts <code class="inline">preset</code> (or <code class="inline">"auto"</code> to classify intent server-side), <code class="inline">provider</code>, <code class="inline">size</code>, the <code class="inline">vendorCheck</code>/<code class="inline">temporalFilter</code>/<code class="inline">intentFilter</code> toggles, and the two Rewriter toggles <code class="inline">resolveVendor</code> (resolve a component type in a comparison question, such as "browser", to the real tracked components and recommend a stack) and <code class="inline">resolveTemporal</code> (turn a phrase like "last 3 weeks" into a date window), both on unless set to <code class="inline">false</code>. Question is capped at 500 characters. A comparison answer that resolved a component type also carries <code class="inline">resolvedComponents</code> (<code class="inline">{ type, members }</code>) and <code class="inline">stack</code> (the recommended app, the lowest-risk component, and each component's computed score). The <code class="inline">result</code> event also carries <code class="inline">guardrailActivity</code> (which of the mandatory guardrails, see <code class="inline">GET /api/guardrails</code>, actually did something for this specific answer), a <code class="inline">guardrail</code> field on any source a guardrail is responsible for surfacing, and (for an anonymous caller only; <code class="inline">null</code> for a signed-in one) <code class="inline">anonymousQuestionsRemaining</code>, the same number <code class="inline">GET /api/ask/anon-quota</code> would now report.</p><pre><code>curl -N -X POST "https://releasetrain.io/api/ask" -H "Authorization: Bearer YOUR_JWT_TOKEN" -H "Content-Type: application/json" -d '{"question":"Was the WebView bug patched?","config":{"preset":"auto"}}'</code></pre><pre><code>data: { "type": "progress", "phase": "retrieving", "detail": "Searching versions and reddit" }
 
 data: { "type": "result", "runId": "660c38fce3cba9423e4f8f23", "answer": "...", "sources": [ "..." ], "abstained": false }</code></pre></div></details>
 <details class="endpoint method-post"><summary class="endpoint-head"><span class="method post">POST</span><span class="path">/api/ask/:runId/rate</span></summary><div class="endpoint-body"><p>Rate one of the caller's own past runs helpful (<code class="inline">1</code>) or not helpful (<code class="inline">-1</code>).</p><div><span class="tag">requires login</span></div><pre><code>curl -X POST "https://releasetrain.io/api/ask/660c38fce3cba9423e4f8f23/rate" -H "Authorization: Bearer YOUR_JWT_TOKEN" -H "Content-Type: application/json" -d '{"rating":1}'</code></pre><pre><code>{ "success": true }</code></pre></div></details>
@@ -4172,6 +4178,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-22</div>
+              <div class="cl-ver cl-ver-minor">v3.104.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Anonymous questions: a small free quota before sign-in</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> A signed-out visitor may now ask a small, admin-configured number of real questions before <code>POST /api/ask</code> falls back to requiring sign-in (new <code>anonymousAskEnabled</code>/<code>anonymousAskLimit</code> fields on <code>GET</code>/<code>PUT /api/admin/settings</code>, both editable from the Account view's admin Settings panel). Ships disabled in effect (limit 0), so this changes nothing until an admin raises it. Enforced server-side only, bucketed by IP address and UTC calendar day; a client-supplied count is never trusted for it.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The Ask intro panel now shows "N of M free questions left today" next to the sign-in button while signed out and the feature is on, backed by the new public <code>GET /api/ask/anon-quota</code>. Once the free questions are used up, the sign-in alert names that specifically instead of the generic "sign in to ask a real question" message.</li>
+                <li><span class="cl-tag cl-tag-docs">docs</span> API Reference: documented the new <code>GET /api/ask/anon-quota</code> route, and noted the new anonymous-question fields on the existing <code>GET</code>/<code>PUT /api/admin/settings</code> and <code>POST /api/ask</code> entries.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-19</div>
@@ -7358,6 +7378,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       <p>Runs your question through a real model call, with tool access to release notes, CVE records, Reddit/StackOverflow, plus a live web search fallback when internal data doesn't cover it. A bare vendor/category name (e.g. "mysql", "llm") browses directly, no model call.</p>
       <div class="ask-intro-signin-row">
         <button type="button" class="ask-intro-signin-btn" id="askIntroSignInLink">Sign in to ask a real question &rarr;</button>
+        <!-- Text + visibility set live by uaUpdateAskIntroSignin() from
+             GET /api/ask/anon-quota (admin-configurable: see
+             anonymousAskEnabled/anonymousAskLimit in the Account view's
+             Settings panel). Hidden by default so a server that hasn't
+             enabled anonymous questions (the shipped default) shows
+             nothing here at all, not an empty line. -->
+        <span class="ask-anon-quota-note" id="askAnonQuotaNote" hidden></span>
       </div>
       <ul class="ask-home-samples" aria-label="Sample questions">
         <li><button type="button" class="ask-sample-btn" data-ask-sample="Do you recommend browser-based Zoom or Teams for my important meeting?">Do you recommend browser-based Zoom or Teams for my important meeting?</button></li>
@@ -10048,7 +10075,25 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const res = await uaRequest("ask", { method: "POST", body: JSON.stringify({ question, config }) });
         if (res.status === 401) {
           refreshQuotaAfter = false;
-          alert("Sign in (Account view) to ask a real question. A plain vendor/category search doesn't need it, but a full answer runs a real query against the model.");
+          // A signed-out visitor who has used up today's free questions
+          // (see anonymousAskLimit in the admin Settings panel) gets a
+          // JSON body naming that specifically, distinct from the plain
+          // "sign in" case (anonymous questions off, or limit already 0)
+          // this alert originally covered. Refreshes the note itself
+          // (rather than trusting the count it already had) since a
+          // second browser tab, or another visitor on the same network,
+          // could have used the shared IP-based quota in the meantime.
+          let anonLimitReached = false;
+          try {
+            const body = await res.json();
+            anonLimitReached = !!body.anonymousLimitReached;
+          } catch { /* non-JSON or empty 401 body: treat as the plain case below */ }
+          if (anonLimitReached) {
+            uaLoadAnonQuota();
+            alert("You've used today's free questions. Sign in (Account view) to keep asking.");
+          } else {
+            alert("Sign in (Account view) to ask a real question. A plain vendor/category search doesn't need it, but a full answer runs a real query against the model.");
+          }
           return;
         }
         // The fast paths (a plain lookup, a bad request) answer with a
@@ -10064,6 +10109,17 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         } else {
           data = await res.json();
           if (!res.ok) throw new Error(data.error || "Request failed.");
+        }
+
+        // null for a signed-in caller (see POST /api/ask in app.js), a
+        // number the moment this was a completed anonymous question -
+        // update the free-questions note from it directly rather than a
+        // second fetch. uaAnonQuotaLimitCache is only set once
+        // uaLoadAnonQuota() has actually run (bootstrap, or whenever the
+        // note last showed), so this is a no-op on the rare page load
+        // where that hasn't happened yet.
+        if (Number.isFinite(data.anonymousQuestionsRemaining) && uaAnonQuotaLimitCache != null) {
+          uaSetAnonQuotaNote(data.anonymousQuestionsRemaining, uaAnonQuotaLimitCache);
         }
 
         if (data.intent === "documents") {
@@ -14943,6 +14999,38 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const user = uaUser();
       const row = document.querySelector(".ask-intro-signin-row");
       if (row) row.style.display = (token && user) ? "none" : "";
+      if (!token || !user) uaLoadAnonQuota();
+    }
+    function uaSetAnonQuotaNote(remaining, limit) {
+      const el = document.getElementById("askAnonQuotaNote");
+      if (!el) return;
+      if (!Number.isFinite(limit) || limit <= 0) { el.hidden = true; return; }
+      el.hidden = false;
+      el.textContent = remaining > 0
+        ? `${remaining} of ${limit} free question${limit === 1 ? "" : "s"} left today`
+        : "You've used today's free questions";
+    }
+    // Cached so a completed anonymous question (see the 'result' SSE
+    // event's own anonymousQuestionsRemaining field, in the Ask submit
+    // handler) can update askAnonQuotaNote via uaSetAnonQuotaNote
+    // in place, without a second fetch, since the SSE payload only
+    // carries the new remaining count, not the limit it's out of.
+    let uaAnonQuotaLimitCache = null;
+    // Public (no auth, see its own comment in app.js): reads the admin
+    // Settings panel's "Allow anonymous questions"/"Free questions
+    // before sign-in" values plus this visitor's own usage so far.
+    // Swallows its own errors and leaves the note hidden rather than
+    // showing a stale or wrong count.
+    async function uaLoadAnonQuota() {
+      const el = document.getElementById("askAnonQuotaNote");
+      try {
+        const res = await uaRequest("ask/anon-quota");
+        if (!res.ok) { if (el) el.hidden = true; return; }
+        const data = await res.json();
+        if (data.authenticated || !data.enabled) { if (el) el.hidden = true; return; }
+        uaAnonQuotaLimitCache = data.limit;
+        uaSetAnonQuotaNote(data.remaining, data.limit);
+      } catch { if (el) el.hidden = true; }
     }
     function uaRender() {
       const token = uaToken();
@@ -15353,6 +15441,23 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       allowedEmailDomains: {
         label: "Allowed registration email domains",
         hint: "Comma-separated (e.g. gmail.com,outlook.com). Any .edu (or .edu.<country>) address is always allowed regardless of this list.",
+      },
+      // Lets a signed-out visitor ask a small number of real questions
+      // (not the free vendor/category lookups, which never needed
+      // sign-in) before Ask falls back to requiring one. Enforced
+      // server-side only, bucketed by IP + UTC day (see app.js's
+      // AnonAskUsage) -- this panel just edits the two knobs. Limit 0,
+      // or the toggle off, both reproduce the original
+      // always-401-for-anonymous-questions behavior exactly.
+      anonymousAskEnabled: {
+        label: "Allow anonymous questions",
+        hint: "Let a signed-out visitor ask real questions at all (up to the limit below) before requiring sign-in. Off reproduces the original behavior: any real question from a signed-out visitor is refused.",
+        type: "boolean",
+      },
+      anonymousAskLimit: {
+        label: "Free questions before sign-in",
+        hint: "How many real questions one IP address may ask per day while signed out. 0 has the same effect as turning the toggle above off.",
+        min: 0, max: 50,
       },
     };
     async function uaLoadSettings() {
