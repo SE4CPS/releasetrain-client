@@ -420,6 +420,33 @@
     }
     #sidebarOverlay.open { display: block; }
 
+    /* Splits the whole page left/right on a screen with room for it,
+       per explicit request: the ☰ drawer (#sidebar specifically, by id
+       -- #filtersPanel shares the base .sidebar class for its styling
+       but is a separate, unrelated drawer on the opposite edge and
+       must keep its own normal toggle behavior, not be forced open by
+       this rule too) becomes a persistent column instead of an overlay
+       that covers the page while open, and everything else (topbar,
+       including the question input row, and .layout below it) shifts
+       right to sit beside it rather than under it. Same 900px
+       breakpoint as ASK_RAIL_MIN_WIDTH above and the .layout flex-row
+       rule below, since both are "wide enough for this app's real
+       desktop layout," not a separate threshold. The sidebar's own
+       content (nav, filters, stats, about, account, eval links) is
+       unchanged, just always visible now instead of toggled;
+       #navToggle has nothing left to do at this width so it hides, and
+       #sidebarOverlay would otherwise still darken the page if
+       something toggled .open on it (including the unrelated
+       #filtersPanel, which shares that same overlay), even though
+       #sidebar itself no longer moves. */
+    @media (min-width: 900px) {
+      #sidebar { transform: none !important; box-shadow: none; }
+      #sidebarOverlay { display: none !important; }
+      #navToggle { display: none; }
+      .topbar { left: 300px; }
+      body { padding-left: 300px; }
+    }
+
     .sidebar-section { padding: 8px; }
     .sidebar-section:last-child { padding-bottom: 12px; }
 
@@ -2379,7 +2406,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.106.0">Releasetrain <em>v3.106.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.107.0">Releasetrain <em>v3.107.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4219,6 +4246,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-22</div>
+              <div class="cl-ver cl-ver-minor">v3.107.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>The whole page splits left/right on a wide screen: a persistent nav column, everything else beside it</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> At the same 900px breakpoint the answer rail already uses, the ☰ menu (<code>#sidebar</code>) stops being an overlay drawer that covers the page while open and becomes a persistent left column instead; the topbar (including the question input row) and the rest of the page shift right to sit beside it. <code>#navToggle</code> hides, since there's nothing left to toggle. The sidebar's own content (nav, filters, stats, about, account, eval links) is unchanged. <code>#filtersPanel</code>, the other, unrelated drawer on the opposite edge, keeps its normal toggle behavior; it shares <code>#sidebar</code>'s base <code>.sidebar</code> class for styling only, so this rule is scoped to the id specifically to avoid also forcing that one open.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-22</div>
