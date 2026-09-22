@@ -5,7 +5,7 @@
   <title>Releasetrain</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Release updates grouped by component: last 6 months" />
-  <meta name="theme-color" content="#2563eb" />
+  <meta name="theme-color" content="#cc785c" />
   <meta name="color-scheme" content="light" />
   <!-- API endpoint. Override per environment by editing this, or at runtime with ?api=... -->
   <meta name="api-base" content="https://releasetrain.io/api/" />
@@ -31,16 +31,22 @@
        prior gray theme - the accent that signals "this is clickable"
        isn't part of the background palette swap. */
     :root {
-      --bg: #e4efe2;
-      --surface: #f3f9f1;
-      --text: #1f2b1f;
-      --muted: #5c6e59;
-      --border: #c3d8c0;
-      --chip-bg: #e2eede;
-      --chip-text: #47593f;
-      --brand: #2563eb;
-      --brand-light: #e6ecf7;
-      --focus: #2563eb;
+      /* Claude-style warm palette: cream page, white surfaces, terracotta
+         accent, warm grays throughout instead of the earlier cool
+         sage-green/blue pairing. Semantic colors below (--cve/--risk and
+         every view-scoped status color) are untouched on purpose, per
+         this block's own comment: those carry meaning and stay
+         recognizable regardless of which brand accent is in effect. */
+      --bg: #f5f4ef;
+      --surface: #ffffff;
+      --text: #2d2a26;
+      --muted: #87837c;
+      --border: #e3e0d6;
+      --chip-bg: #efebe1;
+      --chip-text: #4a463d;
+      --brand: #cc785c;
+      --brand-light: #f3e1d6;
+      --focus: #cc785c;
 
       /* Two accents carry meaning; everything else is neutral ink on neutral
          surface — meaning comes from labels and layout, not colour.
@@ -85,6 +91,16 @@
       font: 13px/1.45 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
       -webkit-font-smoothing: antialiased;
     }
+    /* A default for the many plain, unstyled <a> tags scattered through
+       this file (e.g. the guardrails panel's dynamically-rendered "Sign
+       in to change these") that would otherwise fall back to the
+       browser's own default link blue, clashing with the warm palette
+       above. Lowest possible specificity (a bare element selector), so
+       every already-styled link (#docsView a, .ua-topbar-chip, etc.)
+       keeps overriding it exactly as before; this only fills in the
+       ones nothing else claims. */
+    a { color: var(--brand); }
+    a:hover { color: #b15e3f; }
     /* Numbers, versions, dates and identifiers read as data, not prose. */
     .mono, .datecol, .kpi em, .toggle .count,
     code, kbd, samp { font-family: var(--mono); font-variant-numeric: tabular-nums; }
@@ -312,7 +328,7 @@
       background: var(--brand); color: #fff; border: none; border-radius: var(--radius-sm);
       padding: 9px 12px; cursor: pointer;
     }
-    .ask-intro-signin-btn:hover { background: #1d4ed8; }
+    .ask-intro-signin-btn:hover { background: #b15e3f; }
     /* Set/updated by uaUpdateAskIntroSignin() below, from GET
        /api/ask/anon-quota; hidden whenever anonymous questions are off
        (limit 0) or the visitor is signed in. Inherits .ask-intro-panel's
@@ -1742,10 +1758,10 @@
     .ua-topbar-chip {
       font-size: 12px; font-weight: 600; white-space: nowrap;
       color: var(--brand); background: var(--brand-light);
-      border: 1px solid #bfdbfe; border-radius: var(--radius-full);
+      border: 1px solid #e3c2ae; border-radius: var(--radius-full);
       padding: 3px 10px; cursor: pointer; flex-shrink: 0;
     }
-    .ua-topbar-chip:hover { background: #eff6ff; }
+    .ua-topbar-chip:hover { background: #f3e1d6; }
     .ua-bm-list { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
     .ua-bm-item {
       display: flex; align-items: center; gap: 8px; padding: 8px 10px;
@@ -1757,7 +1773,7 @@
     .ua-org-chip {
       display: inline-block; padding: 1px 7px; border-radius: var(--radius-full);
       font-size: 11px; font-weight: 600; background: var(--brand-light);
-      color: var(--brand); border: 1px solid #bfdbfe;
+      color: var(--brand); border: 1px solid #e3c2ae;
     }
     .ua-why-list { margin: 8px 0 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
     .ua-why-list li { font-size: 12px; color: var(--muted); display: flex; gap: 8px; align-items: flex-start; }
@@ -1824,7 +1840,7 @@
     #docsView h4 { font-size: .85rem; font-weight: 700; margin: 0 0 .2rem; color: #0f172a; }
     #docsView p { margin: .28rem 0; font-size: 13px; color: #0f172a; }
     #docsView ul, #docsView ol { margin: .28rem 0; font-size: 13px; padding-left: 1.2em; }
-    #docsView a { color: #2563eb; text-decoration: none; }
+    #docsView a { color: #cc785c; text-decoration: none; }
     #docsView a:hover { text-decoration: underline; }
     #docsView .muted { color: #64748b; }
     #docsView .small { font-size: .85rem; }
@@ -1863,7 +1879,7 @@
     #docsView .status.warn { background: #fffbeb; color: #b45309; border-color: #fde68a; }
     #docsView .status.err  { background: #fef2f2; color: #b91c1c; border-color: #fca5a5; }
     #docsView .note { border-left: 4px solid #cbd5e1; padding-left: .75rem; margin-top: .5rem; color: #64748b; }
-    #docsView .toplink { display: inline-block; margin-top: .3rem; font-size: .85rem; color: #2563eb; }
+    #docsView .toplink { display: inline-block; margin-top: .3rem; font-size: .85rem; color: #cc785c; }
     #docsView .mermaid { text-align: center; margin: .8rem 0 1.2rem; overflow-x: auto; }
     /* Mermaid's own computed width lands as an inline style="max-width:
        NNNpx" on the <svg> it renders, which wins over this width:100%
@@ -1961,32 +1977,35 @@
       --info:   #475569;  --info-bg: #f1f5f9;
       --reddit: #475569;  --reddit-bg: #f1f5f9;
       --purple: #475569;
-      --chip:   #eff6ff;  --chipText: #334155;
-      --line:   #e2e8f0;  --panel:    #ffffff;
+      --chip:   #efebe1;  --chipText: #4a463d;
+      --line:   #e3e0d6;  --panel:    #ffffff;
       --rad:    10px;
     }
 
     /* ── CVE view (scoped) ──────────────────────────────────── */
     #cveView {
-      /* light-theme token overrides */
-      --bg:       #f8fafc;
+      /* light-theme token overrides, harmonized with :root's own Claude-
+         style warm palette above; --bad/--warn/--ok/--info/--reddit/
+         --purple stay as they were, same "meaning over hue" reasoning as
+         :root's own comment. */
+      --bg:       #faf9f4;
       --panel:    #ffffff;
-      --text:     #1e293b;
-      --muted:    #64748b;
-      --brand:    #2563eb;
+      --text:     #2d2a26;
+      --muted:    #87837c;
+      --brand:    #cc785c;
       --brand-fg: #ffffff;
-      --line:     #e2e8f0;
-      --chip:     #eff6ff;
-      --chipText: #334155;
-      --focus:    #2563eb;
+      --line:     #e3e0d6;
+      --chip:     #efebe1;
+      --chipText: #4a463d;
+      --focus:    #cc785c;
       --bad:    #b91c1c;  --bad-bg:  #fef2f2;
       --warn:   #b45309;  --warn-bg: #fffbeb;
       --ok:     #475569;  --ok-bg:   #f1f5f9;
       --info:   #475569;  --info-bg: #f1f5f9;
       --reddit: #475569;  --reddit-bg: #f1f5f9;
       --purple: #475569;  --purple-bg: #f1f5f9;
-      --link:   #1d4ed8;
-      --shadow: 0 1px 5px rgba(37,99,235,.07), 0 2px 12px rgba(0,0,0,.05);
+      --link:   #b15e3f;
+      --shadow: 0 1px 5px rgba(45,42,38,.07), 0 2px 12px rgba(0,0,0,.05);
       --rad:    10px;
       background: var(--bg); color: var(--text);
       font: 14px/1.6 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
@@ -2292,7 +2311,7 @@
     #networkView .nk-release-head:hover { background: var(--brand-light); }
     #networkView .nk-release-ns {
       font-size: 11px; font-weight: 700; color: var(--brand);
-      background: var(--brand-light); border: 1px solid #bfdbfe;
+      background: var(--brand-light); border: 1px solid #e3c2ae;
       border-radius: var(--radius-full); padding: 1px 8px; flex-shrink: 0;
     }
     #networkView .nk-release-comp { font: 600 13px/1 inherit; flex: 1; min-width: 0; }
@@ -2359,7 +2378,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.104.0">Releasetrain <em>v3.104.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.105.0">Releasetrain <em>v3.105.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2467,28 +2486,40 @@
               <option value="multi_agent_feedback">Multi-agent (feedback loop)</option>
               <option value="compare">Compare all 5</option>
             </select>
-            <!-- Grouped so the three toggles wrap together as one unit
-               (all three on their line, or all three dropping to the
-               next one) rather than splitting apart individually when
-               #askOptionsPanel's own row runs out of width, per explicit
-               request to keep them on one row. -->
-            <div class="ask-toggle-group">
-              <label class="ask-toggle-inline" title="Checked: requires a resolvable vendor/product, declines outright if none is found.&#10;&#10;Unchecked: answers without that requirement.">
-                <input type="checkbox" id="askVendorCheck" checked /> Vendor check
-              </label>
-              <label class="ask-toggle-inline" title="Checked: time-boxed to a recent window, or a date named in the question.&#10;&#10;Unchecked: searches all-time, no date restriction.">
-                <input type="checkbox" id="askTemporalFilter" checked /> Temporal filter
-              </label>
-              <label class="ask-toggle-inline" title="Checked: classifies the question (CVE/patch/version/general/opinion), only matching tools are used.&#10;&#10;Unchecked: every tool is available regardless of classification.">
-                <input type="checkbox" id="askIntentFilter" checked /> Intent filter
-              </label>
-              <label class="ask-toggle-inline" title="Checked: the Rewriter resolves a component type in a comparison question (for example &quot;browser&quot;) to the real tracked components, scores each, and recommends a stack.&#10;&#10;Unchecked: the type word is left as typed and only the two named products are compared.">
-                <input type="checkbox" id="askResolveVendor" checked /> Resolve vendor
-              </label>
-              <label class="ask-toggle-inline" title="Checked: a relative time phrase in the question (&quot;last 3 weeks&quot;, &quot;yesterday&quot;) becomes a concrete date window.&#10;&#10;Unchecked: only an explicit date, or the default recent window, applies.">
-                <input type="checkbox" id="askResolveTemporal" checked /> Resolve temporal constraints
-              </label>
-            </div>
+            <!-- Collapsed by default (unlike Guardrails below, left open):
+                 these five are fine-grained per-question ablation
+                 toggles, useful for testing but not something a visitor
+                 asking one real question needs to see up front. Reuses
+                 .sb-details, same component and reasoning as Guardrails'
+                 own comment just below. Collapsing this costs nothing
+                 behaviorally: every checkbox below still defaults
+                 checked and is still sent exactly as before, whether
+                 this is open or closed. -->
+            <details class="sb-details" id="askAdvancedChecksDetails" style="flex:1 0 100%;margin-top:2px">
+              <summary>Advanced checks</summary>
+              <!-- Grouped so the three toggles wrap together as one unit
+                 (all three on their line, or all three dropping to the
+                 next one) rather than splitting apart individually when
+                 #askOptionsPanel's own row runs out of width, per explicit
+                 request to keep them on one row. -->
+              <div class="ask-toggle-group" style="padding:8px 0 0">
+                <label class="ask-toggle-inline" title="Checked: requires a resolvable vendor/product, declines outright if none is found.&#10;&#10;Unchecked: answers without that requirement.">
+                  <input type="checkbox" id="askVendorCheck" checked /> Vendor check
+                </label>
+                <label class="ask-toggle-inline" title="Checked: time-boxed to a recent window, or a date named in the question.&#10;&#10;Unchecked: searches all-time, no date restriction.">
+                  <input type="checkbox" id="askTemporalFilter" checked /> Temporal filter
+                </label>
+                <label class="ask-toggle-inline" title="Checked: classifies the question (CVE/patch/version/general/opinion), only matching tools are used.&#10;&#10;Unchecked: every tool is available regardless of classification.">
+                  <input type="checkbox" id="askIntentFilter" checked /> Intent filter
+                </label>
+                <label class="ask-toggle-inline" title="Checked: the Rewriter resolves a component type in a comparison question (for example &quot;browser&quot;) to the real tracked components, scores each, and recommends a stack.&#10;&#10;Unchecked: the type word is left as typed and only the two named products are compared.">
+                  <input type="checkbox" id="askResolveVendor" checked /> Resolve vendor
+                </label>
+                <label class="ask-toggle-inline" title="Checked: a relative time phrase in the question (&quot;last 3 weeks&quot;, &quot;yesterday&quot;) becomes a concrete date window.&#10;&#10;Unchecked: only an explicit date, or the default recent window, applies.">
+                  <input type="checkbox" id="askResolveTemporal" checked /> Resolve temporal constraints
+                </label>
+              </div>
+            </details>
             <!-- Guardrails: releasetrain-server's unified admin-configurable
                  registry of deterministic safety/correctness checks applied
                  to every Ask answer (GET /api/guardrails), separate from the
@@ -4178,6 +4209,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-22</div>
+              <div class="cl-ver cl-ver-minor">v3.105.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Warmer color theme; the five per-question ablation checks are collapsed by default</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Switched the site's color palette from the earlier cool sage-green background and blue accent to a warm cream background with a terracotta accent, closer to Claude's own look. Only site chrome and the Ask UI changed: the CVE view got the matching scoped update, and every data-visualization view (Risk Report, component graph, network graph, Mermaid diagrams, Chart.js series) keeps its own existing semantic colors untouched, per this file's own "meaning over hue" reasoning for those. Added one low-specificity default (<code>a { color: var(--brand) }</code>) so a plain, unstyled link (e.g. the guardrails panel's "Sign in to change these") picks up the new accent instead of the browser's own default blue; every already-styled link keeps overriding it exactly as before.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The five per-question ablation checkboxes (Vendor check, Temporal filter, Intent filter, Resolve vendor, Resolve temporal constraints) are now collapsed by default behind a new "Advanced checks" <code>&lt;summary&gt;</code>, the same <code>.sb-details</code> component Guardrails already uses (which stays open, unchanged). Reported as still looking cluttered even after the model/size/pipeline selects and Guardrails were already given their own row; this is the technical, rarely-touched part of that same row. Every checkbox still defaults checked and is sent exactly as before, open or closed.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-22</div>
