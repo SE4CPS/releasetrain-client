@@ -491,13 +491,14 @@
        all three stay in the topbar exactly as before. */
     .sidebar-footer { display: none; }
     @media (min-width: 900px) {
-      /* Column, not row: .brand (the version), #filtersToggleBtn (when
-         a view other than the Ask home shows it) and .topbar-right
-         (sign-in/account) stack one per line in that same order, per
-         explicit request to put sign-in at the actual bottom rather
-         than sharing a row with the version number. */
+      /* Row, split left/right: .brand (the version) on the left,
+         .topbar-right (sign-in/account) on the right, per explicit
+         request. #filtersToggleBtn (only shown outside the Ask home)
+         sits between them when present. A prior version stacked these
+         in a column (version above sign-in) per an earlier request to
+         put sign-in at the actual bottom; superseded by this one. */
       .sidebar-footer {
-        display: flex; flex-direction: column; align-items: stretch; gap: 8px;
+        display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 8px;
         position: sticky; bottom: 0; margin-top: auto;
         background: var(--surface);
         border-top: 1px solid var(--border);
@@ -509,15 +510,36 @@
          heading, per explicit request ("make the version more subtle"). */
       .sidebar-footer .brand { font-size: 11px; font-weight: 400; color: var(--muted); }
       .sidebar-footer .brand em { color: var(--muted); }
-      /* Was margin-left:auto to push itself to the far right of a row;
-         inert in this column layout, and left, not right, is this
-         footer's own alignment (see align-items:stretch above), so it's
-         cleared explicitly rather than just left as unused dead weight. */
+      /* Was margin-left:auto to push itself to the far right of a column
+         layout; inert now that .sidebar-footer's own justify-content
+         already pushes this to the row's right edge, so it's cleared
+         explicitly rather than left as unused dead weight. */
       .sidebar-footer .topbar-right { margin-left: 0; }
+      /* Smaller and outlined, not a big solid-fill pill, per explicit
+         request ("make the sign in button less dominant"); this is
+         footer chrome sitting next to a plain muted version number, not
+         a call-to-action competing for attention the way the topbar's
+         own sign-in entry point (line ~340's .top-signin-btn, shown only
+         on a narrow screen where this footer doesn't exist) still is. */
+      .sidebar-footer .top-signin-btn {
+        background: none; color: var(--brand); border: 1px solid var(--border);
+        font-size: 11px; font-weight: 600; padding: 4px 10px;
+      }
+      .sidebar-footer .top-signin-btn:hover { background: var(--chip-bg); color: var(--brand); }
     }
 
     /* Collapsible sidebar blocks */
     .sb-details { border-top: 1px solid var(--border); }
+    /* No filled background: per explicit request, just the label and the
+       border-top divider ("edges") between entries, not a boxed chip. The
+       global `summary { background: var(--chip-bg) }` rule below would
+       otherwise fill each summary's own container edge to edge, which
+       looked inconsistent between "Menu" (no padded wrapper, spans the
+       full sidebar width) and "Model & pipeline"/"Advanced checks" (inset
+       8px inside #askOptionsPanel's own padding); removing the
+       background entirely sidesteps that mismatch rather than trying to
+       match the inset instead. */
+    .sb-details > summary { background: none; }
     .sb-details > summary {
       /* flex-direction: row spelled out explicitly, same reason as
          .ua-admin-header: the global `summary { flex-direction: column }`
@@ -657,28 +679,29 @@
        only the node states differ, so a preset with no real role
        delegation (Single-agent) just leaves every node idle instead of
        hiding or reshaping the diagram itself. */
-    /* min-height only matters before the diagram has actually rendered
-       (mermaid.render() is async, so this avoids a layout jump while it
-       loads); renderAskWorkflowDiagram() clears it back to 0 the moment
-       real content lands, so a diagram genuinely shorter than this
-       placeholder height (the common case after its viewBox is tightened
-       to content, see that function's own comment) doesn't keep the
-       container artificially tall and push the answer text down.
-       Dark "hacker terminal" card (not the app's own light surface) per
-       explicit request, since the node colors themselves (see
-       ASK_WORKFLOW_NODE_STYLE) are now a green-on-black palette that
-       only reads correctly against a dark background. Now the first
-       thing in the card/rail (see askRenderCard/showAskRailRunning),
-       not just the answer tab's content, so it stays visible and
-       animating regardless of which tab is selected. */
+    /* Plain text "nouns and edges" per explicit request: no per-node
+       box/rect, just each role's name (colored by its own idle/active/
+       done state) joined by a plain arrow character. Sits in
+       #askWorkflowTop, one persistent instance pinned above the question
+       input itself (not inside the per-answer rail card, and not only
+       once a question exists), visible in its dim "idle" state from
+       page load, then lights up live as a real question runs. A dark
+       backing bar is kept (not the app's own light surface) since the
+       hacker-green text only reads against a dark background; the box
+       that's gone is the one that used to wrap each individual node. */
     .ask-workflow-diagram {
-      margin: 0 0 4px; min-height: 56px;
-      background: #050b06; border: 1px solid #123018; border-radius: 8px; padding: 8px 6px;
+      display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+      font: 700 13px/1.3 var(--mono);
+      background: #050b06; border: 1px solid #123018; border-radius: 8px;
+      padding: 10px 14px;
     }
-    .ask-workflow-diagram svg { width: 100%; height: auto; display: block; }
+    .askwf-arrow { color: #2f6b3f; }
+    .askwf-idle { color: #3d6b45; }
+    .askwf-active { color: #39ff14; text-shadow: 0 0 6px rgba(57,255,20,.55); }
+    .askwf-done { color: #33ff66; }
     .ask-workflow-caption {
       font-size: 10.5px; color: #39ff14; font-family: var(--mono); min-height: 14px;
-      margin: 0 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin: 4px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       text-align: right;
     }
     /* Once a run finishes, renderAskWorkflowCaption() sets this back to
@@ -687,6 +710,21 @@
        not an edge case, and shouldn't still reserve its min-height/
        margin-bottom as if real text were there. */
     .ask-workflow-caption:empty { min-height: 0; margin: 0; }
+    /* #askWorkflowTop: the one persistent home for the diagram+caption,
+       a sibling of #askFormDesktopSlot (right before it in the markup)
+       rather than nested inside the rail/tabs, per explicit request
+       ("top of the right side, not below the input field"). Hidden on a
+       narrow screen, matching #askFormDesktopSlot's own breakpoint --
+       this is specifically the wide two-pane layout's "top center of the
+       right side", which doesn't exist as a concept below that width.
+       Same max-width/centering as the form below it so the two align,
+       but its own top padding is a plain small constant, not the form's
+       22vh; it belongs at the true top of the column, not vertically
+       centered with the input. */
+    #askWorkflowTop { display: none; }
+    @media (min-width: 900px) {
+      #askWorkflowTop { display: block; max-width: 780px; margin: 0 auto; padding: 24px 24px 0; }
+    }
     .ask-options-row {
       display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
       font-size: 11px; color: var(--muted);
@@ -2545,7 +2583,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.112.0"><span class="brand-name">Releasetrain </span><em>v3.112.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.113.0"><span class="brand-name">Releasetrain </span><em>v3.113.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2737,6 +2775,17 @@
       </form>
     </div>
   </header>
+
+  <!-- The one persistent pipeline diagram: top center of the right side,
+       above the input, per explicit request. Visible from page load in
+       its dim "idle" state (renderAskWorkflowDiagram defaults to an
+       all-idle state when no question has run yet), not only once a
+       question exists. See renderAskWorkflowDiagram in the script for
+       the plain-text "nouns and edges" renderer. -->
+  <div id="askWorkflowTop">
+    <div id="askWorkflowDiagram" class="ask-workflow-diagram"></div>
+    <div id="askWorkflowCaption" class="ask-workflow-caption"></div>
+  </div>
 
   <!-- Landing spot for the real #askForm node on a wide screen (see
        relocateAskForm's own comment in the script): moved here out of
@@ -3027,16 +3076,11 @@
         </div>
       </div>
 
-      <!-- ── Account controls (shown only in account view) ── -->
-      <div id="usersControls" style="display:none">
-        <div class="sidebar-section">
-          <div class="sidebar-label">Account</div>
-          <p style="font-size:12px;color:var(--muted);line-height:1.6;margin:0 0 10px">
-            Sign in to save preferences. Admins can manage all users and roles.
-          </p>
-          <div id="ua-sidebar-status" style="font-size:12px;color:var(--muted)">Not signed in.</div>
-        </div>
-      </div>
+      <!-- Account has no sidebar panel of its own any more, per explicit
+           request: signing in used to also swap the left sidebar's
+           content (this block), when only the right side should change.
+           uaUpdateSidebar() (see the script) already no-ops safely now
+           that #ua-sidebar-status doesn't exist. -->
 
       <!-- ── Eval Rewriter controls (shown only in eval-rewriter view) ── -->
       <div id="evalRewriterControls" style="display:none">
@@ -4432,6 +4476,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-22</div>
+              <div class="cl-ver cl-ver-minor">v3.113.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Pipeline diagram is now a persistent, plain-text strip above the input</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The pipeline diagram is now one persistent strip pinned above the question input, top center of the right side, visible from page load in its dim "idle" state rather than only appearing once a question is asked. Replaces the earlier version, which lived inside the per-answer rail card.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Rebuilt as plain colored text joined by arrows ("Vendor &rarr; Rewriter &rarr; Retriever &rarr; Evaluator &rarr; Orchestrator"), no per-node box and no Mermaid dependency for this diagram any more. A node's elapsed time now shows inline in brackets, e.g. "Retriever (0.5s)", once it has run.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The sidebar's collapsed sections (Menu, Model &amp; pipeline, Advanced checks, and every other <code>.sb-details</code> group) no longer show a filled background chip, just the label and the divider line between entries, per explicit request.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The sidebar footer is a row again, not a column: the version number sits on the left, sign-in on the right, and the sign-in button itself is now a small outlined pill instead of a big solid-fill one.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Signing in (or visiting Account) no longer changes anything in the left sidebar; only the right side's content changes now. The Account view's own sidebar panel (a plain "sign in to save preferences" blurb with no real controls) is gone.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-22</div>
@@ -8633,20 +8693,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // completing with a real elapsed time, reported live as a flat
     // contradiction between this diagram and the Model vs Rules tab right
     // next to it.
-    // Replaces the old top-of-page text ticker (#askPipelineStatus):
-    // this lives in the answer rail instead, next to the answer itself.
+    // Lives in the persistent #askWorkflowTop, above the input (see that
+    // element's own comment), not in the answer rail.
     // websearch/verify only ever leave "idle" on a run that actually
     // escalates vendor resolution out to a real web search (see
-    // verifyVendorViaWeb on the server) -- a normal, non-escalating
+    // verifyVendorViaWeb on the server); a normal, non-escalating
     // question never touches them, which is what lets
-    // askWorkflowMermaidSource keep rendering the plain 5-node single-agent
-    // diagram unchanged for every other question.
+    // renderAskWorkflowDiagram keep rendering the plain 5-node
+    // single-agent list unchanged for every other question.
     let askWorkflowState = null;      // { vendor, rewriter, retriever, evaluator, orchestrator, websearch, verify } -> idle|active|done
     let askWorkflowTiming = null;     // { vendor, rewriter, retriever, evaluator, orchestrator, websearch, verify } -> { startedAt, doneMs } | null
     let askWorkflowLabel = "";        // current phase's own label (askPhaseLabel), shown under the diagram
     let askWorkflowStartedAt = null;  // for the caption's live elapsed-seconds tick
     let askWorkflowTickTimer = null;
-    let askWorkflowRenderSeq = 0;     // guards a slow mermaid render from clobbering a newer one
 
     const ASK_WORKFLOW_PHASE_NODE = {
       resolving_vendor: "vendor", rewriting: "rewriter",
@@ -8656,39 +8715,33 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       web_searching: "websearch", web_verifying: "verify",
     };
 
-    let _askMermaidLoadPromise = null;
-    function ensureAskMermaidLoaded() {
-      if (typeof window.mermaid !== "undefined") return Promise.resolve();
-      if (_askMermaidLoadPromise) return _askMermaidLoadPromise;
-      _askMermaidLoadPromise = new Promise((resolve, reject) => {
-        const s = document.createElement("script");
-        s.src = "https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js";
-        s.crossOrigin = "anonymous";
-        s.onload = () => { window.mermaid.initialize({ startOnLoad: false, securityLevel: "loose" }); resolve(); };
-        s.onerror = () => reject(new Error("mermaid failed to load"));
-        document.head.appendChild(s);
-      });
-      return _askMermaidLoadPromise;
-    }
-
-    // Flat fills, no gradient/shadow, kept legible at this diagram's
-    // small size. Short single-word node labels (plus a second line for
-    // elapsed seconds, once a node has any) so mermaid's own auto-sizing
-    // never has to cram text against a box edge.
-    // "Hacker terminal" palette per explicit request: a node not yet
-    // reached stays dim, unlit green on a near-black box (inactive); the
-    // one node currently running lights up in the classic bright
-    // terminal green, thicker stroke, against the same dark box
-    // (active); a finished node settles to a steadier, slightly less
-    // intense green so the one truly "active" node still reads as the
-    // brightest thing on screen. Renders against .ask-workflow-diagram's
-    // own dark card background (see its CSS comment), not the app's
-    // usual light surface; this palette only reads correctly there.
-    const ASK_WORKFLOW_NODE_STYLE = {
-      idle: "fill:#0b160b,stroke:#1f3d23,color:#3d6b45",
-      active: "fill:#001f00,stroke:#39ff14,color:#39ff14,stroke-width:2px",
-      done: "fill:#04270f,stroke:#00cc44,color:#33ff66",
-    };
+    // Plain text "nouns and edges" per explicit request: no mermaid, no
+    // per-node box, just each role's name joined by a plain arrow
+    // character, colored by its own idle/active/done state. Renders
+    // synchronously (no async library load, unlike the mermaid version
+    // this replaced), so askWorkflowRenderSeq's "a slow render might
+    // land out of order" guard is no longer needed.
+    const ASK_WORKFLOW_NODES = [
+      { key: "vendor", name: "Vendor" },
+      { key: "rewriter", name: "Rewriter" },
+      { key: "retriever", name: "Retriever" },
+      { key: "evaluator", name: "Evaluator" },
+      { key: "orchestrator", name: "Orchestrator" },
+    ];
+    // Web Search/Verify spliced in between Vendor and Rewriter, since
+    // vendor resolution's escalation to a real web search happens right
+    // there, before retrieval ever starts. Only used once a run has
+    // actually touched them (see the comment on askWorkflowState above);
+    // a normal, non-escalating question keeps the plain 5-node list.
+    const ASK_WORKFLOW_NODES_ESCALATED = [
+      { key: "vendor", name: "Vendor" },
+      { key: "rewriter", name: "Rewriter" },
+      { key: "websearch", name: "Web Search" },
+      { key: "verify", name: "Verify" },
+      { key: "retriever", name: "Retriever" },
+      { key: "evaluator", name: "Evaluator" },
+      { key: "orchestrator", name: "Orchestrator" },
+    ];
     // A node that completed in well under a second still deserves a
     // real, honest reading rather than "0.0s". One decimal place is
     // the finest granularity worth showing a reader here.
@@ -8698,117 +8751,29 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const ms = t.doneMs != null ? t.doneMs : Date.now() - t.startedAt;
       return (ms / 1000).toFixed(1) + "s";
     }
-    function askWorkflowMermaidSource(state) {
-      const style = k => ASK_WORKFLOW_NODE_STYLE[state[k] || "idle"];
-      const label = (k, name) => {
-        const secs = askWorkflowNodeSeconds(k);
-        return secs ? `${name}<br/>${secs}` : name;
+    // Renders into #askWorkflowTop's persistent #askWorkflowDiagram (see
+    // that element's own comment): one instance, always present, not
+    // rebuilt per answer. Defaults to an all-idle state when no question
+    // has run yet (askWorkflowState is still null at page load) so the
+    // diagram shows its dim "inactive hacker colors" from the start
+    // rather than sitting blank until the first question.
+    function renderAskWorkflowDiagram() {
+      const el = document.getElementById("askWorkflowDiagram");
+      if (!el) return;
+      const state = askWorkflowState || {
+        vendor: "idle", rewriter: "idle", retriever: "idle",
+        evaluator: "idle", orchestrator: "idle", websearch: "idle", verify: "idle",
       };
-      // Pipeline escalation: only spliced into the diagram once this run
-      // has actually touched websearch/verify (see the comment on
-      // askWorkflowState above) -- a normal single-agent question that
-      // never escalates keeps rendering the exact same 4-node diagram as
-      // before, unchanged.
       const escalated = (state.websearch && state.websearch !== "idle")
         || (state.verify && state.verify !== "idle");
-      // Smaller font + more spacing than mermaid's own defaults, scoped
-      // to just this diagram via an %%{init}%% directive (not the
-      // global mermaid.initialize() call, which the docs view's own
-      // diagrams also share). Each node now carries a two-line label
-      // (name + seconds), and the extra rankSpacing/nodeSpacing keeps
-      // the "retry" feedback curve clear of the boxes and their text.
-      // nodeSpacing in particular is the vertical gap (perpendicular to
-      // the LR flow) that the dotted EV->RT retry edge routes through
-      // below the main line; too small and its "retry" label sits on
-      // top of that line instead of clearly under it.
-      // lineColor/edgeLabelBackground/textColor: only the per-node
-      // fill/stroke/color above are overridden per node (via the
-      // `style` lines below); the connecting arrows and the "retry"
-      // edge label still come from mermaid's own theme defaults, which
-      // assume a light background and would be unreadable against
-      // .ask-workflow-diagram's own dark "hacker terminal" card.
-      const lines = [
-        "%%{init: {'themeVariables': {'fontSize': '11px', 'lineColor': '#2f6b3f', 'edgeLabelBackground': '#050b06', 'textColor': '#39ff14'}, 'flowchart': {'nodeSpacing': 85, 'rankSpacing': 75}}}%%",
-        "flowchart LR",
-      ];
-      if (escalated) {
-        // Web Search/Verify spliced in between Vendor and Rewriter, since
-        // vendor resolution's escalation to a real web search happens
-        // right there, before retrieval ever starts.
-        lines.push(
-          `  VN("${label("vendor", "Vendor")}") --> RW("${label("rewriter", "Rewriter")}") --> WS("${label("websearch", "Web Search")}") --> VF("${label("verify", "Verify")}") --> RT("${label("retriever", "Retriever")}") --> EV("${label("evaluator", "Evaluator")}") --> OR("${label("orchestrator", "Orchestrator")}")`,
-          "  EV -. retry .-> RT",
-          `  style VN ${style("vendor")}`,
-          `  style RW ${style("rewriter")}`,
-          `  style WS ${style("websearch")}`,
-          `  style VF ${style("verify")}`,
-          `  style RT ${style("retriever")}`,
-          `  style EV ${style("evaluator")}`,
-          `  style OR ${style("orchestrator")}`
-        );
-      } else {
-        lines.push(
-          `  VN("${label("vendor", "Vendor")}") --> RW("${label("rewriter", "Rewriter")}") --> RT("${label("retriever", "Retriever")}") --> EV("${label("evaluator", "Evaluator")}") --> OR("${label("orchestrator", "Orchestrator")}")`,
-          "  EV -. retry .-> RT",
-          `  style VN ${style("vendor")}`,
-          `  style RW ${style("rewriter")}`,
-          `  style RT ${style("retriever")}`,
-          `  style EV ${style("evaluator")}`,
-          `  style OR ${style("orchestrator")}`
-        );
-      }
-      return lines.join("\n");
-    }
-    async function renderAskWorkflowDiagram() {
-      const el = document.getElementById("askWorkflowDiagram");
-      if (!el || !askWorkflowState) return;
-      const mySeq = ++askWorkflowRenderSeq;
-      try {
-        await ensureAskMermaidLoaded();
-        const { svg } = await window.mermaid.render("askWorkflowSvg" + mySeq, askWorkflowMermaidSource(askWorkflowState));
-        if (mySeq !== askWorkflowRenderSeq) return; // a newer render already started
-        el.innerHTML = svg;
-        // .ask-workflow-diagram's own min-height only exists to avoid a
-        // layout jump while mermaid.render() is still loading (it's
-        // async); real content has now landed, so drop it and let the
-        // container collapse to whatever height the (now viewBox-
-        // tightened, see below) SVG actually needs, rather than staying
-        // floored at the placeholder height regardless of content.
-        el.style.minHeight = "0";
-        // Mermaid stamps its own computed width as an inline
-        // style="max-width:NNNpx" on the <svg> it returns, which wins
-        // over .ask-workflow-diagram svg's external width:100% rule at
-        // equal specificity: inline beats an external stylesheet
-        // regardless of source order, so without this the diagram
-        // rendered narrower than its column instead of stretching to
-        // fill it. Clearing it lets the external rule actually apply.
-        const svgEl = el.querySelector("svg");
-        if (svgEl) {
-          svgEl.style.maxWidth = "none";
-          // Mermaid's own viewBox reserves extra space below the visibly
-          // rendered boxes (its default diagram padding, plus room for
-          // the curved dotted "retry" edge, which dips below the main
-          // Retriever/Evaluator row). Stretched to the card's full width
-          // via width:100%, that empty space scales up right along with
-          // the real content, since height:auto derives the rendered
-          // height from the viewBox's own aspect ratio, not from what's
-          // actually drawn, reading on screen as a real gap between the
-          // diagram and the answer text below it. Re-tighten the viewBox
-          // to the rendered content's own bounding box (plus a small
-          // margin) so the aspect ratio, and therefore the auto height,
-          // reflects only what's actually visible.
-          try {
-            const bbox = svgEl.getBBox();
-            const pad = 6;
-            svgEl.setAttribute("viewBox", `${bbox.x - pad} ${bbox.y - pad} ${bbox.width + pad * 2} ${bbox.height + pad * 2}`);
-          } catch (e) {
-            // getBBox can throw if the element isn't laid out yet;
-            // mermaid's own viewBox is a safe fallback either way.
-          }
-        }
-      } catch (e) {
-        console.error("[ASK] workflow diagram failed to render:", e);
-      }
+      const nodes = escalated ? ASK_WORKFLOW_NODES_ESCALATED : ASK_WORKFLOW_NODES;
+      el.innerHTML = nodes.map((n, i) => {
+        const st = state[n.key] || "idle";
+        const secs = askWorkflowNodeSeconds(n.key);
+        const label = secs ? `${n.name} (${secs})` : n.name;
+        const node = `<span class="askwf-${st}">${uaEsc(label)}</span>`;
+        return i === 0 ? node : `<span class="askwf-arrow">&rarr;</span>${node}`;
+      }).join("");
     }
     function renderAskWorkflowCaption() {
       const el = document.getElementById("askWorkflowCaption");
@@ -8827,8 +8792,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // the currently-active node's own seconds count is visibly ticking
     // up in real time, and even a very short-lived state still gets at
     // least one real frame on screen instead of being silently skipped
-    // by the next phase's render racing past it (see renderAskWorkflowDiagram's
-    // own askWorkflowRenderSeq guard).
+    // by the next phase's own state change overwriting it first.
     function startAskWorkflow() {
       askWorkflowState = { vendor: "idle", rewriter: "idle", retriever: "idle", evaluator: "idle", orchestrator: "idle", websearch: "idle", verify: "idle" };
       askWorkflowTiming = { vendor: null, rewriter: null, retriever: null, evaluator: null, orchestrator: null, websearch: null, verify: null };
@@ -10015,8 +9979,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       }
       return `<div class="ask-answer-card${res.abstained ? " ask-answer-abstained" : ""}" data-run-id="${uaEsc(res.runId || "")}">
         ${labelHtml}
-        <div id="askWorkflowDiagram" class="ask-workflow-diagram"></div>
-        <div id="askWorkflowCaption" class="ask-workflow-caption"></div>
         <div class="ask-rail-tabs" role="tablist">
           ${shortPanel ? `<button type="button" class="ask-rail-tab${activeTab === "short" ? " active" : ""}" data-tab="short" role="tab" aria-selected="${activeTab === "short"}">Short answer</button>` : ""}
           <button type="button" class="ask-rail-tab${activeTab === "answer" ? " active" : ""}" data-tab="answer" role="tab" aria-selected="${activeTab === "answer"}">Answer</button>
@@ -10139,9 +10101,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             t.setAttribute("aria-selected", on ? "true" : "false");
           });
           root.querySelectorAll(".ask-rail-panel").forEach(p => { p.hidden = p.dataset.panel !== tab.dataset.tab; });
-          // The workflow diagram measures its own bounding box, which a hidden panel can't
-          // give it (the Short answer tab is the default), so paint it again once it is shown.
-          if (tab.dataset.tab === "answer" && root.querySelector("#askWorkflowDiagram")) renderAskWorkflowDiagram();
           // Guardrails tab content is fetched once, the first time it's
           // actually opened (see askRenderGuardrailsTab's own comment) -
           // most answers are never checked, so this avoids a GET
@@ -10249,6 +10208,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     }
     relocateAskForm();
     askRailMql.addEventListener("change", relocateAskForm);
+    // Paints #askWorkflowTop's persistent diagram in its dim "idle" state
+    // right from page load (askWorkflowState is still null at this
+    // point; renderAskWorkflowDiagram defaults to all-idle when it is),
+    // rather than leaving it blank until the first question actually runs.
+    renderAskWorkflowDiagram();
     // Moves .brand, #filtersToggleBtn and .topbar-right (version number,
     // filters toggle, sign-in/account chip) between .topbar-main and
     // #sidebarFooter at the bottom of the persistent sidebar, same
@@ -10325,13 +10289,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // No pipeline label yet (unresolved until the answer arrives,
       // especially for "Auto"), so just the question, no bracket. See
       // askRenderCard's own labelHtml for the question+label version
-      // used once there's a real answer. The diagram itself sits right
-      // under the heading, above the tabs (see askRenderCard's own
-      // comment on this) so it's visible and animating regardless of
-      // which tab is selected, not just while "Answer" is active.
+      // used once there's a real answer. The diagram itself lives in
+      // the persistent #askWorkflowTop above the input, not here (see
+      // that element's own comment); nothing to render inline in the
+      // card any more.
       body.innerHTML = `<div class="ask-answer-card">
         <div class="ask-answer-heading"><span class="ask-answer-question">${uaEsc(question)}</span></div>
-        ${!isCompare ? `<div id="askWorkflowDiagram" class="ask-workflow-diagram"></div><div id="askWorkflowCaption" class="ask-workflow-caption"></div>` : ""}
         <div class="ask-rail-tabs" role="tablist">
           <button type="button" class="ask-rail-tab active" data-tab="answer" role="tab" aria-selected="true">Answer</button>
           <button type="button" class="ask-rail-tab" data-tab="sources" role="tab" aria-selected="false">Sources</button>
@@ -17107,7 +17070,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       setViewParam("account");
       document.getElementById("usersView").style.display = "block";
       document.getElementById("feedPanel").style.display = "none";
-      document.getElementById("usersControls").style.display = "";
       document.getElementById("feedSidebarSections").style.display = "none";
       EL.usersLink.classList.add("nav-active");
       uaRender();
@@ -17118,7 +17080,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       setViewParam("");
       document.getElementById("usersView").style.display = "none";
       document.getElementById("feedPanel").style.display = "";
-      document.getElementById("usersControls").style.display = "none";
       document.getElementById("feedSidebarSections").style.display = "";
       EL.usersLink.classList.remove("nav-active");
     }
