@@ -680,29 +680,32 @@
        delegation (Single-agent) just leaves every node idle instead of
        hiding or reshaping the diagram itself. */
     /* Plain text "nouns and edges" per explicit request: no per-node
-       box/rect, just each role's name (colored by its own idle/active/
-       done state) joined by a plain arrow character. Sits in
-       #askWorkflowTop, one persistent instance pinned above the question
-       input itself (not inside the per-answer rail card, and not only
-       once a question exists), visible in its dim "idle" state from
-       page load, then lights up live as a real question runs. A dark
-       backing bar is kept (not the app's own light surface) since the
-       hacker-green text only reads against a dark background; the box
-       that's gone is the one that used to wrap each individual node. */
+       box/rect and no backing card of its own either (transparent,
+       centered horizontally): just each role's name, colored by its
+       own idle/active/done state, joined by a plain arrow character,
+       sitting directly on the page. Lives in #askWorkflowTop, one
+       persistent instance pinned above the question input itself (not
+       inside the per-answer rail card, and not only once a question
+       exists), visible in its dim "idle" state from page load, then
+       lights up live as a real question runs. */
     .ask-workflow-diagram {
-      display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+      display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px;
       font: 700 13px/1.3 var(--mono);
-      background: #050b06; border: 1px solid #123018; border-radius: 8px;
-      padding: 10px 14px;
+      background: none; border: none; padding: 6px 14px;
     }
-    .askwf-arrow { color: #2f6b3f; }
-    .askwf-idle { color: #3d6b45; }
-    .askwf-active { color: #39ff14; text-shadow: 0 0 6px rgba(57,255,20,.55); }
-    .askwf-done { color: #33ff66; }
+    /* Colors re-picked for a transparent background (see .ask-workflow-diagram's
+       own comment): the earlier bright neon green/glow only worked
+       against a dark card; on the page's own light surface a strong,
+       saturated but darker green reads as "active" just as clearly
+       without needing a backdrop to glow against. */
+    .askwf-arrow { color: var(--muted); }
+    .askwf-idle { color: var(--muted); }
+    .askwf-active { color: #15803d; }
+    .askwf-done { color: #16a34a; }
     .ask-workflow-caption {
-      font-size: 10.5px; color: #39ff14; font-family: var(--mono); min-height: 14px;
+      font-size: 10.5px; color: var(--muted); font-family: var(--mono); min-height: 14px;
       margin: 4px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      text-align: right;
+      text-align: center;
     }
     /* Once a run finishes, renderAskWorkflowCaption() sets this back to
        "" (see its own comment) rather than leaving a stale "Done" label
@@ -2583,7 +2586,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.113.0"><span class="brand-name">Releasetrain </span><em>v3.113.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.114.0"><span class="brand-name">Releasetrain </span><em>v3.114.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4476,6 +4479,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-22</div>
+              <div class="cl-ver cl-ver-minor">v3.114.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Fixed: asking from another view left it stuck behind the input</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Reported live: asking a question while on Account (or Docs, Graph, Arch, CVE, Dashboard, Changelog, Credits, Release, or an eval view) left that view's own content sitting there below the input, with no answer visible at all. The question input is reachable from every view, but only the Ask home actually has a place to show the answer; submitting now returns to the Ask home first, the same deactivate-whatever's-active step the Home nav link itself already does.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The pipeline diagram's backing card is gone: transparent background, no border, just the colored role names and arrows, centered horizontally above the input. The active/done colors were also re-picked for this (a saturated but darker green) since the earlier bright neon green was tuned for the dark card that no longer exists.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-22</div>
@@ -10455,8 +10471,28 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       e.preventDefault();
       const question = document.getElementById("askQuestion").value.trim();
       if (!question) return;
-      // The answer shows on the Ask home; the feed view has no answer area.
-      if (new URL(location.href).searchParams.get("view") === "feed") setViewParam("");
+      // The answer shows on the Ask home; every other view (feed, Docs,
+      // Account, Graph, etc.) has no answer area of its own, and the
+      // question input/pipeline diagram are reachable from all of them
+      // (see #askWorkflowTop/#askFormDesktopSlot's own comments). Without
+      // this, asking a question while on one of those other views left
+      // that view's own content sitting there, with nothing to actually
+      // show the running/finished rail: reported live from the Account
+      // view specifically. Same deactivate-whatever's-active chain
+      // EL.homeLink's own handler already uses to return to the Ask home.
+      if (ER_ACTIVE)       deactivateEvalRewriter();
+      else if (EE_ACTIVE)  deactivateEvalEvaluator();
+      else if (EO_ACTIVE)  deactivateEvalOrchestrator();
+      else if (G_ACTIVE)   deactivateGraph();
+      else if (A_ACTIVE)   deactivateArch();
+      else if (CV_ACTIVE)  deactivateCve();
+      else if (DB_ACTIVE)  deactivateDashboard();
+      else if (D_ACTIVE)   deactivateDocs();
+      else if (ACK_ACTIVE) deactivateAck();
+      else if (CL_ACTIVE)  deactivateChangelog();
+      else if (UA_ACTIVE)  deactivateUsers();
+      else if (NET_ACTIVE) deactivateNetwork();
+      else if (new URL(location.href).searchParams.get("view") === "feed") setViewParam("");
       const preset = document.getElementById("askPreset").value;
       const provider = document.getElementById("askProvider").value;
       const size = document.getElementById("askSize").value;
