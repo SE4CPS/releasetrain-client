@@ -605,6 +605,14 @@
         margin: 0 auto;
         padding: 22vh 24px 0;
       }
+      /* The big 22vh top padding is what makes the Ask home read as a
+         landing page (prompt sitting "1/4 down the page"), but this same
+         form is reachable from every other view too (see its own
+         comment above), and that much dead space above real page
+         content elsewhere (Account, Docs, ...) was reported live as
+         needing a scroll to see content that would otherwise fit.
+         Small, fixed padding everywhere but the actual Ask home instead. */
+      body:not(.view-home) .ask-form-desktop-slot { padding-top: 24px; }
     }
     /* Every control on this row shares one height, so the bar reads as
        one aligned strip instead of inputs/buttons/select sitting at
@@ -1796,6 +1804,16 @@
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius); padding: 20px; margin-top: 16px;
     }
+    /* Capped and centered specifically for the signed-out Sign in/
+       Register card, per explicit request ("too cluttered"): the wide,
+       unconstrained .ua-card read as a big mostly-empty box with the
+       two-field form stranded on the left and a large dead gap to its
+       right, since #usersView itself is wide (see .ua-field's own
+       comment on this same tension) but a one- or two-field auth form
+       has nothing to fill that width with. The signed-in profile panel
+       keeps the full-width .ua-card unchanged (its stat rows/dashboard
+       cards genuinely use the space). */
+    #ua-auth-panel { max-width: 420px; margin: 0 auto; }
     /* Capped, not full-width: #usersView is now wide enough (up to
        900px) that a single password/text input stretching edge to edge
        would look stray rather than using the space well. Wide use of
@@ -2586,7 +2604,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.114.0"><span class="brand-name">Releasetrain </span><em>v3.114.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.115.0"><span class="brand-name">Releasetrain </span><em>v3.115.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4479,6 +4497,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-22</div>
+              <div class="cl-ver cl-ver-minor">v3.115.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Sign in card is compact and centered; less dead space on every view</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The signed-out Sign in/Register card is capped to 420px and centered instead of stretching the full width of the (now wide) Account panel, reported live as "too cluttered": a two-field form had nothing to fill that width with, leaving a large dead gap beside it.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The question input's large top padding (22vh, so it sits "1/4 down the page" on the Ask home) no longer applies on every other view. It pushed real content on Account, Docs, and everywhere else down by roughly a fifth of the viewport for no reason, forcing a scroll to see content that would otherwise fit; now it's a small fixed padding everywhere but the actual Ask home.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-22</div>
