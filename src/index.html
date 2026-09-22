@@ -5,7 +5,7 @@
   <title>Releasetrain</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Release updates grouped by component: last 6 months" />
-  <meta name="theme-color" content="#cc785c" />
+  <meta name="theme-color" content="#1a73e8" />
   <meta name="color-scheme" content="light" />
   <!-- API endpoint. Override per environment by editing this, or at runtime with ?api=... -->
   <meta name="api-base" content="https://releasetrain.io/api/" />
@@ -31,22 +31,23 @@
        prior gray theme - the accent that signals "this is clickable"
        isn't part of the background palette swap. */
     :root {
-      /* Claude-style warm palette: cream page, white surfaces, terracotta
-         accent, warm grays throughout instead of the earlier cool
-         sage-green/blue pairing. Semantic colors below (--cve/--risk and
+      /* Cold, Gemini-like palette: cool gray page, white surfaces, a
+         real Google-blue accent, superseding the earlier warm Claude-
+         style cream/terracotta pass per explicit request ("make the
+         colors more cold"). Semantic colors below (--cve/--risk and
          every view-scoped status color) are untouched on purpose, per
          this block's own comment: those carry meaning and stay
          recognizable regardless of which brand accent is in effect. */
-      --bg: #f5f4ef;
+      --bg: #f1f4f8;
       --surface: #ffffff;
-      --text: #2d2a26;
-      --muted: #87837c;
-      --border: #e3e0d6;
-      --chip-bg: #efebe1;
-      --chip-text: #4a463d;
-      --brand: #cc785c;
-      --brand-light: #f3e1d6;
-      --focus: #cc785c;
+      --text: #1a1c1e;
+      --muted: #5f6368;
+      --border: #dadce0;
+      --chip-bg: #e8eaed;
+      --chip-text: #3c4043;
+      --brand: #1a73e8;
+      --brand-light: #e8f0fe;
+      --focus: #1a73e8;
 
       /* Two accents carry meaning; everything else is neutral ink on neutral
          surface — meaning comes from labels and layout, not colour.
@@ -94,13 +95,13 @@
     /* A default for the many plain, unstyled <a> tags scattered through
        this file (e.g. the guardrails panel's dynamically-rendered "Sign
        in to change these") that would otherwise fall back to the
-       browser's own default link blue, clashing with the warm palette
-       above. Lowest possible specificity (a bare element selector), so
-       every already-styled link (#docsView a, .ua-topbar-chip, etc.)
-       keeps overriding it exactly as before; this only fills in the
-       ones nothing else claims. */
+       browser's own default link blue rather than this exact palette's
+       own brand blue. Lowest possible specificity (a bare element
+       selector), so every already-styled link (#docsView a,
+       .ua-topbar-chip, etc.) keeps overriding it exactly as before; this
+       only fills in the ones nothing else claims. */
     a { color: var(--brand); }
-    a:hover { color: #b15e3f; }
+    a:hover { color: #1558b0; }
     /* Numbers, versions, dates and identifiers read as data, not prose. */
     .mono, .datecol, .kpi em, .toggle .count,
     code, kbd, samp { font-family: var(--mono); font-variant-numeric: tabular-nums; }
@@ -314,21 +315,16 @@
     .ask-intro-panel p { margin: 0 0 7px; }
     .ask-intro-panel h4 { font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); margin: 10px 0 5px; }
     .ask-intro-panel ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 3px; }
-    /* A real call-to-action, not the small inline text link this used
-       to be: reported live as too easy to miss next to the rest of the
-       panel's plain, technical copy, given signing in is what actually
-       unlocks the whole Ask feature. Sits above the tabs (not inside
-       any one of them) so it's visible regardless of which tab a
-       visitor has open. Same #askIntroSignInLink id as before, so the
-       existing delegated click handler (activateUsers) needs no change
-       at all, just a different element wired to it. */
-    .ask-intro-signin-row { margin: 4px 0 12px; }
-    .ask-intro-signin-btn {
-      display: block; width: 100%; text-align: center; font: 700 12.5px inherit;
-      background: var(--brand); color: #fff; border: none; border-radius: var(--radius-sm);
-      padding: 9px 12px; cursor: pointer;
+    /* The one sign-in entry point, in the topbar's top-right corner (see
+       #topSignInLink's own comment) rather than a call-to-action in the
+       middle of the page, per explicit request. A filled pill so it
+       still reads as the primary action next to the plain #ua-topbar-chip
+       it swaps places with once signed in. */
+    .top-signin-btn {
+      font: 700 12px inherit; background: var(--brand); color: #fff; border: none;
+      border-radius: var(--radius-full); padding: 6px 14px; cursor: pointer; flex-shrink: 0;
     }
-    .ask-intro-signin-btn:hover { background: #b15e3f; }
+    .top-signin-btn:hover { background: #1558b0; }
     /* Set/updated by uaUpdateAskIntroSignin() below, from GET
        /api/ask/anon-quota; hidden whenever anonymous questions are off
        (limit 0) or the visitor is signed in. Inherits .ask-intro-panel's
@@ -712,6 +708,11 @@
       color: var(--brand); white-space: nowrap; flex-shrink: 0;
     }
     .ask-answer-summary { font-size: 13px; line-height: 1.6; margin: 0 0 10px; overflow-wrap: anywhere; }
+    /* Set by askWireAnswerReveal (below): the initial, hidden state of
+       each word-span it wraps a freshly-rendered answer's text in, so
+       an answer appears word by word instead of all at once. */
+    .ask-reveal-word { opacity: 0; transition: opacity .15s ease-out; }
+    .ask-reveal-word.shown { opacity: 1; }
     /* The one substring (a version number, so far) that most directly
        answers the question, per the server's own highlightTerm (see
        ask.js's highestVersionSource). Never a client-side guess at
@@ -1758,10 +1759,10 @@
     .ua-topbar-chip {
       font-size: 12px; font-weight: 600; white-space: nowrap;
       color: var(--brand); background: var(--brand-light);
-      border: 1px solid #e3c2ae; border-radius: var(--radius-full);
+      border: 1px solid #aecbfa; border-radius: var(--radius-full);
       padding: 3px 10px; cursor: pointer; flex-shrink: 0;
     }
-    .ua-topbar-chip:hover { background: #f3e1d6; }
+    .ua-topbar-chip:hover { background: #e8f0fe; }
     .ua-bm-list { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
     .ua-bm-item {
       display: flex; align-items: center; gap: 8px; padding: 8px 10px;
@@ -1773,7 +1774,7 @@
     .ua-org-chip {
       display: inline-block; padding: 1px 7px; border-radius: var(--radius-full);
       font-size: 11px; font-weight: 600; background: var(--brand-light);
-      color: var(--brand); border: 1px solid #e3c2ae;
+      color: var(--brand); border: 1px solid #aecbfa;
     }
     .ua-why-list { margin: 8px 0 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
     .ua-why-list li { font-size: 12px; color: var(--muted); display: flex; gap: 8px; align-items: flex-start; }
@@ -1840,7 +1841,7 @@
     #docsView h4 { font-size: .85rem; font-weight: 700; margin: 0 0 .2rem; color: #0f172a; }
     #docsView p { margin: .28rem 0; font-size: 13px; color: #0f172a; }
     #docsView ul, #docsView ol { margin: .28rem 0; font-size: 13px; padding-left: 1.2em; }
-    #docsView a { color: #cc785c; text-decoration: none; }
+    #docsView a { color: #1a73e8; text-decoration: none; }
     #docsView a:hover { text-decoration: underline; }
     #docsView .muted { color: #64748b; }
     #docsView .small { font-size: .85rem; }
@@ -1879,7 +1880,7 @@
     #docsView .status.warn { background: #fffbeb; color: #b45309; border-color: #fde68a; }
     #docsView .status.err  { background: #fef2f2; color: #b91c1c; border-color: #fca5a5; }
     #docsView .note { border-left: 4px solid #cbd5e1; padding-left: .75rem; margin-top: .5rem; color: #64748b; }
-    #docsView .toplink { display: inline-block; margin-top: .3rem; font-size: .85rem; color: #cc785c; }
+    #docsView .toplink { display: inline-block; margin-top: .3rem; font-size: .85rem; color: #1a73e8; }
     #docsView .mermaid { text-align: center; margin: .8rem 0 1.2rem; overflow-x: auto; }
     /* Mermaid's own computed width lands as an inline style="max-width:
        NNNpx" on the <svg> it renders, which wins over this width:100%
@@ -1977,35 +1978,35 @@
       --info:   #475569;  --info-bg: #f1f5f9;
       --reddit: #475569;  --reddit-bg: #f1f5f9;
       --purple: #475569;
-      --chip:   #efebe1;  --chipText: #4a463d;
-      --line:   #e3e0d6;  --panel:    #ffffff;
+      --chip:   #e8eaed;  --chipText: #3c4043;
+      --line:   #dadce0;  --panel:    #ffffff;
       --rad:    10px;
     }
 
     /* ── CVE view (scoped) ──────────────────────────────────── */
     #cveView {
-      /* light-theme token overrides, harmonized with :root's own Claude-
-         style warm palette above; --bad/--warn/--ok/--info/--reddit/
+      /* light-theme token overrides, harmonized with :root's own cold
+         Gemini-like palette above; --bad/--warn/--ok/--info/--reddit/
          --purple stay as they were, same "meaning over hue" reasoning as
          :root's own comment. */
-      --bg:       #faf9f4;
+      --bg:       #f1f4f8;
       --panel:    #ffffff;
-      --text:     #2d2a26;
-      --muted:    #87837c;
-      --brand:    #cc785c;
+      --text:     #1a1c1e;
+      --muted:    #5f6368;
+      --brand:    #1a73e8;
       --brand-fg: #ffffff;
-      --line:     #e3e0d6;
-      --chip:     #efebe1;
-      --chipText: #4a463d;
-      --focus:    #cc785c;
+      --line:     #dadce0;
+      --chip:     #e8eaed;
+      --chipText: #3c4043;
+      --focus:    #1a73e8;
       --bad:    #b91c1c;  --bad-bg:  #fef2f2;
       --warn:   #b45309;  --warn-bg: #fffbeb;
       --ok:     #475569;  --ok-bg:   #f1f5f9;
       --info:   #475569;  --info-bg: #f1f5f9;
       --reddit: #475569;  --reddit-bg: #f1f5f9;
       --purple: #475569;  --purple-bg: #f1f5f9;
-      --link:   #b15e3f;
-      --shadow: 0 1px 5px rgba(45,42,38,.07), 0 2px 12px rgba(0,0,0,.05);
+      --link:   #1558b0;
+      --shadow: 0 1px 5px rgba(26,28,30,.07), 0 2px 12px rgba(0,0,0,.05);
       --rad:    10px;
       background: var(--bg); color: var(--text);
       font: 14px/1.6 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
@@ -2311,7 +2312,7 @@
     #networkView .nk-release-head:hover { background: var(--brand-light); }
     #networkView .nk-release-ns {
       font-size: 11px; font-weight: 700; color: var(--brand);
-      background: var(--brand-light); border: 1px solid #e3c2ae;
+      background: var(--brand-light); border: 1px solid #aecbfa;
       border-radius: var(--radius-full); padding: 1px 8px; flex-shrink: 0;
     }
     #networkView .nk-release-comp { font: 600 13px/1 inherit; flex: 1; min-width: 0; }
@@ -2378,7 +2379,7 @@
       <button class="nav-toggle" type="button" id="filtersToggleBtn"
         aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
         title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.105.0">Releasetrain <em>v3.105.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.106.0">Releasetrain <em>v3.106.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2390,6 +2391,15 @@
            tall can't share a flex line predictably - it was overlapping
            the form's wrapped checkbox/select row on narrow screens. -->
       <div class="topbar-right">
+        <!-- The one sign-in entry point now that the intro panel's own
+             CTA is gone (see #askIntroPanel's own comment): shown only
+             signed out, opposite #ua-topbar-user which only shows signed
+             in, both toggled from the same place (uaUpdateAskIntroSignin,
+             despite the name, now the one function that keeps both of
+             this row's states in sync). Same activateUsers() target as
+             the old CTA and the guardrails panel's own "Sign in" link:
+             one Account view, not a separate flow. -->
+        <button type="button" class="top-signin-btn" id="topSignInLink">Sign in</button>
         <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
       </div>
       <!-- Kept in the DOM as the internal versions-fetch/pagination
@@ -4209,6 +4219,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-22</div>
+              <div class="cl-ver cl-ver-minor">v3.106.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Cold color palette; sign-in moved to the topbar; the Ask home is just the input; answers type in</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Superseded the previous release's warm cream/terracotta palette with a cold, Gemini-like one: a cool gray page background and a real Google-blue accent (<code>#1a73e8</code>). Same scope as before, site chrome and the Ask UI, CVE view's own scoped tokens, and every data-visualization view's existing semantic colors untouched.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The "Sign in to ask a real question" call-to-action, and the description paragraph and four sample questions above it, are gone from the middle of the Ask home. Sign-in now lives as a single pill in the topbar's top-right corner (<code>#topSignInLink</code>, opposite the existing signed-in account chip it swaps places with), so the home view, with nothing asked yet, is just the question input and the pipeline/model controls.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> A finished answer now types in a few words at a time instead of appearing as one block, the same "watch it write" feel most chat interfaces have. Runs as a pure animation over the already-rendered, already-formatted answer (bold, links, etc. all stay intact); nothing about how the answer itself is built changed, and it plays once per new answer, never on a tab switch back to one already shown.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-22</div>
@@ -7413,33 +7437,23 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     <!-- Shown in the same column slot as #askAnswerRail until a real
          question is asked (see the CSS: .layout.has-ask-rail swaps
-         which of the two is visible). Plain technical description of
-         what Ask actually does, plus clickable sample questions that
-         fill the input without submitting it (a real question runs an
-         actual model call and, for most questions, requires sign-in). -->
+         which of the two is visible). Kept deliberately empty: per
+         explicit request ("remove all this .. simple"), the description
+         paragraph, the sign-in CTA (moved to the topbar's top-right
+         corner, see #topSignInLink), the sample-question grid, and the
+         Latest updates section are all gone. The element itself stays
+         (removing it would break the has-ask-rail visibility swap this
+         comment describes), just with nothing inside it, so the home
+         view is the question input and nothing else until an answer
+         exists. -->
     <aside id="askIntroPanel" class="ask-intro-panel" aria-label="About Ask">
-      <h3>Ask</h3>
-      <p>Runs your question through a real model call, with tool access to release notes, CVE records, Reddit/StackOverflow, plus a live web search fallback when internal data doesn't cover it. A bare vendor/category name (e.g. "mysql", "llm") browses directly, no model call.</p>
-      <div class="ask-intro-signin-row">
-        <button type="button" class="ask-intro-signin-btn" id="askIntroSignInLink">Sign in to ask a real question &rarr;</button>
-        <!-- Text + visibility set live by uaUpdateAskIntroSignin() from
-             GET /api/ask/anon-quota (admin-configurable: see
-             anonymousAskEnabled/anonymousAskLimit in the Account view's
-             Settings panel). Hidden by default so a server that hasn't
-             enabled anonymous questions (the shipped default) shows
-             nothing here at all, not an empty line. -->
-        <span class="ask-anon-quota-note" id="askAnonQuotaNote" hidden></span>
-      </div>
-      <ul class="ask-home-samples" aria-label="Sample questions">
-        <li><button type="button" class="ask-sample-btn" data-ask-sample="Do you recommend browser-based Zoom or Teams for my important meeting?">Do you recommend browser-based Zoom or Teams for my important meeting?</button></li>
-        <li><button type="button" class="ask-sample-btn" data-ask-sample="What is the latest PHP version?">What is the latest PHP version?</button></li>
-        <li><button type="button" class="ask-sample-btn" data-ask-sample="Was the WebView bug patched?">Was the WebView bug patched?</button></li>
-        <li><button type="button" class="ask-sample-btn" data-ask-sample="Any recent CVEs in MySQL?">Any recent CVEs in MySQL?</button></li>
-      </ul>
-      <section id="askHomeLatest" class="ask-home-latest" aria-label="Latest updates" hidden>
-        <h4>Latest updates</h4>
-        <ul></ul>
-      </section>
+      <!-- Text + visibility set live by uaUpdateAskIntroSignin() from
+           GET /api/ask/anon-quota (admin-configurable: see
+           anonymousAskEnabled/anonymousAskLimit in the Account view's
+           Settings panel). Hidden by default so a server that hasn't
+           enabled anonymous questions (the shipped default) shows
+           nothing here at all, not an empty line. -->
+      <span class="ask-anon-quota-note" id="askAnonQuotaNote" hidden></span>
     </aside>
     </div><!-- /.ask-rail-col -->
 
@@ -7930,17 +7944,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         updateAskPreview();
         return;
       }
-      // "sign-in" link in the intro panel's own copy. Opens the same
-      // Account view the sidebar's own 👤 Account link does
-      // (activateUsers, defined further below in this same script;
-      // safe to reference here since function declarations are hoisted
-      // and this only actually runs on a later click, not at wiring
-      // time). Not a second, separate sign-in flow.
-      if (e.target.closest("#askIntroSignInLink")) {
-        e.preventDefault();
-        activateUsers();
-      }
     });
+    // Topbar's own sign-in pill (#topSignInLink, top-right, see its own
+    // comment). Opens the same Account view the sidebar's 👤 Account
+    // link and the guardrails panel's own "Sign in" link do
+    // (activateUsers, defined further below in this same script; safe
+    // to reference here since function declarations are hoisted and
+    // this only actually runs on a later click, not at wiring time).
+    // Not a second, separate sign-in flow.
+    document.getElementById("topSignInLink")?.addEventListener("click", () => activateUsers());
     const askIntentBadgeEl = document.getElementById("askIntentBadge");
     const askVendorCheckEl = document.getElementById("askVendorCheck");
     const askTemporalFilterEl = document.getElementById("askTemporalFilter");
@@ -9738,6 +9750,60 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       </div>`;
     }
 
+    // Reveals an already-rendered answer's text word by word instead of
+    // showing the whole formatted block at once, per explicit request.
+    // Runs purely on the DOM askRenderCard/askRenderCompareBody already
+    // built from mdLite/highlightAnswerTerm: wraps each leaf text node's
+    // non-space runs in their own hidden <span class="ask-reveal-word">
+    // (whitespace stays a plain text node between them, so wrapping and
+    // spacing are unaffected), then reveals them a few at a time.
+    // Structure (bold, links, etc.) is untouched and nothing gets
+    // re-parsed, so this is a pure animation layered on top of already-
+    // correct HTML, not a second markdown pass. Gated by data-revealed
+    // so re-wiring the same card (tab switches call askWireRateButtons/
+    // askWireRailTabs again but don't touch this innerHTML) never
+    // replays it; a genuinely new render (a fresh answer, or "Show full
+    // answer" swapping in the untrimmed text) always gets a fresh,
+    // unmarked element, so it always plays once.
+    function askWireAnswerReveal(root) {
+      root.querySelectorAll(".ask-answer-summary").forEach(el => {
+        if (el.dataset.revealed) return;
+        el.dataset.revealed = "1";
+        const textNodes = [];
+        const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+        let n;
+        while ((n = walker.nextNode())) textNodes.push(n);
+        const spans = [];
+        textNodes.forEach(node => {
+          const parts = node.textContent.split(/(\s+)/);
+          if (parts.length < 2) return; // no whitespace at all: nothing to split into words
+          const frag = document.createDocumentFragment();
+          parts.forEach(part => {
+            if (!part) return;
+            if (/^\s+$/.test(part)) {
+              frag.appendChild(document.createTextNode(part));
+              return;
+            }
+            const span = document.createElement("span");
+            span.className = "ask-reveal-word";
+            span.textContent = part;
+            frag.appendChild(span);
+            spans.push(span);
+          });
+          node.parentNode.replaceChild(frag, node);
+        });
+        if (!spans.length) return;
+        let i = 0;
+        // A few words per tick, not one at a time: at 3 words/35ms an
+        // 80-word answer finishes in under a second, closer to "watch
+        // it type" than "wait for it to finish typing."
+        (function step() {
+          for (let k = 0; k < 3 && i < spans.length; k++, i++) spans[i].classList.add("shown");
+          if (i < spans.length) setTimeout(step, 35);
+        })();
+      });
+    }
+
     function askWireRateButtons(root) {
       root.querySelectorAll(".ask-rate-btn").forEach(rb => {
         rb.addEventListener("click", async () => {
@@ -9849,6 +9915,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     let askRailData = null; // { label, res, question } backing "Show full answer": re-renders untrimmed from the same data, no second request
     function wireAskRailBody(body) {
       askWireRateButtons(body);
+      askWireAnswerReveal(body);
       askWireRailTabs(body);
       const fullBtn = body.querySelector(".ask-view-full-btn");
       if (fullBtn) fullBtn.addEventListener("click", () => {
@@ -9928,6 +9995,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const body = document.getElementById("askRailBody");
       body.innerHTML = askRenderCompareBody(question, data, { showQuestion: true });
       askWireRateButtons(body);
+      askWireAnswerReveal(body);
       askWireRailTabs(body);
       $(".layout").classList.add("has-ask-rail");
     }
@@ -10104,6 +10172,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           } else {
             document.getElementById("askModalBody").innerHTML = askRenderCompareBody(question, data);
             askWireRateButtons(document.getElementById("askModalBody"));
+            askWireAnswerReveal(document.getElementById("askModalBody"));
             askWireRailTabs(document.getElementById("askModalBody"));
           }
           // Every preset resolves the same vendor from the same catalog,
@@ -10198,6 +10267,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           askOverlayEl.classList.add("open");
           askModalEl.classList.add("open");
           askWireRateButtons(document.getElementById("askModalBody"));
+          askWireAnswerReveal(document.getElementById("askModalBody"));
         }
         // The feed follows the question: a resolved vendor/category (only
         // set when Vendor check is on) filters it to that vendor's own
@@ -15041,8 +15111,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     function uaUpdateAskIntroSignin() {
       const token = uaToken();
       const user = uaUser();
-      const row = document.querySelector(".ask-intro-signin-row");
-      if (row) row.style.display = (token && user) ? "none" : "";
+      // #topSignInLink (topbar, top-right) is now the one sign-in entry
+      // point outside the Account view itself, opposite #ua-topbar-user
+      // (uaRender, further down, already shows/hides that one the same
+      // way). Kept as its own name/function rather than renamed, since
+      // this still runs at the same two points (bootstrap and every
+      // uaRender) for the same original reason described above.
+      const btn = document.getElementById("topSignInLink");
+      if (btn) btn.style.display = (token && user) ? "none" : "";
       if (!token || !user) uaLoadAnonQuota();
     }
     function uaSetAnonQuotaNote(remaining, limit) {
