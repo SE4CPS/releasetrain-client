@@ -947,6 +947,16 @@
     .ask-modal-header strong { flex: 1; font-size: 14px; line-height: 1.4; }
     .ask-compare-grid { display: flex; flex-wrap: wrap; gap: 12px; }
     .ask-compare-grid .ask-answer-card { flex: 1 1 240px; min-width: 0; }
+    /* Duo demo mode (see #askDemoQuickBar / askRenderDuoBody): only ever
+       2 cards, and unlike the 5-way Compare grid they each show a full
+       answer, not a "primary answer + a benchmark table tab" summary.
+       They get more width per card than the 5-way grid's 240px. */
+    .ask-duo-grid .ask-answer-card { flex: 1 1 380px; }
+    #askDemoQuickBar {
+      display: flex; justify-content: center; flex-wrap: wrap; gap: 6px;
+      margin-top: 6px;
+    }
+    .ask-demo-btn { font-size: 11.5px; padding: 3px 10px; }
     /* The "what they do/don't do" legend shown in Compare mode's
        Benchmark tab; see askCompareLegendHTML(). A stacked list, not a
        table with a horizontal-scroll fallback: every line wraps to fit
@@ -2701,7 +2711,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.120.0"><span class="brand-name">Releasetrain </span><em>v3.120.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.121.0"><span class="brand-name">Releasetrain </span><em>v3.121.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2837,6 +2847,7 @@
                   <option value="multi_agent">Multi-agent (delegated)</option>
                   <option value="multi_agent_feedback">Multi-agent (feedback loop)</option>
                   <option value="compare">Compare all 5</option>
+                  <option value="duo">Demo: Single vs Multi-Agent</option>
                 </select>
               </div>
             </details>
@@ -2933,6 +2944,19 @@
   <div id="askWorkflowTop">
     <div id="askWorkflowDiagram" class="ask-workflow-diagram"></div>
     <div id="askWorkflowCaption" class="ask-workflow-caption"></div>
+    <!-- One-click seminar-demo shortcuts: run whatever question is
+         currently typed through a specific pipeline (or both at once,
+         side by side) without opening "Model & pipeline" in the sidebar
+         and hunting for the right dropdown value first. Per explicit
+         request ("integrate that to the right side so i can show the
+         single agent demo and see the multiagent"). Reuses the exact
+         set-preset-then-requestSubmit() pattern the Benchmark tab's own
+         "Compare all 5 now" button already uses (see wireAskRailBody). -->
+    <div id="askDemoQuickBar" class="ask-demo-quickbar">
+      <button type="button" id="askDemoSingleBtn" class="btn btn-ghost ask-demo-btn" title="Runs the current question through Single-agent only.">&#9654; Single-Agent</button>
+      <button type="button" id="askDemoMultiBtn" class="btn btn-ghost ask-demo-btn" title="Runs the current question through Multi-agent (feedback loop) only.">&#9654; Multi-Agent</button>
+      <button type="button" id="askDemoDuoBtn" class="btn btn-primary ask-demo-btn" title="Runs the current question through both Single-agent and Multi-agent (feedback loop) at once, shown side by side.">&#9654; Single vs Multi</button>
+    </div>
   </div>
 
   <!-- Landing spot for the real #askForm node on a wide screen (see
@@ -4630,6 +4654,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-22</div>
+              <div class="cl-ver cl-ver-minor">v3.121.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>One-click "Single vs Multi-Agent" demo shortcuts</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> A new quick-access row under the pipeline diagram (top of the right-hand content area, per explicit request "integrate that to the right side so i can show the single agent demo and see the multiagent"): three buttons run whatever question is currently typed through Single-agent only, Multi-agent (feedback loop) only, or both at once, without opening "Model &amp; pipeline" in the sidebar first.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> "Single vs Multi" is a new pipeline option ("Demo: Single vs Multi-Agent" in the Model &amp; pipeline dropdown, or its own quick button) that reuses the existing 5-way Compare's <code>/api/ask/compare</code> endpoint with just <code>single_agent,multi_agent_feedback</code>, and renders both complete answers side by side in the answer rail (new <code>askRenderDuoBody</code>/<code>showAskRailDuo</code>) rather than the 5-way Compare's "one primary answer + a Benchmark tab" layout, so a presenter can point at one card, then the other, in the same screenshot.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-22</div>
@@ -10133,6 +10170,48 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       </div>`;
     }
 
+    // Demo mode (see #askDemoQuickBar): unlike askRenderCompareBody above
+    // (one "primary" answer + a Benchmark tab you have to click into to
+    // see the rest), this shows both full answers at once, side by side.
+    // A presenter can point at one card, then the other, in the same
+    // screenshot/screen-share, with no extra clicks. Only ever
+    // single_agent + multi_agent_feedback (see the "duo" branch in the
+    // ask submit handler), not a generic N-way renderer.
+    function askRenderDuoBody(question, data, opts) {
+      opts = opts || {};
+      const runs = data.runs || [];
+      const order = ["single_agent", "multi_agent_feedback"];
+      const ordered = order.map(p => runs.find(r => r.preset === p)).filter(Boolean);
+      const list = ordered.length ? ordered : runs;
+      const cards = list.map(r => {
+        const label = uaEsc(ASK_PRESET_LABELS[r.preset] || r.preset);
+        if (r.error) {
+          return `<div class="ask-answer-card ask-duo-card">
+            <div class="ask-answer-label">${label}</div>
+            <p class="ask-error">${uaEsc(r.error)}</p>
+          </div>`;
+        }
+        const timing = Number.isFinite(r.latencyMs) ? ` <span class="ask-muted" style="font-weight:normal">&middot; ${Math.round(r.latencyMs / 1000)}s</span>` : "";
+        return `<div class="ask-answer-card ask-duo-card${r.abstained ? " ask-answer-abstained" : ""}" data-run-id="${uaEsc(r.runId || "")}">
+          <div class="ask-answer-label">${label}${timing}</div>
+          <div class="ask-answer-summary">${highlightAnswerTerm(mdLite(r.answer || ""), r.highlightTerm)}</div>
+          ${askRenderSources(r.sources, r.vendorWebEvidence, r.webSearchFallback)}
+          <div class="ask-rate-row">
+            <button type="button" class="btn btn-ghost ask-rate-btn" data-rating="1" ${!r.runId ? "disabled" : ""}>&#128077; Helpful</button>
+            <button type="button" class="btn btn-ghost ask-rate-btn" data-rating="-1" ${!r.runId ? "disabled" : ""}>&#128078; Not helpful</button>
+          </div>
+        </div>`;
+      }).join("");
+      const questionHeading = opts.showQuestion
+        ? `<div class="ask-answer-heading"><span class="ask-answer-question">${uaEsc(question)}</span></div>`
+        : "";
+      return `<div class="ask-duo-wrap">
+        ${questionHeading}
+        <p class="ask-muted" style="margin:0 0 10px">Same question, single-agent (one continuous model call) next to multi-agent, feedback loop (separate Rewriter / Retriever / Evaluator / Orchestrator calls, retrying retrieval when the Evaluator judges the first pass insufficient).</p>
+        <div class="ask-compare-grid ask-duo-grid">${cards}</div>
+      </div>`;
+    }
+
     // opts.trimAnswer: cap the answer text to N chars (a "Show full
     // answer" button appears when it actually got cut), used by the
     // right-side rail so a long answer doesn't dominate the sidebar;
@@ -10597,15 +10676,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // isCompare skips the single-pipeline workflow diagram (Compare mode
     // runs 5 parallel requests, not one phase-event stream to animate)
     // and labels the wait accordingly.
-    function showAskRailRunning(question, isCompare) {
+    // runCount: 0 for a normal single-pipeline question, else the number
+    // of parallel pipelines running at once (5 for Compare, 2 for the
+    // Single-vs-Multi duo demo; see #askDemoQuickBar/askRenderDuoBody).
+    // Kept as a count rather than a separate isDuo boolean so the running/
+    // waiting copy below reads correctly for either without a 3-way branch.
+    function showAskRailRunning(question, runCount) {
       askRailData = null;
       const body = document.getElementById("askRailBody");
+      const isCompare = !!runCount;
       // No separate "Thinking…" line: the live caption right below the
       // diagram already says what's happening (e.g. "Rewriter: resolving
       // vendor… 0.2s"), so a plain static "Thinking…" under that was
       // redundant, one more line for no extra information.
       const answerPanel = isCompare
-        ? `<p class="ask-muted">Running all 5 pipelines against the same question…</p>`
+        ? `<p class="ask-muted">Running ${runCount} pipelines against the same question…</p>`
         : askQueryPreviewBlockHtml(question);
       // No pipeline label yet (unresolved until the answer arrives,
       // especially for "Auto"), so just the question, no bracket. See
@@ -10626,7 +10711,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <p class="ask-muted">Waiting for the answer…</p>
         </div>
         <div class="ask-rail-panel" data-panel="benchmark" hidden>
-          <p class="ask-muted">${isCompare ? "Waiting for all 5 to finish…" : "Waiting for the answer…"}</p>
+          <p class="ask-muted">${isCompare ? `Waiting for all ${runCount} to finish…` : "Waiting for the answer…"}</p>
         </div>
       </div>`;
       askWireRailTabs(body);
@@ -10655,6 +10740,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       askWireRateButtons(body);
       askWireAnswerReveal(body);
       askWireRailTabs(body);
+      $(".layout").classList.add("has-ask-rail");
+    }
+    // Duo demo mode's rail rendering: same shape as showAskRailCompare
+    // above, just the 2-card askRenderDuoBody instead of the 5-way
+    // primary+Benchmark-tab body. No rail tabs to wire (askRenderDuoBody
+    // has no tablist of its own, each card is one flat block).
+    function showAskRailDuo(question, data) {
+      askRailData = null;
+      const body = document.getElementById("askRailBody");
+      body.innerHTML = askRenderDuoBody(question, data, { showQuestion: true });
+      askWireRateButtons(body);
+      askWireAnswerReveal(body);
       $(".layout").classList.add("has-ask-rail");
     }
     function hideAskRail() {
@@ -10772,6 +10869,34 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       return finalResult;
     }
 
+    // #askDemoQuickBar's 3 one-click shortcuts (see its own HTML comment):
+    // set the preset <select> to a fixed value, then requestSubmit() the
+    // real form so every existing branch above (sign-in gate, rail vs.
+    // modal, duo vs. compare vs. a normal question) runs completely
+    // unchanged. This only ever substitutes for a viewer manually opening
+    // "Model & pipeline" in the sidebar and picking a value by hand. If
+    // the question box is empty, focuses it instead of submitting nothing.
+    function wireAskDemoQuickBar() {
+      const focusOrSubmit = () => {
+        const q = document.getElementById("askQuestion");
+        if (!q.value.trim()) { q.focus(); return; }
+        document.getElementById("askForm").requestSubmit();
+      };
+      document.getElementById("askDemoSingleBtn").addEventListener("click", () => {
+        document.getElementById("askPreset").value = "single_agent";
+        focusOrSubmit();
+      });
+      document.getElementById("askDemoMultiBtn").addEventListener("click", () => {
+        document.getElementById("askPreset").value = "multi_agent_feedback";
+        focusOrSubmit();
+      });
+      document.getElementById("askDemoDuoBtn").addEventListener("click", () => {
+        document.getElementById("askPreset").value = "duo";
+        focusOrSubmit();
+      });
+    }
+    wireAskDemoQuickBar();
+
     document.getElementById("askForm").addEventListener("submit", async e => {
       e.preventDefault();
       const question = document.getElementById("askQuestion").value.trim();
@@ -10805,6 +10930,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const provider = document.getElementById("askProvider").value;
       const size = document.getElementById("askSize").value;
       const isCompare = preset === "compare";
+      // "duo": the Single-vs-Multi seminar-demo shortcut (#askDemoQuickBar).
+      // Client-only value, never sent to the server as a preset itself.
+      // It maps to the same /api/ask/compare endpoint Compare mode already
+      // uses, just with 2 presets instead of 5 (see the isCompare ||
+      // isDuo branch below). "compare"/"duo" are mutually exclusive, both
+      // true only never happens since they're the same <select>'s value.
+      const isDuo = preset === "duo";
       const vendorCheck = document.getElementById("askVendorCheck").checked;
       const temporalFilter = document.getElementById("askTemporalFilter").checked;
       const intentFilter = document.getElementById("askIntentFilter").checked;
@@ -10818,7 +10950,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // category lookup (free, no sign-in; classifyAskLookup on the
       // server) or a real question (sign-in required, a real model call)
       // See the branches below.
-      if (isCompare && !uaToken()) {
+      if ((isCompare || isDuo) && !uaToken()) {
         alert("Sign in (Account view) to ask questions. Each answer runs a real query against the model.");
         return;
       }
@@ -10837,26 +10969,31 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // isCompare branch below), since Compare has no live phase stream
       // either way (5 parallel requests, not one to animate).
       const useRail = canUseAskRail();
-      if (useRail) showAskRailRunning(question, isCompare);
+      if (useRail) showAskRailRunning(question, isCompare ? 5 : isDuo ? 2 : 0);
       let refreshQuotaAfter = true;
 
       try {
-        if (isCompare) {
+        if (isCompare || isDuo) {
           if (!useRail) {
             // Narrow screen: the modal fallback, using the exact same
-            // 3-tab Compare rendering as the rail (askRenderCompareBody),
-            // one Compare rendering, not two to keep in sync. The question
-            // itself is left exactly as typed; closing/reopening the
-            // modal, or asking again, should never require retyping it.
+            // rendering the rail uses (askRenderCompareBody/askRenderDuoBody),
+            // one rendering, not two to keep in sync. The question itself is
+            // left exactly as typed; closing/reopening the modal, or asking
+            // again, should never require retyping it.
             hideAskRail();
             document.getElementById("askModalQuestion").textContent = question;
-            document.getElementById("askModalBody").innerHTML = '<p class="ask-muted">Running all 5 pipelines against the same question…</p>';
+            document.getElementById("askModalBody").innerHTML = isCompare
+              ? '<p class="ask-muted">Running all 5 pipelines against the same question…</p>'
+              : '<p class="ask-muted">Running single-agent and multi-agent against the same question…</p>';
             askModalEl.classList.add("ask-compare-mode");
             askOverlayEl.classList.add("open");
             askModalEl.classList.add("open");
           }
           const params = new URLSearchParams({
-            question, presets: "single_agent,multi_agent_buggy,multi_agent_fixed,multi_agent,multi_agent_feedback",
+            question,
+            presets: isCompare
+              ? "single_agent,multi_agent_buggy,multi_agent_fixed,multi_agent,multi_agent_feedback"
+              : "single_agent,multi_agent_feedback",
             vendorCheck: String(vendorCheck), temporalFilter: String(temporalFilter), intentFilter: String(intentFilter),
             resolveVendor: String(resolveVendor), resolveTemporal: String(resolveTemporal),
             provider, size,
@@ -10865,12 +11002,17 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           const data = await askSafeJson(res);
           if (!res.ok) throw new Error(data.error || "Request failed.");
           if (useRail) {
-            showAskRailCompare(question, data);
-          } else {
+            if (isCompare) showAskRailCompare(question, data);
+            else showAskRailDuo(question, data);
+          } else if (isCompare) {
             document.getElementById("askModalBody").innerHTML = askRenderCompareBody(question, data);
             askWireRateButtons(document.getElementById("askModalBody"));
             askWireAnswerReveal(document.getElementById("askModalBody"));
             askWireRailTabs(document.getElementById("askModalBody"));
+          } else {
+            document.getElementById("askModalBody").innerHTML = askRenderDuoBody(question, data);
+            askWireRateButtons(document.getElementById("askModalBody"));
+            askWireAnswerReveal(document.getElementById("askModalBody"));
           }
           // Every preset resolves the same vendor from the same catalog,
           // Vendor check being the one config that actually varies here -
