@@ -762,15 +762,20 @@
        line"): the escalated 7-node list (Vendor/Rewriter/Web Search/
        Verify/Retriever/Evaluator/Orchestrator) used to wrap "Orchestrator"
        onto its own second line once the row ran out of width. No
-       horizontal scrolling either, per a direct follow-up correction to
-       an earlier version of this fix that used a scrollable overflow as
-       its safety net instead: left-aligned (flex-start, "start from left
-       to right"), stretched across #askWorkflowTop's own full available
-       width (see that element's own comment, no longer capped at 780px)
-       so the row has real room for every node without needing to wrap or
-       scroll at all. */
+       horizontal scrolling either: stretched across #askWorkflowTop's
+       own full available width (see that element's own comment, no
+       longer capped at 780px like the question input below it) so the
+       row has real room for every node without needing to wrap or
+       scroll at all. justify-content: safe center, not flex-start, per
+       a direct follow-up correction ("always keep it centered"): centers
+       the row when it fits (the common case, now that it has the full
+       width to work with), same as plain center, but falls back to
+       start-alignment instead of clipping the left end off-screen on the
+       rare screen too narrow to fit even the escalated list at full
+       width (see the earlier, now-superseded version of this comment for
+       why plain, unqualified center is unsafe here). */
     .ask-workflow-diagram {
-      display: flex; align-items: center; justify-content: flex-start; flex-wrap: nowrap; gap: 6px;
+      display: flex; align-items: center; justify-content: safe center; flex-wrap: nowrap; gap: 6px;
       font: 700 13px/1.3 var(--mono); white-space: nowrap;
       background: none; border: none; padding: 6px 14px;
     }
@@ -786,7 +791,7 @@
     .ask-workflow-caption {
       font-size: 10.5px; color: var(--muted); font-family: var(--mono); min-height: 14px;
       margin: 4px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      text-align: left;
+      text-align: center;
     }
     /* Once a run finishes, renderAskWorkflowCaption() sets this back to
        "" (see its own comment) rather than leaving a stale "Done" label
@@ -2696,7 +2701,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.119.1"><span class="brand-name">Releasetrain </span><em>v3.119.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.119.2"><span class="brand-name">Releasetrain </span><em>v3.119.2</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4626,6 +4631,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-22</div>
+              <div class="cl-ver cl-ver-minor">v3.119.2</div>
+            </div>
+            <div class="cl-content">
+              <h3>Pipeline diagram: centered again, still one line, still full width</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Direct follow-up correction: the diagram is centered again ("always keep it centered"), not left-aligned. Still uses the full available width (not capped at 780px) so it stays on one line without wrapping, and still falls back to start-alignment (<code>justify-content: safe center</code>) instead of clipping on the rare screen too narrow to fit the escalated 7-node list even at full width.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-22</div>
