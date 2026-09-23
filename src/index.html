@@ -795,9 +795,21 @@
        `center` could. */
     .ask-workflow-diagram {
       display: flex; align-items: center; justify-content: space-between; flex-wrap: nowrap; gap: 6px;
-      font: 700 13px/1.3 var(--mono); white-space: nowrap;
-      background: none; border: none; padding: 6px 14px;
+      font: 400 13px/1.3 var(--mono); white-space: nowrap;
+      background: none; border: none; padding: 6px 6px;
+      /* Safety net for a narrow window: the row's own flex items can't
+         shrink below their nowrap text's natural width (min-width:auto),
+         so once the full 7-node pipeline genuinely doesn't fit, it would
+         otherwise get silently clipped by `html, body { overflow: hidden }`
+         (see that rule's own comment) rather than wrap or scroll into
+         view -- exactly what cut "Orchestrator" off mid-word in a real
+         screenshot. overflow-x:auto lets this one row scroll internally
+         instead; the scrollbar itself is hidden (same pattern as the
+         full-page views a few lines below) so it doesn't look like a
+         stray UI element, but the content stays reachable by scrolling. */
+      overflow-x: auto;
     }
+    .ask-workflow-diagram::-webkit-scrollbar { display: none; }
     /* Colors re-picked for a transparent background (see .ask-workflow-diagram's
        own comment): the earlier bright neon green/glow only worked
        against a dark card; on the page's own light surface a strong,
@@ -2755,7 +2767,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.128.0"><span class="brand-name">Releasetrain </span><em>v3.128.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.129.0"><span class="brand-name">Releasetrain </span><em>v3.129.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4703,6 +4715,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-23</div>
+              <div class="cl-ver cl-ver-minor">v3.129.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Pipeline diagram: tighter padding, plain node names, no more mid-word clipping</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The pipeline row's own horizontal padding was cut (14px &rarr; 6px per side) and its node names are no longer bold, so the full 7-node pipeline sits more compactly and reads less shouty.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> On a narrow window, the row could run out of width and get silently cut off mid-word ("Orchestrator" clipped to "Orchestrator (", caught live) since the page itself has <code>overflow: hidden</code> and a flex row's items can't shrink below their own nowrap text width. The row now scrolls internally (hidden scrollbar) instead of clipping.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-23</div>
