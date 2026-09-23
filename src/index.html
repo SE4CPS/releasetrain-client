@@ -326,7 +326,6 @@
     #askRailBody .ask-answer-card { border: none; background: transparent; padding: 0; }
     #askRailBody .ask-rail-tabs { margin: 0 0 10px; padding: 0; }
     .ask-short-answer { font-size: 18px; line-height: 1.4; font-weight: 600; margin: 8px 0 6px; }
-    .ask-short-hint { font-size: 11.5px; margin: 0; }
     .ask-home-controls { display: none; }
     .ask-home-controls > h4 { font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); margin: 0 0 8px; }
     .ask-home-samples { list-style: none; margin: 10px 0 14px; padding: 0; display: flex; flex-direction: column; gap: 4px; }
@@ -686,19 +685,20 @@
     }
     .topbar-form .btn { display: inline-flex; align-items: center; justify-content: center; }
     .btn-icon { padding: 0 10px; font-size: 14px; }
-    /* Obviously working, not just disabled. A static hourglass reads as
+    /* Obviously working, not just disabled. A static icon reads as
        "stuck", not "in progress". Per request, plain .btn-ghost (no solid
        background) rather than .btn-primary's solid dark fill; the emoji's
        own built-in colors ignore CSS `color` either way, so the filter
        below is what actually darkens it against a light background,
-       not a background swap on the button itself. */
-    @keyframes askSpin { to { transform: rotate(360deg); } }
-    /* .btn-ghost's own border-color/background (the box Clear and the
-       bookmark button also have) removed here specifically, per request:
-       just the bare spinning hourglass while loading, no surrounding
-       box. The normal, not-loading arrow keeps .btn-ghost's box as-is. */
+       not a background swap on the button itself. Robot (🤖), not the
+       hourglass this replaced, per explicit request -- reuses the same
+       askwfRobotBlink blink animation the pipeline diagram's own active-
+       node robots use (see .askwf-robot-active's comment), a blink
+       reading more "a robot is working" than the hourglass's old spin
+       ever did, and keeping one shared "robot at work" motif across both
+       places instead of two different animations for the same idea. */
     #askSubmitBtn.ask-btn-loading {
-      animation: askSpin .9s linear infinite; filter: brightness(0.6) saturate(1.3);
+      animation: askwfRobotBlink .9s steps(1) infinite; filter: brightness(0.6) saturate(1.3);
       border-color: transparent; background: transparent;
     }
     /* padding/font trimmed down (was 0 8px / 12px) so three of these fit
@@ -741,6 +741,32 @@
     .ask-rail-tab:hover { color: var(--text); }
     .ask-rail-tab.active { color: var(--brand); border-bottom-color: var(--brand); }
     .ask-rail-panel[hidden] { display: none; }
+    /* The running phase caption ("Retriever #2: Searching CVE records…
+       0.3s") used to be its own line below the input (#askWorkflowCaption,
+       now removed). Per explicit request ("add this runtime status right
+       to the benchmark, that way it does not take vertical space"), it
+       now lives right in the tab row next to "Benchmark" instead -- the
+       row is already there and already taking up space regardless of
+       whether a question is running, so appending to it costs nothing
+       extra vertically. Written by renderAskWorkflowCaption, which looks
+       this element up fresh every tick rather than caching a reference,
+       since the whole tab row (this span included) gets torn down and
+       rebuilt every time showAskRailRunning/askRenderCard re-render the
+       card. Empty and invisible once a run finishes (renderAskWorkflowCaption
+       clears the text; an empty span takes no visible space on its own). */
+    .ask-benchmark-live-status {
+      margin-left: auto; align-self: center;
+      font: 400 10.5px var(--mono); color: var(--muted);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 50%;
+    }
+    /* margin-left:auto still consumes all leftover flex-row space even
+       with no visible content, which on the final answer card (more tabs
+       after Benchmark: Model vs Rules, Guardrails, Feedback Loop) shoved
+       every later tab to the far right the instant a run finished and
+       this went empty -- caught from an actual screenshot. Zeroed out
+       whenever empty so those tabs sit in their normal spot right after
+       Benchmark unless there's real live status text to push right. */
+    .ask-benchmark-live-status:empty { margin-left: 0; }
 
     /* ── Agent workflow diagram (Rewriter/Retriever/Evaluator/
        Orchestrator) ────────────────────────────────────────────
@@ -759,23 +785,27 @@
        exists), visible in its dim "idle" state from page load, then
        lights up live as a real question runs. */
     /* nowrap, not wrap, per explicit request ("no line break in one
-       line"): the escalated 7-node list (Vendor/Rewriter/Web Search/
+       line"): the full 7-node pipeline (Vendor/Rewriter/Web Search/
        Verify/Retriever/Evaluator/Orchestrator) used to wrap "Orchestrator"
        onto its own second line once the row ran out of width. No
        horizontal scrolling either: stretched across #askWorkflowTop's
        own full available width (see that element's own comment, no
        longer capped at 780px like the question input below it) so the
        row has real room for every node without needing to wrap or
-       scroll at all. justify-content: safe center, not flex-start, per
-       a direct follow-up correction ("always keep it centered"): centers
-       the row when it fits (the common case, now that it has the full
-       width to work with), same as plain center, but falls back to
-       start-alignment instead of clipping the left end off-screen on the
-       rare screen too narrow to fit even the escalated list at full
-       width (see the earlier, now-superseded version of this comment for
-       why plain, unqualified center is unsafe here). */
+       scroll at all. justify-content: space-between, not center, per
+       direct follow-up request ("use all width available") now that the
+       full 7-node pipeline (see renderAskWorkflowDiagram) always renders
+       regardless of whether this particular run escalated to a web
+       search or not -- with real content now reliably wide enough to
+       want spreading out, `space-between` uses the row's whole width
+       rather than clumping every node into the middle with wasted space
+       on both sides. Degrades safely the same way `safe center` used to:
+       if the full row ever doesn't fit at all, `space-between` packs
+       flush left and overflows to the right, same as `flex-start` would,
+       rather than clipping the left edge off-screen the way plain
+       `center` could. */
     .ask-workflow-diagram {
-      display: flex; align-items: center; justify-content: safe center; flex-wrap: nowrap; gap: 6px;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: nowrap; gap: 6px;
       font: 700 13px/1.3 var(--mono); white-space: nowrap;
       background: none; border: none; padding: 6px 14px;
     }
@@ -788,29 +818,24 @@
     .askwf-idle { color: var(--muted); }
     .askwf-active { color: #15803d; }
     .askwf-done { color: #16a34a; }
-    /* display:none by default: this used to be hidden transitively (a
-       child of #askWorkflowTop, which is itself display:none below
-       900px) but now lives directly in #stickyAskHeader (see its own
-       markup comment on why it moved below the input), so it needs its
-       own explicit hide/show at the same breakpoint #askWorkflowTop and
-       .ask-form-desktop-slot already use, or it would show up on a
-       narrow screen where the rest of this pinned header is hidden. */
-    .ask-workflow-caption {
-      display: none;
-      font-size: 10.5px; color: var(--muted); font-family: var(--mono); min-height: 14px;
-      margin: 4px 0 0; padding: 0 24px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      text-align: center;
-    }
-    /* Once a run finishes, renderAskWorkflowCaption() sets this back to
-       "" (see its own comment) rather than leaving a stale "Done" label
-       on screen, so an empty caption is the normal, common end state,
-       not an edge case, and shouldn't still reserve its min-height/
-       margin-bottom as if real text were there. */
-    .ask-workflow-caption:empty { min-height: 0; margin: 0; }
+    /* Robot in front of each node's name (see renderAskWorkflowDiagram),
+       per explicit request. Only the robot blinks while its own node is
+       "active" -- the node's own name/timer text stays fully static
+       (opacity untouched), per direct follow-up ("only blink the robot
+       in front, this way the text stays static") -- so the robot is its
+       own inner span the blink animation targets, separate from the
+       outer .askwf-${state} span that colors the text. Idle/done robots
+       have no animation at all, just sit at full opacity in whatever
+       color the emoji itself renders in (CSS `color` has no effect on an
+       emoji glyph, so there's nothing to re-color here regardless). */
+    @keyframes askwfRobotBlink { 50% { opacity: 0.15; } }
+    .askwf-robot { display: inline-block; margin-right: 2px; }
+    .askwf-robot-active { animation: askwfRobotBlink 0.9s steps(1) infinite; }
     /* #askWorkflowTop: the one persistent home for the diagram (the
-       caption used to live here too; it's now its own element right
-       after #askFormDesktopSlot -- see .ask-workflow-caption's own
-       comment on why), a sibling of #askFormDesktopSlot (right before it
+       running-phase caption used to live here, then move to its own
+       element below the input; it now lives in the answer card's own
+       Benchmark tab row instead -- see .ask-benchmark-live-status's own
+       comment), a sibling of #askFormDesktopSlot (right before it
        in the markup) rather than nested inside the rail/tabs, per
        explicit request ("top of the right side, not below the input
        field"). Hidden on a narrow screen, matching #askFormDesktopSlot's
@@ -829,12 +854,6 @@
     #askWorkflowTop { display: none; }
     @media (min-width: 900px) {
       #askWorkflowTop { display: block; padding: 24px 24px 0; }
-      /* Same breakpoint as #askWorkflowTop/.ask-form-desktop-slot: this
-         is the same wide two-pane layout the caption only ever applied
-         to; see .ask-workflow-caption's own base-rule comment on why it
-         needs this explicit un-hide now that it's no longer a child of
-         #askWorkflowTop. */
-      .ask-workflow-caption { display: block; }
     }
     /* #viewCloseBtn: see its own markup comment. Same "reachable from
        every view" breakpoint as #askWorkflowTop/#askFormDesktopSlot --
@@ -2065,6 +2084,13 @@
     @media (max-width: 640px) { .ua-se-table { font-size: 11px; } }
     .ua-se-type { font-size: 11px; white-space: nowrap; }
     .ua-se-type-ask { color: var(--brand); font-weight: 600; }
+    /* .ua-se-type-ask is now a real <button> (see uaLoadSearchEvents),
+       so its own default UA chrome (border/background/padding) needs
+       resetting back to reading as plain colored text, same as it did
+       as a <span> before -- only the pointer cursor + hover underline
+       are new, to actually read as clickable. */
+    .ua-se-ask-btn { background: none; border: none; padding: 0; margin: 0; font: inherit; cursor: pointer; }
+    .ua-se-ask-btn:hover { text-decoration: underline; }
     .ua-user-row {
       display: flex; align-items: center; gap: 10px; padding: 10px 14px;
       border: 1px solid var(--border); border-radius: var(--radius-sm);
@@ -2723,7 +2749,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.123.0"><span class="brand-name">Releasetrain </span><em>v3.123.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.124.0"><span class="brand-name">Releasetrain </span><em>v3.124.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2977,16 +3003,6 @@
        original spot in the topbar (always reachable without scrolling,
        a deliberate choice for that width, unchanged). -->
   <div id="askFormDesktopSlot" class="ask-form-desktop-slot" aria-label="Ask"></div>
-  <!-- Moved below the input (was right under the diagram, inside
-       #askWorkflowTop) per explicit request: a running caption
-       ("Generating answer… 6.4s") appearing/growing there used to push
-       the input box itself down while a question was in flight. Living
-       here instead means it can only ever push whatever comes after
-       #stickyAskHeader, never the pinned diagram/input above it. Still
-       the same #askWorkflowCaption element (see renderAskWorkflowCaption
-       in the script, referenced purely by getElementById, so this move
-       needed no JS change), just relocated in the markup. -->
-  <div id="askWorkflowCaption" class="ask-workflow-caption"></div>
   </div>
 
   <div id="navLoader" role="progressbar" aria-label="Loading" aria-hidden="true"></div>
@@ -4676,11 +4692,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-22</div>
-              <div class="cl-ver cl-ver-minor">v3.123.0</div>
+              <div class="cl-ver cl-ver-minor">v3.124.0</div>
             </div>
             <div class="cl-content">
-              <h3>Removed the 3 demo buttons; the Pipeline dropdown is the whole thing</h3>
+              <h3>Robot icons on the pipeline diagram; running status moved into the Benchmark tab</h3>
               <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The pipeline diagram always shows the full 7-node pipeline (Vendor, Rewriter, Web Search, Verify, Retriever, Evaluator, Orchestrator) now, not a shorter 5-node version that only grew to include Web Search/Verify on a run that happened to escalate, per explicit request ("show the whole pipeline including feedback loops and web search etc").</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> A 🤖 sits in front of every node's name, and only that robot blinks while its own node is active &mdash; the node's own name/timer text stays fully static, per direct follow-up ("only blink the robot in front, this way the text stays static"). The pipeline row now spreads across the full available width (<code>justify-content: space-between</code>) instead of centering with wasted space on both sides.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The Ask submit button shows 🤖 (blinking) instead of a spinning ⏳ hourglass while a question is running, per explicit request, reusing the same blink animation the diagram's own active-node robots use.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The running phase status ("Retriever: Searching sources&hellip; 0.3s") moved from its own dedicated line into the answer card's tab row, right after "Benchmark", per explicit request ("add this runtime status right to the benchmark, that way it does not take vertical space"). It no longer reserves any vertical space of its own; it just fills in the same row the tabs already occupy.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The "Short answer" tab's explanatory line ("The full answer, sources and checks are in the other tabs.") is gone, per explicit request &mdash; the tab row right below it already makes that obvious.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> In the Admin panel's Search Events table, a "💬 ask" row is now clickable: it pastes that exact question into the live Ask input (always visible above, even from this view) so an admin can re-run what a user actually asked without retyping it.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The per-answer Guardrails tab's "Used for this answer" note now covers <code>liveRedditSearchFallback</code> (the server's new guardrail, see releasetrain-server), naming which side of a comparison a live Reddit search ran for.</li>
+              </ul>
                 <li><span class="cl-tag cl-tag-ux">ux</span> The Single-Agent / Multi-Agent / Single-vs-Multi quick buttons are gone, per direct follow-up ("no integrate it here", pointing at the Pipeline dropdown itself). They were a redundant shortcut on top of the "Demo: Single vs Multi-Agent" option already in that dropdown; picking it and asking a question does the exact same thing, so there's one control for this now instead of two.</li>
               </ul>
             </div>
@@ -8799,6 +8823,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         text = "Ran a live web search for this answer since internal retrieval found nothing.";
       } else if (id === "comparisonWindowCorrection" && a.applied) {
         text = "Corrected the stated time window for this comparison answer.";
+      } else if (id === "liveRedditSearchFallback" && a.applied) {
+        const entities = (a.entities && a.entities.length) ? a.entities.join(", ") : "a side of this comparison";
+        text = `This system's own tracked Reddit data had nothing for ${uaEsc(entities)}, so a live Reddit search ran instead.`;
       } else if (id === "retrieverRetry" && a.applied) {
         text = `Retried retrieval for this answer (${a.rounds} rounds total).`;
       } else if (id === "rewriterRetry" && a.applied) {
@@ -9058,14 +9085,23 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       return phase;
     }
     // ── Agent workflow diagram (live phase → node highlighting) ─────
-    // Always the same 5-node shape: Vendor, Rewriter, Retriever, Evaluator,
-    // Orchestrator, with a feedback edge back to Retriever. The real
-    // multi-agent-with-feedback architecture end to end. A preset that
-    // doesn't genuinely delegate to separate roles (Single-agent,
-    // Multi-agent buggy/fixed) never fires the phases that light up
-    // Rewriter/Evaluator, so those two just stay idle the whole run:
-    // "highlight only the roles actually used" falls out naturally from
-    // which phase events actually arrive, no per-preset case needed.
+    // Always the full, complete pipeline shape: Vendor, Rewriter, Web
+    // Search, Verify, Retriever, Evaluator, Orchestrator (with a feedback
+    // edge back to Retriever) -- every node this architecture can ever
+    // touch, always rendered, per explicit request ("show the whole
+    // pipeline including feedback loops and web search etc"). A prior
+    // version swapped between this full 7-node list and a plain 5-node
+    // one (Vendor/Rewriter/Retriever/Evaluator/Orchestrator, Web Search/
+    // Verify spliced out) depending on whether THIS run happened to
+    // escalate vendor resolution to a real web search -- removed, since
+    // a viewer unfamiliar with the architecture should see its whole
+    // shape up front, not a diagram that silently grows an extra 2 nodes
+    // only on some questions. A preset that doesn't genuinely delegate to
+    // separate roles (Single-agent, Multi-agent buggy/fixed), or a run
+    // that never escalates to a web search, just leaves those nodes idle
+    // the whole time: "highlight only the roles actually used this run"
+    // still falls out naturally from which phase events actually arrive,
+    // no per-preset/per-run case needed to decide which list to show.
     // Vendor resolution gets its own node, separate from Rewriter, even
     // though it's the very first thing to run: it's a plain deterministic
     // catalog lookup on EVERY architecture (see the "Vendor resolution"
@@ -9078,12 +9114,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // next to it.
     // Lives in the persistent #askWorkflowTop, above the input (see that
     // element's own comment), not in the answer rail.
-    // websearch/verify only ever leave "idle" on a run that actually
-    // escalates vendor resolution out to a real web search (see
-    // verifyVendorViaWeb on the server); a normal, non-escalating
-    // question never touches them, which is what lets
-    // renderAskWorkflowDiagram keep rendering the plain 5-node
-    // single-agent list unchanged for every other question.
     let askWorkflowState = null;      // { vendor, rewriter, retriever, evaluator, orchestrator, websearch, verify } -> idle|active|done
     let askWorkflowTiming = null;     // { vendor, rewriter, retriever, evaluator, orchestrator, websearch, verify } -> { startedAt, doneMs } | null
     let askWorkflowLabel = "";        // current phase's own label (askPhaseLabel), shown under the diagram
@@ -9104,19 +9134,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // synchronously (no async library load, unlike the mermaid version
     // this replaced), so askWorkflowRenderSeq's "a slow render might
     // land out of order" guard is no longer needed.
+    // Always the full 7-node pipeline (see the comment block above) --
+    // no separate plain/escalated variant any more.
     const ASK_WORKFLOW_NODES = [
-      { key: "vendor", name: "Vendor" },
-      { key: "rewriter", name: "Rewriter" },
-      { key: "retriever", name: "Retriever" },
-      { key: "evaluator", name: "Evaluator" },
-      { key: "orchestrator", name: "Orchestrator" },
-    ];
-    // Web Search/Verify spliced in between Vendor and Rewriter, since
-    // vendor resolution's escalation to a real web search happens right
-    // there, before retrieval ever starts. Only used once a run has
-    // actually touched them (see the comment on askWorkflowState above);
-    // a normal, non-escalating question keeps the plain 5-node list.
-    const ASK_WORKFLOW_NODES_ESCALATED = [
       { key: "vendor", name: "Vendor" },
       { key: "rewriter", name: "Rewriter" },
       { key: "websearch", name: "Web Search" },
@@ -9140,6 +9160,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // has run yet (askWorkflowState is still null at page load) so the
     // diagram shows its dim "inactive hacker colors" from the start
     // rather than sitting blank until the first question.
+    // A robot sits in front of every node's name, per explicit request;
+    // only the robot itself blinks while that one node is "active" (a
+    // separate inner span the blink animation targets, see
+    // .askwf-robot-active's own CSS comment) -- the node's own name/timer
+    // text next to it stays fully static, unaffected, per direct
+    // follow-up ("only blink the robot in front, this way the text stays
+    // static").
     function renderAskWorkflowDiagram() {
       const el = document.getElementById("askWorkflowDiagram");
       if (!el) return;
@@ -9147,19 +9174,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         vendor: "idle", rewriter: "idle", retriever: "idle",
         evaluator: "idle", orchestrator: "idle", websearch: "idle", verify: "idle",
       };
-      const escalated = (state.websearch && state.websearch !== "idle")
-        || (state.verify && state.verify !== "idle");
-      const nodes = escalated ? ASK_WORKFLOW_NODES_ESCALATED : ASK_WORKFLOW_NODES;
-      el.innerHTML = nodes.map((n, i) => {
+      el.innerHTML = ASK_WORKFLOW_NODES.map((n, i) => {
         const st = state[n.key] || "idle";
         const secs = askWorkflowNodeSeconds(n.key);
         const label = secs ? `${n.name} (${secs})` : n.name;
-        const node = `<span class="askwf-${st}">${uaEsc(label)}</span>`;
+        const robot = `<span class="askwf-robot${st === "active" ? " askwf-robot-active" : ""}">&#129302;</span>`;
+        const node = `<span class="askwf-${st}">${robot}${uaEsc(label)}</span>`;
         return i === 0 ? node : `<span class="askwf-arrow">&rarr;</span>${node}`;
       }).join("");
     }
+    // Writes into #askBenchmarkLiveStatus (see its own CSS comment), not a
+    // single persistent element: that span lives inside whichever card is
+    // currently in the rail (the running skeleton, then the final answer
+    // card), both of which get fully replaced via innerHTML at various
+    // points, so it's looked up fresh on every tick rather than cached.
     function renderAskWorkflowCaption() {
-      const el = document.getElementById("askWorkflowCaption");
+      const el = document.getElementById("askBenchmarkLiveStatus");
       if (!el) return;
       if (!askWorkflowLabel) { el.textContent = ""; return; }
       const secs = askWorkflowStartedAt ? ((Date.now() - askWorkflowStartedAt) / 1000).toFixed(1) + "s" : "";
@@ -10312,9 +10342,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     function askShortTabHtml(res) {
       const sentence = askShortAnswer(res);
       if (!sentence) return "";
+      // The explanatory line under the sentence ("The full answer,
+      // sources and checks are in the other tabs.") was removed per
+      // explicit request -- the tab row right below it already makes
+      // that obvious.
       return `<div class="ask-rail-panel" data-panel="short">
           <p class="ask-short-answer">${uaEsc(sentence)}</p>
-          <p class="ask-muted ask-short-hint">The full answer, sources and checks are in the other tabs.</p>
         </div>`;
     }
 
@@ -10428,6 +10461,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <button type="button" class="ask-rail-tab${activeTab === "answer" ? " active" : ""}" data-tab="answer" role="tab" aria-selected="${activeTab === "answer"}">Answer</button>
           <button type="button" class="ask-rail-tab" data-tab="sources" role="tab" aria-selected="false">Sources</button>
           <button type="button" class="ask-rail-tab" data-tab="benchmark" role="tab" aria-selected="false">Benchmark</button>
+          <span id="askBenchmarkLiveStatus" class="ask-benchmark-live-status"></span>
           <button type="button" class="ask-rail-tab" data-tab="modelrules" role="tab" aria-selected="false">Model vs Rules</button>
           <button type="button" class="ask-rail-tab" data-tab="guardrails" role="tab" aria-selected="false">Guardrails</button>
           <button type="button" class="ask-rail-tab" data-tab="feedbackloop" role="tab" aria-selected="false">Feedback Loop</button>
@@ -10749,6 +10783,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <button type="button" class="ask-rail-tab active" data-tab="answer" role="tab" aria-selected="true">Answer</button>
           <button type="button" class="ask-rail-tab" data-tab="sources" role="tab" aria-selected="false">Sources</button>
           <button type="button" class="ask-rail-tab" data-tab="benchmark" role="tab" aria-selected="false">Benchmark</button>
+          <span id="askBenchmarkLiveStatus" class="ask-benchmark-live-status"></span>
         </div>
         <div class="ask-rail-panel" data-panel="answer">${answerPanel}</div>
         <div class="ask-rail-panel" data-panel="sources" hidden>
@@ -10974,7 +11009,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const btn = document.getElementById("askSubmitBtn");
       btn.disabled = true;
       const prevIcon = btn.textContent;
-      btn.textContent = "⏳";
+      btn.textContent = "🤖";
       btn.classList.add("ask-btn-loading");
       startAskWorkflow();
       // The rail opens immediately with a running skeleton (diagram +
@@ -17404,8 +17439,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           // reflow a prompt's punctuation, so it's skipped here to show
           // exactly what was typed.
           const q = isAsk ? String(e.query || "") : normalizeQuery(e.query);
+          // Clickable for a real Ask question only (a component search's
+          // own `q` is a bare comma list, not something worth replaying
+          // as a question) -- per explicit request, pastes this row's
+          // exact query into the live Ask input so an admin can re-run
+          // what a user actually asked without retyping it. A plain
+          // <button>, not a link/span with a click handler bolted on, so
+          // it's keyboard-reachable and reads as interactive on its own.
           const typeCell = isAsk
-            ? `<span class="ua-se-type ua-se-type-ask" title="Real Ask question">💬 ask</span>`
+            ? `<button type="button" class="ua-se-type ua-se-type-ask ua-se-ask-btn" title="Click to paste this question into the Ask input" data-query="${esc(q)}">💬 ask</button>`
             : `<span class="ua-se-type" title="Vendor/component search">🔍 search</span>`;
           const isAnon = !e.userId || e.userId === "anonymous";
           const known = !isAnon && usersById.get(String(e.userId));
@@ -17422,6 +17464,23 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           </tr>`;
         }).join("") +
         `</tbody></table>`;
+      // The Ask input (#askQuestion) is the same persistent, position:fixed
+      // element visible from every view (see #stickyAskHeader's own
+      // comment) -- including this Admin/Account view -- so pasting into
+      // it and focusing it is enough; no view switch needed for the
+      // admin to see and use it.
+      listEl.querySelectorAll(".ua-se-ask-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const q = btn.getAttribute("data-query") || "";
+          const input = document.getElementById("askQuestion");
+          if (!input) return;
+          input.value = q;
+          input.focus();
+          const prevText = btn.textContent;
+          btn.textContent = "✓ pasted";
+          setTimeout(() => { btn.textContent = prevText; }, 1200);
+        });
+      });
     }
 
     function trackSearch(q) {
