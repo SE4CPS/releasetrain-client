@@ -2660,7 +2660,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.117.0"><span class="brand-name">Releasetrain </span><em>v3.117.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.117.1"><span class="brand-name">Releasetrain </span><em>v3.117.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4590,6 +4590,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-22</div>
+              <div class="cl-ver cl-ver-minor">v3.117.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Guardrails tab knows about the new dual-source version check</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The per-answer Guardrails tab's "Used for this answer" note now covers <code>dualSourceVersionCheck</code> (the server's new guardrail, see releasetrain-server), naming the live web version found when it disagreed with this system's own internal data.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-22</div>
@@ -8580,6 +8592,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         text = "Blocked this answer's original wording (flagged content).";
       } else if (id === "versionCorrectionRewrite" && a.applied) {
         text = "Verified the version number stated in this answer.";
+      } else if (id === "dualSourceVersionCheck" && a.applied) {
+        text = a.agreed === false
+          ? `Checked a live web source too, found a disagreement (web said ${uaEsc(a.webVersion || "a different version")}), and let the Orchestrator reconcile it.`
+          : "Checked a live web source too, which confirmed this answer's version number.";
       } else if (id === "evaluatorWebOverride" && a.applied) {
         text = "Trusted a live web result the Evaluator judged insufficient for this answer.";
       } else if (id === "deterministicWebFallback" && a.applied) {
