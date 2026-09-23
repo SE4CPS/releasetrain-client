@@ -788,9 +788,17 @@
     .askwf-idle { color: var(--muted); }
     .askwf-active { color: #15803d; }
     .askwf-done { color: #16a34a; }
+    /* display:none by default: this used to be hidden transitively (a
+       child of #askWorkflowTop, which is itself display:none below
+       900px) but now lives directly in #stickyAskHeader (see its own
+       markup comment on why it moved below the input), so it needs its
+       own explicit hide/show at the same breakpoint #askWorkflowTop and
+       .ask-form-desktop-slot already use, or it would show up on a
+       narrow screen where the rest of this pinned header is hidden. */
     .ask-workflow-caption {
+      display: none;
       font-size: 10.5px; color: var(--muted); font-family: var(--mono); min-height: 14px;
-      margin: 4px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin: 4px 0 0; padding: 0 24px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       text-align: center;
     }
     /* Once a run finishes, renderAskWorkflowCaption() sets this back to
@@ -799,25 +807,34 @@
        not an edge case, and shouldn't still reserve its min-height/
        margin-bottom as if real text were there. */
     .ask-workflow-caption:empty { min-height: 0; margin: 0; }
-    /* #askWorkflowTop: the one persistent home for the diagram+caption,
-       a sibling of #askFormDesktopSlot (right before it in the markup)
-       rather than nested inside the rail/tabs, per explicit request
-       ("top of the right side, not below the input field"). Hidden on a
-       narrow screen, matching #askFormDesktopSlot's own breakpoint --
-       this is specifically the wide two-pane layout's "top center of the
-       right side", which doesn't exist as a concept below that width.
-       Full width of #stickyAskHeader (not capped/centered at 780px like
-       the form below it), left to right, per explicit request ("no
-       horizontal scrolling, stretch it along the full available width,
-       start from left to right"): the diagram needs real room to lay
-       out every node on one line without wrapping or scrolling (see
-       .ask-workflow-diagram's own comment), which the form's own capped,
-       centered width doesn't give it. Its own top padding is a plain
-       small constant, not the form's 22vh; it belongs at the true top of
-       the column, not vertically centered with the input. */
+    /* #askWorkflowTop: the one persistent home for the diagram (the
+       caption used to live here too; it's now its own element right
+       after #askFormDesktopSlot -- see .ask-workflow-caption's own
+       comment on why), a sibling of #askFormDesktopSlot (right before it
+       in the markup) rather than nested inside the rail/tabs, per
+       explicit request ("top of the right side, not below the input
+       field"). Hidden on a narrow screen, matching #askFormDesktopSlot's
+       own breakpoint -- this is specifically the wide two-pane layout's
+       "top center of the right side", which doesn't exist as a concept
+       below that width. Full width of #stickyAskHeader (not capped/
+       centered at 780px like the form below it), left to right, per
+       explicit request ("no horizontal scrolling, stretch it along the
+       full available width, start from left to right"): the diagram
+       needs real room to lay out every node on one line without
+       wrapping or scrolling (see .ask-workflow-diagram's own comment),
+       which the form's own capped, centered width doesn't give it. Its
+       own top padding is a plain small constant, not the form's 22vh;
+       it belongs at the true top of the column, not vertically centered
+       with the input. */
     #askWorkflowTop { display: none; }
     @media (min-width: 900px) {
       #askWorkflowTop { display: block; padding: 24px 24px 0; }
+      /* Same breakpoint as #askWorkflowTop/.ask-form-desktop-slot: this
+         is the same wide two-pane layout the caption only ever applied
+         to; see .ask-workflow-caption's own base-rule comment on why it
+         needs this explicit un-hide now that it's no longer a child of
+         #askWorkflowTop. */
+      .ask-workflow-caption { display: block; }
     }
     /* #viewCloseBtn: see its own markup comment. Same "reachable from
        every view" breakpoint as #askWorkflowTop/#askFormDesktopSlot --
@@ -952,9 +969,16 @@
        answer, not a "primary answer + a benchmark table tab" summary.
        They get more width per card than the 5-way grid's 240px. */
     .ask-duo-grid .ask-answer-card { flex: 1 1 380px; }
+    /* Left-aligned (justify-content: flex-start, not center), per direct
+       follow-up request ("move these three to the left in the model and
+       pipeline summary details") once this moved from the sticky header
+       (centered there, matching the diagram above it) into the sidebar's
+       Model & pipeline section, where every other control is left-aligned
+       column content (see #sidebar .ask-toggle-group's own column-mode
+       override just above). No margin-top: the parent .ask-toggle-group's
+       own gap already spaces it from the Pipeline select above it. */
     #askDemoQuickBar {
-      display: flex; justify-content: center; flex-wrap: wrap; gap: 6px;
-      margin-top: 6px;
+      display: flex; justify-content: flex-start; flex-wrap: wrap; gap: 6px;
     }
     .ask-demo-btn { font-size: 11.5px; padding: 3px 10px; }
     /* The "what they do/don't do" legend shown in Compare mode's
@@ -2711,7 +2735,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.121.0"><span class="brand-name">Releasetrain </span><em>v3.121.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.122.0"><span class="brand-name">Releasetrain </span><em>v3.122.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2849,6 +2873,22 @@
                   <option value="compare">Compare all 5</option>
                   <option value="duo">Demo: Single vs Multi-Agent</option>
                 </select>
+                <!-- One-click seminar-demo shortcuts: run whatever question is
+                     currently typed through a specific pipeline (or both at
+                     once, side by side) without hand-picking a value from the
+                     Pipeline dropdown above first. Moved here from the sticky
+                     header above the input (per a first version of this
+                     request), then here into Model & pipeline itself and
+                     left-aligned, per direct follow-up ("move these three to
+                     the left in the model and pipeline summary details").
+                     Reuses the exact set-preset-then-requestSubmit() pattern
+                     the Benchmark tab's own "Compare all 5 now" button already
+                     uses (see wireAskRailBody). -->
+                <div id="askDemoQuickBar" class="ask-demo-quickbar">
+                  <button type="button" id="askDemoSingleBtn" class="btn btn-ghost ask-demo-btn" title="Runs the current question through Single-agent only.">&#9654; Single-Agent</button>
+                  <button type="button" id="askDemoMultiBtn" class="btn btn-ghost ask-demo-btn" title="Runs the current question through Multi-agent (feedback loop) only.">&#9654; Multi-Agent</button>
+                  <button type="button" id="askDemoDuoBtn" class="btn btn-primary ask-demo-btn" title="Runs the current question through both Single-agent and Multi-agent (feedback loop) at once, shown side by side.">&#9654; Single vs Multi</button>
+                </div>
               </div>
             </details>
             <!-- Collapsed by default (unlike Guardrails below, left open):
@@ -2943,20 +2983,6 @@
        the plain-text "nouns and edges" renderer. -->
   <div id="askWorkflowTop">
     <div id="askWorkflowDiagram" class="ask-workflow-diagram"></div>
-    <div id="askWorkflowCaption" class="ask-workflow-caption"></div>
-    <!-- One-click seminar-demo shortcuts: run whatever question is
-         currently typed through a specific pipeline (or both at once,
-         side by side) without opening "Model & pipeline" in the sidebar
-         and hunting for the right dropdown value first. Per explicit
-         request ("integrate that to the right side so i can show the
-         single agent demo and see the multiagent"). Reuses the exact
-         set-preset-then-requestSubmit() pattern the Benchmark tab's own
-         "Compare all 5 now" button already uses (see wireAskRailBody). -->
-    <div id="askDemoQuickBar" class="ask-demo-quickbar">
-      <button type="button" id="askDemoSingleBtn" class="btn btn-ghost ask-demo-btn" title="Runs the current question through Single-agent only.">&#9654; Single-Agent</button>
-      <button type="button" id="askDemoMultiBtn" class="btn btn-ghost ask-demo-btn" title="Runs the current question through Multi-agent (feedback loop) only.">&#9654; Multi-Agent</button>
-      <button type="button" id="askDemoDuoBtn" class="btn btn-primary ask-demo-btn" title="Runs the current question through both Single-agent and Multi-agent (feedback loop) at once, shown side by side.">&#9654; Single vs Multi</button>
-    </div>
   </div>
 
   <!-- Landing spot for the real #askForm node on a wide screen (see
@@ -2968,6 +2994,16 @@
        original spot in the topbar (always reachable without scrolling,
        a deliberate choice for that width, unchanged). -->
   <div id="askFormDesktopSlot" class="ask-form-desktop-slot" aria-label="Ask"></div>
+  <!-- Moved below the input (was right under the diagram, inside
+       #askWorkflowTop) per explicit request: a running caption
+       ("Generating answer… 6.4s") appearing/growing there used to push
+       the input box itself down while a question was in flight. Living
+       here instead means it can only ever push whatever comes after
+       #stickyAskHeader, never the pinned diagram/input above it. Still
+       the same #askWorkflowCaption element (see renderAskWorkflowCaption
+       in the script, referenced purely by getElementById, so this move
+       needed no JS change), just relocated in the markup. -->
+  <div id="askWorkflowCaption" class="ask-workflow-caption"></div>
   </div>
 
   <div id="navLoader" role="progressbar" aria-label="Loading" aria-hidden="true"></div>
@@ -4654,6 +4690,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-22</div>
+              <div class="cl-ver cl-ver-minor">v3.122.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Demo shortcuts moved into Model &amp; pipeline; running caption moved below the input</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The 3 Single/Multi/Single-vs-Multi demo buttons moved from the sticky header above the question input into the sidebar's "Model &amp; pipeline" section (right under the Pipeline dropdown), left-aligned, per direct follow-up request ("move these three to the left in the model and pipeline summary details").</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The running "Generating answer&hellip; 6.4s" caption now renders below the question input instead of between the pipeline diagram and the (now-relocated) demo buttons. It used to grow/shrink there while a question was in flight, visibly pushing the input box down and back up; per explicit request ("avoid moving pipeline or text input") it's now its own element right after the input, so it can only ever push page content below the sticky header, never the pinned diagram or input themselves.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-22</div>
