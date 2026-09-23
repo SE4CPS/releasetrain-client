@@ -2749,7 +2749,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.125.0"><span class="brand-name">Releasetrain </span><em>v3.125.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.125.1"><span class="brand-name">Releasetrain </span><em>v3.125.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4689,6 +4689,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-23</div>
+              <div class="cl-ver cl-ver-patch">v3.125.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Fixed: flagged-report links now work with a relative URL too</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <code>mdLite</code>'s new markdown-link support only matched an absolute <code>https://</code> URL, so a Reddit doc whose own stored URL is relative (e.g. <code>/r/StableDiffusion/</code>) rendered as plain, unlinked text instead of a link, per a live report ("make it clickable"). Now matches a bare <code>/path</code> too, resolved against reddit.com.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-22</div>
@@ -10076,10 +10088,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // work around. No other markdown-link usage exists in this app yet;
     // if one ever does that shouldn't show brackets, give it its own
     // regex rather than changing this one.
-    const MD_LINK_RX = /\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g;
+    // Matches an absolute URL or a bare "/..." path -- confirmed live, a
+    // Reddit doc's own stored url can be relative ("/r/StableDiffusion/"),
+    // which the earlier https-only version silently left as plain,
+    // unlinked text instead of rendering a link at all ("make it
+    // clickable" reported live). A relative path is resolved against
+    // reddit.com specifically, not the current page, since every producer
+    // of this markdown-link shape today is a Reddit/Stack Overflow report.
+    const MD_LINK_RX = /\[([^\]\n]+)\]\((\/[^\s)]+|https?:\/\/[^\s)]+)\)/g;
     function mdLite(text) {
       const escaped = uaEsc(text)
-        .replace(MD_LINK_RX, '<a href="$2" target="_blank" rel="noopener">[$1]</a>')
+        .replace(MD_LINK_RX, (m, label, url) => {
+          const href = /^https?:\/\//i.test(url) ? url : `https://reddit.com${url}`;
+          return `<a href="${href}" target="_blank" rel="noopener">[${label}]</a>`;
+        })
         .replace(/\*\*([^\n*]+?)\*\*/g, "<strong>$1</strong>")
         .replace(/`([^`\n]+?)`/g, "<code>$1</code>");
       // Line-by-line, not "does this whole blank-line-separated block
