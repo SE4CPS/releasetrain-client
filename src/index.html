@@ -2749,7 +2749,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.124.0"><span class="brand-name">Releasetrain </span><em>v3.124.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.125.0"><span class="brand-name">Releasetrain </span><em>v3.125.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4692,11 +4692,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-22</div>
-              <div class="cl-ver cl-ver-minor">v3.124.0</div>
+              <div class="cl-ver cl-ver-minor">v3.125.0</div>
             </div>
             <div class="cl-content">
-              <h3>Robot icons on the pipeline diagram; running status moved into the Benchmark tab</h3>
+              <h3>Comparison answers: metric-aware scoring, flagged-report links</h3>
               <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> A comparison question that names a metric ("which is more <strong>stable</strong>", "...more <strong>secure</strong>", "...better <strong>functionality</strong>") now re-weights the same evidence differently for that metric instead of always using one general-purpose risk formula &mdash; stability prioritizes recent major-version updates (semantic-versioning detected, never guessed from release notes) then Reddit concerns then CVEs; security prioritizes CVEs first; functionality prioritizes minor/patch update activity first.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> A flagged-as-risky community report is now always named by a real, clickable link (<code>mdLite</code> gained markdown-link support, rendered as a bracketed citation, e.g. <code>[1t7k0ts]</code>), appended as a guaranteed warning line after the answer, instead of only being mentioned as a bare count somewhere inside a risk-math paragraph.</li>
+              </ul>
                 <li><span class="cl-tag cl-tag-feat">feat</span> The pipeline diagram always shows the full 7-node pipeline (Vendor, Rewriter, Web Search, Verify, Retriever, Evaluator, Orchestrator) now, not a shorter 5-node version that only grew to include Web Search/Verify on a run that happened to escalate, per explicit request ("show the whole pipeline including feedback loops and web search etc").</li>
                 <li><span class="cl-tag cl-tag-feat">feat</span> A 🤖 sits in front of every node's name, and only that robot blinks while its own node is active &mdash; the node's own name/timer text stays fully static, per direct follow-up ("only blink the robot in front, this way the text stays static"). The pipeline row now spreads across the full available width (<code>justify-content: space-between</code>) instead of centering with wasted space on both sides.</li>
                 <li><span class="cl-tag cl-tag-ux">ux</span> The Ask submit button shows 🤖 (blinking) instead of a spinning ⏳ hourglass while a question is running, per explicit request, reusing the same blink animation the diagram's own active-node robots use.</li>
@@ -10059,8 +10062,24 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const markRx = new RegExp(escaped, "g");
       return unwrapped.replace(markRx, (m) => `<mark class="ask-answer-mark">${m}</mark>`);
     }
+    // "[id](url)" -> a real clickable link, shown as "[id]" (brackets
+    // baked into this template, not part of the source text) -- added
+    // specifically for the server's new comparisonRiskyPostWarning
+    // guardrail ("show the reddit id in brackets and make them
+    // clickable"), which emits exactly this markdown-link shape for each
+    // flagged post's own id. Runs on the already-uaEsc'd text (this
+    // function's very next step below), so `$2` (the URL) is safe to
+    // drop straight into an href without a second escaping pass: uaEsc
+    // already turned any literal `&` in the URL into `&amp;`, which is
+    // the CORRECT way to represent it inside an HTML attribute (a
+    // browser decodes it back to a real `&` on click) -- not a bug to
+    // work around. No other markdown-link usage exists in this app yet;
+    // if one ever does that shouldn't show brackets, give it its own
+    // regex rather than changing this one.
+    const MD_LINK_RX = /\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g;
     function mdLite(text) {
       const escaped = uaEsc(text)
+        .replace(MD_LINK_RX, '<a href="$2" target="_blank" rel="noopener">[$1]</a>')
         .replace(/\*\*([^\n*]+?)\*\*/g, "<strong>$1</strong>")
         .replace(/`([^`\n]+?)`/g, "<code>$1</code>");
       // Line-by-line, not "does this whole blank-line-separated block
