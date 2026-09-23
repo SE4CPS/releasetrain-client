@@ -964,23 +964,11 @@
     .ask-modal-header strong { flex: 1; font-size: 14px; line-height: 1.4; }
     .ask-compare-grid { display: flex; flex-wrap: wrap; gap: 12px; }
     .ask-compare-grid .ask-answer-card { flex: 1 1 240px; min-width: 0; }
-    /* Duo demo mode (see #askDemoQuickBar / askRenderDuoBody): only ever
-       2 cards, and unlike the 5-way Compare grid they each show a full
-       answer, not a "primary answer + a benchmark table tab" summary.
-       They get more width per card than the 5-way grid's 240px. */
+    /* Duo demo mode (see the "duo" pipeline option / askRenderDuoBody):
+       only ever 2 cards, and unlike the 5-way Compare grid they each show
+       a full answer, not a "primary answer + a benchmark table tab"
+       summary. They get more width per card than the 5-way grid's 240px. */
     .ask-duo-grid .ask-answer-card { flex: 1 1 380px; }
-    /* Left-aligned (justify-content: flex-start, not center), per direct
-       follow-up request ("move these three to the left in the model and
-       pipeline summary details") once this moved from the sticky header
-       (centered there, matching the diagram above it) into the sidebar's
-       Model & pipeline section, where every other control is left-aligned
-       column content (see #sidebar .ask-toggle-group's own column-mode
-       override just above). No margin-top: the parent .ask-toggle-group's
-       own gap already spaces it from the Pipeline select above it. */
-    #askDemoQuickBar {
-      display: flex; justify-content: flex-start; flex-wrap: wrap; gap: 6px;
-    }
-    .ask-demo-btn { font-size: 11.5px; padding: 3px 10px; }
     /* The "what they do/don't do" legend shown in Compare mode's
        Benchmark tab; see askCompareLegendHTML(). A stacked list, not a
        table with a horizontal-scroll fallback: every line wraps to fit
@@ -2735,7 +2723,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.122.0"><span class="brand-name">Releasetrain </span><em>v3.122.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.123.0"><span class="brand-name">Releasetrain </span><em>v3.123.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2871,24 +2859,19 @@
                   <option value="multi_agent">Multi-agent (delegated)</option>
                   <option value="multi_agent_feedback">Multi-agent (feedback loop)</option>
                   <option value="compare">Compare all 5</option>
+                  <!-- "Demo: Single vs Multi-Agent" (value "duo"): the
+                       Single-vs-Multi seminar-demo mode lives as a plain
+                       option right here, per direct follow-up request
+                       ("no integrate it here") -- a separate row of 3
+                       quick-access buttons was tried first (in this same
+                       details section, then before that in the sticky
+                       header above the input) and removed as redundant:
+                       picking this option and submitting already does the
+                       exact same thing. See the "duo" branch in the ask
+                       submit handler / askRenderDuoBody for the rest of
+                       the implementation, unchanged by this. -->
                   <option value="duo">Demo: Single vs Multi-Agent</option>
                 </select>
-                <!-- One-click seminar-demo shortcuts: run whatever question is
-                     currently typed through a specific pipeline (or both at
-                     once, side by side) without hand-picking a value from the
-                     Pipeline dropdown above first. Moved here from the sticky
-                     header above the input (per a first version of this
-                     request), then here into Model & pipeline itself and
-                     left-aligned, per direct follow-up ("move these three to
-                     the left in the model and pipeline summary details").
-                     Reuses the exact set-preset-then-requestSubmit() pattern
-                     the Benchmark tab's own "Compare all 5 now" button already
-                     uses (see wireAskRailBody). -->
-                <div id="askDemoQuickBar" class="ask-demo-quickbar">
-                  <button type="button" id="askDemoSingleBtn" class="btn btn-ghost ask-demo-btn" title="Runs the current question through Single-agent only.">&#9654; Single-Agent</button>
-                  <button type="button" id="askDemoMultiBtn" class="btn btn-ghost ask-demo-btn" title="Runs the current question through Multi-agent (feedback loop) only.">&#9654; Multi-Agent</button>
-                  <button type="button" id="askDemoDuoBtn" class="btn btn-primary ask-demo-btn" title="Runs the current question through both Single-agent and Multi-agent (feedback loop) at once, shown side by side.">&#9654; Single vs Multi</button>
-                </div>
               </div>
             </details>
             <!-- Collapsed by default (unlike Guardrails below, left open):
@@ -4690,6 +4673,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-22</div>
+              <div class="cl-ver cl-ver-minor">v3.123.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Removed the 3 demo buttons; the Pipeline dropdown is the whole thing</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The Single-Agent / Multi-Agent / Single-vs-Multi quick buttons are gone, per direct follow-up ("no integrate it here", pointing at the Pipeline dropdown itself). They were a redundant shortcut on top of the "Demo: Single vs Multi-Agent" option already in that dropdown; picking it and asking a question does the exact same thing, so there's one control for this now instead of two.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-22</div>
@@ -10219,7 +10214,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       </div>`;
     }
 
-    // Demo mode (see #askDemoQuickBar): unlike askRenderCompareBody above
+    // Demo mode (the "duo" pipeline option): unlike askRenderCompareBody above
     // (one "primary" answer + a Benchmark tab you have to click into to
     // see the rest), this shows both full answers at once, side by side.
     // A presenter can point at one card, then the other, in the same
@@ -10727,7 +10722,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // and labels the wait accordingly.
     // runCount: 0 for a normal single-pipeline question, else the number
     // of parallel pipelines running at once (5 for Compare, 2 for the
-    // Single-vs-Multi duo demo; see #askDemoQuickBar/askRenderDuoBody).
+    // Single-vs-Multi duo demo; see the "duo" pipeline option/askRenderDuoBody).
     // Kept as a count rather than a separate isDuo boolean so the running/
     // waiting copy below reads correctly for either without a 3-way branch.
     function showAskRailRunning(question, runCount) {
@@ -10918,34 +10913,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       return finalResult;
     }
 
-    // #askDemoQuickBar's 3 one-click shortcuts (see its own HTML comment):
-    // set the preset <select> to a fixed value, then requestSubmit() the
-    // real form so every existing branch above (sign-in gate, rail vs.
-    // modal, duo vs. compare vs. a normal question) runs completely
-    // unchanged. This only ever substitutes for a viewer manually opening
-    // "Model & pipeline" in the sidebar and picking a value by hand. If
-    // the question box is empty, focuses it instead of submitting nothing.
-    function wireAskDemoQuickBar() {
-      const focusOrSubmit = () => {
-        const q = document.getElementById("askQuestion");
-        if (!q.value.trim()) { q.focus(); return; }
-        document.getElementById("askForm").requestSubmit();
-      };
-      document.getElementById("askDemoSingleBtn").addEventListener("click", () => {
-        document.getElementById("askPreset").value = "single_agent";
-        focusOrSubmit();
-      });
-      document.getElementById("askDemoMultiBtn").addEventListener("click", () => {
-        document.getElementById("askPreset").value = "multi_agent_feedback";
-        focusOrSubmit();
-      });
-      document.getElementById("askDemoDuoBtn").addEventListener("click", () => {
-        document.getElementById("askPreset").value = "duo";
-        focusOrSubmit();
-      });
-    }
-    wireAskDemoQuickBar();
-
     document.getElementById("askForm").addEventListener("submit", async e => {
       e.preventDefault();
       const question = document.getElementById("askQuestion").value.trim();
@@ -10979,7 +10946,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const provider = document.getElementById("askProvider").value;
       const size = document.getElementById("askSize").value;
       const isCompare = preset === "compare";
-      // "duo": the Single-vs-Multi seminar-demo shortcut (#askDemoQuickBar).
+      // "duo": the Single-vs-Multi seminar-demo pipeline option.
       // Client-only value, never sent to the server as a preset itself.
       // It maps to the same /api/ask/compare endpoint Compare mode already
       // uses, just with 2 presets instead of 5 (see the isCompare ||
