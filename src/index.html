@@ -2701,7 +2701,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.119.2"><span class="brand-name">Releasetrain </span><em>v3.119.2</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.120.0"><span class="brand-name">Releasetrain </span><em>v3.120.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2783,7 +2783,6 @@
                padding of its own just collapses rather than reading as
                a stray blank line. -->
           <button class="btn btn-ghost" type="button" id="clearBtn">Clear</button>
-          <button class="btn btn-ghost" type="button" id="ua-bm-save-btn" style="display:none" title="Save current search as a bookmark">🔖</button>
           <button class="btn btn-icon btn-ghost" type="submit" id="askSubmitBtn" aria-label="Search or ask">➤</button>
         </div>
         <!-- Moved below the input, left-aligned, per explicit request
@@ -4631,6 +4630,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-22</div>
+              <div class="cl-ver cl-ver-minor">v3.120.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Removed the bookmark button; submitting always returns to the top</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The bookmark-save button (🔖) next to Clear/Send is gone, per explicit request. It saved the internal component-search box's value, not the visible Ask question, and had become a confusing leftover from the app's earlier dual-mode (Search vs. Ask) design.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Submitting a question now scrolls the page back to the top, per explicit request ("center the input on enter submit"), so a viewer who asks from partway down a long scrolled view always lands somewhere consistent to watch the new answer run, instead of staying scrolled into whatever was there before.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-22</div>
@@ -10780,6 +10792,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // just ?view=), and a genuinely new question makes any old ?q=
       // doubly stale regardless.
       setViewParam("");
+      // The pipeline diagram/input themselves are position:fixed (see
+      // #stickyAskHeader's own comment), so they're always visible
+      // regardless of scroll. Per explicit request ("center the input
+      // on enter submit"), a viewer who submits from partway down
+      // a long, scrolled view (or a scrolled-down Ask home) should land
+      // back at the top for the new running answer, not stay scrolled
+      // into whatever was there before. Instant, not smooth: this is a
+      // reset to a known state, not a scroll a viewer should watch happen.
+      window.scrollTo(0, 0);
       const preset = document.getElementById("askPreset").value;
       const provider = document.getElementById("askProvider").value;
       const size = document.getElementById("askSize").value;
@@ -15912,8 +15933,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       document.getElementById("ua-auth-panel").style.display = (!token || !user) ? "" : "none";
       document.getElementById("ua-profile-panel").style.display = (token && user) ? "" : "none";
       uaUpdateAskIntroSignin();
-      const saveBtn = document.getElementById("ua-bm-save-btn");
-      if (saveBtn) saveBtn.style.display = (token && user) ? "" : "none";
       if (token && user) {
         document.getElementById("ua-profile-name").textContent = user.name || user.email;
         document.getElementById("ua-profile-email").textContent = user.email;
@@ -17390,21 +17409,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     document.getElementById("ua-bm-refresh").addEventListener("click", uaLoadBookmarks);
 
-    document.getElementById("ua-bm-save-btn").addEventListener("click", async () => {
-      const q = document.getElementById("components").value.trim();
-      if (!q) { alert("Enter a component search first, then save it as a bookmark."); return; }
-      const url = location.origin + location.pathname + "?q=" + encodeCsvKeepCommas(q);
-      const name = prompt("Bookmark name:", q);
-      if (!name) return;
-      const res = await uaRequest("bookmarks/", { method: "POST", body: JSON.stringify({ name, url }) });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) { alert(data.error || "Failed to save bookmark."); return; }
-      const btn = document.getElementById("ua-bm-save-btn");
-      const orig = btn.textContent;
-      btn.textContent = "Saved!";
-      setTimeout(() => { btn.textContent = orig; }, 1500);
-    });
-
     // Restore shared bookmark on page load
     (async function uaBmHandleShare() {
       const shareId = new URLSearchParams(location.search).get("share");
@@ -17474,9 +17478,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     // Restore session state in sidebar and topbar on load
     uaUpdateSidebar();
-    // Show save button if already logged in
-    const _bsBtn = document.getElementById("ua-bm-save-btn");
-    if (_bsBtn && uaToken()) _bsBtn.style.display = "";
     // Hide the Ask intro panel's sign-in CTA if already logged in (see
     // uaUpdateAskIntroSignin's own comment on why this needs its own
     // bootstrap call, not just a ride on uaRender()).
