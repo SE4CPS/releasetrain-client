@@ -47,6 +47,18 @@
          recognizable regardless of which brand accent is in effect. */
       --bg: #cfd5dc;
       --surface: #ffffff;
+      /* A softer, semi-transparent alternative to --surface, per explicit
+         request ("too many background colors", "white is too much
+         contrast", "more transparent"): --surface stays solid white for
+         real chrome that overlays scrolling content (the sidebar, modals,
+         dropdowns), where a see-through background would show whatever's
+         scrolling underneath and hurt legibility. --view-card is for
+         content-level "card" backgrounds within a view (feed groups, a
+         CVE row, the Account profile card) that don't have that problem,
+         and were previously three different colors (white, a light
+         gray-blue chip tone, and a pink CVE tint) instead of one shared,
+         low-contrast tone. */
+      --view-card: rgba(255, 255, 255, .5);
       --text: #1a1c1e;
       --muted: #5f6368;
       --border: #dadce0;
@@ -604,37 +616,36 @@
     }
     /* Empty and hidden until relocateAskForm (in the script) moves the
        real #askForm node in here on a wide screen; see that div's own
-       comment in the markup. A normal block in the page's own scroll
-       flow (not fixed), so "1/4 down the page" is just top padding, and
-       it naturally starts right of the persistent #sidebar the same way
-       .layout does, via body's own padding-left at this breakpoint. */
+       comment in the markup. A plain block inside #stickyAskHeader (see
+       that element's own CSS comment), which is what's actually pinned
+       in place now; this itself just needs its own horizontal centering. */
     .ask-form-desktop-slot { display: none; }
     @media (min-width: 900px) {
       .ask-form-desktop-slot {
         display: block;
         max-width: 780px;
         margin: 0 auto;
-        padding: 22vh 24px 0;
+        padding: 8px 24px 0;
       }
-      /* The big 22vh top padding is what makes the Ask home read as a
-         landing page (prompt sitting "1/4 down the page"), but this same
-         form is reachable from every other view too (see its own
-         comment above), and that much dead space above real page
-         content elsewhere (Account, Docs, ...) was reported live as
-         needing a scroll to see content that would otherwise fit.
-         Small, fixed padding everywhere but the actual Ask home instead. */
-      body:not(.view-home) .ask-form-desktop-slot { padding-top: 24px; }
-      /* #stickyAskHeader (see its own markup comment): pinned to the top
-         of the page's own scroll outside the Ask home, which keeps its
-         own different, non-sticky 22vh-padded layout untouched: that
-         view's content sits beside the input in .ask-rail-col, which
-         already has its own separate sticky/scroll handling, not
-         underneath it the way every other view's content does. An
-         opaque background (not transparent, unlike the diagram/input
-         themselves) so a view's own content scrolling up behind this
-         header is actually hidden by it, not visible through it. */
-      body:not(.view-home) #stickyAskHeader {
-        position: sticky; top: 0; z-index: 400;
+      /* #stickyAskHeader (see its own markup comment): position:fixed at
+         one constant offset, the SAME on every view including the Ask
+         home, per explicit request ("never move this up or down even if
+         you load a view"). A prior version used a much larger 22vh top
+         padding on the Ask home specifically (a deliberate "landing
+         page" look, prompt sitting "1/4 down the page") and a smaller,
+         sticky-not-fixed treatment everywhere else, which visibly jumped
+         position when switching between the two. Explicit left/right
+         (not margin:0 auto alone) since position:fixed takes this out of
+         the flow that used to align it with the persistent #sidebar's
+         own width; --topbar-h (see updateOffsets in the script) still
+         correctly tracks this element's real height either way, so
+         .layout/every view's own top offset/height math is unaffected by
+         the switch from sticky to fixed. An opaque background (not
+         transparent, unlike the diagram/input themselves) so a view's
+         own content scrolling up behind this header is actually hidden
+         by it, not visible through it. */
+      #stickyAskHeader {
+        position: fixed; top: 0; left: 300px; right: 0; z-index: 400;
         background: var(--bg);
       }
     }
@@ -1403,7 +1414,7 @@
 
     .feedGroup {
       border: 1px solid var(--border); border-radius: var(--radius-sm);
-      overflow: hidden; margin-bottom: 4px; background: var(--surface);
+      overflow: hidden; margin-bottom: 4px; background: var(--view-card);
       transition: border-color .15s;
     }
     .feedGroup:hover { border-color: var(--muted); }
@@ -1412,7 +1423,7 @@
       cursor: pointer; list-style: none; user-select: none;
       display: flex; flex-direction: column; gap: 5px;
       padding: 7px 12px; font-weight: 600; font-size: 12px;
-      background: var(--chip-bg); transition: background .15s;
+      background: var(--view-card); transition: background .15s;
     }
     summary:hover { background: #e6eaef; }
     summary:focus-visible { outline: 3px solid var(--focus); outline-offset: -2px; }
@@ -1430,7 +1441,7 @@
       flex-shrink: 0; transition: transform .18s ease;
     }
     details[open] > summary .groupHead::before { transform: rotate(90deg); }
-    details[open] > summary { background: var(--chip-bg); color: var(--text); border-bottom: 1px solid var(--border); }
+    details[open] > summary { background: var(--view-card); color: var(--text); border-bottom: 1px solid var(--border); }
 
     /* The group's own CVE/Reddit/SO/Major/Minor/Patch total chips get
        their own row below the name, flush-left with the arrow on the
@@ -1489,12 +1500,18 @@
     .li:hover { background: var(--bg); }
     .li:last-child { border-bottom: none; }
 
-    .li.kind-cve { border-left-color: var(--cve); background: var(--cve-bg); }
-    .li.kind-cve:hover { background: var(--cve-bg); }
+    /* Was a distinct tinted background per kind (a pink cve-bg, an amber
+       risk-bg) on top of --surface/--view-card elsewhere, three or four
+       different background colors competing at once; per explicit
+       request ("too many background colors"), every row now shares the
+       same --view-card tone and leans on its own left-border color alone
+       (already a real, distinct color per kind) to carry the meaning. */
+    .li.kind-cve { border-left-color: var(--cve); background: var(--view-card); }
+    .li.kind-cve:hover { background: var(--view-card); }
     .li.kind-reddit { border-left-color: var(--muted); }
-    .li.kind-reddit.risk { border-left-color: var(--risk); background: var(--risk-bg); }
+    .li.kind-reddit.risk { border-left-color: var(--risk); background: var(--view-card); }
     .li.kind-stackoverflow { border-left-color: var(--muted); }
-    .li.kind-stackoverflow.risk { border-left-color: var(--risk); background: var(--risk-bg); }
+    .li.kind-stackoverflow.risk { border-left-color: var(--risk); background: var(--view-card); }
     /* var(--text) (near-black) read as too heavy/dominant for a plain
        "posted today" indicator. These three already have their own
        (currently-unused) softer neutral tokens defined for exactly
@@ -1865,7 +1882,7 @@
     .ua-tab:hover { color: var(--text); }
     .ua-tab.ua-tab-active { color: var(--brand); border-bottom-color: var(--brand); }
     .ua-card {
-      background: var(--surface); border: 1px solid var(--border);
+      background: var(--view-card); border: 1px solid var(--border);
       border-radius: var(--radius); padding: 20px; margin-top: 16px;
     }
     /* Capped and centered specifically for the signed-out Sign in/
@@ -1912,7 +1929,7 @@
        part of the one thing every visitor already looks at first. */
     .ua-profile-header {
       display: flex; flex-direction: column; gap: 6px; padding: 10px 14px;
-      background: var(--surface); border: 1px solid var(--border);
+      background: var(--view-card); border: 1px solid var(--border);
       border-radius: var(--radius); margin-bottom: 8px;
     }
     .ua-profile-header-top { display: flex; align-items: center; gap: 12px; }
@@ -2660,7 +2677,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.117.1"><span class="brand-name">Releasetrain </span><em>v3.117.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.118.0"><span class="brand-name">Releasetrain </span><em>v3.118.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4590,6 +4607,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-22</div>
+              <div class="cl-ver cl-ver-minor">v3.118.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>The header never moves; fewer, softer background colors</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The pipeline diagram and question input used to visibly jump position when switching between the Ask home (a large 22vh top padding, "1/4 down the page") and every other view (a small sticky one). Now position:fixed at one constant, slightly tighter offset, the same on every view including the Ask home, per explicit request ("never move this up or down even if you load a view").</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Reduced the number of distinct background colors on screen at once, per explicit request ("too many background colors", "white is too much contrast"). New <code>--view-card</code> token (a soft, semi-transparent tone) replaces a plain white or a colored tint (pink for a CVE row, amber for a risk row, a gray-blue chip tone for a feed group header) across feed groups, list rows, and the Account view's cards; each row's own left border still carries its real, distinct color, so nothing about what a color means was lost, only the flat background wash. Sidebar/modal chrome keeps the original solid <code>--surface</code> white, since a see-through background there would show scrolling content bleeding through underneath it.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-22</div>
