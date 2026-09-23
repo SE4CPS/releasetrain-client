@@ -47,18 +47,21 @@
          recognizable regardless of which brand accent is in effect. */
       --bg: #cfd5dc;
       --surface: #ffffff;
-      /* A softer, semi-transparent alternative to --surface, per explicit
-         request ("too many background colors", "white is too much
-         contrast", "more transparent"): --surface stays solid white for
-         real chrome that overlays scrolling content (the sidebar, modals,
-         dropdowns), where a see-through background would show whatever's
-         scrolling underneath and hurt legibility. --view-card is for
-         content-level "card" backgrounds within a view (feed groups, a
-         CVE row, the Account profile card) that don't have that problem,
-         and were previously three different colors (white, a light
-         gray-blue chip tone, and a pink CVE tint) instead of one shared,
-         low-contrast tone. */
-      --view-card: rgba(255, 255, 255, .5);
+      /* Genuinely transparent, no tint at all, per explicit repeated
+         request ("no extra background color", "keep it transparent") --
+         an earlier semi-opaque rgba(255,255,255,.5) still read as its
+         own visible box, not actually transparent. --surface stays solid
+         white for real chrome that overlays scrolling content (the
+         sidebar, modals, dropdowns), where a see-through background
+         would show whatever's scrolling underneath and hurt legibility.
+         --view-card is for content-level "card" backgrounds within a
+         view (feed groups, a CVE row, the Account profile card) that
+         don't have that problem: transparent lets the page's own --bg
+         show through completely, so these read as part of the page, not
+         a floating box on top of it. The border/left-border-color on
+         each of these elements is what still marks them as a distinct
+         region/carries any meaningful color, not the fill. */
+      --view-card: transparent;
       --text: #1a1c1e;
       --muted: #5f6368;
       --border: #dadce0;
@@ -2677,7 +2680,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.118.0"><span class="brand-name">Releasetrain </span><em>v3.118.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.118.1"><span class="brand-name">Releasetrain </span><em>v3.118.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4607,6 +4610,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-22</div>
+              <div class="cl-ver cl-ver-minor">v3.118.1</div>
+            </div>
+            <div class="cl-content">
+              <h3><code>--view-card</code> is now genuinely transparent, not a tint</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The previous <code>--view-card</code> (a semi-opaque <code>rgba(255,255,255,.5)</code>) still read as its own visible box on top of the page, reported live as "no extra background color". It's plain <code>transparent</code> now: the Sign in card, feed groups, and CVE/risk rows show the page's own background straight through, with only their border (or left-border color) marking them as a region at all.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-22</div>
