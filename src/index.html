@@ -2784,7 +2784,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.131.0"><span class="brand-name">Releasetrain </span><em>v3.131.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.131.1"><span class="brand-name">Releasetrain </span><em>v3.131.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3091,6 +3091,7 @@
         <div class="demo-q-list" role="list" aria-label="Example questions from the talk">
           <button type="button" class="demo-q-btn" data-q="Which is more stable right now, Zoom or Teams?">Which is more stable right now, Zoom or Teams?</button>
           <button type="button" class="demo-q-btn" data-q="Which is cheaper to maintain across Chrome, Safari, or Firefox: Zoom or Teams?">Which is cheaper to maintain across Chrome, Safari, or Firefox: Zoom or Teams?</button>
+          <button type="button" class="demo-q-btn" data-q="Zoom or Teams and which Browser Stack?">Zoom or Teams and which Browser Stack?</button>
           <button type="button" class="demo-q-btn" data-q="Which had more security fixes recently, Zoom or Teams?">Which had more security fixes recently, Zoom or Teams?</button>
           <button type="button" class="demo-q-btn" data-q="Any user-reported problems with the latest Teams or Zoom update?">Any user-reported problems with the latest Teams or Zoom update?</button>
           <button type="button" class="demo-q-btn" data-q="What would updating Teams disrupt on my system?">What would updating Teams disrupt on my system?</button>
@@ -4760,6 +4761,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-23</div>
+              <div class="cl-ver cl-ver-patch">v3.131.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Prototype Demo: add a third example question</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Added "Zoom or Teams and which Browser Stack?" as the third quick-load button, matching the 2024 EDI40 paper's own rewritten question.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-23</div>
