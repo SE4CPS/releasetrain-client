@@ -690,22 +690,6 @@
     }
     .topbar-form .btn { display: inline-flex; align-items: center; justify-content: center; }
     .btn-icon { padding: 0 10px; font-size: 14px; }
-    /* Obviously working, not just disabled. A static icon reads as
-       "stuck", not "in progress". Per request, plain .btn-ghost (no solid
-       background) rather than .btn-primary's solid dark fill; the emoji's
-       own built-in colors ignore CSS `color` either way, so the filter
-       below is what actually darkens it against a light background,
-       not a background swap on the button itself. Robot (🤖), not the
-       hourglass this replaced, per explicit request -- reuses the same
-       askwfRobotBlink blink animation the pipeline diagram's own active-
-       node robots use (see .askwf-robot-active's comment), a blink
-       reading more "a robot is working" than the hourglass's old spin
-       ever did, and keeping one shared "robot at work" motif across both
-       places instead of two different animations for the same idea. */
-    #askSubmitBtn.ask-btn-loading {
-      animation: askwfRobotBlink .9s steps(1) infinite; filter: brightness(0.6) saturate(1.3);
-      border-color: transparent; background: transparent;
-    }
     /* padding/font trimmed down (was 0 8px / 12px) so three of these fit
        a tighter line before wrapping, per request to reduce line breaks
        in the narrower rail column. */
@@ -867,10 +851,15 @@
     .view-close-btn { display: none; }
     @media (min-width: 900px) {
       .view-close-btn {
-        position: fixed; top: 14px; right: 16px; z-index: 500;
-        width: 30px; height: 30px; border-radius: 50%;
+        /* Moved from top-right to bottom-right and enlarged (30px -> 40px),
+           per explicit request: at top-right it visibly overlapped the
+           pipeline diagram's own right end ("Orchestrator"), caught live
+           from a real screenshot. */
+        position: fixed; bottom: 16px; right: 16px; z-index: 500;
+        width: 40px; height: 40px; border-radius: 50%;
         border: 1px solid var(--border); background: var(--surface); color: var(--muted);
-        font-size: 13px; line-height: 1; cursor: pointer;
+        font-size: 16px; line-height: 1; cursor: pointer;
+        box-shadow: var(--shadow-md);
         display: flex; align-items: center; justify-content: center;
       }
       .view-close-btn:hover { background: var(--chip-bg); color: var(--text); }
@@ -1820,7 +1809,7 @@
       top: calc(var(--topbar-h) + 16px);
       height: calc(100vh - var(--topbar-h) - 32px);
       overflow-y: auto; overscroll-behavior: contain;
-      background: var(--surface);
+      background: var(--view-card);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow-sm);
@@ -1834,7 +1823,7 @@
       top: calc(var(--topbar-h) + 16px);
       height: calc(100vh - var(--topbar-h) - 32px);
       overflow-y: auto; overscroll-behavior: contain;
-      background: var(--surface);
+      background: var(--view-card);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow-sm);
@@ -1891,7 +1880,7 @@
     .ack-header {
       padding: 18px 20px 14px;
       border-bottom: 1px solid var(--border);
-      background: var(--bg);
+      background: transparent;
     }
     .ack-header h2 { margin: 0 0 6px; font-size: 15px; font-weight: 700; }
     .ack-header p  { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.6; }
@@ -2217,7 +2206,7 @@
       top: calc(var(--topbar-h) + 16px);
       height: calc(100vh - var(--topbar-h) - 32px);
       overflow-y: auto;
-      background: #fff;
+      background: var(--view-card);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow-sm);
@@ -2240,11 +2229,11 @@
     #docsView a:hover { text-decoration: underline; }
     #docsView .muted { color: #64748b; }
     #docsView .small { font-size: .85rem; }
-    #docsView section.block { border: 1px solid #e2e8f0; border-radius: var(--radius); background: #fff; padding: .72rem .78rem; margin-bottom: .72rem; }
+    #docsView section.block { border: 1px solid #e2e8f0; border-radius: var(--radius); background: var(--view-card); padding: .72rem .78rem; margin-bottom: .72rem; }
     #docsView .section-sort-note { color: #64748b; font-size: .84rem; margin: .15rem 0 .45rem; }
     #docsView .callout { border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; padding: .55rem .7rem; margin: .45rem 0; }
     #docsView .api-grid { display: block; margin-top: .45rem; }
-    #docsView .endpoint { width: 100%; box-sizing: border-box; border: 1px solid #d9dee3; border-left-width: 6px; border-radius: 6px; margin: 0 0 8px; overflow: hidden; background: #fff; padding: 0; }
+    #docsView .endpoint { width: 100%; box-sizing: border-box; border: 1px solid #d9dee3; border-left-width: 6px; border-radius: 6px; margin: 0 0 8px; overflow: hidden; background: var(--view-card); padding: 0; }
     #docsView details.endpoint > summary { list-style: none; }
     #docsView details.endpoint > summary::-webkit-details-marker { display: none; }
     #docsView .endpoint summary.endpoint-head { display: flex !important; flex-direction: row !important; align-items: center !important; gap: .55rem !important; flex-wrap: wrap !important; margin: 0 !important; padding: 7px 10px !important; cursor: pointer !important; border-bottom: 1px solid transparent !important; font-size: 13px !important; }
@@ -2262,7 +2251,7 @@
     #docsView .method.post { background: #64748b; }
     #docsView .method.put { background: #b45309; }
     #docsView .path { font-family: Consolas, Monaco, "SFMono-Regular", Menlo, monospace; font-size: .9rem; font-weight: 700; overflow-wrap: anywhere; color: #0f172a; }
-    #docsView .tag { display: inline-block; padding: .1rem .35rem; border: 1px solid #e2e8f0; border-radius: 999px; font-size: .72rem; background: #fff; margin-right: .3rem; margin-top: .2rem; color: #64748b; }
+    #docsView .tag { display: inline-block; padding: .1rem .35rem; border: 1px solid #e2e8f0; border-radius: 999px; font-size: .72rem; background: var(--view-card); margin-right: .3rem; margin-top: .2rem; color: #64748b; }
     #docsView table { width: 100%; border-collapse: collapse; margin: .45rem 0 .7rem; table-layout: fixed; font-size: 12px; }
     #docsView th, #docsView td { border: 1px solid #e2e8f0; padding: .42rem .5rem; text-align: left; vertical-align: top; word-break: break-word; overflow-wrap: anywhere; color: #0f172a; }
     #docsView thead th { background: #f1f5f9; }
@@ -2287,7 +2276,7 @@
        column instead of rendering narrower than the space available. */
     #docsView .mermaid svg { width: 100%; height: auto; }
     /* arch-sub: collapsible details blocks inside #d-architecture */
-    #docsView details.arch-sub { border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; margin-top: .6rem; overflow: hidden; }
+    #docsView details.arch-sub { border: 1px solid #e2e8f0; border-radius: 8px; background: var(--view-card); margin-top: .6rem; overflow: hidden; }
     #docsView summary.d-arch-sum { list-style: none; display: flex !important; flex-direction: row !important; align-items: center !important; gap: .45rem !important; padding: .58rem .8rem !important; cursor: pointer; font-size: .88rem !important; font-weight: 700 !important; color: #0f172a !important; background: #f1f5f9 !important; border-bottom: 1px solid transparent; transition: background .12s !important; }
     #docsView details.arch-sub[open] > summary.d-arch-sum { border-bottom-color: #e2e8f0 !important; }
     #docsView summary.d-arch-sum:hover { background: #f1f5f9 !important; }
@@ -2636,7 +2625,7 @@
     #dashboardView .ri-score-rec { font-size: 11px; margin-top: 4px; line-height: 1.4; color: var(--text); }
     #dashboardView .ri-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 14px; }
     #dashboardView .ri-card {
-      background: var(--surface); border: 1px solid var(--border);
+      background: var(--view-card); border: 1px solid var(--border);
       border-radius: var(--radius-sm); padding: 11px 13px;
       display: flex; flex-direction: column; gap: 6px;
     }
@@ -2766,7 +2755,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.127.0"><span class="brand-name">Releasetrain </span><em>v3.127.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.128.0"><span class="brand-name">Releasetrain </span><em>v3.128.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4714,6 +4703,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-23</div>
+              <div class="cl-ver cl-ver-minor">v3.128.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Transparent view backgrounds everywhere; pipeline-first-node feedback replaces the submit button's own loading state</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Docs, Credits, and Changelog's own outer panels (plus the Docs page's nested cards/tags/sub-sections and the Dashboard's own stat cards) were still solid white or <code>var(--surface)</code>, left over from before <code>--view-card</code> existed. All switched to it, per explicit, repeated request ("transparent background for all view items"). The Changelog's own sticky header intentionally keeps an opaque background, since scrolled entries would otherwise show through the header text pinned above them.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The submit button no longer changes appearance at all between idle and running, per explicit follow-up ("keep the state of the button the same independent if it is pressed or not, do not make it a robot") &mdash; it was a redundant second "something is happening" signal now that the pipeline diagram's own first node does that instead.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The pipeline diagram's first node is renamed "User Question" (was "Vendor") and now activates the instant a question is submitted, with its own timer already running, rather than waiting for the real vendor-resolution phase event to stream back. Hovering it shows the actual question text.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The floating "&times;" close button moved from top-right (where it visibly overlapped the pipeline diagram's own right end) to bottom-right, and enlarged (30px &rarr; 40px), per explicit request.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-23</div>
@@ -9247,6 +9251,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     let askWorkflowLabel = "";        // current phase's own label (askPhaseLabel), shown under the diagram
     let askWorkflowStartedAt = null;  // for the caption's live elapsed-seconds tick
     let askWorkflowTickTimer = null;
+    // The literal question this run started for, shown as the "User
+    // Question" node's own hover title (see renderAskWorkflowDiagram) --
+    // full text on hover rather than in the node's own label, which
+    // stays a short, fixed, non-wrapping string like every other node.
+    let askWorkflowQuestion = "";
 
     const ASK_WORKFLOW_PHASE_NODE = {
       resolving_vendor: "vendor", rewriting: "rewriter",
@@ -9265,7 +9274,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // Always the full 7-node pipeline (see the comment block above) --
     // no separate plain/escalated variant any more.
     const ASK_WORKFLOW_NODES = [
-      { key: "vendor", name: "Vendor" },
+      // Labeled "User Question", not "Vendor" (the internal state key,
+      // still "vendor", is unchanged -- it still lights up on the real
+      // resolving_vendor phase event same as before): per explicit
+      // request, this first node is what a viewer sees light up the
+      // instant they submit (see startAskWorkflow's own comment), so it
+      // reads better as "the question just came in" than a term
+      // ("Vendor") a general audience has no reason to already know.
+      { key: "vendor", name: "User Question" },
       { key: "rewriter", name: "Rewriter" },
       { key: "websearch", name: "Web Search" },
       { key: "verify", name: "Verify" },
@@ -9307,7 +9323,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const secs = askWorkflowNodeSeconds(n.key);
         const label = secs ? `${n.name} (${secs})` : n.name;
         const robot = `<span class="askwf-robot${st === "active" ? " askwf-robot-active" : ""}">&#129302;</span>`;
-        const node = `<span class="askwf-${st}">${robot}${uaEsc(label)}</span>`;
+        // Only the first node ("User Question") gets the real question
+        // text as a hover title -- every other node's title stays empty
+        // (the default, no attribute), since only this one stands in for
+        // the question itself rather than a real pipeline role.
+        const title = (i === 0 && askWorkflowQuestion) ? ` title="${uaEsc(askWorkflowQuestion)}"` : "";
+        const node = `<span class="askwf-${st}"${title}>${robot}${uaEsc(label)}</span>`;
         return i === 0 ? node : `<span class="askwf-arrow">&rarr;</span>${node}`;
       }).join("");
     }
@@ -9334,12 +9355,23 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // up in real time, and even a very short-lived state still gets at
     // least one real frame on screen instead of being silently skipped
     // by the next phase's own state change overwriting it first.
-    function startAskWorkflow() {
-      askWorkflowState = { vendor: "idle", rewriter: "idle", retriever: "idle", evaluator: "idle", orchestrator: "idle", websearch: "idle", verify: "idle" };
-      askWorkflowTiming = { vendor: null, rewriter: null, retriever: null, evaluator: null, orchestrator: null, websearch: null, verify: null };
+    // question: shown as the "User Question" node's own hover title (see
+    // renderAskWorkflowDiagram). That first node also starts "active"
+    // immediately, with its own timer already running, rather than
+    // "idle" until the real resolving_vendor phase event streams back --
+    // per explicit request, the pipeline diagram's own first node is now
+    // what gives a viewer instant feedback that a question was actually
+    // submitted, replacing the submit button's own former loading state
+    // (removed as a redundant second "something is happening" signal).
+    function startAskWorkflow(question) {
+      askWorkflowQuestion = question || "";
+      askWorkflowState = { vendor: "active", rewriter: "idle", retriever: "idle", evaluator: "idle", orchestrator: "idle", websearch: "idle", verify: "idle" };
+      const now = Date.now();
+      askWorkflowTiming = { vendor: { startedAt: now, doneMs: null }, rewriter: null, retriever: null, evaluator: null, orchestrator: null, websearch: null, verify: null };
       askWorkflowLabel = ""; askWorkflowStartedAt = null;
       if (askWorkflowTickTimer) clearInterval(askWorkflowTickTimer);
       askWorkflowTickTimer = setInterval(() => { renderAskWorkflowCaption(); renderAskWorkflowDiagram(); }, 250);
+      renderAskWorkflowDiagram();
     }
     // Freezes doneMs on whichever node(s) are currently "active" (their
     // own elapsed time stops growing) right before the state itself
@@ -11170,12 +11202,17 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         return;
       }
 
+      // The button's own icon/style no longer changes between idle and
+      // running (see startAskWorkflow's own comment) -- per explicit
+      // follow-up ("keep the state of the button the same independent
+      // if it is pressed or not, do not make it a robot"), it was a
+      // redundant second "something is happening" signal once the
+      // pipeline diagram's own first node started reflecting that
+      // instead. disabled still toggles (a real functional guard against
+      // double-submit), just with no accompanying visual change.
       const btn = document.getElementById("askSubmitBtn");
       btn.disabled = true;
-      const prevIcon = btn.textContent;
-      btn.textContent = "🤖";
-      btn.classList.add("ask-btn-loading");
-      startAskWorkflow();
+      startAskWorkflow(question);
       // The rail opens immediately with a running skeleton (diagram +
       // live caption, or for Compare mode a plain "Running 5 pipelines…")
       // rather than waiting for the full response. Compare mode now uses
@@ -11366,8 +11403,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         askModalEl.classList.add("open");
       } finally {
         btn.disabled = false;
-        btn.textContent = prevIcon;
-        btn.classList.remove("ask-btn-loading");
         finishAskWorkflow();
         // Every real ask attempt (success, abstain, or a rate-limit error
         // like "TPM: Limit 8000, Used 7333...") updates the provider's
