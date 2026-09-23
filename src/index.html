@@ -45,7 +45,7 @@
          and every view-scoped status color) are untouched on purpose,
          per this block's own comment: those carry meaning and stay
          recognizable regardless of which brand accent is in effect. */
-      --bg: #dfe3e8;
+      --bg: #cfd5dc;
       --surface: #ffffff;
       --text: #1a1c1e;
       --muted: #5f6368;
@@ -172,6 +172,10 @@
     }
     .nav-link:hover { background: var(--chip-bg); }
     .nav-link:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+    /* #filtersToggleBtn (see its own markup comment): a real <button>,
+       not an <a>, since it toggles a panel rather than navigating: reset
+       to plain button chrome so it reads identically to its <a> siblings. */
+    button.nav-link { background: none; border: none; width: 100%; text-align: left; cursor: pointer; font-family: inherit; }
 
     /* Hamburger — the single control that opens the whole menu drawer
        (views + search/filters), at every screen width. */
@@ -342,6 +346,13 @@
       border-radius: var(--radius-full); padding: 6px 14px; cursor: pointer; flex-shrink: 0;
     }
     .top-signin-btn:hover { background: #1558b0; }
+    /* #authStatusDot: see its own markup comment. Green while signed in;
+       a small muted, low-contrast dot while signed out, deliberately not
+       an alarming color (red/orange) since "not signed in" is this app's
+       normal, expected default state, not an error. */
+    .auth-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .auth-dot-on { background: #1e8e3e; }
+    .auth-dot-off { background: var(--border); }
     /* Set/updated by uaUpdateAskIntroSignin() below, from GET
        /api/ask/anon-quota; hidden whenever anonymous questions are off
        (limit 0) or the visitor is signed in. Inherits .ask-intro-panel's
@@ -613,6 +624,43 @@
          needing a scroll to see content that would otherwise fit.
          Small, fixed padding everywhere but the actual Ask home instead. */
       body:not(.view-home) .ask-form-desktop-slot { padding-top: 24px; }
+      /* #stickyAskHeader (see its own markup comment): pinned to the top
+         of the page's own scroll outside the Ask home, which keeps its
+         own different, non-sticky 22vh-padded layout untouched: that
+         view's content sits beside the input in .ask-rail-col, which
+         already has its own separate sticky/scroll handling, not
+         underneath it the way every other view's content does. An
+         opaque background (not transparent, unlike the diagram/input
+         themselves) so a view's own content scrolling up behind this
+         header is actually hidden by it, not visible through it. */
+      body:not(.view-home) #stickyAskHeader {
+        position: sticky; top: 0; z-index: 400;
+        background: var(--bg);
+      }
+    }
+    /* The vertical scrollbar hidden, per explicit request, while
+       scrolling itself (mouse wheel, trackpad, keyboard) stays fully
+       functional; only the visible track/thumb is gone. html's own
+       page-level scrollbar (see page-scroll's own comment in the
+       script) is one target. Each view's own internal scroll container
+       (#usersView, #docsView, etc., the actual "view details on the
+       right side" this request named, each already position:sticky with
+       its own overflow-y:auto, see updateOffsets's own comment above) is
+       the other, and is the one most likely actually visible day to day
+       now that --topbar-h correctly reflects #stickyAskHeader. #sidebar's
+       own, separate internal scrollbar is deliberately left alone: a
+       different, narrower scroll area, not "the view details". */
+    html { scrollbar-width: none; }
+    html::-webkit-scrollbar { display: none; }
+    #evalRewriterView, #evalEvaluatorView, #evalOrchestratorView,
+    #cveView, #dashboardView, #usersView, #feedPanel, #changelogView,
+    #networkView, #docsView, #ackView, #graphView {
+      scrollbar-width: none;
+    }
+    #evalRewriterView::-webkit-scrollbar, #evalEvaluatorView::-webkit-scrollbar, #evalOrchestratorView::-webkit-scrollbar,
+    #cveView::-webkit-scrollbar, #dashboardView::-webkit-scrollbar, #usersView::-webkit-scrollbar, #feedPanel::-webkit-scrollbar, #changelogView::-webkit-scrollbar,
+    #networkView::-webkit-scrollbar, #docsView::-webkit-scrollbar, #ackView::-webkit-scrollbar, #graphView::-webkit-scrollbar {
+      display: none;
     }
     /* Every control on this row shares one height, so the bar reads as
        one aligned strip instead of inputs/buttons/select sitting at
@@ -2230,7 +2278,7 @@
          Gemini-like palette above; --bad/--warn/--ok/--info/--reddit/
          --purple stay as they were, same "meaning over hue" reasoning as
          :root's own comment. */
-      --bg:       #dfe3e8;
+      --bg:       #cfd5dc;
       --panel:    #ffffff;
       --text:     #1a1c1e;
       --muted:    #5f6368;
@@ -2612,15 +2660,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <!-- Filters + Stats used to live inside the same ☰ drawer as the
-           view-switcher nav, permanently taking up sidebar space every
-           time the menu opened. Its own toggle/panel, separate from ☰,
-           per explicit request: "I want them to have their own view
-           which I can toggle." -->
-      <button class="nav-toggle" type="button" id="filtersToggleBtn"
-        aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
-        title="Filters &amp; stats">🎚️</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.116.0"><span class="brand-name">Releasetrain </span><em>v3.116.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.117.0"><span class="brand-name">Releasetrain </span><em>v3.117.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2640,6 +2680,13 @@
              this row's states in sync). Same activateUsers() target as
              the old CTA and the guardrails panel's own "Sign in" link:
              one Account view, not a separate flow. -->
+        <!-- Small status dot, per explicit request: green while signed
+           in, a subtle muted dot while signed out. Not an alarming
+           color, just a quiet "not signed in" state. Updated alongside
+           #topSignInLink/#ua-topbar-user's own visibility toggle in
+           uaUpdateAskIntroSignin/uaRender, not a separate check of its
+           own. -->
+        <span id="authStatusDot" class="auth-dot auth-dot-off" title="Not signed in" aria-hidden="true"></span>
         <button type="button" class="top-signin-btn" id="topSignInLink">Sign in</button>
         <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
       </div>
@@ -2822,6 +2869,21 @@
   <button id="viewCloseBtn" class="view-close-btn" type="button"
     title="Close and return to the Ask home" aria-label="Close and return to the Ask home" hidden>&#10005;</button>
 
+  <!-- #stickyAskHeader (see its own CSS comment): wraps the diagram and
+       the input as one sticky unit, pinned to the top of the page's own
+       scroll on a wide screen outside the Ask home, per explicit request
+       ("allow only internal scroll for view items"). They stay in view
+       once a viewer scrolls a long view's own content, rather than
+       scrolling away with it. One shared sticky wrapper, not position:sticky
+       on each of the two elements separately: both stuck to the same
+       top:0 offset would overlap each other once pinned, since
+       #askWorkflowTop's own height is dynamic (varies with its content)
+       and can't be hardcoded as the second element's own sticky offset.
+       Not wrapped around .layout too: that holds the persistent,
+       position:fixed #sidebar as one of its own children, so giving
+       .layout itself a scroll/overflow of its own would risk clipping
+       that fixed sidebar; this wrapper stops short of it entirely. -->
+  <div id="stickyAskHeader">
   <!-- The one persistent pipeline diagram: top center of the right side,
        above the input, per explicit request. Visible from page load in
        its dim "idle" state (renderAskWorkflowDiagram defaults to an
@@ -2842,6 +2904,7 @@
        original spot in the topbar (always reachable without scrolling,
        a deliberate choice for that width, unchanged). -->
   <div id="askFormDesktopSlot" class="ask-form-desktop-slot" aria-label="Ask"></div>
+  </div>
 
   <div id="navLoader" role="progressbar" aria-label="Loading" aria-hidden="true"></div>
 
@@ -2877,6 +2940,15 @@
         <nav class="nav-links" id="navLinks" aria-label="Views">
           <a id="homeLink" class="nav-link" href="#" title="Return to the Ask home page">🏠 Home</a>
           <a id="feedLink" class="nav-link" href="#" title="Browse the recent updates feed">📋 Recent updates</a>
+          <!-- Filters + Stats used to live as a bare, unlabeled icon
+               button (🎚️) in the topbar, later relocated into the
+               sidebar footer next to the version/sign-in, reported live
+               as an unreadable mystery icon there. A real, clearly
+               labeled Menu item instead, per explicit request, still
+               toggling the same #filtersPanel drawer open/closed. -->
+          <button type="button" id="filtersToggleBtn" class="nav-link"
+            aria-label="Toggle filters and stats" aria-expanded="false" aria-controls="filtersPanel"
+            title="Filters &amp; stats">🎚️ Filters &amp; Stats</button>
           <a id="graphLink" class="nav-link" href="#" title="Show component graph (in-page)">📊 Graph</a>
           <a id="archLink" class="nav-link" href="#" title="Show architecture diagram (in-page)">🏗 Arch</a>
           <a id="cveLink" class="nav-link" href="#" title="Show CVE discussions (in-page)">🔐 CVE</a>
@@ -3092,13 +3164,10 @@
       </div>
 
       <!-- ── Changelog controls (shown only in changelog view) ── -->
+      <!-- Same removal as Account/Credits' own sidebar panels above: a
+           plain descriptive blurb, not a real control. -->
       <div id="changelogControls" style="display:none">
         <div class="sidebar-section">
-          <div class="sidebar-label">Version history</div>
-          <p style="font-size:12px;color:var(--muted);line-height:1.6;margin:0 0 10px">
-            All notable changes are documented here. Follows
-            <a href="https://semver.org" target="_blank" rel="noopener noreferrer" style="color:var(--brand)">semver</a>.
-          </p>
           <a class="btn btn-ghost" href="https://github.com/SE4CPS/releasetrain-client"
             target="_blank" rel="noopener noreferrer" style="font-size:12px;padding:5px 10px;display:inline-flex;align-items:center;gap:5px">
             ⭐ GitHub
@@ -3107,14 +3176,13 @@
       </div>
 
       <!-- ── Ack controls (shown only in credits view) ── -->
+      <!-- The descriptive "About" paragraph is gone per explicit request
+           (matching the same call already made for Account's own sidebar
+           panel): a plain blurb with no real control isn't worth a
+           sidebar panel of its own. The GitHub link is a real, actionable
+           control, so it stays. -->
       <div id="ackControls" style="display:none">
         <div class="sidebar-section">
-          <div class="sidebar-label">About</div>
-          <p style="font-size:12px;color:var(--muted);line-height:1.6;margin:0 0 10px">
-            releasetrain.io tracks software releases, CVEs, and community signals.
-            We gratefully acknowledge the open data and open-source teams whose APIs,
-            feeds, and tools made this possible.
-          </p>
           <a class="btn btn-ghost" href="https://github.com/SE4CPS/releasetrain-client"
             target="_blank" rel="noopener noreferrer" style="font-size:12px;padding:5px 10px;display:inline-flex;align-items:center;gap:5px">
             ⭐ GitHub
@@ -4522,6 +4590,23 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-22</div>
+              <div class="cl-ver cl-ver-minor">v3.117.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Fixed a stale URL bug; internal scroll per view; a signed-in indicator</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Clicking Home (or the close button, or asking a new question) left a stale <code>?q=...</code> from an earlier shared-search link sitting in the address bar indefinitely. <code>setViewParam</code> now clears it every time, and Home/the close button call it unconditionally instead of only when the view was "feed".</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Restored each view's own internal scroll (Account, Docs, etc. already had a <code>position: sticky</code> panel sized against <code>--topbar-h</code>, but that variable read 0 once the topbar was hidden entirely outside the Ask home, so a view's content started right at the very top instead of below the sticky diagram+input). <code>--topbar-h</code> now also tracks that header's own real height, and the visible scrollbar on both the page and every view is hidden (scrolling itself is unaffected) per explicit request.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> A small dot next to the sidebar's sign-in button: green while signed in, a subtle muted dot while signed out.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The Filters &amp; Stats toggle is a real, clearly labeled Menu item now instead of a bare icon button that used to relocate into the sidebar footer, reported live as an unreadable mystery icon there.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Removed the same kind of plain descriptive sidebar blurb (no real control, just a paragraph) from the Credits and Changelog views that Account's own sidebar panel already lost; the real links/controls on each stay.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The page background is a step darker, and the pipeline diagram's own transparent background now sits closer to it.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-22</div>
@@ -10298,36 +10383,36 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // point; renderAskWorkflowDiagram defaults to all-idle when it is),
     // rather than leaving it blank until the first question actually runs.
     renderAskWorkflowDiagram();
-    // Moves .brand, #filtersToggleBtn and .topbar-right (version number,
-    // filters toggle, sign-in/account chip) between .topbar-main and
-    // #sidebarFooter at the bottom of the persistent sidebar, same
-    // breakpoint as every other relocation here. Per explicit request:
-    // once this and relocateAskForm have both run, .topbar's own rule
-    // (above) hides it entirely, since nothing of its content is left
-    // in it, leaving the right side as just the question input.
-    // #navToggle never relocates (just hidden via CSS at this width, see
-    // .topbar's own rule) and is used as the anchor for restoring the
-    // other three to their exact original relative order on a narrow
-    // screen: inserting each relative to the previous one this way stays
-    // correct regardless of what relocateAskForm's own listener (same
-    // askRailMql, registered separately) has or hasn't done to #askForm
-    // yet, since insertBefore only repositions the node given to it, not
-    // whatever else happens to be sitting in .topbar-main at the time.
+    // Moves .brand and .topbar-right (version number, sign-in/account
+    // chip) between .topbar-main and #sidebarFooter at the bottom of the
+    // persistent sidebar, same breakpoint as every other relocation here.
+    // Per explicit request: once this and relocateAskForm have both run,
+    // .topbar's own rule (above) hides it entirely, since nothing of its
+    // content is left in it, leaving the right side as just the question
+    // input. #filtersToggleBtn no longer relocates at all: it's now a
+    // permanent, clearly labeled Menu item (see its own markup comment),
+    // not a bare icon that used to move between the topbar and this
+    // footer. #navToggle never relocates either (just hidden via CSS at
+    // this width, see .topbar's own rule) and is used as the anchor for
+    // restoring the other two to their exact original relative order on
+    // a narrow screen: inserting each relative to the previous one this
+    // way stays correct regardless of what relocateAskForm's own listener
+    // (same askRailMql, registered separately) has or hasn't done to
+    // #askForm yet, since insertBefore only repositions the node given to
+    // it, not whatever else happens to be sitting in .topbar-main at the
+    // time.
     function relocateSidebarFooter() {
       const brand = document.querySelector(".brand");
-      const filtersBtn = document.getElementById("filtersToggleBtn");
       const topbarRight = document.querySelector(".topbar-right");
       const navToggle = document.getElementById("navToggle");
       const footer = document.getElementById("sidebarFooter");
-      if (!brand || !filtersBtn || !topbarRight || !navToggle || !footer) return;
+      if (!brand || !topbarRight || !navToggle || !footer) return;
       if (askRailMql.matches) {
         if (brand.parentElement !== footer) footer.appendChild(brand);
-        if (filtersBtn.parentElement !== footer) footer.appendChild(filtersBtn);
         if (topbarRight.parentElement !== footer) footer.appendChild(topbarRight);
       } else {
         const topbarMain = navToggle.parentElement;
-        if (filtersBtn.previousElementSibling !== navToggle) topbarMain.insertBefore(filtersBtn, navToggle.nextSibling);
-        if (brand.previousElementSibling !== filtersBtn) topbarMain.insertBefore(brand, filtersBtn.nextSibling);
+        if (brand.previousElementSibling !== navToggle) topbarMain.insertBefore(brand, navToggle.nextSibling);
         if (topbarRight.previousElementSibling !== brand) topbarMain.insertBefore(topbarRight, brand.nextSibling);
       }
     }
@@ -10551,7 +10636,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // handler and #viewCloseBtn (see their own comments) both use to
       // return to the Ask home.
       deactivateActiveView();
-      if (new URL(location.href).searchParams.get("view") === "feed") setViewParam("");
+      // Unconditional: same reasoning as EL.homeLink's own handler (a
+      // stale ?q= from an earlier shared link needs clearing too, not
+      // just ?view=), and a genuinely new question makes any old ?q=
+      // doubly stale regardless.
+      setViewParam("");
       const preset = document.getElementById("askPreset").value;
       const provider = document.getElementById("askProvider").value;
       const size = document.getElementById("askSize").value;
@@ -10830,13 +10919,29 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       return "./img/default.png";
     };
 
+    // Every view's own sticky/height math (see e.g. #usersView's own
+    // `top: calc(var(--topbar-h) + 16px)`) assumes --topbar-h is the
+    // real height of whatever's actually pinned above it. .topbar itself
+    // is display:none at a wide width outside the Ask home (see its own
+    // CSS rule), so its offsetHeight there is 0. #stickyAskHeader
+    // (the diagram+input) is what's actually sticky and visible in that
+    // exact case, per explicit request ("allow only internal scroll for
+    // view items"). Reading .topbar unconditionally left every one of
+    // these views computing `top: 16px`, well short of the sticky
+    // header's own real height, so a view's content started underneath/
+    // behind it instead of right below it. Read whichever one is
+    // actually visible (offsetHeight is 0 for a display:none element
+    // either way, so no explicit visibility check is needed).
     function updateOffsets() {
       const tb = $(".topbar");
-      document.documentElement.style.setProperty("--topbar-h", (tb ? tb.offsetHeight : 0) + "px");
+      const stickyHeader = document.getElementById("stickyAskHeader");
+      const h = Math.max(tb ? tb.offsetHeight : 0, stickyHeader ? stickyHeader.offsetHeight : 0);
+      document.documentElement.style.setProperty("--topbar-h", h + "px");
     }
     window.addEventListener("load", updateOffsets);
     window.addEventListener("resize", updateOffsets);
     new ResizeObserver(updateOffsets).observe($(".topbar"));
+    if (document.getElementById("stickyAskHeader")) new ResizeObserver(updateOffsets).observe(document.getElementById("stickyAskHeader"));
 
     const normalizeQuery = q => String(q || "").split(",").map(t => t.trim()).filter(Boolean).join(",");
     const encodeCsvKeepCommas = csv => {
@@ -10858,6 +10963,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const url = new URL(location.href);
       if (view) url.searchParams.set("view", view);
       else url.searchParams.delete("view");
+      // Every call site here means "navigate to this named view" (or
+      // home); a `?q=...` from an earlier shared-search link has nothing
+      // to do with any of them and shouldn't linger in the address bar
+      // once the viewer has navigated away from it. Reported live:
+      // clicking Home left `?q=whatsapp` in the URL indefinitely, since
+      // this function used to only ever touch its own `view` param.
+      url.searchParams.delete("q");
       // URLSearchParams encodes commas as %2C; restore them for readability
       history.replaceState({}, "", url.toString().replace(/%2C/gi, ","));
       syncHomeClass();
@@ -11268,16 +11380,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     });
 
     document.querySelector(".brand").addEventListener("click", e => {
-      if (G_ACTIVE)   { e.preventDefault(); deactivateGraph(); }
-      else if (A_ACTIVE)  { e.preventDefault(); deactivateArch(); }
-      else if (CV_ACTIVE) { e.preventDefault(); deactivateCve(); }
-      else if (DB_ACTIVE) { e.preventDefault(); deactivateDashboard(); }
-      else if (D_ACTIVE)  { e.preventDefault(); deactivateDocs(); }
-      else if (ACK_ACTIVE){ e.preventDefault(); deactivateAck(); }
-      else if (CL_ACTIVE) { e.preventDefault(); deactivateChangelog(); }
-      else if (UA_ACTIVE) { e.preventDefault(); deactivateUsers(); }
-      else if (NET_ACTIVE){ e.preventDefault(); deactivateNetwork(); }
-      else if (new URL(location.href).searchParams.get("view") === "feed") { e.preventDefault(); setViewParam(""); }
+      e.preventDefault();
+      deactivateActiveView();
+      // Same unconditional clear as EL.homeLink's own handler just below
+      // (a stray `?q=...` needs clearing too, not just `?view=`).
+      setViewParam("");
     });
 
     // Shared by the Home link, the Recent updates link, the ask submit
@@ -11303,7 +11410,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     EL.homeLink.addEventListener("click", e => {
       e.preventDefault();
       deactivateActiveView();
-      if (new URL(location.href).searchParams.get("view") === "feed") setViewParam("");
+      // Unconditional, not just "if view === feed": a stray `?q=...` from
+      // an earlier shared-search link (with no ?view= at all) needs
+      // clearing too, and deactivateActiveView() above is a no-op when
+      // nothing else was active in the first place. Reported live:
+      // clicking Home left `?q=whatsapp` sitting in the address bar with
+      // no way to clear it. setViewParam("") is itself a no-op on the
+      // URL when there's nothing to clear, so this is always safe to call.
+      setViewParam("");
     });
 
     // "Recent updates": the plain feed, as its own view (the Ask home no longer shows it).
@@ -11318,7 +11432,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // Menu first.
     document.getElementById("viewCloseBtn").addEventListener("click", () => {
       deactivateActiveView();
-      if (new URL(location.href).searchParams.get("view") === "feed") setViewParam("");
+      // Unconditional: same reasoning as EL.homeLink's own handler.
+      setViewParam("");
     });
 
     function gReRender() {
@@ -15556,6 +15671,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       } else {
         chip.style.display = "none";
       }
+      // See #authStatusDot's own markup comment: kept in sync here too,
+      // since this function (not just uaUpdateAskIntroSignin) is one of
+      // the two places this chip's own visibility is decided.
+      const dot = document.getElementById("authStatusDot");
+      if (dot) {
+        dot.classList.toggle("auth-dot-on", !!user);
+        dot.classList.toggle("auth-dot-off", !user);
+        dot.title = user ? "Signed in" : "Not signed in";
+      }
     }
 
     function uaUpdateSidebar() {
@@ -15595,6 +15719,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // reason described above.
       const btn = document.getElementById("topSignInLink");
       if (btn) btn.style.display = (token && user) ? "none" : "";
+      const dot = document.getElementById("authStatusDot");
+      if (dot) {
+        const signedIn = !!(token && user);
+        dot.classList.toggle("auth-dot-on", signedIn);
+        dot.classList.toggle("auth-dot-off", !signedIn);
+        dot.title = signedIn ? "Signed in" : "Not signed in";
+      }
       if (!token || !user) uaLoadAnonQuota();
       // Guardrails is hidden entirely while signed out now, per explicit
       // request: everything it showed for a signed-out visitor was
