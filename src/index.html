@@ -589,6 +589,23 @@
     .sb-details[open] > summary::before { transform: rotate(90deg); }
     .sb-details > summary:hover { color: var(--text); background: rgba(255,255,255,.04); }
 
+    /* .demo-q-btn: sized to the sidebar's own column (min(300px, 86vw),
+       see .sidebar), never a fixed width of its own -- width:100% plus
+       box-sizing:border-box so its padding/border stay inside whatever
+       that column actually is, including the 86vw fallback on a
+       narrower screen. white-space:normal (not nowrap) since several
+       of these questions run longer than the column is wide; they wrap
+       to 2-3 lines rather than overflowing or getting cut off. */
+    .demo-q-list { display: flex; flex-direction: column; gap: 6px; padding: 4px 12px 10px; }
+    .demo-q-btn {
+      width: 100%; box-sizing: border-box; text-align: left; white-space: normal;
+      font: 400 12px/1.35 inherit; color: var(--text);
+      background: var(--chip-bg); border: 1px solid var(--border); border-radius: 6px;
+      padding: 7px 9px; cursor: pointer;
+    }
+    .demo-q-btn:hover { background: rgba(255,255,255,.06); border-color: var(--brand); }
+    .demo-q-btn:active { transform: translateY(1px); }
+
     .sidebar-label {
       font: 700 9px/1 inherit; color: var(--muted);
       text-transform: uppercase; letter-spacing: .6px; margin-bottom: 7px;
@@ -2767,7 +2784,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.129.0"><span class="brand-name">Releasetrain </span><em>v3.129.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.130.0"><span class="brand-name">Releasetrain </span><em>v3.130.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3052,6 +3069,34 @@
 
     <!-- ── Menu drawer: views + search/filters, opened via the ☰ button ── -->
     <aside class="sidebar" id="sidebar" aria-label="Menu">
+
+      <!-- Prototype Demo: quick-load buttons for the RISE seminar talk
+           (per explicit request, "to simplify the Presentation
+           tomorrow"), one per paper's own motivating question, so the
+           presenter can click instead of retyping a question live.
+           Loads the text into #askQuestion (and re-runs the same
+           preview update typing would trigger) but does NOT submit --
+           "load", not "run", so the presenter keeps control of timing.
+           Placed first, above Menu: relocateAskOptionsPanel (below)
+           always re-inserts #askOptionsPanel as navLinksDetails' own
+           next sibling, so anything placed after Menu in the markup
+           gets pushed below Model & pipeline/Advanced checks/Guardrails
+           at runtime regardless of source order -- putting this block
+           before navLinksDetails instead is the only placement that
+           reliably stays at the top. Open by default (unlike every
+           other .sb-details group here): this is the one thing that
+           actually needs to be visible without an extra click. -->
+      <details class="sb-details" id="demoQuestionsDetails" open>
+        <summary>Prototype Demo</summary>
+        <div class="demo-q-list" role="list" aria-label="Example questions from the talk">
+          <button type="button" class="demo-q-btn" data-q="Which is more stable right now, Zoom or Teams?">Which is more stable right now, Zoom or Teams?</button>
+          <button type="button" class="demo-q-btn" data-q="Which is cheaper to maintain across Chrome, Safari, or Firefox: Zoom or Teams?">Which is cheaper to maintain across Chrome, Safari, or Firefox: Zoom or Teams?</button>
+          <button type="button" class="demo-q-btn" data-q="Which had more security fixes recently, Zoom or Teams?">Which had more security fixes recently, Zoom or Teams?</button>
+          <button type="button" class="demo-q-btn" data-q="Any user-reported problems with the latest Teams or Zoom update?">Any user-reported problems with the latest Teams or Zoom update?</button>
+          <button type="button" class="demo-q-btn" data-q="What would updating Teams disrupt on my system?">What would updating Teams disrupt on my system?</button>
+          <button type="button" class="demo-q-btn" data-q="Do you recommend browser-based Zoom or Teams for my important meeting?">Do you recommend browser-based Zoom or Teams for my important meeting?</button>
+        </div>
+      </details>
 
       <!-- Collapsed by default, same as every other .sb-details group in
            this sidebar (per explicit request to collapse everything on
@@ -4715,6 +4760,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-23</div>
+              <div class="cl-ver cl-ver-minor">v3.130.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Prototype Demo: quick-load buttons for the RISE seminar talk</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> A new "Prototype Demo" section at the top of the sidebar holds six one-click buttons, one per paper's motivating question, so a live talk can load a question into the Ask input without retyping it. Loading never auto-submits, so the presenter still controls when it runs.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-23</div>
@@ -10947,6 +11004,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     }
     relocateSidebarFooter();
     askRailMql.addEventListener("change", relocateSidebarFooter);
+    // Prototype Demo quick-load buttons (see their own markup comment):
+    // fills #askQuestion and re-runs the same preview logic typing
+    // would trigger, but never submits -- the presenter clicks Ask
+    // (or presses Enter) themselves, on their own timing.
+    const demoQList = document.querySelector(".demo-q-list");
+    if (demoQList) demoQList.addEventListener("click", (e) => {
+      const btn = e.target.closest(".demo-q-btn");
+      if (!btn) return;
+      const q = btn.dataset.q || "";
+      const input = document.getElementById("askQuestion");
+      if (!input) return;
+      input.value = q;
+      updateAskPreview();
+      input.focus();
+    });
     let askRailData = null; // { label, res, question } backing "Show full answer": re-renders untrimmed from the same data, no second request
     function wireAskRailBody(body) {
       askWireRateButtons(body);
