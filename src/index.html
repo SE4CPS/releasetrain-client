@@ -2784,7 +2784,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.130.0"><span class="brand-name">Releasetrain </span><em>v3.130.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.131.0"><span class="brand-name">Releasetrain </span><em>v3.131.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4760,6 +4760,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-23</div>
+              <div class="cl-ver cl-ver-minor">v3.131.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Pipeline diagram: verb labels (Ask, Rewrite, Search, Verify, Retrieve, Evaluate, Orchestrate)</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Every node name in the pipeline diagram is a verb now instead of a noun ("User Question" &rarr; "Ask", "Rewriter" &rarr; "Rewrite", "Web Search" &rarr; "Search", "Retriever" &rarr; "Retrieve", "Evaluator" &rarr; "Evaluate", "Orchestrator" &rarr; "Orchestrate"), per explicit request, so the whole row reads shorter without losing what each step does.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-23</div>
@@ -9356,20 +9368,23 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // Always the full 7-node pipeline (see the comment block above) --
     // no separate plain/escalated variant any more.
     const ASK_WORKFLOW_NODES = [
-      // Labeled "User Question", not "Vendor" (the internal state key,
-      // still "vendor", is unchanged -- it still lights up on the real
+      // Labeled "Ask", not "Vendor" (the internal state key, still
+      // "vendor", is unchanged -- it still lights up on the real
       // resolving_vendor phase event same as before): per explicit
       // request, this first node is what a viewer sees light up the
       // instant they submit (see startAskWorkflow's own comment), so it
       // reads better as "the question just came in" than a term
       // ("Vendor") a general audience has no reason to already know.
-      { key: "vendor", name: "User Question" },
-      { key: "rewriter", name: "Rewriter" },
-      { key: "websearch", name: "Web Search" },
+      // Every node name is a verb (Ask/Rewrite/Search/Verify/Retrieve/
+      // Evaluate/Orchestrate), not a noun, per explicit follow-up
+      // request -- shorter labels, same reasoning.
+      { key: "vendor", name: "Ask" },
+      { key: "rewriter", name: "Rewrite" },
+      { key: "websearch", name: "Search" },
       { key: "verify", name: "Verify" },
-      { key: "retriever", name: "Retriever" },
-      { key: "evaluator", name: "Evaluator" },
-      { key: "orchestrator", name: "Orchestrator" },
+      { key: "retriever", name: "Retrieve" },
+      { key: "evaluator", name: "Evaluate" },
+      { key: "orchestrator", name: "Orchestrate" },
     ];
     // A node that completed in well under a second still deserves a
     // real, honest reading rather than "0.0s". One decimal place is
@@ -9405,7 +9420,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const secs = askWorkflowNodeSeconds(n.key);
         const label = secs ? `${n.name} (${secs})` : n.name;
         const robot = `<span class="askwf-robot${st === "active" ? " askwf-robot-active" : ""}">&#129302;</span>`;
-        // Only the first node ("User Question") gets the real question
+        // Only the first node ("Ask") gets the real question
         // text as a hover title -- every other node's title stays empty
         // (the default, no attribute), since only this one stands in for
         // the question itself rather than a real pipeline role.
@@ -9437,7 +9452,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // up in real time, and even a very short-lived state still gets at
     // least one real frame on screen instead of being silently skipped
     // by the next phase's own state change overwriting it first.
-    // question: shown as the "User Question" node's own hover title (see
+    // question: shown as the "Ask" node's own hover title (see
     // renderAskWorkflowDiagram). That first node also starts "active"
     // immediately, with its own timer already running, rather than
     // "idle" until the real resolving_vendor phase event streams back --
