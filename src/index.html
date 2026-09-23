@@ -2784,7 +2784,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.131.1"><span class="brand-name">Releasetrain </span><em>v3.131.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.131.2"><span class="brand-name">Releasetrain </span><em>v3.131.2</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4761,6 +4761,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-23</div>
+              <div class="cl-ver cl-ver-patch">v3.131.2</div>
+            </div>
+            <div class="cl-content">
+              <h3>Fix: a shared Arch view link lost its own component list</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <code>setViewParam</code> unconditionally deleted the <code>q</code> URL param on every view change, including entering the Arch view -- but Arch is the one view that genuinely reads <code>q</code> as the component list to render (<code>?view=arch&amp;q=safari,chrome,firefox</code>). The diagram still rendered correctly on that first load (the value was already read into the input before the URL got rewritten), but the address bar silently dropped to a bare <code>?view=arch</code>, so reloading, bookmarking, or sharing that exact link lost the component list. Reported live against a real broken link. <code>q</code> is now preserved specifically for <code>view === "arch"</code>; every other view (Home, Docs, CVE, Graph, etc.) still clears it exactly as before.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-23</div>
@@ -11640,13 +11652,24 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const url = new URL(location.href);
       if (view) url.searchParams.set("view", view);
       else url.searchParams.delete("view");
-      // Every call site here means "navigate to this named view" (or
-      // home); a `?q=...` from an earlier shared-search link has nothing
-      // to do with any of them and shouldn't linger in the address bar
-      // once the viewer has navigated away from it. Reported live:
-      // clicking Home left `?q=whatsapp` in the URL indefinitely, since
-      // this function used to only ever touch its own `view` param.
-      url.searchParams.delete("q");
+      // Every other call site here means "navigate to this named view"
+      // (or home); a `?q=...` from an earlier shared-search link has
+      // nothing to do with any of them and shouldn't linger in the
+      // address bar once the viewer has navigated away from it.
+      // Reported live: clicking Home left `?q=whatsapp` in the URL
+      // indefinitely, since this function used to only ever touch its
+      // own `view` param.
+      // "arch" is the one exception: activateArch() (its only caller
+      // with a real view name) reads `q` as the actual component list
+      // to render (see boot()'s own `EL.components.value = rawQ`), so
+      // deleting it here silently broke `?view=arch&q=...` -- the page
+      // rendered the right diagram on that first load (the value was
+      // already in the input field before this ran), but the URL lost
+      // `q` immediately, so reloading, bookmarking, or sharing that
+      // exact link lost the component list. Reported live as "this is
+      // not working" against a real `?view=arch&q=safari,chrome,...`
+      // link that silently degraded to a bare `?view=arch`.
+      if (view !== "arch") url.searchParams.delete("q");
       // URLSearchParams encodes commas as %2C; restore them for readability
       history.replaceState({}, "", url.toString().replace(/%2C/gi, ","));
       syncHomeClass();
