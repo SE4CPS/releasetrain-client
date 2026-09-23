@@ -572,7 +572,12 @@
          redeclare, stacking the chevron and label into two centered
          lines instead of one row. */
       list-style: none; display: flex; flex-direction: row; align-items: center; gap: 5px;
-      padding: 8px 12px; cursor: pointer; user-select: none;
+      /* Vertical padding trimmed (was 8px top/bottom) per explicit
+         request: with 4 of these stacked in the sidebar (Menu, Model &
+         pipeline, Advanced checks, Guardrails) and Guardrails alone now
+         listing 15 checks, the collapsed headers' own padding was
+         eating into the room needed to see that list without scrolling. */
+      padding: 4px 12px; cursor: pointer; user-select: none;
       font: 700 9px/1 var(--mono); color: var(--muted);
       text-transform: uppercase; letter-spacing: .5px;
     }
@@ -919,8 +924,11 @@
        via its own inline style, so it needs no separate rule here. */
     @media (min-width: 900px) {
       #sidebar .ask-options-panel {
-        display: flex; flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 8px;
-        padding: 8px; margin-bottom: 0;
+        /* gap/padding trimmed (was 8px/8px), same "fit Guardrails' own
+           now-15-entry list without scrolling" request as
+           .sb-details > summary's own padding cut just above. */
+        display: flex; flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 3px;
+        padding: 4px; margin-bottom: 0;
       }
       /* The three top-level groups (Model & pipeline / Advanced checks /
          Guardrails, each a .sb-details) carry their own flex:1 0 100%
@@ -933,20 +941,29 @@
          only now overridden above) made them wrap into side-by-side
          "columns" instead of a plain vertical stack. Reset to auto
          height here so each item is only as tall as its own content. */
-      #sidebar .ask-options-panel > .sb-details { flex: 0 0 auto; }
+      /* margin-top: 0, not the base rule's 2px: the flex gap: 3px set
+         just above already spaces these; the base rule's margin would
+         just add on top of that gap redundantly. */
+      #sidebar .ask-options-panel > .sb-details { flex: 0 0 auto; margin-top: 0; }
       #sidebar .ask-toggle-group { flex-direction: column; align-items: flex-start; gap: 6px; }
       #sidebar .ask-preset-select { width: 100%; }
     }
     .ask-intent-badge {
       flex-shrink: 0; align-self: center;
-      font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: var(--radius-full);
+      /* border-radius: var(--radius), not the old var(--radius-full) pill
+         shape, per explicit request ("make the chips a bit more square
+         cornered") -- same small radius most other chrome in this app
+         already uses, now that there are two of these shown side by
+         side (domain + fact/opinion) rather than just one. */
+      font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: var(--radius);
       background: var(--brand-light); color: var(--brand); white-space: nowrap;
     }
     /* Left-aligned row under the input for #askIntentBadge (see its own
        markup comment). display:flex so an empty/hidden badge collapses
        this row to nothing, same reasoning already established for
-       .ask-options-row just below it. */
-    .ask-intent-badge-row { display: flex; margin-top: 4px; }
+       .ask-options-row just below it. gap: 6px added now that a second,
+       independent chip (#askQuestionTypeBadge) can show alongside it. */
+    .ask-intent-badge-row { display: flex; gap: 6px; margin-top: 4px; }
     /* Was a fixed full-width strip below the header (any real overlay
        needs the page's own top padding bumped to make room for it, see
        .layout's own history); moved per explicit request to sit inline
@@ -2749,7 +2766,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.126.0"><span class="brand-name">Releasetrain </span><em>v3.126.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.127.0"><span class="brand-name">Releasetrain </span><em>v3.127.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2842,6 +2859,14 @@
              input regardless of screen width. -->
         <div class="ask-intent-badge-row">
           <span id="askIntentBadge" class="ask-intent-badge" hidden></span>
+          <!-- Second, independent chip (see classifyQuestionTypeClient's
+               own comment): fact vs. opinion, not folded into the domain
+               badge above, per explicit request ("independent of the
+               domain language"). Always shown once there's a question
+               typed (never hidden the way the domain badge can be),
+               since "fact" is itself a real, useful answer, not a
+               placeholder for "nothing to show." -->
+          <span id="askQuestionTypeBadge" class="ask-intent-badge" hidden></span>
         </div>
         <div class="ask-options-row">
           <!-- Agentic-AI-specific controls (model/size/pipeline, the
@@ -4689,6 +4714,31 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-23</div>
+              <div class="cl-ver cl-ver-minor">v3.127.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>A second, independent Fact/Opinion chip under the input</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> A new chip shows "Fact question" or "Opinion question" right next to the existing domain chip (Version question, CVE question, etc.), classified independently of it, per explicit request ("independent of the domain language"). A question can now show both at once ("Version question" + "Opinion question" for "should I upgrade to the latest version?"), which the single combined classifier could never surface together. Always shown once something is typed, since "fact" is itself a real answer, not a placeholder for "nothing to show" the way the domain chip's own hidden state is.</li>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Both chips are now a bit more square-cornered (<code>border-radius: var(--radius)</code>, was the fully-rounded <code>var(--radius-full)</code>), per explicit request, now that two of them show side by side.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-23</div>
+              <div class="cl-ver cl-ver-patch">v3.126.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Tightened vertical gaps in the sidebar's collapsible sections</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Per explicit request, the vertical padding on every <code>.sb-details</code> summary row (Menu, Model &amp; pipeline, Advanced checks, Guardrails) and the gap/padding around them was cut roughly in half, so all 4 collapsed headers, and the Guardrails list itself now that it has 15 entries, fit with noticeably less scrolling.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-23</div>
@@ -8599,6 +8649,25 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       }
       return null; // "general" isn't worth badging - nothing distinctive to show
     }
+    // Second, independent badge (see #askQuestionTypeBadge's own markup
+    // comment): fact vs. opinion, orthogonal to the domain badge above
+    // (CVE/patch/version/comparison/general) rather than folded into the
+    // same 5-way classification, per explicit request ("independent of
+    // the domain language") -- a question can be both a Version question
+    // AND an Opinion question at once ("should I upgrade to the latest
+    // version?"), which the single combined classifier above could never
+    // show simultaneously. Reuses the exact same opinion keyword list
+    // ASK_INTENT_KEYWORDS.opinion already has, rather than a second,
+    // separately-tuned list, so the two badges never disagree about what
+    // counts as an opinion cue. Unlike the domain badge (hidden when
+    // nothing distinctive matches), this one always shows one of the two:
+    // "fact" is the honest default for a question with no opinion cue,
+    // not an absence of information the way "general" is for the domain.
+    function classifyQuestionTypeClient(question) {
+      const text = String(question || "").toLowerCase();
+      return ASK_INTENT_KEYWORDS.opinion.some(kw => text.indexOf(kw) !== -1) ? "opinion" : "fact";
+    }
+    const ASK_QUESTION_TYPE_BADGE_LABELS = { fact: "Fact question", opinion: "Opinion question" };
     // Client-side mirror of releasetrain-server's src/ask.js
     // GENERIC_QUERY_STOPLIST/buildTermRegex: a deterministic preview of
     // which words will actually drive the search match, computed and
@@ -8737,6 +8806,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // Not a second, separate sign-in flow.
     document.getElementById("topSignInLink")?.addEventListener("click", () => activateUsers());
     const askIntentBadgeEl = document.getElementById("askIntentBadge");
+    const askQuestionTypeBadgeEl = document.getElementById("askQuestionTypeBadge");
     const askVendorCheckEl = document.getElementById("askVendorCheck");
     const askTemporalFilterEl = document.getElementById("askTemporalFilter");
     const askIntentFilterEl = document.getElementById("askIntentFilter");
@@ -8814,9 +8884,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           </label>`).join("");
       bodyEl.innerHTML = `
         ${signedIn ? "" : `<p class="ua-muted" style="font-size:11px;margin:0 0 6px"><a href="#" id="askGuardrailsSignInLink" target="_self">Sign in</a> to change these.</p>`}
-        <div style="display:flex;flex-direction:column;gap:6px">${optionalHtml}</div>
-        <p class="ua-muted" style="font-size:10px;margin:10px 0 4px;text-transform:uppercase;letter-spacing:.4px">Always on</p>
-        <div style="display:flex;flex-direction:column;gap:6px">${mandatoryHtml}</div>
+        <div style="display:flex;flex-direction:column;gap:3px">${optionalHtml}</div>
+        <p class="ua-muted" style="font-size:10px;margin:6px 0 3px;text-transform:uppercase;letter-spacing:.4px">Always on</p>
+        <div style="display:flex;flex-direction:column;gap:3px">${mandatoryHtml}</div>
       `;
       const signInLink = document.getElementById("askGuardrailsSignInLink");
       if (signInLink) signInLink.addEventListener("click", e => { e.preventDefault(); activateUsers(); });
@@ -9344,6 +9414,16 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         askIntentBadgeEl.hidden = false;
       } else {
         askIntentBadgeEl.hidden = true;
+      }
+      // Independent of the domain badge above: hidden only when there's
+      // no question at all to classify (an empty box has no "fact" vs
+      // "opinion" answer either), shown otherwise regardless of whether
+      // the domain badge itself is showing.
+      if (question.trim()) {
+        askQuestionTypeBadgeEl.textContent = ASK_QUESTION_TYPE_BADGE_LABELS[classifyQuestionTypeClient(question)];
+        askQuestionTypeBadgeEl.hidden = false;
+      } else {
+        askQuestionTypeBadgeEl.hidden = true;
       }
     }
     askQuestionEl.addEventListener("input", updateAskPreview);
