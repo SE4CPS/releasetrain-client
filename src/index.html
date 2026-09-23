@@ -2749,7 +2749,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.125.1"><span class="brand-name">Releasetrain </span><em>v3.125.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.126.0"><span class="brand-name">Releasetrain </span><em>v3.126.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4689,6 +4689,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-23</div>
+              <div class="cl-ver cl-ver-minor">v3.126.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Sidebar Guardrails panel now lists every mandatory check too</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The Guardrails panel in the sidebar used to list only the one check a visitor can actually change ("Retry new terms"). It now also shows every mandatory, always-on guardrail underneath (Injection scan, Leak scan, Version check, Dual-source check, Domain check, Web override, Web fallback, Window check, Live Reddit search, Metric weighting, Risk report links, Retriever retry, Evaluator retry, Hedge retry), each checked and disabled, with the full description still a hover away, so the depth of this system's own protections is visible at a glance instead of only surfacing per-answer in the Guardrails tab.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> New guardrail: <strong>vendorDomainVerification</strong>. When a web search verifies a vendor not in this system's own catalog, the claimed "official" URL's own domain is now checked against the vendor name (e.g. does "zoom.us" actually contain "zoom") and flagged as a caveat on a mismatch, rather than trusting the model's own claim with no check at all. A mismatch is disclosed, never a rejection, since a real product can legitimately be documented off-domain (GitHub, Wikipedia, a docs site).</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-23</div>
@@ -8759,11 +8772,36 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // every question so they always win; listing them here too only duplicated them.
       const ASK_DUPLICATED_TOGGLES = ["vendorCheck", "temporalFilter", "intentFilter"];
       const optional = guardrails.filter(g => g.tier !== "mandatory" && !ASK_DUPLICATED_TOGGLES.includes(g.id));
+      // Per explicit request ("are there more guardrails that can be
+      // added to the left, you can keep them unchangeable"): the
+      // mandatory ones are listed here too now, alongside the checks a
+      // visitor can actually change -- always shown checked and disabled
+      // (same as a non-configurable optional one already renders, see
+      // below), so they read as "on, not changeable" using an existing
+      // visual pattern rather than a new one. Still can't be toggled;
+      // the full description is still only a hover away.
+      const mandatory = guardrails.filter(g => g.tier === "mandatory");
       const signedIn = !!uaToken();
-      // Only the checks this visitor can control are listed here, each as a short label
-      // (hover for the full description). The mandatory, admin-set ones can't be changed,
-      // so they live in each answer's Guardrails tab instead.
-      const ASK_GUARDRAIL_SHORT = { rewriterRetry: "Retry new terms" };
+      // Every short label here is deliberately <= ~18 characters so it
+      // never wraps or overflows the sidebar's own narrow column, per
+      // explicit request. Hover for the full description either way.
+      const ASK_GUARDRAIL_SHORT = {
+        rewriterRetry: "Retry new terms",
+        toolResultInjectionScan: "Injection scan",
+        outputLeakScan: "Leak scan",
+        versionCorrectionRewrite: "Version check",
+        dualSourceVersionCheck: "Dual-source check",
+        vendorDomainVerification: "Domain check",
+        evaluatorWebOverride: "Web override",
+        deterministicWebFallback: "Web fallback",
+        comparisonWindowCorrection: "Window check",
+        liveRedditSearchFallback: "Live Reddit search",
+        comparisonMetricWeighting: "Metric weighting",
+        comparisonRiskyPostWarning: "Risk report links",
+        retrieverRetry: "Retriever retry",
+        evaluatorSelfCheck: "Evaluator retry",
+        orchestratorRevise: "Hedge retry",
+      };
       const shortLabel = g => ASK_GUARDRAIL_SHORT[g.id] || String(g.label || g.id).split(/\s+/).slice(0, 3).join(" ");
       const optionalHtml = optional.length
         ? optional.map(g => `<label class="ask-toggle-inline" title="${uaEsc(g.description || g.label || g.id)}">
@@ -8771,9 +8809,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <span id="ask-guardrail-msg-${uaEsc(g.id)}" class="ua-muted" style="font-size:10px;display:none">Saved</span>
           </label>`).join("")
         : `<p class="ua-muted" style="font-size:11px;margin:0">None you can change.</p>`;
+      const mandatoryHtml = mandatory.map(g => `<label class="ask-toggle-inline" style="opacity:.7" title="${uaEsc(g.description || g.label || g.id)}">
+            <input type="checkbox" checked disabled> ${uaEsc(shortLabel(g))}
+          </label>`).join("");
       bodyEl.innerHTML = `
         ${signedIn ? "" : `<p class="ua-muted" style="font-size:11px;margin:0 0 6px"><a href="#" id="askGuardrailsSignInLink" target="_self">Sign in</a> to change these.</p>`}
         <div style="display:flex;flex-direction:column;gap:6px">${optionalHtml}</div>
+        <p class="ua-muted" style="font-size:10px;margin:10px 0 4px;text-transform:uppercase;letter-spacing:.4px">Always on</p>
+        <div style="display:flex;flex-direction:column;gap:6px">${mandatoryHtml}</div>
       `;
       const signInLink = document.getElementById("askGuardrailsSignInLink");
       if (signInLink) signInLink.addEventListener("click", e => { e.preventDefault(); activateUsers(); });
