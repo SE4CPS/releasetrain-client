@@ -605,6 +605,20 @@
     }
     .demo-q-btn:hover { background: rgba(255,255,255,.06); border-color: var(--brand); }
     .demo-q-btn:active { transform: translateY(1px); }
+    /* .demo-q-meta: the question's own classified intent + real agent
+       count, so a presenter (or anyone reading this list) can see the
+       full spread of intents before clicking, not just discover it from
+       the answer badge afterward. "1 agent (fixed path)" on the
+       comparison button specifically calls out that a comparison
+       question always bypasses the single/multi-agent choice entirely
+       (see runComparisonAsk) -- labeling it plain "multi-agent" here
+       would repeat the exact confusion a live tester hit picking the
+       multi-agent preset on a comparison question and still seeing
+       "1 AGENT" in the answer badge. */
+    .demo-q-meta {
+      display: block; margin-top: 4px; font: 700 9px/1.3 inherit;
+      color: var(--muted); text-transform: uppercase; letter-spacing: .4px;
+    }
 
     .sidebar-label {
       font: 700 9px/1 inherit; color: var(--muted);
@@ -2784,7 +2798,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.131.4"><span class="brand-name">Releasetrain </span><em>v3.131.4</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.131.5"><span class="brand-name">Releasetrain </span><em>v3.131.5</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3098,14 +3112,13 @@
            actually needs to be visible without an extra click. -->
       <details class="sb-details" id="demoQuestionsDetails" open>
         <summary>Prototype Demo</summary>
-        <div class="demo-q-list" role="list" aria-label="Example questions from the talk">
-          <button type="button" class="demo-q-btn" data-q="Which is more stable right now, Zoom or Teams?">Which is more stable right now, Zoom or Teams?</button>
-          <button type="button" class="demo-q-btn" data-q="Which is cheaper to maintain across Chrome, Safari, or Firefox: Zoom or Teams?">Which is cheaper to maintain across Chrome, Safari, or Firefox: Zoom or Teams?</button>
-          <button type="button" class="demo-q-btn" data-q="Zoom or Teams and which Browser Stack?">Zoom or Teams and which Browser Stack?</button>
-          <button type="button" class="demo-q-btn" data-q="Which had more security fixes recently, Zoom or Teams?">Which had more security fixes recently, Zoom or Teams?</button>
-          <button type="button" class="demo-q-btn" data-q="Any user-reported problems with the latest Teams or Zoom update?">Any user-reported problems with the latest Teams or Zoom update?</button>
-          <button type="button" class="demo-q-btn" data-q="What would updating Teams disrupt on my system?">What would updating Teams disrupt on my system?</button>
-          <button type="button" class="demo-q-btn" data-q="Do you recommend browser-based Zoom or Teams for my important meeting?">Do you recommend browser-based Zoom or Teams for my important meeting?</button>
+        <div class="demo-q-list" role="list" aria-label="Example questions from the talk, one per question type">
+          <button type="button" class="demo-q-btn" data-q="Which is more stable right now, Zoom or Teams?">Which is more stable right now, Zoom or Teams?<span class="demo-q-meta">Comparison &middot; 1 agent (fixed path)</span></button>
+          <button type="button" class="demo-q-btn" data-q="Is there a known vulnerability in the latest Zoom update?">Is there a known vulnerability in the latest Zoom update?<span class="demo-q-meta">CVE &middot; Multi-agent</span></button>
+          <button type="button" class="demo-q-btn" data-q="Has Teams fixed the screen-share bug yet?">Has Teams fixed the screen-share bug yet?<span class="demo-q-meta">Patch &middot; Multi-agent</span></button>
+          <button type="button" class="demo-q-btn" data-q="What's the latest version of Teams?">What&rsquo;s the latest version of Teams?<span class="demo-q-meta">Version &middot; Single-agent</span></button>
+          <button type="button" class="demo-q-btn" data-q="Do you recommend browser-based Zoom for my important meeting?">Do you recommend browser-based Zoom for my important meeting?<span class="demo-q-meta">Opinion &middot; Single-agent</span></button>
+          <button type="button" class="demo-q-btn" data-q="What are people saying about Teams stability lately?">What are people saying about Teams stability lately?<span class="demo-q-meta">General &middot; Multi-agent</span></button>
         </div>
       </details>
 
@@ -4771,6 +4784,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-23</div>
+              <div class="cl-ver cl-ver-patch">v3.131.5</div>
+            </div>
+            <div class="cl-content">
+              <h3>Prototype Demo buttons now cover all 6 question types</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Each of the 6 <strong>Prototype Demo</strong> quick-load buttons now shows its classified question type and real agent count (e.g. "CVE &middot; Multi-agent") right under the question text, and the 6 questions were rewritten so every intent Auto can classify (comparison, CVE, patch, version, opinion, general) is represented exactly once (verified against the real <code>detectComparisonEntities</code>/keyword logic in <code>ask.js</code>, not just eyeballed). The comparison button is labeled "1 agent (fixed path)" rather than "multi-agent", since a comparison question always bypasses the pipeline choice and runs its own fixed evidence-gather path regardless of preset (see the v3.131.4 entry below).</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-23</div>
