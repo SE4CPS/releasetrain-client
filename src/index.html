@@ -2784,7 +2784,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.131.3"><span class="brand-name">Releasetrain </span><em>v3.131.3</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.131.4"><span class="brand-name">Releasetrain </span><em>v3.131.4</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2920,10 +2920,10 @@
                 <select id="askSize" class="ask-preset-select" aria-label="Model size"
                   title="Model size tier for the selected provider. Larger sizes trade speed for answer quality."></select>
                 <select id="askPreset" class="ask-preset-select" aria-label="Which pipeline to ask"
-                  title="Which pipeline runs. Auto picks one from the question's own classified intent (a comparison/security/patch question gets the delegated pipeline, a plain version or opinion question gets the single-agent one) and the answer states why.&#10;&#10;Orchestrator: single agent is one continuous model call that does everything itself.&#10;&#10;Orchestrator: delegates is genuine delegation: a Rewriter, a Retriever, and an Evaluator are each their own separate model call.">
+                  title="Which pipeline runs. Auto picks one from the question's own classified intent (a comparison/security/patch question gets the multi-agent pipeline, a plain version or opinion question gets the single-agent one) and the answer states why. A comparison question always runs its own fixed evidence-gather path first, before either pipeline applies, so it always shows 1 agent regardless of which one is picked here.&#10;&#10;Orchestrator: single agent is one continuous model call that does everything itself.&#10;&#10;Orchestrator: multi-agent is genuine delegation: a Rewriter, a Retriever, and an Evaluator are each their own separate model call.">
                   <option value="auto" selected>Auto (recommended)</option>
                   <option value="orchestrator_single">Orchestrator: single agent</option>
-                  <option value="orchestrator_delegated">Orchestrator: delegates (Rewrite/Retrieve/Evaluate)</option>
+                  <option value="orchestrator_delegated">Orchestrator: multi-agent (Rewrite/Retrieve/Evaluate)</option>
                   <option value="compare">Compare all 5</option>
                   <!-- "Demo: Single vs Multi-Agent" (value "duo"): the
                        Single-vs-Multi seminar-demo mode lives as a plain
@@ -4771,6 +4771,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-23</div>
+              <div class="cl-ver cl-ver-patch">v3.131.4</div>
+            </div>
+            <div class="cl-content">
+              <h3>Rename the delegated pipeline option to "multi-agent"</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The <strong>Model &amp; pipeline</strong> dropdown's <code>orchestrator_delegated</code> option read "Orchestrator: delegates (Rewrite/Retrieve/Evaluate)"; renamed to "Orchestrator: multi-agent (Rewrite/Retrieve/Evaluate)" to match the existing "Demo: Single vs Multi-Agent" terminology, and to make clear it's the multi-agent counterpart to "Orchestrator: single agent". The tooltip now also notes that a comparison question always runs its own fixed evidence-gather path and shows 1 agent regardless of which pipeline is picked, since that surprised a tester who selected the multi-agent option and still saw "1 AGENT" on a comparison question.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-23</div>
@@ -8713,7 +8725,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // the only two the simplified dropdown offers directly. See
       // ASK_PRESETS in ask.js for what each actually runs under the hood.
       orchestrator_single: "Orchestrator, single agent",
-      orchestrator_delegated: "Orchestrator, delegates",
+      orchestrator_delegated: "Orchestrator, multi-agent",
       // Defensive fallback only: the server always resolves "auto" to a
       // concrete preset before an answer comes back (see /api/ask),
       // so this should never actually render.
