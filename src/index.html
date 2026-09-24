@@ -1829,7 +1829,12 @@
     .a-stack-select {
       padding: 5px 8px; border: 1px solid var(--border); border-radius: var(--radius);
       background: var(--bg); color: var(--text); font: inherit; font-size: 12px;
-      cursor: pointer; width: 100%;
+      cursor: pointer;
+      /* Was width:100% for its old full-width sidebar slot; now it's one
+         flex item among several in .a-view-header's horizontal row, where
+         100% would mean 100% of the whole row and push every button next
+         to it out of view. Sized to its own content instead. */
+      width: auto;
     }
     /* Arch view: default landing state (no component picked) */
     #a-empty { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 32px 24px; background: var(--bg); }
@@ -2809,7 +2814,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.131.6"><span class="brand-name">Releasetrain </span><em>v3.131.6</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.131.7"><span class="brand-name">Releasetrain </span><em>v3.131.7</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3260,42 +3265,16 @@
            same regardless of which view is active. IDs (a-viewDiagram/
            a-viewTable) are unchanged, so aSetMode() and its click
            handlers need no changes -- only the markup moved. -->
-      <div id="archControls" style="display:none">
-
-        <details class="sb-details">
-          <summary>Stacks</summary>
-          <div class="sidebar-section" style="padding-bottom:12px">
-          <select id="a-stackSelect" class="a-stack-select">
-            <option value="">Add stack to search…</option>
-            <option value="apache,linux,mysql,php">LAMP</option>
-            <option value="nginx,linux,mysql,php">LEMP</option>
-            <option value="ubuntu,nginx,nodejs">UNN</option>
-            <option value="macos,rails,postgresql">Rails</option>
-            <option value="django,windows,sqlite">DWS</option>
-            <option value="flask,arch,postgresql">Flask</option>
-            <option value="redhat,spring,java">Spring</option>
-            <option value="centos,rails,postgresql">CRP</option>
-            <option value="debian,django,sqlite">DDS</option>
-            <option value="ubuntu,prisma,svelte">USP</option>
-          </select>
-          <button id="a-addStackBtn" class="btn btn-primary" type="button" style="width:100%;margin-top:4px">+ Add Stack</button>
-          </div>
-        </details>
-
-        <details class="sb-details">
-          <summary>Actions</summary>
-          <div class="sidebar-section" style="padding-bottom:14px">
-            <div style="display:flex;gap:6px;flex-wrap:wrap">
-              <button id="a-metricsBtn" class="btn btn-ghost" type="button" style="font-size:12px;padding:5px 10px">📊 Metrics</button>
-              <button id="a-codeBtn"    class="btn btn-ghost" type="button" style="font-size:12px;padding:5px 10px">📋 Code</button>
-              <button id="a-detailsBtn" class="btn btn-ghost" type="button" style="font-size:12px;padding:5px 10px">🔍 Details</button>
-              <button id="a-configBtn"  class="btn btn-ghost" type="button" style="font-size:12px;padding:5px 10px">⚙ Config</button>
-              <button id="a-copyLinkBtn" class="btn btn-ghost" type="button" style="font-size:12px;padding:5px 10px">🔗 Copy link</button>
-            </div>
-          </div>
-        </details>
-
-      </div>
+      <!-- Stacks/Actions/Diagram+Table all moved out of this sidebar
+           section entirely (2026-09-23, follow-up to the Diagram/Table
+           move above) -- same reasoning: they're all controls for the
+           Arch view's own content, not global sidebar settings, so they
+           now live in .a-view-header inside #archView itself, on the
+           right side of that view. This div is kept only because
+           activateArch()/deactivateArch() still toggle its display to
+           show/hide the sidebar's "Arch is active" state elsewhere; it
+           has no controls of its own left to hold. -->
+      <div id="archControls" style="display:none"></div>
 
       <!-- ── Docs controls (shown only in docs view) ── -->
       <div id="docsControls" style="display:none">
@@ -3709,11 +3688,37 @@
       <!-- Arch canvas (shown only in arch view) -->
       <div id="archView" style="display:none">
         <span id="a-title" hidden></span>
-        <!-- Diagram/Table view-mode toggle: lives with the content it
-             switches (right side of this view's own header), not in the
-             sidebar -- see the archControls comment for why this moved. -->
+        <!-- Stacks/Actions/Diagram+Table: all controls for this view's
+             own content, so they all live here on the right side of its
+             header, not in the sidebar -- see the archControls comment
+             for the full reasoning. Plain buttons/select, not <details>
+             accordions (no room for a collapse affordance in a header
+             row, and nothing here needs hiding by default the way a
+             long sidebar section might). flex-wrap so a narrow window
+             wraps to a second line instead of overflowing. -->
         <div class="a-view-header">
-          <div style="display:flex;gap:6px;margin-left:auto">
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-left:auto">
+            <select id="a-stackSelect" class="a-stack-select" style="font-size:12px">
+              <option value="">Add stack to search…</option>
+              <option value="apache,linux,mysql,php">LAMP</option>
+              <option value="nginx,linux,mysql,php">LEMP</option>
+              <option value="ubuntu,nginx,nodejs">UNN</option>
+              <option value="macos,rails,postgresql">Rails</option>
+              <option value="django,windows,sqlite">DWS</option>
+              <option value="flask,arch,postgresql">Flask</option>
+              <option value="redhat,spring,java">Spring</option>
+              <option value="centos,rails,postgresql">CRP</option>
+              <option value="debian,django,sqlite">DDS</option>
+              <option value="ubuntu,prisma,svelte">USP</option>
+            </select>
+            <button id="a-addStackBtn" class="btn btn-primary" type="button" style="font-size:12px;padding:5px 10px">+ Add Stack</button>
+            <span style="width:1px;align-self:stretch;background:var(--border);margin:0 2px"></span>
+            <button id="a-metricsBtn" class="btn btn-ghost" type="button" style="font-size:12px;padding:5px 10px">📊 Metrics</button>
+            <button id="a-codeBtn"    class="btn btn-ghost" type="button" style="font-size:12px;padding:5px 10px">📋 Code</button>
+            <button id="a-detailsBtn" class="btn btn-ghost" type="button" style="font-size:12px;padding:5px 10px">🔍 Details</button>
+            <button id="a-configBtn"  class="btn btn-ghost" type="button" style="font-size:12px;padding:5px 10px">⚙ Config</button>
+            <button id="a-copyLinkBtn" class="btn btn-ghost" type="button" style="font-size:12px;padding:5px 10px">🔗 Copy link</button>
+            <span style="width:1px;align-self:stretch;background:var(--border);margin:0 2px"></span>
             <button id="a-viewDiagram" class="btn btn-primary" type="button" style="font-size:12px;padding:5px 14px">Diagram</button>
             <button id="a-viewTable" class="btn btn-ghost" type="button" style="font-size:12px;padding:5px 14px">Table</button>
           </div>
@@ -4810,6 +4815,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-23</div>
+              <div class="cl-ver cl-ver-patch">v3.131.7</div>
+            </div>
+            <div class="cl-content">
+              <h3>Move Stacks/Actions into the Arch view too; fix a real PlantUML error</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Follow-up to the Diagram/Table move: the Arch sidebar's <strong>Stacks</strong> and <strong>Actions</strong> sections moved the same way, into the Arch view's own header on the right side, next to the Diagram/Table toggle. The sidebar's <code>#archControls</code> is now an empty placeholder (still toggled by activate/deactivateArch, but has nothing left to show).</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The <code>skinparam Padding</code>/<code>ComponentPadding</code> added in v3.131.6 aren't real PlantUML directives: newer PlantUML rejects them and renders a "please use CSS style instead" warning banner inline in the diagram itself, caught from a live render. Removed both; the font-size bumps already grow each box's default padding along with its text.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Diagram still read as cramped at the font sizes from v3.131.6 (16/17/15/13). Bumped to 20/22/20/16 and verified directly against the real PlantUML server (no warning banner, correct font-size values in the returned SVG, legible at a realistic render size) rather than assuming the change took effect.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-23</div>
@@ -12594,15 +12613,25 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // Scorecard: one-line overview across the whole set.
       const sc = aScore(sorted);
       const scorecard = `header Freshness ${sc.score}/100  |  ${sc.behind} behind  |  ${sc.current} current  |  ${sc.cve} CVE  |  ${sc.unknown} version unknown  |  median lag ${sc.medianLag}d\n`;
-      // Font/padding sizes bumped from PlantUML's own small defaults
-      // (2026-09-23, "make the arch view diagram more readable"): the
-      // rendered SVG only ever scales up to the width of .a-canvas
-      // (height:auto preserves its aspect ratio), so a diagram with few,
-      // short rows was rendering wide-and-short with real vertical space
-      // left unused below it. Bigger source fonts/padding make the same
-      // layout both more legible and taller relative to its own width,
-      // so it actually fills more of that available height once scaled.
-      let uml = `@startuml\nskinparam BackgroundColor #ffffff\nskinparam DefaultTextAlignment left\nskinparam Shadowing false\nskinparam PackageBorderColor #cbd5e1\nskinparam PackageBackgroundColor #ffffff\nskinparam ComponentBorderColor #94a3b8\nskinparam ComponentBackgroundColor #ffffff\nskinparam ArrowColor #111827\nskinparam FontColor #111827\nskinparam DefaultFontSize 16\nskinparam PackageFontSize 17\nskinparam PackageFontStyle bold\nskinparam ComponentFontSize 15\nskinparam ArrowFontSize 13\nskinparam Padding 8\nskinparam ComponentPadding 12\n${scorecard}left footer Software Ecosystem: ${ts}\n${legend}`;
+      // Font sizes bumped from PlantUML's own small defaults (2026-09-23,
+      // "make the arch view diagram more readable" / "use the available
+      // height"): the rendered SVG only ever scaled up to the width of
+      // .a-canvas (height:auto preserves its aspect ratio), so a diagram
+      // with few, short rows rendered small with real vertical space
+      // left unused below it. Bigger source fonts make the same layout
+      // both more legible and taller relative to its own width, so it
+      // fills more of that available height once scaled (see
+      // aFitDiagramSvg). Bumped again after a live render still read as
+      // cramped at the first pass (16/17/15/13 -> 20/22/20/16).
+      // `skinparam Padding`/`ComponentPadding` were tried for extra
+      // breathing room but are not real PlantUML skinparams (newer
+      // PlantUML rejects them and renders a "please use CSS style
+      // instead" warning banner inline in the diagram itself -- caught
+      // from a live render, not assumed) -- removed rather than chasing
+      // the CSS-style-block syntax PlantUML wants instead, since the
+      // font-size bumps alone already grow each box's default internal
+      // margin along with its text.
+      let uml = `@startuml\nskinparam BackgroundColor #ffffff\nskinparam DefaultTextAlignment left\nskinparam Shadowing false\nskinparam PackageBorderColor #cbd5e1\nskinparam PackageBackgroundColor #ffffff\nskinparam ComponentBorderColor #94a3b8\nskinparam ComponentBackgroundColor #ffffff\nskinparam ArrowColor #111827\nskinparam FontColor #111827\nskinparam DefaultFontSize 20\nskinparam PackageFontSize 22\nskinparam PackageFontStyle bold\nskinparam ComponentFontSize 20\nskinparam ArrowFontSize 16\n${scorecard}left footer Software Ecosystem: ${ts}\n${legend}`;
       // Renders the stack groups + leftover components for a given subset of versions.
       const groupedNames = new Set();
       groupedStacks.forEach(s => s.matchedComponents.forEach(c => groupedNames.add(c)));
