@@ -2784,7 +2784,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.131.2"><span class="brand-name">Releasetrain </span><em>v3.131.2</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.131.3"><span class="brand-name">Releasetrain </span><em>v3.131.3</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2920,13 +2920,10 @@
                 <select id="askSize" class="ask-preset-select" aria-label="Model size"
                   title="Model size tier for the selected provider. Larger sizes trade speed for answer quality."></select>
                 <select id="askPreset" class="ask-preset-select" aria-label="Which pipeline to ask"
-                  title="Which pipeline runs. Auto picks one from the question's own classified intent (a comparison, security, or plain version question each get a different pipeline) and the answer states why.&#10;&#10;Single-agent/Multi-agent buggy/fixed are one continuous model call with capability flags toggled on or off.&#10;&#10;Multi-agent (delegated) and Multi-agent (feedback loop) are genuine delegation: Rewriter, Retriever, and Evaluator are each their own separate model call.">
+                  title="Which pipeline runs. Auto picks one from the question's own classified intent (a comparison/security/patch question gets the delegated pipeline, a plain version or opinion question gets the single-agent one) and the answer states why.&#10;&#10;Orchestrator: single agent is one continuous model call that does everything itself.&#10;&#10;Orchestrator: delegates is genuine delegation: a Rewriter, a Retriever, and an Evaluator are each their own separate model call.">
                   <option value="auto" selected>Auto (recommended)</option>
-                  <option value="multi_agent_fixed">Multi-agent (fixed)</option>
-                  <option value="single_agent">Single-agent</option>
-                  <option value="multi_agent_buggy">Multi-agent (buggy)</option>
-                  <option value="multi_agent">Multi-agent (delegated)</option>
-                  <option value="multi_agent_feedback">Multi-agent (feedback loop)</option>
+                  <option value="orchestrator_single">Orchestrator: single agent</option>
+                  <option value="orchestrator_delegated">Orchestrator: delegates (Rewrite/Retrieve/Evaluate)</option>
                   <option value="compare">Compare all 5</option>
                   <!-- "Demo: Single vs Multi-Agent" (value "duo"): the
                        Single-vs-Multi seminar-demo mode lives as a plain
@@ -2938,7 +2935,20 @@
                        picking this option and submitting already does the
                        exact same thing. See the "duo" branch in the ask
                        submit handler / askRenderDuoBody for the rest of
-                       the implementation, unchanged by this. -->
+                       the implementation, unchanged by this.
+
+                       The 5 raw ablation presets (single_agent,
+                       multi_agent_buggy/fixed, multi_agent,
+                       multi_agent_feedback) were removed from this visible
+                       list 2026-09-23 to cut the dropdown down to the two
+                       clean architecture choices Auto now resolves between
+                       (orchestrator_single/orchestrator_delegated) for the
+                       demo. They still exist server-side, unchanged, and
+                       are still exactly what "Compare all 5" and this
+                       "duo" option run under the hood -- only their
+                       standalone entries in this <select> are gone. Pick
+                       one of the 5 directly via the API (?preset=...) if
+                       ever needed again; nothing server-side stops it. -->
                   <option value="duo">Demo: Single vs Multi-Agent</option>
                 </select>
               </div>
@@ -4761,6 +4771,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-23</div>
+              <div class="cl-ver cl-ver-patch">v3.131.3</div>
+            </div>
+            <div class="cl-content">
+              <h3>Simplify the pipeline picker to two clean architectures</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Two new demo-facing presets, <code>orchestrator_single</code> ("does everything itself") and <code>orchestrator_delegated</code> ("spawns a Rewriter/Retriever/Evaluator sub-agent each"), replacing the confusing five-way <code>single_agent</code>/<code>multi_agent_buggy</code>/<code>multi_agent_fixed</code>/<code>multi_agent</code>/<code>multi_agent_feedback</code> picker in the <strong>Model &amp; pipeline</strong> dropdown. The five original presets are unchanged and still power "Compare all 5" and the Single-vs-Multi demo mode internally.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> <strong>Auto</strong> now resolves every question's classified intent to one of just these two presets instead of the old five, so a comparison, security, or patch question always gets real Rewriter/Retriever/Evaluator delegation (previously only security/patch questions did) and a plain version or opinion question always gets the fast single-agent pass.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-23</div>
@@ -8686,6 +8709,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       multi_agent_fixed: "Multi-agent, fixed",
       multi_agent: "Multi-agent, delegated",
       multi_agent_feedback: "Multi-agent, feedback loop",
+      // The two demo-facing aliases (2026-09-23) Auto now resolves to, and
+      // the only two the simplified dropdown offers directly. See
+      // ASK_PRESETS in ask.js for what each actually runs under the hood.
+      orchestrator_single: "Orchestrator, single agent",
+      orchestrator_delegated: "Orchestrator, delegates",
       // Defensive fallback only: the server always resolves "auto" to a
       // concrete preset before an answer comes back (see /api/ask),
       // so this should never actually render.
@@ -9302,7 +9330,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     };
     function askPhaseLabel(phase, detail, preset, meta) {
       const isMultiAgent = preset === "multi_agent_buggy" || preset === "multi_agent_fixed"
-        || preset === "multi_agent" || preset === "multi_agent_feedback";
+        || preset === "multi_agent" || preset === "multi_agent_feedback"
+        || preset === "orchestrator_delegated";
       // meta.attempt (1 or 2) identifies which Retriever/Evaluator call
       // this event belongs to, on the two presets whose feedback loop can
       // genuinely run those roles twice for one question. Shown as a
