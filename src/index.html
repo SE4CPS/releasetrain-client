@@ -1789,6 +1789,14 @@
       box-shadow: var(--shadow-sm);
     }
     @media (max-width: 640px) { #archView { position: static; height: 82vh; } }
+    /* Real header row (not floating) so the Diagram/Table toggle has its
+       own right-aligned slot that never competes for the same corner as
+       #a-loader (which anchors to .a-canvas now, not #archView -- see
+       its own comment) or overlaps the canvas/table content below it. */
+    .a-view-header {
+      display: flex; align-items: center; flex: 0 0 auto;
+      padding: 8px 12px; border-bottom: 1px solid var(--border);
+    }
     #a-loader {
       position: absolute; top: 10px; right: 10px; z-index: 2;
       width: 16px; height: 16px; border-radius: 50%;
@@ -1797,12 +1805,15 @@
     }
     @keyframes a-spin { to { transform: rotate(360deg); } }
     .a-canvas {
-      flex: 1 1 auto; min-height: 0;
+      position: relative; flex: 1 1 auto; min-height: 0;
       display: flex; align-items: center; justify-content: center;
       background: #fff; overflow: auto; padding: 2px;
     }
     #a-ecosysImage { width: 100%; height: 100%; overflow: auto; }
-    #a-ecosysImage svg { max-width: 100%; height: auto; display: block; margin: auto; }
+    /* No max-width/height:auto here anymore -- aFitDiagramSvg() sets an
+       explicit pixel width+height on the <svg> itself, scaled to
+       whichever axis of .a-canvas is the tighter fit (see its own
+       comment), so this rule would only fight that computed size. */
     #a-ecosysImage a text { text-decoration: underline; }
     /* Arch view: drift table mode */
     #a-table { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 12px 14px; background: var(--surface); }
@@ -2798,7 +2809,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.131.5"><span class="brand-name">Releasetrain </span><em>v3.131.5</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.131.6"><span class="brand-name">Releasetrain </span><em>v3.131.6</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3239,14 +3250,17 @@
       </div>
 
       <!-- ── Arch controls (shown only in arch view) ── -->
+      <!-- The Diagram/Table view-mode toggle used to live here, as its
+           own row at the top of this otherwise-empty-looking sidebar
+           section. Moved to a real header bar inside #archView itself
+           (see .a-view-header, right above .a-canvas) per direct
+           feedback: a control for the CURRENT view's own display mode
+           belongs with that view's content, on the right side of its
+           own header, not buried in a sidebar section that looks the
+           same regardless of which view is active. IDs (a-viewDiagram/
+           a-viewTable) are unchanged, so aSetMode() and its click
+           handlers need no changes -- only the markup moved. -->
       <div id="archControls" style="display:none">
-
-        <div class="sidebar-section" style="padding-bottom:10px">
-          <div style="display:flex;gap:6px">
-            <button id="a-viewDiagram" class="btn btn-primary" type="button" style="flex:1;font-size:12px;padding:5px 0">Diagram</button>
-            <button id="a-viewTable" class="btn btn-ghost" type="button" style="flex:1;font-size:12px;padding:5px 0">Table</button>
-          </div>
-        </div>
 
         <details class="sb-details">
           <summary>Stacks</summary>
@@ -3694,9 +3708,21 @@
 
       <!-- Arch canvas (shown only in arch view) -->
       <div id="archView" style="display:none">
-        <div id="a-loader"></div>
         <span id="a-title" hidden></span>
+        <!-- Diagram/Table view-mode toggle: lives with the content it
+             switches (right side of this view's own header), not in the
+             sidebar -- see the archControls comment for why this moved. -->
+        <div class="a-view-header">
+          <div style="display:flex;gap:6px;margin-left:auto">
+            <button id="a-viewDiagram" class="btn btn-primary" type="button" style="font-size:12px;padding:5px 14px">Diagram</button>
+            <button id="a-viewTable" class="btn btn-ghost" type="button" style="font-size:12px;padding:5px 14px">Table</button>
+          </div>
+        </div>
         <div class="a-canvas">
+          <!-- Anchors to .a-canvas now (position:relative), not
+               #archView, so it never sits in the same corner as the
+               Diagram/Table toggle in .a-view-header above it. -->
+          <div id="a-loader"></div>
           <div id="a-ecosysImage" role="img" aria-label="Ecosystem architecture diagram"></div>
         </div>
         <div id="a-table" style="display:none"></div>
@@ -4784,6 +4810,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-23</div>
+              <div class="cl-ver cl-ver-patch">v3.131.6</div>
+            </div>
+            <div class="cl-content">
+              <h3>Move the Arch view's Diagram/Table toggle into its own header</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The Diagram/Table view-mode toggle used to sit at the top of the Arch view's sidebar section, which otherwise looks the same regardless of which view is active. Moved it into a real header bar inside the Arch view's own content panel, right-aligned above the diagram/table, since it's a control for that view's own display mode, not a global sidebar setting.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The ecosystem diagram only ever scaled to match its container's <em>width</em> (<code>height:auto</code>), so a wide-and-short diagram rendered small with real vertical space left unused below it. It now computes an explicit pixel size against whichever axis of the canvas is the tighter fit, re-run on window resize, and bumped the underlying PlantUML font/padding sizes so the diagram is more legible at the larger size.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-23</div>
@@ -12555,7 +12594,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // Scorecard: one-line overview across the whole set.
       const sc = aScore(sorted);
       const scorecard = `header Freshness ${sc.score}/100  |  ${sc.behind} behind  |  ${sc.current} current  |  ${sc.cve} CVE  |  ${sc.unknown} version unknown  |  median lag ${sc.medianLag}d\n`;
-      let uml = `@startuml\nskinparam BackgroundColor #ffffff\nskinparam DefaultTextAlignment left\nskinparam Shadowing false\nskinparam PackageBorderColor #cbd5e1\nskinparam PackageBackgroundColor #ffffff\nskinparam ComponentBorderColor #94a3b8\nskinparam ComponentBackgroundColor #ffffff\nskinparam ArrowColor #111827\nskinparam FontColor #111827\n${scorecard}left footer Software Ecosystem: ${ts}\n${legend}`;
+      // Font/padding sizes bumped from PlantUML's own small defaults
+      // (2026-09-23, "make the arch view diagram more readable"): the
+      // rendered SVG only ever scales up to the width of .a-canvas
+      // (height:auto preserves its aspect ratio), so a diagram with few,
+      // short rows was rendering wide-and-short with real vertical space
+      // left unused below it. Bigger source fonts/padding make the same
+      // layout both more legible and taller relative to its own width,
+      // so it actually fills more of that available height once scaled.
+      let uml = `@startuml\nskinparam BackgroundColor #ffffff\nskinparam DefaultTextAlignment left\nskinparam Shadowing false\nskinparam PackageBorderColor #cbd5e1\nskinparam PackageBackgroundColor #ffffff\nskinparam ComponentBorderColor #94a3b8\nskinparam ComponentBackgroundColor #ffffff\nskinparam ArrowColor #111827\nskinparam FontColor #111827\nskinparam DefaultFontSize 16\nskinparam PackageFontSize 17\nskinparam PackageFontStyle bold\nskinparam ComponentFontSize 15\nskinparam ArrowFontSize 13\nskinparam Padding 8\nskinparam ComponentPadding 12\n${scorecard}left footer Software Ecosystem: ${ts}\n${legend}`;
       // Renders the stack groups + leftover components for a given subset of versions.
       const groupedNames = new Set();
       groupedStacks.forEach(s => s.matchedComponents.forEach(c => groupedNames.add(c)));
@@ -12652,6 +12699,33 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const deflated = pako.deflateRaw(unescape(encodeURIComponent(text)), { level: 9 });
       return aEncode64(deflated);
     }
+    // Scales the current ecosystem SVG to fill whichever dimension of
+    // .a-canvas is the real constraint (2026-09-23, "use the available
+    // height"): a plain width:100%/height:auto fit only ever grows the
+    // diagram until its WIDTH matches the container, so a diagram with
+    // few, short rows (wide-and-short) rendered small with real unused
+    // vertical space below it, even though there was room to grow
+    // further. This reads the SVG's own intrinsic viewBox size (stored
+    // once at render time, see aRenderDiagram) and the container's
+    // current client size, then sets an explicit pixel width/height at
+    // whichever scale is the tighter of the two -- a real "contain" fit,
+    // not a distorting stretch, since both axes scale by the same factor.
+    // Re-run on window resize (the container's own size can change) so
+    // this stays correct after the initial render too.
+    function aFitDiagramSvg() {
+      const host = aEl("ecosysImage");
+      const s = host && host.querySelector("svg");
+      const canvas = host && host.closest(".a-canvas");
+      if (!s || !canvas) return;
+      const vw = Number(s.dataset.vbW), vh = Number(s.dataset.vbH);
+      if (!vw || !vh) return;
+      const cw = canvas.clientWidth - 4, ch = canvas.clientHeight - 4;  // minus .a-canvas's own 2px padding per side
+      if (cw <= 0 || ch <= 0) return;
+      const scale = Math.min(cw / vw, ch / vh);
+      s.style.width = Math.floor(vw * scale) + "px";
+      s.style.height = Math.floor(vh * scale) + "px";
+    }
+    let A_FIT_RESIZE_WIRED = false;
     function aRenderDiagram(uml) {
       A_UML_CODE = uml;
       A_PLANTUML_URL = A_PLANTUML_SERVER + aEncodePlantUML(uml);
@@ -12663,13 +12737,23 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         .then(svg => {
           host.innerHTML = svg;
           const s = host.querySelector("svg");
-          if (s) { s.removeAttribute("width"); s.removeAttribute("height"); s.style.maxWidth = "100%"; s.style.height = "auto"; }
+          if (s) {
+            // Read the intrinsic size PlantUML encoded into viewBox
+            // ("0 0 W H") before removing width/height, then let
+            // aFitDiagramSvg compute the actual on-screen size.
+            const vb = (s.getAttribute("viewBox") || "").trim().split(/\s+/);
+            s.dataset.vbW = vb[2] || ""; s.dataset.vbH = vb[3] || "";
+            s.removeAttribute("width"); s.removeAttribute("height");
+            s.style.display = "block"; s.style.margin = "auto";
+            aFitDiagramSvg();
+          }
           host.querySelectorAll("a").forEach(a => { a.setAttribute("target", "_blank"); a.setAttribute("rel", "noopener noreferrer"); });
         })
         .catch(() => { host.innerHTML = `<p class="a-muted-note">Could not render diagram.</p>`; })
         .finally(done);
       const codeEl = aEl("plantumlCode");
       if (codeEl) codeEl.textContent = uml;
+      if (!A_FIT_RESIZE_WIRED) { A_FIT_RESIZE_WIRED = true; window.addEventListener("resize", aFitDiagramSvg); }
     }
     function aUpdateMetrics(vers) {
       const { groupedStacks } = aGetStack(vers.map(v => v.name));
@@ -12746,6 +12830,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const e = aEl("empty");
       if (e && e.style.display !== "none") return;  // empty state stays put
       aShowResult();
+      // If the diagram was last fit while .a-canvas was hidden behind the
+      // table (0 client size, e.g. restoring "table" as the saved mode
+      // on load), its size never got computed -- redo it now that the
+      // canvas is actually visible and has a real size to fit against.
+      if (A_MODE === "diagram") aFitDiagramSvg();
       if (A_MODE === "table") aRenderTable();
     }
     function aEsc(s) {
