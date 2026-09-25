@@ -2815,7 +2815,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.131.9"><span class="brand-name">Releasetrain </span><em>v3.131.9</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.131.10"><span class="brand-name">Releasetrain </span><em>v3.131.10</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2955,6 +2955,7 @@
                   <option value="auto" selected>Auto (recommended)</option>
                   <option value="orchestrator_single">Orchestrator: single agent</option>
                   <option value="orchestrator_delegated">Orchestrator: multi-agent (Rewrite/Retrieve/Evaluate)</option>
+                  <option value="langgraph_delegated">Orchestrator: multi-agent (LangGraph, experimental)</option>
                   <option value="compare">Compare all 5</option>
                   <!-- "Demo: Single vs Multi-Agent" (value "duo"): the
                        Single-vs-Multi seminar-demo mode lives as a plain
@@ -4816,6 +4817,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-25</div>
+              <div class="cl-ver cl-ver-patch">v3.131.10</div>
+            </div>
+            <div class="cl-content">
+              <h3>LangGraph pipeline option and admin controls</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> New <strong>Orchestrator: multi-agent (LangGraph, experimental)</strong> pipeline option: the same multi-agent pipeline, but the Retriever/Evaluator retry loop runs as a LangGraph.js graph. Needs the matching server change (<code>langgraph_delegated</code> preset).</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Seven new admin settings for it, in the Account view's admin settings: enabled (kill switch), use for Auto, max retrieval rounds, step limit, node timeout, include step trace in answers, and what to do on error (fall back to the normal loop or fail).</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-25</div>
@@ -8852,6 +8866,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // ASK_PRESETS in ask.js for what each actually runs under the hood.
       orchestrator_single: "Orchestrator, single agent",
       orchestrator_delegated: "Orchestrator, multi-agent",
+      langgraph_delegated: "Orchestrator, multi-agent (LangGraph)",
       // Defensive fallback only: the server always resolves "auto" to a
       // concrete preset before an answer comes back (see /api/ask),
       // so this should never actually render.
@@ -9469,7 +9484,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     function askPhaseLabel(phase, detail, preset, meta) {
       const isMultiAgent = preset === "multi_agent_buggy" || preset === "multi_agent_fixed"
         || preset === "multi_agent" || preset === "multi_agent_feedback"
-        || preset === "orchestrator_delegated";
+        || preset === "orchestrator_delegated" || preset === "langgraph_delegated";
       // meta.attempt (1 or 2) identifies which Retriever/Evaluator call
       // this event belongs to, on the two presets whose feedback loop can
       // genuinely run those roles twice for one question. Shown as a
@@ -17022,6 +17037,48 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           { value: "small", label: "Small" },
           { value: "medium", label: "Medium" },
           { value: "large", label: "Large" },
+        ],
+      },
+      // LangGraph orchestration (see releasetrain-server's langgraphLoop.js):
+      // the langgraph_delegated pipeline runs the Retriever/Evaluator retry
+      // loop as a LangGraph graph. Value, default and valid range are all
+      // owned server-side; these are display labels and hints only.
+      langgraphEnabled: {
+        label: "LangGraph: enabled",
+        type: "boolean",
+        hint: "Kill switch. When off, the LangGraph pipeline runs the normal retry loop instead (same answers, no graph).",
+      },
+      langgraphAutoRoute: {
+        label: "LangGraph: use for Auto",
+        type: "boolean",
+        hint: "When on, Auto sends security, patch and general questions through the LangGraph pipeline instead of the standard multi-agent one.",
+      },
+      langgraphMaxRounds: {
+        label: "LangGraph: max retrieval rounds",
+        hint: "Most Retriever + Evaluator rounds a LangGraph run may take. 0 uses the Retriever retry guardrail's own limit.",
+        min: 0, max: 5,
+      },
+      langgraphRecursionLimit: {
+        label: "LangGraph: step limit",
+        hint: "LangGraph's own cap on graph steps (each round is 2 steps). A run that needs more is stopped and handled by the error policy below.",
+        min: 3, max: 100,
+      },
+      langgraphNodeTimeoutSeconds: {
+        label: "LangGraph: node timeout (seconds)",
+        hint: "Longest a single graph step (a retrieval + evaluation round, or a retry step) may take. 0 means no limit.",
+        min: 0, max: 300,
+      },
+      langgraphTraceInResponse: {
+        label: "LangGraph: include step trace in answers",
+        type: "boolean",
+        hint: "Adds which graph steps ran, how long each took, and whether the run fell back, to each LangGraph answer's response.",
+      },
+      langgraphOnError: {
+        label: "LangGraph: on error",
+        hint: "What happens if the graph fails (package missing, timeout, step limit): finish the question with the normal loop, or fail it.",
+        options: [
+          { value: "fallback", label: "Fall back to the normal loop" },
+          { value: "fail", label: "Fail the question" },
         ],
       },
       // View visibility: which nav-menu links show up at all, server-
