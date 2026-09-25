@@ -2815,7 +2815,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.131.10"><span class="brand-name">Releasetrain </span><em>v3.131.10</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.131.11"><span class="brand-name">Releasetrain </span><em>v3.131.11</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4817,6 +4817,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-25</div>
+              <div class="cl-ver cl-ver-patch">v3.131.11</div>
+            </div>
+            <div class="cl-content">
+              <h3>Credits: LangGraph.js</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The agentic AI credits now list LangGraph.js and LangChain Core, and the section's intro no longer says no LangChain is used: the experimental LangGraph pipeline uses LangGraph.js for the Retriever/Evaluator retry loop only.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-25</div>
@@ -8012,7 +8024,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
         <div class="ack-header ack-sub">
           <h2>🤖 Agentic AI: open-source frameworks, tools, and models</h2>
-          <p>The Ask pipeline (Rewriter, Retriever, Evaluator, Orchestrator) uses the open-source software and open-weight models below; the models marked selectable are offered as options but are not the default. The agent loop, BM25 reranking, and guardrail wiring are our own code: no LangChain, LlamaIndex, or agent SDK is used.</p>
+          <p>The Ask pipeline (Rewriter, Retriever, Evaluator, Orchestrator) uses the open-source software and open-weight models below; the models marked selectable are offered as options but are not the default. The agent loop, BM25 reranking, and guardrail wiring are our own code. The experimental LangGraph pipeline option uses LangGraph.js for its Retriever/Evaluator retry loop only; no LlamaIndex or other agent SDK is used.</p>
         </div>
         <ul class="ack-list">
           <li><a target="_blank" rel="noopener" href="https://nodejs.org/">Node.js</a><span>Server runtime for the Ask agent pipeline (Rewriter, Retriever, Evaluator, Orchestrator)</span></li>
@@ -8025,6 +8037,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <li><a target="_blank" rel="noopener" href="https://github.com/openai/gpt-oss">OpenAI gpt-oss</a><span>Open-weight gpt-oss models: gpt-oss-120b is the default agent model (Ollama Cloud, medium); gpt-oss-20b (small) and the Groq-hosted versions are selectable</span></li>
           <li><a target="_blank" rel="noopener" href="https://github.com/QwenLM">Qwen (Alibaba Cloud)</a><span>Open-weight Qwen model, selectable as the medium agent model on Groq (not the default)</span></li>
           <li><a target="_blank" rel="noopener" href="https://huggingface.co/nvidia">NVIDIA Nemotron</a><span>Open-weight nemotron-3-super, selectable as the large agent model on Ollama Cloud (not the default)</span></li>
+          <li><a target="_blank" rel="noopener" href="https://github.com/langchain-ai/langgraphjs">LangGraph.js</a><span>Graph orchestration for the experimental LangGraph pipeline option: runs the Retriever/Evaluator retry loop as a graph (optional; falls back to our own loop)</span></li>
+          <li><a target="_blank" rel="noopener" href="https://github.com/langchain-ai/langchainjs">LangChain Core (@langchain/core)</a><span>Runtime library that LangGraph.js is built on</span></li>
           <li><a target="_blank" rel="noopener" href="https://mermaid.js.org/">Mermaid</a><span>Ask pipeline and multi-agent architecture diagrams in the Docs view</span></li>
         </ul>
       </div><!-- /#ackView -->
