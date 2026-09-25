@@ -2815,7 +2815,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.131.11"><span class="brand-name">Releasetrain </span><em>v3.131.11</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.131.12"><span class="brand-name">Releasetrain </span><em>v3.131.12</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4817,6 +4817,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-25</div>
+              <div class="cl-ver cl-ver-patch">v3.131.12</div>
+            </div>
+            <div class="cl-content">
+              <h3>Feedback Loop tab shows which engine ran</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> A multi-agent answer's Feedback Loop tab now says whether the retry loop ran as a LangGraph graph or as the built-in loop, lists each graph step with its round number and duration, and shows the reason if a LangGraph run fell back to the built-in loop. Before this, the only way to tell was to read the raw <code>orchestration</code> field in the network response.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-25</div>
@@ -9399,7 +9411,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const loopCountRaw = panel.dataset.feedbackLoopCount;
       const loopCount = loopCountRaw ? Number(loopCountRaw) : null;
       const loopLines = [];
+      // Which engine ran the retry loop: the server adds `orchestration`
+      // only for the LangGraph pipeline (see langgraphLoop.js); every
+      // other delegated preset runs the built-in loop.
+      let orch = null;
+      try { orch = JSON.parse(panel.dataset.orchestration || "null"); } catch { /* keep null */ }
       if (isDelegated) {
+        if (orch && orch.engine === "langgraph") {
+          loopLines.push(orch.fallback
+            ? `Orchestration: LangGraph was requested, but this run fell back to the built-in loop (${orch.fallbackReason || "no reason recorded"}).`
+            : "Orchestration: the retry loop ran as a LangGraph graph.");
+          if (Array.isArray(orch.trace) && orch.trace.length) {
+            loopLines.push("Graph steps: " + orch.trace.map(t => `${t.node} #${t.attempt} (${t.ms} ms${t.ok ? "" : ", failed"})`).join(", ") + ".");
+          }
+        } else {
+          loopLines.push("Orchestration: the built-in retry loop.");
+        }
         if (loopCount) {
           loopLines.push(`${loopCount} retrieval/evaluation round${loopCount === 1 ? "" : "s"} for this answer${loopCount > 1 ? " (the feedback loop retried)" : " (no retry needed, the first pass was already sufficient)"}.`);
         }
@@ -11005,6 +11032,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="ask-rail-panel" data-panel="feedbackloop" hidden
           data-feedback-loop-count="${Number.isFinite(res.feedbackLoopCount) ? res.feedbackLoopCount : ""}"
+          data-orchestration='${uaEsc(JSON.stringify(res.orchestration || null))}'
           data-guardrail-activity='${uaEsc(JSON.stringify(res.guardrailActivity || {}))}'>
           <p class="ask-muted" style="font-size:12px;padding:8px 0">Loading…</p>
         </div>
