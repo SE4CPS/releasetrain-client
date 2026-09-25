@@ -1943,6 +1943,7 @@
     }
     .ack-header h2 { margin: 0 0 6px; font-size: 15px; font-weight: 700; }
     .ack-header p  { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.6; }
+    .ack-sub { border-top: 1px solid var(--border); }
     .ack-list {
       list-style: none; margin: 0; padding: 10px 14px 24px;
       display: flex; flex-direction: column; gap: 2px;
@@ -2814,7 +2815,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.131.7"><span class="brand-name">Releasetrain </span><em>v3.131.7</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.131.8"><span class="brand-name">Releasetrain </span><em>v3.131.8</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4815,6 +4816,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-25</div>
+              <div class="cl-ver cl-ver-patch">v3.131.8</div>
+            </div>
+            <div class="cl-content">
+              <h3>Credits: agentic AI open-source frameworks, tools, and models</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The Credits page has a new section crediting the open-source software and open-weight models behind the Ask agent pipeline (Node.js, Express, node-fetch, the MongoDB driver, prompt-protection, express-rate-limit, Ollama, gpt-oss, Qwen, Nemotron, Llama 3.1, Mermaid). Every entry was checked against the server's <code>package.json</code>, its installed packages, and the provider model list in <code>ask.js</code>, and the section states that no agent framework (LangChain, LlamaIndex, or an agent SDK) is used.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-23</div>
@@ -7969,6 +7982,25 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <li><a target="_blank" rel="noopener" href="https://loading.io/">loading.io</a><span>Loading animation assets</span></li>
           <li><a target="_blank" rel="noopener" href="https://regexr.com/">regexr.com</a><span>Regex development tool</span></li>
           <li><a target="_blank" rel="noopener" href="https://uptimerobot.com/">UptimeRobot</a><span>Uptime monitoring</span></li>
+        </ul>
+
+        <div class="ack-header ack-sub">
+          <h2>🤖 Agentic AI: open-source frameworks, tools, and models</h2>
+          <p>The Ask pipeline (Rewriter, Retriever, Evaluator, Orchestrator) uses the open-source software and open-weight models below. The agent loop, BM25 reranking, and guardrail wiring are our own code: no LangChain, LlamaIndex, or agent SDK is used.</p>
+        </div>
+        <ul class="ack-list">
+          <li><a target="_blank" rel="noopener" href="https://nodejs.org/">Node.js</a><span>Server runtime for the Ask agent pipeline (Rewriter, Retriever, Evaluator, Orchestrator)</span></li>
+          <li><a target="_blank" rel="noopener" href="https://expressjs.com/">Express</a><span>HTTP API and streamed progress events for Ask, including the delegated multi-agent runs</span></li>
+          <li><a target="_blank" rel="noopener" href="https://github.com/node-fetch/node-fetch">node-fetch</a><span>HTTP client for every model-provider and retrieval-tool call; no vendor agent SDK is used</span></li>
+          <li><a target="_blank" rel="noopener" href="https://github.com/mongodb/node-mongodb-native">MongoDB Node.js Driver</a><span>Reads the evidence (versions, CVEs, Reddit) the Retriever searches and stores each Ask run and its feedback</span></li>
+          <li><a target="_blank" rel="noopener" href="https://www.npmjs.com/package/prompt-protection">prompt-protection</a><span>Prompt-injection scan of tool results and answer-leak scan of final answers (MIT)</span></li>
+          <li><a target="_blank" rel="noopener" href="https://github.com/express-rate-limit/express-rate-limit">express-rate-limit</a><span>Request rate limiting in front of the Ask endpoint</span></li>
+          <li><a target="_blank" rel="noopener" href="https://ollama.com/">Ollama</a><span>Open-source model runtime and cloud hosting for the open-weight agent models</span></li>
+          <li><a target="_blank" rel="noopener" href="https://github.com/openai/gpt-oss">OpenAI gpt-oss</a><span>Open-weight gpt-oss-20b and gpt-oss-120b, the small and large agent models on Groq and the small and medium models on Ollama Cloud</span></li>
+          <li><a target="_blank" rel="noopener" href="https://github.com/QwenLM">Qwen (Alibaba Cloud)</a><span>Open-weight Qwen model, the medium agent model on Groq</span></li>
+          <li><a target="_blank" rel="noopener" href="https://huggingface.co/nvidia">NVIDIA Nemotron</a><span>Open-weight nemotron-3-super, the large agent model on Ollama Cloud</span></li>
+          <li><a target="_blank" rel="noopener" href="https://www.llama.com/">Meta Llama 3.1 8B</a><span>Open-weight Rewriter model in the AgenticSE 2026 paper's evaluation (research prototype, not the production models above)</span></li>
+          <li><a target="_blank" rel="noopener" href="https://mermaid.js.org/">Mermaid</a><span>Ask pipeline and multi-agent architecture diagrams in the Docs view</span></li>
         </ul>
       </div><!-- /#ackView -->
 
