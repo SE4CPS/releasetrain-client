@@ -857,7 +857,9 @@
     #askWorkflowDiagram g.askwfg-done text { fill: #166534 !important; }
     #askWorkflowDiagram g.askwfg-skipped rect { fill: transparent !important; stroke: #9ca3af !important; stroke-dasharray: 4 3; }
     #askWorkflowDiagram g.askwfg-skipped text { fill: #9ca3af !important; }
-    .ask-console { position: sticky; bottom: 0; z-index: 5; margin-top: 14px; height: 170px; overflow-y: auto; box-shadow: 0 -6px 12px rgba(0,0,0,.15); background: #0a0a0a; color: #d4d4d4; border-radius: 8px; padding: 10px 12px; font: 12px/1.5 Consolas, ui-monospace, monospace; white-space: pre-wrap; }
+    .ask-console { position: fixed; left: 0; right: 0; bottom: 0; z-index: 900; height: 170px; overflow-y: auto; border-radius: 10px 10px 0 0; box-shadow: 0 -6px 16px rgba(0,0,0,.25); background: #0a0a0a; color: #d4d4d4; padding: 10px 14px; font: 12px/1.5 Consolas, ui-monospace, monospace; white-space: pre-wrap; }
+    body.has-ask-console { padding-bottom: 180px; }
+    .ask-console-close { position: sticky; top: 0; float: right; background: #262626; color: #d4d4d4; border: 0; border-radius: 4px; cursor: pointer; font-size: 12px; padding: 1px 7px; }
     .ask-console .ac-t { color: #7c7c7c; }
     .ask-console .ac-note { color: #7dd3fc; }
     #askWorkflowDiagram g.askwfg-active { animation: askwfRobotBlink 1.2s ease-in-out infinite; }
@@ -2829,7 +2831,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.133.1"><span class="brand-name">Releasetrain </span><em>v3.133.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.133.3"><span class="brand-name">Releasetrain </span><em>v3.133.3</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4831,6 +4833,30 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-26</div>
+              <div class="cl-ver cl-ver-patch">v3.133.3</div>
+            </div>
+            <div class="cl-content">
+              <h3>Run log no longer hidden under the sidebar</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The bottom run log starts at the main column, so its text is visible next to the sidebar.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-26</div>
+              <div class="cl-ver cl-ver-patch">v3.133.2</div>
+            </div>
+            <div class="cl-content">
+              <h3>Run log stuck to the bottom of the page</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The run log is now one fixed-height box pinned to the bottom of the browser window, visible on every tab, newest line first, with a close button.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-26</div>
@@ -9897,11 +9923,24 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       return askWorkflowLog.slice().reverse().map(l => `<div class="${l.cls}"><span class="ac-t">[${l.t}s]</span> ${uaEsc(l.text)}</div>`).join("");
     }
     function renderAskConsole() {
-      document.querySelectorAll(".ask-console").forEach(el => {
-        el.innerHTML = askConsoleHtml();
-        el.scrollTop = 0; // newest line is on top
-      });
+      let el = document.getElementById("askConsoleFixed");
+      if (!el) {
+        el = document.createElement("div");
+        el.id = "askConsoleFixed";
+        el.className = "ask-console";
+        el.setAttribute("aria-label", "Run log");
+        document.body.appendChild(el);
+        document.body.classList.add("has-ask-console");
+      }
+      el.innerHTML = '<button type="button" class="ask-console-close" aria-label="Hide log">✕</button>' + askConsoleHtml();
+      el.querySelector(".ask-console-close").onclick = () => { el.remove(); document.body.classList.remove("has-ask-console"); };
+      el.scrollTop = 0; // newest line is on top
+      // Start where the main column starts so the sidebar never covers the text.
+      const main = document.getElementById("askWorkflowTop");
+      const host = main && main.parentElement;
+      el.style.left = host ? Math.max(0, Math.round(host.getBoundingClientRect().left)) + "px" : "0";
     }
+    window.addEventListener("resize", () => { if (document.getElementById("askConsoleFixed")) renderAskConsole(); });
     function pushAskWorkflowPhase(phase, detail, preset, meta) {
       if (!askWorkflowState) return;
       if (phase === "note") {
@@ -11068,7 +11107,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // that obvious.
       return `<div class="ask-rail-panel" data-panel="short">
           <p class="ask-short-answer">${uaEsc(sentence)}</p>
-          <div class="ask-console" aria-label="Run log">${askConsoleHtml()}</div>
         </div>`;
     }
 
@@ -11522,7 +11560,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <button type="button" class="ask-rail-tab" data-tab="benchmark" role="tab" aria-selected="false">Benchmark</button>
           <span id="askBenchmarkLiveStatus" class="ask-benchmark-live-status"></span>
         </div>
-        <div class="ask-rail-panel" data-panel="answer">${answerPanel}<div class="ask-console" aria-label="Run log">${askConsoleHtml()}</div></div>
+        <div class="ask-rail-panel" data-panel="answer">${answerPanel}</div>
         <div class="ask-rail-panel" data-panel="sources" hidden>
           <p class="ask-muted">Waiting for the answer…</p>
         </div>
