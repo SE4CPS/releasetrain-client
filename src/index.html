@@ -2842,7 +2842,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.134.2"><span class="brand-name">Releasetrain </span><em>v3.134.2</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.134.3"><span class="brand-name">Releasetrain </span><em>v3.134.3</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4844,6 +4844,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-26</div>
+              <div class="cl-ver cl-ver-patch">v3.134.3</div>
+            </div>
+            <div class="cl-content">
+              <h3>Gentler page load</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The latest-version lookups for the feed run 4 at a time instead of about 70 at once, and a failed lookup is retried later instead of staying blank.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-26</div>
@@ -10235,12 +10247,32 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // and every existing caller that only wants the number still works
     // unchanged since destructuring `{ version }` off a null result is
     // safe.
+    // At most 4 of these lookups run at once. The feed asks for one per
+    // group, and ~70 simultaneous requests on page load can knock a small
+    // server over (the proxy then answers 502 to everything, login included).
+    const latestVersionQueue = [];
+    let latestVersionActive = 0;
+    function latestVersionFetch(url) {
+      return new Promise((resolve, reject) => {
+        latestVersionQueue.push({ url, resolve, reject });
+        pumpLatestVersionQueue();
+      });
+    }
+    function pumpLatestVersionQueue() {
+      while (latestVersionActive < 4 && latestVersionQueue.length) {
+        const job = latestVersionQueue.shift();
+        latestVersionActive++;
+        fetch(job.url).then(job.resolve, job.reject).finally(() => { latestVersionActive--; pumpLatestVersionQueue(); });
+      }
+    }
     async function fetchLatestVersionFor(name) {
       const key = name.toLowerCase();
       if (componentLatestVersionCache.has(key)) return componentLatestVersionCache.get(key);
       let result = { version: null, date: null };
+      let cacheable = true;
       try {
-        const res = await fetch(`${API_BASE}c/name/${encodeURIComponent(name)}`);
+        const res = await latestVersionFetch(`${API_BASE}c/name/${encodeURIComponent(name)}`);
+        if (!res.ok && res.status >= 500) cacheable = false;
         if (res.ok) {
           const data = await res.json();
           const list = Object.values(data)[0];
@@ -10271,8 +10303,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           }, null);
           if (best && best.versionNumber) result = { version: best.versionNumber, date: best.versionReleaseDate || null };
         }
-      } catch { /* leave result null; a missing bracket beats a broken dropdown */ }
-      componentLatestVersionCache.set(key, result);
+      } catch { cacheable = false; /* leave result null; a missing bracket beats a broken dropdown */ }
+      if (cacheable) componentLatestVersionCache.set(key, result);
       return result;
     }
 
