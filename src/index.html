@@ -849,8 +849,8 @@
     .askwf-arrow { color: var(--muted); }
     #askWorkflowDiagram svg { max-width: 100%; height: auto; overflow: visible; }
     #askWorkflowDiagram text.askwf-secs { font-size: 11px; fill: var(--muted) !important; font-weight: 400 !important; }
-    #askWorkflowDiagram g.askwfg-idle rect { fill: transparent !important; stroke: var(--muted) !important; }
-    #askWorkflowDiagram g.askwfg-idle text { fill: var(--muted) !important; }
+    #askWorkflowDiagram g.askwfg-idle rect { fill: #f2f0ff !important; stroke: #8b83d6 !important; }
+    #askWorkflowDiagram g.askwfg-idle text { fill: #3b3766 !important; }
     #askWorkflowDiagram g.askwfg-active rect { fill: #dcfce7 !important; stroke: #15803d !important; }
     #askWorkflowDiagram g.askwfg-active text { fill: #14532d !important; font-weight: 700; }
     #askWorkflowDiagram g.askwfg-done rect { fill: #f0fdf4 !important; stroke: #16a34a !important; }
@@ -2824,7 +2824,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.132.0"><span class="brand-name">Releasetrain </span><em>v3.132.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.132.1"><span class="brand-name">Releasetrain </span><em>v3.132.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4826,6 +4826,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-26</div>
+              <div class="cl-ver cl-ver-patch">v3.132.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Agent graph labels centered</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Node labels in the live agent graph sit in the middle of their boxes, and idle nodes use LangGraph's own purple styling.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-26</div>
@@ -9730,7 +9742,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           // time is a small separate text under the box.
           let t = g.querySelector("text.askwf-secs");
           if (!t) {
-            const box = g.querySelector("rect").getBBox();
+            const r0 = g.querySelector("rect");
+            const rw = +r0.getAttribute("width"), rh = +r0.getAttribute("height");
+            const box = { x: +r0.getAttribute("x") || 0, y: +r0.getAttribute("y") || 0, width: rw, height: rh };
             // Center the label in its box: Mermaid measured it before the
             // page font applied, which leaves it off-center.
             const lab = g.querySelector("text");
