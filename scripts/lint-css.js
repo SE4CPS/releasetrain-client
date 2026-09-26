@@ -38,7 +38,7 @@ for (const file of files) {
   const add = (index, msg) => problems.push(`${rel}:${lineOf(text, index)}  ${msg}`);
 
   if (file.endsWith('.html')) {
-    for (const m of text.matchAll(/<script(?![^>]*src=)[^>]*>/g)) add(m.index, 'inline <script>: move the code to src/app.js');
+    for (const m of text.matchAll(/<script(?![^>]*\bsrc=)[^>]*>/g)) add(m.index, 'inline <script>: move the code to src/app.js');
     for (const m of text.matchAll(/\son(?:click|change|input|submit|key\w+|load|error|mouse\w+|focus|blur)=/g)) add(m.index, 'inline event handler: use addEventListener in app.js');
   } else {
     for (const m of text.matchAll(/["'`]<[a-z][^>]*\son(?:click|change|input|submit|key\w+|load|error|mouse\w+|focus|blur)=/g)) add(m.index, 'inline event handler in a template: use addEventListener');
