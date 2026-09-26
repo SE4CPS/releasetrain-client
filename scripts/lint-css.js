@@ -10,6 +10,8 @@
  *   - element.style.<property> reads or writes (setProperty of a --custom
  *     property is the one allowed use)
  *   - cssText and setAttribute("style", ...)
+ *   - inline <script> code or on...= event-handler attributes (all JS lives in
+ *     src/app.js)
  *
  * Toggle visibility with classList / setDisplay(), and style with a class
  * defined in styles.css. Plain Node, no dependencies.
@@ -34,6 +36,13 @@ for (const file of files) {
   const text = fs.readFileSync(file, 'utf8');
   const rel = path.relative(path.resolve(__dirname, '..'), file);
   const add = (index, msg) => problems.push(`${rel}:${lineOf(text, index)}  ${msg}`);
+
+  if (file.endsWith('.html')) {
+    for (const m of text.matchAll(/<script(?![^>]*src=)[^>]*>/g)) add(m.index, 'inline <script>: move the code to src/app.js');
+    for (const m of text.matchAll(/\son(?:click|change|input|submit|key\w+|load|error|mouse\w+|focus|blur)=/g)) add(m.index, 'inline event handler: use addEventListener in app.js');
+  } else {
+    for (const m of text.matchAll(/["'`]<[a-z][^>]*\son(?:click|change|input|submit|key\w+|load|error|mouse\w+|focus|blur)=/g)) add(m.index, 'inline event handler in a template: use addEventListener');
+  }
 
   for (const m of text.matchAll(/<style[\s>]/g)) add(m.index, '<style> block: move it to src/styles.css');
 
