@@ -22,7 +22,7 @@
     gtag('config', 'G-P5E77Z7VG5');
   </script>
 
-  <link rel="stylesheet" href="styles.css?v=3.134.6">
+  <link rel="stylesheet" href="styles.css?v=3.134.7">
 </head>
 
 <body>
@@ -38,7 +38,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.134.6"><span class="brand-name">Releasetrain </span><em>v3.134.6</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.134.7"><span class="brand-name">Releasetrain </span><em>v3.134.7</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2038,6 +2038,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-26</div>
+              <div class="cl-ver cl-ver-patch">v3.134.7</div>
+            </div>
+            <div class="cl-content">
+              <h3>Removed the duplicate status text</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The live status text on the right of the answer tabs is gone. The run log at the bottom shows the same steps.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-26</div>
@@ -8602,7 +8614,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <button type="button" class="ask-rail-tab${activeTab === "answer" ? " active" : ""}" data-tab="answer" role="tab" aria-selected="${activeTab === "answer"}">Answer</button>
           <button type="button" class="ask-rail-tab" data-tab="sources" role="tab" aria-selected="false">Sources</button>
           <button type="button" class="ask-rail-tab" data-tab="benchmark" role="tab" aria-selected="false">Benchmark</button>
-          <span id="askBenchmarkLiveStatus" class="ask-benchmark-live-status"></span>
           <button type="button" class="ask-rail-tab" data-tab="modelrules" role="tab" aria-selected="false">Model vs Rules</button>
           <button type="button" class="ask-rail-tab" data-tab="guardrails" role="tab" aria-selected="false">Guardrails</button>
           <button type="button" class="ask-rail-tab" data-tab="feedbackloop" role="tab" aria-selected="false">Feedback Loop</button>
@@ -8940,7 +8951,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <button type="button" class="ask-rail-tab active" data-tab="answer" role="tab" aria-selected="true">Answer</button>
           <button type="button" class="ask-rail-tab" data-tab="sources" role="tab" aria-selected="false">Sources</button>
           <button type="button" class="ask-rail-tab" data-tab="benchmark" role="tab" aria-selected="false">Benchmark</button>
-          <span id="askBenchmarkLiveStatus" class="ask-benchmark-live-status"></span>
         </div>
         <div class="ask-rail-panel" data-panel="answer">${answerPanel}</div>
         <div class="ask-rail-panel" data-panel="sources" hidden>
