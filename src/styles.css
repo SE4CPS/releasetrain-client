@@ -833,7 +833,7 @@ html::-webkit-scrollbar { display: none; }
 #askWorkflowDiagram g.askwfg-input text { fill: #374151 !important; }
 #askWorkflowDiagram g.askwfg-skipped rect { fill: transparent !important; stroke: #9ca3af !important; stroke-dasharray: 4 3; }
 #askWorkflowDiagram g.askwfg-skipped text { fill: #9ca3af !important; }
-.ask-console { position: fixed; left: 0; right: 0; bottom: 0; z-index: 900; height: 170px; overflow-y: auto; border-radius: 10px 10px 0 0; box-shadow: 0 -6px 16px rgba(0,0,0,.25); background: #0a0a0a; color: #d4d4d4; padding: 10px 14px; font: 12px/1.5 Consolas, ui-monospace, monospace; white-space: pre-wrap; }
+.ask-console { position: fixed; left: var(--console-left, 0px); right: 0; bottom: 0; z-index: 900; height: 170px; overflow-y: auto; border-radius: 10px 10px 0 0; box-shadow: 0 -6px 16px rgba(0,0,0,.25); background: #0a0a0a; color: #d4d4d4; padding: 10px 14px; font: 12px/1.5 Consolas, ui-monospace, monospace; white-space: pre-wrap; }
 body.has-ask-console { padding-bottom: 180px; }
 body.has-ask-console.has-ask-console-min { padding-bottom: 40px; }
 .ask-console.ask-console-min { height: 32px; overflow: hidden; padding-top: 6px; padding-bottom: 6px; }
@@ -3073,3 +3073,32 @@ select.ua-settings-input { width: auto; max-width: 100%; }
 .st-262 { white-space: nowrap !important; } /* js: <td> */
 .st-263 { font-size: 12px !important; padding: 6px 0 !important; } /* js: .ua-muted */
 .st-264 { margin-top: 3px !important; gap: 4px !important; flex-wrap: wrap !important; } /* js: <div> */
+
+/* ── Visibility utilities (replace inline display styles) ────────────
+   !important keeps the old inline-style priority. Toggle with setDisplay(). ─── */
+.u-hide { display: none !important; }
+.u-show-block { display: block !important; }
+.u-show-flex { display: flex !important; }
+.u-show-grid { display: grid !important; }
+.u-show-inline-block { display: inline-block !important; }
+.u-show-inline-flex { display: inline-flex !important; }
+
+/* ── Runtime values (set from JS as custom properties, styled here) ──── */
+.rt-bg { background: var(--rt-bg) !important; }
+.rt-c { color: var(--rt-c) !important; }
+.rt-w { width: var(--rt-w, 0) !important; }
+.u-bold { font-weight: 700 !important; }
+.u-pos-rel { position: relative !important; }
+.u-max-none { max-width: none !important; }
+.a-fit { width: var(--rt-fit-w) !important; height: var(--rt-fit-h) !important; margin: auto !important; }
+.link-dotted { color: inherit !important; text-decoration: underline dotted !important; }
+.msg-muted { color: #475569 !important; }
+.msg-err { color: #b91c1c !important; }
+.ua-cadence-reset-btn { font-size: 11px !important; padding: 4px 8px !important; }
+.ua-inline-input { font-size: 12px; padding: 3px 6px; border: 1px solid var(--border); border-radius: var(--radius-sm); width: 100%; box-sizing: border-box; }
+.ua-inline-btn { font-size: 12px !important; padding: 4px 8px !important; margin-top: 4px !important; }
+.ua-inline-btn-2 { margin-left: 4px !important; }
+.ua-inline-wrap { flex: 1; min-width: 0; }
+.shared-banner { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 16px; font-size: 12px; box-shadow: var(--shadow-md); z-index: 9999; color: var(--muted); }
+.fault-bar { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 99999; max-width: min(92vw, 560px); display: flex; gap: 10px; align-items: center; padding: 8px 12px; border: 1px solid var(--cve, #b91c1c); border-radius: 3px; background: var(--surface, #fff); color: var(--text, #0f172a); font: 13px/1.4 system-ui, sans-serif; box-shadow: 0 2px 8px rgba(15, 23, 42, .12); }
+.fault-dismiss { border: 1px solid var(--border, #e2e8f0); background: none; border-radius: 3px; padding: 2px 8px; cursor: pointer; font: inherit; }

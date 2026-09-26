@@ -22,7 +22,7 @@
     gtag('config', 'G-P5E77Z7VG5');
   </script>
 
-  <link rel="stylesheet" href="styles.css?v=3.134.7">
+  <link rel="stylesheet" href="styles.css?v=3.135.0">
 </head>
 
 <body>
@@ -38,7 +38,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.134.7"><span class="brand-name">Releasetrain </span><em>v3.134.7</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.135.0"><span class="brand-name">Releasetrain </span><em>v3.135.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -66,7 +66,7 @@
            own. -->
         <span id="authStatusDot" class="auth-dot auth-dot-off" title="Not signed in" aria-hidden="true"></span>
         <button type="button" class="top-signin-btn" id="topSignInLink">Sign in</button>
-        <span id="ua-topbar-user" class="ua-topbar-chip" style="display:none" title="Account"></span>
+        <span id="ua-topbar-user" class="u-hide ua-topbar-chip"  title="Account"></span>
       </div>
       <!-- Kept in the DOM as the internal versions-fetch/pagination
            engine only, never shown. A plain vendor/category lookup
@@ -77,7 +77,7 @@
            completely unchanged. Search and Ask used to be two separate,
            user-toggled forms; now there's one box, and /api/ask itself
            decides which of these two paths a query takes. -->
-      <form id="filterForm" class="topbar-form" aria-label="Component search" style="display:none" aria-hidden="true">
+      <form id="filterForm" class="u-hide topbar-form" aria-label="Component search"  aria-hidden="true">
         <div class="search-wrap">
           <span class="search-icon" aria-hidden="true">🔍</span>
           <input id="components" name="components" class="search-input" type="text"
@@ -408,16 +408,16 @@
 
 
       <!-- ── Graph controls (shown only in graph view) ── -->
-      <div id="graphControls" style="display:none">
+      <div id="graphControls" class="u-hide" >
 
         <details class="sb-details">
           <summary>Layers</summary>
           <div class="sidebar-section st-3">
-            <div style="display: flex;" class="st-4">
-              <label style="display: flex;" class="st-5"><input type="checkbox" id="g-show-versions" checked class="st-6"> <span class="g-legend-dot st-7"></span>Versions</label>
-              <label style="display: flex;" class="st-5"><input type="checkbox" id="g-show-cve" checked class="st-6"> <span class="g-legend-dot st-8"></span>CVE versions</label>
-              <label style="display: flex;" class="st-5"><input type="checkbox" id="g-show-reddit" checked class="st-6"> <span class="g-legend-dot st-7"></span>Reddit posts</label>
-              <label style="display: flex;" class="st-5"><input type="checkbox" id="g-show-so" checked class="st-6"> <span class="g-legend-dot st-9"></span>StackOverflow</label>
+            <div  class="u-show-flex st-4">
+              <label  class="u-show-flex st-5"><input type="checkbox" id="g-show-versions" checked class="st-6"> <span class="g-legend-dot st-7"></span>Versions</label>
+              <label  class="u-show-flex st-5"><input type="checkbox" id="g-show-cve" checked class="st-6"> <span class="g-legend-dot st-8"></span>CVE versions</label>
+              <label  class="u-show-flex st-5"><input type="checkbox" id="g-show-reddit" checked class="st-6"> <span class="g-legend-dot st-7"></span>Reddit posts</label>
+              <label  class="u-show-flex st-5"><input type="checkbox" id="g-show-so" checked class="st-6"> <span class="g-legend-dot st-9"></span>StackOverflow</label>
             </div>
           </div>
         </details>
@@ -425,9 +425,9 @@
         <details class="sb-details">
           <summary>Options</summary>
           <div class="sidebar-section st-3">
-            <div style="display: flex;" class="st-4">
-              <label style="display: flex;" class="st-5"><input type="checkbox" id="g-risk-only" class="st-6"> High-risk posts only</label>
-              <label style="display: flex;" class="st-5"><input type="checkbox" id="g-cve-posts" class="st-6"> <span class="g-legend-dot st-10"></span>CVE-mentioning posts</label>
+            <div  class="u-show-flex st-4">
+              <label  class="u-show-flex st-5"><input type="checkbox" id="g-risk-only" class="st-6"> High-risk posts only</label>
+              <label  class="u-show-flex st-5"><input type="checkbox" id="g-cve-posts" class="st-6"> <span class="g-legend-dot st-10"></span>CVE-mentioning posts</label>
             </div>
           </div>
         </details>
@@ -499,10 +499,10 @@
            activateArch()/deactivateArch() still toggle its display to
            show/hide the sidebar's "Arch is active" state elsewhere; it
            has no controls of its own left to hold. -->
-      <div id="archControls" style="display:none"></div>
+      <div id="archControls" class="u-hide" ></div>
 
       <!-- ── Docs controls (shown only in docs view) ── -->
-      <div id="docsControls" style="display:none">
+      <div id="docsControls" class="u-hide" >
 
         <!-- Live collection stats — always visible -->
         <div class="sidebar-section st-23">
@@ -578,9 +578,9 @@
       <!-- ── Changelog controls (shown only in changelog view) ── -->
       <!-- Same removal as Account/Credits' own sidebar panels above: a
            plain descriptive blurb, not a real control. -->
-      <div id="changelogControls" style="display:none">
+      <div id="changelogControls" class="u-hide" >
         <div class="sidebar-section">
-          <a class="btn btn-ghost st-26" href="https://github.com/SE4CPS/releasetrain-client" target="_blank" rel="noopener noreferrer" style="display: inline-flex;">
+          <a class="u-show-inline-flex btn btn-ghost st-26" href="https://github.com/SE4CPS/releasetrain-client" target="_blank" rel="noopener noreferrer" >
             ⭐ GitHub
           </a>
         </div>
@@ -592,9 +592,9 @@
            panel): a plain blurb with no real control isn't worth a
            sidebar panel of its own. The GitHub link is a real, actionable
            control, so it stays. -->
-      <div id="ackControls" style="display:none">
+      <div id="ackControls" class="u-hide" >
         <div class="sidebar-section">
-          <a class="btn btn-ghost st-26" href="https://github.com/SE4CPS/releasetrain-client" target="_blank" rel="noopener noreferrer" style="display: inline-flex;">
+          <a class="u-show-inline-flex btn btn-ghost st-26" href="https://github.com/SE4CPS/releasetrain-client" target="_blank" rel="noopener noreferrer" >
             ⭐ GitHub
           </a>
         </div>
@@ -607,7 +607,7 @@
            that #ua-sidebar-status doesn't exist. -->
 
       <!-- ── Eval Rewriter controls (shown only in eval-rewriter view) ── -->
-      <div id="evalRewriterControls" style="display:none">
+      <div id="evalRewriterControls" class="u-hide" >
         <div class="sidebar-section">
           <div class="sidebar-label">Rewriter eval</div>
           <p class="st-27">
@@ -617,7 +617,7 @@
       </div>
 
       <!-- ── Eval Evaluator controls (shown only in eval-evaluator view) ── -->
-      <div id="evalEvaluatorControls" style="display:none">
+      <div id="evalEvaluatorControls" class="u-hide" >
         <div class="sidebar-section">
           <div class="sidebar-label">Evaluator eval</div>
           <p class="st-27">
@@ -627,7 +627,7 @@
       </div>
 
       <!-- ── Eval Orchestrator controls (shown only in eval-orchestrator view) ── -->
-      <div id="evalOrchestratorControls" style="display:none">
+      <div id="evalOrchestratorControls" class="u-hide" >
         <div class="sidebar-section">
           <div class="sidebar-label">Orchestrator eval</div>
           <p class="st-27">
@@ -637,7 +637,7 @@
       </div>
 
       <!-- ── CVE controls (shown only in cve view) ── -->
-      <div id="cveControls" class="cv-host" style="display:none">
+      <div id="cveControls" class="u-hide cv-host" >
         <!-- Status -->
         <div class="st-28">
           <div id="statusBar" role="status" aria-live="polite">
@@ -647,7 +647,7 @@
           <div id="loadProgress"><div id="loadProgressFill" class="st-29"></div></div>
         </div>
         <!-- Aggregates -->
-        <div style="display: flex;" class="st-30">
+        <div  class="u-show-flex st-30">
           <div class="panel legend-panel">
             <details>
               <summary class="legend-toggle"><h2>Legend &amp; Glossary</h2></summary>
@@ -684,7 +684,7 @@
       </div>
 
       <!-- ── Dashboard controls (shown only in dashboard view) ── -->
-      <div id="dashboardControls" style="display:none">
+      <div id="dashboardControls" class="u-hide" >
         <div class="sidebar-section">
           <div class="ri-ctrl-label st-31">Using search query</div>
           <div class="st-32">Components are read from the feed search field. Multiple components are supported (comma separated).</div>
@@ -710,10 +710,10 @@
         <div class="sidebar-section st-37">
           <div class="ri-ctrl-label st-24">Score legend</div>
           <div class="st-38">
-            <div><span style="display: inline-block;" class="st-39"></span><strong>0–24 Low:</strong> No blocking advisories</div>
-            <div><span style="display: inline-block;" class="st-40"></span><strong>25–49 Medium:</strong> Review before deploying</div>
-            <div><span style="display: inline-block;" class="st-40"></span><strong>50–74 High:</strong> Staged rollout required</div>
-            <div><span style="display: inline-block;" class="st-41"></span><strong>75–100 Critical:</strong> Defer deployment</div>
+            <div><span  class="u-show-inline-block st-39"></span><strong>0–24 Low:</strong> No blocking advisories</div>
+            <div><span  class="u-show-inline-block st-40"></span><strong>25–49 Medium:</strong> Review before deploying</div>
+            <div><span  class="u-show-inline-block st-40"></span><strong>50–74 High:</strong> Staged rollout required</div>
+            <div><span  class="u-show-inline-block st-41"></span><strong>75–100 Critical:</strong> Defer deployment</div>
           </div>
           <div class="ri-ctrl-label st-42">Scoring factors</div>
           <div class="st-43">
@@ -728,7 +728,7 @@
       </div>
 
       <!-- ── Network controls (shown only in network view) ── -->
-      <div id="networkControls" style="display:none">
+      <div id="networkControls" class="u-hide" >
         <div class="sidebar-section">
           <div class="sidebar-label">Releases</div>
           <p class="st-44">
@@ -873,7 +873,7 @@
             <div class="sb-group-label" id="sbActivityLabel">Activity (2 weeks)</div>
             <div class="st-48"><canvas id="home-activity-chart"></canvas></div>
             <p class="st-49">Click a label to show/hide that line.</p>
-            <div style="display: flex;" class="st-50">
+            <div  class="u-show-flex st-50">
               <span><span class="st-51">●</span> Versions</span>
               <span><span class="st-52">●</span> CVE</span>
               <span><span class="st-53">●</span> Community</span>
@@ -882,7 +882,7 @@
             </div>
 
             <div class="sb-group-label">Top searches (24h)</div>
-            <div id="top-searches-list" style="display: flex;" class="st-56">
+            <div id="top-searches-list"  class="u-show-flex st-56">
               <span class="st-22">Loading...</span>
             </div>
 
@@ -897,7 +897,7 @@
     <main id="main-content" class="feed-main">
 
       <!-- Graph canvas (shown only in graph view) -->
-      <div id="graphView" style="display:none">
+      <div id="graphView" class="u-hide" >
         <div id="g-graphBadge">—</div>
         <div id="g-zoomBar">
           <button id="g-zoomIn" title="Zoom in">+</button>
@@ -905,11 +905,11 @@
           <button id="g-zoomFit" title="Fit graph" class="st-57">fit</button>
         </div>
         <div id="g-networkContainer"></div>
-        <div id="g-nodeInfoPanel" style="display:none"></div>
+        <div id="g-nodeInfoPanel" class="u-hide" ></div>
       </div>
 
       <!-- Arch canvas (shown only in arch view) -->
-      <div id="archView" style="display:none">
+      <div id="archView" class="u-hide" >
         <span id="a-title" hidden></span>
         <!-- Stacks/Actions/Diagram+Table: all controls for this view's
              own content, so they all live here on the right side of its
@@ -920,7 +920,7 @@
              long sidebar section might). flex-wrap so a narrow window
              wraps to a second line instead of overflowing. -->
         <div class="a-view-header">
-          <div style="display: flex;" class="st-58">
+          <div  class="u-show-flex st-58">
             <select id="a-stackSelect" class="a-stack-select st-59">
               <option value="">Add stack to search…</option>
               <option value="apache,linux,mysql,php">LAMP</option>
@@ -953,8 +953,8 @@
           <div id="a-loader"></div>
           <div id="a-ecosysImage" role="img" aria-label="Ecosystem architecture diagram"></div>
         </div>
-        <div id="a-table" style="display:none"></div>
-        <div id="a-empty" style="display:none">
+        <div id="a-table" class="u-hide" ></div>
+        <div id="a-empty" class="u-hide" >
           <div class="a-empty-head">
             <h3>Choose a stack to visualize</h3>
             <p>Render a live architecture diagram for any technology stack, stacked in tiers: hypervisor base layer, then OS, then applications. Every component is annotated with its installed vs. latest version, update severity, and any known CVEs. Pick a sample stack below, or add your own components from the sidebar.</p>
@@ -967,7 +967,7 @@
       </div>
 
       <!-- Docs view (shown only in docs view) -->
-      <div id="docsView" style="display:none"><div class="d-wrap">
+      <div id="docsView" class="u-hide" ><div class="d-wrap">
 
 <!-- ═══ SYSTEM ARCHITECTURE ══════════════════════════════════════ -->
 <section class="block" id="d-architecture">
@@ -1234,7 +1234,7 @@ flowchart TD
     class DB_V,DB_R,IDX db
     class Q,RET,RANK,AUG,LLM chat
 </div>
-<div style="display: grid;" class="st-67">
+<div  class="u-show-grid st-67">
   <div class="callout st-68">
     <p class="small st-69">Embedding model</p>
     <p class="small muted st-70">sentence-transformers all-MiniLM-L6-v2 or OpenAI text-embedding-3-small. Encodes release notes and Reddit posts into dense 384 or 1536 dimensional vectors indexed in FAISS.</p>
@@ -1891,7 +1891,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 <div class="arch-sub-body">
 <p class="small muted st-82">Fetched live from the API on first load. Rolling 2-year window. Est. size based on average document size.</p>
 
-<div style="display: grid;" class="st-100">
+<div  class="u-show-grid st-100">
 
   <!-- Versions card -->
   <div class="callout st-101">
@@ -1933,7 +1933,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       </div></div><!-- /#docsView -->
 
       <!-- CVE view (shown only in CVE view): timeline only; aggregates live in sidebar -->
-      <div id="cveView" class="cv-host" style="display:none">
+      <div id="cveView" class="u-hide cv-host" >
         <!-- NVD pipeline banner: collapsible -->
         <details class="cv-details">
           <summary>CVE Lifecycle Pipeline</summary>
@@ -1994,13 +1994,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
       <!-- Dashboard view -->
       <!-- Risk Intelligence view -->
-      <div id="dashboardView" style="display:none">
+      <div id="dashboardView" class="u-hide" >
         <div id="ri-idle" class="ri-idle">
           <div class="ri-idle-icon">&#x1F50D;</div>
           <div class="ri-idle-title">Release Risk Intelligence</div>
           <div class="ri-idle-sub">Select a component and optionally a specific version, then click Analyze Risk to get a deployment risk assessment.</div>
         </div>
-        <div id="ri-results" style="display:none">
+        <div id="ri-results" class="u-hide" >
           <div class="ri-score-bar">
             <div class="ri-score-num" id="ri-score-num">0</div>
             <div class="ri-score-info">
@@ -2031,13 +2031,26 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       </div><!-- /#dashboardView -->
 
       <!-- Changelog view -->
-      <div id="changelogView" style="display:none" aria-label="Version changelog">
+      <div id="changelogView" class="u-hide"  aria-label="Version changelog">
         <div class="cl-header">
           <h2>📝 Changelog</h2>
           <p>Notable changes to releasetrain-client, newest first.</p>
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-26</div>
+              <div class="cl-ver cl-ver-minor">v3.135.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>No inline styles left in the app code</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Show and hide, banners, inline editors and value-driven widths and colors now use classes and CSS variables from styles.css. Nothing changes visually.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The CVE page loading bar fills again. A recent CSS move had pinned it at zero width.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-26</div>
@@ -5464,7 +5477,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       </div><!-- /#changelogView -->
 
       <!-- Credits / Acknowledgements view -->
-      <div id="ackView" style="display:none">
+      <div id="ackView" class="u-hide" >
         <div class="ack-header">
           <h2>🤝 Credits &amp; Acknowledgements</h2>
           <p>We gratefully thank the following open data, open-source teams, and services whose APIs, feeds, databases, and software helped build releasetrain.io.</p>
@@ -5520,10 +5533,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
       <!-- Admin-only: Rewriter A/B eval view. No LLM grading, see
            runRewriterAbEval's own comment in ask.js for why. -->
-      <div id="evalRewriterView" style="display:none">
+      <div id="evalRewriterView" class="u-hide" >
         <div class="eval-rewriter-wrap st-114">
           <h2 class="st-115">🧪 Rewriter Eval</h2>
-          <div style="display: flex;" class="st-116">
+          <div  class="u-show-flex st-116">
             <input id="erQuestion" type="text" class="search-input st-117" placeholder="Type a question, or sample a real one...">
             <button type="button" id="erSampleBtn" class="btn btn-ghost">🎲 Sample</button>
             <button type="button" id="erRunBtn" class="btn btn-primary">Run</button>
@@ -5538,10 +5551,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
            comment in ask.js. Shares evalRewriterView's own CSS scope
            (.eval-rewriter-wrap/.er-grid/.er-compare) rather than a
            near-duplicate set of rules for the same layout shape. -->
-      <div id="evalEvaluatorView" style="display:none">
+      <div id="evalEvaluatorView" class="u-hide" >
         <div class="eval-rewriter-wrap st-114">
           <h2 class="st-115">🧪 Evaluator Eval</h2>
-          <div style="display: flex;" class="st-116">
+          <div  class="u-show-flex st-116">
             <input id="eeQuestion" type="text" class="search-input st-117" placeholder="Type a question, or sample a real one...">
             <button type="button" id="eeSampleBtn" class="btn btn-ghost">🎲 Sample</button>
             <button type="button" id="eeRunBtn" class="btn btn-primary">Run</button>
@@ -5554,10 +5567,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       <!-- Admin-only: Orchestrator eval view. See runOrchestratorEval's
            own comment in ask.js. Same shared CSS scope as the two views
            above. -->
-      <div id="evalOrchestratorView" style="display:none">
+      <div id="evalOrchestratorView" class="u-hide" >
         <div class="eval-rewriter-wrap st-114">
           <h2 class="st-115">🧪 Orchestrator Eval</h2>
-          <div style="display: flex;" class="st-116">
+          <div  class="u-show-flex st-116">
             <input id="eoQuestion" type="text" class="search-input st-117" placeholder="Type a question, or sample a real one...">
             <button type="button" id="eoSampleBtn" class="btn btn-ghost">🎲 Sample</button>
             <button type="button" id="eoRunBtn" class="btn btn-primary">Run</button>
@@ -5568,7 +5581,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       </div><!-- /#evalOrchestratorView -->
 
       <!-- Account / user management view -->
-      <div id="usersView" style="display:none">
+      <div id="usersView" class="u-hide" >
 
         <!-- Unauthenticated state -->
         <div id="ua-auth-panel">
@@ -5580,7 +5593,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="ua-card">
             <form id="ua-login-form">
               <h2 class="st-119">Sign in</h2>
-              <div id="ua-login-error" class="ua-msg ua-msg-error" style="display:none"></div>
+              <div id="ua-login-error" class="u-hide ua-msg ua-msg-error" ></div>
               <div class="ua-field">
                 <label for="ua-login-email">Email</label>
                 <input id="ua-login-email" type="email" class="search-input" autocomplete="email" required />
@@ -5591,10 +5604,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               </div>
               <button class="btn btn-primary" type="submit" id="ua-login-btn">Sign in</button>
             </form>
-            <form id="ua-register-form" style="display:none">
+            <form id="ua-register-form" class="u-hide" >
               <h2 class="st-119">Create account</h2>
-              <div id="ua-register-error" class="ua-msg ua-msg-error" style="display:none"></div>
-              <div id="ua-register-ok" class="ua-msg ua-msg-ok" style="display:none"></div>
+              <div id="ua-register-error" class="u-hide ua-msg ua-msg-error" ></div>
+              <div id="ua-register-ok" class="u-hide ua-msg ua-msg-ok" ></div>
               <div class="ua-field">
                 <label for="ua-reg-name">Name <span class="ua-opt">(optional)</span></label>
                 <input id="ua-reg-name" type="text" class="search-input" autocomplete="name" />
@@ -5610,7 +5623,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               </div>
               <button class="btn btn-primary" type="submit" id="ua-register-btn">Create account</button>
             </form>
-            <div id="ua-why-pane" style="display:none">
+            <div id="ua-why-pane" class="u-hide" >
               <h2 class="st-121">Why create an account?</h2>
           <ul class="ua-why-list">
             <li><span>🔖</span>Save a search once, reopen it from any device.</li>
@@ -5625,7 +5638,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
 
         <!-- Authenticated state -->
-        <div id="ua-profile-panel" style="display:none">
+        <div id="ua-profile-panel" class="u-hide" >
           <div class="ua-profile-header">
             <div class="ua-profile-header-top">
               <div class="ua-profile-info">
@@ -5640,7 +5653,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                  overview cards already use (no separate request). Right
                  in the profile card so they're visible immediately, not
                  a separate easy-to-miss line elsewhere on the page. -->
-            <div id="ua-reg-notice" class="ua-reg-notice" style="display:none"></div>
+            <div id="ua-reg-notice" class="u-hide ua-reg-notice" ></div>
             <div id="ua-reg-stats" class="ua-reg-stats"></div>
           </div>
           <details class="ua-admin-details">
@@ -5648,8 +5661,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               <span class="st-122">Change password</span>
             </summary>
               <form id="ua-pw-form" class="st-123">
-                <div id="ua-pw-error" class="ua-msg ua-msg-error" style="display:none"></div>
-                <div id="ua-pw-ok" class="ua-msg ua-msg-ok" style="display:none"></div>
+                <div id="ua-pw-error" class="u-hide ua-msg ua-msg-error" ></div>
+                <div id="ua-pw-ok" class="u-hide ua-msg ua-msg-ok" ></div>
                 <div class="ua-field">
                   <label for="ua-pw-new">New password <span class="ua-opt">(min 8 chars)</span></label>
                   <input id="ua-pw-new" type="password" class="search-input" autocomplete="new-password" minlength="8" required />
@@ -5664,26 +5677,26 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               <span class="ua-opt st-124">(use your own instead of the shared server key)</span>
             </summary>
               <div class="st-123">
-                <div id="ua-keys-error" class="ua-msg ua-msg-error" style="display:none"></div>
-                <div id="ua-keys-ok" class="ua-msg ua-msg-ok" style="display:none"></div>
+                <div id="ua-keys-error" class="u-hide ua-msg ua-msg-error" ></div>
+                <div id="ua-keys-ok" class="u-hide ua-msg ua-msg-ok" ></div>
                 <p class="ua-muted st-125">A key set here is used for your own Ask requests in place of the shared server key. Stored on your account; only the last 4 characters are ever shown back. Save an empty box to clear it and fall back to the shared key.</p>
                 <div class="ua-field st-118">
                   <label>Claude (Anthropic) <span id="ua-key-anthropic-status" class="ua-opt st-126"></span></label>
-                  <div style="display: flex;" class="st-127">
+                  <div  class="u-show-flex st-127">
                     <input id="ua-key-anthropic" type="password" class="search-input st-128" placeholder="sk-ant-…" autocomplete="one-time-code" name="rt-provider-key-anthropic" data-1p-ignore data-lpignore="true" data-form-type="other" maxlength="400" readonly />
                     <button class="btn btn-primary" type="button" data-key-save="anthropic">Save</button>
                   </div>
                 </div>
                 <div class="ua-field st-118">
                   <label>Groq <span id="ua-key-groq-status" class="ua-opt st-126"></span></label>
-                  <div style="display: flex;" class="st-127">
+                  <div  class="u-show-flex st-127">
                     <input id="ua-key-groq" type="password" class="search-input st-128" placeholder="gsk_…" autocomplete="one-time-code" name="rt-provider-key-groq" data-1p-ignore data-lpignore="true" data-form-type="other" maxlength="400" readonly />
                     <button class="btn btn-primary" type="button" data-key-save="groq">Save</button>
                   </div>
                 </div>
                 <div class="ua-field">
                   <label>Ollama Cloud <span id="ua-key-ollama-status" class="ua-opt st-126"></span></label>
-                  <div style="display: flex;" class="st-127">
+                  <div  class="u-show-flex st-127">
                     <input id="ua-key-ollama" type="password" class="search-input st-128" placeholder="key…" autocomplete="one-time-code" name="rt-provider-key-ollama" data-1p-ignore data-lpignore="true" data-form-type="other" maxlength="400" readonly />
                     <button class="btn btn-primary" type="button" data-key-save="ollama">Save</button>
                   </div>
@@ -5697,8 +5710,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               <span class="ua-opt st-124">(appear in share links)</span>
             </summary>
               <div class="st-123">
-                <div id="ua-org-error" class="ua-msg ua-msg-error" style="display:none"></div>
-                <div id="ua-org-ok" class="ua-msg ua-msg-ok" style="display:none"></div>
+                <div id="ua-org-error" class="u-hide ua-msg ua-msg-error" ></div>
+                <div id="ua-org-ok" class="u-hide ua-msg ua-msg-ok" ></div>
                 <p class="ua-muted st-125">Max 2. Each name is appended to share links as <code>?org=name&amp;share=…</code>. Alphanumeric, dash, or underscore only.</p>
                 <div class="ua-field">
                   <label for="ua-org-1">Org 1</label>
@@ -5719,7 +5732,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               <button id="ua-bm-refresh" class="btn btn-ghost st-129">Refresh</button>
             </summary>
             <p class="ua-muted st-130">Save searches using the 🔖 button in the sidebar. Share links are public.</p>
-            <div id="ua-bm-empty" class="ua-muted st-59" style="display: none;">No bookmarks yet.</div>
+            <div id="ua-bm-empty" class="u-hide ua-muted st-59" >No bookmarks yet.</div>
             <div id="ua-bm-list" class="ua-bm-list"></div>
           </details>
           <!-- Installed versions -->
@@ -5730,15 +5743,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               <button id="ua-inv-refresh" class="btn btn-ghost st-129">Refresh</button>
             </summary>
             <p class="ua-muted st-131">Record the versions you actually run. The Arch view compares them against the latest release to show how far each component has drifted. <span class="st-132">Saved to your account, so it follows you across devices.</span></p>
-            <div id="ua-inv-msg" class="ua-msg" style="display:none"></div>
-            <form id="ua-inv-add-form" style="display: flex;" class="st-133">
+            <div id="ua-inv-msg" class="u-hide ua-msg" ></div>
+            <form id="ua-inv-add-form"  class="u-show-flex st-133">
               <input id="ua-inv-comp" list="ua-comp-names" class="search-input st-134" placeholder="component (e.g. apache)" maxlength="64" autocomplete="off" required />
               <input id="ua-inv-ver" class="search-input st-135" placeholder="version (e.g. 2.4.58)" maxlength="32" autocomplete="off" required />
               <button class="btn btn-primary st-59" type="submit">Add</button>
             </form>
             <datalist id="ua-comp-names"></datalist>
             <details class="st-136">
-              <summary style="display: flex;" class="st-137">
+              <summary  class="u-show-flex st-137">
                 <span class="st-138">›</span> Paste a list
               </summary>
               <div class="st-47">
@@ -5747,11 +5760,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                 <button id="ua-inv-bulk-btn" class="btn btn-ghost st-141" type="button">Import</button>
               </div>
             </details>
-            <div id="ua-inv-empty" class="ua-muted st-59" style="display: none;">No versions recorded yet.</div>
+            <div id="ua-inv-empty" class="u-hide ua-muted st-59" >No versions recorded yet.</div>
             <div id="ua-inv-list" class="ua-bm-list"></div>
           </details>
           <!-- Admin: all users -->
-          <div id="ua-admin-section" style="display:none">
+          <div id="ua-admin-section" class="u-hide" >
             <!-- The registration notice/stat line now lives in the
                  profile card above (#ua-reg-notice/#ua-reg-stats), not
                  here; see that markup's own comment. -->
@@ -5873,21 +5886,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               </summary>
               <div id="ua-vendor-catalog-body">
                 <p class="ua-muted st-147">Corrects or adds a vendor name the automatic catalog (built from tracked release data and Reddit subreddit names) doesn't resolve on its own, e.g. mapping "ada" to "Ada" when a real product's automatic verification is ambiguous.</p>
-                <div id="ua-vendor-alias-error" class="ua-msg ua-msg-error" style="display:none"></div>
-                <form id="ua-vendor-alias-form" style="display: flex;" class="st-148">
+                <div id="ua-vendor-alias-error" class="u-hide ua-msg ua-msg-error" ></div>
+                <form id="ua-vendor-alias-form"  class="u-show-flex st-148">
                   <input id="ua-vendor-alias-input" class="search-input st-149" placeholder="Alias (e.g. ada)" maxlength="64" autocomplete="off" required />
                   <input id="ua-vendor-canonical-input" class="search-input st-149" placeholder="Canonical name (e.g. Ada)" maxlength="64" autocomplete="off" required />
                   <button class="btn btn-primary st-59" type="submit">Add alias</button>
                 </form>
-                <div id="ua-vendor-alias-empty" class="ua-muted st-59" style="display: none;">No aliases yet.</div>
+                <div id="ua-vendor-alias-empty" class="u-hide ua-muted st-59" >No aliases yet.</div>
                 <div id="ua-vendor-alias-list" class="ua-bm-list"></div>
 
                 <hr class="st-150" />
 
                 <p class="st-151">Manual gap-fill trigger</p>
                 <p class="ua-muted st-125">Manually run the same automatic-catalog gap-fill a bot's own fallback triggers for a vendor with zero tracked evidence. The result also shows up in the System overview panel's "Recent vendor gap-fills" list above.</p>
-                <div id="ua-vendor-gapfill-msg" class="ua-msg" style="display:none"></div>
-                <form id="ua-vendor-gapfill-form" style="display: flex;" class="st-152">
+                <div id="ua-vendor-gapfill-msg" class="u-hide ua-msg" ></div>
+                <form id="ua-vendor-gapfill-form"  class="u-show-flex st-152">
                   <input id="ua-vendor-gapfill-input" class="search-input st-153" placeholder="Vendor name (e.g. ada)" maxlength="64" autocomplete="off" required />
                   <button class="btn btn-primary st-59" type="submit">Run gap-fill</button>
                 </form>
@@ -5901,7 +5914,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               </summary>
               <div id="ua-user-list"></div>
             </details>
-            <details class="ua-admin-details" id="ua-search-events-section" style="display:none">
+            <details class="u-hide ua-admin-details" id="ua-search-events-section" >
               <summary class="ua-admin-header">
                 <span class="st-122">Search &amp; Ask activity</span>
                 <span id="ua-se-count" class="ua-muted st-59"></span>
@@ -5915,10 +5928,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       </div><!-- /#usersView -->
 
       <!-- ── Network view ── -->
-      <div id="networkView" style="display:none">
+      <div id="networkView" class="u-hide" >
 
         <!-- login gate -->
-        <div id="nk-gate" style="display: none;" class="st-154">
+        <div id="nk-gate"  class="u-hide st-154">
           <div class="st-155">🌐</div>
           <div class="st-156">Releases</div>
           <p class="st-157">
@@ -5932,7 +5945,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
 
         <!-- authenticated main panel -->
-        <div id="nk-main" style="display: none;" class="st-159">
+        <div id="nk-main"  class="u-hide st-159">
           <div class="nk-tabs">
             <button class="nk-tab nk-tab-active" data-nk-tab="discover">Discover</button>
             <button class="nk-tab" data-nk-tab="publish">Publish a Release</button>
@@ -5947,7 +5960,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
           <!-- publish -->
           <div class="nk-tab-panel" id="nk-panel-publish">
-            <div id="nk-publish-msg" style="display:none" class="nk-msg"></div>
+            <div id="nk-publish-msg"  class="u-hide nk-msg"></div>
             <form id="nk-publish-form" class="nk-form" autocomplete="off">
               <div class="nk-field">
                 <label class="nk-label" for="nk-vendor-ns">Vendor namespace</label>
@@ -6076,11 +6089,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
   <!-- ── Arch dialogs ── -->
   <dialog id="a-metricsDialog" class="st-164">
-    <div style="display: flex;" class="st-165">
+    <div  class="u-show-flex st-165">
       <strong>Ecosystem Metrics</strong>
       <button class="btn btn-ghost st-166" data-close-dialog="a-metricsDialog">Close</button>
     </div>
-    <div style="display: flex;" class="st-167">
+    <div  class="u-show-flex st-167">
       <div class="st-168">Total <strong id="a-totalComponents">0</strong></div>
       <div class="st-168">Stacks <strong id="a-stackCount">0</strong></div>
       <div class="st-169">CVE <strong id="a-cveCount">0</strong></div>
@@ -6091,22 +6104,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
   </dialog>
 
   <dialog id="a-codeDialog" class="st-171">
-    <div style="display: flex;" class="st-165">
+    <div  class="u-show-flex st-165">
       <strong>PlantUML Code</strong>
       <button class="btn btn-ghost st-166" data-close-dialog="a-codeDialog">Close</button>
     </div>
     <pre id="a-plantumlCode" class="st-172"></pre>
-    <div style="display: flex;" class="st-173">
+    <div  class="u-show-flex st-173">
       <button class="btn btn-primary" id="a-copyCodeBtn">Copy Code</button>
     </div>
   </dialog>
 
   <dialog id="a-detailsDialog" class="st-174">
-    <div style="display: flex;" class="st-165">
+    <div  class="u-show-flex st-165">
       <strong>Details</strong>
       <button class="btn btn-ghost st-166" data-close-dialog="a-detailsDialog">Close</button>
     </div>
-    <div style="display: grid;" class="st-175">
+    <div  class="u-show-grid st-175">
       <div class="st-176">
         <div class="st-177">Components</div>
         <div id="a-detComponents" class="st-178">—</div>
@@ -6119,11 +6132,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
   </dialog>
 
   <dialog id="a-configDialog" class="st-164">
-    <div style="display: flex;" class="st-165">
+    <div  class="u-show-flex st-165">
       <strong>Config</strong>
       <button class="btn btn-ghost st-166" data-close-dialog="a-configDialog">Close</button>
     </div>
-    <div style="display: grid;" class="st-179">
+    <div  class="u-show-grid st-179">
       <label for="a-cfgApi">API Endpoint</label>
       <input id="a-cfgApi" type="text" readonly class="st-180" />
       <button class="btn btn-ghost st-60" id="a-cfgCopyApi">Copy</button>
@@ -6135,6 +6148,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
   </dialog>
 
   <script>
+    // Show/hide without inline styles: the visibility classes live in styles.css.
+    // "" clears every override (back to the stylesheet's own display).
+    function setDisplay(el, value) {
+      el.classList.remove("u-hide", "u-show-block", "u-show-flex", "u-show-grid", "u-show-inline-block", "u-show-inline-flex");
+      if (value === "none") el.classList.add("u-hide");
+      else if (value) el.classList.add("u-show-" + value);
+    }
+
     /* ── Constants ────────────────────────────────────────────── */
     // Resolution order: ?api= query override, then <meta name="api-base">, then default.
     // Always normalised to a single trailing slash.
@@ -6157,15 +6178,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         shown = true;
         const bar = document.createElement("div");
         bar.setAttribute("role", "alert");
-        bar.style.cssText = "position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:99999;"
-          + "max-width:min(92vw,560px);display:flex;gap:10px;align-items:center;"
-          + "padding:8px 12px;border:1px solid var(--cve,#b91c1c);border-radius:3px;"
-          + "background:var(--surface,#fff);color:var(--text,#0f172a);font:13px/1.4 system-ui,sans-serif;"
-          + "box-shadow:0 2px 8px rgba(15,23,42,.12)";
+        bar.className = "fault-bar";
         bar.innerHTML = '<span class="st-182" >Something went wrong loading part of this page. '
           + 'A reload may help; if it persists the API may be unavailable.</span>'
-          + '<button type="button" style="border:1px solid var(--border,#e2e8f0);background:none;'
-          + 'border-radius:3px;padding:2px 8px;cursor:pointer;font:inherit">Dismiss</button>';
+          + '<button type="button" class="fault-dismiss">Dismiss</button>';
         bar.querySelector("button").addEventListener("click", () => { bar.remove(); shown = false; });
         (document.body || document.documentElement).appendChild(bar);
       };
@@ -6262,7 +6278,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     };
     fetch(API_BASE + "views/visibility").then(r => r.ok ? r.json() : {}).then(flags => {
       for (const [key, elId] of Object.entries(VIEW_NAV_LINKS)) {
-        if (flags[key] === false && EL[elId]) EL[elId].style.display = "none";
+        if (flags[key] === false && EL[elId]) setDisplay(EL[elId], "none");
       }
     }).catch(() => { /* nav just shows every link, same as before this existed */ });
 
@@ -6662,7 +6678,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const optionalHtml = optional.length
         ? optional.map(g => `<label class="ask-toggle-inline" title="${uaEsc(g.description || g.label || g.id)}">
             <input type="checkbox" class="ask-guardrail-input" data-id="${uaEsc(g.id)}"${g.effective ? " checked" : ""}${g.configurable ? "" : " disabled"}> ${uaEsc(shortLabel(g))}
-            <span id="ask-guardrail-msg-${uaEsc(g.id)}" class="st-184 ua-muted" style="display:none;">Saved</span>
+            <span id="ask-guardrail-msg-${uaEsc(g.id)}" class="u-hide st-184 ua-muted" >Saved</span>
           </label>`).join("")
         : `<p class="st-183 ua-muted" >None you can change.</p>`;
       const mandatoryHtml = mandatory.map(g => `<label class="st-185 ask-toggle-inline"  title="${uaEsc(g.description || g.label || g.id)}">
@@ -6670,9 +6686,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           </label>`).join("");
       bodyEl.innerHTML = `
         ${signedIn ? "" : `<p class="st-186 ua-muted" ><a href="#" id="askGuardrailsSignInLink" target="_self">Sign in</a> to change these.</p>`}
-        <div class="st-187" style="display:flex;">${optionalHtml}</div>
+        <div class="u-show-flex st-187" >${optionalHtml}</div>
         <p class="st-188 ua-muted" >Always on</p>
-        <div class="st-187" style="display:flex;">${mandatoryHtml}</div>
+        <div class="u-show-flex st-187" >${mandatoryHtml}</div>
       `;
       const signInLink = document.getElementById("askGuardrailsSignInLink");
       if (signInLink) signInLink.addEventListener("click", e => { e.preventDefault(); activateUsers(); });
@@ -6687,8 +6703,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             const putRes = await uaRequest("account/guardrails", { method: "PUT", body: JSON.stringify({ guardrailPrefs: { [id]: checked } }) });
             if (!putRes.ok) throw new Error((await putRes.json().catch(() => ({}))).error || "Save failed.");
             if (msgEl) {
-              msgEl.style.display = "";
-              setTimeout(() => { msgEl.style.display = "none"; }, 1200);
+              setDisplay(msgEl, "");
+              setTimeout(() => { setDisplay(msgEl, "none"); }, 1200);
             }
           } catch (err) {
             input.checked = !checked;
@@ -6777,7 +6793,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             </div>
             ${interactive
               ? `<input type="checkbox" class="ask-guardrail-input" data-id="${uaEsc(g.id)}"${g.effective ? " checked" : ""}${g.configurable ? "" : " disabled"}>
-                 <span id="ask-guardrail-tab-msg-${uaEsc(g.id)}" class="st-184 ua-muted" style="display:none;">Saved</span>`
+                 <span id="ask-guardrail-tab-msg-${uaEsc(g.id)}" class="u-hide st-184 ua-muted" >Saved</span>`
               : `<input type="checkbox" disabled${g.enabled ? " checked" : ""}>`}
           </div>`;
       };
@@ -6816,8 +6832,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             const putRes = await uaRequest("account/guardrails", { method: "PUT", body: JSON.stringify({ guardrailPrefs: { [id]: checked } }) });
             if (!putRes.ok) throw new Error((await putRes.json().catch(() => ({}))).error || "Save failed.");
             if (msgEl) {
-              msgEl.style.display = "";
-              setTimeout(() => { msgEl.style.display = "none"; }, 1200);
+              setDisplay(msgEl, "");
+              setTimeout(() => { setDisplay(msgEl, "none"); }, 1200);
             }
           } catch (err) {
             input.checked = !checked;
@@ -7312,7 +7328,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // Start where the main column starts so the sidebar never covers the text.
       const main = document.getElementById("askWorkflowTop");
       const host = main && main.parentElement;
-      el.style.left = host ? Math.max(0, Math.round(host.getBoundingClientRect().left)) + "px" : "0";
+      el.style.setProperty("--console-left", host ? Math.max(0, Math.round(host.getBoundingClientRect().left)) + "px" : "0px");
     }
     window.addEventListener("resize", () => { if (document.getElementById("askConsoleFixed")) renderAskConsole(); });
     function pushAskWorkflowPhase(phase, detail, preset, meta) {
@@ -9615,7 +9631,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         .map(n => ({ label: n.label || n.id, kind: kindOf(String(n.id)) }))
         .sort((a, b) => a.kind.localeCompare(b.kind) || a.label.localeCompare(b.label));
       box.innerHTML = rows.map(r =>
-        `<div class="st-200" style="display:flex;">` +
+        `<div class="u-show-flex st-200" >` +
         `<span class="st-201"  title="${aEsc(r.label)}">${aEsc(r.label)}</span>` +
         `<span class="st-202" >${r.kind}</span></div>`
       ).join("");
@@ -9639,7 +9655,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const container = document.getElementById("g-networkContainer");
       const badge = document.getElementById("g-graphBadge");
       const info = document.getElementById("g-nodeInfoPanel");
-      if (info) info.style.display = "none";
+      if (info) setDisplay(info, "none");
 
       const showVer  = document.getElementById("g-show-versions")?.checked !== false;
       const showCve  = document.getElementById("g-show-cve")?.checked !== false;
@@ -9784,9 +9800,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (!compSet.size || satelliteCount <= 0) {
         const suggestions = ["linux","nginx","redis","kubernetes","openssl","postgresql","mysql","python","nodejs","mongodb"];
         const chips = suggestions.map(s =>
-          `<a href="/?q=${encodeURIComponent(s)}&view=graph" class="st-203" style="display:inline-block;">${s}</a>`
+          `<a href="/?q=${encodeURIComponent(s)}&view=graph" class="u-show-inline-block st-203" >${s}</a>`
         ).join("");
-        container.innerHTML = `<div class="st-204" style="display:flex;"><div class="st-205" >Search for a component in the feed to populate the graph, or pick a suggestion:</div><div class="st-206" >${chips}</div></div>`;
+        container.innerHTML = `<div class="u-show-flex st-204" ><div class="st-205" >Search for a component in the feed to populate the graph, or pick a suggestion:</div><div class="st-206" >${chips}</div></div>`;
         if (badge) badge.textContent = "No data";
         if (statsEl) statsEl.textContent = "No data. Search for a component first.";
         gRenderIsolated(nodes.get());  // every seeded hub is edgeless here
@@ -9846,11 +9862,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
       /* ── Node click: show info panel ── */
       G_NETWORK.on("click", function(params) {
-        if (!params.nodes.length) { if (info) info.style.display = "none"; return; }
+        if (!params.nodes.length) { if (info) setDisplay(info, "none"); return; }
         const nodeId = params.nodes[0];
         const node = nodes.get(nodeId);
         if (!node || !info) return;
-        const closeBtn = '<button onclick="document.getElementById(\'g-nodeInfoPanel\').style.display=\'none\'" class="st-207" >×</button>';
+        const closeBtn = '<button onclick="document.getElementById(\'g-nodeInfoPanel\').classList.add(\'u-hide\')" class="st-207" >×</button>';
         const isComp = nodeId.startsWith("comp:");
         let html = closeBtn;
         if (isComp) {
@@ -9860,7 +9876,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           html += '<div class="st-208" >' + count + ' connected node' + (count !== 1 ? 's' : '') + '</div>';
           html += '<div class="st-209" ><a href="/?q=' + encodeURIComponent(key) + '" target="_self" class="st-210" >Open feed ↗</a></div>';
         } else {
-          html += '<strong class="st-211" style="display:block;">' + (node.sourceName || node.label) + '</strong>';
+          html += '<strong class="u-show-block st-211" >' + (node.sourceName || node.label) + '</strong>';
           if (node.title) html += '<div class="st-212" >' + node.title + '</div>';
           if (node.sourceUrl) {
             html += '<a href="' + node.sourceUrl + '" target="_blank" rel="noopener" class="st-213" >' + node.sourceUrl + ' ↗</a>';
@@ -9869,7 +9885,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           }
         }
         info.innerHTML = html;
-        info.style.display = "block";
+        setDisplay(info, "block");
       });
     }
 
@@ -9906,20 +9922,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (NET_ACTIVE) deactivateNetwork();
       G_ACTIVE = true;
       setViewParam("graph");
-      document.getElementById("graphView").style.display = "block";
-      document.getElementById("feedPanel").style.display = "none";
-      document.getElementById("graphControls").style.display = "";
-      document.getElementById("feedSidebarSections").style.display = "none";
+      setDisplay(document.getElementById("graphView"), "block");
+      setDisplay(document.getElementById("feedPanel"), "none");
+      setDisplay(document.getElementById("graphControls"), "");
+      setDisplay(document.getElementById("feedSidebarSections"), "none");
       EL.graphLink.classList.add("nav-active");
     }
     function deactivateGraph() {
       gDestroyNetwork();
       G_ACTIVE = false;
       setViewParam("");
-      document.getElementById("graphView").style.display = "none";
-      document.getElementById("feedPanel").style.display = "";
-      document.getElementById("graphControls").style.display = "none";
-      document.getElementById("feedSidebarSections").style.display = "";
+      setDisplay(document.getElementById("graphView"), "none");
+      setDisplay(document.getElementById("feedPanel"), "");
+      setDisplay(document.getElementById("graphControls"), "none");
+      setDisplay(document.getElementById("feedSidebarSections"), "");
       EL.graphLink.classList.remove("nav-active");
     }
 
@@ -10480,15 +10496,16 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const cw = canvas.clientWidth - 4, ch = canvas.clientHeight - 4;  // minus .a-canvas's own 2px padding per side
       if (cw <= 0 || ch <= 0) return;
       const scale = Math.min(cw / vw, ch / vh);
-      s.style.width = Math.floor(vw * scale) + "px";
-      s.style.height = Math.floor(vh * scale) + "px";
+      s.style.setProperty("--rt-fit-w", Math.floor(vw * scale) + "px");
+      s.style.setProperty("--rt-fit-h", Math.floor(vh * scale) + "px");
+      s.classList.add("a-fit");
     }
     let A_FIT_RESIZE_WIRED = false;
     function aRenderDiagram(uml) {
       A_UML_CODE = uml;
       A_PLANTUML_URL = A_PLANTUML_SERVER + aEncodePlantUML(uml);
       const host = aEl("ecosysImage"), loader = aEl("loader");
-      const done = () => { if (loader) loader.style.display = "none"; };
+      const done = () => { if (loader) setDisplay(loader, "none"); };
       // Inline the SVG so diagram links (community post handles) are clickable.
       fetch(A_PLANTUML_URL)
         .then(r => r.ok ? r.text() : Promise.reject(r.status))
@@ -10502,7 +10519,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             const vb = (s.getAttribute("viewBox") || "").trim().split(/\s+/);
             s.dataset.vbW = vb[2] || ""; s.dataset.vbH = vb[3] || "";
             s.removeAttribute("width"); s.removeAttribute("height");
-            s.style.display = "block"; s.style.margin = "auto";
+            setDisplay(s, "block"); s.classList.add("a-fit");
             aFitDiagramSvg();
           }
           host.querySelectorAll("a").forEach(a => { a.setAttribute("target", "_blank"); a.setAttribute("rel", "noopener noreferrer"); });
@@ -10574,10 +10591,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     // Show the result area (canvas or table per A_MODE), hide the empty state.
     function aShowResult() {
-      const e = aEl("empty"); if (e) e.style.display = "none";
+      const e = aEl("empty"); if (e) setDisplay(e, "none");
       const c = aCanvasEl(), t = aEl("table");
-      if (c) c.style.display = (A_MODE === "table") ? "none" : "";
-      if (t) t.style.display = (A_MODE === "table") ? "" : "none";
+      if (c) setDisplay(c, (A_MODE === "table") ? "none" : "");
+      if (t) setDisplay(t, (A_MODE === "table") ? "" : "none");
     }
     function aSetMode(mode) {
       A_MODE = (mode === "table") ? "table" : "diagram";
@@ -10586,7 +10603,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (dg) dg.className = "btn" + (A_MODE === "diagram" ? " btn-primary" : " btn-ghost");
       if (tb) tb.className = "btn" + (A_MODE === "table" ? " btn-primary" : " btn-ghost");
       const e = aEl("empty");
-      if (e && e.style.display !== "none") return;  // empty state stays put
+      if (e && !e.classList.contains("u-hide")) return;  // empty state stays put
       aShowResult();
       // If the diagram was last fit while .a-canvas was hidden behind the
       // table (0 client size, e.g. restoring "table" as the saved mode
@@ -10617,7 +10634,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         rows.map(r => {
           // Colour only marks a problem. Calm rows stay plain.
           const chip = r.gap.tier !== "none"
-            ? `<span class="a-chip-t" style="background:${A_FILLS.behind}">${aEsc(aGapLabel(r.gap))}</span>`
+            ? `<span class="a-chip-t rt-bg" style="--rt-bg:${A_FILLS.behind}">${aEsc(aGapLabel(r.gap))}</span>`
             : `<span class="a-muted-note">${r.key === "unknown" ? "version ?" : "on latest"}</span>`;
           return `<tr>` +
             `<td>${aEsc(r.v.name)}</td>` +
@@ -10625,7 +10642,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             `<td class="mono">${aEsc(r.lat.versionNumber || "-")}</td>` +
             `<td>${chip}</td>` +
             `<td class="mono">${r.days ? r.days + "d" : "-"}</td>` +
-            `<td>${(() => { const c = aCveOf(r.v); return c ? `<span class="a-chip-t" style="background:${A_FILLS.cve}">${aEsc(c.code)}</span>` : "-"; })()}</td>` +
+            `<td>${(() => { const c = aCveOf(r.v); return c ? `<span class="a-chip-t rt-bg" style="--rt-bg:${A_FILLS.cve}">${aEsc(c.code)}</span>` : "-"; })()}</td>` +
             `<td>${(() => {
               const p = (r.v._riskPosts || [])[0];
               if (!p) return `<span class="a-muted-note">no risk posts (${A_RISK_DAYS}d)</span>`;
@@ -10654,18 +10671,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     }
     function aShowEmptyState() {
       const loader = aEl("loader"), titleEl = aEl("title");
-      if (loader) loader.style.display = "none";
+      if (loader) setDisplay(loader, "none");
       if (titleEl) titleEl.textContent = "Pick a stack to begin";
-      const c = aCanvasEl(); if (c) c.style.display = "none";
-      const t = aEl("table"); if (t) t.style.display = "none";
-      const e = aEl("empty"); if (e) e.style.display = "block";
+      const c = aCanvasEl(); if (c) setDisplay(c, "none");
+      const t = aEl("table"); if (t) setDisplay(t, "none");
+      const e = aEl("empty"); if (e) setDisplay(e, "block");
       aBuildEmptyState();
     }
 
     async function aLoadUpdatedToday() {
       const loader = aEl("loader"), titleEl = aEl("title");
       aShowResult();
-      if (loader) loader.style.display = "block";
+      if (loader) setDisplay(loader, "block");
       try {
         const res = await fetch(`${API_BASE}v/d/updatedToday`, { headers: { Accept: "application/json" } });
         if (!res.ok) throw new Error(`${res.status}`);
@@ -10676,7 +10693,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         A_VERSIONS = vers;
         if (!vers.length) {
           if (titleEl) titleEl.textContent = "No components updated today";
-          if (loader) loader.style.display = "none";
+          if (loader) setDisplay(loader, "none");
           return;
         }
         await aAttachCve(vers);
@@ -10685,7 +10702,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         if (A_MODE === "table") aRenderTable();
       } catch (e) {
         console.error("Arch load error:", e);
-        if (loader) loader.style.display = "none";
+        if (loader) setDisplay(loader, "none");
       }
     }
 
@@ -10695,7 +10712,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (!names.length) { aShowEmptyState(); return; }
       const loader = aEl("loader"), titleEl = aEl("title");
       aShowResult();
-      if (loader) loader.style.display = "block";
+      if (loader) setDisplay(loader, "block");
       try {
         const query = names.map(n => `component=name:${encodeURIComponent(n)}`).join("&");
         const res = await fetch(`${API_BASE}v/d/versionsByComponent?${query}`, { headers: { Accept: "application/json" } });
@@ -10707,7 +10724,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         A_VERSIONS = vers;
         if (!vers.length) {
           if (titleEl) titleEl.textContent = "No data";
-          if (loader) loader.style.display = "none";
+          if (loader) setDisplay(loader, "none");
           return;
         }
         await aAttachCve(vers);
@@ -10717,7 +10734,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         if (A_MODE === "table") aRenderTable();
       } catch (e) {
         console.error("Arch load error:", e);
-        if (loader) loader.style.display = "none";
+        if (loader) setDisplay(loader, "none");
       }
     }
 
@@ -10736,20 +10753,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (NET_ACTIVE) deactivateNetwork();
       A_ACTIVE = true;
       setViewParam("arch");
-      document.getElementById("archView").style.display = "flex";
-      document.getElementById("feedPanel").style.display = "none";
-      document.getElementById("archControls").style.display = "";
-      document.getElementById("feedSidebarSections").style.display = "none";
+      setDisplay(document.getElementById("archView"), "flex");
+      setDisplay(document.getElementById("feedPanel"), "none");
+      setDisplay(document.getElementById("archControls"), "");
+      setDisplay(document.getElementById("feedSidebarSections"), "none");
       EL.archLink.classList.add("nav-active");
       aSetMode(A_MODE);  // sync the Diagram / Table toggle buttons
     }
     function deactivateArch() {
       A_ACTIVE = false;
       setViewParam("");
-      document.getElementById("archView").style.display = "none";
-      document.getElementById("feedPanel").style.display = "";
-      document.getElementById("archControls").style.display = "none";
-      document.getElementById("feedSidebarSections").style.display = "";
+      setDisplay(document.getElementById("archView"), "none");
+      setDisplay(document.getElementById("feedPanel"), "");
+      setDisplay(document.getElementById("archControls"), "none");
+      setDisplay(document.getElementById("feedSidebarSections"), "");
       EL.archLink.classList.remove("nav-active");
     }
 
@@ -10827,7 +10844,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           });
         });
         const pre = code.parentElement;
-        pre.style.position = "relative";
+        pre.classList.add("u-pos-rel");
         pre.appendChild(btn);
       });
     }
@@ -10914,7 +10931,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             window.mermaid.run({ nodes }).then(() => {
               nodes.forEach(n => {
                 const svg = n.querySelector("svg");
-                if (svg) svg.style.maxWidth = "none";
+                if (svg) svg.classList.add("u-max-none");
               });
             });
           }
@@ -11026,10 +11043,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (NET_ACTIVE) deactivateNetwork();
       D_ACTIVE = true;
       setViewParam("docs");
-      document.getElementById("docsView").style.display = "block";
-      document.getElementById("feedPanel").style.display = "none";
-      document.getElementById("docsControls").style.display = "";
-      document.getElementById("feedSidebarSections").style.display = "none";
+      setDisplay(document.getElementById("docsView"), "block");
+      setDisplay(document.getElementById("feedPanel"), "none");
+      setDisplay(document.getElementById("docsControls"), "");
+      setDisplay(document.getElementById("feedSidebarSections"), "none");
       EL.docsLink.classList.add("nav-active");
       dInitDocs();
       dScrollToHash();
@@ -11038,10 +11055,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     function deactivateDocs() {
       D_ACTIVE = false;
       setViewParam("");
-      document.getElementById("docsView").style.display = "none";
-      document.getElementById("feedPanel").style.display = "";
-      document.getElementById("docsControls").style.display = "none";
-      document.getElementById("feedSidebarSections").style.display = "";
+      setDisplay(document.getElementById("docsView"), "none");
+      setDisplay(document.getElementById("feedPanel"), "");
+      setDisplay(document.getElementById("docsControls"), "none");
+      setDisplay(document.getElementById("feedSidebarSections"), "");
       EL.docsLink.classList.remove("nav-active");
     }
 
@@ -11068,20 +11085,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (NET_ACTIVE) deactivateNetwork();
       CL_ACTIVE = true;
       setViewParam("changelog");
-      document.getElementById("changelogView").style.display = "block";
-      document.getElementById("feedPanel").style.display = "none";
-      document.getElementById("changelogControls").style.display = "";
-      document.getElementById("feedSidebarSections").style.display = "none";
+      setDisplay(document.getElementById("changelogView"), "block");
+      setDisplay(document.getElementById("feedPanel"), "none");
+      setDisplay(document.getElementById("changelogControls"), "");
+      setDisplay(document.getElementById("feedSidebarSections"), "none");
       EL.changelogLink.classList.add("nav-active");
     }
 
     function deactivateChangelog() {
       CL_ACTIVE = false;
       setViewParam("");
-      document.getElementById("changelogView").style.display = "none";
-      document.getElementById("feedPanel").style.display = "";
-      document.getElementById("changelogControls").style.display = "none";
-      document.getElementById("feedSidebarSections").style.display = "";
+      setDisplay(document.getElementById("changelogView"), "none");
+      setDisplay(document.getElementById("feedPanel"), "");
+      setDisplay(document.getElementById("changelogControls"), "none");
+      setDisplay(document.getElementById("feedSidebarSections"), "");
       EL.changelogLink.classList.remove("nav-active");
     }
 
@@ -11108,20 +11125,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (NET_ACTIVE) deactivateNetwork();
       ACK_ACTIVE = true;
       setViewParam("credits");
-      document.getElementById("ackView").style.display = "block";
-      document.getElementById("feedPanel").style.display = "none";
-      document.getElementById("ackControls").style.display = "";
-      document.getElementById("feedSidebarSections").style.display = "none";
+      setDisplay(document.getElementById("ackView"), "block");
+      setDisplay(document.getElementById("feedPanel"), "none");
+      setDisplay(document.getElementById("ackControls"), "");
+      setDisplay(document.getElementById("feedSidebarSections"), "none");
       EL.ackLink.classList.add("nav-active");
     }
 
     function deactivateAck() {
       ACK_ACTIVE = false;
       setViewParam("");
-      document.getElementById("ackView").style.display = "none";
-      document.getElementById("feedPanel").style.display = "";
-      document.getElementById("ackControls").style.display = "none";
-      document.getElementById("feedSidebarSections").style.display = "";
+      setDisplay(document.getElementById("ackView"), "none");
+      setDisplay(document.getElementById("feedPanel"), "");
+      setDisplay(document.getElementById("ackControls"), "none");
+      setDisplay(document.getElementById("feedSidebarSections"), "");
       EL.ackLink.classList.remove("nav-active");
     }
 
@@ -11153,19 +11170,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (EO_ACTIVE)  deactivateEvalOrchestrator();
       ER_ACTIVE = true;
       setViewParam("eval-rewriter");
-      document.getElementById("evalRewriterView").style.display = "block";
-      document.getElementById("feedPanel").style.display = "none";
-      document.getElementById("evalRewriterControls").style.display = "";
-      document.getElementById("feedSidebarSections").style.display = "none";
+      setDisplay(document.getElementById("evalRewriterView"), "block");
+      setDisplay(document.getElementById("feedPanel"), "none");
+      setDisplay(document.getElementById("evalRewriterControls"), "");
+      setDisplay(document.getElementById("feedSidebarSections"), "none");
       EL.evalRewriterLink.classList.add("nav-active");
     }
     function deactivateEvalRewriter() {
       ER_ACTIVE = false;
       setViewParam("");
-      document.getElementById("evalRewriterView").style.display = "none";
-      document.getElementById("feedPanel").style.display = "";
-      document.getElementById("evalRewriterControls").style.display = "none";
-      document.getElementById("feedSidebarSections").style.display = "";
+      setDisplay(document.getElementById("evalRewriterView"), "none");
+      setDisplay(document.getElementById("feedPanel"), "");
+      setDisplay(document.getElementById("evalRewriterControls"), "none");
+      setDisplay(document.getElementById("feedSidebarSections"), "");
       EL.evalRewriterLink.classList.remove("nav-active");
     }
     EL.evalRewriterLink.addEventListener("click", e => {
@@ -11194,19 +11211,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (EO_ACTIVE)  deactivateEvalOrchestrator();
       EE_ACTIVE = true;
       setViewParam("eval-evaluator");
-      document.getElementById("evalEvaluatorView").style.display = "block";
-      document.getElementById("feedPanel").style.display = "none";
-      document.getElementById("evalEvaluatorControls").style.display = "";
-      document.getElementById("feedSidebarSections").style.display = "none";
+      setDisplay(document.getElementById("evalEvaluatorView"), "block");
+      setDisplay(document.getElementById("feedPanel"), "none");
+      setDisplay(document.getElementById("evalEvaluatorControls"), "");
+      setDisplay(document.getElementById("feedSidebarSections"), "none");
       EL.evalEvaluatorLink.classList.add("nav-active");
     }
     function deactivateEvalEvaluator() {
       EE_ACTIVE = false;
       setViewParam("");
-      document.getElementById("evalEvaluatorView").style.display = "none";
-      document.getElementById("feedPanel").style.display = "";
-      document.getElementById("evalEvaluatorControls").style.display = "none";
-      document.getElementById("feedSidebarSections").style.display = "";
+      setDisplay(document.getElementById("evalEvaluatorView"), "none");
+      setDisplay(document.getElementById("feedPanel"), "");
+      setDisplay(document.getElementById("evalEvaluatorControls"), "none");
+      setDisplay(document.getElementById("feedSidebarSections"), "");
       EL.evalEvaluatorLink.classList.remove("nav-active");
     }
     EL.evalEvaluatorLink.addEventListener("click", e => {
@@ -11235,19 +11252,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (EE_ACTIVE)  deactivateEvalEvaluator();
       EO_ACTIVE = true;
       setViewParam("eval-orchestrator");
-      document.getElementById("evalOrchestratorView").style.display = "block";
-      document.getElementById("feedPanel").style.display = "none";
-      document.getElementById("evalOrchestratorControls").style.display = "";
-      document.getElementById("feedSidebarSections").style.display = "none";
+      setDisplay(document.getElementById("evalOrchestratorView"), "block");
+      setDisplay(document.getElementById("feedPanel"), "none");
+      setDisplay(document.getElementById("evalOrchestratorControls"), "");
+      setDisplay(document.getElementById("feedSidebarSections"), "none");
       EL.evalOrchestratorLink.classList.add("nav-active");
     }
     function deactivateEvalOrchestrator() {
       EO_ACTIVE = false;
       setViewParam("");
-      document.getElementById("evalOrchestratorView").style.display = "none";
-      document.getElementById("feedPanel").style.display = "";
-      document.getElementById("evalOrchestratorControls").style.display = "none";
-      document.getElementById("feedSidebarSections").style.display = "";
+      setDisplay(document.getElementById("evalOrchestratorView"), "none");
+      setDisplay(document.getElementById("feedPanel"), "");
+      setDisplay(document.getElementById("evalOrchestratorControls"), "none");
+      setDisplay(document.getElementById("feedSidebarSections"), "");
       EL.evalOrchestratorLink.classList.remove("nav-active");
     }
     EL.evalOrchestratorLink.addEventListener("click", e => {
@@ -12861,7 +12878,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const fmtN = n => n.toLocaleString();
       const pct = yestN ? Math.round((todayN - yestN) / yestN * 100) : null;
       const deltaHtml = pct != null
-        ? `, <span style="color:${pct > 0 ? '#475569' : pct < 0 ? '#dc2626' : '#6b7280'};font-weight:700">${pct >= 0 ? '+' : ''}${pct}%</span>`
+        ? `, <span class="rt-c u-bold" style="--rt-c:${pct > 0 ? '#475569' : pct < 0 ? '#dc2626' : '#6b7280'}">${pct >= 0 ? '+' : ''}${pct}%</span>`
         : '';
       const el = document.getElementById('home-r-total');
       if (el) el.innerHTML = fmtN(_homeRTotalNum) + ` [${fmtN(todayN)} today${deltaHtml}]`;
@@ -12988,7 +13005,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         listEl.innerHTML = items.map(item => {
           const q = normalizeQuery(item.query);
           if (!q) return "";
-          return '<a href="/?q=' + encodeCsvKeepCommas(q) + '" class="st-225" style="display:flex;">'
+          return '<a href="/?q=' + encodeCsvKeepCommas(q) + '" class="u-show-flex st-225" >'
             + '<span class="st-201" >' + q.replace(/&/g,"&amp;").replace(/</g,"&lt;") + '</span>'
             + '<span class="st-226" >' + item.count + (item.count === 1 ? ' search' : ' searches') + '</span>'
             + '</a>';
@@ -13015,7 +13032,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const pct = Math.round((todayN - yestN) / yestN * 100);
         const sign = pct >= 0 ? '+' : '';
         const color = pct > 0 ? '#475569' : pct < 0 ? '#dc2626' : '#6b7280';
-        return `, <span class="st-227" style="color:${color};">${sign}${pct}%</span>`;
+        return `, <span class="st-227 rt-c" style="--rt-c:${color}">${sign}${pct}%</span>`;
       };
       // Build LOOKBACK_DAYS-day date array (oldest → today)
       const days = Array.from({ length: LOOKBACK_DAYS }, (_, i) => {
@@ -13156,7 +13173,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     function cvSetProgress(loaded, total) {
       if (!CV_EL.loadProgressFill) return;
       const pct = total > 0 ? Math.min(100, Math.round(loaded / total * 100)) : 0;
-      CV_EL.loadProgressFill.style.width = pct + '%';
+      CV_EL.loadProgressFill.classList.add("rt-w");
+      CV_EL.loadProgressFill.style.setProperty("--rt-w", pct + "%");
     }
 
     async function cvFetchBatch(cursor = null) {
@@ -13169,7 +13187,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     async function cvLoadAll() {
       if (!CV_EL.loadProgress) return;
-      CV_EL.loadProgress.style.display = 'block';
+      setDisplay(CV_EL.loadProgress, 'block');
       try {
         const first = await cvFetchBatch();
         CV_STATE.totalCount = first.totalCount ?? first.data?.length ?? 0;
@@ -13191,12 +13209,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           cvRenderAggregates();
         }
         cvSetStatus(`${CV_STATE.all.length} CVE posts loaded`, 'done');
-        CV_EL.loadProgress.style.display = 'none';
+        setDisplay(CV_EL.loadProgress, 'none');
         cvFetchVersionIndex();
       } catch (e) {
         cvSetStatus('Failed to load: ' + e.message, 'error');
         if (CV_EL.postList) CV_EL.postList.innerHTML = `<li class="empty-state"><div class="icon">⚠️</div>${cvEscHtml(e.message)}</li>`;
-        if (CV_EL.loadProgress) CV_EL.loadProgress.style.display = 'none';
+        if (CV_EL.loadProgress) setDisplay(CV_EL.loadProgress, 'none');
       }
     }
 
@@ -13328,7 +13346,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
       const row2 = document.createElement('div'); row2.className = 'post-row2';
       row2.innerHTML = `<span>📅 ${date}</span><span>⬆ ${post.score ?? 0}</span><span>💬 ${post.num_comments ?? 0}</span>` +
-        (ratio !== null ? `<span><span class="score-bar"><span class="score-fill" style="width:${ratio}%"></span></span> ${ratio}%</span>` : '') +
+        (ratio !== null ? `<span><span class="score-bar"><span class="score-fill rt-w" style="--rt-w:${ratio}%"></span></span> ${ratio}%</span>` : '') +
         `<span>👤 ${cvEscHtml(post.author ?? '')}</span>`;
 
       meta.appendChild(titleDiv); meta.appendChild(chips); meta.appendChild(row2);
@@ -13363,7 +13381,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           const a = document.createElement('a');
           a.href = 'https://nvd.nist.gov/vuln/detail/' + encodeURIComponent(id);
           a.target = '_blank'; a.rel = 'noopener noreferrer';
-          a.style.cssText = 'color:inherit;text-decoration:underline dotted;';
+          a.classList.add("link-dotted");
           a.textContent = id; label.appendChild(a);
         });
         label.appendChild(document.createTextNode(' · Event Timeline'));
@@ -13583,7 +13601,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (CV_EL.aggStatus) CV_EL.aggStatus.innerHTML = CV_NVD_STATUSES
         .filter(s => (statusMap.get(s.key) ?? 0) > 0)
         .map(s => { const n = statusMap.get(s.key) ?? 0;
-          return `<div class="bar-row" title="${cvEscHtml(s.desc)}"><span class="bar-label">${cvEscHtml(s.label)}</span><span class="bar-track"><span class="bar-fill ${s.bar}" style="width:${Math.round(n/maxStatus*100)}%"></span></span><span class="bar-count">${n}</span></div>`;
+          return `<div class="bar-row" title="${cvEscHtml(s.desc)}"><span class="bar-label">${cvEscHtml(s.label)}</span><span class="bar-track"><span class="bar-fill ${s.bar} rt-w" style="--rt-w:${Math.round(n/maxStatus*100)}%"></span></span><span class="bar-count">${n}</span></div>`;
         }).join('') || '<span class="st-229" >No data yet</span>';
 
       const srcCount = { reddit: 0, stackoverflow: 0, other: 0 };
@@ -13613,7 +13631,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const months = [...monthMap.entries()].sort((a, b) => a[0].localeCompare(b[0]));
       const maxM = Math.max(...months.map(m => m[1]), 1);
       if (CV_EL.aggMonthly) CV_EL.aggMonthly.innerHTML = months.length
-        ? months.map(([mo, n]) => `<div class="bar-row"><span class="bar-label">${mo}</span><span class="bar-track"><span class="bar-fill" style="width:${Math.round(n/maxM*100)}%"></span></span><span class="bar-count">${n}</span></div>`).join('')
+        ? months.map(([mo, n]) => `<div class="bar-row"><span class="bar-label">${mo}</span><span class="bar-track"><span class="bar-fill rt-w" style="--rt-w:${Math.round(n/maxM*100)}%"></span></span><span class="bar-count">${n}</span></div>`).join('')
         : '<span class="st-229" >No date data yet</span>';
     }
 
@@ -13631,7 +13649,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const sorted = [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12);
       const maxV = Math.max(...sorted.map(e => e[1]), 1);
       if (!sorted.length) return '<span class="st-229" >No data</span>';
-      return sorted.map(([label, n]) => `<div class="bar-row"><span class="bar-label" title="${cvEscHtml(label)}">${cvEscHtml(label)}</span><span class="bar-track"><span class="bar-fill ${colorClass}" style="width:${Math.round(n/maxV*100)}%"></span></span><span class="bar-count">${n}</span></div>`).join('');
+      return sorted.map(([label, n]) => `<div class="bar-row"><span class="bar-label" title="${cvEscHtml(label)}">${cvEscHtml(label)}</span><span class="bar-track"><span class="bar-fill ${colorClass} rt-w" style="--rt-w:${Math.round(n/maxV*100)}%"></span></span><span class="bar-count">${n}</span></div>`).join('');
     }
 
     const CV_CVE_RE = /CVE-\d{4}-\d{4,}/gi;
@@ -13714,10 +13732,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (NET_ACTIVE) deactivateNetwork();
       CV_ACTIVE = true;
       setViewParam("cve");
-      document.getElementById("cveView").style.display = "flex";
-      document.getElementById("feedPanel").style.display = "none";
-      document.getElementById("cveControls").style.display = "";
-      document.getElementById("feedSidebarSections").style.display = "none";
+      setDisplay(document.getElementById("cveView"), "flex");
+      setDisplay(document.getElementById("feedPanel"), "none");
+      setDisplay(document.getElementById("cveControls"), "");
+      setDisplay(document.getElementById("feedSidebarSections"), "none");
       EL.cveLink.classList.add("nav-active");
       cvInitPage();
     }
@@ -13725,10 +13743,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     function deactivateCve() {
       CV_ACTIVE = false;
       setViewParam("");
-      document.getElementById("cveView").style.display = "none";
-      document.getElementById("feedPanel").style.display = "";
-      document.getElementById("cveControls").style.display = "none";
-      document.getElementById("feedSidebarSections").style.display = "";
+      setDisplay(document.getElementById("cveView"), "none");
+      setDisplay(document.getElementById("feedPanel"), "");
+      setDisplay(document.getElementById("cveControls"), "none");
+      setDisplay(document.getElementById("feedSidebarSections"), "");
       EL.cveLink.classList.remove("nav-active");
     }
 
@@ -13839,15 +13857,17 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     }
 
     function riRenderResults({ compRaw, targetV, recentVers, cveVers, isCveTarget, channel, posts, riskPostsList, cvePostsList, soPostsList, score, level, scoreColor, rec, windowDays }) {
-      document.getElementById("ri-idle").style.display = "none";
-      document.getElementById("ri-results").style.display = "";
+      setDisplay(document.getElementById("ri-idle"), "none");
+      setDisplay(document.getElementById("ri-results"), "");
 
       const numEl = document.getElementById("ri-score-num");
       numEl.textContent = score;
-      numEl.style.color = scoreColor;
+      numEl.classList.add("rt-c");
+      numEl.style.setProperty("--rt-c", scoreColor);
       const lvlEl = document.getElementById("ri-score-level");
       lvlEl.textContent = level + " Risk";
-      lvlEl.style.color = scoreColor;
+      lvlEl.classList.add("rt-c");
+      lvlEl.style.setProperty("--rt-c", scoreColor);
       document.getElementById("ri-score-comp").textContent =
         compRaw + (targetV ? " v" + (targetV.versionNumber || "?") : " (all versions)");
       document.getElementById("ri-score-rec").textContent = rec;
@@ -13939,10 +13959,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (NET_ACTIVE) deactivateNetwork();
       DB_ACTIVE = true;
       setViewParam("risk");
-      document.getElementById("dashboardView").style.display = "block";
-      document.getElementById("feedPanel").style.display = "none";
-      document.getElementById("dashboardControls").style.display = "";
-      document.getElementById("feedSidebarSections").style.display = "none";
+      setDisplay(document.getElementById("dashboardView"), "block");
+      setDisplay(document.getElementById("feedPanel"), "none");
+      setDisplay(document.getElementById("dashboardControls"), "");
+      setDisplay(document.getElementById("feedSidebarSections"), "none");
       EL.dashboardLink.classList.add("nav-active");
       riPopulateVersions();
     }
@@ -13950,10 +13970,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     function deactivateDashboard() {
       DB_ACTIVE = false;
       setViewParam("");
-      document.getElementById("dashboardView").style.display = "none";
-      document.getElementById("feedPanel").style.display = "";
-      document.getElementById("dashboardControls").style.display = "none";
-      document.getElementById("feedSidebarSections").style.display = "";
+      setDisplay(document.getElementById("dashboardView"), "none");
+      setDisplay(document.getElementById("feedPanel"), "");
+      setDisplay(document.getElementById("dashboardControls"), "none");
+      setDisplay(document.getElementById("feedSidebarSections"), "");
       EL.dashboardLink.classList.remove("nav-active");
     }
 
@@ -14113,11 +14133,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             body: JSON.stringify({ outcome, fromVersion, description })
           });
           if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || res.status);
-          msgEl.style.color = "#475569";
+          msgEl.classList.remove("msg-err"); msgEl.classList.add("msg-muted");
           msgEl.textContent = "Thank you for your report.";
           setTimeout(() => { wrap.remove(); nkLoadReleases(document.getElementById("nk-search").value); }, 1200);
         } catch (err) {
-          msgEl.style.color = "#b91c1c";
+          msgEl.classList.remove("msg-muted"); msgEl.classList.add("msg-err");
           msgEl.textContent = "Could not submit: " + nkEsc(String(err.message || "error"));
         }
       });
@@ -14127,12 +14147,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const gate = document.getElementById("nk-gate");
       const main = document.getElementById("nk-main");
       if (!uaToken()) {
-        gate.style.display = "block";
-        main.style.display = "none";
+        setDisplay(gate, "block");
+        setDisplay(main, "none");
         return;
       }
-      gate.style.display = "none";
-      main.style.display = "block";
+      setDisplay(gate, "none");
+      setDisplay(main, "block");
       nkLoadReleases((document.getElementById("nk-search") || {}).value || "");
     }
 
@@ -14150,10 +14170,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (UA_ACTIVE)  deactivateUsers();
       NET_ACTIVE = true;
       setViewParam("release");
-      document.getElementById("networkView").style.display = "block";
-      document.getElementById("feedPanel").style.display = "none";
-      document.getElementById("networkControls").style.display = "";
-      document.getElementById("feedSidebarSections").style.display = "none";
+      setDisplay(document.getElementById("networkView"), "block");
+      setDisplay(document.getElementById("feedPanel"), "none");
+      setDisplay(document.getElementById("networkControls"), "");
+      setDisplay(document.getElementById("feedSidebarSections"), "none");
       EL.networkLink.classList.add("nav-active");
       nkRender();
     }
@@ -14161,10 +14181,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     function deactivateNetwork() {
       NET_ACTIVE = false;
       setViewParam("");
-      document.getElementById("networkView").style.display = "none";
-      document.getElementById("feedPanel").style.display = "";
-      document.getElementById("networkControls").style.display = "none";
-      document.getElementById("feedSidebarSections").style.display = "";
+      setDisplay(document.getElementById("networkView"), "none");
+      setDisplay(document.getElementById("feedPanel"), "");
+      setDisplay(document.getElementById("networkControls"), "none");
+      setDisplay(document.getElementById("feedSidebarSections"), "");
       EL.networkLink.classList.remove("nav-active");
     }
 
@@ -14205,12 +14225,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (nsErr) {
         msgEl.className = "nk-msg nk-msg-error";
         msgEl.textContent = nsErr;
-        msgEl.style.display = "block";
+        setDisplay(msgEl, "block");
         return;
       }
       msgEl.className = "nk-msg";
       msgEl.textContent = "Publishing...";
-      msgEl.style.display = "block";
+      setDisplay(msgEl, "block");
       try {
         const token = localStorage.getItem("rt_token");
         const res = await fetch(API_BASE + "knowledge/releases", {
@@ -14226,13 +14246,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         msgEl.textContent = "Release published.";
         document.getElementById("nk-publish-form").reset();
         setTimeout(() => {
-          msgEl.style.display = "none";
+          setDisplay(msgEl, "none");
           document.querySelector("[data-nk-tab='discover']").click();
         }, 1400);
       } catch (err) {
         msgEl.className = "nk-msg nk-msg-error";
         msgEl.textContent = "Publish failed: " + nkEsc(String(err.message || "error"));
-        msgEl.style.display = "block";
+        setDisplay(msgEl, "block");
       }
     });
 
@@ -14271,7 +14291,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const el = document.getElementById(id);
       if (!el) return;
       el.textContent = text;
-      el.style.display = text ? "" : "none";
+      setDisplay(el, text ? "" : "none");
     }
 
     function uaUpdateTopbar() {
@@ -14280,9 +14300,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (!chip) return;
       if (user) {
         chip.textContent = user.name || user.email;
-        chip.style.display = "";
+        setDisplay(chip, "");
       } else {
-        chip.style.display = "none";
+        setDisplay(chip, "none");
       }
       // See #authStatusDot's own markup comment: kept in sync here too,
       // since this function (not just uaUpdateAskIntroSignin) is one of
@@ -14331,7 +14351,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // points (bootstrap and every uaRender) for the same original
       // reason described above.
       const btn = document.getElementById("topSignInLink");
-      if (btn) btn.style.display = (token && user) ? "none" : "";
+      if (btn) setDisplay(btn, (token && user) ? "none" : "");
       const dot = document.getElementById("authStatusDot");
       if (dot) {
         const signedIn = !!(token && user);
@@ -14347,7 +14367,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // genuinely useful, and reappears, the moment there's a real
       // account to save a preference to.
       const guardrails = document.getElementById("askGuardrailsDetails");
-      if (guardrails) guardrails.style.display = (token && user) ? "" : "none";
+      if (guardrails) setDisplay(guardrails, (token && user) ? "" : "none");
     }
     function uaSetAnonQuotaNote(remaining, limit) {
       const el = document.getElementById("askAnonQuotaNote");
@@ -14383,8 +14403,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     function uaRender() {
       const token = uaToken();
       const user = uaUser();
-      document.getElementById("ua-auth-panel").style.display = (!token || !user) ? "" : "none";
-      document.getElementById("ua-profile-panel").style.display = (token && user) ? "" : "none";
+      setDisplay(document.getElementById("ua-auth-panel"), (!token || !user) ? "" : "none");
+      setDisplay(document.getElementById("ua-profile-panel"), (token && user) ? "" : "none");
       uaUpdateAskIntroSignin();
       if (token && user) {
         document.getElementById("ua-profile-name").textContent = user.name || user.email;
@@ -14397,7 +14417,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         badge.className = "ua-badge ua-badge-" + user.role;
         const adminSection = document.getElementById("ua-admin-section");
         if (user.role === "admin") {
-          adminSection.style.display = "";
+          setDisplay(adminSection, "");
           uaLoadDashboard();
           uaLoadSettings();
           uaLoadGuardrails();
@@ -14407,7 +14427,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           uaLoadUsers();
           uaLoadSearchEvents();
         } else {
-          adminSection.style.display = "none";
+          setDisplay(adminSection, "none");
         }
         // Admin-only nav item, hidden from everyone else regardless of
         // the separate site-wide VIEW_NAV_LINKS visibility toggles above
@@ -14529,10 +14549,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const statsEl = document.getElementById("ua-reg-stats");
       if (!noticeEl || !statsEl || !users) return;
       if (users.newSinceLastLogin > 0) {
-        noticeEl.style.display = "";
+        setDisplay(noticeEl, "");
         noticeEl.innerHTML = `🔔 <strong>${users.newSinceLastLogin}</strong> new registration${users.newSinceLastLogin === 1 ? "" : "s"} since your last login.`;
       } else {
-        noticeEl.style.display = "none";
+        setDisplay(noticeEl, "none");
         noticeEl.innerHTML = "";
       }
       const q = queries || { total: 0, last7Days: 0 };
@@ -14623,7 +14643,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="ua-dash-card-label">MongoDB storage</div>
           <div class="ua-dash-card-value">${storage.storageMb} MB</div>
           <div class="ua-dash-card-sub">of ${storage.limitMb} MB cap (${storagePct}%)</div>
-          <div class="ua-dash-bar"><div class="ua-dash-bar-fill${storagePct >= 90 ? " ua-dash-bar-alert" : ""}" style="width:${Math.min(100, storagePct)}%"></div></div>
+          <div class="ua-dash-bar"><div class="ua-dash-bar-fill rt-w${storagePct >= 90 ? " ua-dash-bar-alert" : ""}" style="--rt-w:${Math.min(100, storagePct)}%"></div></div>
         </div>
         <div class="ua-dash-card ${attrPct >= 15 ? "ua-dash-card-alert" : ""}">
           <div class="ua-dash-card-label">Source attribution</div>
@@ -15117,7 +15137,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <span class="ua-bot-row-detail">default ${def}d</span>
           <input type="number" class="st-252 ua-settings-input ua-cadence-input" data-bot="${uaEsc(bot)}" value="${effective}" min="1" max="365" >
           <button type="button" class="st-249 btn btn-ghost ua-cadence-save" data-bot="${uaEsc(bot)}" >Save</button>
-          <button type="button" class="btn btn-ghost ua-cadence-reset" data-bot="${uaEsc(bot)}" style="font-size:11px;padding:4px 8px${hasOverride ? "" : ";display:none"}">Reset to default</button>
+          <button type="button" class="btn btn-ghost ua-cadence-reset ua-cadence-reset-btn${hasOverride ? "" : " u-hide"}" data-bot="${uaEsc(bot)}">Reset to default</button>
         </div>`;
       }).join("");
 
@@ -15136,7 +15156,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             btn.textContent = "Saved";
             setTimeout(() => { btn.textContent = prevText; btn.disabled = false; }, 1200);
             const resetBtn = listEl.querySelector(`.ua-cadence-reset[data-bot="${CSS.escape(bot)}"]`);
-            if (resetBtn) resetBtn.style.display = "";
+            if (resetBtn) setDisplay(resetBtn, "");
           } catch (err) {
             alert(err.message || "Save failed.");
             btn.textContent = prevText;
@@ -15156,7 +15176,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             const applied = await putRes.json();
             const def = applied.defaults ? applied.defaults[bot] : undefined;
             if (input && Number.isFinite(def)) input.value = def;
-            btn.style.display = "none";
+            setDisplay(btn, "none");
           } catch (err) {
             alert(err.message || "Reset failed.");
           } finally {
@@ -15182,13 +15202,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const res = await uaRequest("admin/vendor-aliases").catch(() => null);
       if (!res || !res.ok) {
         listEl.innerHTML = `<p class="st-189 ua-muted" >Could not load vendor aliases.</p>`;
-        if (emptyEl) emptyEl.style.display = "none";
+        if (emptyEl) setDisplay(emptyEl, "none");
         return;
       }
       const { data } = await res.json();
       const rows = data || [];
       if (countEl) countEl.textContent = rows.length ? "(" + rows.length + ")" : "";
-      if (emptyEl) emptyEl.style.display = rows.length ? "none" : "";
+      if (emptyEl) setDisplay(emptyEl, rows.length ? "none" : "");
       listEl.innerHTML = rows.map(a => `<div class="ua-bm-item" data-id="${uaEsc(a._id)}">
         <span class="ua-bm-name">${uaEsc(a.alias)} &rarr; ${uaEsc(a.canonicalName)}</span>
         <div class="ua-bm-actions">
@@ -15207,7 +15227,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             if (row) row.remove();
             const remaining = listEl.children.length;
             if (countEl) countEl.textContent = remaining ? "(" + remaining + ")" : "";
-            if (emptyEl) emptyEl.style.display = remaining ? "none" : "";
+            if (emptyEl) setDisplay(emptyEl, remaining ? "none" : "");
           } else {
             alert("Failed to delete alias.");
             btn.disabled = false;
@@ -15345,7 +15365,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     function uaSelectTab(name) {
       const panes = { login: "ua-login-form", register: "ua-register-form", why: "ua-why-pane" };
       for (const k of Object.keys(panes)) {
-        document.getElementById(panes[k]).style.display = k === name ? "" : "none";
+        setDisplay(document.getElementById(panes[k]), k === name ? "" : "none");
         document.getElementById("ua-tab-" + k).classList.toggle("ua-tab-active", k === name);
       }
     }
@@ -15504,8 +15524,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (!el) return;
       el.textContent = text || "";
       el.className = "ua-msg " + (kind === "error" ? "ua-msg-error" : "ua-msg-ok");
-      el.style.display = text ? "" : "none";
-      if (text) setTimeout(() => { el.style.display = "none"; }, 4000);
+      setDisplay(el, text ? "" : "none");
+      if (text) setTimeout(() => { setDisplay(el, "none"); }, 4000);
     }
 
     let uaInvNamesLoaded = false;
@@ -15538,15 +15558,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (countEl) countEl.textContent = inv.length ? "(" + inv.length + ")" : "";
       if (!inv.length) {
         listEl.innerHTML = "";
-        if (emptyEl) emptyEl.style.display = "";
+        if (emptyEl) setDisplay(emptyEl, "");
         return;
       }
-      if (emptyEl) emptyEl.style.display = "none";
+      if (emptyEl) setDisplay(emptyEl, "none");
       listEl.innerHTML = inv.map(e => `<div class="ua-bm-item" data-comp="${uaEsc(e.component)}">
         <div class="st-255" >
           <span class="ua-bm-name" title="${uaEsc(e.component)}">${uaEsc(e.component)}</span>
           <span class="st-256 ua-org-chip" >${uaEsc(e.version)}</span>
-          <span class="st-257 ua-inv-drift ua-muted" style="display:block;">checking latest…</span>
+          <span class="u-show-block st-257 ua-inv-drift ua-muted" >checking latest…</span>
         </div>
         <div class="ua-bm-actions">
           <button class="st-258 btn btn-ghost ua-inv-edit-btn" data-comp="${uaEsc(e.component)}" data-ver="${uaEsc(e.version)}" >Edit</button>
@@ -15628,7 +15648,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         }
         const color = A_FILLS.behind;
         slot.innerHTML =
-          `<span class="st-261 ua-org-chip" style="background:${color};">→ ${uaEsc(lv)}</span> `
+          `<span class="st-261 ua-org-chip rt-bg" style="--rt-bg:${color}">→ ${uaEsc(lv)}</span> `
           + `<span class="ua-muted">${uaEsc(aGapLabel(gap))} behind</span>` + cveHtml;
       });
     }
@@ -15691,7 +15711,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const section = document.getElementById("ua-search-events-section");
       const listEl  = document.getElementById("ua-se-list");
       const countEl = document.getElementById("ua-se-count");
-      section.style.display = "";
+      setDisplay(section, "");
       listEl.innerHTML = `<p class="st-189 ua-muted" >Loading…</p>`;
       const [res, usersById] = await Promise.all([
         uaRequest("events/search?limit=200").catch(() => null),
@@ -15801,7 +15821,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const countEl = document.getElementById("ua-bm-count");
       if (!listEl) return;
       listEl.innerHTML = `<p class="st-263 ua-muted" >Loading…</p>`;
-      if (emptyEl) emptyEl.style.display = "none";
+      if (emptyEl) setDisplay(emptyEl, "none");
       const res = await uaRequest("bookmarks/").catch(() => null);
       if (!res || !res.ok) {
         listEl.innerHTML = `<p class="st-263 ua-muted" >Could not load bookmarks.</p>`;
@@ -15811,7 +15831,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (countEl) countEl.textContent = "(" + data.data.length + ")";
       if (!data.data.length) {
         listEl.innerHTML = "";
-        if (emptyEl) emptyEl.style.display = "";
+        if (emptyEl) setDisplay(emptyEl, "");
         return;
       }
       const shareBase = location.origin + location.pathname + "?share=";
@@ -15822,7 +15842,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         return `<div class="ua-bm-item" data-id="${uaEsc(b._id)}">
           <div class="st-255" >
             <span class="ua-bm-name" title="${uaEsc(b.name)}">${uaEsc(b.name)}</span>
-            ${orgChips ? `<div class="st-264" style="display:flex;">${orgChips}</div>` : ""}
+            ${orgChips ? `<div class="u-show-flex st-264" >${orgChips}</div>` : ""}
           </div>
           <div class="ua-bm-actions">
             <a href="${uaEsc(b.url)}" class="st-258 btn btn-ghost"  title="Open saved search">Open</a>
@@ -15857,17 +15877,17 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           const input = document.createElement("input");
           input.type = "text";
           input.value = currentName;
-          input.style.cssText = "font-size:12px;padding:3px 6px;border:1px solid var(--border);border-radius:var(--radius-sm);width:100%;box-sizing:border-box";
+          input.classList.add("ua-inline-input");
           const saveBtn = document.createElement("button");
           saveBtn.textContent = "Save";
           saveBtn.className = "btn btn-ghost";
-          saveBtn.style.cssText = "font-size:12px;padding:4px 8px;margin-top:4px";
+          saveBtn.classList.add("ua-inline-btn");
           const cancelBtn = document.createElement("button");
           cancelBtn.textContent = "Cancel";
           cancelBtn.className = "btn btn-ghost";
-          cancelBtn.style.cssText = "font-size:12px;padding:4px 8px;margin-top:4px;margin-left:4px";
+          cancelBtn.classList.add("ua-inline-btn", "ua-inline-btn-2");
           const editWrap = document.createElement("div");
-          editWrap.style.cssText = "flex:1;min-width:0";
+          editWrap.classList.add("ua-inline-wrap");
           editWrap.appendChild(input);
           const editActions = document.createElement("div");
           editActions.appendChild(saveBtn);
@@ -15875,15 +15895,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           editWrap.appendChild(editActions);
           const actionsEl = item.querySelector(".ua-bm-actions");
           const nameParent = nameEl.parentElement;
-          nameParent.style.display = "none";
-          actionsEl.style.display = "none";
+          setDisplay(nameParent, "none");
+          setDisplay(actionsEl, "none");
           item.appendChild(editWrap);
           input.focus();
           input.select();
           const doCancel = () => {
             item.removeChild(editWrap);
-            nameParent.style.display = "";
-            actionsEl.style.display = "";
+            setDisplay(nameParent, "");
+            setDisplay(actionsEl, "");
           };
           cancelBtn.addEventListener("click", doCancel);
           const doSave = async () => {
@@ -15945,7 +15965,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         }
         if (data.orgs && data.orgs.length) {
           const banner = document.createElement("div");
-          banner.style.cssText = "position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:8px 16px;font-size:12px;box-shadow:var(--shadow-md);z-index:9999;color:var(--muted)";
+          banner.className = "shared-banner";
           banner.textContent = "Shared by: " + data.orgs.join(", ");
           document.body.appendChild(banner);
           setTimeout(() => banner.remove(), 4000);
@@ -15971,9 +15991,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (NET_ACTIVE) deactivateNetwork();
       UA_ACTIVE = true;
       setViewParam("account");
-      document.getElementById("usersView").style.display = "block";
-      document.getElementById("feedPanel").style.display = "none";
-      document.getElementById("feedSidebarSections").style.display = "none";
+      setDisplay(document.getElementById("usersView"), "block");
+      setDisplay(document.getElementById("feedPanel"), "none");
+      setDisplay(document.getElementById("feedSidebarSections"), "none");
       EL.usersLink.classList.add("nav-active");
       uaRender();
     }
@@ -15981,9 +16001,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     function deactivateUsers() {
       UA_ACTIVE = false;
       setViewParam("");
-      document.getElementById("usersView").style.display = "none";
-      document.getElementById("feedPanel").style.display = "";
-      document.getElementById("feedSidebarSections").style.display = "";
+      setDisplay(document.getElementById("usersView"), "none");
+      setDisplay(document.getElementById("feedPanel"), "");
+      setDisplay(document.getElementById("feedSidebarSections"), "");
       EL.usersLink.classList.remove("nav-active");
     }
 
