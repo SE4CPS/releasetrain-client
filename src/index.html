@@ -855,6 +855,11 @@
     #askWorkflowDiagram g.askwfg-active text { fill: #14532d !important; font-weight: 700; }
     #askWorkflowDiagram g.askwfg-done rect { fill: #f0fdf4 !important; stroke: #16a34a !important; }
     #askWorkflowDiagram g.askwfg-done text { fill: #166534 !important; }
+    #askWorkflowDiagram g.askwfg-skipped rect { fill: transparent !important; stroke: #9ca3af !important; stroke-dasharray: 4 3; }
+    #askWorkflowDiagram g.askwfg-skipped text { fill: #9ca3af !important; }
+    .ask-console { margin-top: 14px; max-height: 190px; overflow-y: auto; background: #0a0a0a; color: #d4d4d4; border-radius: 8px; padding: 10px 12px; font: 12px/1.5 Consolas, ui-monospace, monospace; white-space: pre-wrap; }
+    .ask-console .ac-t { color: #7c7c7c; }
+    .ask-console .ac-note { color: #7dd3fc; }
     #askWorkflowDiagram g.askwfg-active { animation: askwfRobotBlink 1.2s ease-in-out infinite; }
     .askwf-idle { color: var(--muted); }
     .askwf-active { color: #15803d; }
@@ -2824,7 +2829,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.132.2"><span class="brand-name">Releasetrain </span><em>v3.132.2</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.133.0"><span class="brand-name">Releasetrain </span><em>v3.133.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4826,6 +4831,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-26</div>
+              <div class="cl-ver cl-ver-minor">v3.133.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Agent graph shows skipped steps, details and a live log</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> After a run, agents that never ran turn dashed and grey and say skipped, so the green boxes match the agent count.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Each agent shows a short detail under its time: search term count, documents found, and the evaluator's verdict.</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> A scrollable console box under the answer logs each step and its reasoning with timestamps, live while the run is going.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-26</div>
@@ -9643,6 +9662,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // full text on hover rather than in the node's own label, which
     // stays a short, fixed, non-wrapping string like every other node.
     let askWorkflowQuestion = "";
+    let askWorkflowNotes = {};        // node name -> short detail shown under the box
+    let askWorkflowLog = [];          // console lines for the Short answer tab
+    let askWorkflowFinished = false;  // true once the run is over (unvisited nodes turn "skipped")
 
     const ASK_WORKFLOW_PHASE_NODE = {
       resolving_vendor: "vendor", rewriting: "rewriter",
@@ -9747,7 +9769,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         for (const n of ASK_WORKFLOW_NODES) {
           const g = el.querySelector(`g.node[id*="flowchart-${n.name}-"]`);
           if (!g) continue;
-          const st = state[n.key] || "idle";
+          let st = state[n.key] || "idle";
+          if (askWorkflowFinished && st === "idle" && n.key !== "vendor") st = "skipped";
           g.setAttribute("class", `node default askwfg-${st}`);
           // Center the label in its box by measuring both on screen (Mermaid
           // measured the text before the page font applied); retried until
@@ -9779,7 +9802,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             t.setAttribute("y", box.y + box.height + 13);
             g.appendChild(t);
           }
-          t.textContent = secs || "";
+          const note = askWorkflowNotes[n.name];
+          t.textContent = st === "skipped" ? "skipped" : [secs, note].filter(Boolean).join(" · ");
         }
         return;
       }
@@ -9826,6 +9850,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // (removed as a redundant second "something is happening" signal).
     function startAskWorkflow(question) {
       askWorkflowQuestion = question || "";
+      askWorkflowNotes = {}; askWorkflowLog = []; askWorkflowFinished = false; askWorkflowStartedRun = Date.now();
+      askConsoleLog("Question received");
       askWorkflowState = { vendor: "active", rewriter: "idle", retriever: "idle", evaluator: "idle", orchestrator: "idle", websearch: "idle", verify: "idle" };
       const now = Date.now();
       askWorkflowTiming = { vendor: { startedAt: now, doneMs: null }, rewriter: null, retriever: null, evaluator: null, orchestrator: null, websearch: null, verify: null };
@@ -9846,11 +9872,34 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         if (t && t.doneMs == null) t.doneMs = now - t.startedAt;
       }
     }
+    // Console box under the Short answer: one timestamped line per progress
+    // event, appended live. The box exists in the running card and in the
+    // finished card's Short answer tab, so both are refreshed together.
+    function askConsoleLog(text, cls) {
+      const t = askWorkflowStartedRun ? ((Date.now() - askWorkflowStartedRun) / 1000).toFixed(1) : "0.0";
+      askWorkflowLog.push({ t, text, cls: cls || "" });
+      renderAskConsole();
+    }
+    let askWorkflowStartedRun = 0;
+    function askConsoleHtml() {
+      return askWorkflowLog.map(l => `<div class="${l.cls}"><span class="ac-t">[${l.t}s]</span> ${uaEsc(l.text)}</div>`).join("");
+    }
+    function renderAskConsole() {
+      document.querySelectorAll(".ask-console").forEach(el => {
+        el.innerHTML = askConsoleHtml();
+        el.scrollTop = el.scrollHeight;
+      });
+    }
     function pushAskWorkflowPhase(phase, detail, preset, meta) {
       if (!askWorkflowState) return;
+      if (phase === "note") {
+        if (meta && meta.node) { askWorkflowNotes[meta.node] = meta.short || ""; askConsoleLog(`${meta.node}: ${meta.text || ""}`, "ac-note"); renderAskWorkflowDiagram(); }
+        return;
+      }
       const now = Date.now();
       askWorkflowLabel = askPhaseLabel(phase, detail, preset, meta);
       askWorkflowStartedAt = now;
+      askConsoleLog(askWorkflowLabel);
       const node = ASK_WORKFLOW_PHASE_NODE[phase];
       if (node) {
         freezeActiveAskWorkflowTiming(now);
@@ -9895,6 +9944,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // about the per-phase breakdown is actually lost, just this one
       // redundant trailing line.
       askWorkflowLabel = "";
+      askWorkflowFinished = true;
+      askConsoleLog("Done");
       renderAskWorkflowCaption();
       renderAskWorkflowDiagram();
     }
@@ -11005,6 +11056,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       // that obvious.
       return `<div class="ask-rail-panel" data-panel="short">
           <p class="ask-short-answer">${uaEsc(sentence)}</p>
+          <div class="ask-console" aria-label="Run log">${askConsoleHtml()}</div>
         </div>`;
     }
 
@@ -11458,7 +11510,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <button type="button" class="ask-rail-tab" data-tab="benchmark" role="tab" aria-selected="false">Benchmark</button>
           <span id="askBenchmarkLiveStatus" class="ask-benchmark-live-status"></span>
         </div>
-        <div class="ask-rail-panel" data-panel="answer">${answerPanel}</div>
+        <div class="ask-rail-panel" data-panel="answer">${answerPanel}<div class="ask-console" aria-label="Run log">${askConsoleHtml()}</div></div>
         <div class="ask-rail-panel" data-panel="sources" hidden>
           <p class="ask-muted">Waiting for the answer…</p>
         </div>
