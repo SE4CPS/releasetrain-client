@@ -22,7 +22,7 @@
     gtag('config', 'G-P5E77Z7VG5');
   </script>
 
-  <link rel="stylesheet" href="styles.css?v=3.134.4">
+  <link rel="stylesheet" href="styles.css?v=3.134.5">
 </head>
 
 <body>
@@ -38,7 +38,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.134.4"><span class="brand-name">Releasetrain </span><em>v3.134.4</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.134.5"><span class="brand-name">Releasetrain </span><em>v3.134.5</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -164,7 +164,7 @@
                  ignores them. -->
             <details class="sb-details">
               <summary>Model &amp; pipeline</summary>
-              <div class="ask-toggle-group" style="padding:8px 0 0">
+              <div class="ask-toggle-group st-1">
                 <select id="askProvider" class="ask-preset-select" aria-label="Which model answers"
                   title="Which LLM answers a real question (Claude, Groq, or Ollama Cloud). No effect on a plain vendor/category lookup.">
                   <option value="anthropic">Claude (Anthropic)</option>
@@ -224,7 +224,7 @@
                  next one) rather than splitting apart individually when
                  #askOptionsPanel's own row runs out of width, per explicit
                  request to keep them on one row. -->
-              <div class="ask-toggle-group" style="padding:8px 0 0">
+              <div class="ask-toggle-group st-1">
                 <label class="ask-toggle-inline" title="Checked: requires a resolvable vendor/product, declines outright if none is found.&#10;&#10;Unchecked: answers without that requirement.">
                   <input type="checkbox" id="askVendorCheck" checked /> Vendor check
                 </label>
@@ -258,8 +258,8 @@
                  time it is reopened (see the "toggle" listener below). -->
             <details class="sb-details" id="askGuardrailsDetails">
               <summary>Guardrails</summary>
-              <div class="sidebar-section" id="askGuardrailsBody" style="padding:8px 0 0">
-                <p class="ua-muted" style="font-size:11px;margin:0">Loading…</p>
+              <div class="sidebar-section st-1" id="askGuardrailsBody">
+                <p class="ua-muted st-2">Loading…</p>
               </div>
             </details>
           </div>
@@ -412,36 +412,36 @@
 
         <details class="sb-details">
           <summary>Layers</summary>
-          <div class="sidebar-section" style="padding-bottom:10px">
-            <div style="display:flex;flex-direction:column;gap:7px">
-              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="g-show-versions" checked style="accent-color:var(--brand)"> <span class="g-legend-dot" style="background:#64748b"></span>Versions</label>
-              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="g-show-cve" checked style="accent-color:var(--brand)"> <span class="g-legend-dot" style="background:#dc2626"></span>CVE versions</label>
-              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="g-show-reddit" checked style="accent-color:var(--brand)"> <span class="g-legend-dot" style="background:#64748b"></span>Reddit posts</label>
-              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="g-show-so" checked style="accent-color:var(--brand)"> <span class="g-legend-dot" style="background:#2563eb"></span>StackOverflow</label>
+          <div class="sidebar-section st-3">
+            <div style="display: flex;" class="st-4">
+              <label style="display: flex;" class="st-5"><input type="checkbox" id="g-show-versions" checked class="st-6"> <span class="g-legend-dot st-7"></span>Versions</label>
+              <label style="display: flex;" class="st-5"><input type="checkbox" id="g-show-cve" checked class="st-6"> <span class="g-legend-dot st-8"></span>CVE versions</label>
+              <label style="display: flex;" class="st-5"><input type="checkbox" id="g-show-reddit" checked class="st-6"> <span class="g-legend-dot st-7"></span>Reddit posts</label>
+              <label style="display: flex;" class="st-5"><input type="checkbox" id="g-show-so" checked class="st-6"> <span class="g-legend-dot st-9"></span>StackOverflow</label>
             </div>
           </div>
         </details>
 
         <details class="sb-details">
           <summary>Options</summary>
-          <div class="sidebar-section" style="padding-bottom:10px">
-            <div style="display:flex;flex-direction:column;gap:7px">
-              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="g-risk-only" style="accent-color:var(--brand)"> High-risk posts only</label>
-              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="g-cve-posts" style="accent-color:var(--brand)"> <span class="g-legend-dot" style="background:#94a3b8"></span>CVE-mentioning posts</label>
+          <div class="sidebar-section st-3">
+            <div style="display: flex;" class="st-4">
+              <label style="display: flex;" class="st-5"><input type="checkbox" id="g-risk-only" class="st-6"> High-risk posts only</label>
+              <label style="display: flex;" class="st-5"><input type="checkbox" id="g-cve-posts" class="st-6"> <span class="g-legend-dot st-10"></span>CVE-mentioning posts</label>
             </div>
           </div>
         </details>
 
         <details class="sb-details">
           <summary>Time window</summary>
-          <div class="sidebar-section" style="padding-bottom:10px">
-            <select id="g-window" style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font:inherit;font-size:12px;cursor:pointer">
+          <div class="sidebar-section st-3">
+            <select id="g-window" class="st-11">
               <option value="30">Last 30 days</option>
               <option value="90" selected>Last 90 days</option>
               <option value="180">Last 180 days</option>
               <option value="365">Last 12 months</option>
             </select>
-            <div style="margin-top:7px;font-size:10px;color:var(--muted);line-height:1.5">
+            <div class="st-12">
               Edge length = days since release or post.<br>Closer to hub = more recent.
             </div>
           </div>
@@ -449,31 +449,31 @@
 
         <details class="sb-details">
           <summary>Legend</summary>
-          <div class="sidebar-section" style="font-size:11px;color:var(--muted);line-height:2;padding-bottom:8px">
-            <div><span class="g-legend-dot" style="background:#2563eb;width:13px;height:13px"></span> Component hub</div>
-            <div><span class="g-legend-dot" style="background:#475569"></span> Minor release</div>
-            <div><span class="g-legend-dot" style="background:#b45309"></span> Major release</div>
-            <div><span class="g-legend-dot" style="background:#64748b"></span> Patch release</div>
-            <div><span class="g-legend-dot" style="background:#dc2626"></span> CVE version</div>
-            <div><span class="g-legend-dot" style="background:#64748b"></span> Reddit post</div>
-            <div><span class="g-legend-dot" style="background:#94a3b8"></span> Reddit (CVE mention)</div>
-            <div><span class="g-legend-dot" style="background:#2563eb"></span> StackOverflow</div>
+          <div class="sidebar-section st-13">
+            <div><span class="g-legend-dot st-14"></span> Component hub</div>
+            <div><span class="g-legend-dot st-15"></span> Minor release</div>
+            <div><span class="g-legend-dot st-16"></span> Major release</div>
+            <div><span class="g-legend-dot st-7"></span> Patch release</div>
+            <div><span class="g-legend-dot st-8"></span> CVE version</div>
+            <div><span class="g-legend-dot st-7"></span> Reddit post</div>
+            <div><span class="g-legend-dot st-10"></span> Reddit (CVE mention)</div>
+            <div><span class="g-legend-dot st-9"></span> StackOverflow</div>
           </div>
         </details>
 
         <div class="sidebar-section">
-          <button id="g-refreshBtn" class="btn btn-ghost" style="width:100%;font-size:12px">↺ Refresh graph</button>
+          <button id="g-refreshBtn" class="btn btn-ghost st-17">↺ Refresh graph</button>
         </div>
 
         <details class="sb-details" id="g-isolatedWrap">
-          <summary>Isolated nodes <span class="g-iso-count" style="margin-left:auto;font:inherit;color:var(--muted)"></span></summary>
-          <div class="sidebar-section" style="font-size:11px;line-height:1.6;padding-bottom:8px">
-            <div style="color:var(--muted);margin-bottom:4px">Nodes with zero edges are hidden from the canvas.</div>
-            <div id="g-isolatedList" style="color:var(--muted)">—</div>
+          <summary>Isolated nodes <span class="g-iso-count st-18"></span></summary>
+          <div class="sidebar-section st-19">
+            <div class="st-20">Nodes with zero edges are hidden from the canvas.</div>
+            <div id="g-isolatedList" class="st-21">—</div>
           </div>
         </details>
 
-        <div class="sidebar-section" style="font-size:11px;color:var(--muted)">
+        <div class="sidebar-section st-22">
           <div id="g-statsLine">—</div>
         </div>
 
@@ -505,8 +505,8 @@
       <div id="docsControls" style="display:none">
 
         <!-- Live collection stats — always visible -->
-        <div class="sidebar-section" style="padding-bottom:6px;border-top:1px solid var(--border)">
-          <div class="sidebar-label" style="margin-bottom:6px">Live Collection Stats</div>
+        <div class="sidebar-section st-23">
+          <div class="sidebar-label st-24">Live Collection Stats</div>
 
           <details class="sb-stat-group">
             <summary class="sb-stat-head">📦 Versions</summary>
@@ -534,7 +534,7 @@
 
         <details class="sb-details">
           <summary>API Reference</summary>
-          <div class="sidebar-section" style="padding-bottom:4px">
+          <div class="sidebar-section st-25">
             <ul class="d-toc">
               <li><a href="#" data-target="d-architecture">🏗 System Architecture</a></li>
               <li><a href="#" data-target="d-quickstart">⚡ Quick start</a></li>
@@ -551,7 +551,7 @@
 
         <details class="sb-details">
           <summary>Data &amp; Schema</summary>
-          <div class="sidebar-section" style="padding-bottom:4px">
+          <div class="sidebar-section st-25">
             <ul class="d-toc">
               <li><a href="#" data-target="d-data-models">📋 Data models</a></li>
               <li><a href="#" data-target="d-ml-fields">🤖 ML fields</a></li>
@@ -563,7 +563,7 @@
 
         <details class="sb-details">
           <summary>Integration Guide</summary>
-          <div class="sidebar-section" style="padding-bottom:4px">
+          <div class="sidebar-section st-25">
             <ul class="d-toc">
               <li><a href="#" data-target="d-pagination">📄 Pagination</a></li>
               <li><a href="#" data-target="d-errors">⚠ Errors</a></li>
@@ -580,8 +580,7 @@
            plain descriptive blurb, not a real control. -->
       <div id="changelogControls" style="display:none">
         <div class="sidebar-section">
-          <a class="btn btn-ghost" href="https://github.com/SE4CPS/releasetrain-client"
-            target="_blank" rel="noopener noreferrer" style="font-size:12px;padding:5px 10px;display:inline-flex;align-items:center;gap:5px">
+          <a class="btn btn-ghost st-26" href="https://github.com/SE4CPS/releasetrain-client" target="_blank" rel="noopener noreferrer" style="display: inline-flex;">
             ⭐ GitHub
           </a>
         </div>
@@ -595,8 +594,7 @@
            control, so it stays. -->
       <div id="ackControls" style="display:none">
         <div class="sidebar-section">
-          <a class="btn btn-ghost" href="https://github.com/SE4CPS/releasetrain-client"
-            target="_blank" rel="noopener noreferrer" style="font-size:12px;padding:5px 10px;display:inline-flex;align-items:center;gap:5px">
+          <a class="btn btn-ghost st-26" href="https://github.com/SE4CPS/releasetrain-client" target="_blank" rel="noopener noreferrer" style="display: inline-flex;">
             ⭐ GitHub
           </a>
         </div>
@@ -612,7 +610,7 @@
       <div id="evalRewriterControls" style="display:none">
         <div class="sidebar-section">
           <div class="sidebar-label">Rewriter eval</div>
-          <p style="font-size:12px;color:var(--muted);line-height:1.6;margin:0 0 10px">
+          <p class="st-27">
             Admin only. Compares the Retriever's own evidence with the Rewriter's chosen search terms against the raw question text, vendor and tool access held constant. No automated grading; read both lists yourself.
           </p>
         </div>
@@ -622,7 +620,7 @@
       <div id="evalEvaluatorControls" style="display:none">
         <div class="sidebar-section">
           <div class="sidebar-label">Evaluator eval</div>
-          <p style="font-size:12px;color:var(--muted);line-height:1.6;margin:0 0 10px">
+          <p class="st-27">
             Admin only. Compares the Evaluator's own raw sufficiency verdict with the final verdict after the deterministic override (a real search_web hit, or a real release document naming the vendor and version) can force it to sufficient.
           </p>
         </div>
@@ -632,7 +630,7 @@
       <div id="evalOrchestratorControls" style="display:none">
         <div class="sidebar-section">
           <div class="sidebar-label">Orchestrator eval</div>
-          <p style="font-size:12px;color:var(--muted);line-height:1.6;margin:0 0 10px">
+          <p class="st-27">
             Admin only. Compares the Orchestrator's own raw generated answer with the final answer after the deterministic version-correctness check can replace it.
           </p>
         </div>
@@ -641,15 +639,15 @@
       <!-- ── CVE controls (shown only in cve view) ── -->
       <div id="cveControls" class="cv-host" style="display:none">
         <!-- Status -->
-        <div style="padding:10px 14px 6px;border-bottom:1px solid var(--line)">
+        <div class="st-28">
           <div id="statusBar" role="status" aria-live="polite">
             <span class="dot"></span>
             <span id="statusText">Loading CVE data…</span>
           </div>
-          <div id="loadProgress"><div id="loadProgressFill" style="width:0%"></div></div>
+          <div id="loadProgress"><div id="loadProgressFill" class="st-29"></div></div>
         </div>
         <!-- Aggregates -->
-        <div style="padding:10px 14px 16px;display:flex;flex-direction:column;gap:10px">
+        <div style="display: flex;" class="st-30">
           <div class="panel legend-panel">
             <details>
               <summary class="legend-toggle"><h2>Legend &amp; Glossary</h2></summary>
@@ -688,37 +686,37 @@
       <!-- ── Dashboard controls (shown only in dashboard view) ── -->
       <div id="dashboardControls" style="display:none">
         <div class="sidebar-section">
-          <div class="ri-ctrl-label" style="margin-bottom:3px">Using search query</div>
-          <div style="font-size:10px;color:var(--muted);line-height:1.4">Components are read from the feed search field. Multiple components are supported (comma separated).</div>
+          <div class="ri-ctrl-label st-31">Using search query</div>
+          <div class="st-32">Components are read from the feed search field. Multiple components are supported (comma separated).</div>
         </div>
         <div class="sidebar-section">
-          <div class="ri-ctrl-label">Version <span style="color:var(--muted);font-size:10px">(optional, single component)</span></div>
-          <select id="ri-ver-select" class="sidebar-input" style="width:100%;box-sizing:border-box">
+          <div class="ri-ctrl-label">Version <span class="st-33">(optional, single component)</span></div>
+          <select id="ri-ver-select" class="sidebar-input st-34">
             <option value="">Latest / all</option>
           </select>
         </div>
         <div class="sidebar-section">
           <div class="ri-ctrl-label">Window</div>
-          <select id="ri-window-select" class="sidebar-input" style="width:100%;box-sizing:border-box">
+          <select id="ri-window-select" class="sidebar-input st-34">
             <option value="30" selected>Last 30 days</option>
             <option value="90">Last 90 days</option>
             <option value="180">Last 180 days</option>
           </select>
         </div>
         <div class="sidebar-section">
-          <button id="ri-analyze-btn" class="btn btn-primary" style="width:100%">Analyze Risk</button>
+          <button id="ri-analyze-btn" class="btn btn-primary st-35">Analyze Risk</button>
         </div>
-        <div id="ri-sidebar-status" style="font-size:11px;color:var(--muted);margin-top:2px;padding:0 2px"></div>
-        <div class="sidebar-section" style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px">
-          <div class="ri-ctrl-label" style="margin-bottom:6px">Score legend</div>
-          <div style="font-size:11px;line-height:1.8">
-            <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#475569;margin-right:5px;vertical-align:middle"></span><strong>0–24 Low:</strong> No blocking advisories</div>
-            <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#b45309;margin-right:5px;vertical-align:middle"></span><strong>25–49 Medium:</strong> Review before deploying</div>
-            <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#b45309;margin-right:5px;vertical-align:middle"></span><strong>50–74 High:</strong> Staged rollout required</div>
-            <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#b91c1c;margin-right:5px;vertical-align:middle"></span><strong>75–100 Critical:</strong> Defer deployment</div>
+        <div id="ri-sidebar-status" class="st-36"></div>
+        <div class="sidebar-section st-37">
+          <div class="ri-ctrl-label st-24">Score legend</div>
+          <div class="st-38">
+            <div><span style="display: inline-block;" class="st-39"></span><strong>0–24 Low:</strong> No blocking advisories</div>
+            <div><span style="display: inline-block;" class="st-40"></span><strong>25–49 Medium:</strong> Review before deploying</div>
+            <div><span style="display: inline-block;" class="st-40"></span><strong>50–74 High:</strong> Staged rollout required</div>
+            <div><span style="display: inline-block;" class="st-41"></span><strong>75–100 Critical:</strong> Defer deployment</div>
           </div>
-          <div class="ri-ctrl-label" style="margin-top:8px;margin-bottom:4px">Scoring factors</div>
-          <div style="font-size:10px;color:var(--muted);line-height:1.7">
+          <div class="ri-ctrl-label st-42">Scoring factors</div>
+          <div class="st-43">
             <div>CVE target version: +40</div>
             <div>CVE releases (×8, max 24): +8 each</div>
             <div>Risk posts (score×10 if &gt;0.5, else +5, max 20)</div>
@@ -733,14 +731,14 @@
       <div id="networkControls" style="display:none">
         <div class="sidebar-section">
           <div class="sidebar-label">Releases</div>
-          <p style="font-size:11px;color:var(--muted);line-height:1.5;margin:4px 0 0">
+          <p class="st-44">
             Vendors publish releases. Users report production outcomes. Collective knowledge grows with each report.
           </p>
         </div>
         <div class="sidebar-section">
-          <input id="nk-search" type="text" class="sidebar-input" placeholder="Filter by component or version" style="width:100%;box-sizing:border-box" />
+          <input id="nk-search" type="text" class="sidebar-input st-34" placeholder="Filter by component or version" />
         </div>
-        <div id="nk-sidebar-status" style="font-size:11px;color:var(--muted);padding:0 2px"></div>
+        <div id="nk-sidebar-status" class="st-45"></div>
       </div>
 
       <!-- Landing spot for .brand, #filtersToggleBtn and .topbar-right
@@ -767,7 +765,7 @@
 
         <details class="sb-details" open>
           <summary>Filters</summary>
-          <div class="sidebar-section" style="padding-bottom:12px">
+          <div class="sidebar-section st-46">
             <div class="toggles" id="fixedToggles" role="group" aria-label="Quick filters">
               <button class="toggle" data-key="major" aria-pressed="false" type="button"
                 title="Releases classified as a major version bump (breaking or large changes)">
@@ -845,7 +843,7 @@
              nested toggle (.sb-stat-group) unchanged. -->
         <details class="sb-details">
           <summary>Stats</summary>
-          <div class="sidebar-section" style="padding-bottom:12px">
+          <div class="sidebar-section st-46">
 
             <div class="sb-group-label">Types</div>
             <div class="toggles" id="typeToggles" role="group" aria-label="Component type filters"></div>
@@ -859,7 +857,7 @@
               <div class="kpi">🖥️ Hypervisors <em id="kpi-hv">0</em></div>
               <div class="kpi" id="kpi-range">📅 Range: <em>—</em></div>
             </div>
-            <details class="sb-stat-group" style="margin-top:8px">
+            <details class="sb-stat-group st-47">
               <summary class="sb-stat-head">Collection totals</summary>
               <div class="sb-stat-body">
                 <div class="sb-stat-row"><span>Versions</span><span id="home-v-total">…</span></div>
@@ -873,19 +871,19 @@
             </details>
 
             <div class="sb-group-label" id="sbActivityLabel">Activity (2 weeks)</div>
-            <div style="position:relative;height:118px"><canvas id="home-activity-chart"></canvas></div>
-            <p style="margin:2px 0 0;font-size:10px;color:var(--muted)">Click a label to show/hide that line.</p>
-            <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;font-size:10px;color:var(--muted);margin-top:4px">
-              <span><span style="color:#2563eb;font-size:12px">●</span> Versions</span>
-              <span><span style="color:#dc2626;font-size:12px">●</span> CVE</span>
-              <span><span style="color:#64748b;font-size:12px">●</span> Community</span>
-              <span><span style="color:#475569;font-size:12px">●</span> LLM</span>
-              <span><span style="color:#0f766e;font-size:12px">●</span> Hypervisor</span>
+            <div class="st-48"><canvas id="home-activity-chart"></canvas></div>
+            <p class="st-49">Click a label to show/hide that line.</p>
+            <div style="display: flex;" class="st-50">
+              <span><span class="st-51">●</span> Versions</span>
+              <span><span class="st-52">●</span> CVE</span>
+              <span><span class="st-53">●</span> Community</span>
+              <span><span class="st-54">●</span> LLM</span>
+              <span><span class="st-55">●</span> Hypervisor</span>
             </div>
 
             <div class="sb-group-label">Top searches (24h)</div>
-            <div id="top-searches-list" style="display:flex;flex-direction:column;gap:6px">
-              <span style="font-size:11px;color:var(--muted)">Loading...</span>
+            <div id="top-searches-list" style="display: flex;" class="st-56">
+              <span class="st-22">Loading...</span>
             </div>
 
           </div>
@@ -904,7 +902,7 @@
         <div id="g-zoomBar">
           <button id="g-zoomIn" title="Zoom in">+</button>
           <button id="g-zoomOut" title="Zoom out">−</button>
-          <button id="g-zoomFit" title="Fit graph" style="font-size:11px;font-weight:600">fit</button>
+          <button id="g-zoomFit" title="Fit graph" class="st-57">fit</button>
         </div>
         <div id="g-networkContainer"></div>
         <div id="g-nodeInfoPanel" style="display:none"></div>
@@ -922,8 +920,8 @@
              long sidebar section might). flex-wrap so a narrow window
              wraps to a second line instead of overflowing. -->
         <div class="a-view-header">
-          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-left:auto">
-            <select id="a-stackSelect" class="a-stack-select" style="font-size:12px">
+          <div style="display: flex;" class="st-58">
+            <select id="a-stackSelect" class="a-stack-select st-59">
               <option value="">Add stack to search…</option>
               <option value="apache,linux,mysql,php">LAMP</option>
               <option value="nginx,linux,mysql,php">LEMP</option>
@@ -936,16 +934,16 @@
               <option value="debian,django,sqlite">DDS</option>
               <option value="ubuntu,prisma,svelte">USP</option>
             </select>
-            <button id="a-addStackBtn" class="btn btn-primary" type="button" style="font-size:12px;padding:5px 10px">+ Add Stack</button>
-            <span style="width:1px;align-self:stretch;background:var(--border);margin:0 2px"></span>
-            <button id="a-metricsBtn" class="btn btn-ghost" type="button" style="font-size:12px;padding:5px 10px">📊 Metrics</button>
-            <button id="a-codeBtn"    class="btn btn-ghost" type="button" style="font-size:12px;padding:5px 10px">📋 Code</button>
-            <button id="a-detailsBtn" class="btn btn-ghost" type="button" style="font-size:12px;padding:5px 10px">🔍 Details</button>
-            <button id="a-configBtn"  class="btn btn-ghost" type="button" style="font-size:12px;padding:5px 10px">⚙ Config</button>
-            <button id="a-copyLinkBtn" class="btn btn-ghost" type="button" style="font-size:12px;padding:5px 10px">🔗 Copy link</button>
-            <span style="width:1px;align-self:stretch;background:var(--border);margin:0 2px"></span>
-            <button id="a-viewDiagram" class="btn btn-primary" type="button" style="font-size:12px;padding:5px 14px">Diagram</button>
-            <button id="a-viewTable" class="btn btn-ghost" type="button" style="font-size:12px;padding:5px 14px">Table</button>
+            <button id="a-addStackBtn" class="btn btn-primary st-60" type="button">+ Add Stack</button>
+            <span class="st-61"></span>
+            <button id="a-metricsBtn" class="btn btn-ghost st-60" type="button">📊 Metrics</button>
+            <button id="a-codeBtn" class="btn btn-ghost st-60" type="button">📋 Code</button>
+            <button id="a-detailsBtn" class="btn btn-ghost st-60" type="button">🔍 Details</button>
+            <button id="a-configBtn" class="btn btn-ghost st-60" type="button">⚙ Config</button>
+            <button id="a-copyLinkBtn" class="btn btn-ghost st-60" type="button">🔗 Copy link</button>
+            <span class="st-61"></span>
+            <button id="a-viewDiagram" class="btn btn-primary st-62" type="button">Diagram</button>
+            <button id="a-viewTable" class="btn btn-ghost st-62" type="button">Table</button>
           </div>
         </div>
         <div class="a-canvas">
@@ -963,7 +961,7 @@
           </div>
           <div id="a-stackGrid" class="a-stack-grid"></div>
           <div class="a-empty-foot">
-            <button id="a-todayBtn" class="btn btn-ghost" type="button" style="font-size:12px">📅 Show components updated today</button>
+            <button id="a-todayBtn" class="btn btn-ghost st-59" type="button">📅 Show components updated today</button>
           </div>
         </div>
       </div>
@@ -974,15 +972,15 @@
 <!-- ═══ SYSTEM ARCHITECTURE ══════════════════════════════════════ -->
 <section class="block" id="d-architecture">
 
-<h2 style="margin-bottom:.35rem">System Architecture</h2>
-<p class="small" style="margin-bottom:.3rem">An open-source pipeline for tracking software releases, security advisories, and community signals. The goal is to continuously poll 20+ vendor feeds, package registries, and developer forums; normalise every event into one of two MongoDB collections (<code class="inline">versions</code> or <code class="inline">reddit</code>); stamp each document with a structured identifier; and expose the full corpus through a typed REST API and a static browser client. No proprietary transforms, no vendor lock-in.</p>
-<p class="small muted" style="margin-bottom:.15rem">Each section is collapsed by default. Click any heading to expand.</p>
+<h2 class="st-63">System Architecture</h2>
+<p class="small st-64">An open-source pipeline for tracking software releases, security advisories, and community signals. The goal is to continuously poll 20+ vendor feeds, package registries, and developer forums; normalise every event into one of two MongoDB collections (<code class="inline">versions</code> or <code class="inline">reddit</code>); stamp each document with a structured identifier; and expose the full corpus through a typed REST API and a static browser client. No proprietary transforms, no vendor lock-in.</p>
+<p class="small muted st-65">Each section is collapsed by default. Click any heading to expand.</p>
 
 <!-- 1. Platform Overview -->
 <details class="arch-sub">
 <summary class="d-arch-sum">Platform Overview</summary>
 <div class="arch-sub-body">
-<p class="small muted" style="margin:.25rem 0 .5rem">Six subsystems, two MongoDB collections, one REST API. Arrows show the primary data and control paths.</p>
+<p class="small muted st-66">Six subsystems, two MongoDB collections, one REST API. Arrows show the primary data and control paths.</p>
 <div class="mermaid">
 graph TB
     subgraph SOURCES ["External Sources · 20+ feeds"]
@@ -1043,7 +1041,7 @@ graph TB
 <details class="arch-sub">
 <summary class="d-arch-sum">Source Coverage: 20+ release and community feeds</summary>
 <div class="arch-sub-body">
-<p class="small muted" style="margin:.25rem 0 .5rem">Security and vendor feeds write to the versions collection. Community signals write to the reddit collection.</p>
+<p class="small muted st-66">Security and vendor feeds write to the versions collection. Community signals write to the reddit collection.</p>
 <div class="mermaid">
 flowchart LR
     subgraph SEC ["Security · 9 sources"]
@@ -1093,7 +1091,7 @@ flowchart LR
 <details class="arch-sub">
 <summary class="d-arch-sum">Data Ingestion and Enrichment Pipeline</summary>
 <div class="arch-sub-body">
-<p class="small muted" style="margin:.25rem 0 .5rem">Raw signals pass through four stages before landing in MongoDB.</p>
+<p class="small muted st-66">Raw signals pass through four stages before landing in MongoDB.</p>
 <div class="mermaid">
 flowchart LR
     subgraph COLLECT ["Collect"]
@@ -1126,7 +1124,7 @@ flowchart LR
 <details class="arch-sub">
 <summary class="d-arch-sum">API Topology: REST route groups and MongoDB dependencies</summary>
 <div class="arch-sub-body">
-<p class="small muted" style="margin:.25rem 0 .5rem">All REST route groups and the MongoDB collection each reads or writes.</p>
+<p class="small muted st-66">All REST route groups and the MongoDB collection each reads or writes.</p>
 <div class="mermaid">
 graph LR
     CL(["Client or API consumer"])
@@ -1163,7 +1161,7 @@ graph LR
 <details class="arch-sub">
 <summary class="d-arch-sum">Frontend Views: releasetrain-client</summary>
 <div class="arch-sub-body">
-<p class="small muted" style="margin:.25rem 0 .5rem">One self-contained <code>index.html</code> served as a static file. Views switch client-side via a <code>?view=</code> parameter; no per-view page loads. Click a view to expand details.</p>
+<p class="small muted st-66">One self-contained <code>index.html</code> served as a static file. Views switch client-side via a <code>?view=</code> parameter; no per-view page loads. Click a view to expand details.</p>
 
 <details class="arch-view">
 <summary class="d-arch-view-sum">Feed</summary>
@@ -1212,7 +1210,7 @@ graph LR
 <details class="arch-sub">
 <summary class="d-arch-sum">AI Chat: RAG pipeline with vector search and LLM inference</summary>
 <div class="arch-sub-body">
-<p class="small muted" style="margin:.25rem 0 .5rem">A Streamlit application (<code class="inline">releasetrain-chat</code>) that wraps a retrieval-augmented generation pipeline over both MongoDB collections. At startup it encodes release notes and community posts into a FAISS vector index. At query time it retrieves the top-k most similar documents by cosine similarity, optionally reranked by a cross-encoder, then injects them into an LLM prompt served via DigitalOcean GenAI (Llama 3 or Mistral). Responses include source citations derived from the retrieved documents.</p>
+<p class="small muted st-66">A Streamlit application (<code class="inline">releasetrain-chat</code>) that wraps a retrieval-augmented generation pipeline over both MongoDB collections. At startup it encodes release notes and community posts into a FAISS vector index. At query time it retrieves the top-k most similar documents by cosine similarity, optionally reranked by a cross-encoder, then injects them into an LLM prompt served via DigitalOcean GenAI (Llama 3 or Mistral). Responses include source citations derived from the retrieved documents.</p>
 <div class="mermaid">
 flowchart TD
     USER(["User question"])
@@ -1236,22 +1234,22 @@ flowchart TD
     class DB_V,DB_R,IDX db
     class Q,RET,RANK,AUG,LLM chat
 </div>
-<div style="margin-top:.55rem;display:grid;grid-template-columns:1fr 1fr;gap:.4rem">
-  <div class="callout" style="padding:.45rem .6rem">
-    <p class="small" style="font-weight:700;margin:0 0 .18rem;color:#0f172a">Embedding model</p>
-    <p class="small muted" style="margin:0">sentence-transformers all-MiniLM-L6-v2 or OpenAI text-embedding-3-small. Encodes release notes and Reddit posts into dense 384 or 1536 dimensional vectors indexed in FAISS.</p>
+<div style="display: grid;" class="st-67">
+  <div class="callout st-68">
+    <p class="small st-69">Embedding model</p>
+    <p class="small muted st-70">sentence-transformers all-MiniLM-L6-v2 or OpenAI text-embedding-3-small. Encodes release notes and Reddit posts into dense 384 or 1536 dimensional vectors indexed in FAISS.</p>
   </div>
-  <div class="callout" style="padding:.45rem .6rem">
-    <p class="small" style="font-weight:700;margin:0 0 .18rem;color:#0f172a">LLM</p>
-    <p class="small muted" style="margin:0">Served via DigitalOcean GenAI Platform. Llama 3 70B or Mistral 7B receives an augmented prompt containing retrieved release context and returns a grounded, cited answer.</p>
+  <div class="callout st-68">
+    <p class="small st-69">LLM</p>
+    <p class="small muted st-70">Served via DigitalOcean GenAI Platform. Llama 3 70B or Mistral 7B receives an augmented prompt containing retrieved release context and returns a grounded, cited answer.</p>
   </div>
-  <div class="callout" style="padding:.45rem .6rem">
-    <p class="small" style="font-weight:700;margin:0 0 .18rem;color:#0f172a">Vector store</p>
-    <p class="small muted" style="margin:0">FAISS in memory index rebuilt at startup from both collections. Top k cosine similarity retrieval with configurable k (default 10 documents per query).</p>
+  <div class="callout st-68">
+    <p class="small st-69">Vector store</p>
+    <p class="small muted st-70">FAISS in memory index rebuilt at startup from both collections. Top k cosine similarity retrieval with configurable k (default 10 documents per query).</p>
   </div>
-  <div class="callout" style="padding:.45rem .6rem">
-    <p class="small" style="font-weight:700;margin:0 0 .18rem;color:#0f172a">Retrieval strategy</p>
-    <p class="small muted" style="margin:0">Hybrid: dense vector search over embeddings plus sparse BM25 keyword match over version IDs and CVE strings. Results merged and reranked before prompt injection.</p>
+  <div class="callout st-68">
+    <p class="small st-69">Retrieval strategy</p>
+    <p class="small muted st-70">Hybrid: dense vector search over embeddings plus sparse BM25 keyword match over version IDs and CVE strings. Results merged and reranked before prompt injection.</p>
   </div>
 </div>
 </div>
@@ -1261,7 +1259,7 @@ flowchart TD
 <details class="arch-sub">
 <summary class="d-arch-sum">Request Lifecycle: Version search call path</summary>
 <div class="arch-sub-body">
-<p class="small muted" style="margin:.25rem 0 .5rem">Canonical read path through the stack for a version search call.</p>
+<p class="small muted st-66">Canonical read path through the stack for a version search call.</p>
 <div class="mermaid">
 sequenceDiagram
     autonumber
@@ -1405,7 +1403,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
 <h2>Aggregation endpoints</h2><p class="section-sort-note">Endpoints collapsed by default, ordered method-first then route.</p>
 <p class="small muted">Measure volume, gaps, and classification counts across both collections. All date params use <code class="inline">YYYYMMDD</code> format. Range-based endpoints default to the rolling 2-year window when <code class="inline">start</code>/<code class="inline">end</code> are omitted.</p>
 
-<h3 style="margin:.7rem 0 .3rem;font-size:.88rem;color:#64748b;text-transform:uppercase;letter-spacing:.04em">Versions · <code style="font-size:.8rem;text-transform:none">/api/aggregate/v/*</code></h3>
+<h3 class="st-71">Versions · <code class="st-72">/api/aggregate/v/*</code></h3>
 <div class="api-grid">
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/v/typeBreakdown</span></summary><div class="endpoint-body"><p>CVE vs release-note split plus per-channel breakdown for a date range. Omit <code class="inline">start</code>/<code class="inline">end</code> to use the rolling 2-year window.</p><div><span class="tag">start optional</span><span class="tag">end optional</span></div><pre><code>curl "https://releasetrain.io/api/aggregate/v/typeBreakdown?start=20250101&end=20251231"</code></pre><pre><code>{
   "range": { "start": "20250101", "end": "20251231" },
@@ -1424,7 +1422,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/v/versionCountByDay</span></summary><div class="endpoint-body"><p>Day-by-day version counts over an explicit date range.</p><div><span class="tag">start=YYYYMMDD required</span><span class="tag">end=YYYYMMDD required</span></div><pre><code>curl "https://releasetrain.io/api/aggregate/v/versionCountByDay?start=20250701&amp;end=20250730"</code></pre><pre><code>{ "range": { "start": "20250701", "end": "20250730" }, "days": [{ "_id": "20250701", "count": 12 }] }</code></pre></div></details>
 </div>
 
-<h3 style="margin:.9rem 0 .3rem;font-size:.88rem;color:#64748b;text-transform:uppercase;letter-spacing:.04em">Community · <code style="font-size:.8rem;text-transform:none">/api/aggregate/reddit/*</code></h3>
+<h3 class="st-73">Community · <code class="st-72">/api/aggregate/reddit/*</code></h3>
 <div class="api-grid">
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/aggregate/reddit/summary</span></summary><div class="endpoint-body"><p>Full overview in one call: totals, Reddit vs Stack Overflow split, top subreddits/components, and score stats. Omit <code class="inline">start</code>/<code class="inline">end</code> for the rolling 2-year window.</p><div><span class="tag">start optional</span><span class="tag">end optional</span><span class="tag">topN optional · default 10</span></div><pre><code>curl "https://releasetrain.io/api/aggregate/reddit/summary?topN=5"</code></pre><pre><code>{
   "range": { "start": "20240518", "end": "20260518" },
@@ -1494,7 +1492,7 @@ curl "https://releasetrain.io/api/c/name/firefox/118.0.1"</code></pre></div></de
 <section class="block" id="d-ask">
 <h2>Ask (AI Q&amp;A)</h2>
 <div class="callout"><h3>Ask at a glance</h3><p class="small">Retrieval-augmented Q&amp;A over the same versions/reddit corpus the rest of the API reads. A plain vendor/category name (e.g. "chrome") short-circuits to a document lookup with no model call and no sign-in required; a real question streams back live progress over Server-Sent Events and requires sign-in, since each one is a real, billed LLM call.</p></div>
-<p class="small muted" style="margin:.25rem 0 .5rem">Which path a question actually takes: intent decides it first, then, for everything that isn't declined or a comparison, the preset's own architecture decides whether four roles run as genuinely separate model calls or one continuous tool-use loop.</p>
+<p class="small muted st-66">Which path a question actually takes: intent decides it first, then, for everything that isn't declined or a comparison, the preset's own architecture decides whether four roles run as genuinely separate model calls or one continuous tool-use loop.</p>
 <div class="mermaid">
 flowchart LR
     Q["User question"] --> INTENT{"Classify<br/>intent"}
@@ -1518,7 +1516,7 @@ flowchart LR
 </div>
 <p class="section-sort-note">Endpoints collapsed by default, ordered method-first then route.</p>
 <div class="api-grid">
-<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/ask/compare</span></summary><div class="endpoint-body"><p>Runs the same question through up to 5 presets in parallel, for side-by-side accuracy comparison. Defaults to <code class="inline">single_agent,multi_agent_buggy,multi_agent_fixed</code> if <code class="inline">presets</code> is omitted. Also accepts <code class="inline">resolveVendor=false</code> and <code class="inline">resolveTemporal=false</code> to switch off the Rewriter toggles (both on by default), same as <code class="inline">POST /api/ask</code>.</p><div><span class="tag">requires login</span><span class="tag">question required</span><span class="tag">presets optional</span></div><pre><code>curl "https://releasetrain.io/api/ask/compare?question=Should+I+use+Node+or+Flask&amp;presets=single_agent,multi_agent_fixed" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "question": "Should I use Node or Flask?", "runs": [ { "preset": "single_agent", "runId": "660c38fce3cba9423e4f8f23", "answer": "...", "sources": [ "..." ] }, { "preset": "multi_agent_fixed", "runId": "660c38fce3cba9423e4f8f24", "answer": "...", "sources": [ "..." ] } ] }</code></pre><p style="margin-top:10px"><strong>Triggering the feedback loop:</strong> ask about a version for a product that plainly does not exist (so both internal retrieval and the deterministic web-search fallback come up empty, and the Evaluator judges the first pass insufficient) under <code class="inline">multi_agent_feedback</code>, the only preset with <code class="inline">feedbackLoop</code> on. Not a hard guarantee every single time, since the Evaluator's own verdict is a live model judgment call, not a fixed rule, but this is the reliable way to exercise it. Look for <code class="inline">"feedbackLoopCount": 2</code> in the response (1 means it answered in one pass, no retry needed), or open that answer's own Feedback Loop tab in the UI.</p><pre><code>curl "https://releasetrain.io/api/ask/compare?question=What+is+the+latest+version+of+Quantavox+Studio&amp;presets=multi_agent_feedback" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre></div></details>
+<details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/ask/compare</span></summary><div class="endpoint-body"><p>Runs the same question through up to 5 presets in parallel, for side-by-side accuracy comparison. Defaults to <code class="inline">single_agent,multi_agent_buggy,multi_agent_fixed</code> if <code class="inline">presets</code> is omitted. Also accepts <code class="inline">resolveVendor=false</code> and <code class="inline">resolveTemporal=false</code> to switch off the Rewriter toggles (both on by default), same as <code class="inline">POST /api/ask</code>.</p><div><span class="tag">requires login</span><span class="tag">question required</span><span class="tag">presets optional</span></div><pre><code>curl "https://releasetrain.io/api/ask/compare?question=Should+I+use+Node+or+Flask&amp;presets=single_agent,multi_agent_fixed" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "question": "Should I use Node or Flask?", "runs": [ { "preset": "single_agent", "runId": "660c38fce3cba9423e4f8f23", "answer": "...", "sources": [ "..." ] }, { "preset": "multi_agent_fixed", "runId": "660c38fce3cba9423e4f8f24", "answer": "...", "sources": [ "..." ] } ] }</code></pre><p class="st-74"><strong>Triggering the feedback loop:</strong> ask about a version for a product that plainly does not exist (so both internal retrieval and the deterministic web-search fallback come up empty, and the Evaluator judges the first pass insufficient) under <code class="inline">multi_agent_feedback</code>, the only preset with <code class="inline">feedbackLoop</code> on. Not a hard guarantee every single time, since the Evaluator's own verdict is a live model judgment call, not a fixed rule, but this is the reliable way to exercise it. Look for <code class="inline">"feedbackLoopCount": 2</code> in the response (1 means it answered in one pass, no retry needed), or open that answer's own Feedback Loop tab in the UI.</p><pre><code>curl "https://releasetrain.io/api/ask/compare?question=What+is+the+latest+version+of+Quantavox+Studio&amp;presets=multi_agent_feedback" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/ask/history</span></summary><div class="endpoint-body"><p>The signed-in user's own past Ask runs, newest first.</p><div><span class="tag">requires login</span><span class="tag">limit optional · default 50 · max 200</span></div><pre><code>curl "https://releasetrain.io/api/ask/history?limit=20" -H "Authorization: Bearer YOUR_JWT_TOKEN"</code></pre><pre><code>{ "data": [ { "_id": "660c38fce3cba9423e4f8f23", "question": "What is the latest PHP version?", "answer": "...", "rating": 1, "createdAt": "2026-03-25T17:00:00.000Z" } ] }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/ask/presets</span></summary><div class="endpoint-body"><p>The named retrieval-pipeline presets (<code class="inline">single_agent</code>, <code class="inline">multi_agent_buggy</code>, <code class="inline">multi_agent_fixed</code>, plus the delegated architectures) and the current admin-configured default.</p><pre><code>curl "https://releasetrain.io/api/ask/presets"</code></pre><pre><code>{ "presets": { "single_agent": { "label": "Single-agent (no rewrite)" } }, "defaultPreset": "auto" }</code></pre></div></details>
 <details class="endpoint method-get"><summary class="endpoint-head"><span class="method get">GET</span><span class="path">/api/ask/providers</span></summary><div class="endpoint-body"><p>Available LLM providers (Anthropic, Groq, Ollama Cloud) and each one's small/medium/large model sizes, plus the current default preset/provider/size a new visitor's Ask form should start on.</p><pre><code>curl "https://releasetrain.io/api/ask/providers"</code></pre><pre><code>{ "providers": [ { "id": "anthropic", "label": "Anthropic", "sizes": [ { "id": "small", "label": "Small" } ] } ], "defaultPreset": "auto", "defaultProvider": "ollama", "defaultSize": "medium" }</code></pre></div></details>
@@ -1536,7 +1534,7 @@ data: { "type": "result", "runId": "660c38fce3cba9423e4f8f23", "answer": "...", 
 <h2>Ask pipelines</h2>
 <p class="section-sort-note">Which process <code class="inline">POST /api/ask</code> runs, by the question's own classified intent. Preset <code class="inline">"auto"</code> resolves to one of these before the model is ever called (see <code class="inline">pickAutoPipeline</code> in <code class="inline">ask.js</code>); any other preset value runs that one directly regardless of intent. "Research type" is the general question-type category each row corresponds to in the wider question-classification literature, not this system's own terms.</p>
 <table>
-<thead><tr><th style="width:16%">Research type</th><th style="width:10%">Type</th><th style="width:20%">Intent</th><th style="width:22%">Process</th><th>Example</th></tr></thead>
+<thead><tr><th class="st-75">Research type</th><th class="st-76">Type</th><th class="st-77">Intent</th><th class="st-78">Process</th><th>Example</th></tr></thead>
 <tbody>
 <tr><td>Decision-making</td><td>Comparison</td><td><code class="inline">comparison-question</code></td><td>Delegated + feedback loop</td><td>"Should I use Node or Flask?"</td></tr>
 <tr><td>Factoid, verify</td><td>Security</td><td><code class="inline">cve-question</code></td><td>Union search + BM25 rerank</td><td>"Any recent CVEs in MySQL?"</td></tr>
@@ -1565,21 +1563,21 @@ data: { "type": "result", "runId": "660c38fce3cba9423e4f8f23", "answer": "...", 
 <details class="arch-sub">
 <summary class="d-arch-sum">⚡ Quick Start</summary>
 <div class="arch-sub-body">
-<p class="small muted" style="margin:.2rem 0 .6rem">Three requests that cover the most common use cases. Paste any into a terminal to verify connectivity and explore the response shape. Base URL: <code class="inline">https://releasetrain.io</code> · All <code class="inline">GET</code> endpoints are public and unauthenticated.</p>
+<p class="small muted st-79">Three requests that cover the most common use cases. Paste any into a terminal to verify connectivity and explore the response shape. Base URL: <code class="inline">https://releasetrain.io</code> · All <code class="inline">GET</code> endpoints are public and unauthenticated.</p>
 
-<h3 style="font-size:.87rem;margin:.4rem 0 .28rem">What released in the last 7 days?</h3>
+<h3 class="st-80">What released in the last 7 days?</h3>
 <pre><code>curl "https://releasetrain.io/api/v/search?start=20260511&end=20260518&limit=25&showCount=true"</code></pre>
 
-<h3 style="font-size:.87rem;margin:.55rem 0 .28rem">Any CVEs published this month?</h3>
+<h3 class="st-81">Any CVEs published this month?</h3>
 <pre><code>curl "https://releasetrain.io/api/v/search?channel=cve&start=20260501&end=20260531&limit=50&showCount=true"</code></pre>
 
-<h3 style="font-size:.87rem;margin:.55rem 0 .28rem">What is Reddit saying about Chrome right now?</h3>
+<h3 class="st-81">What is Reddit saying about Chrome right now?</h3>
 <pre><code>curl "https://releasetrain.io/api/reddit/by-subreddit?q=chrome&minScore=5&limit=25"</code></pre>
 
-<h3 style="font-size:.87rem;margin:.55rem 0 .28rem">Latest 10 Firefox releases with key fields only</h3>
+<h3 class="st-81">Latest 10 Firefox releases with key fields only</h3>
 <pre><code>curl "https://releasetrain.io/api/v/latest10?q=firefox&limit=10"</code></pre>
 
-<h3 style="font-size:.87rem;margin:.55rem 0 .28rem">Forecast Chrome's next release date</h3>
+<h3 class="st-81">Forecast Chrome's next release date</h3>
 <pre><code>curl "https://releasetrain.io/api/v/fc?q=chrome"</code></pre>
 </div>
 </details>
@@ -1591,14 +1589,14 @@ data: { "type": "result", "runId": "660c38fce3cba9423e4f8f23", "answer": "...", 
 <details class="arch-sub">
 <summary class="d-arch-sum">📋 Data Models</summary>
 <div class="arch-sub-body">
-<p class="small muted" style="margin:.2rem 0 .55rem">Two MongoDB collections store all release intelligence. Not every document has every field: the schema evolves as new sources are added.</p>
+<p class="small muted st-82">Two MongoDB collections store all release intelligence. Not every document has every field: the schema evolves as new sources are added.</p>
 
 <details class="arch-sub">
 <summary class="d-arch-sum">versions collection</summary>
 <div class="arch-sub-body">
-<p class="small muted" style="margin:.2rem 0 .45rem">One document per software version release. Written by the bot fleet; read by <code class="inline">/api/v/*</code> and <code class="inline">/api/aggregate/*</code>.</p>
+<p class="small muted st-83">One document per software version release. Written by the bot fleet; read by <code class="inline">/api/v/*</code> and <code class="inline">/api/aggregate/*</code>.</p>
 <table>
-<thead><tr><th style="width:34%">Field</th><th style="width:16%">Type</th><th>Description</th></tr></thead>
+<thead><tr><th class="st-84">Field</th><th class="st-75">Type</th><th>Description</th></tr></thead>
 <tbody>
 <tr><td><code class="inline">_id</code></td><td>ObjectId</td><td>MongoDB document ID</td></tr>
 <tr><td><code class="inline">versionId</code></td><td>string</td><td>Composite key: <code class="inline">YYYYMMDD + productName + versionNumber</code>. Unique per release.</td></tr>
@@ -1639,9 +1637,9 @@ data: { "type": "result", "runId": "660c38fce3cba9423e4f8f23", "answer": "...", 
 <details class="arch-sub">
 <summary class="d-arch-sum">reddit collection</summary>
 <div class="arch-sub-body">
-<p class="small muted" style="margin:.2rem 0 .45rem">One document per Reddit post. Written by the scraper and ML labeller; read by <code class="inline">/api/reddit/*</code>.</p>
+<p class="small muted st-83">One document per Reddit post. Written by the scraper and ML labeller; read by <code class="inline">/api/reddit/*</code>.</p>
 <table>
-<thead><tr><th style="width:34%">Field</th><th style="width:16%">Type</th><th>Description</th></tr></thead>
+<thead><tr><th class="st-84">Field</th><th class="st-75">Type</th><th>Description</th></tr></thead>
 <tbody>
 <tr><td><code class="inline">_id</code></td><td>ObjectId</td><td>MongoDB document ID</td></tr>
 <tr><td><code class="inline">redditId</code></td><td>string</td><td>Reddit short ID, e.g. <code class="inline">1nq0h33</code>. Deduplication key.</td></tr>
@@ -1685,11 +1683,11 @@ data: { "type": "result", "runId": "660c38fce3cba9423e4f8f23", "answer": "...", 
 <details class="arch-sub">
 <summary class="d-arch-sum">📄 Pagination Guide</summary>
 <div class="arch-sub-body">
-<p class="small muted" style="margin:.2rem 0 .6rem">The API supports two paging schemes. Use <strong>page/limit</strong> for random access; use <strong>cursor</strong> for efficient forward scrolling through large result sets without offset drift.</p>
+<p class="small muted st-79">The API supports two paging schemes. Use <strong>page/limit</strong> for random access; use <strong>cursor</strong> for efficient forward scrolling through large result sets without offset drift.</p>
 
-<h3 style="font-size:.87rem;margin:0 0 .3rem">Page / Limit</h3>
+<h3 class="st-85">Page / Limit</h3>
 <table>
-<thead><tr><th style="width:28%">Param</th><th>Description</th></tr></thead>
+<thead><tr><th class="st-86">Param</th><th>Description</th></tr></thead>
 <tbody>
 <tr><td><code class="inline">page</code></td><td>1-based page number. Default: <code class="inline">1</code></td></tr>
 <tr><td><code class="inline">limit</code></td><td>Documents per page. Default: <code class="inline">25</code>. Pass <code class="inline">limit=all</code> to disable paging (large collections only).</td></tr>
@@ -1699,9 +1697,9 @@ data: { "type": "result", "runId": "660c38fce3cba9423e4f8f23", "answer": "...", 
 <pre><code>curl "https://releasetrain.io/api/v/search?q=chrome&limit=50&page=2&showCount=true"
 # response: { "data": [...], "totalCount": 314 }</code></pre>
 
-<h3 style="font-size:.87rem;margin:.65rem 0 .3rem">Cursor (forward-only)</h3>
+<h3 class="st-87">Cursor (forward-only)</h3>
 <table>
-<thead><tr><th style="width:28%">Param</th><th>Description</th></tr></thead>
+<thead><tr><th class="st-86">Param</th><th>Description</th></tr></thead>
 <tbody>
 <tr><td><code class="inline">cursor</code></td><td>Opaque token from the <code class="inline">X-Next-Cursor</code> response header. Omit for the first page.</td></tr>
 </tbody>
@@ -1712,9 +1710,9 @@ curl -i "https://releasetrain.io/api/v/search?q=chrome&limit=50"
 # Subsequent page
 curl "https://releasetrain.io/api/v/search?q=chrome&limit=50&cursor=TOKEN"</code></pre>
 
-<h3 style="font-size:.87rem;margin:.65rem 0 .3rem">Support by endpoint</h3>
+<h3 class="st-87">Support by endpoint</h3>
 <table>
-<thead><tr><th style="width:50%">Endpoint</th><th style="width:25%">Page/Limit</th><th>Cursor</th></tr></thead>
+<thead><tr><th class="st-88">Endpoint</th><th class="st-89">Page/Limit</th><th>Cursor</th></tr></thead>
 <tbody>
 <tr><td><code class="inline">/api/v/search</code></td><td>✓</td><td>✓</td></tr>
 <tr><td><code class="inline">/api/v/latest10</code></td><td>✓</td><td>✗</td></tr>
@@ -1736,39 +1734,39 @@ curl "https://releasetrain.io/api/v/search?q=chrome&limit=50&cursor=TOKEN"</code
 <details class="arch-sub">
 <summary class="d-arch-sum">🤖 ML Fields</summary>
 <div class="arch-sub-body">
-<p class="small muted" style="margin:.2rem 0 .6rem">Two predicted fields are added to every Reddit document by the bot ML labeller. Human overrides live alongside predictions so consumers can choose which branch to trust.</p>
+<p class="small muted st-79">Two predicted fields are added to every Reddit document by the bot ML labeller. Human overrides live alongside predictions so consumers can choose which branch to trust.</p>
 
-<div class="callout" style="margin-bottom:.55rem">
-<h3 style="font-size:.87rem;margin:0 0 .28rem"><code class="inline">metadata.predicted.isUpdateRelated</code></h3>
-<p class="small" style="margin:0 0 .35rem">Text classifier trained on labeled Reddit posts. Predicts whether a post discusses a software update: a new release, patch announcement, upgrade discussion, or CVE advisory.</p>
-<table style="margin:.3rem 0 .4rem">
-<thead><tr><th style="width:28%">Value</th><th>Meaning</th></tr></thead>
+<div class="callout st-90">
+<h3 class="st-91"><code class="inline">metadata.predicted.isUpdateRelated</code></h3>
+<p class="small st-92">Text classifier trained on labeled Reddit posts. Predicts whether a post discusses a software update: a new release, patch announcement, upgrade discussion, or CVE advisory.</p>
+<table class="st-93">
+<thead><tr><th class="st-86">Value</th><th>Meaning</th></tr></thead>
 <tbody>
 <tr><td><code class="inline">true</code></td><td>Post likely discusses a software update or release event</td></tr>
 <tr><td><code class="inline">false</code></td><td>Post predicted as not update-related</td></tr>
 <tr><td>field absent</td><td>Document has not been scored yet</td></tr>
 </tbody>
 </table>
-<p class="small muted" style="margin:0">Query predicted positives: <code class="inline">/api/reddit/query/update-related?isLabeled=false&isUpdateRelated=true</code>. Switch to <code class="inline">isLabeled=true</code> to use human labels.</p>
+<p class="small muted st-70">Query predicted positives: <code class="inline">/api/reddit/query/update-related?isLabeled=false&isUpdateRelated=true</code>. Switch to <code class="inline">isLabeled=true</code> to use human labels.</p>
 </div>
 
-<div class="callout" style="margin-bottom:.55rem">
-<h3 style="font-size:.87rem;margin:0 0 .28rem"><code class="inline">metadata.predicted.positiveScore</code></h3>
-<p class="small" style="margin:0 0 .35rem">Sentiment classifier output. Continuous score 0–1 reflecting community sentiment toward the update being discussed. Scores above 0.5 are considered positive.</p>
-<table style="margin:.3rem 0 .4rem">
-<thead><tr><th style="width:28%">Range</th><th>Interpretation</th></tr></thead>
+<div class="callout st-90">
+<h3 class="st-91"><code class="inline">metadata.predicted.positiveScore</code></h3>
+<p class="small st-92">Sentiment classifier output. Continuous score 0–1 reflecting community sentiment toward the update being discussed. Scores above 0.5 are considered positive.</p>
+<table class="st-93">
+<thead><tr><th class="st-86">Range</th><th>Interpretation</th></tr></thead>
 <tbody>
 <tr><td><code class="inline">0.0 – 0.5</code></td><td>Neutral to negative sentiment</td></tr>
 <tr><td><code class="inline">0.5 – 0.75</code></td><td>Mildly positive</td></tr>
 <tr><td><code class="inline">0.75 – 1.0</code></td><td>Strongly positive</td></tr>
 </tbody>
 </table>
-<p class="small muted" style="margin:0">Retrieve high-confidence positives: <code class="inline">/api/reddit/query/positive</code>. Use <code class="inline">/api/reddit/query/filter?minScore=0.75&maxScore=1.0</code> for a custom window.</p>
+<p class="small muted st-70">Retrieve high-confidence positives: <code class="inline">/api/reddit/query/positive</code>. Use <code class="inline">/api/reddit/query/filter?minScore=0.75&maxScore=1.0</code> for a custom window.</p>
 </div>
 
 <div class="callout">
-<h3 style="font-size:.87rem;margin:0 0 .28rem">Human labels vs predictions</h3>
-<p class="small" style="margin:0">Human labels live under <code class="inline">metadata.labeled.isUpdateRelated</code> and take precedence over predictions for training and evaluation. The <strong>Label view</strong> in releasetrain-client is the labelling interface. Pass <code class="inline">isLabeled=true</code> on any query route to read only human-verified data.</p>
+<h3 class="st-91">Human labels vs predictions</h3>
+<p class="small st-70">Human labels live under <code class="inline">metadata.labeled.isUpdateRelated</code> and take precedence over predictions for training and evaluation. The <strong>Label view</strong> in releasetrain-client is the labelling interface. Pass <code class="inline">isLabeled=true</code> on any query route to read only human-verified data.</p>
 </div>
 </div>
 </details>
@@ -1780,9 +1778,9 @@ curl "https://releasetrain.io/api/v/search?q=chrome&limit=50&cursor=TOKEN"</code
 <details class="arch-sub">
 <summary class="d-arch-sum">📖 Glossary</summary>
 <div class="arch-sub-body">
-<p class="small muted" style="margin:.2rem 0 .5rem">Domain-specific terms used throughout the API, codebase and this documentation.</p>
+<p class="small muted st-94">Domain-specific terms used throughout the API, codebase and this documentation.</p>
 <table>
-<thead><tr><th style="width:30%">Term</th><th>Definition</th></tr></thead>
+<thead><tr><th class="st-95">Term</th><th>Definition</th></tr></thead>
 <tbody>
 <tr><td><code class="inline">versionId</code></td><td>Composite business key: <code class="inline">YYYYMMDD + productName + versionNumber</code>. Unique per release. Used by <code class="inline">/api/v/versionId/:id</code>.</td></tr>
 <tr><td><code class="inline">versionReleaseChannel</code></td><td>Inferred semver category: <code class="inline">major</code> (breaking), <code class="inline">minor</code> (feature), <code class="inline">patch</code> (bugfix), <code class="inline">cve</code> (security advisory), <code class="inline">other</code> (non-standard).</td></tr>
@@ -1808,9 +1806,9 @@ curl "https://releasetrain.io/api/v/search?q=chrome&limit=50&cursor=TOKEN"</code
 <details class="arch-sub">
 <summary class="d-arch-sum">⚠ Error Format</summary>
 <div class="arch-sub-body">
-<p class="small muted" style="margin:.2rem 0 .5rem">All error responses return JSON. Use the HTTP status code for programmatic branching; the <code class="inline">message</code> field is human-readable context.</p>
+<p class="small muted st-94">All error responses return JSON. Use the HTTP status code for programmatic branching; the <code class="inline">message</code> field is human-readable context.</p>
 <table>
-<thead><tr><th style="width:18%">Status</th><th style="width:30%">When</th><th>Body shape</th></tr></thead>
+<thead><tr><th class="st-96">Status</th><th class="st-95">When</th><th>Body shape</th></tr></thead>
 <tbody>
 <tr><td><code class="inline">200 OK</code></td><td>Success</td><td><code class="inline">{ "data": [...] }</code> or collection-specific shape</td></tr>
 <tr><td><code class="inline">400 Bad Request</code></td><td>Missing or invalid parameter</td><td><code class="inline">{ "error": "Bad Request", "message": "..." }</code></td></tr>
@@ -1823,8 +1821,8 @@ curl "https://releasetrain.io/api/v/search?q=chrome&limit=50&cursor=TOKEN"</code
 
 // 404 example
 { "error": "Not Found", "message": "document not found" }</code></pre>
-<div class="callout" style="margin-top:.5rem">
-<p class="small" style="margin:0">The <code class="inline">/api/health</code> and <code class="inline">/api/meta</code> routes use a slightly different shape: <code class="inline">{ "ok": true }</code> on success and <code class="inline">{ "ok": false, "error": "..." }</code> on failure.</p>
+<div class="callout st-97">
+<p class="small st-70">The <code class="inline">/api/health</code> and <code class="inline">/api/meta</code> routes use a slightly different shape: <code class="inline">{ "ok": true }</code> on success and <code class="inline">{ "ok": false, "error": "..." }</code> on failure.</p>
 </div>
 </div>
 </details>
@@ -1836,7 +1834,7 @@ curl "https://releasetrain.io/api/v/search?q=chrome&limit=50&cursor=TOKEN"</code
 <details class="arch-sub">
 <summary class="d-arch-sum">🔍 Field Projection</summary>
 <div class="arch-sub-body">
-<p class="small muted" style="margin:.2rem 0 .5rem">Several endpoints accept a <code class="inline">fields</code> query parameter that limits the fields returned per document, useful for reducing payload size when building lightweight dashboards or mobile clients.</p>
+<p class="small muted st-94">Several endpoints accept a <code class="inline">fields</code> query parameter that limits the fields returned per document, useful for reducing payload size when building lightweight dashboards or mobile clients.</p>
 <pre><code># Return only title, subreddit and score
 curl "https://releasetrain.io/api/reddit?limit=50&fields=title,subreddit,score"
 
@@ -1845,8 +1843,8 @@ curl "https://releasetrain.io/api/v/search?q=chrome&fields=versionId,versionNumb
 
 # Nested fields via dot notation
 curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdateRelated"</code></pre>
-<table style="margin-top:.5rem">
-<thead><tr><th style="width:55%">Endpoint</th><th>Notes</th></tr></thead>
+<table class="st-97">
+<thead><tr><th class="st-98">Endpoint</th><th>Notes</th></tr></thead>
 <tbody>
 <tr><td><code class="inline">/api/v/search</code></td><td>All version fields including nested paths</td></tr>
 <tr><td><code class="inline">/api/reddit</code></td><td>All reddit fields including nested paths</td></tr>
@@ -1856,8 +1854,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 <tr><td><code class="inline">/api/reddit/by-subreddit</code></td><td>All reddit fields</td></tr>
 </tbody>
 </table>
-<div class="callout" style="margin-top:.45rem">
-<p class="small" style="margin:0"><code class="inline">_id</code> is always returned regardless of the <code class="inline">fields</code> value. Nested paths use dot notation, e.g. <code class="inline">metadata.predicted.positiveScore</code>.</p>
+<div class="callout st-99">
+<p class="small st-70"><code class="inline">_id</code> is always returned regardless of the <code class="inline">fields</code> value. Nested paths use dot notation, e.g. <code class="inline">metadata.predicted.positiveScore</code>.</p>
 </div>
 </div>
 </details>
@@ -1869,9 +1867,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 <details class="arch-sub">
 <summary class="d-arch-sum">🔒 Security and Access</summary>
 <div class="arch-sub-body">
-<p class="small muted" style="margin:.2rem 0 .5rem">Current access model for the REST API.</p>
+<p class="small muted st-94">Current access model for the REST API.</p>
 <table>
-<thead><tr><th style="width:28%">Concern</th><th>Status</th></tr></thead>
+<thead><tr><th class="st-86">Concern</th><th>Status</th></tr></thead>
 <tbody>
 <tr><td>Authentication</td><td>None required for <code class="inline">GET</code> endpoints. The full read surface is public.</td></tr>
 <tr><td>Write access</td><td><code class="inline">POST</code> and <code class="inline">PUT</code> routes are intended for the bot fleet and are not token-guarded in the current version, so treat them as internal.</td></tr>
@@ -1891,41 +1889,41 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 <details class="arch-sub">
 <summary class="d-arch-sum">📊 Live Collection Stats</summary>
 <div class="arch-sub-body">
-<p class="small muted" style="margin:.2rem 0 .55rem">Fetched live from the API on first load. Rolling 2-year window. Est. size based on average document size.</p>
+<p class="small muted st-82">Fetched live from the API on first load. Rolling 2-year window. Est. size based on average document size.</p>
 
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:.55rem;margin-bottom:.55rem">
+<div style="display: grid;" class="st-100">
 
   <!-- Versions card -->
-  <div class="callout" style="padding:.6rem .7rem">
-    <p style="font-weight:700;margin:0 0 .35rem;color:#0f172a;font-size:.88rem">📦 Versions</p>
-    <table style="margin:0;font-size:12px;border:none">
+  <div class="callout st-101">
+    <p class="st-102">📦 Versions</p>
+    <table class="st-103">
       <tbody>
-        <tr><td style="border:none;padding:2px 0;color:#64748b;width:58%">Total</td><td style="border:none;padding:2px 0;font-weight:800;color:#2563eb;font-size:1.1rem" id="d-stat-versions">…</td></tr>
-        <tr><td style="border:none;padding:2px 0;color:#64748b">CVE advisories</td><td style="border:none;padding:2px 0;font-weight:700;color:#dc2626" id="d-stat-v-cve">…</td></tr>
-        <tr><td style="border:none;padding:2px 0;color:#64748b">Release notes</td><td style="border:none;padding:2px 0;font-weight:700;color:#475569" id="d-stat-v-noncve">…</td></tr>
-        <tr><td style="border:none;padding:3px 0 0;color:#64748b">Est. size</td><td style="border:none;padding:3px 0 0;font-weight:600;color:#475569;font-size:11px" id="d-stat-v-size">…</td></tr>
+        <tr><td class="st-104">Total</td><td id="d-stat-versions" class="st-105">…</td></tr>
+        <tr><td class="st-106">CVE advisories</td><td id="d-stat-v-cve" class="st-107">…</td></tr>
+        <tr><td class="st-106">Release notes</td><td id="d-stat-v-noncve" class="st-108">…</td></tr>
+        <tr><td class="st-109">Est. size</td><td id="d-stat-v-size" class="st-110">…</td></tr>
       </tbody>
     </table>
   </div>
 
   <!-- Community card -->
-  <div class="callout" style="padding:.6rem .7rem">
-    <p style="font-weight:700;margin:0 0 .35rem;color:#0f172a;font-size:.88rem">💬 Community</p>
-    <table style="margin:0;font-size:12px;border:none">
+  <div class="callout st-101">
+    <p class="st-102">💬 Community</p>
+    <table class="st-103">
       <tbody>
-        <tr><td style="border:none;padding:2px 0;color:#64748b;width:58%">Total</td><td style="border:none;padding:2px 0;font-weight:800;color:#2563eb;font-size:1.1rem" id="d-stat-reddit">…</td></tr>
-        <tr><td style="border:none;padding:2px 0;color:#64748b">Reddit posts</td><td style="border:none;padding:2px 0;font-weight:700;color:#64748b" id="d-stat-r-reddit">…</td></tr>
-        <tr><td style="border:none;padding:2px 0;color:#64748b">Stack Overflow</td><td style="border:none;padding:2px 0;font-weight:700;color:#64748b" id="d-stat-r-so">…</td></tr>
-        <tr><td style="border:none;padding:2px 0;color:#64748b">Server Fault</td><td style="border:none;padding:2px 0;font-weight:700;color:#64748b" id="d-stat-r-sf">…</td></tr>
-        <tr><td style="border:none;padding:3px 0 0;color:#64748b">Est. size</td><td style="border:none;padding:3px 0 0;font-weight:600;color:#475569;font-size:11px" id="d-stat-r-size">…</td></tr>
+        <tr><td class="st-104">Total</td><td id="d-stat-reddit" class="st-105">…</td></tr>
+        <tr><td class="st-106">Reddit posts</td><td id="d-stat-r-reddit" class="st-111">…</td></tr>
+        <tr><td class="st-106">Stack Overflow</td><td id="d-stat-r-so" class="st-111">…</td></tr>
+        <tr><td class="st-106">Server Fault</td><td id="d-stat-r-sf" class="st-111">…</td></tr>
+        <tr><td class="st-109">Est. size</td><td id="d-stat-r-size" class="st-110">…</td></tr>
       </tbody>
     </table>
   </div>
 
 </div>
 
-<div class="callout" id="d-stats-freshness" style="padding:.42rem .6rem">
-  <p class="small muted" style="margin:0">Loading freshness info…</p>
+<div class="callout st-112" id="d-stats-freshness">
+  <p class="small muted st-70">Loading freshness info…</p>
 </div>
 </div>
 </details>
@@ -1941,7 +1939,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <summary>CVE Lifecycle Pipeline</summary>
           <div class="nvd-pipeline" id="nvdPipeline">
             <div class="nvd-pipeline-title">
-              <span>CVE Lifecycle · Reddit post distribution per stage &nbsp;·&nbsp; <span style="font-weight:400;opacity:.7">dashed = CVE List (cve.org) &nbsp; solid = NVD</span></span>
+              <span>CVE Lifecycle · Reddit post distribution per stage &nbsp;·&nbsp; <span class="st-113">dashed = CVE List (cve.org) &nbsp; solid = NVD</span></span>
               <span class="nvd-pipeline-range" id="pipelineRange"></span>
             </div>
             <div class="nvd-pipeline-flow" id="nvdPipelineFlow"></div>
@@ -2040,6 +2038,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-26</div>
+              <div class="cl-ver cl-ver-patch">v3.134.5</div>
+            </div>
+            <div class="cl-content">
+              <h3>Inline styles in the page markup moved to styles.css</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> About 370 inline style attributes in the static page markup are now classes in styles.css. Nothing changes visually.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-26</div>
@@ -5487,16 +5497,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       <!-- Admin-only: Rewriter A/B eval view. No LLM grading, see
            runRewriterAbEval's own comment in ask.js for why. -->
       <div id="evalRewriterView" style="display:none">
-        <div class="eval-rewriter-wrap" style="max-width:1100px;margin:0 auto;padding:20px 16px 60px">
-          <h2 style="margin:0 0 12px">🧪 Rewriter Eval</h2>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
-            <input id="erQuestion" type="text" class="search-input"
-              style="flex:1 1 320px;min-width:240px"
-              placeholder="Type a question, or sample a real one...">
+        <div class="eval-rewriter-wrap st-114">
+          <h2 class="st-115">🧪 Rewriter Eval</h2>
+          <div style="display: flex;" class="st-116">
+            <input id="erQuestion" type="text" class="search-input st-117" placeholder="Type a question, or sample a real one...">
             <button type="button" id="erSampleBtn" class="btn btn-ghost">🎲 Sample</button>
             <button type="button" id="erRunBtn" class="btn btn-primary">Run</button>
           </div>
-          <div id="erStatus" class="ask-muted" style="margin-bottom:10px"></div>
+          <div id="erStatus" class="ask-muted st-118"></div>
           <div id="erResults"></div>
         </div>
       </div><!-- /#evalRewriterView -->
@@ -5507,16 +5515,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
            (.eval-rewriter-wrap/.er-grid/.er-compare) rather than a
            near-duplicate set of rules for the same layout shape. -->
       <div id="evalEvaluatorView" style="display:none">
-        <div class="eval-rewriter-wrap" style="max-width:1100px;margin:0 auto;padding:20px 16px 60px">
-          <h2 style="margin:0 0 12px">🧪 Evaluator Eval</h2>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
-            <input id="eeQuestion" type="text" class="search-input"
-              style="flex:1 1 320px;min-width:240px"
-              placeholder="Type a question, or sample a real one...">
+        <div class="eval-rewriter-wrap st-114">
+          <h2 class="st-115">🧪 Evaluator Eval</h2>
+          <div style="display: flex;" class="st-116">
+            <input id="eeQuestion" type="text" class="search-input st-117" placeholder="Type a question, or sample a real one...">
             <button type="button" id="eeSampleBtn" class="btn btn-ghost">🎲 Sample</button>
             <button type="button" id="eeRunBtn" class="btn btn-primary">Run</button>
           </div>
-          <div id="eeStatus" class="ask-muted" style="margin-bottom:10px"></div>
+          <div id="eeStatus" class="ask-muted st-118"></div>
           <div id="eeResults"></div>
         </div>
       </div><!-- /#evalEvaluatorView -->
@@ -5525,16 +5531,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
            own comment in ask.js. Same shared CSS scope as the two views
            above. -->
       <div id="evalOrchestratorView" style="display:none">
-        <div class="eval-rewriter-wrap" style="max-width:1100px;margin:0 auto;padding:20px 16px 60px">
-          <h2 style="margin:0 0 12px">🧪 Orchestrator Eval</h2>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
-            <input id="eoQuestion" type="text" class="search-input"
-              style="flex:1 1 320px;min-width:240px"
-              placeholder="Type a question, or sample a real one...">
+        <div class="eval-rewriter-wrap st-114">
+          <h2 class="st-115">🧪 Orchestrator Eval</h2>
+          <div style="display: flex;" class="st-116">
+            <input id="eoQuestion" type="text" class="search-input st-117" placeholder="Type a question, or sample a real one...">
             <button type="button" id="eoSampleBtn" class="btn btn-ghost">🎲 Sample</button>
             <button type="button" id="eoRunBtn" class="btn btn-primary">Run</button>
           </div>
-          <div id="eoStatus" class="ask-muted" style="margin-bottom:10px"></div>
+          <div id="eoStatus" class="ask-muted st-118"></div>
           <div id="eoResults"></div>
         </div>
       </div><!-- /#evalOrchestratorView -->
@@ -5551,7 +5555,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           </div>
           <div class="ua-card">
             <form id="ua-login-form">
-              <h2 style="margin:0 0 16px;font-size:15px;font-weight:700">Sign in</h2>
+              <h2 class="st-119">Sign in</h2>
               <div id="ua-login-error" class="ua-msg ua-msg-error" style="display:none"></div>
               <div class="ua-field">
                 <label for="ua-login-email">Email</label>
@@ -5564,7 +5568,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               <button class="btn btn-primary" type="submit" id="ua-login-btn">Sign in</button>
             </form>
             <form id="ua-register-form" style="display:none">
-              <h2 style="margin:0 0 16px;font-size:15px;font-weight:700">Create account</h2>
+              <h2 class="st-119">Create account</h2>
               <div id="ua-register-error" class="ua-msg ua-msg-error" style="display:none"></div>
               <div id="ua-register-ok" class="ua-msg ua-msg-ok" style="display:none"></div>
               <div class="ua-field">
@@ -5574,7 +5578,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               <div class="ua-field">
                 <label for="ua-reg-email">Email</label>
                 <input id="ua-reg-email" type="email" class="search-input" autocomplete="email" required />
-                <p class="ua-muted" style="font-size:11px;margin:4px 0 0">Gmail, Outlook, Yahoo, iCloud, ProtonMail, AOL, or a .edu address. Disposable/temp-mail addresses aren't accepted.</p>
+                <p class="ua-muted st-120">Gmail, Outlook, Yahoo, iCloud, ProtonMail, AOL, or a .edu address. Disposable/temp-mail addresses aren't accepted.</p>
               </div>
               <div class="ua-field">
                 <label for="ua-reg-password">Password <span class="ua-opt">(min 8 chars)</span></label>
@@ -5583,7 +5587,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               <button class="btn btn-primary" type="submit" id="ua-register-btn">Create account</button>
             </form>
             <div id="ua-why-pane" style="display:none">
-              <h2 style="margin:0 0 12px;font-size:15px;font-weight:700">Why create an account?</h2>
+              <h2 class="st-121">Why create an account?</h2>
           <ul class="ua-why-list">
             <li><span>🔖</span>Save a search once, reopen it from any device.</li>
             <li><span>🔗</span>Share a link and recipients see your exact filtered view.</li>
@@ -5617,9 +5621,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           </div>
           <details class="ua-admin-details">
             <summary class="ua-admin-header">
-              <span style="font-weight:700;font-size:13px">Change password</span>
+              <span class="st-122">Change password</span>
             </summary>
-              <form id="ua-pw-form" style="margin-top:14px">
+              <form id="ua-pw-form" class="st-123">
                 <div id="ua-pw-error" class="ua-msg ua-msg-error" style="display:none"></div>
                 <div id="ua-pw-ok" class="ua-msg ua-msg-ok" style="display:none"></div>
                 <div class="ua-field">
@@ -5632,31 +5636,31 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <!-- Model provider keys (bring your own) -->
           <details class="ua-admin-details">
             <summary class="ua-admin-header">
-              <span style="font-weight:700;font-size:13px">Model provider keys</span>
-              <span class="ua-opt" style="font-weight:400;font-size:12px">(use your own instead of the shared server key)</span>
+              <span class="st-122">Model provider keys</span>
+              <span class="ua-opt st-124">(use your own instead of the shared server key)</span>
             </summary>
-              <div style="margin-top:14px">
+              <div class="st-123">
                 <div id="ua-keys-error" class="ua-msg ua-msg-error" style="display:none"></div>
                 <div id="ua-keys-ok" class="ua-msg ua-msg-ok" style="display:none"></div>
-                <p class="ua-muted" style="font-size:12px;margin:0 0 10px">A key set here is used for your own Ask requests in place of the shared server key. Stored on your account; only the last 4 characters are ever shown back. Save an empty box to clear it and fall back to the shared key.</p>
-                <div class="ua-field" style="margin-bottom:10px">
-                  <label>Claude (Anthropic) <span id="ua-key-anthropic-status" class="ua-opt" style="font-weight:400"></span></label>
-                  <div style="display:flex;gap:6px">
-                    <input id="ua-key-anthropic" type="password" class="search-input" placeholder="sk-ant-…" autocomplete="one-time-code" name="rt-provider-key-anthropic" data-1p-ignore data-lpignore="true" data-form-type="other" maxlength="400" readonly style="flex:1;min-width:0" />
+                <p class="ua-muted st-125">A key set here is used for your own Ask requests in place of the shared server key. Stored on your account; only the last 4 characters are ever shown back. Save an empty box to clear it and fall back to the shared key.</p>
+                <div class="ua-field st-118">
+                  <label>Claude (Anthropic) <span id="ua-key-anthropic-status" class="ua-opt st-126"></span></label>
+                  <div style="display: flex;" class="st-127">
+                    <input id="ua-key-anthropic" type="password" class="search-input st-128" placeholder="sk-ant-…" autocomplete="one-time-code" name="rt-provider-key-anthropic" data-1p-ignore data-lpignore="true" data-form-type="other" maxlength="400" readonly />
                     <button class="btn btn-primary" type="button" data-key-save="anthropic">Save</button>
                   </div>
                 </div>
-                <div class="ua-field" style="margin-bottom:10px">
-                  <label>Groq <span id="ua-key-groq-status" class="ua-opt" style="font-weight:400"></span></label>
-                  <div style="display:flex;gap:6px">
-                    <input id="ua-key-groq" type="password" class="search-input" placeholder="gsk_…" autocomplete="one-time-code" name="rt-provider-key-groq" data-1p-ignore data-lpignore="true" data-form-type="other" maxlength="400" readonly style="flex:1;min-width:0" />
+                <div class="ua-field st-118">
+                  <label>Groq <span id="ua-key-groq-status" class="ua-opt st-126"></span></label>
+                  <div style="display: flex;" class="st-127">
+                    <input id="ua-key-groq" type="password" class="search-input st-128" placeholder="gsk_…" autocomplete="one-time-code" name="rt-provider-key-groq" data-1p-ignore data-lpignore="true" data-form-type="other" maxlength="400" readonly />
                     <button class="btn btn-primary" type="button" data-key-save="groq">Save</button>
                   </div>
                 </div>
                 <div class="ua-field">
-                  <label>Ollama Cloud <span id="ua-key-ollama-status" class="ua-opt" style="font-weight:400"></span></label>
-                  <div style="display:flex;gap:6px">
-                    <input id="ua-key-ollama" type="password" class="search-input" placeholder="key…" autocomplete="one-time-code" name="rt-provider-key-ollama" data-1p-ignore data-lpignore="true" data-form-type="other" maxlength="400" readonly style="flex:1;min-width:0" />
+                  <label>Ollama Cloud <span id="ua-key-ollama-status" class="ua-opt st-126"></span></label>
+                  <div style="display: flex;" class="st-127">
+                    <input id="ua-key-ollama" type="password" class="search-input st-128" placeholder="key…" autocomplete="one-time-code" name="rt-provider-key-ollama" data-1p-ignore data-lpignore="true" data-form-type="other" maxlength="400" readonly />
                     <button class="btn btn-primary" type="button" data-key-save="ollama">Save</button>
                   </div>
                 </div>
@@ -5665,13 +5669,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <!-- Org namespaces -->
           <details class="ua-admin-details">
             <summary class="ua-admin-header">
-              <span style="font-weight:700;font-size:13px">Organization namespaces</span>
-              <span class="ua-opt" style="font-weight:400;font-size:12px">(appear in share links)</span>
+              <span class="st-122">Organization namespaces</span>
+              <span class="ua-opt st-124">(appear in share links)</span>
             </summary>
-              <div style="margin-top:14px">
+              <div class="st-123">
                 <div id="ua-org-error" class="ua-msg ua-msg-error" style="display:none"></div>
                 <div id="ua-org-ok" class="ua-msg ua-msg-ok" style="display:none"></div>
-                <p class="ua-muted" style="font-size:12px;margin:0 0 10px">Max 2. Each name is appended to share links as <code>?org=name&amp;share=…</code>. Alphanumeric, dash, or underscore only.</p>
+                <p class="ua-muted st-125">Max 2. Each name is appended to share links as <code>?org=name&amp;share=…</code>. Alphanumeric, dash, or underscore only.</p>
                 <div class="ua-field">
                   <label for="ua-org-1">Org 1</label>
                   <input id="ua-org-1" type="text" class="search-input" placeholder="e.g. acme" maxlength="32" />
@@ -5686,40 +5690,40 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <!-- Bookmarks -->
           <details class="ua-admin-details">
             <summary class="ua-admin-header">
-              <span style="font-weight:700;font-size:13px">Bookmarks</span>
-              <span id="ua-bm-count" class="ua-muted" style="font-size:12px"></span>
-              <button id="ua-bm-refresh" class="btn btn-ghost" style="font-size:12px;padding:4px 10px;margin-left:auto">Refresh</button>
+              <span class="st-122">Bookmarks</span>
+              <span id="ua-bm-count" class="ua-muted st-59"></span>
+              <button id="ua-bm-refresh" class="btn btn-ghost st-129">Refresh</button>
             </summary>
-            <p class="ua-muted" style="font-size:12px;margin:8px 0 6px">Save searches using the 🔖 button in the sidebar. Share links are public.</p>
-            <div id="ua-bm-empty" class="ua-muted" style="font-size:12px;display:none">No bookmarks yet.</div>
+            <p class="ua-muted st-130">Save searches using the 🔖 button in the sidebar. Share links are public.</p>
+            <div id="ua-bm-empty" class="ua-muted st-59" style="display: none;">No bookmarks yet.</div>
             <div id="ua-bm-list" class="ua-bm-list"></div>
           </details>
           <!-- Installed versions -->
           <details class="ua-admin-details">
             <summary class="ua-admin-header">
-              <span style="font-weight:700;font-size:13px">Installed versions</span>
-              <span id="ua-inv-count" class="ua-muted" style="font-size:12px"></span>
-              <button id="ua-inv-refresh" class="btn btn-ghost" style="font-size:12px;padding:4px 10px;margin-left:auto">Refresh</button>
+              <span class="st-122">Installed versions</span>
+              <span id="ua-inv-count" class="ua-muted st-59"></span>
+              <button id="ua-inv-refresh" class="btn btn-ghost st-129">Refresh</button>
             </summary>
-            <p class="ua-muted" style="font-size:12px;margin:8px 0 8px">Record the versions you actually run. The Arch view compares them against the latest release to show how far each component has drifted. <span style="opacity:.8">Saved to your account, so it follows you across devices.</span></p>
+            <p class="ua-muted st-131">Record the versions you actually run. The Arch view compares them against the latest release to show how far each component has drifted. <span class="st-132">Saved to your account, so it follows you across devices.</span></p>
             <div id="ua-inv-msg" class="ua-msg" style="display:none"></div>
-            <form id="ua-inv-add-form" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
-              <input id="ua-inv-comp" list="ua-comp-names" class="search-input" placeholder="component (e.g. apache)" maxlength="64" autocomplete="off" required style="flex:1 1 150px;min-width:0" />
-              <input id="ua-inv-ver" class="search-input" placeholder="version (e.g. 2.4.58)" maxlength="32" autocomplete="off" required style="flex:0 1 130px;min-width:0" />
-              <button class="btn btn-primary" type="submit" style="font-size:12px">Add</button>
+            <form id="ua-inv-add-form" style="display: flex;" class="st-133">
+              <input id="ua-inv-comp" list="ua-comp-names" class="search-input st-134" placeholder="component (e.g. apache)" maxlength="64" autocomplete="off" required />
+              <input id="ua-inv-ver" class="search-input st-135" placeholder="version (e.g. 2.4.58)" maxlength="32" autocomplete="off" required />
+              <button class="btn btn-primary st-59" type="submit">Add</button>
             </form>
             <datalist id="ua-comp-names"></datalist>
-            <details style="margin-bottom:8px">
-              <summary style="cursor:pointer;font-size:12px;color:var(--muted);list-style:none;display:flex;flex-direction:row;align-items:center;gap:4px">
-                <span style="font-size:10px">›</span> Paste a list
+            <details class="st-136">
+              <summary style="display: flex;" class="st-137">
+                <span class="st-138">›</span> Paste a list
               </summary>
-              <div style="margin-top:8px">
-                <p class="ua-muted" style="font-size:11px;margin:0 0 6px">One per line: <code>component@version</code>, <code>component version</code>, or <code>component,version</code>. Existing entries are updated.</p>
-                <textarea id="ua-inv-bulk" class="search-input" rows="5" placeholder="apache@2.4.58&#10;php 8.1.0&#10;nginx,1.27.2" style="width:100%;box-sizing:border-box;font:12px/1.5 Consolas,Monaco,monospace;resize:vertical"></textarea>
-                <button id="ua-inv-bulk-btn" class="btn btn-ghost" type="button" style="font-size:12px;margin-top:6px">Import</button>
+              <div class="st-47">
+                <p class="ua-muted st-139">One per line: <code>component@version</code>, <code>component version</code>, or <code>component,version</code>. Existing entries are updated.</p>
+                <textarea id="ua-inv-bulk" class="search-input st-140" rows="5" placeholder="apache@2.4.58&#10;php 8.1.0&#10;nginx,1.27.2"></textarea>
+                <button id="ua-inv-bulk-btn" class="btn btn-ghost st-141" type="button">Import</button>
               </div>
             </details>
-            <div id="ua-inv-empty" class="ua-muted" style="font-size:12px;display:none">No versions recorded yet.</div>
+            <div id="ua-inv-empty" class="ua-muted st-59" style="display: none;">No versions recorded yet.</div>
             <div id="ua-inv-list" class="ua-bm-list"></div>
           </details>
           <!-- Admin: all users -->
@@ -5735,13 +5739,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                  (e.g. "All users (6)") is accurate without opening it. -->
             <details class="ua-admin-details">
               <summary class="ua-admin-header">
-                <span style="font-weight:700;font-size:13px">System overview</span>
-                <span id="ua-dash-updated" class="ua-muted" style="font-size:12px"></span>
-                <button id="ua-refresh-dash" class="btn btn-ghost" style="font-size:12px;padding:4px 10px;margin-left:auto">Refresh</button>
+                <span class="st-122">System overview</span>
+                <span id="ua-dash-updated" class="ua-muted st-59"></span>
+                <button id="ua-refresh-dash" class="btn btn-ghost st-129">Refresh</button>
               </summary>
               <div id="ua-dash-section">
                 <div id="ua-dash-grid" class="ua-dash-grid">
-                  <p class="ua-muted" style="font-size:12px;padding:8px 0">Loading…</p>
+                  <p class="ua-muted st-142">Loading…</p>
                 </div>
                 <div id="ua-dash-bots"></div>
                 <div id="ua-dash-botgap"></div>
@@ -5760,18 +5764,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                  safety-relevant setting worth surfacing prominently. -->
             <details class="ua-admin-details">
               <summary class="ua-admin-header">
-                <span style="font-weight:700;font-size:13px">Guardrails</span>
-                <span id="ua-guardrails-count" class="ua-muted" style="font-size:12px"></span>
-                <button id="ua-refresh-guardrails" class="btn btn-ghost" style="font-size:12px;padding:4px 10px;margin-left:auto">Refresh</button>
+                <span class="st-122">Guardrails</span>
+                <span id="ua-guardrails-count" class="ua-muted st-59"></span>
+                <button id="ua-refresh-guardrails" class="btn btn-ghost st-129">Refresh</button>
               </summary>
               <div id="ua-guardrails-section">
-                <p style="font-weight:700;font-size:12px;margin:10px 0 2px">Mandatory</p>
-                <p class="ua-muted" style="font-size:12px;margin:0 0 6px">Always applied; only an admin can turn one off, and doing so removes a specific, documented safety or correctness fix.</p>
+                <p class="st-143">Mandatory</p>
+                <p class="ua-muted st-144">Always applied; only an admin can turn one off, and doing so removes a specific, documented safety or correctness fix.</p>
                 <div id="ua-guardrails-mandatory-list" class="ua-settings-list">
-                  <p class="ua-muted" style="font-size:12px;padding:8px 0">Loading…</p>
+                  <p class="ua-muted st-142">Loading…</p>
                 </div>
-                <p style="font-weight:700;font-size:12px;margin:16px 0 2px">Optional</p>
-                <p class="ua-muted" style="font-size:12px;margin:0 0 6px">Applied by default at the setting below; a signed-in user may override this for their own questions.</p>
+                <p class="st-145">Optional</p>
+                <p class="ua-muted st-144">Applied by default at the setting below; a signed-in user may override this for their own questions.</p>
                 <div id="ua-guardrails-optional-list" class="ua-settings-list"></div>
               </div>
             </details>
@@ -5786,14 +5790,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                  how a future answer for that vendor gets produced. -->
             <details class="ua-admin-details">
               <summary class="ua-admin-header">
-                <span style="font-weight:700;font-size:13px">Feedback Loop</span>
-                <span id="ua-feedback-thresholds-count" class="ua-muted" style="font-size:12px"></span>
-                <button id="ua-refresh-feedback-thresholds" class="btn btn-ghost" style="font-size:12px;padding:4px 10px;margin-left:auto">Refresh</button>
+                <span class="st-122">Feedback Loop</span>
+                <span id="ua-feedback-thresholds-count" class="ua-muted st-59"></span>
+                <button id="ua-refresh-feedback-thresholds" class="btn btn-ghost st-129">Refresh</button>
               </summary>
               <div id="ua-feedback-thresholds-section">
-                <p class="ua-muted" style="font-size:12px;margin:10px 0 6px">Flags a vendor on its answers' Feedback Loop tab once real user ratings run negative past these thresholds.</p>
+                <p class="ua-muted st-146">Flags a vendor on its answers' Feedback Loop tab once real user ratings run negative past these thresholds.</p>
                 <div id="ua-feedback-thresholds-list" class="ua-settings-list">
-                  <p class="ua-muted" style="font-size:12px;padding:8px 0">Loading…</p>
+                  <p class="ua-muted st-142">Loading…</p>
                 </div>
               </div>
             </details>
@@ -5804,12 +5808,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                  markup here (see uaLoadSettings/UA_SETTINGS_META). -->
             <details class="ua-admin-details">
               <summary class="ua-admin-header">
-                <span style="font-weight:700;font-size:13px">Settings</span>
-                <span id="ua-settings-count" class="ua-muted" style="font-size:12px"></span>
+                <span class="st-122">Settings</span>
+                <span id="ua-settings-count" class="ua-muted st-59"></span>
               </summary>
               <div id="ua-settings-section">
                 <div id="ua-settings-list" class="ua-settings-list">
-                  <p class="ua-muted" style="font-size:12px;padding:8px 0">Loading…</p>
+                  <p class="ua-muted st-142">Loading…</p>
                 </div>
               </div>
             </details>
@@ -5821,14 +5825,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                  ever opened, same reasoning as every other section here. -->
             <details class="ua-admin-details">
               <summary class="ua-admin-header">
-                <span style="font-weight:700;font-size:13px">Bot health thresholds</span>
-                <span id="ua-cadence-count" class="ua-muted" style="font-size:12px"></span>
-                <button id="ua-refresh-cadence" class="btn btn-ghost" style="font-size:12px;padding:4px 10px;margin-left:auto">Refresh</button>
+                <span class="st-122">Bot health thresholds</span>
+                <span id="ua-cadence-count" class="ua-muted st-59"></span>
+                <button id="ua-refresh-cadence" class="btn btn-ghost st-129">Refresh</button>
               </summary>
               <div id="ua-cadence-section">
-                <p class="ua-muted" style="font-size:12px;margin:8px 0 6px">How many days a bot may go quiet before the System overview panel's Bot health card flags it stale. Leave a row at its default unless that bot's normal update cadence genuinely differs.</p>
+                <p class="ua-muted st-130">How many days a bot may go quiet before the System overview panel's Bot health card flags it stale. Leave a row at its default unless that bot's normal update cadence genuinely differs.</p>
                 <div id="ua-cadence-list" class="ua-settings-list">
-                  <p class="ua-muted" style="font-size:12px;padding:8px 0">Loading…</p>
+                  <p class="ua-muted st-142">Loading…</p>
                 </div>
               </div>
             </details>
@@ -5839,45 +5843,45 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                  fallback runs automatically. -->
             <details class="ua-admin-details">
               <summary class="ua-admin-header">
-                <span style="font-weight:700;font-size:13px">Vendor catalog</span>
-                <span id="ua-vendor-alias-count" class="ua-muted" style="font-size:12px"></span>
-                <button id="ua-refresh-vendor-aliases" class="btn btn-ghost" style="font-size:12px;padding:4px 10px;margin-left:auto">Refresh</button>
+                <span class="st-122">Vendor catalog</span>
+                <span id="ua-vendor-alias-count" class="ua-muted st-59"></span>
+                <button id="ua-refresh-vendor-aliases" class="btn btn-ghost st-129">Refresh</button>
               </summary>
               <div id="ua-vendor-catalog-body">
-                <p class="ua-muted" style="font-size:12px;margin:8px 0 10px">Corrects or adds a vendor name the automatic catalog (built from tracked release data and Reddit subreddit names) doesn't resolve on its own, e.g. mapping "ada" to "Ada" when a real product's automatic verification is ambiguous.</p>
+                <p class="ua-muted st-147">Corrects or adds a vendor name the automatic catalog (built from tracked release data and Reddit subreddit names) doesn't resolve on its own, e.g. mapping "ada" to "Ada" when a real product's automatic verification is ambiguous.</p>
                 <div id="ua-vendor-alias-error" class="ua-msg ua-msg-error" style="display:none"></div>
-                <form id="ua-vendor-alias-form" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
-                  <input id="ua-vendor-alias-input" class="search-input" placeholder="Alias (e.g. ada)" maxlength="64" autocomplete="off" required style="flex:1 1 140px;min-width:0" />
-                  <input id="ua-vendor-canonical-input" class="search-input" placeholder="Canonical name (e.g. Ada)" maxlength="64" autocomplete="off" required style="flex:1 1 140px;min-width:0" />
-                  <button class="btn btn-primary" type="submit" style="font-size:12px">Add alias</button>
+                <form id="ua-vendor-alias-form" style="display: flex;" class="st-148">
+                  <input id="ua-vendor-alias-input" class="search-input st-149" placeholder="Alias (e.g. ada)" maxlength="64" autocomplete="off" required />
+                  <input id="ua-vendor-canonical-input" class="search-input st-149" placeholder="Canonical name (e.g. Ada)" maxlength="64" autocomplete="off" required />
+                  <button class="btn btn-primary st-59" type="submit">Add alias</button>
                 </form>
-                <div id="ua-vendor-alias-empty" class="ua-muted" style="font-size:12px;display:none">No aliases yet.</div>
+                <div id="ua-vendor-alias-empty" class="ua-muted st-59" style="display: none;">No aliases yet.</div>
                 <div id="ua-vendor-alias-list" class="ua-bm-list"></div>
 
-                <hr style="border:none;border-top:1px solid var(--border);margin:16px 0" />
+                <hr class="st-150" />
 
-                <p style="font-weight:700;font-size:13px;margin:0 0 4px">Manual gap-fill trigger</p>
-                <p class="ua-muted" style="font-size:12px;margin:0 0 10px">Manually run the same automatic-catalog gap-fill a bot's own fallback triggers for a vendor with zero tracked evidence. The result also shows up in the System overview panel's "Recent vendor gap-fills" list above.</p>
+                <p class="st-151">Manual gap-fill trigger</p>
+                <p class="ua-muted st-125">Manually run the same automatic-catalog gap-fill a bot's own fallback triggers for a vendor with zero tracked evidence. The result also shows up in the System overview panel's "Recent vendor gap-fills" list above.</p>
                 <div id="ua-vendor-gapfill-msg" class="ua-msg" style="display:none"></div>
-                <form id="ua-vendor-gapfill-form" style="display:flex;gap:6px;flex-wrap:wrap">
-                  <input id="ua-vendor-gapfill-input" class="search-input" placeholder="Vendor name (e.g. ada)" maxlength="64" autocomplete="off" required style="flex:1 1 200px;min-width:0" />
-                  <button class="btn btn-primary" type="submit" style="font-size:12px">Run gap-fill</button>
+                <form id="ua-vendor-gapfill-form" style="display: flex;" class="st-152">
+                  <input id="ua-vendor-gapfill-input" class="search-input st-153" placeholder="Vendor name (e.g. ada)" maxlength="64" autocomplete="off" required />
+                  <button class="btn btn-primary st-59" type="submit">Run gap-fill</button>
                 </form>
               </div>
             </details>
             <details class="ua-admin-details">
               <summary class="ua-admin-header">
-                <span style="font-weight:700;font-size:13px">All users</span>
-                <span id="ua-user-count" class="ua-muted" style="font-size:12px"></span>
-                <button id="ua-refresh-users" class="btn btn-ghost" style="font-size:12px;padding:4px 10px;margin-left:auto">Refresh</button>
+                <span class="st-122">All users</span>
+                <span id="ua-user-count" class="ua-muted st-59"></span>
+                <button id="ua-refresh-users" class="btn btn-ghost st-129">Refresh</button>
               </summary>
               <div id="ua-user-list"></div>
             </details>
             <details class="ua-admin-details" id="ua-search-events-section" style="display:none">
               <summary class="ua-admin-header">
-                <span style="font-weight:700;font-size:13px">Search &amp; Ask activity</span>
-                <span id="ua-se-count" class="ua-muted" style="font-size:12px"></span>
-                <button id="ua-refresh-searches" class="btn btn-ghost" style="font-size:12px;padding:4px 10px;margin-left:auto">Refresh</button>
+                <span class="st-122">Search &amp; Ask activity</span>
+                <span id="ua-se-count" class="ua-muted st-59"></span>
+                <button id="ua-refresh-searches" class="btn btn-ghost st-129">Refresh</button>
               </summary>
               <div id="ua-se-list"></div>
             </details>
@@ -5890,21 +5894,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       <div id="networkView" style="display:none">
 
         <!-- login gate -->
-        <div id="nk-gate" style="display:none;text-align:center;padding:48px 20px">
-          <div style="font-size:36px;margin-bottom:12px">🌐</div>
-          <div style="font-size:15px;font-weight:700;margin-bottom:8px">Releases</div>
-          <p style="font-size:12px;color:var(--muted);max-width:340px;margin:0 auto 18px;line-height:1.7">
+        <div id="nk-gate" style="display: none;" class="st-154">
+          <div class="st-155">🌐</div>
+          <div class="st-156">Releases</div>
+          <p class="st-157">
             Vendors publish releases. Users report production outcomes. Collective knowledge answers questions like
             "How did version 4.2 perform?" or "Who upgraded successfully from 3.9?"
           </p>
-          <p style="font-size:11px;color:var(--muted);margin:0 auto 18px;max-width:300px;line-height:1.6">
+          <p class="st-158">
             Value grows with participation. Sign in to publish releases and report experiences.
           </p>
           <button class="btn btn-primary" id="nk-signin-btn">Sign in to participate</button>
         </div>
 
         <!-- authenticated main panel -->
-        <div id="nk-main" style="display:none;padding:16px;max-width:680px">
+        <div id="nk-main" style="display: none;" class="st-159">
           <div class="nk-tabs">
             <button class="nk-tab nk-tab-active" data-nk-tab="discover">Discover</button>
             <button class="nk-tab" data-nk-tab="publish">Publish a Release</button>
@@ -5944,14 +5948,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                 </select>
               </div>
               <div class="nk-field">
-                <label class="nk-label" for="nk-notes-url">Release notes URL <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+                <label class="nk-label" for="nk-notes-url">Release notes URL <span class="st-160">(optional)</span></label>
                 <input id="nk-notes-url" class="nk-input" type="url" placeholder="https://..." maxlength="512" />
               </div>
               <div class="nk-field">
-                <label class="nk-label" for="nk-description">Description <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+                <label class="nk-label" for="nk-description">Description <span class="st-160">(optional)</span></label>
                 <textarea id="nk-description" class="nk-input nk-textarea" placeholder="What changed in this release?" maxlength="1000"></textarea>
               </div>
-              <button type="submit" class="btn btn-primary" style="align-self:flex-start">Publish Release</button>
+              <button type="submit" class="btn btn-primary st-161">Publish Release</button>
             </form>
           </div>
         </div>
@@ -5979,15 +5983,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
              instead of a status-text line, a separate error paragraph,
              and this block all saying overlapping things at once. -->
         <div id="emptyState">
-          <div id="emptyStateIcon" style="font-size:32px">🔍</div>
+          <div id="emptyStateIcon" class="st-162">🔍</div>
           <p id="emptyStateMsg">No updates match the current filters.</p>
           <p id="emptyStateDetail" hidden></p>
         </div>
 
         <div id="feed">
-          <div class="skeleton" aria-hidden="true" style="height:68px"></div>
-          <div class="skeleton" aria-hidden="true" style="height:68px"></div>
-          <div class="skeleton" aria-hidden="true" style="height:68px"></div>
+          <div class="skeleton st-163" aria-hidden="true"></div>
+          <div class="skeleton st-163" aria-hidden="true"></div>
+          <div class="skeleton st-163" aria-hidden="true"></div>
         </div>
 
         <div id="sentinel" class="sentinel" role="status" aria-live="polite">Loading more…</div>
@@ -6047,63 +6051,63 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
   <button id="backToTop" aria-label="Back to top" title="Back to top">↑</button>
 
   <!-- ── Arch dialogs ── -->
-  <dialog id="a-metricsDialog" style="border:1px solid var(--border);border-radius:var(--radius);padding:16px;background:var(--surface);color:var(--text);max-width:520px;width:min(96vw,520px)">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px">
+  <dialog id="a-metricsDialog" class="st-164">
+    <div style="display: flex;" class="st-165">
       <strong>Ecosystem Metrics</strong>
-      <button class="btn btn-ghost" data-close-dialog="a-metricsDialog" style="padding:4px 10px">Close</button>
+      <button class="btn btn-ghost st-166" data-close-dialog="a-metricsDialog">Close</button>
     </div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;font-size:13px">
-      <div style="padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg)">Total <strong id="a-totalComponents">0</strong></div>
-      <div style="padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg)">Stacks <strong id="a-stackCount">0</strong></div>
-      <div style="padding:6px 12px;border:1px solid #fca5a5;border-radius:8px;background:#fef2f2;color:#b91c1c">CVE <strong id="a-cveCount">0</strong></div>
-      <div style="padding:6px 12px;border:1px solid #fcd34d;border-radius:8px;background:#fffbeb;color:#b45309">Behind <strong id="a-behindCount">0</strong></div>
-      <div style="padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg)">On latest <strong id="a-currentCount">0</strong></div>
-      <div style="padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg)">Version unknown <strong id="a-unknownCount">0</strong></div>
+    <div style="display: flex;" class="st-167">
+      <div class="st-168">Total <strong id="a-totalComponents">0</strong></div>
+      <div class="st-168">Stacks <strong id="a-stackCount">0</strong></div>
+      <div class="st-169">CVE <strong id="a-cveCount">0</strong></div>
+      <div class="st-170">Behind <strong id="a-behindCount">0</strong></div>
+      <div class="st-168">On latest <strong id="a-currentCount">0</strong></div>
+      <div class="st-168">Version unknown <strong id="a-unknownCount">0</strong></div>
     </div>
   </dialog>
 
-  <dialog id="a-codeDialog" style="border:1px solid var(--border);border-radius:var(--radius);padding:16px;background:var(--surface);color:var(--text);max-width:700px;width:min(96vw,700px)">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px">
+  <dialog id="a-codeDialog" class="st-171">
+    <div style="display: flex;" class="st-165">
       <strong>PlantUML Code</strong>
-      <button class="btn btn-ghost" data-close-dialog="a-codeDialog" style="padding:4px 10px">Close</button>
+      <button class="btn btn-ghost st-166" data-close-dialog="a-codeDialog">Close</button>
     </div>
-    <pre id="a-plantumlCode" style="background:#0a1220;color:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:12px 14px;white-space:pre-wrap;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;max-height:55vh;overflow:auto;margin:0"></pre>
-    <div style="display:flex;gap:8px;margin-top:10px">
+    <pre id="a-plantumlCode" class="st-172"></pre>
+    <div style="display: flex;" class="st-173">
       <button class="btn btn-primary" id="a-copyCodeBtn">Copy Code</button>
     </div>
   </dialog>
 
-  <dialog id="a-detailsDialog" style="border:1px solid var(--border);border-radius:var(--radius);padding:16px;background:var(--surface);color:var(--text);max-width:600px;width:min(96vw,600px)">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px">
+  <dialog id="a-detailsDialog" class="st-174">
+    <div style="display: flex;" class="st-165">
       <strong>Details</strong>
-      <button class="btn btn-ghost" data-close-dialog="a-detailsDialog" style="padding:4px 10px">Close</button>
+      <button class="btn btn-ghost st-166" data-close-dialog="a-detailsDialog">Close</button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">
-      <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px">
-        <div style="font-weight:700;margin-bottom:6px">Components</div>
-        <div id="a-detComponents" style="line-height:1.7;color:var(--muted)">—</div>
+    <div style="display: grid;" class="st-175">
+      <div class="st-176">
+        <div class="st-177">Components</div>
+        <div id="a-detComponents" class="st-178">—</div>
       </div>
-      <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px">
-        <div style="font-weight:700;margin-bottom:6px">Stacks Detected</div>
-        <div id="a-detStacks" style="line-height:1.7;color:var(--muted)">—</div>
+      <div class="st-176">
+        <div class="st-177">Stacks Detected</div>
+        <div id="a-detStacks" class="st-178">—</div>
       </div>
     </div>
   </dialog>
 
-  <dialog id="a-configDialog" style="border:1px solid var(--border);border-radius:var(--radius);padding:16px;background:var(--surface);color:var(--text);max-width:520px;width:min(96vw,520px)">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px">
+  <dialog id="a-configDialog" class="st-164">
+    <div style="display: flex;" class="st-165">
       <strong>Config</strong>
-      <button class="btn btn-ghost" data-close-dialog="a-configDialog" style="padding:4px 10px">Close</button>
+      <button class="btn btn-ghost st-166" data-close-dialog="a-configDialog">Close</button>
     </div>
-    <div style="display:grid;grid-template-columns:140px 1fr auto;gap:8px;align-items:center;font-size:13px">
+    <div style="display: grid;" class="st-179">
       <label for="a-cfgApi">API Endpoint</label>
-      <input id="a-cfgApi" type="text" readonly style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font:inherit;font-size:12px" />
-      <button class="btn btn-ghost" id="a-cfgCopyApi" style="font-size:12px;padding:5px 10px">Copy</button>
+      <input id="a-cfgApi" type="text" readonly class="st-180" />
+      <button class="btn btn-ghost st-60" id="a-cfgCopyApi">Copy</button>
       <label for="a-cfgPlant">PlantUML Server</label>
-      <input id="a-cfgPlant" type="text" style="padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font:inherit;font-size:12px" />
-      <button class="btn btn-primary" id="a-cfgApplyPlant" style="font-size:12px;padding:5px 10px">Apply</button>
+      <input id="a-cfgPlant" type="text" class="st-180" />
+      <button class="btn btn-primary st-60" id="a-cfgApplyPlant">Apply</button>
     </div>
-    <p style="font-size:12px;color:var(--muted);margin:10px 0 0">Changing the PlantUML server updates where images are fetched from for this session.</p>
+    <p class="st-181">Changing the PlantUML server updates where images are fetched from for this session.</p>
   </dialog>
 
   <script>
