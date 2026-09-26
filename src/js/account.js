@@ -8,7 +8,6 @@
     function uaUser() {
       try { return JSON.parse(localStorage.getItem("rt_user") || "null"); } catch { return null; }
     }
-    function uaOrgs() { const u = uaUser(); return (u && Array.isArray(u.orgs)) ? u.orgs : []; }
     function uaSetSession(token, user) {
       localStorage.setItem("rt_token", token);
       localStorage.setItem("rt_user", JSON.stringify(user));

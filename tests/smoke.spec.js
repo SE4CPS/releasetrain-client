@@ -4,8 +4,8 @@ const { test, expect } = require('@playwright/test');
  * Smoke coverage: every top-level view activates without an uncaught JavaScript
  * error and reveals its container. The REST API is stubbed so the run is
  * hermetic and boot() resolves deterministically; this is a wiring check, not
- * an integration test. It stands in for the manual "does the giant inline
- * script still parse and wire up" check until src/index.html is modularised.
+ * an integration test. It checks that the scripts under src/js/ still parse and
+ * wire up together.
  */
 
 // Minimal but shape-correct responses for every endpoint boot() and the views touch.
@@ -29,7 +29,7 @@ async function stubApi(page) {
 }
 
 const VIEWS = [
-  { view: '', selector: '#askIntroPanel' },
+  { view: '', selector: '#askForm' },
   { view: 'feed', selector: '#feedPanel' },
   { view: 'graph', selector: '#graphView' },
   { view: 'arch', selector: '#archView' },

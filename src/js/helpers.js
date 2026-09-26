@@ -26,8 +26,6 @@
     const titleCase = s => s ? s.replace(/\w\S*/g, w => w[0].toUpperCase() + w.slice(1)) : s;
     const tokens = s => uniq(String(s || "").split(",").map(t => norm(t)).filter(Boolean));
 
-    const GENERIC_WORDS = new Set(["project", "org", "organization", "team", "labs", "systems", "software",
-      "tech", "technologies", "dev", "development", "opensource", "open", "source"]);
 
     const dayLabelFromMillis = ms => {
       try {

@@ -272,7 +272,6 @@
     const askVendorCheckEl = document.getElementById("askVendorCheck");
     const askTemporalFilterEl = document.getElementById("askTemporalFilter");
     const askIntentFilterEl = document.getElementById("askIntentFilter");
-    const askResolveVendorEl = document.getElementById("askResolveVendor");
     const askResolveTemporalEl = document.getElementById("askResolveTemporal");
 
     // Guardrails: releasetrain-server's unified admin-configurable
