@@ -22,7 +22,7 @@
     gtag('config', 'G-P5E77Z7VG5');
   </script>
 
-  <link rel="stylesheet" href="styles.css?v=3.134.5">
+  <link rel="stylesheet" href="styles.css?v=3.134.6">
 </head>
 
 <body>
@@ -38,7 +38,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.134.5"><span class="brand-name">Releasetrain </span><em>v3.134.5</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.134.6"><span class="brand-name">Releasetrain </span><em>v3.134.6</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2038,6 +2038,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-26</div>
+              <div class="cl-ver cl-ver-patch">v3.134.6</div>
+            </div>
+            <div class="cl-content">
+              <h3>Inline styles in generated HTML moved to styles.css</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> About 170 inline style attributes in the HTML the app builds in JavaScript are now classes in styles.css. Nothing changes visually.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-26</div>
@@ -6138,7 +6150,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           + "padding:8px 12px;border:1px solid var(--cve,#b91c1c);border-radius:3px;"
           + "background:var(--surface,#fff);color:var(--text,#0f172a);font:13px/1.4 system-ui,sans-serif;"
           + "box-shadow:0 2px 8px rgba(15,23,42,.12)";
-        bar.innerHTML = '<span style="flex:1">Something went wrong loading part of this page. '
+        bar.innerHTML = '<span class="st-182" >Something went wrong loading part of this page. '
           + 'A reload may help; if it persists the API may be unavailable.</span>'
           + '<button type="button" style="border:1px solid var(--border,#e2e8f0);background:none;'
           + 'border-radius:3px;padding:2px 8px;cursor:pointer;font:inherit">Dismiss</button>';
@@ -6591,10 +6603,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     async function askLoadGuardrails() {
       const bodyEl = document.getElementById("askGuardrailsBody");
       if (!bodyEl) return;
-      bodyEl.innerHTML = `<p class="ua-muted" style="font-size:11px;margin:0">Loading…</p>`;
+      bodyEl.innerHTML = `<p class="st-183 ua-muted" >Loading…</p>`;
       const res = await uaRequest("guardrails").catch(() => null);
       if (!res || !res.ok) {
-        bodyEl.innerHTML = `<p class="ua-muted" style="font-size:11px;margin:0">Could not load guardrails.</p>`;
+        bodyEl.innerHTML = `<p class="st-183 ua-muted" >Could not load guardrails.</p>`;
         return;
       }
       const data = await res.json();
@@ -6638,17 +6650,17 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const optionalHtml = optional.length
         ? optional.map(g => `<label class="ask-toggle-inline" title="${uaEsc(g.description || g.label || g.id)}">
             <input type="checkbox" class="ask-guardrail-input" data-id="${uaEsc(g.id)}"${g.effective ? " checked" : ""}${g.configurable ? "" : " disabled"}> ${uaEsc(shortLabel(g))}
-            <span id="ask-guardrail-msg-${uaEsc(g.id)}" class="ua-muted" style="font-size:10px;display:none">Saved</span>
+            <span id="ask-guardrail-msg-${uaEsc(g.id)}" class="st-184 ua-muted" style="display:none;">Saved</span>
           </label>`).join("")
-        : `<p class="ua-muted" style="font-size:11px;margin:0">None you can change.</p>`;
-      const mandatoryHtml = mandatory.map(g => `<label class="ask-toggle-inline" style="opacity:.7" title="${uaEsc(g.description || g.label || g.id)}">
+        : `<p class="st-183 ua-muted" >None you can change.</p>`;
+      const mandatoryHtml = mandatory.map(g => `<label class="st-185 ask-toggle-inline"  title="${uaEsc(g.description || g.label || g.id)}">
             <input type="checkbox" checked disabled> ${uaEsc(shortLabel(g))}
           </label>`).join("");
       bodyEl.innerHTML = `
-        ${signedIn ? "" : `<p class="ua-muted" style="font-size:11px;margin:0 0 6px"><a href="#" id="askGuardrailsSignInLink" target="_self">Sign in</a> to change these.</p>`}
-        <div style="display:flex;flex-direction:column;gap:3px">${optionalHtml}</div>
-        <p class="ua-muted" style="font-size:10px;margin:6px 0 3px;text-transform:uppercase;letter-spacing:.4px">Always on</p>
-        <div style="display:flex;flex-direction:column;gap:3px">${mandatoryHtml}</div>
+        ${signedIn ? "" : `<p class="st-186 ua-muted" ><a href="#" id="askGuardrailsSignInLink" target="_self">Sign in</a> to change these.</p>`}
+        <div class="st-187" style="display:flex;">${optionalHtml}</div>
+        <p class="st-188 ua-muted" >Always on</p>
+        <div class="st-187" style="display:flex;">${mandatoryHtml}</div>
       `;
       const signInLink = document.getElementById("askGuardrailsSignInLink");
       if (signInLink) signInLink.addEventListener("click", e => { e.preventDefault(); activateUsers(); });
@@ -6735,7 +6747,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       try { taggedSources = JSON.parse(panel.dataset.guardrailSources || "[]"); } catch { /* keep [] */ }
       const res = await uaRequest("guardrails").catch(() => null);
       if (!res || !res.ok) {
-        panel.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">Could not load guardrails.</p>`;
+        panel.innerHTML = `<p class="st-189 ua-muted" >Could not load guardrails.</p>`;
         return;
       }
       const data = await res.json();
@@ -6745,7 +6757,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const signedIn = !!uaToken();
       const rowHtml = (g, interactive) => {
         const mine = taggedSources.filter(s => s.guardrail === g.id).map(s => s.title);
-        return `<div class="ua-settings-row" style="font-size:11px;padding:8px 10px">
+        return `<div class="st-190 ua-settings-row" >
             <div class="ua-settings-info">
               <strong>${interactive ? "" : "&#128274; "}${uaEsc(g.label || g.id)}</strong>
               <span class="ua-muted">${uaEsc(g.description || "")}</span>
@@ -6753,21 +6765,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             </div>
             ${interactive
               ? `<input type="checkbox" class="ask-guardrail-input" data-id="${uaEsc(g.id)}"${g.effective ? " checked" : ""}${g.configurable ? "" : " disabled"}>
-                 <span id="ask-guardrail-tab-msg-${uaEsc(g.id)}" class="ua-muted" style="font-size:10px;display:none">Saved</span>`
+                 <span id="ask-guardrail-tab-msg-${uaEsc(g.id)}" class="st-184 ua-muted" style="display:none;">Saved</span>`
               : `<input type="checkbox" disabled${g.enabled ? " checked" : ""}>`}
           </div>`;
       };
       const mandatoryHtml = mandatory.length ? mandatory.map(g => rowHtml(g, false)).join("")
-        : `<p class="ua-muted" style="font-size:11px;margin:0">None defined yet.</p>`;
+        : `<p class="st-183 ua-muted" >None defined yet.</p>`;
       const optionalHtml = optional.length ? optional.map(g => rowHtml(g, true)).join("")
-        : `<p class="ua-muted" style="font-size:11px;margin:0">None defined yet.</p>`;
+        : `<p class="st-183 ua-muted" >None defined yet.</p>`;
       panel.innerHTML = `
-        <p class="ask-muted" style="margin:0 0 10px">Which safety/correctness checks applied to this exact answer, and what each is set to.</p>
-        <p style="font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin:0 0 4px;color:var(--muted)">Mandatory (admin-set, disabled here)</p>
-        <div class="ua-settings-list" style="margin-top:0">${mandatoryHtml}</div>
-        <p style="font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin:12px 0 4px;color:var(--muted)">Optional</p>
-        ${signedIn ? "" : `<p class="ua-muted" style="font-size:11px;margin:0 0 6px">Sign in (<a href="#" id="askGuardrailsTabSignInLink" target="_self">Account view</a>) to customize these for your own questions.</p>`}
-        <div class="ua-settings-list" style="margin-top:0">${optionalHtml}</div>
+        <p class="st-191 ask-muted" >Which safety/correctness checks applied to this exact answer, and what each is set to.</p>
+        <p class="st-192" >Mandatory (admin-set, disabled here)</p>
+        <div class="st-193 ua-settings-list" >${mandatoryHtml}</div>
+        <p class="st-194" >Optional</p>
+        ${signedIn ? "" : `<p class="st-186 ua-muted" >Sign in (<a href="#" id="askGuardrailsTabSignInLink" target="_self">Account view</a>) to customize these for your own questions.</p>`}
+        <div class="st-193 ua-settings-list" >${optionalHtml}</div>
       `;
       const signInLink = panel.querySelector("#askGuardrailsTabSignInLink");
       if (signInLink) signInLink.addEventListener("click", e => { e.preventDefault(); activateUsers(); });
@@ -6874,25 +6886,25 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (activity.orchestratorRevise && activity.orchestratorRevise.applied) {
         loopLines.push("This answer was regenerated after an initial hedge despite real evidence.");
       }
-      const loopCountHtml = `<p style="font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin:0 0 4px;color:var(--muted)">This answer's loop activity</p>
-           ${loopLines.map(t => `<p class="ask-muted" style="margin:0 0 10px">${uaEsc(t)}</p>`).join("")}`;
+      const loopCountHtml = `<p class="st-192" >This answer's loop activity</p>
+           ${loopLines.map(t => `<p class="st-191 ask-muted" >${uaEsc(t)}</p>`).join("")}`;
       if (!runId) {
-        panel.innerHTML = `${loopCountHtml}<p class="ua-muted" style="font-size:12px;padding:8px 0">No saved answer to check yet.</p>`;
+        panel.innerHTML = `${loopCountHtml}<p class="st-189 ua-muted" >No saved answer to check yet.</p>`;
         return;
       }
       const res = await uaRequest(`ask/${runId}/feedback-loop`).catch(() => null);
       if (!res) {
-        panel.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">Could not load feedback loop status.</p>`;
+        panel.innerHTML = `<p class="st-189 ua-muted" >Could not load feedback loop status.</p>`;
         return;
       }
       if (res.status === 401) {
-        panel.innerHTML = `${loopCountHtml}<p class="ua-muted" style="font-size:12px;padding:8px 0">Sign in (<a href="#" id="askFeedbackLoopSignInLink" target="_self">Account view</a>) to see feedback loop status for your own answers.</p>`;
+        panel.innerHTML = `${loopCountHtml}<p class="st-189 ua-muted" >Sign in (<a href="#" id="askFeedbackLoopSignInLink" target="_self">Account view</a>) to see feedback loop status for your own answers.</p>`;
         const signInLink = panel.querySelector("#askFeedbackLoopSignInLink");
         if (signInLink) signInLink.addEventListener("click", e => { e.preventDefault(); activateUsers(); });
         return;
       }
       if (!res.ok) {
-        panel.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">Could not load feedback loop status.</p>`;
+        panel.innerHTML = `<p class="st-189 ua-muted" >Could not load feedback loop status.</p>`;
         return;
       }
       const data = await res.json();
@@ -6901,25 +6913,25 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         : "Not rated yet";
       const vendorText = data.vendor ? uaEsc(data.vendor) : "this question's vendor";
       const statsHtml = data.totalRatings
-        ? `<p class="ask-muted" style="margin:0 0 10px">${data.totalRatings} rating${data.totalRatings === 1 ? "" : "s"} so far for <strong>${vendorText}</strong>, ${Math.round((data.negativeRatio || 0) * 100)}% negative.</p>`
-        : `<p class="ask-muted" style="margin:0 0 10px">No user ratings yet for <strong>${vendorText}</strong>.</p>`;
-      const thresholdsHtml = (data.thresholds || []).map(t => `<div class="ua-settings-row" style="font-size:11px;padding:8px 10px">
+        ? `<p class="st-191 ask-muted" >${data.totalRatings} rating${data.totalRatings === 1 ? "" : "s"} so far for <strong>${vendorText}</strong>, ${Math.round((data.negativeRatio || 0) * 100)}% negative.</p>`
+        : `<p class="st-191 ask-muted" >No user ratings yet for <strong>${vendorText}</strong>.</p>`;
+      const thresholdsHtml = (data.thresholds || []).map(t => `<div class="st-190 ua-settings-row" >
           <div class="ua-settings-info">
             <strong>&#128274; ${uaEsc(t.label || t.id)}</strong>
             <span class="ua-muted">${uaEsc(t.description || "")}</span>
             ${t.flagged ? `<div class="ask-feedback-flagged">&#9888;&#65039; ${vendorText} is currently flagged: at least ${t.minRatings} ratings, &ge;${Math.round(t.negativeRatio * 100)}% negative.</div>` : ""}
           </div>
           <input type="checkbox" disabled${t.enabled ? " checked" : ""}>
-        </div>`).join("") || `<p class="ua-muted" style="font-size:11px;margin:0">No feedback thresholds defined yet.</p>`;
+        </div>`).join("") || `<p class="st-183 ua-muted" >No feedback thresholds defined yet.</p>`;
       panel.innerHTML = `
-        <p class="ask-muted" style="margin:0 0 10px">Real user ratings for this answer's vendor, and whether an admin-set threshold currently flags it. <a href="#" class="ask-feedbackloop-goto-answer">Rate this answer</a></p>
+        <p class="st-191 ask-muted" >Real user ratings for this answer's vendor, and whether an admin-set threshold currently flags it. <a href="#" class="ask-feedbackloop-goto-answer">Rate this answer</a></p>
         ${loopCountHtml}
-        <p style="font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin:0 0 4px;color:var(--muted)">This answer's rating</p>
-        <p class="ask-muted" style="margin:0 0 10px">${uaEsc(ratingText)}</p>
-        <p style="font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin:0 0 4px;color:var(--muted)">Vendor rating history</p>
+        <p class="st-192" >This answer's rating</p>
+        <p class="st-191 ask-muted" >${uaEsc(ratingText)}</p>
+        <p class="st-192" >Vendor rating history</p>
         ${statsHtml}
-        <p style="font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin:12px 0 4px;color:var(--muted)">Thresholds (admin-set, disabled here)</p>
-        <div class="ua-settings-list" style="margin-top:0">${thresholdsHtml}</div>
+        <p class="st-194" >Thresholds (admin-set, disabled here)</p>
+        <div class="st-193 ua-settings-list" >${thresholdsHtml}</div>
       `;
       // "Rate this answer": switches this same card to its Answer tab,
       // same jump-to-tab pattern as Guardrails' "View source" above.
@@ -8357,7 +8369,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <button type="button" class="ask-rail-tab" data-tab="benchmark" role="tab" aria-selected="false">Benchmark</button>
         </div>
         <div class="ask-rail-panel" data-panel="answer">
-          <p class="ask-muted" style="margin:0 0 10px">Ran all 5 pipelines against the same question${primary ? ". Shown here: " + uaEsc(ASK_PRESET_LABELS[primary.preset] || primary.preset) + "&rsquo;s answer" : ""}. See the Benchmark tab to compare every pipeline's answer side by side.</p>
+          <p class="st-191 ask-muted" >Ran all 5 pipelines against the same question${primary ? ". Shown here: " + uaEsc(ASK_PRESET_LABELS[primary.preset] || primary.preset) + "&rsquo;s answer" : ""}. See the Benchmark tab to compare every pipeline's answer side by side.</p>
           ${answerHtml}
         </div>
         <div class="ask-rail-panel" data-panel="sources" hidden>
@@ -8394,7 +8406,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <p class="ask-error">${uaEsc(r.error)}</p>
           </div>`;
         }
-        const timing = Number.isFinite(r.latencyMs) ? ` <span class="ask-muted" style="font-weight:normal">&middot; ${Math.round(r.latencyMs / 1000)}s</span>` : "";
+        const timing = Number.isFinite(r.latencyMs) ? ` <span class="st-195 ask-muted" >&middot; ${Math.round(r.latencyMs / 1000)}s</span>` : "";
         return `<div class="ask-answer-card ask-duo-card${r.abstained ? " ask-answer-abstained" : ""}" data-run-id="${uaEsc(r.runId || "")}">
           <div class="ask-answer-label">${label}${timing}</div>
           <div class="ask-answer-summary">${highlightAnswerTerm(mdLite(r.answer || ""), r.highlightTerm)}</div>
@@ -8410,7 +8422,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         : "";
       return `<div class="ask-duo-wrap">
         ${questionHeading}
-        <p class="ask-muted" style="margin:0 0 10px">Same question, single-agent (one continuous model call) next to multi-agent, feedback loop (separate Rewriter / Retriever / Evaluator / Orchestrator calls, retrying retrieval when the Evaluator judges the first pass insufficient).</p>
+        <p class="st-191 ask-muted" >Same question, single-agent (one continuous model call) next to multi-agent, feedback loop (separate Rewriter / Retriever / Evaluator / Orchestrator calls, retrying retrieval when the Evaluator judges the first pass insufficient).</p>
         <div class="ask-compare-grid ask-duo-grid">${cards}</div>
       </div>`;
     }
@@ -8562,11 +8574,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         : `<div class="ask-answer-label">${uaEsc(displayLabel)}${abstainBadge}</div>`;
       const answerHtml = `
         <div class="ask-answer-summary">${highlightAnswerTerm(mdLite(shownAnswer), res.highlightTerm)}</div>
-        ${wasTrimmed ? '<button type="button" class="btn btn-ghost ask-view-full-btn" style="font-size:11px;padding:3px 8px;margin:-4px 0 8px">Show full answer</button>' : ""}
+        ${wasTrimmed ? '<button type="button" class="st-196 btn btn-ghost ask-view-full-btn" >Show full answer</button>' : ""}
         <div class="ask-rate-row">
           <button type="button" class="btn btn-ghost ask-rate-btn" data-rating="1" ${!res.runId ? "disabled" : ""}>👍 Helpful</button>
           <button type="button" class="btn btn-ghost ask-rate-btn" data-rating="-1" ${!res.runId ? "disabled" : ""}>👎 Not helpful</button>
-          <span class="ask-muted" style="margin-left:auto">${res.latencyMs ? Math.round(res.latencyMs / 1000) + "s" : ""}</span>
+          <span class="st-197 ask-muted" >${res.latencyMs ? Math.round(res.latencyMs / 1000) + "s" : ""}</span>
         </div>`;
 
       // "Short answer" tab: one sentence, first and selected by default; the full Answer
@@ -8607,22 +8619,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="ask-rail-panel" data-panel="benchmark" hidden>
           <p class="ask-muted">See how every pipeline (Single-agent, Multi-agent buggy/fixed/delegated/feedback loop) answers this exact question, side by side.</p>
-          <button type="button" class="btn btn-primary ask-run-compare-btn" style="font-size:12px">Compare all 5 now</button>
+          <button type="button" class="st-198 btn btn-primary ask-run-compare-btn" >Compare all 5 now</button>
         </div>
         <div class="ask-rail-panel" data-panel="modelrules" hidden>
-          <p class="ask-muted" style="margin:0 0 10px">Which part of each role actually ran on this exact answer, the model or a deterministic check.</p>
+          <p class="st-191 ask-muted" >Which part of each role actually ran on this exact answer, the model or a deterministic check.</p>
           ${askRenderModelVsRules(res)}
         </div>
         <div class="ask-rail-panel" data-panel="guardrails" hidden
           data-guardrail-activity='${uaEsc(JSON.stringify(res.guardrailActivity || {}))}'
           data-guardrail-sources='${uaEsc(JSON.stringify((res.sources || []).filter(s => s.guardrail).map(s => ({ title: s.title, guardrail: s.guardrail }))))}'>
-          <p class="ask-muted" style="font-size:12px;padding:8px 0">Loading…</p>
+          <p class="st-189 ask-muted" >Loading…</p>
         </div>
         <div class="ask-rail-panel" data-panel="feedbackloop" hidden
           data-feedback-loop-count="${Number.isFinite(res.feedbackLoopCount) ? res.feedbackLoopCount : ""}"
           data-orchestration='${uaEsc(JSON.stringify(res.orchestration || null))}'
           data-guardrail-activity='${uaEsc(JSON.stringify(res.guardrailActivity || {}))}'>
-          <p class="ask-muted" style="font-size:12px;padding:8px 0">Loading…</p>
+          <p class="st-189 ask-muted" >Loading…</p>
         </div>
       </div>`;
     }
@@ -9582,7 +9594,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         if (c) c.textContent = list.length ? String(list.length) : "";
       }
       if (!list.length) {
-        box.innerHTML = `<div style="color:var(--muted)">None: every node has at least one edge.</div>`;
+        box.innerHTML = `<div class="st-199" >None: every node has at least one edge.</div>`;
         return;
       }
       const kindOf = id =>
@@ -9593,9 +9605,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         .map(n => ({ label: n.label || n.id, kind: kindOf(String(n.id)) }))
         .sort((a, b) => a.kind.localeCompare(b.kind) || a.label.localeCompare(b.label));
       box.innerHTML = rows.map(r =>
-        `<div style="display:flex;justify-content:space-between;gap:8px;padding:2px 0;border-bottom:1px solid var(--border)">` +
-        `<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${aEsc(r.label)}">${aEsc(r.label)}</span>` +
-        `<span style="color:var(--muted);flex-shrink:0">${r.kind}</span></div>`
+        `<div class="st-200" style="display:flex;">` +
+        `<span class="st-201"  title="${aEsc(r.label)}">${aEsc(r.label)}</span>` +
+        `<span class="st-202" >${r.kind}</span></div>`
       ).join("");
     }
 
@@ -9762,9 +9774,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (!compSet.size || satelliteCount <= 0) {
         const suggestions = ["linux","nginx","redis","kubernetes","openssl","postgresql","mysql","python","nodejs","mongodb"];
         const chips = suggestions.map(s =>
-          `<a href="/?q=${encodeURIComponent(s)}&view=graph" style="display:inline-block;padding:4px 10px;margin:3px;border-radius:99px;border:1px solid var(--border);background:var(--surface);color:var(--brand);font-size:11px;text-decoration:none;cursor:pointer">${s}</a>`
+          `<a href="/?q=${encodeURIComponent(s)}&view=graph" class="st-203" style="display:inline-block;">${s}</a>`
         ).join("");
-        container.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;padding:24px;text-align:center"><div style="font-size:13px;color:var(--muted)">Search for a component in the feed to populate the graph, or pick a suggestion:</div><div style="max-width:420px">${chips}</div></div>`;
+        container.innerHTML = `<div class="st-204" style="display:flex;"><div class="st-205" >Search for a component in the feed to populate the graph, or pick a suggestion:</div><div class="st-206" >${chips}</div></div>`;
         if (badge) badge.textContent = "No data";
         if (statsEl) statsEl.textContent = "No data. Search for a component first.";
         gRenderIsolated(nodes.get());  // every seeded hub is edgeless here
@@ -9828,22 +9840,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const nodeId = params.nodes[0];
         const node = nodes.get(nodeId);
         if (!node || !info) return;
-        const closeBtn = '<button onclick="document.getElementById(\'g-nodeInfoPanel\').style.display=\'none\'" style="float:right;background:none;border:none;cursor:pointer;font-size:15px;line-height:1;color:var(--muted);">×</button>';
+        const closeBtn = '<button onclick="document.getElementById(\'g-nodeInfoPanel\').style.display=\'none\'" class="st-207" >×</button>';
         const isComp = nodeId.startsWith("comp:");
         let html = closeBtn;
         if (isComp) {
           const key = nodeId.slice(5);
           const count = edges.get({ filter: e => e.to === nodeId }).length;
-          html += '<strong style="font-size:12px">' + node.label + '</strong>';
-          html += '<div style="margin-top:4px;color:var(--muted)">' + count + ' connected node' + (count !== 1 ? 's' : '') + '</div>';
-          html += '<div style="margin-top:4px"><a href="/?q=' + encodeURIComponent(key) + '" target="_self" style="font-size:10px;color:var(--brand)">Open feed ↗</a></div>';
+          html += '<strong class="st-198" >' + node.label + '</strong>';
+          html += '<div class="st-208" >' + count + ' connected node' + (count !== 1 ? 's' : '') + '</div>';
+          html += '<div class="st-209" ><a href="/?q=' + encodeURIComponent(key) + '" target="_self" class="st-210" >Open feed ↗</a></div>';
         } else {
-          html += '<strong style="font-size:11px;display:block;margin-bottom:4px">' + (node.sourceName || node.label) + '</strong>';
-          if (node.title) html += '<div style="font-size:10px;color:var(--muted);white-space:pre-line;margin-bottom:6px">' + node.title + '</div>';
+          html += '<strong class="st-211" style="display:block;">' + (node.sourceName || node.label) + '</strong>';
+          if (node.title) html += '<div class="st-212" >' + node.title + '</div>';
           if (node.sourceUrl) {
-            html += '<a href="' + node.sourceUrl + '" target="_blank" rel="noopener" style="font-size:10px;color:var(--brand);word-break:break-all">' + node.sourceUrl + ' ↗</a>';
+            html += '<a href="' + node.sourceUrl + '" target="_blank" rel="noopener" class="st-213" >' + node.sourceUrl + ' ↗</a>';
           } else {
-            html += '<span style="font-size:10px;color:var(--muted)">No source URL available.</span>';
+            html += '<span class="st-214" >No source URL available.</span>';
           }
         }
         info.innerHTML = html;
@@ -10986,7 +10998,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         if (cData) set('d-stat-components', fmt(cData.totalComponents));
 
         const fresh = document.getElementById('d-stats-freshness');
-        if (fresh) fresh.innerHTML = '<p class="small muted" style="margin:0">Version data polled continuously from 20+ release feeds. Reddit &amp; Stack Overflow ingested on a rolling schedule. Both collections maintain a rolling 2-year window.</p>';
+        if (fresh) fresh.innerHTML = '<p class="st-215 small muted" >Version data polled continuously from 20+ release feeds. Reddit &amp; Stack Overflow ingested on a rolling schedule. Both collections maintain a rolling 2-year window.</p>';
       });
     }
 
@@ -11325,14 +11337,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           + `Without: ${data.withoutRewriter.toolCallsUsed} tool call(s), ${withoutSources.length} source(s)`;
 
         results.innerHTML = `<div class="er-compare">
-          <div class="ask-answer-card" style="margin-bottom:16px">
+          <div class="st-216 ask-answer-card" >
             <div class="ask-answer-label">Prompt</div>
-            <p class="ask-muted" style="font-size:12px;margin:0">Rewriter Prompt: ${uaEsc(data.rewriterTerms.join(", "))}</p>
+            <p class="st-217 ask-muted" >Rewriter Prompt: ${uaEsc(data.rewriterTerms.join(", "))}</p>
           </div>
-          <div class="ask-answer-card" style="margin-bottom:16px">
+          <div class="st-216 ask-answer-card" >
             <div class="ask-answer-label">Sources</div>
-            <p class="ask-muted" style="font-size:12px;margin:0 0 8px">${summaryLine}</p>
-            <div class="er-grid" style="margin-bottom:0">
+            <p class="st-218 ask-muted" >${summaryLine}</p>
+            <div class="st-219 er-grid" >
               <div>
                 <div class="ask-source-heading">With Rewrite (${onlyWith.length})</div>
                 ${onlyWith.length ? askRenderSourceItems(erPrep(onlyWith), true) : `<p class="ask-muted">None.</p>`}
@@ -11344,8 +11356,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             </div>
           </div>
           <details class="ask-answer-card">
-            <summary class="ask-answer-label" style="cursor:pointer">Common (${common.length}): found on both sides</summary>
-            <div style="margin-top:8px">${commonHtml}</div>
+            <summary class="st-220 ask-answer-label" >Common (${common.length}): found on both sides</summary>
+            <div class="st-221" >${commonHtml}</div>
           </details>
         </div>`;
       } catch (e) {
@@ -11382,8 +11394,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const icon = verdict.sufficient ? "✅" : "⛔";
       return `<div class="ask-answer-card">
         <div class="ask-answer-label">${uaEsc(label)}</div>
-        <p style="font-size:13px;margin:0 0 4px">${icon} ${verdict.sufficient ? "Sufficient" : "Insufficient"}</p>
-        <p class="ask-muted" style="font-size:12px;margin:0">${uaEsc(verdict.reason || "")}</p>
+        <p class="st-222" >${icon} ${verdict.sufficient ? "Sufficient" : "Insufficient"}</p>
+        <p class="st-217 ask-muted" >${uaEsc(verdict.reason || "")}</p>
       </div>`;
     }
 
@@ -11404,11 +11416,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           + (data.overridden ? " · Overridden by the deterministic check" : " · Not overridden, the model's own verdict stood");
 
         results.innerHTML = `<div class="er-compare">
-          <div class="ask-answer-card" style="margin-bottom:16px">
+          <div class="st-216 ask-answer-card" >
             <div class="ask-answer-label">Prompt</div>
-            <p class="ask-muted" style="font-size:12px;margin:0">Rewriter Prompt: ${uaEsc(data.rewriterTerms.join(", "))}</p>
+            <p class="st-217 ask-muted" >Rewriter Prompt: ${uaEsc(data.rewriterTerms.join(", "))}</p>
           </div>
-          <div class="ask-answer-card" style="margin-bottom:16px">
+          <div class="st-216 ask-answer-card" >
             <div class="ask-answer-label">Sources (${data.sources.length})</div>
             ${data.sources.length ? askRenderSourceItems(erPrep(data.sources)) : `<p class="ask-muted">None.</p>`}
           </div>
@@ -11447,7 +11459,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     function eoRenderAnswer(label, text) {
       return `<div class="ask-answer-card">
         <div class="ask-answer-label">${uaEsc(label)}</div>
-        <p style="font-size:13px;margin:0">${uaEsc(text)}</p>
+        <p class="st-223" >${uaEsc(text)}</p>
       </div>`;
     }
 
@@ -11469,18 +11481,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
              : data.overridden ? " · Overridden by the deterministic version check" : " · Not overridden, the model's own answer stood");
 
         const answerHtml = data.abstained
-          ? `<div class="ask-answer-card"><div class="ask-answer-label">Answer</div><p style="font-size:13px;margin:0">${uaEsc(data.finalAnswer)}</p></div>`
+          ? `<div class="ask-answer-card"><div class="ask-answer-label">Answer</div><p class="st-223" >${uaEsc(data.finalAnswer)}</p></div>`
           : `<div class="er-grid">
               ${eoRenderAnswer("Raw Orchestrator Answer", data.rawAnswer)}
               ${eoRenderAnswer("Final Answer", data.finalAnswer)}
             </div>`;
 
         results.innerHTML = `<div class="er-compare">
-          <div class="ask-answer-card" style="margin-bottom:16px">
+          <div class="st-216 ask-answer-card" >
             <div class="ask-answer-label">Prompt</div>
-            <p class="ask-muted" style="font-size:12px;margin:0">Rewriter Prompt: ${uaEsc(data.rewriterTerms.join(", "))}</p>
+            <p class="st-217 ask-muted" >Rewriter Prompt: ${uaEsc(data.rewriterTerms.join(", "))}</p>
           </div>
-          <div class="ask-answer-card" style="margin-bottom:16px">
+          <div class="st-216 ask-answer-card" >
             <div class="ask-answer-label">Sources (${data.sources.length})</div>
             ${data.sources.length ? askRenderSourceItems(erPrep(data.sources)) : `<p class="ask-muted">None.</p>`}
           </div>
@@ -12960,19 +12972,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const data = await res.json();
         const items = data.data || [];
         if (!items.length) {
-          listEl.innerHTML = '<span style="font-size:11px;color:var(--muted)">No searches yet.</span>';
+          listEl.innerHTML = '<span class="st-224" >No searches yet.</span>';
           return;
         }
         listEl.innerHTML = items.map(item => {
           const q = normalizeQuery(item.query);
           if (!q) return "";
-          return '<a href="/?q=' + encodeCsvKeepCommas(q) + '" style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);text-decoration:none;color:var(--text);font-size:12px">'
-            + '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + q.replace(/&/g,"&amp;").replace(/</g,"&lt;") + '</span>'
-            + '<span style="font-size:11px;color:var(--muted);margin-left:8px;flex-shrink:0">' + item.count + (item.count === 1 ? ' search' : ' searches') + '</span>'
+          return '<a href="/?q=' + encodeCsvKeepCommas(q) + '" class="st-225" style="display:flex;">'
+            + '<span class="st-201" >' + q.replace(/&/g,"&amp;").replace(/</g,"&lt;") + '</span>'
+            + '<span class="st-226" >' + item.count + (item.count === 1 ? ' search' : ' searches') + '</span>'
             + '</a>';
         }).filter(Boolean).join("");
       } catch {
-        listEl.innerHTML = '<span style="font-size:11px;color:var(--muted)">Could not load.</span>';
+        listEl.innerHTML = '<span class="st-224" >Could not load.</span>';
       }
     })();
 
@@ -12993,7 +13005,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const pct = Math.round((todayN - yestN) / yestN * 100);
         const sign = pct >= 0 ? '+' : '';
         const color = pct > 0 ? '#475569' : pct < 0 ? '#dc2626' : '#6b7280';
-        return `, <span style="color:${color};font-weight:700">${sign}${pct}%</span>`;
+        return `, <span class="st-227" style="color:${color};">${sign}${pct}%</span>`;
       };
       // Build LOOKBACK_DAYS-day date array (oldest → today)
       const days = Array.from({ length: LOOKBACK_DAYS }, (_, i) => {
@@ -13538,7 +13550,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         if (!n) return;
         const pct = totalPosts > 0 ? Math.round(n / totalPosts * 100) + '%' : '';
         html += `<div class="npp-step ${s.cls}" title="${cvEscHtml(CV_NVD_BY_KEY[s.key]?.desc ?? '')}"><span class="npp-count">${n}</span><span class="npp-label">${cvEscHtml(s.label)}</span>${pct ? `<span class="npp-sub">${pct} of posts</span>` : ''}</div>`;
-        html += `<span class="npp-arrow" style="font-size:11px;opacity:.4">·</span>`;
+        html += `<span class="st-228 npp-arrow" >·</span>`;
       });
       if (CV_EL.nvdPipelineFlow) CV_EL.nvdPipelineFlow.innerHTML = html;
     }
@@ -13562,7 +13574,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         .filter(s => (statusMap.get(s.key) ?? 0) > 0)
         .map(s => { const n = statusMap.get(s.key) ?? 0;
           return `<div class="bar-row" title="${cvEscHtml(s.desc)}"><span class="bar-label">${cvEscHtml(s.label)}</span><span class="bar-track"><span class="bar-fill ${s.bar}" style="width:${Math.round(n/maxStatus*100)}%"></span></span><span class="bar-count">${n}</span></div>`;
-        }).join('') || '<span style="font-size:12px;color:var(--muted)">No data yet</span>';
+        }).join('') || '<span class="st-229" >No data yet</span>';
 
       const srcCount = { reddit: 0, stackoverflow: 0, other: 0 };
       posts.forEach(p => { srcCount[cvGetSource(p)]++; });
@@ -13592,7 +13604,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const maxM = Math.max(...months.map(m => m[1]), 1);
       if (CV_EL.aggMonthly) CV_EL.aggMonthly.innerHTML = months.length
         ? months.map(([mo, n]) => `<div class="bar-row"><span class="bar-label">${mo}</span><span class="bar-track"><span class="bar-fill" style="width:${Math.round(n/maxM*100)}%"></span></span><span class="bar-count">${n}</span></div>`).join('')
-        : '<span style="font-size:12px;color:var(--muted)">No date data yet</span>';
+        : '<span class="st-229" >No date data yet</span>';
     }
 
     function cvUpdateStatusDropdown(statusMap, total) {
@@ -13608,7 +13620,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     function cvRenderBars(map, colorClass) {
       const sorted = [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12);
       const maxV = Math.max(...sorted.map(e => e[1]), 1);
-      if (!sorted.length) return '<span style="font-size:12px;color:var(--muted)">No data</span>';
+      if (!sorted.length) return '<span class="st-229" >No data</span>';
       return sorted.map(([label, n]) => `<div class="bar-row"><span class="bar-label" title="${cvEscHtml(label)}">${cvEscHtml(label)}</span><span class="bar-track"><span class="bar-fill ${colorClass}" style="width:${Math.round(n/maxV*100)}%"></span></span><span class="bar-count">${n}</span></div>`).join('');
     }
 
@@ -13831,23 +13843,23 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       document.getElementById("ri-score-rec").textContent = rec;
 
       const pillCls = { Critical:"ri-pill-red", High:"ri-pill-red", Medium:"ri-pill-amber", Low:"ri-pill-green" }[level] || "ri-pill-gray";
-      let recHtml = '<div style="margin-bottom:6px">'
+      let recHtml = '<div class="st-230" >'
         + '<span class="ri-pill ' + pillCls + '">' + riEsc(level) + ' Risk</span>'
         + ' <span class="ri-pill ri-pill-gray">' + riEsc(channel) + ' release</span>';
       if (isCveTarget) recHtml += ' <span class="ri-pill ri-pill-red">CVE release</span>';
       if (channel === "major") recHtml += ' <span class="ri-pill ri-pill-amber">Breaking changes likely</span>';
-      recHtml += '</div><div style="line-height:1.5">' + riEsc(rec) + '</div>'
-        + '<div style="margin-top:8px;font-size:10px;color:var(--muted)">'
+      recHtml += '</div><div class="st-231" >' + riEsc(rec) + '</div>'
+        + '<div class="st-232" >'
         + recentVers.length + ' version' + (recentVers.length !== 1 ? 's' : '') + ' in last ' + windowDays + 'd'
         + ' · ' + posts.length + ' community post' + (posts.length !== 1 ? 's' : '') + '</div>';
       document.getElementById("ri-body-rec").innerHTML = recHtml;
 
       let cveHtml = "";
       if (!cveVers.length && !isCveTarget) {
-        cveHtml = '<span style="color:var(--muted)">No CVE releases detected in the last ' + windowDays + ' days.</span>';
+        cveHtml = '<span class="st-199" >No CVE releases detected in the last ' + windowDays + ' days.</span>';
       } else {
-        if (isCveTarget) cveHtml += '<div style="margin-bottom:5px"><span class="ri-pill ri-pill-red">Target version is a CVE/security release</span></div>';
-        cveHtml += '<div style="margin-bottom:4px"><strong>' + cveVers.length + '</strong> CVE release' + (cveVers.length !== 1 ? 's' : '') + ' in last ' + windowDays + 'd</div>';
+        if (isCveTarget) cveHtml += '<div class="st-233" ><span class="ri-pill ri-pill-red">Target version is a CVE/security release</span></div>';
+        cveHtml += '<div class="st-234" ><strong>' + cveVers.length + '</strong> CVE release' + (cveVers.length !== 1 ? 's' : '') + ' in last ' + windowDays + 'd</div>';
         cveVers.slice(0, 5).forEach(v => {
           const url = (v.versionUrl && v.versionUrl.startsWith("http")) ? v.versionUrl : null;
           const ep  = gGetVersionEpoch(v);
@@ -13857,15 +13869,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           cveHtml += '</div>';
         });
         if (cveVers.length > 5) cveHtml += '<div class="ri-post-meta">+' + (cveVers.length - 5) + ' more</div>';
-        if (cvePostsList.length) cveHtml += '<div style="margin-top:6px"><span class="ri-pill ri-pill-red">' + cvePostsList.length + ' community CVE post' + (cvePostsList.length !== 1 ? 's' : '') + '</span></div>';
+        if (cvePostsList.length) cveHtml += '<div class="st-235" ><span class="ri-pill ri-pill-red">' + cvePostsList.length + ' community CVE post' + (cvePostsList.length !== 1 ? 's' : '') + '</span></div>';
       }
       document.getElementById("ri-body-cve").innerHTML = cveHtml;
 
       let sigHtml = "";
       if (!posts.length) {
-        sigHtml = '<span style="color:var(--muted)">No community posts found for this component.</span>';
+        sigHtml = '<span class="st-199" >No community posts found for this component.</span>';
       } else {
-        sigHtml = '<div style="margin-bottom:6px">'
+        sigHtml = '<div class="st-230" >'
           + '<span class="ri-pill ' + (riskPostsList.length ? "ri-pill-amber" : "ri-pill-green") + '">' + riskPostsList.length + ' risk post' + (riskPostsList.length !== 1 ? 's' : '') + '</span> '
           + '<span class="ri-pill ri-pill-blue">' + soPostsList.length + ' SO</span> '
           + '<span class="ri-pill ri-pill-gray">' + posts.length + ' total</span></div>';
@@ -13885,20 +13897,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
       let verHtml = "";
       if (!targetV) {
-        verHtml = '<span style="color:var(--muted)">No version data found for <strong>' + riEsc(compRaw) + '</strong>. Run a search first.</span>';
+        verHtml = '<span class="st-199" >No version data found for <strong>' + riEsc(compRaw) + '</strong>. Run a search first.</span>';
       } else {
         const ep  = gGetVersionEpoch(targetV);
         const url = (targetV.versionUrl && targetV.versionUrl.startsWith("http")) ? targetV.versionUrl
           : (targetV.versionReleaseNotes && targetV.versionReleaseNotes.startsWith("http")) ? targetV.versionReleaseNotes : null;
         const chCls = channel === "cve" ? "ri-pill-red" : channel === "major" ? "ri-pill-amber" : "ri-pill-blue";
-        verHtml = '<table style="width:100%;border-collapse:collapse;font-size:11px">'
-          + '<tr><td style="color:var(--muted);padding:2px 4px 2px 0;white-space:nowrap">Component</td><td>' + riEsc(targetV.versionProductName || compRaw) + '</td></tr>'
-          + '<tr><td style="color:var(--muted);padding:2px 4px 2px 0">Version</td><td><strong>v' + riEsc(targetV.versionNumber || "?") + '</strong></td></tr>'
-          + '<tr><td style="color:var(--muted);padding:2px 4px 2px 0">Channel</td><td><span class="ri-pill ' + chCls + '">' + riEsc(channel) + '</span></td></tr>'
-          + (ep ? '<tr><td style="color:var(--muted);padding:2px 4px 2px 0">Released</td><td>' + new Date(ep).toLocaleDateString() + '</td></tr>' : '')
-          + (url ? '<tr><td style="color:var(--muted);padding:2px 4px 2px 0">Notes</td><td><a href="' + riEsc(url) + '" target="_blank" rel="noopener" style="color:var(--brand)">Release notes</a></td></tr>' : '')
+        verHtml = '<table class="st-236" >'
+          + '<tr><td class="st-237" >Component</td><td>' + riEsc(targetV.versionProductName || compRaw) + '</td></tr>'
+          + '<tr><td class="st-238" >Version</td><td><strong>v' + riEsc(targetV.versionNumber || "?") + '</strong></td></tr>'
+          + '<tr><td class="st-238" >Channel</td><td><span class="ri-pill ' + chCls + '">' + riEsc(channel) + '</span></td></tr>'
+          + (ep ? '<tr><td class="st-238" >Released</td><td>' + new Date(ep).toLocaleDateString() + '</td></tr>' : '')
+          + (url ? '<tr><td class="st-238" >Notes</td><td><a href="' + riEsc(url) + '" target="_blank" rel="noopener" class="st-239" >Release notes</a></td></tr>' : '')
           + '</table>';
-        if (channel === "major") verHtml += '<div style="margin-top:8px;padding:6px 8px;background:#fffbeb;border-radius:4px;font-size:10px;color:#b45309">Major version update. Review migration guides and test all integrations before deploying.</div>';
+        if (channel === "major") verHtml += '<div class="st-240" >Major version update. Review migration guides and test all integrations before deploying.</div>';
       }
       document.getElementById("ri-body-ver").innerHTML = verHtml;
     }
@@ -14021,14 +14033,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           + '<span class="nk-release-ns">' + nkEsc(ns) + '</span>'
           + '<span class="nk-release-comp">' + nkEsc(comp) + '</span>'
           + '<span class="nk-release-ver">v' + nkEsc(ver) + '</span>'
-          + '<span class="ri-pill ' + chCls + '" style="font-size:10px">' + nkEsc(ch) + '</span>'
+          + '<span class="st-184 ri-pill ' + chCls + '" >' + nkEsc(ch) + '</span>'
           + (dateStr ? '<span class="nk-release-meta">' + dateStr + '</span>' : '')
           + '</div>'
           + '<div class="nk-release-body" id="nk-body-' + nkEsc(id) + '">'
-          + (desc ? '<p style="font-size:12px;margin:0 0 10px;color:var(--text)">' + nkEsc(desc) + '</p>' : '')
-          + (notesUrl ? '<p style="font-size:11px;margin:0 0 10px"><a href="' + nkEsc(notesUrl) + '" target="_blank" rel="noopener" style="color:var(--brand)">Release notes ↗</a></p>' : '')
-          + '<div id="nk-reports-' + nkEsc(id) + '" style="margin-bottom:8px">' + reportsHtml + '</div>'
-          + (uaToken() ? '<button class="btn btn-sm" style="margin-top:6px" data-nk-report="' + nkEsc(id) + '">Add experience</button>' : '')
+          + (desc ? '<p class="st-241" >' + nkEsc(desc) + '</p>' : '')
+          + (notesUrl ? '<p class="st-242" ><a href="' + nkEsc(notesUrl) + '" target="_blank" rel="noopener" class="st-239" >Release notes ↗</a></p>' : '')
+          + '<div id="nk-reports-' + nkEsc(id) + '" class="st-243" >' + reportsHtml + '</div>'
+          + (uaToken() ? '<button class="st-235 btn btn-sm"  data-nk-report="' + nkEsc(id) + '">Add experience</button>' : '')
           + '</div>';
         card.querySelector(".nk-release-head").addEventListener("click", () => {
           card.querySelector(".nk-release-body").classList.toggle("open");
@@ -14042,7 +14054,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     }
 
     function nkRenderReportsHtml(reports) {
-      if (!reports.length) return '<span style="font-size:11px;color:var(--muted)">No experience reports yet.</span>';
+      if (!reports.length) return '<span class="st-224" >No experience reports yet.</span>';
       const labels = { success: "Worked well", issues: "Had issues", upgrade: "Upgraded from" };
       const cls    = { success: "nk-outcome-ok", issues: "nk-outcome-issue", upgrade: "nk-outcome-upgrade" };
       return reports.map(rp => {
@@ -14051,7 +14063,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           + '<span class="' + (cls[rp.outcome] || "") + '">' + nkEsc(labels[rp.outcome] || rp.outcome || "") + '</span>'
           + (rp.fromVersion ? ' from v' + nkEsc(rp.fromVersion) : '')
           + (rp.description ? ': ' + nkEsc(rp.description.slice(0, 120)) : '')
-          + (date ? '<div style="font-size:10px;color:var(--muted);margin-top:2px">' + date + (rp.reportedBy ? ' · ' + nkEsc(rp.reportedBy) : '') + '</div>' : '')
+          + (date ? '<div class="st-244" >' + date + (rp.reportedBy ? ' · ' + nkEsc(rp.reportedBy) : '') + '</div>' : '')
           + '</div>';
       }).join("");
     }
@@ -14062,18 +14074,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const wrap = document.createElement("div");
       wrap.className = "nk-report-form";
       wrap.innerHTML =
-        '<div style="border-top:1px solid var(--border);padding-top:10px;margin-top:8px">'
-        + '<div style="font-size:11px;font-weight:700;margin-bottom:8px;color:var(--muted)">Your experience</div>'
-        + '<select id="nk-rep-outcome-' + releaseId + '" class="nk-input" style="margin-bottom:6px">'
+        '<div class="st-245" >'
+        + '<div class="st-246" >Your experience</div>'
+        + '<select id="nk-rep-outcome-' + releaseId + '" class="st-230 nk-input" >'
         + '<option value="success">Worked well in production</option>'
         + '<option value="issues">Had issues</option>'
         + '<option value="upgrade">Successfully upgraded from a previous version</option>'
         + '</select>'
-        + '<input id="nk-rep-from-' + releaseId + '" class="nk-input" type="text" placeholder="Upgraded from version (optional)" style="margin-bottom:6px" maxlength="32" />'
-        + '<textarea id="nk-rep-desc-' + releaseId + '" class="nk-input nk-textarea" placeholder="Describe your experience (optional)" style="min-height:60px;margin-bottom:8px" maxlength="500"></textarea>'
+        + '<input id="nk-rep-from-' + releaseId + '" class="st-230 nk-input" type="text" placeholder="Upgraded from version (optional)"  maxlength="32" />'
+        + '<textarea id="nk-rep-desc-' + releaseId + '" class="st-247 nk-input nk-textarea" placeholder="Describe your experience (optional)"  maxlength="500"></textarea>'
         + '<button class="btn btn-primary btn-sm" id="nk-rep-submit-' + releaseId + '">Submit</button>'
         + ' <button class="btn btn-sm" id="nk-rep-cancel-' + releaseId + '">Cancel</button>'
-        + '<div id="nk-rep-msg-' + releaseId + '" style="font-size:11px;color:var(--muted);margin-top:5px"></div>'
+        + '<div id="nk-rep-msg-' + releaseId + '" class="st-248" ></div>'
         + '</div>';
       card.querySelector(".nk-release-body").appendChild(wrap);
       document.getElementById("nk-rep-cancel-" + releaseId).addEventListener("click", () => wrap.remove());
@@ -14574,7 +14586,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const updatedEl = document.getElementById("ua-dash-updated");
       const res = await uaRequest("admin/overview").catch(() => null);
       if (!res || !res.ok) {
-        gridEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">Could not load system overview.</p>`;
+        gridEl.innerHTML = `<p class="st-189 ua-muted" >Could not load system overview.</p>`;
         botsEl.innerHTML = "";
         if (botGapEl) botGapEl.innerHTML = "";
         return;
@@ -14620,7 +14632,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>`;
 
       botsEl.innerHTML = uaRenderBotGroups(botHealth) ||
-        `<p class="ua-muted" style="font-size:12px;padding:8px 0">No bot health data available.</p>`;
+        `<p class="st-189 ua-muted" >No bot health data available.</p>`;
       if (botGapEl) botGapEl.innerHTML = uaRenderBotGapRecent(gap.recent);
     }
 
@@ -14831,7 +14843,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const countEl = document.getElementById("ua-settings-count");
       const res = await uaRequest("admin/settings").catch(() => null);
       if (!res || !res.ok) {
-        listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">Could not load settings.</p>`;
+        listEl.innerHTML = `<p class="st-189 ua-muted" >Could not load settings.</p>`;
         return;
       }
       const settings = await res.json();
@@ -14845,7 +14857,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const keys = Object.keys(settings).filter(k => k !== "guardrails");
       if (countEl) countEl.textContent = keys.length ? "(" + keys.length + ")" : "";
       if (!keys.length) {
-        listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">No settings defined yet.</p>`;
+        listEl.innerHTML = `<p class="st-189 ua-muted" >No settings defined yet.</p>`;
         return;
       }
       listEl.innerHTML = keys.map(key => {
@@ -14871,7 +14883,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             ${meta.hint ? `<span class="ua-muted">${uaEsc(meta.hint)}</span>` : ""}
           </div>
           ${inputHtml}
-          <button type="button" class="btn btn-ghost ua-settings-save" data-key="${uaEsc(key)}" style="font-size:12px;padding:4px 10px">Save</button>
+          <button type="button" class="st-249 btn btn-ghost ua-settings-save" data-key="${uaEsc(key)}" >Save</button>
         </div>`;
       }).join("");
 
@@ -14924,7 +14936,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (!mandatoryEl || !optionalEl) return;
       const res = await uaRequest("admin/settings").catch(() => null);
       if (!res || !res.ok) {
-        mandatoryEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">Could not load guardrails.</p>`;
+        mandatoryEl.innerHTML = `<p class="st-189 ua-muted" >Could not load guardrails.</p>`;
         optionalEl.innerHTML = "";
         return;
       }
@@ -14944,18 +14956,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <strong>${uaEsc(g.label || g.id)}</strong>
             <span class="ua-muted">${uaEsc(g.description || "")}</span>
           </div>
-          ${Number.isFinite(g.maxAttempts) ? `<label class="ua-muted" style="font-size:12px">max attempts
-            <input type="number" class="ua-settings-input ua-guardrail-maxattempts-input" data-id="${uaEsc(g.id)}" value="${g.maxAttempts}" min="1" max="${g.maxAttemptsCeiling || g.maxAttempts}" style="width:55px">
+          ${Number.isFinite(g.maxAttempts) ? `<label class="st-198 ua-muted" >max attempts
+            <input type="number" class="st-250 ua-settings-input ua-guardrail-maxattempts-input" data-id="${uaEsc(g.id)}" value="${g.maxAttempts}" min="1" max="${g.maxAttemptsCeiling || g.maxAttempts}" >
           </label>` : ""}
           <input type="checkbox" class="ua-settings-input ua-settings-checkbox ua-guardrail-input" data-id="${uaEsc(g.id)}"${g.enabled ? " checked" : ""}>
-          <button type="button" class="btn btn-ghost ua-guardrail-save" data-id="${uaEsc(g.id)}" style="font-size:12px;padding:4px 10px">Save</button>
+          <button type="button" class="st-249 btn btn-ghost ua-guardrail-save" data-id="${uaEsc(g.id)}" >Save</button>
         </div>`;
       const mandatory = guardrails.filter(g => g.tier === "mandatory");
       const optional = guardrails.filter(g => g.tier !== "mandatory");
       mandatoryEl.innerHTML = mandatory.length ? mandatory.map(rowHtml).join("")
-        : `<p class="ua-muted" style="font-size:12px;padding:8px 0">No mandatory guardrails defined yet.</p>`;
+        : `<p class="st-189 ua-muted" >No mandatory guardrails defined yet.</p>`;
       optionalEl.innerHTML = optional.length ? optional.map(rowHtml).join("")
-        : `<p class="ua-muted" style="font-size:12px;padding:8px 0">No optional guardrails defined yet.</p>`;
+        : `<p class="st-189 ua-muted" >No optional guardrails defined yet.</p>`;
 
       document.querySelectorAll("#ua-guardrails-section .ua-guardrail-save").forEach(btn => {
         btn.addEventListener("click", async () => {
@@ -15001,14 +15013,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (!listEl) return;
       const res = await uaRequest("admin/settings").catch(() => null);
       if (!res || !res.ok) {
-        listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">Could not load feedback thresholds.</p>`;
+        listEl.innerHTML = `<p class="st-189 ua-muted" >Could not load feedback thresholds.</p>`;
         return;
       }
       const settings = await res.json();
       const thresholds = Array.isArray(settings.feedbackThresholds) ? settings.feedbackThresholds : [];
       if (countEl) countEl.textContent = thresholds.length ? "(" + thresholds.length + ")" : "";
       if (!thresholds.length) {
-        listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">No feedback thresholds defined yet.</p>`;
+        listEl.innerHTML = `<p class="st-189 ua-muted" >No feedback thresholds defined yet.</p>`;
         return;
       }
       listEl.innerHTML = thresholds.map(t => `<div class="ua-settings-row" data-id="${uaEsc(t.id)}">
@@ -15016,14 +15028,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <strong>${uaEsc(t.label || t.id)}</strong>
             <span class="ua-muted">${uaEsc(t.description || "")}</span>
           </div>
-          <label class="ua-muted" style="font-size:12px">min ratings
-            <input type="number" class="ua-settings-input ua-feedback-min-input" data-id="${uaEsc(t.id)}" value="${t.minRatings}" min="1" max="1000" style="width:60px">
+          <label class="st-198 ua-muted" >min ratings
+            <input type="number" class="st-251 ua-settings-input ua-feedback-min-input" data-id="${uaEsc(t.id)}" value="${t.minRatings}" min="1" max="1000" >
           </label>
-          <label class="ua-muted" style="font-size:12px">% negative
-            <input type="number" class="ua-settings-input ua-feedback-ratio-input" data-id="${uaEsc(t.id)}" value="${Math.round((t.negativeRatio || 0) * 100)}" min="0" max="100" style="width:55px">
+          <label class="st-198 ua-muted" >% negative
+            <input type="number" class="st-250 ua-settings-input ua-feedback-ratio-input" data-id="${uaEsc(t.id)}" value="${Math.round((t.negativeRatio || 0) * 100)}" min="0" max="100" >
           </label>
           <input type="checkbox" class="ua-settings-input ua-settings-checkbox ua-feedback-enabled-input" data-id="${uaEsc(t.id)}"${t.enabled ? " checked" : ""}>
-          <button type="button" class="btn btn-ghost ua-feedback-threshold-save" data-id="${uaEsc(t.id)}" style="font-size:12px;padding:4px 10px">Save</button>
+          <button type="button" class="st-249 btn btn-ghost ua-feedback-threshold-save" data-id="${uaEsc(t.id)}" >Save</button>
         </div>`).join("");
 
       listEl.querySelectorAll(".ua-feedback-threshold-save").forEach(btn => {
@@ -15075,14 +15087,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (!listEl) return;
       const res = await uaRequest("admin/bot-cadence").catch(() => null);
       if (!res || !res.ok) {
-        listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">Could not load bot cadence thresholds.</p>`;
+        listEl.innerHTML = `<p class="st-189 ua-muted" >Could not load bot cadence thresholds.</p>`;
         return;
       }
       const { defaults, overrides } = await res.json();
       const bots = Object.keys(defaults || {}).sort();
       if (countEl) countEl.textContent = bots.length ? "(" + bots.length + ")" : "";
       if (!bots.length) {
-        listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">No bots defined yet.</p>`;
+        listEl.innerHTML = `<p class="st-189 ua-muted" >No bots defined yet.</p>`;
         return;
       }
       listEl.innerHTML = bots.map(bot => {
@@ -15093,8 +15105,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         return `<div class="ua-bot-row" data-bot="${uaEsc(bot)}">
           <span class="ua-bot-row-name">${uaEsc(bot)}</span>
           <span class="ua-bot-row-detail">default ${def}d</span>
-          <input type="number" class="ua-settings-input ua-cadence-input" data-bot="${uaEsc(bot)}" value="${effective}" min="1" max="365" style="width:70px">
-          <button type="button" class="btn btn-ghost ua-cadence-save" data-bot="${uaEsc(bot)}" style="font-size:12px;padding:4px 10px">Save</button>
+          <input type="number" class="st-252 ua-settings-input ua-cadence-input" data-bot="${uaEsc(bot)}" value="${effective}" min="1" max="365" >
+          <button type="button" class="st-249 btn btn-ghost ua-cadence-save" data-bot="${uaEsc(bot)}" >Save</button>
           <button type="button" class="btn btn-ghost ua-cadence-reset" data-bot="${uaEsc(bot)}" style="font-size:11px;padding:4px 8px${hasOverride ? "" : ";display:none"}">Reset to default</button>
         </div>`;
       }).join("");
@@ -15159,7 +15171,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (!listEl) return;
       const res = await uaRequest("admin/vendor-aliases").catch(() => null);
       if (!res || !res.ok) {
-        listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">Could not load vendor aliases.</p>`;
+        listEl.innerHTML = `<p class="st-189 ua-muted" >Could not load vendor aliases.</p>`;
         if (emptyEl) emptyEl.style.display = "none";
         return;
       }
@@ -15170,7 +15182,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       listEl.innerHTML = rows.map(a => `<div class="ua-bm-item" data-id="${uaEsc(a._id)}">
         <span class="ua-bm-name">${uaEsc(a.alias)} &rarr; ${uaEsc(a.canonicalName)}</span>
         <div class="ua-bm-actions">
-          <button class="btn btn-ghost ua-vendor-alias-del" data-id="${uaEsc(a._id)}" style="font-size:12px;padding:4px 10px;color:var(--cve);border-color:#fca5a5">Delete</button>
+          <button class="st-253 btn btn-ghost ua-vendor-alias-del" data-id="${uaEsc(a._id)}" >Delete</button>
         </div>
       </div>`).join("");
 
@@ -15258,17 +15270,17 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
     async function uaLoadUsers() {
       const listEl = document.getElementById("ua-user-list");
-      listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">Loading…</p>`;
+      listEl.innerHTML = `<p class="st-189 ua-muted" >Loading…</p>`;
       const res = await uaRequest("users/").catch(() => null);
       if (!res || !res.ok) {
-        listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">Could not load users.</p>`;
+        listEl.innerHTML = `<p class="st-189 ua-muted" >Could not load users.</p>`;
         return;
       }
       const data = await res.json();
       const countEl = document.getElementById("ua-user-count");
       if (countEl) countEl.textContent = "(" + data.total + ")";
       if (!data.data.length) {
-        listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">No users found.</p>`;
+        listEl.innerHTML = `<p class="st-189 ua-muted" >No users found.</p>`;
         return;
       }
       const currentUser = uaUser();
@@ -15285,8 +15297,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               <option value="admin"${u.role === "admin" ? " selected" : ""}>admin</option>
             </select>
             ${isSelf
-              ? `<span style="font-size:11px;color:var(--muted);padding:4px 6px">you</span>`
-              : `<button class="btn btn-ghost ua-del-btn" data-id="${uaEsc(u._id)}" style="font-size:12px;padding:4px 10px;color:var(--cve);border-color:#fca5a5">Delete</button>`
+              ? `<span class="st-254" >you</span>`
+              : `<button class="st-253 btn btn-ghost ua-del-btn" data-id="${uaEsc(u._id)}" >Delete</button>`
             }
           </div>
         </div>`;
@@ -15521,14 +15533,14 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       }
       if (emptyEl) emptyEl.style.display = "none";
       listEl.innerHTML = inv.map(e => `<div class="ua-bm-item" data-comp="${uaEsc(e.component)}">
-        <div style="flex:1;min-width:0">
+        <div class="st-255" >
           <span class="ua-bm-name" title="${uaEsc(e.component)}">${uaEsc(e.component)}</span>
-          <span class="ua-org-chip" style="font-family:Consolas,Monaco,monospace">${uaEsc(e.version)}</span>
-          <span class="ua-inv-drift ua-muted" style="display:block;margin-top:3px;font-size:11px">checking latest…</span>
+          <span class="st-256 ua-org-chip" >${uaEsc(e.version)}</span>
+          <span class="st-257 ua-inv-drift ua-muted" style="display:block;">checking latest…</span>
         </div>
         <div class="ua-bm-actions">
-          <button class="btn btn-ghost ua-inv-edit-btn" data-comp="${uaEsc(e.component)}" data-ver="${uaEsc(e.version)}" style="font-size:12px;padding:4px 8px">Edit</button>
-          <button class="btn btn-ghost ua-inv-del-btn" data-comp="${uaEsc(e.component)}" style="font-size:12px;padding:4px 8px;color:var(--cve);border-color:#fca5a5">Delete</button>
+          <button class="st-258 btn btn-ghost ua-inv-edit-btn" data-comp="${uaEsc(e.component)}" data-ver="${uaEsc(e.version)}" >Edit</button>
+          <button class="st-259 btn btn-ghost ua-inv-del-btn" data-comp="${uaEsc(e.component)}" >Delete</button>
         </div>
       </div>`).join("");
       uaInvAnnotate(inv);
@@ -15597,7 +15609,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         const cve = (rec && rec.latestCveVersion)
           ? { code: aExtractCveCode(rec.latestCveVersion.versionUrl) }
           : cveByName.get(String(comp).toLowerCase());
-        const cveHtml = cve ? ` <span style="color:var(--cve)">· ${uaEsc(cve.code)}${cve.date ? " (" + cve.date.slice(4, 6) + "/" + cve.date.slice(6, 8) + ")" : ""}</span>` : "";
+        const cveHtml = cve ? ` <span class="st-260" >· ${uaEsc(cve.code)}${cve.date ? " (" + cve.date.slice(4, 6) + "/" + cve.date.slice(6, 8) + ")" : ""}</span>` : "";
         if (!lv) { slot.innerHTML = "no release data" + cveHtml; return; }
         const gap = aVerGap(entry.version, lv);
         if (gap.tier === "none") {
@@ -15606,7 +15618,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         }
         const color = A_FILLS.behind;
         slot.innerHTML =
-          `<span class="ua-org-chip" style="background:${color};color:#0f172a">→ ${uaEsc(lv)}</span> `
+          `<span class="st-261 ua-org-chip" style="background:${color};">→ ${uaEsc(lv)}</span> `
           + `<span class="ua-muted">${uaEsc(aGapLabel(gap))} behind</span>` + cveHtml;
       });
     }
@@ -15670,20 +15682,20 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const listEl  = document.getElementById("ua-se-list");
       const countEl = document.getElementById("ua-se-count");
       section.style.display = "";
-      listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">Loading…</p>`;
+      listEl.innerHTML = `<p class="st-189 ua-muted" >Loading…</p>`;
       const [res, usersById] = await Promise.all([
         uaRequest("events/search?limit=200").catch(() => null),
         uaUsersMap(),
       ]);
       if (!res || !res.ok) {
-        listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">Could not load search events.</p>`;
+        listEl.innerHTML = `<p class="st-189 ua-muted" >Could not load search events.</p>`;
         return;
       }
       const data = await res.json();
       const events = data.data || [];
       if (countEl) countEl.textContent = "(" + events.length + ")";
       if (!events.length) {
-        listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:8px 0">No searches recorded yet.</p>`;
+        listEl.innerHTML = `<p class="st-189 ua-muted" >No searches recorded yet.</p>`;
         return;
       }
       const esc = s => String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
@@ -15735,10 +15747,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               ? `<span title="${esc(known.email)}">${esc(known.name || known.email)}</span>`
               : `<span title="${esc(e.userId)}">${esc((e.userId || "").slice(-8))}</span>`;
           return `<tr>
-            <td style="white-space:nowrap">${typeCell}</td>
+            <td class="st-262" >${typeCell}</td>
             <td title="${esc(q)}">${esc(q)}</td>
             <td>${userCell}</td>
-            <td style="white-space:nowrap" title="${esc(e.timestamp ? new Date(e.timestamp).toLocaleString() : "")}">${esc(relTime(e.timestamp))}</td>
+            <td class="st-262"  title="${esc(e.timestamp ? new Date(e.timestamp).toLocaleString() : "")}">${esc(relTime(e.timestamp))}</td>
           </tr>`;
         }).join("") +
         `</tbody></table>`;
@@ -15778,11 +15790,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       const emptyEl = document.getElementById("ua-bm-empty");
       const countEl = document.getElementById("ua-bm-count");
       if (!listEl) return;
-      listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:6px 0">Loading…</p>`;
+      listEl.innerHTML = `<p class="st-263 ua-muted" >Loading…</p>`;
       if (emptyEl) emptyEl.style.display = "none";
       const res = await uaRequest("bookmarks/").catch(() => null);
       if (!res || !res.ok) {
-        listEl.innerHTML = `<p class="ua-muted" style="font-size:12px;padding:6px 0">Could not load bookmarks.</p>`;
+        listEl.innerHTML = `<p class="st-263 ua-muted" >Could not load bookmarks.</p>`;
         return;
       }
       const data = await res.json();
@@ -15798,15 +15810,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           ? b.orgs.map(o => `<span class="ua-org-chip">${uaEsc(o)}</span>`).join("")
           : "";
         return `<div class="ua-bm-item" data-id="${uaEsc(b._id)}">
-          <div style="flex:1;min-width:0">
+          <div class="st-255" >
             <span class="ua-bm-name" title="${uaEsc(b.name)}">${uaEsc(b.name)}</span>
-            ${orgChips ? `<div style="margin-top:3px;display:flex;gap:4px;flex-wrap:wrap">${orgChips}</div>` : ""}
+            ${orgChips ? `<div class="st-264" style="display:flex;">${orgChips}</div>` : ""}
           </div>
           <div class="ua-bm-actions">
-            <a href="${uaEsc(b.url)}" class="btn btn-ghost" style="font-size:12px;padding:4px 8px" title="Open saved search">Open</a>
-            <button class="btn btn-ghost ua-bm-edit-btn" data-id="${uaEsc(b._id)}" data-name="${uaEsc(b.name)}" style="font-size:12px;padding:4px 8px" title="Rename bookmark">Edit</button>
-            <button class="btn btn-ghost ua-bm-share-btn" data-share="${uaEsc(b.shareId)}" style="font-size:12px;padding:4px 8px" title="Copy share link">Copy link</button>
-            <button class="btn btn-ghost ua-bm-del-btn" data-id="${uaEsc(b._id)}" style="font-size:12px;padding:4px 8px;color:var(--cve);border-color:#fca5a5">Delete</button>
+            <a href="${uaEsc(b.url)}" class="st-258 btn btn-ghost"  title="Open saved search">Open</a>
+            <button class="st-258 btn btn-ghost ua-bm-edit-btn" data-id="${uaEsc(b._id)}" data-name="${uaEsc(b.name)}"  title="Rename bookmark">Edit</button>
+            <button class="st-258 btn btn-ghost ua-bm-share-btn" data-share="${uaEsc(b.shareId)}"  title="Copy share link">Copy link</button>
+            <button class="st-259 btn btn-ghost ua-bm-del-btn" data-id="${uaEsc(b._id)}" >Delete</button>
           </div>
         </div>`;
       }).join("");
