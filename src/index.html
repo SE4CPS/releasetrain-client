@@ -858,6 +858,8 @@
     #askWorkflowDiagram g.askwfg-skipped text { fill: #9ca3af !important; }
     .ask-console { position: fixed; left: 0; right: 0; bottom: 0; z-index: 900; height: 170px; overflow-y: auto; border-radius: 10px 10px 0 0; box-shadow: 0 -6px 16px rgba(0,0,0,.25); background: #0a0a0a; color: #d4d4d4; padding: 10px 14px; font: 12px/1.5 Consolas, ui-monospace, monospace; white-space: pre-wrap; }
     body.has-ask-console { padding-bottom: 180px; }
+    body.has-ask-console.has-ask-console-min { padding-bottom: 40px; }
+    .ask-console.ask-console-min { height: 32px; overflow: hidden; padding-top: 6px; padding-bottom: 6px; }
     .ask-console-close { position: sticky; top: 0; float: right; background: #262626; color: #d4d4d4; border: 0; border-radius: 4px; cursor: pointer; font-size: 12px; padding: 1px 7px; }
     .ask-console .ac-t { color: #7c7c7c; }
     .ask-console .ac-note { color: #7dd3fc; }
@@ -2825,7 +2827,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.133.4"><span class="brand-name">Releasetrain </span><em>v3.133.4</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.133.6"><span class="brand-name">Releasetrain </span><em>v3.133.6</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4827,6 +4829,30 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-26</div>
+              <div class="cl-ver cl-ver-patch">v3.133.6</div>
+            </div>
+            <div class="cl-content">
+              <h3>Run log minimizes instead of closing</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The run log's close button is now a minimize toggle that shrinks it to a slim bar and expands it again, keeping the log.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-26</div>
+              <div class="cl-ver cl-ver-patch">v3.133.5</div>
+            </div>
+            <div class="cl-content">
+              <h3>"Why create an account?" is now a tab</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> The reasons list moved from a collapsed panel below the sign-in box to a third tab next to Sign in and Register.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-26</div>
@@ -8226,6 +8252,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="ua-tabs">
             <button id="ua-tab-login" class="ua-tab ua-tab-active" type="button">Sign in</button>
             <button id="ua-tab-register" class="ua-tab" type="button">Register</button>
+            <button id="ua-tab-why" class="ua-tab" type="button">Why create an account?</button>
           </div>
           <div class="ua-card">
             <form id="ua-login-form">
@@ -8260,11 +8287,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               </div>
               <button class="btn btn-primary" type="submit" id="ua-register-btn">Create account</button>
             </form>
-          </div>
-        <details style="margin-top:12px">
-          <summary style="cursor:pointer;font-size:12px;color:var(--muted);list-style:none;display:flex;flex-direction:row;align-items:center;gap:4px">
-            <span style="font-size:10px">›</span> Why create an account?
-          </summary>
+            <div id="ua-why-pane" style="display:none">
+              <h2 style="margin:0 0 12px;font-size:15px;font-weight:700">Why create an account?</h2>
           <ul class="ua-why-list">
             <li><span>🔖</span>Save a search once, reopen it from any device.</li>
             <li><span>🔗</span>Share a link and recipients see your exact filtered view.</li>
@@ -8273,7 +8297,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <li><span>🛡</span>Admins can view, edit, and remove any user account.</li>
             <li><span>🏷</span>Add up to 2 org names to brand your share links (<code>?org=…</code>).</li>
           </ul>
-        </details>
+            </div>
+          </div>
         </div>
 
         <!-- Authenticated state -->
@@ -9937,6 +9962,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     function askConsoleHtml() {
       return askWorkflowLog.slice().reverse().map(l => `<div class="${l.cls}"><span class="ac-t">[${l.t}s]</span> ${uaEsc(l.text)}</div>`).join("");
     }
+    let askConsoleMin = false;
     function renderAskConsole() {
       let el = document.getElementById("askConsoleFixed");
       if (!el) {
@@ -9947,8 +9973,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         document.body.appendChild(el);
         document.body.classList.add("has-ask-console");
       }
-      el.innerHTML = '<button type="button" class="ask-console-close" aria-label="Hide log">✕</button>' + askConsoleHtml();
-      el.querySelector(".ask-console-close").onclick = () => { el.remove(); document.body.classList.remove("has-ask-console"); };
+      el.classList.toggle("ask-console-min", askConsoleMin);
+      document.body.classList.toggle("has-ask-console-min", askConsoleMin);
+      el.innerHTML = `<button type="button" class="ask-console-close" aria-label="${askConsoleMin ? "Expand log" : "Minimize log"}" title="${askConsoleMin ? "Expand" : "Minimize"}">${askConsoleMin ? "&#9650;" : "&#8211;"}</button>` + (askConsoleMin ? '<span class="ac-t">Run log</span>' : askConsoleHtml());
+      el.querySelector(".ask-console-close").onclick = () => { askConsoleMin = !askConsoleMin; renderAskConsole(); };
       el.scrollTop = 0; // newest line is on top
       // Start where the main column starts so the sidebar never covers the text.
       const main = document.getElementById("askWorkflowTop");
@@ -17946,17 +17974,15 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       });
     }
 
-    document.getElementById("ua-tab-login").addEventListener("click", () => {
-      document.getElementById("ua-login-form").style.display = "";
-      document.getElementById("ua-register-form").style.display = "none";
-      document.getElementById("ua-tab-login").classList.add("ua-tab-active");
-      document.getElementById("ua-tab-register").classList.remove("ua-tab-active");
-    });
-    document.getElementById("ua-tab-register").addEventListener("click", () => {
-      document.getElementById("ua-register-form").style.display = "";
-      document.getElementById("ua-login-form").style.display = "none";
-      document.getElementById("ua-tab-register").classList.add("ua-tab-active");
-      document.getElementById("ua-tab-login").classList.remove("ua-tab-active");
+    function uaSelectTab(name) {
+      const panes = { login: "ua-login-form", register: "ua-register-form", why: "ua-why-pane" };
+      for (const k of Object.keys(panes)) {
+        document.getElementById(panes[k]).style.display = k === name ? "" : "none";
+        document.getElementById("ua-tab-" + k).classList.toggle("ua-tab-active", k === name);
+      }
+    }
+    ["login", "register", "why"].forEach(k => {
+      document.getElementById("ua-tab-" + k).addEventListener("click", () => uaSelectTab(k));
     });
 
     document.getElementById("ua-login-form").addEventListener("submit", async e => {
