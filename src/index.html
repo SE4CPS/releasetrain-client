@@ -2842,7 +2842,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.134.1"><span class="brand-name">Releasetrain </span><em>v3.134.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.134.2"><span class="brand-name">Releasetrain </span><em>v3.134.2</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4844,6 +4844,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-26</div>
+              <div class="cl-ver cl-ver-patch">v3.134.2</div>
+            </div>
+            <div class="cl-content">
+              <h3>Green boxes match the agent count</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Steps that ran plain code without a model call, like the document lookup in a comparison, turn grey and say code, so the green boxes equal the "N agents" badge.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-26</div>
@@ -9796,6 +9808,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     let askWorkflowQuestion = "";
     let askWorkflowNotes = {};        // node name -> short detail shown under the box
     let askWorkflowLog = [];          // console lines for the Short answer tab
+    let askWorkflowAgentKeys = null;  // set when the answer arrives; null while running
     let askWorkflowFinished = false;  // true once the run is over (unvisited nodes turn "skipped")
 
     const ASK_WORKFLOW_PHASE_NODE = {
@@ -9927,6 +9940,9 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         // green, so the green boxes are exactly the agents counted in
         // the "N agents" badge.
         if (n.key === "vendor" && st === "done") st = "input";
+        // A finished node that made no model call is a code step, not an agent.
+        const isCodeStep = st === "done" && askWorkflowAgentKeys && !askWorkflowAgentKeys.includes(n.key);
+        if (isCodeStep) st = "input";
         g.setAttribute("class", `node default askwfg-${st}`);
         // Center the label in its box by measuring both on screen (Mermaid
         // measured the text before the page font applied); retried until
@@ -9959,7 +9975,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           g.appendChild(t);
         }
         const note = askWorkflowNotes[n.name];
-        t.textContent = st === "skipped" ? "skipped" : [secs, note].filter(Boolean).join(" · ");
+        t.textContent = st === "skipped" ? "skipped" : (isCodeStep && !askWorkflowNotes[n.name]) ? [secs, "code"].join(" · ") : [secs, note].filter(Boolean).join(" · ");
       }
     }
     // Writes into #askBenchmarkLiveStatus (see its own CSS comment), not a
@@ -9995,7 +10011,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // (removed as a redundant second "something is happening" signal).
     function startAskWorkflow(question) {
       askWorkflowQuestion = question || "";
-      askWorkflowNotes = {}; askWorkflowLog = []; askWorkflowFinished = false; askWorkflowStartedRun = Date.now();
+      askWorkflowNotes = {}; askWorkflowLog = []; askWorkflowFinished = false; askWorkflowAgentKeys = null; askWorkflowStartedRun = Date.now();
       askConsoleLog("Question received");
       askWorkflowState = { vendor: "active", rewriter: "idle", retriever: "idle", evaluator: "idle", orchestrator: "idle", websearch: "idle", verify: "idle" };
       const now = Date.now();
@@ -12035,6 +12051,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         // value so the label reads as the pipeline that actually ran
         // ("Multi-agent (feedback loop)"), not the literal word "auto".
         const resolvedPreset = (data.config && data.config.preset) || preset;
+        // Which graph nodes were actual agents (model calls) for this run,
+        // using the same rule as the "N agents" badge, so the green boxes
+        // match that number. Other finished nodes are plain code steps.
+        askWorkflowAgentKeys = (data.intent !== "comparison" && data.evaluatorRan)
+          ? ["rewriter", "retriever", "evaluator", "orchestrator"] : ["orchestrator"];
+        if (data.vendorWebVerified) askWorkflowAgentKeys.push("verify");
+        renderAskWorkflowDiagram();
         // A real answer: shown inline beside the feed when there's room
         // for it, the popup modal otherwise (a narrow window, or a
         // laptop split half-screen with a chat window, say).
