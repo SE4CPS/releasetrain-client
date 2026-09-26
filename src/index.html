@@ -862,6 +862,19 @@
     body.has-ask-console { padding-bottom: 180px; }
     body.has-ask-console.has-ask-console-min { padding-bottom: 40px; }
     .ask-console.ask-console-min { height: 32px; overflow: hidden; padding-top: 6px; padding-bottom: 6px; }
+    /* Keep the floating close button above the bottom run log instead of under it. */
+    body.has-ask-console .view-close-btn { bottom: 186px; }
+    body.has-ask-console.has-ask-console-min .view-close-btn { bottom: 48px; }
+    /* Phone view: only the latest updates. Everything Ask / agentic AI
+       (question box, agent graph, run log, demo questions, pipeline
+       options, eval pages, credits, changelog) is hidden, and the page
+       opens on the Recent updates feed instead of the Ask home. */
+    @media (max-width: 640px) {
+      #askForm, #askWorkflowTop, #askFormDesktopSlot, #demoQuestionsDetails, #askOptionsPanel,
+      #askConsoleFixed, .ask-rail-col, #homeLink, #ackLink, #changelogLink,
+      #evalRewriterLink, #evalEvaluatorLink, #evalOrchestratorLink, #viewCloseBtn { display: none !important; }
+      body.has-ask-console, body.has-ask-console.has-ask-console-min { padding-bottom: 0; }
+    }
     .ask-console-close { position: sticky; top: 0; float: right; background: #262626; color: #d4d4d4; border: 0; border-radius: 4px; cursor: pointer; font-size: 12px; padding: 1px 7px; }
     .ask-console .ac-t { color: #7c7c7c; }
     .ask-console .ac-note { color: #7dd3fc; }
@@ -2829,7 +2842,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.133.8"><span class="brand-name">Releasetrain </span><em>v3.133.8</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.134.1"><span class="brand-name">Releasetrain </span><em>v3.134.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4831,6 +4844,30 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-26</div>
+              <div class="cl-ver cl-ver-patch">v3.134.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Close button no longer overlaps the run log</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The round close button moves up above the run log, and sits just above the slim bar when the log is minimized.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-26</div>
+              <div class="cl-ver cl-ver-minor">v3.134.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Phone view shows only the latest updates</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> On phones the app opens on Recent updates, and the Ask box, agent graph, run log, credits and changelog are hidden.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-26</div>
@@ -12216,6 +12253,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
       if (closeBtn) closeBtn.hidden = document.body.classList.contains("view-home");
       relocateAskOptionsPanel();
     }
+    // Phones get the Recent updates feed only (see the "Phone view" CSS).
+    // A phone landing on the Ask home, or on an AI-only view, is sent to the feed.
+    (function phoneFeedOnly() {
+      if (!window.matchMedia("(max-width: 640px)").matches) return;
+      const u = new URL(location.href);
+      const view = u.searchParams.get("view");
+      const aiViews = ["credits", "changelog", "eval-rewriter", "eval-evaluator", "eval-orchestrator"];
+      if ((!view && !u.searchParams.get("q")) || aiViews.includes(view)) {
+        u.searchParams.set("view", "feed");
+        history.replaceState({}, "", u.toString());
+      }
+    })();
     syncHomeClass();
 
     function setLinksHref() {
