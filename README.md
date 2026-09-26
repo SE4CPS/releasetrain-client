@@ -10,10 +10,13 @@ Releasetrain REST API (lives in the separate `releasetrain-server` repo).
 
 ## Architecture
 
-One self-contained file, `src/index.html`: inline CSS/JS, no build-time
-framework. Third-party runtime libraries (Chart.js, vis-network, mermaid,
-pako) load from a CDN at pinned versions. `npm run build` copies `src/` to
-`dist/` (git-ignored) and stamps the version; `src/` is the source of truth.
+A static page with no build-time framework or bundler:
+
+- `src/index.html`: markup only. No `<style>`, no inline styles, no inline scripts.
+- `src/styles.css`: all CSS. Values that only exist at runtime are set from JS as `--rt-*` custom properties.
+- `src/js/*.js`: all JavaScript, as plain classic scripts loaded in order by `index.html` (they share one global scope, like one big script). `core.js` first, feature files in the middle (`ask*.js`, `graph.js`, `arch.js`, `feed.js`, `cve.js`, `account.js`, ...), and `main.js` last: it holds the start-up code, which needs every earlier file's functions to exist. Put new start-up calls in `main.js`, not in a feature file.
+
+Third-party runtime libraries (Chart.js, vis-network, mermaid, pako) load from a CDN at pinned versions. `npm run build` copies `src/` to `dist/` (git-ignored) and stamps the version into the asset URLs; `src/` is the source of truth. `npm run lint` (`scripts/lint-css.js`) enforces the no-inline-CSS/JS rules.
 
 The API base resolves from, in order: a `?api=` query param, the
 `<meta name="api-base">` tag in `src/index.html`, then the built-in default

@@ -11,7 +11,7 @@
  *     property is the one allowed use)
  *   - cssText and setAttribute("style", ...)
  *   - inline <script> code or on...= event-handler attributes (all JS lives in
- *     src/app.js)
+ *     src/js/)
  *
  * Toggle visibility with classList / setDisplay(), and style with a class
  * defined in styles.css. Plain Node, no dependencies.
@@ -21,10 +21,14 @@ const fs = require('fs');
 const path = require('path');
 
 const srcDir = path.resolve(__dirname, '..', 'src');
-const files = fs
-  .readdirSync(srcDir)
-  .filter((f) => /\.(html|js)$/.test(f))
-  .map((f) => path.join(srcDir, f));
+const files = [];
+(function collect(dir) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) collect(full);
+    else if (/[.](html|js)$/.test(entry.name)) files.push(full);
+  }
+})(srcDir);
 
 const problems = [];
 
@@ -38,8 +42,8 @@ for (const file of files) {
   const add = (index, msg) => problems.push(`${rel}:${lineOf(text, index)}  ${msg}`);
 
   if (file.endsWith('.html')) {
-    for (const m of text.matchAll(/<script(?![^>]*\bsrc=)[^>]*>/g)) add(m.index, 'inline <script>: move the code to src/app.js');
-    for (const m of text.matchAll(/\son(?:click|change|input|submit|key\w+|load|error|mouse\w+|focus|blur)=/g)) add(m.index, 'inline event handler: use addEventListener in app.js');
+    for (const m of text.matchAll(/<script(?![^>]*\bsrc=)[^>]*>/g)) add(m.index, 'inline <script>: move the code to a file in src/js/');
+    for (const m of text.matchAll(/\son(?:click|change|input|submit|key\w+|load|error|mouse\w+|focus|blur)=/g)) add(m.index, 'inline event handler: use addEventListener in src/js/');
   } else {
     for (const m of text.matchAll(/["'`]<[a-z][^>]*\son(?:click|change|input|submit|key\w+|load|error|mouse\w+|focus|blur)=/g)) add(m.index, 'inline event handler in a template: use addEventListener');
   }

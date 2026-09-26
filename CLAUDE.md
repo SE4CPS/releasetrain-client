@@ -207,3 +207,12 @@ All presentation goes in `src/styles.css`. No `<style>` blocks, no `style="..."`
 - The one exception is a value that only exists at runtime (a computed width, a data-driven color): set a `--rt-*` CSS custom property (`style="--rt-w:${pct}%"` or `el.style.setProperty("--rt-w", ...)`) and let a class in `styles.css` read it (`.rt-w`, `.rt-c`, `.rt-bg`).
 - `npm run lint` runs `scripts/lint-css.js` and fails on any violation, so `npm run check` catches it.
 - Classes named `st-N` are placeholders extracted from old inline styles; rename them to real component classes when you touch that view. Their `!important` only preserves the old inline-style priority and can go once a rule is a proper component rule.
+
+
+## JavaScript lives in src/js/*.js (global rule)
+
+No inline `<script>` code and no `on...=` handler attributes in `index.html` or in JS-built HTML; the lint enforces it. The scripts under `src/js/` are classic scripts sharing one global scope, loaded in the order listed at the end of `index.html` (core, ask, ask-workflow, ask-rail, helpers, graph, arch, docs, eval, feed, cve, risk, network, account, inventory, main).
+
+- A top-level statement that runs at load may only use functions and consts declared in the same file or an earlier one. Function declarations in a later file are not hoisted across files.
+- Anything that kicks off async work at load (`boot().then(...)`, timers, startup calls) goes in `main.js`, which loads last.
+- Adding a new file: add its `<script src="js/<name>.js?v=...">` tag in the right position, and keep the version stamping (`scripts/build.js`) working.
