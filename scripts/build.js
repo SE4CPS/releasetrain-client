@@ -33,6 +33,7 @@ const indexPath = path.join(dist, 'index.html');
 const html = fs
   .readFileSync(indexPath, 'utf8')
   .replace(/data-app-version="[^"]*"/, `data-app-version="${version}"`)
+  .replace(/styles\.css\?v=[^"]*/, `styles.css?v=${version}`)
   .replace(
     /(<a class="brand"[^>]*>Releasetrain <em>)v[^<]*(<\/em>)/,
     `$1v${version}$2`,
