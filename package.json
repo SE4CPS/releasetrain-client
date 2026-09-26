@@ -1,6 +1,6 @@
 {
   "name": "releasetrain-client",
-  "version": "3.133.3",
+  "version": "3.133.4",
   "description": "Static browser client for Releasetrain",
   "private": true,
   "engines": {

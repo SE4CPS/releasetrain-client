@@ -846,7 +846,6 @@
        against a dark card; on the page's own light surface a strong,
        saturated but darker green reads as "active" just as clearly
        without needing a backdrop to glow against. */
-    .askwf-arrow { color: var(--muted); }
     #askWorkflowDiagram svg { max-width: 100%; height: auto; overflow: visible; }
     #askWorkflowDiagram text.askwf-secs { font-size: 11px; fill: var(--muted) !important; font-weight: 400 !important; }
     #askWorkflowDiagram g.askwfg-idle rect { fill: #f2f0ff !important; stroke: #8b83d6 !important; }
@@ -863,9 +862,6 @@
     .ask-console .ac-t { color: #7c7c7c; }
     .ask-console .ac-note { color: #7dd3fc; }
     #askWorkflowDiagram g.askwfg-active { animation: askwfRobotBlink 1.2s ease-in-out infinite; }
-    .askwf-idle { color: var(--muted); }
-    .askwf-active { color: #15803d; }
-    .askwf-done { color: #16a34a; }
     /* Robot in front of each node's name (see renderAskWorkflowDiagram),
        per explicit request. Only the robot blinks while its own node is
        "active" -- the node's own name/timer text stays fully static
@@ -877,8 +873,6 @@
        color the emoji itself renders in (CSS `color` has no effect on an
        emoji glyph, so there's nothing to re-color here regardless). */
     @keyframes askwfRobotBlink { 50% { opacity: 0.15; } }
-    .askwf-robot { display: inline-block; margin-right: 2px; }
-    .askwf-robot-active { animation: askwfRobotBlink 0.9s steps(1) infinite; }
     /* #askWorkflowTop: the one persistent home for the diagram (the
        running-phase caption used to live here, then move to its own
        element below the input; it now lives in the answer card's own
@@ -2831,7 +2825,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.133.3"><span class="brand-name">Releasetrain </span><em>v3.133.3</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.133.4"><span class="brand-name">Releasetrain </span><em>v3.133.4</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4833,6 +4827,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-26</div>
+              <div class="cl-ver cl-ver-patch">v3.133.4</div>
+            </div>
+            <div class="cl-content">
+              <h3>Removed the old plain text agent row</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The old text row with robot icons is gone. If the graph can't be fetched, the page keeps retrying, and it draws the last graph it saw straight away.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-26</div>
@@ -9769,11 +9775,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // installed there), the plain text row below is the fallback.
     let askGraphSvg = null;
     let askGraphLoading = false;
-    let askGraphFailed = false;
-    function loadAskGraph() {
-      if (askGraphSvg || askGraphLoading || askGraphFailed) return;
-      askGraphLoading = true;
-      const ensureMermaid = () => new Promise((resolve, reject) => {
+    let askGraphRetryMs = 1500;
+    const ASK_GRAPH_CACHE_KEY = "rt.askGraphMermaid";
+    function askEnsureMermaid() {
+      return new Promise((resolve, reject) => {
         if (window.mermaid) return resolve();
         const sc = document.createElement("script");
         sc.src = "https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js";
@@ -9781,18 +9786,40 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         sc.onload = resolve; sc.onerror = reject;
         document.head.appendChild(sc);
       });
-      Promise.all([uaRequest("ask/graph").then(r => r.ok ? r.json() : Promise.reject(new Error("graph"))), ensureMermaid()])
-        .then(async ([g]) => {
-          window.mermaid.initialize({ startOnLoad: false, securityLevel: "strict", flowchart: { curve: "linear", htmlLabels: false } });
-          const text = String(g.mermaid || "").replace(/graph TD;/, "graph LR;").replace(/<p>__start__<\/p>/, "Start").replace(/<p>__end__<\/p>/, "End");
-          const out = await window.mermaid.render("askLangGraphSvg", text);
-          askGraphSvg = out.svg;
+    }
+    async function askDrawGraph(mermaidText) {
+      await askEnsureMermaid();
+      window.mermaid.initialize({ startOnLoad: false, securityLevel: "strict", flowchart: { curve: "linear", htmlLabels: false } });
+      const text = String(mermaidText || "").replace(/graph TD;/, "graph LR;").replace(/<p>__start__<\/p>/, "Start").replace(/<p>__end__<\/p>/, "End");
+      const out = await window.mermaid.render("askLangGraphSvg", text);
+      askGraphSvg = out.svg;
+      const el = document.getElementById("askWorkflowDiagram");
+      if (el) el.innerHTML = askGraphSvg;
+      renderAskWorkflowDiagram();
+    }
+    // Draws the last graph seen (kept in localStorage) right away, then
+    // refreshes it from the server. A failed fetch (server restarting) is
+    // retried with backoff instead of giving up, so there is no second,
+    // hand-built version of the diagram to fall back to.
+    function loadAskGraph() {
+      if (askGraphSvg || askGraphLoading) return;
+      askGraphLoading = true;
+      let cached = null;
+      try { cached = localStorage.getItem(ASK_GRAPH_CACHE_KEY); } catch {}
+      const fetchIt = () => uaRequest("ask/graph").then(r => r.ok ? r.json() : Promise.reject(new Error("graph")));
+      const go = async () => {
+        try {
+          if (cached) await askDrawGraph(cached);
+          const g = await fetchIt();
+          try { localStorage.setItem(ASK_GRAPH_CACHE_KEY, g.mermaid); } catch {}
+          if (!cached || cached !== g.mermaid) await askDrawGraph(g.mermaid);
           askGraphLoading = false;
-          const el = document.getElementById("askWorkflowDiagram");
-          if (el) el.innerHTML = askGraphSvg;
-          renderAskWorkflowDiagram();
-        })
-        .catch(() => { askGraphLoading = false; askGraphFailed = true; renderAskWorkflowDiagram(); });
+        } catch (e) {
+          if (askGraphSvg) { askGraphLoading = false; return; }
+          setTimeout(() => { askGraphLoading = false; askGraphRetryMs = Math.min(askGraphRetryMs * 2, 15000); loadAskGraph(); }, askGraphRetryMs);
+        }
+      };
+      go();
     }
     function renderAskWorkflowDiagram() {
       const el = document.getElementById("askWorkflowDiagram");
@@ -9801,59 +9828,47 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         vendor: "idle", rewriter: "idle", retriever: "idle",
         evaluator: "idle", orchestrator: "idle", websearch: "idle", verify: "idle",
       };
-      if (!askGraphFailed) {
-        if (!askGraphSvg) { loadAskGraph(); return; }
-        if (!el.querySelector("svg")) el.innerHTML = askGraphSvg;
-        for (const n of ASK_WORKFLOW_NODES) {
-          const g = el.querySelector(`g.node[id*="flowchart-${n.name}-"]`);
-          if (!g) continue;
-          let st = state[n.key] || "idle";
-          if (askWorkflowFinished && st === "idle" && n.key !== "vendor") st = "skipped";
-          g.setAttribute("class", `node default askwfg-${st}`);
-          // Center the label in its box by measuring both on screen (Mermaid
-          // measured the text before the page font applied); retried until
-          // the diagram is actually visible and measurable.
-          const lab0 = g.querySelector("text:not(.askwf-secs)");
-          const rect0 = g.querySelector("rect");
-          if (lab0 && rect0 && !lab0.dataset.centered) {
-            const lr = lab0.getBoundingClientRect(), rr = rect0.getBoundingClientRect();
-            const sc = rect0.getScreenCTM();
-            if (lr.width > 0 && rr.width > 0 && sc && sc.a) {
-              const dx = (rr.left + rr.width / 2 - (lr.left + lr.width / 2)) / sc.a;
-              const dy = (rr.top + rr.height / 2 - (lr.top + lr.height / 2)) / sc.d;
-              lab0.setAttribute("transform", `translate(${dx} ${dy})`);
-              lab0.dataset.centered = "1";
-            }
+      if (!askGraphSvg) { loadAskGraph(); return; }
+      if (!el.querySelector("svg")) el.innerHTML = askGraphSvg;
+      for (const n of ASK_WORKFLOW_NODES) {
+        const g = el.querySelector(`g.node[id*="flowchart-${n.name}-"]`);
+        if (!g) continue;
+        let st = state[n.key] || "idle";
+        if (askWorkflowFinished && st === "idle" && n.key !== "vendor") st = "skipped";
+        g.setAttribute("class", `node default askwfg-${st}`);
+        // Center the label in its box by measuring both on screen (Mermaid
+        // measured the text before the page font applied); retried until
+        // the diagram is actually visible and measurable.
+        const lab0 = g.querySelector("text:not(.askwf-secs)");
+        const rect0 = g.querySelector("rect");
+        if (lab0 && rect0 && !lab0.dataset.centered) {
+          const lr = lab0.getBoundingClientRect(), rr = rect0.getBoundingClientRect();
+          const sc = rect0.getScreenCTM();
+          if (lr.width > 0 && rr.width > 0 && sc && sc.a) {
+            const dx = (rr.left + rr.width / 2 - (lr.left + lr.width / 2)) / sc.a;
+            const dy = (rr.top + rr.height / 2 - (lr.top + lr.height / 2)) / sc.d;
+            lab0.setAttribute("transform", `translate(${dx} ${dy})`);
+            lab0.dataset.centered = "1";
           }
-          const secs = askWorkflowNodeSeconds(n.key);
-          // The node's own label stays as LangGraph drew it; the elapsed
-          // time is a small separate text under the box.
-          let t = g.querySelector("text.askwf-secs");
-          if (!t) {
-            const r0 = g.querySelector("rect");
-            const rw = +r0.getAttribute("width"), rh = +r0.getAttribute("height");
-            const box = { x: +r0.getAttribute("x") || 0, y: +r0.getAttribute("y") || 0, width: rw, height: rh };
-            t = document.createElementNS("http://www.w3.org/2000/svg", "text");
-            t.setAttribute("class", "askwf-secs");
-            t.setAttribute("text-anchor", "middle");
-            t.setAttribute("x", box.x + box.width / 2);
-            t.setAttribute("y", box.y + box.height + 13);
-            g.appendChild(t);
-          }
-          const note = askWorkflowNotes[n.name];
-          t.textContent = st === "skipped" ? "skipped" : [secs, note].filter(Boolean).join(" · ");
         }
-        return;
-      }
-      el.innerHTML = ASK_WORKFLOW_NODES.map((n, i) => {
-        const st = state[n.key] || "idle";
         const secs = askWorkflowNodeSeconds(n.key);
-        const label = secs ? `${n.name} (${secs})` : n.name;
-        const robot = `<span class="askwf-robot${st === "active" ? " askwf-robot-active" : ""}">&#129302;</span>`;
-        const title = (i === 0 && askWorkflowQuestion) ? ` title="${uaEsc(askWorkflowQuestion)}"` : "";
-        const node = `<span class="askwf-${st}"${title}>${robot}${uaEsc(label)}</span>`;
-        return i === 0 ? node : `<span class="askwf-arrow">&rarr;</span>${node}`;
-      }).join("");
+        // The node's own label stays as LangGraph drew it; the elapsed
+        // time is a small separate text under the box.
+        let t = g.querySelector("text.askwf-secs");
+        if (!t) {
+          const r0 = g.querySelector("rect");
+          const rw = +r0.getAttribute("width"), rh = +r0.getAttribute("height");
+          const box = { x: +r0.getAttribute("x") || 0, y: +r0.getAttribute("y") || 0, width: rw, height: rh };
+          t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          t.setAttribute("class", "askwf-secs");
+          t.setAttribute("text-anchor", "middle");
+          t.setAttribute("x", box.x + box.width / 2);
+          t.setAttribute("y", box.y + box.height + 13);
+          g.appendChild(t);
+        }
+        const note = askWorkflowNotes[n.name];
+        t.textContent = st === "skipped" ? "skipped" : [secs, note].filter(Boolean).join(" · ");
+      }
     }
     // Writes into #askBenchmarkLiveStatus (see its own CSS comment), not a
     // single persistent element: that span lives inside whichever card is
