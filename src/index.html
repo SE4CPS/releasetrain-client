@@ -847,6 +847,15 @@
        saturated but darker green reads as "active" just as clearly
        without needing a backdrop to glow against. */
     .askwf-arrow { color: var(--muted); }
+    #askWorkflowDiagram svg { max-width: 100%; height: auto; overflow: visible; }
+    #askWorkflowDiagram text.askwf-secs { font-size: 11px; fill: var(--muted) !important; font-weight: 400 !important; }
+    #askWorkflowDiagram g.askwfg-idle rect { fill: transparent !important; stroke: var(--muted) !important; }
+    #askWorkflowDiagram g.askwfg-idle text { fill: var(--muted) !important; }
+    #askWorkflowDiagram g.askwfg-active rect { fill: #dcfce7 !important; stroke: #15803d !important; }
+    #askWorkflowDiagram g.askwfg-active text { fill: #14532d !important; font-weight: 700; }
+    #askWorkflowDiagram g.askwfg-done rect { fill: #f0fdf4 !important; stroke: #16a34a !important; }
+    #askWorkflowDiagram g.askwfg-done text { fill: #166534 !important; }
+    #askWorkflowDiagram g.askwfg-active { animation: askwfRobotBlink 1.2s ease-in-out infinite; }
     .askwf-idle { color: var(--muted); }
     .askwf-active { color: #15803d; }
     .askwf-done { color: #16a34a; }
@@ -2815,7 +2824,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.131.12"><span class="brand-name">Releasetrain </span><em>v3.131.12</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.132.0"><span class="brand-name">Releasetrain </span><em>v3.132.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4817,6 +4826,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-26</div>
+              <div class="cl-ver cl-ver-minor">v3.132.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Live LangGraph agent graph for everyone</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The pipeline diagram above the question box is now LangGraph's own graph drawing, fetched from the server and rendered with Mermaid. It is always visible: nodes stay dim while idle, the active node lights up and blinks, finished nodes turn green, and each shows its elapsed time.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-25</div>
@@ -9656,6 +9677,39 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // text next to it stays fully static, unaffected, per direct
     // follow-up ("only blink the robot in front, this way the text stays
     // static").
+    // The pipeline drawing is LangGraph's own drawMermaid() output, fetched
+    // once from GET /api/ask/graph and drawn by Mermaid (standard libraries,
+    // no hand-built diagram). Every call after that only restyles the
+    // existing SVG nodes from the live state, so it is cheap to run on the
+    // 250 ms tick. If the server cannot provide the graph (LangGraph not
+    // installed there), the plain text row below is the fallback.
+    let askGraphSvg = null;
+    let askGraphLoading = false;
+    let askGraphFailed = false;
+    function loadAskGraph() {
+      if (askGraphSvg || askGraphLoading || askGraphFailed) return;
+      askGraphLoading = true;
+      const ensureMermaid = () => new Promise((resolve, reject) => {
+        if (window.mermaid) return resolve();
+        const sc = document.createElement("script");
+        sc.src = "https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js";
+        sc.crossOrigin = "anonymous";
+        sc.onload = resolve; sc.onerror = reject;
+        document.head.appendChild(sc);
+      });
+      Promise.all([uaRequest("ask/graph").then(r => r.ok ? r.json() : Promise.reject(new Error("graph"))), ensureMermaid()])
+        .then(async ([g]) => {
+          window.mermaid.initialize({ startOnLoad: false, securityLevel: "strict", flowchart: { curve: "linear", htmlLabels: false } });
+          const text = String(g.mermaid || "").replace(/graph TD;/, "graph LR;").replace(/<p>__start__<\/p>/, "Start").replace(/<p>__end__<\/p>/, "End");
+          const out = await window.mermaid.render("askLangGraphSvg", text);
+          askGraphSvg = out.svg;
+          askGraphLoading = false;
+          const el = document.getElementById("askWorkflowDiagram");
+          if (el) el.innerHTML = askGraphSvg;
+          renderAskWorkflowDiagram();
+        })
+        .catch(() => { askGraphLoading = false; askGraphFailed = true; renderAskWorkflowDiagram(); });
+    }
     function renderAskWorkflowDiagram() {
       const el = document.getElementById("askWorkflowDiagram");
       if (!el) return;
@@ -9663,15 +9717,47 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         vendor: "idle", rewriter: "idle", retriever: "idle",
         evaluator: "idle", orchestrator: "idle", websearch: "idle", verify: "idle",
       };
+      if (!askGraphFailed) {
+        if (!askGraphSvg) { loadAskGraph(); return; }
+        if (!el.querySelector("svg")) el.innerHTML = askGraphSvg;
+        for (const n of ASK_WORKFLOW_NODES) {
+          const g = el.querySelector(`g.node[id*="flowchart-${n.name}-"]`);
+          if (!g) continue;
+          const st = state[n.key] || "idle";
+          g.setAttribute("class", `node default askwfg-${st}`);
+          const secs = askWorkflowNodeSeconds(n.key);
+          // The node's own label stays as LangGraph drew it; the elapsed
+          // time is a small separate text under the box.
+          let t = g.querySelector("text.askwf-secs");
+          if (!t) {
+            const box = g.querySelector("rect").getBBox();
+            // Center the label in its box: Mermaid measured it before the
+            // page font applied, which leaves it off-center.
+            const lab = g.querySelector("text");
+            if (lab) {
+              lab.setAttribute("text-anchor", "middle");
+              lab.setAttribute("x", box.x + box.width / 2);
+              lab.setAttribute("y", box.y + box.height / 2);
+              lab.setAttribute("dominant-baseline", "central");
+              lab.removeAttribute("transform");
+              lab.querySelectorAll("tspan").forEach(ts => { ts.setAttribute("x", box.x + box.width / 2); ts.removeAttribute("dy"); });
+            }
+            t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            t.setAttribute("class", "askwf-secs");
+            t.setAttribute("text-anchor", "middle");
+            t.setAttribute("x", box.x + box.width / 2);
+            t.setAttribute("y", box.y + box.height + 13);
+            g.appendChild(t);
+          }
+          t.textContent = secs || "";
+        }
+        return;
+      }
       el.innerHTML = ASK_WORKFLOW_NODES.map((n, i) => {
         const st = state[n.key] || "idle";
         const secs = askWorkflowNodeSeconds(n.key);
         const label = secs ? `${n.name} (${secs})` : n.name;
         const robot = `<span class="askwf-robot${st === "active" ? " askwf-robot-active" : ""}">&#129302;</span>`;
-        // Only the first node ("Ask") gets the real question
-        // text as a hover title -- every other node's title stays empty
-        // (the default, no attribute), since only this one stands in for
-        // the question itself rather than a real pipeline role.
         const title = (i === 0 && askWorkflowQuestion) ? ` title="${uaEsc(askWorkflowQuestion)}"` : "";
         const node = `<span class="askwf-${st}"${title}>${robot}${uaEsc(label)}</span>`;
         return i === 0 ? node : `<span class="askwf-arrow">&rarr;</span>${node}`;
