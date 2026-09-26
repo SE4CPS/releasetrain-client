@@ -854,6 +854,8 @@
     #askWorkflowDiagram g.askwfg-active text { fill: #14532d !important; font-weight: 700; }
     #askWorkflowDiagram g.askwfg-done rect { fill: #f0fdf4 !important; stroke: #16a34a !important; }
     #askWorkflowDiagram g.askwfg-done text { fill: #166534 !important; }
+    #askWorkflowDiagram g.askwfg-input rect { fill: #e5e7eb !important; stroke: #6b7280 !important; }
+    #askWorkflowDiagram g.askwfg-input text { fill: #374151 !important; }
     #askWorkflowDiagram g.askwfg-skipped rect { fill: transparent !important; stroke: #9ca3af !important; stroke-dasharray: 4 3; }
     #askWorkflowDiagram g.askwfg-skipped text { fill: #9ca3af !important; }
     .ask-console { position: fixed; left: 0; right: 0; bottom: 0; z-index: 900; height: 170px; overflow-y: auto; border-radius: 10px 10px 0 0; box-shadow: 0 -6px 16px rgba(0,0,0,.25); background: #0a0a0a; color: #d4d4d4; padding: 10px 14px; font: 12px/1.5 Consolas, ui-monospace, monospace; white-space: pre-wrap; }
@@ -2827,7 +2829,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.133.6"><span class="brand-name">Releasetrain </span><em>v3.133.6</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.133.7"><span class="brand-name">Releasetrain </span><em>v3.133.7</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4829,6 +4831,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-26</div>
+              <div class="cl-ver cl-ver-patch">v3.133.7</div>
+            </div>
+            <div class="cl-content">
+              <h3>Ask node no longer counted as an agent</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The Ask box (the incoming question) turns grey when done instead of green, so the green boxes are exactly the agents in the "N agents" badge.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-26</div>
@@ -9860,6 +9874,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         if (!g) continue;
         let st = state[n.key] || "idle";
         if (askWorkflowFinished && st === "idle" && n.key !== "vendor") st = "skipped";
+        // "Ask" is the incoming question, not an agent: it never turns
+        // green, so the green boxes are exactly the agents counted in
+        // the "N agents" badge.
+        if (n.key === "vendor" && st === "done") st = "input";
         g.setAttribute("class", `node default askwfg-${st}`);
         // Center the label in its box by measuring both on screen (Mermaid
         // measured the text before the page font applied); retried until
