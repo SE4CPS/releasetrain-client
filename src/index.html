@@ -2829,7 +2829,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.133.7"><span class="brand-name">Releasetrain </span><em>v3.133.7</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.133.8"><span class="brand-name">Releasetrain </span><em>v3.133.8</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -3259,7 +3259,7 @@
         <details class="sb-details" id="g-isolatedWrap">
           <summary>Isolated nodes <span class="g-iso-count" style="margin-left:auto;font:inherit;color:var(--muted)"></span></summary>
           <div class="sidebar-section" style="font-size:11px;line-height:1.6;padding-bottom:8px">
-            <div style="color:var(--muted);margin-bottom:4px">Nodes with zero edges — hidden from the canvas.</div>
+            <div style="color:var(--muted);margin-bottom:4px">Nodes with zero edges are hidden from the canvas.</div>
             <div id="g-isolatedList" style="color:var(--muted)">—</div>
           </div>
         </details>
@@ -3750,7 +3750,7 @@
         <div id="a-empty" style="display:none">
           <div class="a-empty-head">
             <h3>Choose a stack to visualize</h3>
-            <p>Render a live architecture diagram for any technology stack, stacked in tiers — hypervisor base layer, then OS, then applications. Every component is annotated with its installed vs. latest version, update severity, and any known CVEs. Pick a sample stack below, or add your own components from the sidebar.</p>
+            <p>Render a live architecture diagram for any technology stack, stacked in tiers: hypervisor base layer, then OS, then applications. Every component is annotated with its installed vs. latest version, update severity, and any known CVEs. Pick a sample stack below, or add your own components from the sidebar.</p>
           </div>
           <div id="a-stackGrid" class="a-stack-grid"></div>
           <div class="a-empty-foot">
@@ -3973,7 +3973,7 @@ graph LR
 
 <details class="arch-view">
 <summary class="d-arch-view-sum">Arch View</summary>
-<div class="arch-view-body">PlantUML diagram, encoded client-side (pako) and rendered as SVG by the public plantuml.com server. Components are stacked in tiers — hypervisor base layer (<code>versionProductType === "Hypervisor"</code>), then OS, then applications — with an "Upgrade now" cluster hoisted out for anything carrying a CVE or a major-version gap. A table mode lists the same data as a drift report.</div>
+<div class="arch-view-body">PlantUML diagram, encoded client-side (pako) and rendered as SVG by the public plantuml.com server. Components are stacked in tiers: hypervisor base layer (<code>versionProductType === "Hypervisor"</code>), then OS, then applications, with an "Upgrade now" cluster hoisted out for anything carrying a CVE or a major-version gap. A table mode lists the same data as a drift report.</div>
 </details>
 
 <details class="arch-view">
@@ -4382,7 +4382,7 @@ data: { "type": "result", "runId": "660c38fce3cba9423e4f8f23", "answer": "...", 
 <details class="arch-sub">
 <summary class="d-arch-sum">📋 Data Models</summary>
 <div class="arch-sub-body">
-<p class="small muted" style="margin:.2rem 0 .55rem">Two MongoDB collections store all release intelligence. Not every document has every field — the schema evolves as new sources are added.</p>
+<p class="small muted" style="margin:.2rem 0 .55rem">Two MongoDB collections store all release intelligence. Not every document has every field: the schema evolves as new sources are added.</p>
 
 <details class="arch-sub">
 <summary class="d-arch-sum">versions collection</summary>
@@ -4497,7 +4497,7 @@ data: { "type": "result", "runId": "660c38fce3cba9423e4f8f23", "answer": "...", 
 <tr><td><code class="inline">cursor</code></td><td>Opaque token from the <code class="inline">X-Next-Cursor</code> response header. Omit for the first page.</td></tr>
 </tbody>
 </table>
-<pre><code># First page — capture the X-Next-Cursor response header
+<pre><code># First page: capture the X-Next-Cursor response header
 curl -i "https://releasetrain.io/api/v/search?q=chrome&limit=50"
 
 # Subsequent page
@@ -4531,7 +4531,7 @@ curl "https://releasetrain.io/api/v/search?q=chrome&limit=50&cursor=TOKEN"</code
 
 <div class="callout" style="margin-bottom:.55rem">
 <h3 style="font-size:.87rem;margin:0 0 .28rem"><code class="inline">metadata.predicted.isUpdateRelated</code></h3>
-<p class="small" style="margin:0 0 .35rem">Text classifier trained on labeled Reddit posts. Predicts whether a post discusses a software update — a new release, patch announcement, upgrade discussion, or CVE advisory.</p>
+<p class="small" style="margin:0 0 .35rem">Text classifier trained on labeled Reddit posts. Predicts whether a post discusses a software update: a new release, patch announcement, upgrade discussion, or CVE advisory.</p>
 <table style="margin:.3rem 0 .4rem">
 <thead><tr><th style="width:28%">Value</th><th>Meaning</th></tr></thead>
 <tbody>
@@ -4627,7 +4627,7 @@ curl "https://releasetrain.io/api/v/search?q=chrome&limit=50&cursor=TOKEN"</code
 <details class="arch-sub">
 <summary class="d-arch-sum">🔍 Field Projection</summary>
 <div class="arch-sub-body">
-<p class="small muted" style="margin:.2rem 0 .5rem">Several endpoints accept a <code class="inline">fields</code> query parameter that limits the fields returned per document — useful for reducing payload size when building lightweight dashboards or mobile clients.</p>
+<p class="small muted" style="margin:.2rem 0 .5rem">Several endpoints accept a <code class="inline">fields</code> query parameter that limits the fields returned per document, useful for reducing payload size when building lightweight dashboards or mobile clients.</p>
 <pre><code># Return only title, subreddit and score
 curl "https://releasetrain.io/api/reddit?limit=50&fields=title,subreddit,score"
 
@@ -4665,7 +4665,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 <thead><tr><th style="width:28%">Concern</th><th>Status</th></tr></thead>
 <tbody>
 <tr><td>Authentication</td><td>None required for <code class="inline">GET</code> endpoints. The full read surface is public.</td></tr>
-<tr><td>Write access</td><td><code class="inline">POST</code> and <code class="inline">PUT</code> routes are intended for the bot fleet and are not token-guarded in the current version — treat them as internal.</td></tr>
+<tr><td>Write access</td><td><code class="inline">POST</code> and <code class="inline">PUT</code> routes are intended for the bot fleet and are not token-guarded in the current version, so treat them as internal.</td></tr>
 <tr><td>CORS</td><td>Permissive. All origins are allowed for <code class="inline">GET</code> requests. Safe to call from browser JavaScript.</td></tr>
 <tr><td>Rate limiting</td><td>No hard limit is enforced. For long-running integrations, cache responses locally and use <code class="inline">cursor</code> or <code class="inline">start/end</code> to request only new data.</td></tr>
 <tr><td>HTTPS</td><td>All production traffic is served over HTTPS. HTTP redirects to HTTPS.</td></tr>
@@ -4831,6 +4831,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-26</div>
+              <div class="cl-ver cl-ver-patch">v3.133.8</div>
+            </div>
+            <div class="cl-content">
+              <h3>No dashes used for emphasis in UI text</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> Sign-in reasons, the graph view and the docs now use colons or commas instead of dashes for emphasis.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-26</div>
@@ -8306,7 +8318,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <ul class="ua-why-list">
             <li><span>🔖</span>Save a search once, reopen it from any device.</li>
             <li><span>🔗</span>Share a link and recipients see your exact filtered view.</li>
-            <li><span>🔐</span>Stay signed in across tabs and reloads &mdash; no re-entering credentials.</li>
+            <li><span>🔐</span>Stay signed in across tabs and reloads, with no re-entering credentials.</li>
             <li><span>📌</span>Your saved searches are private to your account.</li>
             <li><span>🛡</span>Admins can view, edit, and remove any user account.</li>
             <li><span>🏷</span>Add up to 2 org names to brand your share links (<code>?org=…</code>).</li>
@@ -12254,7 +12266,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         if (c) c.textContent = list.length ? String(list.length) : "";
       }
       if (!list.length) {
-        box.innerHTML = `<div style="color:var(--muted)">None — every node has at least one edge.</div>`;
+        box.innerHTML = `<div style="color:var(--muted)">None: every node has at least one edge.</div>`;
         return;
       }
       const kindOf = id =>
@@ -16722,7 +16734,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         return '<div class="nk-report-item">'
           + '<span class="' + (cls[rp.outcome] || "") + '">' + nkEsc(labels[rp.outcome] || rp.outcome || "") + '</span>'
           + (rp.fromVersion ? ' from v' + nkEsc(rp.fromVersion) : '')
-          + (rp.description ? ' — ' + nkEsc(rp.description.slice(0, 120)) : '')
+          + (rp.description ? ': ' + nkEsc(rp.description.slice(0, 120)) : '')
           + (date ? '<div style="font-size:10px;color:var(--muted);margin-top:2px">' + date + (rp.reportedBy ? ' · ' + nkEsc(rp.reportedBy) : '') + '</div>' : '')
           + '</div>';
       }).join("");
@@ -17141,7 +17153,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     // skipped entirely rather than shown as a heading with nothing under it.
     function uaRenderBotGroups(botHealth) {
       const groups = [
-        { key: "stale",   cls: "ua-bot-row-stale",   icon: "🔴", label: "Stale — needs attention" },
+        { key: "stale",   cls: "ua-bot-row-stale",   icon: "🔴", label: "Stale: needs attention" },
         { key: "healthy", cls: "ua-bot-row-healthy", icon: "🟢", label: "Healthy" },
         { key: "noData",  cls: "ua-bot-row-nodata",  icon: "⚪", label: "No attributed data" },
       ];
