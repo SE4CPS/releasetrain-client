@@ -2824,7 +2824,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.132.1"><span class="brand-name">Releasetrain </span><em>v3.132.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.132.2"><span class="brand-name">Releasetrain </span><em>v3.132.2</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4826,6 +4826,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-26</div>
+              <div class="cl-ver cl-ver-patch">v3.132.2</div>
+            </div>
+            <div class="cl-content">
+              <h3>Agent graph labels vertically centered</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Node names in the live agent graph are now centered vertically as well as horizontally, measured on screen.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-26</div>
@@ -9737,6 +9749,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           if (!g) continue;
           const st = state[n.key] || "idle";
           g.setAttribute("class", `node default askwfg-${st}`);
+          // Center the label in its box by measuring both on screen (Mermaid
+          // measured the text before the page font applied); retried until
+          // the diagram is actually visible and measurable.
+          const lab0 = g.querySelector("text:not(.askwf-secs)");
+          const rect0 = g.querySelector("rect");
+          if (lab0 && rect0 && !lab0.dataset.centered) {
+            const lr = lab0.getBoundingClientRect(), rr = rect0.getBoundingClientRect();
+            const sc = rect0.getScreenCTM();
+            if (lr.width > 0 && rr.width > 0 && sc && sc.a) {
+              const dx = (rr.left + rr.width / 2 - (lr.left + lr.width / 2)) / sc.a;
+              const dy = (rr.top + rr.height / 2 - (lr.top + lr.height / 2)) / sc.d;
+              lab0.setAttribute("transform", `translate(${dx} ${dy})`);
+              lab0.dataset.centered = "1";
+            }
+          }
           const secs = askWorkflowNodeSeconds(n.key);
           // The node's own label stays as LangGraph drew it; the elapsed
           // time is a small separate text under the box.
@@ -9745,17 +9772,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             const r0 = g.querySelector("rect");
             const rw = +r0.getAttribute("width"), rh = +r0.getAttribute("height");
             const box = { x: +r0.getAttribute("x") || 0, y: +r0.getAttribute("y") || 0, width: rw, height: rh };
-            // Center the label in its box: Mermaid measured it before the
-            // page font applied, which leaves it off-center.
-            const lab = g.querySelector("text");
-            if (lab) {
-              lab.setAttribute("text-anchor", "middle");
-              lab.setAttribute("x", box.x + box.width / 2);
-              lab.setAttribute("y", box.y + box.height / 2);
-              lab.setAttribute("dominant-baseline", "central");
-              lab.removeAttribute("transform");
-              lab.querySelectorAll("tspan").forEach(ts => { ts.setAttribute("x", box.x + box.width / 2); ts.removeAttribute("dy"); });
-            }
             t = document.createElementNS("http://www.w3.org/2000/svg", "text");
             t.setAttribute("class", "askwf-secs");
             t.setAttribute("text-anchor", "middle");
