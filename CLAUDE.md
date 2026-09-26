@@ -197,3 +197,13 @@ always reflect the current, real conventions of the repo, not lag behind what's 
 - `releasetrain-server`: the Node/Express API this client calls; `src/ask.js` holds the Ask
   pipeline/comparison logic this file has regex mirrors of.
 - `releasetrain-bot`: the Python scraper/maintainer scripts populating the data this client displays.
+
+
+## CSS lives in src/styles.css only (global rule)
+
+All presentation goes in `src/styles.css`. No `<style>` blocks, no `style="..."` attributes, no `element.style.x = ...`, no `cssText`, in HTML or in JS-built HTML strings.
+
+- Style with a class defined in `styles.css`. Show and hide with `setDisplay(el, value)` or `classList` (`u-hide`, `u-show-flex`, ...).
+- The one exception is a value that only exists at runtime (a computed width, a data-driven color): set a `--rt-*` CSS custom property (`style="--rt-w:${pct}%"` or `el.style.setProperty("--rt-w", ...)`) and let a class in `styles.css` read it (`.rt-w`, `.rt-c`, `.rt-bg`).
+- `npm run lint` runs `scripts/lint-css.js` and fails on any violation, so `npm run check` catches it.
+- Classes named `st-N` are placeholders extracted from old inline styles; rename them to real component classes when you touch that view. Their `!important` only preserves the old inline-style priority and can go once a rule is a proper component rule.

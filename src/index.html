@@ -22,7 +22,7 @@
     gtag('config', 'G-P5E77Z7VG5');
   </script>
 
-  <link rel="stylesheet" href="styles.css?v=3.135.0">
+  <link rel="stylesheet" href="styles.css?v=3.135.1">
 </head>
 
 <body>
@@ -38,7 +38,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.135.0"><span class="brand-name">Releasetrain </span><em>v3.135.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.135.1"><span class="brand-name">Releasetrain </span><em>v3.135.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2041,6 +2041,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-26</div>
+              <div class="cl-ver cl-ver-patch">v3.135.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Lint rule keeps CSS in styles.css</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-ux">ux</span> A new check fails the build if a style block, inline style attribute or JS style write is added outside styles.css.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-26</div>
               <div class="cl-ver cl-ver-minor">v3.135.0</div>
             </div>
             <div class="cl-content">
@@ -3191,7 +3203,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               <h3>Docs: a Mermaid diagram for the Ask pipeline</h3>
               <ul>
                 <li><span class="cl-tag cl-tag-feat">feat</span> New flowchart at the top of the Ask (AI Q&amp;A) docs section: how a question's classified intent picks its path (declined, the fixed comparison evidence gather, or the general pipeline), and, for the general path, whether the preset's architecture runs the Rewriter/Retriever/Evaluator/Orchestrator as genuinely separate model calls (with the feedback-loop retry edge) or one continuous tool-use loop.</li>
-                <li><span class="cl-tag cl-tag-fix">fix</span> Every Mermaid diagram in the Docs page (this new one and the six existing System Architecture diagrams) now actually stretches to fill its column: Mermaid stamps its own computed width as an inline <code>style="max-width:NNNpx"</code>, which silently won over the page's own <code>width:100%</code> rule at equal specificity, same root cause already fixed for the live Ask answer workflow diagram.</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Every Mermaid diagram in the Docs page (this new one and the six existing System Architecture diagrams) now actually stretches to fill its column: Mermaid stamps its own computed width as an inline <code>style=&quot;max-width:NNNpx&quot;</code>, which silently won over the page's own <code>width:100%</code> rule at equal specificity, same root cause already fixed for the live Ask answer workflow diagram.</li>
               </ul>
             </div>
           </div>

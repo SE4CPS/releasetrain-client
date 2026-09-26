@@ -1,6 +1,6 @@
 {
   "name": "releasetrain-client",
-  "version": "3.135.0",
+  "version": "3.135.1",
   "description": "Static browser client for Releasetrain",
   "private": true,
   "engines": {
@@ -11,7 +11,7 @@
     "build": "node scripts/build.js",
     "start": "http-server dist -c-1 --log-ip",
     "prod": "npm run build && npm start",
-    "lint": "biome check tests",
+    "lint": "biome check tests && node scripts/lint-css.js",
     "format": "biome check --write tests",
     "test": "npm run build && playwright test",
     "check": "npm run build && npm run lint && playwright test"
