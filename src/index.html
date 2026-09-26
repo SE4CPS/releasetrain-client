@@ -857,7 +857,7 @@
     #askWorkflowDiagram g.askwfg-done text { fill: #166534 !important; }
     #askWorkflowDiagram g.askwfg-skipped rect { fill: transparent !important; stroke: #9ca3af !important; stroke-dasharray: 4 3; }
     #askWorkflowDiagram g.askwfg-skipped text { fill: #9ca3af !important; }
-    .ask-console { margin-top: 14px; max-height: 190px; overflow-y: auto; background: #0a0a0a; color: #d4d4d4; border-radius: 8px; padding: 10px 12px; font: 12px/1.5 Consolas, ui-monospace, monospace; white-space: pre-wrap; }
+    .ask-console { position: sticky; bottom: 0; z-index: 5; margin-top: 14px; height: 170px; overflow-y: auto; box-shadow: 0 -6px 12px rgba(0,0,0,.15); background: #0a0a0a; color: #d4d4d4; border-radius: 8px; padding: 10px 12px; font: 12px/1.5 Consolas, ui-monospace, monospace; white-space: pre-wrap; }
     .ask-console .ac-t { color: #7c7c7c; }
     .ask-console .ac-note { color: #7dd3fc; }
     #askWorkflowDiagram g.askwfg-active { animation: askwfRobotBlink 1.2s ease-in-out infinite; }
@@ -2829,7 +2829,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.133.0"><span class="brand-name">Releasetrain </span><em>v3.133.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.133.1"><span class="brand-name">Releasetrain </span><em>v3.133.1</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -4831,6 +4831,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-26</div>
+              <div class="cl-ver cl-ver-patch">v3.133.1</div>
+            </div>
+            <div class="cl-content">
+              <h3>Console box pinned to the bottom, newest line first</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The run log is a fixed-height box stuck to the bottom of the answer area, with the latest message on top.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-26</div>
@@ -9882,12 +9894,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     }
     let askWorkflowStartedRun = 0;
     function askConsoleHtml() {
-      return askWorkflowLog.map(l => `<div class="${l.cls}"><span class="ac-t">[${l.t}s]</span> ${uaEsc(l.text)}</div>`).join("");
+      return askWorkflowLog.slice().reverse().map(l => `<div class="${l.cls}"><span class="ac-t">[${l.t}s]</span> ${uaEsc(l.text)}</div>`).join("");
     }
     function renderAskConsole() {
       document.querySelectorAll(".ask-console").forEach(el => {
         el.innerHTML = askConsoleHtml();
-        el.scrollTop = el.scrollHeight;
+        el.scrollTop = 0; // newest line is on top
       });
     }
     function pushAskWorkflowPhase(phase, detail, preset, meta) {
