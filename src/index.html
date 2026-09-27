@@ -952,20 +952,11 @@
         <div id="a-empty" class="u-hide" >
           <div class="a-empty-head">
             <h3>Add your own software to visualize</h3>
-            <p>Render a live architecture diagram for any set of components, stacked in tiers: hypervisor base layer, then OS, then applications. Every component is annotated with its installed vs. latest version, update severity, and any known CVEs.</p>
+            <p>See drift, staleness, and CVEs calculated against what you actually run, not a generic search.</p>
           </div>
           <div class="a-empty-real">
-            <p class="a-empty-real-title">Upload what's actually installed on your machine, not a sample stack:</p>
-            <p class="a-empty-real-why">A plain component search only shows the public release history for that name. Your own <strong>Installed versions</strong> tell ReleaseTrain what you actually run, so drift, staleness, and CVE exposure get calculated against your real installed version, not guessed at.</p>
-            <div class="a-empty-real-row">
-              <button id="a-goToAccountBtn" class="btn btn-primary" type="button">Add components in your Account →</button>
-              <div class="a-empty-real-cli">
-                <span>or scan a machine automatically:</span>
-                <code>pip install releasetrain-inventory</code>
-                <code>releasetrain-inventory --upload --email you@example.com</code>
-                <a href="https://pypi.org/project/releasetrain-inventory/" target="_blank" rel="noopener">releasetrain-inventory on PyPI</a>
-              </div>
-            </div>
+            <button id="a-goToAccountBtn" class="btn btn-primary" type="button">Add components in your Account →</button>
+            <p class="a-empty-real-cli">or scan a machine: <code>pip install releasetrain-inventory</code></p>
           </div>
           <div class="a-empty-foot">
             <button id="a-todayBtn" class="btn btn-ghost st-59" type="button">📅 Show components updated today</button>

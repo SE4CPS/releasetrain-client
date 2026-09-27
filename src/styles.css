@@ -1865,17 +1865,14 @@ table.a-drift td.mono { font-family: Consolas, Monaco, monospace; }
 /* Real-machine CTA: the primary suggestion on this screen (no more
    sample-stack cards to pick from instead) - point at either the
    Account tab's saved-inventory upload, or the CLI scanner package. */
-.a-empty-real { max-width: 620px; margin: 0 auto; text-align: center; }
-.a-empty-real-title { margin: 0 0 8px; font-size: 13px; font-weight: 700; color: var(--text); }
-.a-empty-real-why { margin: 0 0 16px; font-size: 12.5px; line-height: 1.6; color: var(--muted); }
-.a-empty-real-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 14px; }
-/* Secondary action, visually separated below the primary CTA above it. */
-.a-empty-foot { max-width: 780px; margin: 26px auto 0; padding-top: 18px; border-top: 1px solid var(--border); text-align: center; }
-.a-empty-real-cli { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.a-empty-real { text-align: center; }
+.a-empty-real-cli { margin: 10px 0 0; font-size: 12px; color: var(--muted); }
 .a-empty-real-cli code {
   background: var(--chip-bg); border: 1px solid var(--border); border-radius: 6px;
   padding: 3px 8px; font-family: var(--mono); font-size: 12px; color: var(--text);
 }
+/* Secondary action, visually separated below the primary CTA above it. */
+.a-empty-foot { max-width: 780px; margin: 26px auto 0; padding-top: 18px; border-top: 1px solid var(--border); text-align: center; }
 
 /* ── Credits / Ack view ─────────────────────────────────── */
 #ackView {
