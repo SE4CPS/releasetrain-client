@@ -159,14 +159,21 @@
       return "[" + "#".repeat(f) + "-".repeat(10 - f) + "]";
     }
     // Rank for sorting: worst first.
-    const A_COLOR_RANK = { cve: 0, behind: 1, unknown: 2, current: 3 };
+    const A_COLOR_RANK = { cve: 0, behind: 1, unknown: 2, current: 3, nodata: 4 };
     // Ecosystem freshness score + headline counts for the scorecard.
     function aScore(vers) {
       const pts = { current: 100, unknown: 70, behind: 55, cve: 15 };
-      let sum = 0, behind = 0, current = 0, cve = 0, unknown = 0;
+      // A component ReleaseTrain doesn't track at all ("nodata") used to
+      // fall into the same bucket as a genuinely-confirmed-current one and
+      // scored a free 100 - silently inflating the freshness score for any
+      // account with untracked software in it. Excluded from the average
+      // entirely now, the same way aSummarize already excludes it.
+      let sum = 0, behind = 0, current = 0, cve = 0, unknown = 0, counted = 0;
       const lags = [];
       vers.forEach(v => {
         const k = aColorKey(v);
+        if (k === "nodata") return;
+        counted++;
         sum += pts[k];
         if (k === "cve") cve++;
         else if (k === "behind") behind++;
@@ -176,7 +183,7 @@
       });
       lags.sort((a, b) => a - b);
       return {
-        score: vers.length ? Math.round(sum / vers.length) : 100,
+        score: counted ? Math.round(sum / counted) : 100,
         behind, current, cve, unknown,
         medianLag: lags.length ? lags[Math.floor(lags.length / 2)] : 0,
       };
@@ -210,10 +217,19 @@
     }
     /* The only colour axis: act-now / behind / current / no-data.
        Everything finer (how far behind, community chatter, freshly released)
-       is carried by the text label, not by more colours. */
+       is carried by the text label, not by more colours.
+       "nodata" (ReleaseTrain doesn't track this component at all, so there's
+       nothing to compare the installed version against) is NOT the same as
+       "current" (we have both a latest and an installed version, and they
+       genuinely match) - collapsing the two used to show plainly-untracked
+       software (e.g. Adobe Acrobat Reader, Audacity - nothing wrong with
+       either, ReleaseTrain simply has no release data for them) as
+       "on latest" in the table, which is a claim this system has no basis
+       to make. */
     function aColorKey(version) {
       const cur = version.currentVersion || version.latestVersion, lat = version.latestVersion;
-      if (!cur || !lat) return "current";
+      if (!lat) return "nodata";
+      if (!cur) return "nodata";
       if (aCveOf(version)) return "cve";
       const behind = aVerGap(cur.versionNumber, lat.versionNumber).tier !== "none";
       if (behind || (version._risk || 0) > 0) return "behind";
@@ -222,7 +238,7 @@
     }
     function aComponentLine(version, fills) {
       const cur = version.currentVersion || version.latestVersion, lat = version.latestVersion;
-      if (!cur || !lat) return `component "${aSanitize(version.name)}"`;
+      if (!cur || !lat) return `component "${aSanitize(version.name)}\\nno release data"`;
       const fill = fills[aColorKey(version)] || fills.current;
       const name = aSanitize(cur.versionProductName || version.name);
       const cv = aSanitize(cur.versionNumber), lv = aSanitize(lat.versionNumber);
@@ -246,12 +262,13 @@
       return `component "${headline}${cveText}${riskText}" #${fill.replace("#", "")}`;
     }
     /* Two colours, used only where something needs attention. A calm component
-       (on latest, or version unknown) gets no fill at all. */
+       (on latest, version unknown, or no release data at all) gets no fill. */
     const A_FILLS = {
       cve:     "#fca5a5",  /* red   : security advisory — act now      */
       behind:  "#fcd34d",  /* amber : an update is available           */
       current: "#ffffff",  /* none                                     */
       unknown: "#ffffff",  /* none                                     */
+      nodata:  "#ffffff",  /* none                                     */
     };
     const A_RISK_DAYS = 10;  // community-risk lookback for the arch view
     // Recent high-risk community (Reddit) posts for a component, newest first.
@@ -604,9 +621,10 @@
         `</tr></thead><tbody>` +
         rows.map(r => {
           // Colour only marks a problem. Calm rows stay plain.
+          const statusText = r.key === "nodata" ? "no release data" : r.key === "unknown" ? "version ?" : "on latest";
           const chip = r.gap.tier !== "none"
             ? `<span class="a-chip-t rt-bg" style="--rt-bg:${A_FILLS.behind}">${aEsc(aGapLabel(r.gap))}</span>`
-            : `<span class="a-muted-note">${r.key === "unknown" ? "version ?" : "on latest"}</span>`;
+            : `<span class="a-muted-note">${statusText}</span>`;
           return `<tr>` +
             `<td>${aEsc(r.v.name)}</td>` +
             `<td class="mono">${r.v._hasInstalled ? aEsc(r.cur.versionNumber) : '<span class="a-muted-note">?</span>'}</td>` +
@@ -753,17 +771,22 @@
 
     /* ── Arch sidebar controls ────────────────────────────────── */
     // Adds one option per machine recorded in Installed versions (see
-    // inventory.js) to #a-stackSelect, right alongside the hardcoded preset
-    // stacks (LAMP, LEMP, ...) - each one's value is that machine's own
-    // component list, so "+ Add Stack" (the existing handler just below,
+    // inventory.js) to #a-stackSelect - each one's value is that machine's
+    // own component list, so "+ Add Stack" (the existing handler just below,
     // unchanged) loads every component recorded on that machine into the
-    // search the exact same way it loads a preset. Rebuilt every time Arch
-    // is activated (uaInvGet() reads from localStorage, always current) so
-    // it reflects whatever's been added/removed on the Account page since
-    // the last time this ran, without needing its own refresh button.
-    function aPopulateMachineStacks() {
+    // search the same way a preset stack used to. Rebuilt every time Arch is
+    // activated. uaInvGet() alone only reads whatever's cached in
+    // localStorage, which is stale the moment inventory changes anywhere
+    // other than this browser (e.g. the CLI tool uploading from a second
+    // machine) - so this refreshes that cache from the server first
+    // (uaLoadInventoryFromServer, the same call the Account page's own
+    // Refresh button makes) whenever the user is actually signed in.
+    async function aPopulateMachineStacks() {
       const sel = document.getElementById("a-stackSelect");
       if (!sel || typeof uaInvGet !== "function") return;
+      if (typeof uaUser === "function" && uaUser() && typeof uaLoadInventoryFromServer === "function") {
+        await uaLoadInventoryFromServer();
+      }
       const old = sel.querySelector("optgroup[data-machine-group]");
       if (old) old.remove();
       const byMachine = new Map();

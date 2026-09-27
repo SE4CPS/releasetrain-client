@@ -1811,13 +1811,26 @@ button.chip.poll-btn.chip-err { border-color: var(--cve); color: var(--cve); bac
    whichever axis of .a-canvas is the tighter fit (see its own
    comment), so this rule would only fight that computed size. */
 #a-ecosysImage a text { text-decoration: underline; }
-/* Arch view: drift table mode */
-#a-table { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 12px 14px; background: var(--surface); }
-.a-score { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+/* Arch view: drift table mode.
+   #a-table (the scrolling ancestor for the sticky <th> below) must not
+   carry its own top padding: a sticky element's "top: 0" sticks to the
+   padding EDGE, not the content edge, so a top-padded scroll container
+   leaves a gap the first data row can still scroll up into and sit
+   visible inside, peeking above the "stuck" header - reported live as a
+   stray row rendering above the Component/Installed/... header row.
+   The same visual spacing now comes from .a-score's own margin-top
+   instead, which scrolls away normally with the rest of the content. */
+#a-table { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 0 14px 12px; background: var(--surface); }
+.a-score { font-size: 12px; color: var(--muted); margin: 12px 0 10px; }
 .a-score b { color: var(--text); font-size: 13px; }
+/* "Lightweight to read": airier row padding, a lighter (600, not 700)
+   header weight, and a hairline border instead of the table's own
+   full-strength one - the data should read as a plain, calm list, not a
+   dense boxed grid. */
 table.a-drift { width: 100%; border-collapse: collapse; font-size: 12px; }
-table.a-drift th, table.a-drift td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
-table.a-drift th { position: sticky; top: 0; background: var(--chip-bg); font-weight: 700; color: var(--text); }
+table.a-drift th, table.a-drift td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+table.a-drift th { position: sticky; top: 0; z-index: 1; background: var(--chip-bg); font-weight: 600; color: var(--text); }
+table.a-drift tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--surface) 97%, var(--text)); }
 table.a-drift tr:hover td { background: var(--bg); }
 table.a-drift td.mono { font-family: Consolas, Monaco, monospace; }
 .a-chip-t { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; color: #0f172a; border: 1px solid rgba(0,0,0,.12); }
