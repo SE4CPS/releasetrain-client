@@ -925,8 +925,8 @@
       $("ua-visits-unverified").textContent = data.totals.unverified
         ? "Not counted: " + data.totals.unverified + " page loads from " + data.totals.unverifiedIps + " IP addresses that never ran the site's scripts (very likely bots and scrapers)."
         : "";
-      $("ua-visits-countries").innerHTML = uaVisitsTable(["Country", "Visits", "Visitors"],
-        data.countries.map((c) => `<tr><td>${uaEsc(uaCountryLabel(c.code))}</td><td class="ua-num">${c.visits}</td><td class="ua-num">${c.uniques}</td></tr>`), "No visits yet.");
+      $("ua-visits-countries").innerHTML = uaVisitsTable(["Country", "Visits", "Visitors", "Per visitor"],
+        data.countries.map((c) => `<tr><td>${uaEsc(uaCountryLabel(c.code))}</td><td class="ua-num">${c.visits}</td><td class="ua-num">${c.uniques}</td><td class="ua-num">${c.visitsPerVisitor === undefined ? "" : c.visitsPerVisitor}</td></tr>`), "No visits yet.");
       $("ua-visits-pages").innerHTML = uaVisitsTable(["View", "Visits"],
         data.pages.map((p) => `<tr><td>${uaEsc(p.page)}</td><td class="ua-num">${p.visits}</td></tr>`), "No visits yet.");
       $("ua-visits-refs").innerHTML = uaVisitsTable(["Referrer", "Visits"],
