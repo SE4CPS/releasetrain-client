@@ -686,6 +686,10 @@
       setDisplay(document.getElementById("feedPanel"), "");
       setDisplay(document.getElementById("feedSidebarSections"), "");
       EL.usersLink.classList.remove("nav-active");
+      // Clear any promptSignIn() banner (see account.js) so it never shows
+      // stale on a later, unrelated visit to this view.
+      const prompt = document.getElementById("ua-auth-prompt");
+      if (prompt) setDisplay(prompt, "none");
     }
 
     EL.usersLink.addEventListener("click", e => {

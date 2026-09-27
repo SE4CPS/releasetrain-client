@@ -723,7 +723,7 @@
       e.preventDefault();
       if (btn.dataset.state === "loading" || btn.disabled) return;
       if (!uaToken()) {
-        alert("Sign in (Account view) to run a poll. It runs a real query against the model.");
+        promptSignIn("Sign in or create a free account to run a poll — it runs a real query against the model.");
         return;
       }
       const redditId = btn.dataset.redditId;

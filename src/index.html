@@ -5856,6 +5856,12 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
         <!-- Unauthenticated state -->
         <div id="ua-auth-panel">
+          <!-- Shown instead of a blocking alert() when Ask redirects here
+               (sign-in required, or today's free anonymous questions used
+               up) - see promptSignIn in account.js. Hidden again on
+               deactivateUsers() so it never shows stale on an unrelated
+               later visit to this view. -->
+          <div id="ua-auth-prompt" class="u-hide ua-msg ua-msg-ok"></div>
           <div class="ua-tabs">
             <button id="ua-tab-login" class="ua-tab ua-tab-active" type="button">Sign in</button>
             <button id="ua-tab-register" class="ua-tab" type="button">Register</button>

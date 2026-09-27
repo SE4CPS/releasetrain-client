@@ -485,7 +485,7 @@
       // server) or a real question (sign-in required, a real model call)
       // See the branches below.
       if ((isCompare || isDuo) && !uaToken()) {
-        alert("Sign in (Account view) to ask questions. Each answer runs a real query against the model.");
+        promptSignIn("Sign in or create a free account to run a comparison — each answer runs a real query against the model.");
         return;
       }
 
@@ -581,9 +581,9 @@
           } catch { /* non-JSON or empty 401 body: treat as the plain case below */ }
           if (anonLimitReached) {
             uaLoadAnonQuota();
-            alert("You've used today's free questions. Sign in (Account view) to keep asking.");
+            promptSignIn("You've used today's free questions. Create a free account to keep asking.");
           } else {
-            alert("Sign in (Account view) to ask a real question. A plain vendor/category search doesn't need it, but a full answer runs a real query against the model.");
+            promptSignIn("Sign in or create a free account to ask a real question. A plain vendor/category search doesn't need one, but a full answer runs a real query against the model.");
           }
           return;
         }

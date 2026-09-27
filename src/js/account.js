@@ -24,6 +24,20 @@
       return fetch(API_BASE + path, { ...opts, headers: { ...headers, ...(opts.headers || {}) } });
     }
 
+    // Opens the Account view with an inline banner explaining why, instead
+    // of a blocking alert() - per explicit request ("dont show the pop up
+    // - load the view account login/registration view and say create an
+    // account or so"). Used wherever Ask used to alert() a sign-in
+    // requirement (see ask-rail.js/ask-workflow.js). Left showing until
+    // deactivateUsers() clears it, so it survives a sign-in/register tab
+    // switch on the same visit but never lingers into a later, unrelated
+    // one.
+    function promptSignIn(message) {
+      if (typeof activateUsers === "function") activateUsers();
+      const el = document.getElementById("ua-auth-prompt");
+      if (el) { el.textContent = message; setDisplay(el, ""); }
+    }
+
     function uaEsc(s) {
       return String(s || "")
         .replace(/&/g, "&amp;").replace(/</g, "&lt;")
