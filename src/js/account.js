@@ -163,6 +163,8 @@
         if (user.role === "admin") {
           setDisplay(adminSection, "");
           uaLoadServerAlerts();
+          uaLoadVisitsChart();
+          uaLoadVisitsTab();
           uaLoadDashboard();
           uaLoadSettings();
           uaLoadGuardrails();
@@ -791,9 +793,10 @@
     }
     function uaSetAdminTabs(isAdmin) {
       document.querySelectorAll(".ua-subtab-admin").forEach((b) => setDisplay(b, isAdmin ? "" : "none"));
+      setDisplay(document.getElementById("ua-visits-top"), isAdmin ? "" : "none");
       let stored = "account";
       try { stored = sessionStorage.getItem("ua-subtab") || "account"; } catch { /* private mode */ }
-      const adminOnly = ["overview", "alerts", "settings", "bots", "users"];
+      const adminOnly = ["overview", "visits", "alerts", "settings", "bots", "users"];
       uaSelectSubtab(!isAdmin && adminOnly.includes(stored) ? "account" : stored);
     }
     document.getElementById("ua-profile-panel")?.addEventListener("click", (e) => {
@@ -836,6 +839,105 @@
     setInterval(() => {
       const u = uaUser();
       if (u && u.role === "admin" && !document.hidden) uaLoadServerAlerts();
+    }, 60000);
+
+
+
+    // ---- Visits (admin): chart at the top of the Account page, and the Visits tab.
+    // Data: GET /api/admin/visits?days=N, computed on the server from the web
+    // server's access log (IP addresses as-is, country looked up from the IP).
+    let uaVisitsChart = null;
+    function uaWithChartJs(cb) {
+      if (typeof Chart !== "undefined") { cb(); return; }
+      let s = document.querySelector('script[src*="chart.umd"]');
+      if (!s) {
+        s = document.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js";
+        s.crossOrigin = "anonymous";
+        document.head.appendChild(s);
+      }
+      s.addEventListener("load", cb, { once: true });
+    }
+    function uaCountryLabel(code) {
+      if (!/^[A-Z]{2}$/.test(code || "") || code === "ZZ") return "Unknown";
+      let name = code;
+      try { name = new Intl.DisplayNames(["en"], { type: "region" }).of(code) || code; } catch { /* old browser */ }
+      return name + " (" + code + ")";
+    }
+    async function uaFetchVisits(days) {
+      const res = await uaRequest("admin/visits?days=" + days).catch(() => null);
+      if (!res || !res.ok) return null;
+      return res.json().catch(() => null);
+    }
+    async function uaLoadVisitsChart() {
+      const canvas = document.getElementById("ua-visits-chart");
+      if (!canvas) return;
+      const data = await uaFetchVisits(14);
+      const sum = document.getElementById("ua-visits-top-sum");
+      if (!data || !Array.isArray(data.daily)) {
+        if (sum) sum.textContent = "Could not load visits.";
+        return;
+      }
+      if (sum) sum.textContent = data.totals.visits + " visits, " + data.totals.uniques + " unique visitors";
+      const labels = data.daily.map((d) => new Date(d.date + "T00:00:00Z").toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" }));
+      uaWithChartJs(() => {
+        try {
+          if (uaVisitsChart) { uaVisitsChart.destroy(); uaVisitsChart = null; }
+          uaVisitsChart = new Chart(canvas.getContext("2d"), {
+            type: "bar",
+            data: {
+              labels,
+              datasets: [
+                { type: "bar", label: "Total visits", data: data.daily.map((d) => d.visits), backgroundColor: "rgba(99,102,241,0.25)", borderColor: "rgba(99,102,241,0.6)", borderWidth: 1, order: 2 },
+                { type: "line", label: "Unique visitors", data: data.daily.map((d) => d.uniques), borderColor: "#2563eb", backgroundColor: "#2563eb", tension: 0.3, pointRadius: 3, order: 1 },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              interaction: { mode: "index", intersect: false },
+              plugins: { legend: { position: "top", align: "end", labels: { boxWidth: 12 } } },
+              scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+            },
+          });
+        } catch (e) { console.warn("[visits-chart]", e); }
+      });
+    }
+    function uaVisitsTable(head, rows, empty) {
+      if (!rows.length) return `<p class="ua-muted">${uaEsc(empty)}</p>`;
+      return `<table class="ua-data-table"><thead><tr>${head.map((h, i) => `<th${i ? ' class="ua-num"' : ""}>${uaEsc(h)}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody></table>`;
+    }
+    async function uaLoadVisitsTab() {
+      const sel = document.getElementById("ua-visits-days");
+      const days = sel ? Number(sel.value) || 14 : 14;
+      const $ = (id) => document.getElementById(id);
+      if (!$("ua-visits-cards")) return;
+      const data = await uaFetchVisits(days);
+      if (!data || !Array.isArray(data.daily)) {
+        $("ua-visits-summary").textContent = "(could not load)";
+        return;
+      }
+      $("ua-visits-summary").textContent = "(" + data.from + " to " + data.to + ")";
+      $("ua-visits-n-visits").textContent = data.totals.visits;
+      $("ua-visits-n-uniques").textContent = data.totals.uniques;
+      $("ua-visits-n-ask").textContent = data.totals.ask;
+      $("ua-visits-n-api").textContent = data.totals.api;
+      $("ua-visits-countries").innerHTML = uaVisitsTable(["Country", "Visits", "Visitors"],
+        data.countries.map((c) => `<tr><td>${uaEsc(uaCountryLabel(c.code))}</td><td class="ua-num">${c.visits}</td><td class="ua-num">${c.uniques}</td></tr>`), "No visits yet.");
+      $("ua-visits-pages").innerHTML = uaVisitsTable(["View", "Visits"],
+        data.pages.map((p) => `<tr><td>${uaEsc(p.page)}</td><td class="ua-num">${p.visits}</td></tr>`), "No visits yet.");
+      $("ua-visits-refs").innerHTML = uaVisitsTable(["Referrer", "Visits"],
+        data.referrers.map((r) => `<tr><td>${uaEsc(r.host)}</td><td class="ua-num">${r.visits}</td></tr>`), "No visits yet.");
+      $("ua-visits-visitors").innerHTML = uaVisitsTable(["IP address", "Country", "Visits", "Asked", "Last seen", "View", "Browser"],
+        data.visitors.map((v) => `<tr><td class="ua-mono">${uaEsc(v.ip)}</td><td>${uaEsc(uaCountryLabel(v.country))}</td><td class="ua-num">${v.visits}</td><td class="ua-num">${v.ask}</td><td>${uaEsc(new Date(v.last).toLocaleString())}</td><td>${uaEsc(v.page || "")}</td><td>${uaEsc(v.browser || "")}</td></tr>`),
+        "No visitors in this period.");
+    }
+    document.getElementById("ua-refresh-visits")?.addEventListener("click", (e) => { e.preventDefault(); uaLoadVisitsTab(); uaLoadVisitsChart(); });
+    document.getElementById("ua-visits-days")?.addEventListener("change", uaLoadVisitsTab);
+    let uaVisitsTick = 0;
+    setInterval(() => {
+      const u = uaUser();
+      if (u && u.role === "admin" && !document.hidden && ++uaVisitsTick % 5 === 0) { uaLoadVisitsChart(); uaLoadVisitsTab(); }
     }, 60000);
 
 

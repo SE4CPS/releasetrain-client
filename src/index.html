@@ -17,7 +17,7 @@
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-P5E77Z7VG5"></script>
   
 
-  <link rel="stylesheet" href="styles.css?v=3.137.0">
+  <link rel="stylesheet" href="styles.css?v=3.138.0">
 </head>
 
 <body>
@@ -33,7 +33,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.137.0"><span class="brand-name">Releasetrain </span><em>v3.137.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.138.0"><span class="brand-name">Releasetrain </span><em>v3.138.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2033,6 +2033,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-26</div>
+              <div class="cl-ver cl-ver-minor">v3.138.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Visitors chart on top of the admin view, and a Visits tab</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Admins see a 14-day chart of unique and total visitors at the top of the Account page, plus a Visits tab with countries, views, referrers and recent visitors (IP address, country, browser). Counted from the web server's access log; no tracking script.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-26</div>
@@ -5711,10 +5723,16 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <div id="ua-reg-notice" class="u-hide ua-reg-notice" ></div>
             <div id="ua-reg-stats" class="ua-reg-stats"></div>
           </div>
+          <!-- Admin only: unique and total visitors, last 14 days (Chart.js), from GET /api/admin/visits -->
+          <div id="ua-visits-top" class="ua-visits-top u-hide">
+            <div class="ua-visits-top-head"><strong>Visitors, last 14 days</strong><span id="ua-visits-top-sum" class="ua-muted"></span></div>
+            <div class="ua-visits-chart-box"><canvas id="ua-visits-chart" aria-label="Unique and total visitors per day"></canvas></div>
+          </div>
           <div class="ua-tabs ua-subtabs" role="tablist" aria-label="Account sections">
             <button type="button" class="ua-tab ua-tab-active" data-ua-tab="account">Account</button>
             <button type="button" class="ua-tab" data-ua-tab="saved">Saved</button>
             <button type="button" class="ua-tab ua-subtab-admin u-hide" data-ua-tab="overview">Overview</button>
+            <button type="button" class="ua-tab ua-subtab-admin u-hide" data-ua-tab="visits">Visits</button>
             <button type="button" class="ua-tab ua-subtab-admin u-hide" data-ua-tab="alerts">Alerts <span id="ua-alerts-badge" class="ua-badge-count u-hide"></span></button>
             <button type="button" class="ua-tab ua-subtab-admin u-hide" data-ua-tab="settings">Settings</button>
             <button type="button" class="ua-tab ua-subtab-admin u-hide" data-ua-tab="bots">Bots</button>
@@ -5838,6 +5856,34 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                  data still loads eagerly on sign-in (uaRender), not only
                  on first expand, so the count next to a closed summary
                  (e.g. "All users (6)") is accurate without opening it. -->
+            <!-- Visits: counted from the web server's access log (see releasetrain-server src/visits.js). -->
+            <details class="ua-admin-details" data-ua-group="visits" open>
+              <summary class="ua-admin-header">
+                <span class="st-122">Visitors</span>
+                <span id="ua-visits-summary" class="ua-muted st-59"></span>
+                <select id="ua-visits-days" class="ua-visits-days" aria-label="Period">
+                  <option value="7">7 days</option>
+                  <option value="14" selected>14 days</option>
+                  <option value="30">30 days</option>
+                  <option value="45">45 days</option>
+                </select>
+                <button id="ua-refresh-visits" class="btn btn-ghost st-129">Refresh</button>
+              </summary>
+              <div id="ua-visits-cards" class="ua-visits-cards">
+                <div class="ua-visits-card"><b id="ua-visits-n-visits">0</b><span>Visits</span></div>
+                <div class="ua-visits-card"><b id="ua-visits-n-uniques">0</b><span>Unique visitors (IPs)</span></div>
+                <div class="ua-visits-card"><b id="ua-visits-n-ask">0</b><span>Questions asked</span></div>
+                <div class="ua-visits-card"><b id="ua-visits-n-api">0</b><span>API requests</span></div>
+              </div>
+              <div class="ua-visits-cols">
+                <div><h4>Countries</h4><div id="ua-visits-countries" class="ua-visits-table"></div></div>
+                <div><h4>Views</h4><div id="ua-visits-pages" class="ua-visits-table"></div></div>
+                <div><h4>Referrers</h4><div id="ua-visits-refs" class="ua-visits-table"></div></div>
+              </div>
+              <h4 class="ua-visits-h">Recent visitors</h4>
+              <div id="ua-visits-visitors" class="ua-visits-table"></div>
+              <p class="ua-muted ua-visits-note">Counted from the web server's access log. Bots, health checks and this server are excluded. IP addresses are personal data: they are shown to admins only and the log is kept 45 days. Country from IP: <a href="https://db-ip.com" target="_blank" rel="noopener">IP Geolocation by DB-IP</a>.</p>
+            </details>
             <!-- Server alerts: written by the VM (watchdog, deploys, weekly report) to a
                  plain log file and read back by GET /api/admin/server-alerts.
                  Not stored in MongoDB, so outages are recorded while the API is down. -->
@@ -6223,22 +6269,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     <p class="st-181">Changing the PlantUML server updates where images are fetched from for this session.</p>
   </dialog>
 
-  <script src="js/core.js?v=3.137.0"></script>
-  <script src="js/ask.js?v=3.137.0"></script>
-  <script src="js/ask-workflow.js?v=3.137.0"></script>
-  <script src="js/ask-rail.js?v=3.137.0"></script>
-  <script src="js/helpers.js?v=3.137.0"></script>
-  <script src="js/graph.js?v=3.137.0"></script>
-  <script src="js/arch.js?v=3.137.0"></script>
-  <script src="js/docs.js?v=3.137.0"></script>
-  <script src="js/eval.js?v=3.137.0"></script>
-  <script src="js/feed.js?v=3.137.0"></script>
-  <script src="js/cve.js?v=3.137.0"></script>
-  <script src="js/risk.js?v=3.137.0"></script>
-  <script src="js/network.js?v=3.137.0"></script>
-  <script src="js/account.js?v=3.137.0"></script>
-  <script src="js/inventory.js?v=3.137.0"></script>
-  <script src="js/main.js?v=3.137.0"></script>
+  <script src="js/core.js?v=3.138.0"></script>
+  <script src="js/ask.js?v=3.138.0"></script>
+  <script src="js/ask-workflow.js?v=3.138.0"></script>
+  <script src="js/ask-rail.js?v=3.138.0"></script>
+  <script src="js/helpers.js?v=3.138.0"></script>
+  <script src="js/graph.js?v=3.138.0"></script>
+  <script src="js/arch.js?v=3.138.0"></script>
+  <script src="js/docs.js?v=3.138.0"></script>
+  <script src="js/eval.js?v=3.138.0"></script>
+  <script src="js/feed.js?v=3.138.0"></script>
+  <script src="js/cve.js?v=3.138.0"></script>
+  <script src="js/risk.js?v=3.138.0"></script>
+  <script src="js/network.js?v=3.138.0"></script>
+  <script src="js/account.js?v=3.138.0"></script>
+  <script src="js/inventory.js?v=3.138.0"></script>
+  <script src="js/main.js?v=3.138.0"></script>
 </body>
 
 </html>
