@@ -798,7 +798,7 @@ html::-webkit-scrollbar { display: none; }
    rather than clipping the left edge off-screen the way plain
    `center` could. */
 .ask-workflow-diagram {
-  display: flex; align-items: center; justify-content: space-between; flex-wrap: nowrap; gap: 6px;
+  display: flex; align-items: center; justify-content: center; flex-wrap: nowrap; gap: 6px;
   font: 400 13px/1.3 var(--mono); white-space: nowrap;
   background: none; border: none; padding: 6px 6px;
   /* The agent graph is an SVG that scales down to the column, so this row never
@@ -810,7 +810,10 @@ html::-webkit-scrollbar { display: none; }
    against a dark card; on the page's own light surface a strong,
    saturated but darker green reads as "active" just as clearly
    without needing a backdrop to glow against. */
-#askWorkflowDiagram svg { max-width: 100%; height: auto; overflow: visible; }
+/* The graph fills the whole width of the column and stays centered: the renderer
+   writes its own inline max-width (the natural pixel width), so that is overridden here.
+   The height cap keeps a very wide window from pushing the input down the page. */
+#askWorkflowDiagram svg { width: 100% !important; max-width: none !important; height: auto; max-height: 24vh; overflow: visible; }
 #askWorkflowDiagram text.askwf-secs { font-size: 11px; fill: var(--muted) !important; font-weight: 400 !important; }
 #askWorkflowDiagram g.askwfg-idle rect { fill: #f2f0ff !important; stroke: #8b83d6 !important; }
 #askWorkflowDiagram g.askwfg-idle text { fill: #3b3766 !important; }
