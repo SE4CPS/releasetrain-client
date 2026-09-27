@@ -33,7 +33,7 @@ const VISITS = {
   from: '2026-09-14',
   to: '2026-09-27',
   logsFound: 2,
-  totals: { visits: 217, uniques: 40, ask: 14, api: 280 },
+  totals: { visits: 217, uniques: 40, ask: 14, api: 280, unverified: 96, unverifiedIps: 12 },
   daily: DAILY,
   pages: [{ page: 'home', visits: 150 }],
   referrers: [{ host: 'google.com', visits: 20 }],
@@ -130,6 +130,9 @@ test('admin sees the 14-day unique and total visitors chart, and the Visits tab'
   await page.locator('[data-ua-tab="visits"]').click();
   await expect(page.locator('#ua-visits-n-visits')).toHaveText('217');
   await expect(page.locator('#ua-visits-n-uniques')).toHaveText('40');
+  await expect(page.locator('#ua-visits-unverified')).toContainText(
+    '96 page loads from 12 IP addresses',
+  );
   await expect(page.locator('#ua-visits-countries')).toContainText('United States (US)');
   await expect(page.locator('#ua-visits-countries')).toContainText('Unknown');
   await expect(page.locator('#ua-visits-visitors')).toContainText('138.9.74.3');
