@@ -159,8 +159,10 @@
         badge.textContent = user.role;
         badge.className = "ua-badge ua-badge-" + user.role;
         const adminSection = document.getElementById("ua-admin-section");
+        uaSetAdminTabs(user.role === "admin");
         if (user.role === "admin") {
           setDisplay(adminSection, "");
+          uaLoadServerAlerts();
           uaLoadDashboard();
           uaLoadSettings();
           uaLoadGuardrails();
@@ -771,6 +773,71 @@
         });
       });
     }
+
+
+    // Account page sub-tabs: each section carries data-ua-group and only the
+    // selected tab's sections are shown. Uses its own hide class (ua-tab-hidden)
+    // so it never fights the show/hide logic some sections already have.
+    function uaSelectSubtab(name) {
+      const panel = document.getElementById("ua-profile-panel");
+      if (!panel) return;
+      panel.querySelectorAll("details.ua-admin-details[data-ua-group]").forEach((d) => {
+        d.classList.toggle("ua-tab-hidden", d.dataset.uaGroup !== name);
+      });
+      panel.querySelectorAll("[data-ua-tab]").forEach((b) => {
+        b.classList.toggle("ua-tab-active", b.dataset.uaTab === name);
+      });
+      try { sessionStorage.setItem("ua-subtab", name); } catch { /* private mode */ }
+    }
+    function uaSetAdminTabs(isAdmin) {
+      document.querySelectorAll(".ua-subtab-admin").forEach((b) => setDisplay(b, isAdmin ? "" : "none"));
+      let stored = "account";
+      try { stored = sessionStorage.getItem("ua-subtab") || "account"; } catch { /* private mode */ }
+      const adminOnly = ["overview", "alerts", "settings", "bots", "users"];
+      uaSelectSubtab(!isAdmin && adminOnly.includes(stored) ? "account" : stored);
+    }
+    document.getElementById("ua-profile-panel")?.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-ua-tab]");
+      if (b) uaSelectSubtab(b.dataset.uaTab);
+    });
+    uaSelectSubtab("account");
+
+    // Server alerts (admin): GET /api/admin/server-alerts reads the VM's alert log.
+    async function uaLoadServerAlerts() {
+      const list = document.getElementById("ua-alerts-list");
+      if (!list) return;
+      const res = await uaRequest("admin/server-alerts?limit=50").catch(() => null);
+      if (!res || !res.ok) {
+        list.innerHTML = '<p class="ua-muted">Could not load alerts.</p>';
+        return;
+      }
+      const data = await res.json().catch(() => ({}));
+      const alerts = Array.isArray(data.alerts) ? data.alerts : [];
+      const levels = ["critical", "warn", "ok", "info"];
+      const countEl = document.getElementById("ua-alerts-count");
+      if (countEl) countEl.textContent = alerts.length ? "(" + alerts.length + ")" : "";
+      // Badge on the tab: problems (critical or warn) from the last 24 hours.
+      const since = Date.now() - 24 * 3600 * 1000;
+      const recent = alerts.filter((a) => (a.level === "critical" || a.level === "warn") && Date.parse(a.ts) >= since).length;
+      const badge = document.getElementById("ua-alerts-badge");
+      if (badge) {
+        badge.textContent = String(recent);
+        setDisplay(badge, recent ? "" : "none");
+      }
+      list.innerHTML = alerts.length
+        ? alerts.map((a) => {
+          const lvl = levels.includes(a.level) ? a.level : "info";
+          const when = Number.isNaN(Date.parse(a.ts)) ? a.ts : new Date(a.ts).toLocaleString();
+          return `<div class="ua-alert-row ua-alert-${lvl}"><span class="ua-alert-dot"></span><span class="ua-alert-time">${uaEsc(when)}</span><span class="ua-alert-msg">${uaEsc(a.message)}</span></div>`;
+        }).join("")
+        : '<p class="ua-muted">No alerts yet. The server watchdog reports here when something goes wrong.</p>';
+    }
+    document.getElementById("ua-refresh-alerts")?.addEventListener("click", (e) => { e.preventDefault(); uaLoadServerAlerts(); });
+    setInterval(() => {
+      const u = uaUser();
+      if (u && u.role === "admin" && !document.hidden) uaLoadServerAlerts();
+    }, 60000);
+
 
     const uaRefreshGuardrailsBtn = document.getElementById("ua-refresh-guardrails");
     if (uaRefreshGuardrailsBtn) uaRefreshGuardrailsBtn.addEventListener("click", uaLoadGuardrails);

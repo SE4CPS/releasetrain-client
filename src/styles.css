@@ -3102,3 +3102,23 @@ select.ua-settings-input { width: auto; max-width: 100%; }
 .shared-banner { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 16px; font-size: 12px; box-shadow: var(--shadow-md); z-index: 9999; color: var(--muted); }
 .fault-bar { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 99999; max-width: min(92vw, 560px); display: flex; gap: 10px; align-items: center; padding: 8px 12px; border: 1px solid var(--cve, #b91c1c); border-radius: 3px; background: var(--surface, #fff); color: var(--text, #0f172a); font: 13px/1.4 system-ui, sans-serif; box-shadow: 0 2px 8px rgba(15, 23, 42, .12); }
 .fault-dismiss { border: 1px solid var(--border, #e2e8f0); background: none; border-radius: 3px; padding: 2px 8px; cursor: pointer; font: inherit; }
+
+/* ── Account page: sub-tabs, section cards and the server alert list ──
+   Regroups the admin sections into tabs so the page is not one long list. ── */
+.ua-tab-hidden { display: none !important; }
+.ua-subtabs { margin: 14px 0 12px; flex-wrap: wrap; }
+.ua-subtabs .ua-tab { padding: 8px 14px; }
+#ua-profile-panel details.ua-admin-details { border: 1px solid var(--border); border-radius: 8px; background: var(--surface); margin: 0 0 10px; padding: 0 14px; }
+#ua-profile-panel details.ua-admin-details[open] { padding-bottom: 12px; }
+#ua-profile-panel .ua-admin-header { padding: 12px 0; }
+.ua-badge-count { display: inline-block; min-width: 16px; padding: 0 5px; margin-left: 4px; border-radius: 8px; background: #dc2626; color: #fff; font-size: 11px; line-height: 16px; text-align: center; }
+.ua-alerts-note { font-size: 12px; margin: 0 0 8px; }
+.ua-alerts-list { display: flex; flex-direction: column; }
+.ua-alert-row { display: grid; grid-template-columns: 10px 175px 1fr; gap: 10px; align-items: start; padding: 8px 0; border-top: 1px solid var(--border); font-size: 13px; }
+.ua-alert-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; background: var(--muted); }
+.ua-alert-critical .ua-alert-dot { background: #dc2626; }
+.ua-alert-warn .ua-alert-dot { background: #d97706; }
+.ua-alert-ok .ua-alert-dot { background: #16a34a; }
+.ua-alert-critical .ua-alert-msg { font-weight: 600; }
+.ua-alert-time { color: var(--muted); font-variant-numeric: tabular-nums; }
+@media (max-width: 640px) { .ua-alert-row { grid-template-columns: 10px 1fr; } .ua-alert-time, .ua-alert-msg { grid-column: 2; } }

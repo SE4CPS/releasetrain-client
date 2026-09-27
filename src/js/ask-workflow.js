@@ -126,6 +126,9 @@
       await askEnsureMermaid();
       window.mermaid.initialize({ startOnLoad: false, securityLevel: "strict", flowchart: { curve: "linear", htmlLabels: false } });
       const text = String(mermaidText || "").replace(/graph TD;/, "graph LR;").replace(/<p>__start__<\/p>/, "Start").replace(/<p>__end__<\/p>/, "End");
+      // parse() throws on bad input without touching the page; render() would
+      // paint Mermaid's own error graphic into the body.
+      await window.mermaid.parse(text);
       const out = await window.mermaid.render("askLangGraphSvg", text);
       askGraphSvg = out.svg;
       const el = document.getElementById("askWorkflowDiagram");

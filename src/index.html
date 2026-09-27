@@ -17,7 +17,7 @@
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-P5E77Z7VG5"></script>
   
 
-  <link rel="stylesheet" href="styles.css?v=3.136.1">
+  <link rel="stylesheet" href="styles.css?v=3.137.0">
 </head>
 
 <body>
@@ -33,7 +33,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.136.1"><span class="brand-name">Releasetrain </span><em>v3.136.1</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.137.0"><span class="brand-name">Releasetrain </span><em>v3.137.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2033,6 +2033,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-26</div>
+              <div class="cl-ver cl-ver-minor">v3.137.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Account and admin page grouped into tabs, with a Server alerts list</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> The Account page is now tabs (Account, Saved, and for admins Overview, Alerts, Settings, Bots, Users) with card-style sections instead of one long list. New Server alerts tab shows watchdog, deploy and report messages from the server, with a red badge for problems in the last 24 hours.</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-26</div>
@@ -5699,7 +5711,16 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <div id="ua-reg-notice" class="u-hide ua-reg-notice" ></div>
             <div id="ua-reg-stats" class="ua-reg-stats"></div>
           </div>
-          <details class="ua-admin-details">
+          <div class="ua-tabs ua-subtabs" role="tablist" aria-label="Account sections">
+            <button type="button" class="ua-tab ua-tab-active" data-ua-tab="account">Account</button>
+            <button type="button" class="ua-tab" data-ua-tab="saved">Saved</button>
+            <button type="button" class="ua-tab ua-subtab-admin u-hide" data-ua-tab="overview">Overview</button>
+            <button type="button" class="ua-tab ua-subtab-admin u-hide" data-ua-tab="alerts">Alerts <span id="ua-alerts-badge" class="ua-badge-count u-hide"></span></button>
+            <button type="button" class="ua-tab ua-subtab-admin u-hide" data-ua-tab="settings">Settings</button>
+            <button type="button" class="ua-tab ua-subtab-admin u-hide" data-ua-tab="bots">Bots</button>
+            <button type="button" class="ua-tab ua-subtab-admin u-hide" data-ua-tab="users">Users</button>
+          </div>
+          <details class="ua-admin-details" data-ua-group="account" open>
             <summary class="ua-admin-header">
               <span class="st-122">Change password</span>
             </summary>
@@ -5714,7 +5735,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               </form>
           </details>
           <!-- Model provider keys (bring your own) -->
-          <details class="ua-admin-details">
+          <details class="ua-admin-details" data-ua-group="account">
             <summary class="ua-admin-header">
               <span class="st-122">Model provider keys</span>
               <span class="ua-opt st-124">(use your own instead of the shared server key)</span>
@@ -5747,7 +5768,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               </div>
           </details>
           <!-- Org namespaces -->
-          <details class="ua-admin-details">
+          <details class="ua-admin-details" data-ua-group="account">
             <summary class="ua-admin-header">
               <span class="st-122">Organization namespaces</span>
               <span class="ua-opt st-124">(appear in share links)</span>
@@ -5768,7 +5789,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               </div>
           </details>
           <!-- Bookmarks -->
-          <details class="ua-admin-details">
+          <details class="ua-admin-details" data-ua-group="saved" open>
             <summary class="ua-admin-header">
               <span class="st-122">Bookmarks</span>
               <span id="ua-bm-count" class="ua-muted st-59"></span>
@@ -5779,7 +5800,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <div id="ua-bm-list" class="ua-bm-list"></div>
           </details>
           <!-- Installed versions -->
-          <details class="ua-admin-details">
+          <details class="ua-admin-details" data-ua-group="saved">
             <summary class="ua-admin-header">
               <span class="st-122">Installed versions</span>
               <span id="ua-inv-count" class="ua-muted st-59"></span>
@@ -5817,7 +5838,19 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                  data still loads eagerly on sign-in (uaRender), not only
                  on first expand, so the count next to a closed summary
                  (e.g. "All users (6)") is accurate without opening it. -->
-            <details class="ua-admin-details">
+            <!-- Server alerts: written by the VM (watchdog, deploys, weekly report) to a
+                 plain log file and read back by GET /api/admin/server-alerts.
+                 Not stored in MongoDB, so outages are recorded while the API is down. -->
+            <details class="ua-admin-details" data-ua-group="alerts" open>
+              <summary class="ua-admin-header">
+                <span class="st-122">Server alerts</span>
+                <span id="ua-alerts-count" class="ua-muted st-59"></span>
+                <button id="ua-refresh-alerts" class="btn btn-ghost st-129">Refresh</button>
+              </summary>
+              <p class="ua-muted ua-alerts-note">From the server watchdog, deploys and the weekly report. The same messages are emailed to the admin address.</p>
+              <div id="ua-alerts-list" class="ua-alerts-list"><p class="ua-muted">Loading…</p></div>
+            </details>
+            <details class="ua-admin-details" data-ua-group="overview" open>
               <summary class="ua-admin-header">
                 <span class="st-122">System overview</span>
                 <span id="ua-dash-updated" class="ua-muted st-59"></span>
@@ -5842,7 +5875,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                  after System overview, ahead of the generic Settings and
                  Bot health thresholds sections, since this is a
                  safety-relevant setting worth surfacing prominently. -->
-            <details class="ua-admin-details">
+            <details class="ua-admin-details" data-ua-group="settings">
               <summary class="ua-admin-header">
                 <span class="st-122">Guardrails</span>
                 <span id="ua-guardrails-count" class="ua-muted st-59"></span>
@@ -5868,7 +5901,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                  v1 is visibility-only: a flagged vendor shows up on its
                  answers' own Feedback Loop tab, it does not yet change
                  how a future answer for that vendor gets produced. -->
-            <details class="ua-admin-details">
+            <details class="ua-admin-details" data-ua-group="settings">
               <summary class="ua-admin-header">
                 <span class="st-122">Feedback Loop</span>
                 <span id="ua-feedback-thresholds-count" class="ua-muted st-59"></span>
@@ -5886,7 +5919,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                  whatever GET /api/admin/settings actually returns, so a
                  new admin-tunable value added server-side needs no new
                  markup here (see uaLoadSettings/UA_SETTINGS_META). -->
-            <details class="ua-admin-details">
+            <details class="ua-admin-details" data-ua-group="settings" open>
               <summary class="ua-admin-header">
                 <span class="st-122">Settings</span>
                 <span id="ua-settings-count" class="ua-muted st-59"></span>
@@ -5903,7 +5936,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                  Loaded eagerly alongside the other admin sections (see
                  uaRender below) so its count is accurate before it's
                  ever opened, same reasoning as every other section here. -->
-            <details class="ua-admin-details">
+            <details class="ua-admin-details" data-ua-group="bots" open>
               <summary class="ua-admin-header">
                 <span class="st-122">Bot health thresholds</span>
                 <span id="ua-cadence-count" class="ua-muted st-59"></span>
@@ -5921,7 +5954,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                  Reddit subreddit names) doesn't resolve on its own, plus
                  a manual trigger for the same gap-fill a bot's own
                  fallback runs automatically. -->
-            <details class="ua-admin-details">
+            <details class="ua-admin-details" data-ua-group="bots">
               <summary class="ua-admin-header">
                 <span class="st-122">Vendor catalog</span>
                 <span id="ua-vendor-alias-count" class="ua-muted st-59"></span>
@@ -5949,7 +5982,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                 </form>
               </div>
             </details>
-            <details class="ua-admin-details">
+            <details class="ua-admin-details" data-ua-group="users" open>
               <summary class="ua-admin-header">
                 <span class="st-122">All users</span>
                 <span id="ua-user-count" class="ua-muted st-59"></span>
@@ -5957,7 +5990,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               </summary>
               <div id="ua-user-list"></div>
             </details>
-            <details class="u-hide ua-admin-details" id="ua-search-events-section" >
+            <details class="u-hide ua-admin-details" id="ua-search-events-section" data-ua-group="users">
               <summary class="ua-admin-header">
                 <span class="st-122">Search &amp; Ask activity</span>
                 <span id="ua-se-count" class="ua-muted st-59"></span>
@@ -6190,22 +6223,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     <p class="st-181">Changing the PlantUML server updates where images are fetched from for this session.</p>
   </dialog>
 
-  <script src="js/core.js?v=3.136.1"></script>
-  <script src="js/ask.js?v=3.136.1"></script>
-  <script src="js/ask-workflow.js?v=3.136.1"></script>
-  <script src="js/ask-rail.js?v=3.136.1"></script>
-  <script src="js/helpers.js?v=3.136.1"></script>
-  <script src="js/graph.js?v=3.136.1"></script>
-  <script src="js/arch.js?v=3.136.1"></script>
-  <script src="js/docs.js?v=3.136.1"></script>
-  <script src="js/eval.js?v=3.136.1"></script>
-  <script src="js/feed.js?v=3.136.1"></script>
-  <script src="js/cve.js?v=3.136.1"></script>
-  <script src="js/risk.js?v=3.136.1"></script>
-  <script src="js/network.js?v=3.136.1"></script>
-  <script src="js/account.js?v=3.136.1"></script>
-  <script src="js/inventory.js?v=3.136.1"></script>
-  <script src="js/main.js?v=3.136.1"></script>
+  <script src="js/core.js?v=3.137.0"></script>
+  <script src="js/ask.js?v=3.137.0"></script>
+  <script src="js/ask-workflow.js?v=3.137.0"></script>
+  <script src="js/ask-rail.js?v=3.137.0"></script>
+  <script src="js/helpers.js?v=3.137.0"></script>
+  <script src="js/graph.js?v=3.137.0"></script>
+  <script src="js/arch.js?v=3.137.0"></script>
+  <script src="js/docs.js?v=3.137.0"></script>
+  <script src="js/eval.js?v=3.137.0"></script>
+  <script src="js/feed.js?v=3.137.0"></script>
+  <script src="js/cve.js?v=3.137.0"></script>
+  <script src="js/risk.js?v=3.137.0"></script>
+  <script src="js/network.js?v=3.137.0"></script>
+  <script src="js/account.js?v=3.137.0"></script>
+  <script src="js/inventory.js?v=3.137.0"></script>
+  <script src="js/main.js?v=3.137.0"></script>
 </body>
 
 </html>
