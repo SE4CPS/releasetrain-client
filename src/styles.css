@@ -569,15 +569,35 @@ body.view-feed .layout > .feed-main { flex: 1 1 0; }
    narrower screen. white-space:normal (not nowrap) since several
    of these questions run longer than the column is wide; they wrap
    to 2-3 lines rather than overflowing or getting cut off. */
-.demo-q-list { display: flex; flex-direction: column; gap: 6px; padding: 4px 12px 10px; }
+/* Capped and internally scrollable so 8 real questions (2-3 lines each)
+   don't push the rest of the sidebar (Menu, Model & pipeline, ...) below
+   the fold and force the whole sidebar to scroll - only this list does,
+   same hidden-scrollbar treatment as this file's other internally-
+   scrolling views (see the shared #evalRewriterView-and-friends rule). */
+.demo-q-list {
+  display: flex; flex-direction: column; gap: 6px; padding: 4px 12px 10px;
+  max-height: 260px; overflow-y: auto; overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.demo-q-list::-webkit-scrollbar { display: none; }
+.demo-q-row { display: flex; align-items: stretch; gap: 6px; }
 .demo-q-btn {
-  width: 100%; box-sizing: border-box; text-align: left; white-space: normal;
+  flex: 1 1 auto; min-width: 0; box-sizing: border-box; text-align: left; white-space: normal;
   font: 400 12px/1.35 inherit; color: var(--text);
   background: var(--chip-bg); border: 1px solid var(--border); border-radius: 6px;
   padding: 7px 9px; cursor: pointer;
 }
 .demo-q-btn:hover { background: rgba(255,255,255,.06); border-color: var(--brand); }
 .demo-q-btn:active { transform: translateY(1px); }
+/* Small, muted open-on-Reddit icon beside its question button - its own
+   sibling element, not nested inside the button (invalid HTML). */
+.demo-q-link {
+  flex: 0 0 auto; display: flex; align-items: center; justify-content: center;
+  width: 26px; font-size: 12px; text-decoration: none;
+  background: var(--chip-bg); border: 1px solid var(--border); border-radius: 6px;
+  opacity: .7;
+}
+.demo-q-link:hover { opacity: 1; border-color: var(--brand); }
 /* .demo-q-meta: the question's own classified intent + real agent
    count, so a presenter (or anyone reading this list) can see the
    full spread of intents before clicking, not just discover it from
@@ -952,9 +972,16 @@ body.has-ask-console.has-ask-console-min .view-close-btn { bottom: 48px; }
   #sidebar .ask-options-panel {
     /* gap/padding trimmed (was 8px/8px), same "fit Guardrails' own
        now-15-entry list without scrolling" request as
-       .sb-details > summary's own padding cut just above. */
+       .sb-details > summary's own padding cut just above.
+       Horizontal padding dropped to 0 (was 4px, both sides): the three
+       .sb-details groups inside (Model & pipeline / Advanced checks /
+       Guardrails) each already get their own 12px left inset from
+       .sb-details > summary's own padding, same as Menu/Recent Reddit
+       Update Risk Questions above them - this wrapper's extra 4px was
+       shifting only these three 4px further right than the other
+       sidebar groups, a visible left-edge mismatch caught live. */
     display: flex; flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 3px;
-    padding: 4px; margin-bottom: 0;
+    padding: 4px 0; margin-bottom: 0;
   }
   /* The three top-level groups (Model & pipeline / Advanced checks /
      Guardrails, each a .sb-details) carry their own flex:1 0 100%

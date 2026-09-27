@@ -150,7 +150,7 @@
     });
     // The status dot opens the Account page (useful when the rail hides the Sign in button).
     document.getElementById("authStatusDot")?.addEventListener("click", () => activateUsers());
-    // Reddit Update Questions quick-load buttons (see their own markup
+    // Recent Reddit Update Risk Questions quick-load buttons (see their own markup
     // comment): fills #askQuestion and re-runs the same preview logic
     // typing would trigger, but never submits -- the viewer clicks Ask
     // (or presses Enter) themselves, on their own timing.
@@ -192,10 +192,20 @@
           })
           .slice(0, REDDIT_UPDATE_Q_LIMIT);
         if (!risky.length) return;
+        // A real <a> can't nest inside the clickable <button> (invalid,
+        // inconsistent browser handling), so the open-on-Reddit icon is a
+        // sibling in its own row wrapper, not part of the button itself.
         demoQList.innerHTML = risky.map(({ d, riskScore }) => {
           const dateStr = d.created_utc ? new Date(d.created_utc).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
           const meta = [d.subreddit ? `r/${d.subreddit}` : null, `risk ${riskScore.toFixed(2)}`, dateStr].filter(Boolean).join(" &middot; ");
-          return `<button type="button" class="demo-q-btn" data-q="${uaEsc(d.title || "")}">${uaEsc(d.title || "")}<span class="demo-q-meta">${meta}</span></button>`;
+          const postUrl = d.url || d.sourceUrl || "";
+          const link = postUrl
+            ? `<a class="demo-q-link" href="${uaEsc(postUrl)}" target="_blank" rel="noopener noreferrer" title="Open on Reddit" aria-label="Open on Reddit">🔗</a>`
+            : "";
+          return `<div class="demo-q-row">
+            <button type="button" class="demo-q-btn" data-q="${uaEsc(d.title || "")}">${uaEsc(d.title || "")}<span class="demo-q-meta">${meta}</span></button>
+            ${link}
+          </div>`;
         }).join("");
       } catch { /* best-effort: an empty section beats a broken page */ }
     }
