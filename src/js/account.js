@@ -923,7 +923,7 @@
       $("ua-visits-n-ask").textContent = data.totals.ask;
       $("ua-visits-n-api").textContent = data.totals.api;
       $("ua-visits-unverified").textContent = data.totals.unverified
-        ? "Not counted: " + data.totals.unverified + " page loads from " + data.totals.unverifiedIps + " IP addresses that never ran the site's scripts (very likely bots and scrapers)."
+        ? "Not counted: " + data.totals.unverified + " page loads from " + data.totals.unverifiedIps + " IP addresses that made almost no API requests (very likely bots and crawlers)."
         : "";
       $("ua-visits-countries").innerHTML = uaVisitsTable(["Country", "Visits", "Visitors", "Per visitor"],
         data.countries.map((c) => `<tr><td>${uaEsc(uaCountryLabel(c.code))}</td><td class="ua-num">${c.visits}</td><td class="ua-num">${c.uniques}</td><td class="ua-num">${c.visitsPerVisitor === undefined ? "" : c.visitsPerVisitor}</td></tr>`), "No visits yet.");
