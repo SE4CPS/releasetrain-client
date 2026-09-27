@@ -2220,11 +2220,21 @@ select.ua-settings-input { width: auto; max-width: 100%; }
 .ua-why-list li { font-size: 12px; color: var(--muted); display: flex; gap: 8px; align-items: flex-start; }
 .ua-why-list li span { flex-shrink: 0; }
 
-/* Installed versions: the optional vendor/machine inputs on the add form
-   (#ua-inv-add-form), sized like #ua-inv-ver's own st-135 flex rule. The
-   vendor/machine chips on a saved row reuse .ua-org-chip's own look but in
-   a neutral gray, distinct from the version chip's brand color, since they
-   describe the entry rather than being the value itself. */
+/* Installed versions: #ua-inv-add-form's four inputs share .search-input's
+   look, but that class's own 28px left padding is reserved for a search
+   icon (see the main Ask/component search bars) that none of these four
+   plain fields have, and its 13px font, combined with that wasted padding,
+   left no room for even a short placeholder to render fully at this
+   field's ~130px width (e.g. "version (e.g" got clipped). .ua-inv-field
+   drops the font size and reclaims that padding for every field in this
+   row; .ua-inv-field-grow (component, the one field worth giving more room
+   to) and .ua-inv-field-sm (version/vendor/machine) then split the row's
+   width between them, same flex-basis values as before. The vendor/machine
+   chips on a saved row reuse .ua-org-chip's own look but in a neutral gray,
+   distinct from the version chip's brand color, since they describe the
+   entry rather than being the value itself. */
+.ua-inv-field { font-size: 11px !important; padding-left: 8px !important; }
+.ua-inv-field-grow { flex: 1 1 150px !important; min-width: 0 !important; }
 .ua-inv-field-sm { flex: 0 1 130px !important; min-width: 0 !important; }
 .ua-inv-vendor-chip, .ua-inv-machine-chip {
   display: inline-block; padding: 1px 7px; border-radius: var(--radius-full);
@@ -2947,8 +2957,6 @@ select.ua-settings-input { width: auto; max-width: 100%; }
 .st-131 { font-size: 12px !important; margin: 8px 0 8px !important; } /* .ua-muted */
 .st-132 { opacity: .8 !important; } /* <span> */
 .st-133 { gap: 6px !important; flex-wrap: wrap !important; margin-bottom: 8px !important; } /* #ua-inv-add-form */
-.st-134 { flex: 1 1 150px !important; min-width: 0 !important; } /* #ua-inv-comp */
-.st-135 { flex: 0 1 130px !important; min-width: 0 !important; } /* #ua-inv-ver */
 .st-136 { margin-bottom: 8px !important; } /* <details> */
 .st-137 { cursor: pointer !important; font-size: 12px !important; color: var(--muted) !important; list-style: none !important; flex-direction: row !important; align-items: center !important; gap: 4px !important; } /* <summary> */
 .st-138 { font-size: 10px !important; } /* <span> */

@@ -17,7 +17,7 @@
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-P5E77Z7VG5"></script>
   
 
-  <link rel="stylesheet" href="styles.css?v=3.142.2">
+  <link rel="stylesheet" href="styles.css?v=3.143.0">
 </head>
 
 <body>
@@ -33,7 +33,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.142.2"><span class="brand-name">Releasetrain </span><em>v3.142.2</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.143.0"><span class="brand-name">Releasetrain </span><em>v3.143.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2037,6 +2037,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-26</div>
+              <div class="cl-ver cl-ver-minor">v3.143.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Installed versions: readable placeholders</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-fix">fix</span> The four Installed versions add-form fields no longer clip their placeholder text; shortened wording plus a smaller font and reclaimed icon padding make every placeholder fully visible, with the field name moved to an aria-label for accessibility</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-26</div>
@@ -5975,10 +5987,10 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <p class="ua-muted st-131">Record the versions you actually run. The Arch view compares them against the latest release to show how far each component has drifted. <span class="st-132">Saved to your account, so it follows you across devices.</span></p>
             <div id="ua-inv-msg" class="u-hide ua-msg" ></div>
             <form id="ua-inv-add-form"  class="u-show-flex st-133">
-              <input id="ua-inv-comp" list="ua-comp-names" class="search-input st-134" placeholder="component (e.g. apache)" maxlength="64" autocomplete="off" required />
-              <input id="ua-inv-ver" class="search-input st-135" placeholder="version (e.g. 2.4.58)" maxlength="32" autocomplete="off" required />
-              <input id="ua-inv-vendor" class="search-input ua-inv-field-sm" placeholder="vendor (optional)" maxlength="64" autocomplete="off" />
-              <input id="ua-inv-machine" class="search-input ua-inv-field-sm" placeholder="machine (optional)" maxlength="80" autocomplete="off" />
+              <input id="ua-inv-comp" list="ua-comp-names" class="search-input ua-inv-field ua-inv-field-grow" aria-label="Component" placeholder="e.g. apache" maxlength="64" autocomplete="off" required />
+              <input id="ua-inv-ver" class="search-input ua-inv-field ua-inv-field-sm" aria-label="Version" placeholder="e.g. 2.4.58" maxlength="32" autocomplete="off" required />
+              <input id="ua-inv-vendor" class="search-input ua-inv-field ua-inv-field-sm" aria-label="Vendor (optional)" placeholder="e.g. Google" maxlength="64" autocomplete="off" />
+              <input id="ua-inv-machine" class="search-input ua-inv-field ua-inv-field-sm" aria-label="Machine (optional)" placeholder="e.g. Laptop" maxlength="80" autocomplete="off" />
               <button class="btn btn-primary st-59" type="submit">Add</button>
             </form>
             <datalist id="ua-comp-names"></datalist>
@@ -6420,22 +6432,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     <p class="st-181">Changing the PlantUML server updates where images are fetched from for this session.</p>
   </dialog>
 
-  <script src="js/core.js?v=3.142.2"></script>
-  <script src="js/ask.js?v=3.142.2"></script>
-  <script src="js/ask-workflow.js?v=3.142.2"></script>
-  <script src="js/ask-rail.js?v=3.142.2"></script>
-  <script src="js/helpers.js?v=3.142.2"></script>
-  <script src="js/graph.js?v=3.142.2"></script>
-  <script src="js/arch.js?v=3.142.2"></script>
-  <script src="js/docs.js?v=3.142.2"></script>
-  <script src="js/eval.js?v=3.142.2"></script>
-  <script src="js/feed.js?v=3.142.2"></script>
-  <script src="js/cve.js?v=3.142.2"></script>
-  <script src="js/risk.js?v=3.142.2"></script>
-  <script src="js/network.js?v=3.142.2"></script>
-  <script src="js/account.js?v=3.142.2"></script>
-  <script src="js/inventory.js?v=3.142.2"></script>
-  <script src="js/main.js?v=3.142.2"></script>
+  <script src="js/core.js?v=3.143.0"></script>
+  <script src="js/ask.js?v=3.143.0"></script>
+  <script src="js/ask-workflow.js?v=3.143.0"></script>
+  <script src="js/ask-rail.js?v=3.143.0"></script>
+  <script src="js/helpers.js?v=3.143.0"></script>
+  <script src="js/graph.js?v=3.143.0"></script>
+  <script src="js/arch.js?v=3.143.0"></script>
+  <script src="js/docs.js?v=3.143.0"></script>
+  <script src="js/eval.js?v=3.143.0"></script>
+  <script src="js/feed.js?v=3.143.0"></script>
+  <script src="js/cve.js?v=3.143.0"></script>
+  <script src="js/risk.js?v=3.143.0"></script>
+  <script src="js/network.js?v=3.143.0"></script>
+  <script src="js/account.js?v=3.143.0"></script>
+  <script src="js/inventory.js?v=3.143.0"></script>
+  <script src="js/main.js?v=3.143.0"></script>
 </body>
 
 </html>
