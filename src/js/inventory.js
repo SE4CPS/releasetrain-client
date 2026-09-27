@@ -269,6 +269,7 @@
         if (!slot || !entry) return;
         const rec = byName.get(String(comp).toLowerCase());
         const lv = rec && rec.latestVersion && rec.latestVersion.versionNumber;
+        row.dataset.hasMatch = lv ? "1" : "0";
         const cve = (rec && rec.latestCveVersion)
           ? { code: aExtractCveCode(rec.latestCveVersion.versionUrl) }
           : cveByName.get(String(comp).toLowerCase());
@@ -294,6 +295,20 @@
           `<span class="st-261 ua-org-chip rt-bg" style="--rt-bg:${color}">→ ${uaEsc(lv)}</span> `
           + `<span class="ua-muted">${uaEsc(aGapLabel(gap))} behind</span>` + cveHtml + fetchedHtml;
       });
+      // A component ReleaseTrain actually tracks a latest version for is
+      // more actionable to look at than one it has no data on, so those
+      // rows move to the top - relative order within each of the two
+      // groups is left as-is (still the existing component/machine/vendor
+      // sort from uaInvNormalize). Element.appendChild on a node already
+      // in the DOM moves it rather than cloning it, so this reorders in
+      // place without re-rendering anything.
+      const invListEl = document.getElementById("ua-inv-list");
+      if (invListEl) {
+        const items = [...invListEl.querySelectorAll(".ua-bm-item")];
+        const matched = items.filter(el => el.dataset.hasMatch === "1");
+        const rest = items.filter(el => el.dataset.hasMatch !== "1");
+        for (const el of [...matched, ...rest]) invListEl.appendChild(el);
+      }
     }
 
     document.getElementById("ua-inv-refresh").addEventListener("click", () => uaLoadInventoryFromServer());
