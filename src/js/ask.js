@@ -127,9 +127,12 @@
     // not an absence of information the way "general" is for the domain.
     function classifyQuestionTypeClient(question) {
       const text = String(question || "").toLowerCase();
-      return ASK_INTENT_KEYWORDS.opinion.some(kw => text.indexOf(kw) !== -1) ? "opinion" : "fact";
+      if (ASK_INTENT_KEYWORDS.opinion.some(kw => text.indexOf(kw) !== -1)) return "opinion";
+      // Mirrors the server's isWhenQuestion: a "when" question is always answered with a date.
+      return ASK_WHEN_QUESTION_RX.test(text) ? "when" : "fact";
     }
-    const ASK_QUESTION_TYPE_BADGE_LABELS = { fact: "Fact question", opinion: "Opinion question" };
+    const ASK_WHEN_QUESTION_RX = /^\s*(?:so|well|ok(?:ay)?)?\s*(?:when\b|what\s+(?:date|day|year)\b|which\s+(?:date|day)\b|how\s+long\s+ago\b)|\b(?:release|released|launch|launched)\s+date\b/i;
+    const ASK_QUESTION_TYPE_BADGE_LABELS = { fact: "Fact question", opinion: "Opinion question", when: "When question: date" };
     // Client-side mirror of releasetrain-server's src/ask.js
     // GENERIC_QUERY_STOPLIST/buildTermRegex: a deterministic preview of
     // which words will actually drive the search match, computed and
