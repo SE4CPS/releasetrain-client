@@ -200,7 +200,7 @@ button.nav-link { background: none; border: none; width: 100%; text-align: left;
   padding: calc(var(--topbar-h) + 12px) 8px 28px;
 }
 @media (max-width: 640px) {
-  html, body { overflow: auto; height: auto; }
+  html, body { overflow-y: auto; overflow-x: hidden; height: auto; }
   .layout { padding: calc(var(--topbar-h) + 12px) 8px 32px; }
 }
 
@@ -803,19 +803,10 @@ html::-webkit-scrollbar { display: none; }
   display: flex; align-items: center; justify-content: space-between; flex-wrap: nowrap; gap: 6px;
   font: 400 13px/1.3 var(--mono); white-space: nowrap;
   background: none; border: none; padding: 6px 6px;
-  /* Safety net for a narrow window: the row's own flex items can't
-     shrink below their nowrap text's natural width (min-width:auto),
-     so once the full 7-node pipeline genuinely doesn't fit, it would
-     otherwise get silently clipped by `html, body { overflow: hidden }`
-     (see that rule's own comment) rather than wrap or scroll into
-     view -- exactly what cut "Orchestrator" off mid-word in a real
-     screenshot. overflow-x:auto lets this one row scroll internally
-     instead; the scrollbar itself is hidden (same pattern as the
-     full-page views a few lines below) so it doesn't look like a
-     stray UI element, but the content stays reachable by scrolling. */
-  overflow-x: auto;
+  /* The agent graph is an SVG that scales down to the column, so this row never
+     needs to scroll sideways; anything wider than the column is clipped, not scrolled. */
+  overflow-x: hidden;
 }
-.ask-workflow-diagram::-webkit-scrollbar { display: none; }
 /* Colors re-picked for a transparent background (see .ask-workflow-diagram's
    own comment): the earlier bright neon green/glow only worked
    against a dark card; on the page's own light surface a strong,
@@ -1187,7 +1178,9 @@ body.has-ask-console.has-ask-console-min .view-close-btn { bottom: 48px; }
    sentences, not a short label like the other two), so the table
    itself gets its own scroll container rather than ever forcing the
    whole card wider than its column. */
-.ask-mvr-wrap { overflow-x: auto; }
+.ask-mvr-wrap { overflow-x: hidden; }
+.ask-mvr-wrap table { width: 100%; }
+.ask-mvr-wrap th, .ask-mvr-wrap td { overflow-wrap: anywhere; }
 .ask-mvr-table { width: 100%; min-width: 420px; border-collapse: collapse; font-size: 12px; }
 .ask-mvr-table th { text-align: left; padding: 6px 8px; border-bottom: 2px solid var(--border); color: var(--muted); font-weight: 600; white-space: nowrap; }
 .ask-mvr-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
@@ -1809,16 +1802,16 @@ button.chip.poll-btn.chip-err { border-color: var(--cve); color: var(--cve); bac
 .a-canvas {
   position: relative; flex: 1 1 auto; min-height: 0;
   display: flex; align-items: center; justify-content: center;
-  background: #fff; overflow: auto; padding: 2px;
+  background: #fff; overflow-y: auto; overflow-x: hidden; padding: 2px;
 }
-#a-ecosysImage { width: 100%; height: 100%; overflow: auto; }
+#a-ecosysImage { width: 100%; height: 100%; overflow-y: auto; overflow-x: hidden; }
 /* No max-width/height:auto here anymore -- aFitDiagramSvg() sets an
    explicit pixel width+height on the <svg> itself, scaled to
    whichever axis of .a-canvas is the tighter fit (see its own
    comment), so this rule would only fight that computed size. */
 #a-ecosysImage a text { text-decoration: underline; }
 /* Arch view: drift table mode */
-#a-table { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 12px 14px; background: var(--surface); }
+#a-table { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 12px 14px; background: var(--surface); }
 .a-score { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
 .a-score b { color: var(--text); font-size: 13px; }
 table.a-drift { width: 100%; border-collapse: collapse; font-size: 12px; }
@@ -1839,7 +1832,7 @@ table.a-drift td.mono { font-family: Consolas, Monaco, monospace; }
   width: auto;
 }
 /* Arch view: default landing state (no component picked) */
-#a-empty { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 32px 24px; background: var(--bg); }
+#a-empty { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 32px 24px; background: var(--bg); }
 .a-empty-head { max-width: 780px; margin: 0 auto 22px; text-align: center; }
 .a-empty-head h3 { margin: 0 0 6px; font-size: 16px; font-weight: 800; color: var(--text); }
 .a-empty-head p { margin: 0 auto; max-width: 620px; font-size: 12.5px; line-height: 1.6; color: var(--muted); }
@@ -1991,18 +1984,18 @@ table.a-drift td.mono { font-family: Consolas, Monaco, monospace; }
    few px too wide (a long unbreakable token) drops a horizontal
    scrollbar across the entire view. Pin overflow-x to hidden on the
    container; a piece of content that genuinely can't reflow (a wide
-   diagram, a code block) gets its own small overflow-x:auto box
+   diagram, a code block) gets its own small overflow-x: hidden box
    instead, so any scroll stays contained to it, never the view. */
 #usersView, #feedPanel, #changelogView, #dashboardView,
 #networkView, #docsView, #ackView { overflow-x: hidden; }
-/* #ua-se-list keeps a defensive overflow-x:auto box here for the
+/* #ua-se-list keeps a defensive overflow-x: hidden box here for the
    admin search-events table even though that table now uses a fixed
    percentage-column layout (see .ua-se-table's own comment) that
    guarantees it fits its container at any width; the box stays as a
    fallback (an unusually long unbroken token slipping past ellipsis
    truncation, say) rather than something expected to actually
    engage. */
-#ua-se-list { overflow-x: auto; overflow-y: hidden; }
+#ua-se-list { overflow-x: hidden; overflow-y: hidden; }
 .ua-tabs {
   display: flex; border-bottom: 2px solid var(--border); margin-bottom: 0;
 }
@@ -2327,7 +2320,7 @@ select.ua-settings-input { width: auto; max-width: 100%; }
 #docsView .status.err  { background: #fef2f2; color: #b91c1c; border-color: #fca5a5; }
 #docsView .note { border-left: 4px solid #cbd5e1; padding-left: .75rem; margin-top: .5rem; color: #64748b; }
 #docsView .toplink { display: inline-block; margin-top: .3rem; font-size: .85rem; color: #1a73e8; }
-#docsView .mermaid { text-align: center; margin: .8rem 0 1.2rem; overflow-x: auto; }
+#docsView .mermaid { text-align: center; margin: .8rem 0 1.2rem; overflow-x: hidden; }
 /* Mermaid's own computed width lands as an inline style="max-width:
    NNNpx" on the <svg> it renders, which wins over this width:100%
    rule at equal specificity regardless of source order (same root
@@ -2978,7 +2971,7 @@ select.ua-settings-input { width: auto; max-width: 100%; }
 .st-169 { padding: 6px 12px !important; border: 1px solid #fca5a5 !important; border-radius: 8px !important; background: #fef2f2 !important; color: #b91c1c !important; } /* <div> */
 .st-170 { padding: 6px 12px !important; border: 1px solid #fcd34d !important; border-radius: 8px !important; background: #fffbeb !important; color: #b45309 !important; } /* <div> */
 .st-171 { border: 1px solid var(--border) !important; border-radius: var(--radius) !important; padding: 16px !important; background: var(--surface) !important; color: var(--text) !important; max-width: 700px !important; width: min(96vw,700px) !important; } /* #a-codeDialog */
-.st-172 { background: #0a1220 !important; color: #f8fafc !important; border: 1px solid var(--border) !important; border-radius: 8px !important; padding: 12px 14px !important; white-space: pre-wrap !important; font: 12px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace !important; max-height: 55vh !important; overflow: auto !important; margin: 0 !important; } /* #a-plantumlCode */
+.st-172 { background: #0a1220 !important; color: #f8fafc !important; border: 1px solid var(--border) !important; border-radius: 8px !important; padding: 12px 14px !important; white-space: pre-wrap !important; font: 12px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace !important; max-height: 55vh !important; overflow-y: auto; overflow-x: hidden !important; margin: 0 !important; } /* #a-plantumlCode */
 .st-173 { gap: 8px !important; margin-top: 10px !important; } /* <div> */
 .st-174 { border: 1px solid var(--border) !important; border-radius: var(--radius) !important; padding: 16px !important; background: var(--surface) !important; color: var(--text) !important; max-width: 600px !important; width: min(96vw,600px) !important; } /* #a-detailsDialog */
 .st-175 { grid-template-columns: 1fr 1fr !important; gap: 12px !important; font-size: 13px !important; } /* <div> */
@@ -3134,7 +3127,7 @@ select.ua-settings-input { width: auto; max-width: 100%; }
 .ua-visits-card span { font-size: 12px; color: var(--muted); }
 .ua-visits-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; margin-bottom: 12px; }
 .ua-visits-cols h4, .ua-visits-h { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); }
-.ua-visits-table { overflow-x: auto; }
+.ua-visits-table { overflow-x: hidden; }
 .ua-data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .ua-data-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .3px; color: var(--muted); font-weight: 600; padding: 4px 8px 4px 0; border-bottom: 1px solid var(--border); white-space: nowrap; }
 .ua-data-table td { padding: 5px 8px 5px 0; border-bottom: 1px solid var(--border); white-space: nowrap; }
@@ -3143,4 +3136,14 @@ select.ua-settings-input { width: auto; max-width: 100%; }
 .ua-visits-note { font-size: 12px; margin: 10px 0 0; }
 .ua-data-table tr.ua-row-today td { background: rgba(22, 163, 74, 0.10); }
 .ua-visits-today-key { margin-left: 8px; padding: 1px 8px; border-radius: 8px; background: rgba(22, 163, 74, 0.10); color: #166534; font-size: 11px; text-transform: none; letter-spacing: 0; font-weight: 500; }
-.ua-data-table .ua-num + td { padding-left: 16px; }
+.ua-data-table .ua-num + td { padding-left: 10px; }
+
+/* Visits tables: compact, wrap instead of scrolling sideways */
+.ua-visits-table { overflow-x: visible; }
+.ua-data-table { font-size: 12px; }
+.ua-data-table th { font-size: 10px; white-space: normal; padding-right: 6px; }
+.ua-data-table td { white-space: normal; overflow-wrap: anywhere; padding: 4px 6px 4px 0; }
+.ua-data-table .ua-num { white-space: nowrap; }
+.ua-visits-cols { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+@media (max-width: 900px) { .ua-visits-cols { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 640px) { #ua-visits-visitors tr > :nth-child(4), #ua-visits-visitors tr > :nth-child(6), #ua-visits-visitors tr > :nth-child(7) { display: none; } }

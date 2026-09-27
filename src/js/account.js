@@ -858,6 +858,16 @@
       }
       s.addEventListener("load", cb, { once: true });
     }
+    // Name only ("United States"), for the narrow Countries table.
+    function uaCountryName(code) {
+      if (!/^[A-Z]{2}$/.test(code || "") || code === "ZZ") return "Unknown";
+      try { return new Intl.DisplayNames(["en"], { type: "region" }).of(code) || code; } catch { return code; }
+    }
+    // "Stockton, US" when the city is known, otherwise the country name.
+    function uaLocation(v) {
+      if (v.city && /^[A-Z]{2}$/.test(v.country || "")) return v.city + ", " + v.country;
+      return uaCountryName(v.country);
+    }
     function uaCountryLabel(code) {
       if (!/^[A-Z]{2}$/.test(code || "") || code === "ZZ") return "Unknown";
       let name = code;
@@ -926,13 +936,13 @@
         ? "Not counted: " + data.totals.unverified + " page loads from " + data.totals.unverifiedIps + " IP addresses that made almost no API requests (very likely bots and crawlers)."
         : "";
       $("ua-visits-countries").innerHTML = uaVisitsTable(["Country", "Visits", "Visitors", "Per visitor"],
-        data.countries.map((c) => `<tr><td>${uaEsc(uaCountryLabel(c.code))}</td><td class="ua-num">${c.visits}</td><td class="ua-num">${c.uniques}</td><td class="ua-num">${c.visitsPerVisitor === undefined ? "" : c.visitsPerVisitor}</td></tr>`), "No visits yet.");
+        data.countries.map((c) => `<tr><td>${uaEsc(uaCountryName(c.code))}</td><td class="ua-num">${c.visits}</td><td class="ua-num">${c.uniques}</td><td class="ua-num">${c.visitsPerVisitor === undefined ? "" : c.visitsPerVisitor}</td></tr>`), "No visits yet.");
       $("ua-visits-pages").innerHTML = uaVisitsTable(["View", "Visits"],
         data.pages.map((p) => `<tr><td>${uaEsc(p.page)}</td><td class="ua-num">${p.visits}</td></tr>`), "No visits yet.");
       $("ua-visits-refs").innerHTML = uaVisitsTable(["Referrer", "Visits"],
         data.referrers.map((r) => `<tr><td>${uaEsc(r.host)}</td><td class="ua-num">${r.visits}</td></tr>`), "No visits yet.");
-      $("ua-visits-visitors").innerHTML = uaVisitsTable(["IP address", "Country", "Visits", "Asked", "Last seen", "View", "Browser"],
-        data.visitors.map((v) => `<tr${new Date(v.last).toDateString() === new Date().toDateString() ? ' class="ua-row-today"' : ""}><td class="ua-mono">${uaEsc(v.ip)}</td><td>${uaEsc(uaCountryLabel(v.country))}</td><td class="ua-num">${v.visits}</td><td class="ua-num">${v.ask}</td><td>${uaEsc(new Date(v.last).toLocaleString())}</td><td>${uaEsc(v.page || "")}</td><td>${uaEsc(v.browser || "")}</td></tr>`),
+      $("ua-visits-visitors").innerHTML = uaVisitsTable(["IP address", "Location", "Visits", "Asked", "Last seen", "View", "Browser"],
+        data.visitors.map((v) => `<tr${new Date(v.last).toDateString() === new Date().toDateString() ? ' class="ua-row-today"' : ""}><td class="ua-mono">${uaEsc(v.ip)}</td><td>${uaEsc(uaLocation(v))}</td><td class="ua-num">${v.visits}</td><td class="ua-num">${v.ask}</td><td>${uaEsc(new Date(v.last).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }))}</td><td>${uaEsc(v.page || "")}</td><td>${uaEsc(v.browser || "")}</td></tr>`),
         "No visitors in this period.");
     }
     document.getElementById("ua-refresh-visits")?.addEventListener("click", (e) => { e.preventDefault(); uaLoadVisitsTab(); uaLoadVisitsChart(); });

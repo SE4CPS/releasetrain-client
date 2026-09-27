@@ -216,3 +216,12 @@ No inline `<script>` code and no `on...=` handler attributes in `index.html` or 
 - A top-level statement that runs at load may only use functions and consts declared in the same file or an earlier one. Function declarations in a later file are not hoisted across files.
 - Anything that kicks off async work at load (`boot().then(...)`, timers, startup calls) goes in `main.js`, which loads last.
 - Adding a new file: add its `<script src="js/<name>.js?v=...">` tag in the right position, and keep the version stamping (`scripts/build.js`) working.
+
+
+## No horizontal scrolling (global rule)
+
+Nothing in the client scrolls sideways, at any window width from phone to desktop. Lay content out with flexbox or grid that wraps (`flex-wrap`, `minmax(0, 1fr)` columns, `min-width: 0`), let text wrap (`overflow-wrap: anywhere`, `white-space: pre-wrap` for code), and let images and SVG scale (`max-width: 100%`). Vertical scrolling is fine (`overflow-y: auto`).
+
+- `overflow` or `overflow-x` set to `auto` or `scroll` in a stylesheet fails `npm run lint`.
+- `tests/no-horizontal-scroll.spec.js` opens every view (and every admin tab) at 1300px and 390px and fails if the page or any scroll box scrolls sideways. Add new views to its list.
+- For a table with many columns, shrink the font, allow wrapping, and hide low-value columns on narrow screens (`@media (max-width: 640px)`) instead of adding a scroll box.

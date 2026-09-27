@@ -46,11 +46,22 @@ const VISITS = {
     {
       ip: '138.9.74.3',
       country: 'US',
+      city: 'Stockton',
       visits: 9,
       ask: 2,
       last: '2026-09-27T09:00:00Z',
       page: 'home',
       browser: 'Chrome',
+    },
+    {
+      ip: '2001:0db8:85a3:0000:0000:8a2e:0370:7334',
+      country: 'VN',
+      city: 'Ho Chi Minh City',
+      visits: 12,
+      ask: 4,
+      last: '2026-09-20T09:00:00Z',
+      page: 'shared search',
+      browser: 'Firefox',
     },
     {
       ip: '81.2.69.142',
@@ -142,9 +153,10 @@ test('admin sees the 14-day unique and total visitors chart, and the Visits tab'
   await expect(page.locator('#ua-visits-unverified')).toContainText(
     '96 page loads from 12 IP addresses',
   );
-  await expect(page.locator('#ua-visits-countries')).toContainText('United States (US)');
+  await expect(page.locator('#ua-visits-countries')).toContainText('United States');
   await expect(page.locator('#ua-visits-countries')).toContainText('Unknown');
   await expect(page.locator('#ua-visits-visitors')).toContainText('138.9.74.3');
+  await expect(page.locator('#ua-visits-visitors')).toContainText('Stockton, US');
   // rows for visitors seen today get the subtle green background; older ones do not
   await expect(page.locator('#ua-visits-visitors tr.ua-row-today')).toHaveCount(1);
   await expect(page.locator('#ua-visits-visitors tr.ua-row-today')).toContainText('81.2.69.142');
@@ -155,3 +167,32 @@ test('a normal user does not see the visitors chart', async ({ page }) => {
   await page.goto('/?view=account');
   await expect(page.locator('#ua-visits-top')).toBeHidden();
 });
+
+for (const width of [1300, 390]) {
+  test(`Visits tables never scroll sideways at ${width}px wide`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await signIn(page, 'admin');
+    await page.goto('/?view=account');
+    await page.locator('[data-ua-tab="visits"]').click();
+    await expect(page.locator('#ua-visits-visitors table')).toBeVisible();
+    const overflow = await page.evaluate(() =>
+      ['ua-visits-countries', 'ua-visits-pages', 'ua-visits-refs', 'ua-visits-visitors'].map(
+        (id) => {
+          const box = document.getElementById(id);
+          const table = box.querySelector('table');
+          return {
+            id,
+            boxScrolls: box.scrollWidth > box.clientWidth + 1,
+            tableWider: table
+              ? table.getBoundingClientRect().right > box.getBoundingClientRect().right + 1
+              : false,
+          };
+        },
+      ),
+    );
+    for (const o of overflow) {
+      expect(o.boxScrolls, `${o.id} scrolls sideways`).toBe(false);
+      expect(o.tableWider, `${o.id} is wider than its box`).toBe(false);
+    }
+  });
+}

@@ -10,6 +10,7 @@
  *   - element.style.<property> reads or writes (setProperty of a --custom
  *     property is the one allowed use)
  *   - cssText and setAttribute("style", ...)
+ *   - overflow / overflow-x set to auto or scroll in a stylesheet (no horizontal scrolling)
  *   - inline <script> code or on...= event-handler attributes (all JS lives in
  *     src/js/)
  *
@@ -26,7 +27,7 @@ const files = [];
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) collect(full);
-    else if (/[.](html|js)$/.test(entry.name)) files.push(full);
+    else if (/[.](html|js|css)$/.test(entry.name)) files.push(full);
   }
 })(srcDir);
 
@@ -47,6 +48,15 @@ for (const file of files) {
   } else {
     for (const m of text.matchAll(/["'`]<[a-z][^>]*\son(?:click|change|input|submit|key\w+|load|error|mouse\w+|focus|blur)=/g)) add(m.index, 'inline event handler in a template: use addEventListener');
   }
+
+  // Global rule: no horizontal scrolling. Wrap (flex-wrap, overflow-wrap) or clip instead.
+  // Vertical scrolling is fine: use overflow-y.
+  if (file.endsWith('.css')) {
+    for (const m of text.matchAll(/overflow(-x)?\s*:\s*(auto|scroll)/g)) {
+      add(m.index, 'horizontal scrolling is not allowed: let content wrap (flex-wrap, overflow-wrap) or clip it; use overflow-y for vertical scroll');
+    }
+  }
+  if (file.endsWith('.css')) continue; // the checks below are for HTML and JS only
 
   for (const m of text.matchAll(/<style[\s>]/g)) add(m.index, '<style> block: move it to src/styles.css');
 
