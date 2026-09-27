@@ -711,6 +711,7 @@
 
     /* ── Arch view: show / hide ───────────────────────────────── */
     function activateArch() {
+      aPopulateMachineStacks();
       if (ER_ACTIVE)  deactivateEvalRewriter();
       if (EE_ACTIVE)  deactivateEvalEvaluator();
       if (EO_ACTIVE)  deactivateEvalOrchestrator();
@@ -751,6 +752,39 @@
     });
 
     /* ── Arch sidebar controls ────────────────────────────────── */
+    // Adds one option per machine recorded in Installed versions (see
+    // inventory.js) to #a-stackSelect, right alongside the hardcoded preset
+    // stacks (LAMP, LEMP, ...) - each one's value is that machine's own
+    // component list, so "+ Add Stack" (the existing handler just below,
+    // unchanged) loads every component recorded on that machine into the
+    // search the exact same way it loads a preset. Rebuilt every time Arch
+    // is activated (uaInvGet() reads from localStorage, always current) so
+    // it reflects whatever's been added/removed on the Account page since
+    // the last time this ran, without needing its own refresh button.
+    function aPopulateMachineStacks() {
+      const sel = document.getElementById("a-stackSelect");
+      if (!sel || typeof uaInvGet !== "function") return;
+      const old = sel.querySelector("optgroup[data-machine-group]");
+      if (old) old.remove();
+      const byMachine = new Map();
+      for (const e of uaInvGet()) {
+        if (!e.machine) continue;
+        if (!byMachine.has(e.machine)) byMachine.set(e.machine, new Set());
+        byMachine.get(e.machine).add(e.component);
+      }
+      if (!byMachine.size) return;
+      const group = document.createElement("optgroup");
+      group.label = "Your machines";
+      group.setAttribute("data-machine-group", "1");
+      for (const [machine, comps] of byMachine) {
+        const opt = document.createElement("option");
+        opt.value = Array.from(comps).join(",");
+        opt.textContent = `${machine} (${comps.size})`;
+        group.appendChild(opt);
+      }
+      sel.appendChild(group);
+    }
+
     document.getElementById("a-addStackBtn").addEventListener("click", () => {
       const sel = document.getElementById("a-stackSelect");
       const val = sel.value; if (!val) return;
