@@ -37,7 +37,19 @@
       if (hr < 24) return hr + "h ago";
       const day = Math.floor(hr / 24);
       if (day < 30) return day + "d ago";
-      return new Date(iso).toISOString().slice(0, 10);
+      return uaLocalDate(iso);
+    }
+    // Everything stored (recordedAt, versionTimestampLastUpdate, ...) is UTC,
+    // as it should be in the database; these two convert it to the viewer's
+    // own local time zone only for display, via the browser's own Intl
+    // support, not string manipulation on the UTC value.
+    function uaLocalDate(iso) {
+      const d = new Date(iso);
+      return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString("en-CA"); // en-CA: YYYY-MM-DD, but in local time
+    }
+    function uaLocalDateTime(iso) {
+      const d = new Date(iso);
+      return Number.isNaN(d.getTime()) ? iso : d.toLocaleString();
     }
 
     // Pulls the server's copy of the inventory on Account-page load and
@@ -161,7 +173,7 @@
           ${e.vendor ? `<span class="ua-inv-vendor-chip" title="Vendor">${uaEsc(e.vendor)}</span>` : ""}
           ${e.machine ? `<span class="ua-inv-machine-chip" title="Machine">${uaEsc(e.machine)}</span>` : ""}
           <span class="st-256 ua-org-chip" >${uaEsc(e.version)}</span>
-          ${e.recordedAt ? `<span class="ua-muted ua-inv-fetched" title="Recorded ${uaEsc(e.recordedAt)}">recorded ${uaEsc(uaRelTime(e.recordedAt))}</span>` : ""}
+          ${e.recordedAt ? `<span class="ua-muted ua-inv-fetched" title="Recorded ${uaEsc(uaLocalDateTime(e.recordedAt))}">recorded ${uaEsc(uaRelTime(e.recordedAt))}</span>` : ""}
           <span class="u-show-block st-257 ua-inv-drift ua-muted" >checking latest…</span>
         </div>
         <div class="ua-bm-actions">
@@ -258,7 +270,7 @@
         const fetchedIso = lvDoc && (lvDoc.versionTimestampLastUpdate
           || (lvDoc.versionTimestamp ? new Date(lvDoc.versionTimestamp).toISOString() : null));
         const fetchedHtml = fetchedIso
-          ? ` <span class="ua-muted ua-inv-fetched" title="Checked ${uaEsc(fetchedIso)}">· checked ${uaEsc(uaRelTime(fetchedIso))}</span>`
+          ? ` <span class="ua-muted ua-inv-fetched" title="Checked ${uaEsc(uaLocalDateTime(fetchedIso))}">· checked ${uaEsc(uaRelTime(fetchedIso))}</span>`
           : "";
         if (!lv) { slot.innerHTML = "no release data" + cveHtml; return; }
         const gap = aVerGap(entry.version, lv);
