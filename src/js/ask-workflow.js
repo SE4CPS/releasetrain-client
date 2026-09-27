@@ -1444,7 +1444,7 @@
     // verdict as data (the winning app, and the component when a stack was resolved);
     // anything else uses the answer's own first sentence, with markdown, citation markers
     // and links stripped, capped at about 220 characters.
-    function askShortAnswer(res) {
+    function askShortAnswer(res, question) {
       if (!res) return "";
       const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
       if (res.intent === "comparison" && !res.abstained) {
@@ -1462,6 +1462,14 @@
         .replace(/\s+([.,;:!?)])/g, "$1")
         .trim();
       if (!text) return "";
+      // A "when" question is answered by its date, so keep the sentence that carries it
+      // (with its "(N days ago)") instead of trimming the answer down to the bare claim.
+      if (!res.abstained && typeof classifyQuestionTypeClient === "function" && classifyQuestionTypeClient(question) === "when") {
+        const parts = text.split(/(?<=[.!?])\s+(?=[A-Z0-9("'])/);
+        let out = parts[0];
+        if (!/\b\d{4}\b/.test(out) && parts[1]) out += ` ${parts[1]}`;
+        return out.length > 200 ? `${out.slice(0, 197).replace(/\s+\S*$/, "")}…` : out;
+      }
       const SENTENCE = /^.+?[.!?](?=\s+[A-Z0-9("']|$)/;
       let first = (text.match(SENTENCE) || [text])[0];
       // Brief on purpose: no parentheticals, no reason or time clauses (why, when, released),
@@ -1481,8 +1489,8 @@
       if (first.length > 140) first = `${first.slice(0, 137).replace(/\s+\S*$/, "")}\u2026`;
       return first;
     }
-    function askShortTabHtml(res) {
-      const sentence = askShortAnswer(res);
+    function askShortTabHtml(res, question) {
+      const sentence = askShortAnswer(res, question);
       if (!sentence) return "";
       // The explanatory line under the sentence ("The full answer,
       // sources and checks are in the other tabs.") was removed per
@@ -1584,7 +1592,7 @@
 
       // "Short answer" tab: one sentence, first and selected by default; the full Answer
       // tab (opts.activeTab === "answer", e.g. after "Show full answer") keeps the old view.
-      const shortPanel = askShortTabHtml(res);
+      const shortPanel = askShortTabHtml(res, opts.previewQuestion || res.question);
       const activeTab = shortPanel && opts.activeTab !== "answer" ? "short" : "answer";
       if (!opts.showWorkflow) {
         return `<div class="ask-answer-card${res.abstained ? " ask-answer-abstained" : ""}" data-run-id="${uaEsc(res.runId || "")}">
