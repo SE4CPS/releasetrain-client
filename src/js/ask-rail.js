@@ -120,6 +120,36 @@
     }
     relocateSidebarFooter();
     askRailMql.addEventListener("change", relocateSidebarFooter);
+
+    // Collapsible sidebar (desktop only; below 900px it is the slide-in drawer). The
+    // state is a class on <body>, remembered in localStorage. The toggle stays visible
+    // in both states, so keyboard focus is never lost when it is used.
+    const sidebarCollapseBtn = document.getElementById("sidebarCollapseBtn");
+    function setSidebarCollapsed(collapsed, persist) {
+      document.body.classList.toggle("sidebar-collapsed", collapsed);
+      if (sidebarCollapseBtn) {
+        const label = collapsed ? "Expand sidebar" : "Collapse sidebar";
+        sidebarCollapseBtn.setAttribute("aria-expanded", String(!collapsed));
+        sidebarCollapseBtn.setAttribute("aria-label", label);
+        sidebarCollapseBtn.title = label;
+      }
+      if (persist) {
+        try { localStorage.setItem("rt.sidebar", collapsed ? "collapsed" : "open"); } catch { /* private mode */ }
+      }
+      if (persist || collapsed) {
+        // Charts, the graph and the run log measure themselves on resize.
+        window.dispatchEvent(new Event("resize"));
+        setTimeout(() => window.dispatchEvent(new Event("resize")), 260);
+      }
+    }
+    let sidebarStored = "";
+    try { sidebarStored = localStorage.getItem("rt.sidebar") || ""; } catch { /* private mode */ }
+    setSidebarCollapsed(sidebarStored === "collapsed", false);
+    sidebarCollapseBtn?.addEventListener("click", () => {
+      setSidebarCollapsed(!document.body.classList.contains("sidebar-collapsed"), true);
+    });
+    // The status dot opens the Account page (useful when the rail hides the Sign in button).
+    document.getElementById("authStatusDot")?.addEventListener("click", () => activateUsers());
     // Prototype Demo quick-load buttons (see their own markup comment):
     // fills #askQuestion and re-runs the same preview logic typing
     // would trigger, but never submits -- the presenter clicks Ask

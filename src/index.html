@@ -17,7 +17,7 @@
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-P5E77Z7VG5"></script>
   
 
-  <link rel="stylesheet" href="styles.css?v=3.139.0">
+  <link rel="stylesheet" href="styles.css?v=3.140.0">
 </head>
 
 <body>
@@ -33,7 +33,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.139.0"><span class="brand-name">Releasetrain </span><em>v3.139.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.140.0"><span class="brand-name">Releasetrain </span><em>v3.140.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -59,7 +59,7 @@
            #topSignInLink/#ua-topbar-user's own visibility toggle in
            uaUpdateAskIntroSignin/uaRender, not a separate check of its
            own. -->
-        <span id="authStatusDot" class="auth-dot auth-dot-off" title="Not signed in" aria-hidden="true"></span>
+        <button type="button" id="authStatusDot" class="auth-dot auth-dot-off" aria-label="Not signed in. Open Account" title="Not signed in"></button>
         <button type="button" class="top-signin-btn" id="topSignInLink">Sign in</button>
         <span id="ua-topbar-user" class="u-hide ua-topbar-chip"  title="Account"></span>
       </div>
@@ -746,7 +746,11 @@
            content wrapped in a flex column just to pin it. Empty and
            unused on a narrow screen, where all three stay in the topbar
            exactly as before. -->
-      <div id="sidebarFooter" class="sidebar-footer"></div>
+      <div id="sidebarFooter" class="sidebar-footer">
+        <button type="button" id="sidebarCollapseBtn" class="sidebar-collapse-btn" aria-controls="sidebar" aria-expanded="true" aria-label="Collapse sidebar" title="Collapse sidebar">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
     </aside>
 
     <!-- ── Filters panel: Filters + Stats, opened via the 🎚️ button,
@@ -2033,6 +2037,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-26</div>
+              <div class="cl-ver cl-ver-minor">v3.140.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Collapsible sidebar</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feature">feature</span> Desktop sidebar collapses to a slim rail with an accessible toggle; the signed-in dot (filled green or hollow gray) stays visible and opens Account, and the page uses the freed space</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-26</div>
@@ -6330,22 +6346,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     <p class="st-181">Changing the PlantUML server updates where images are fetched from for this session.</p>
   </dialog>
 
-  <script src="js/core.js?v=3.139.0"></script>
-  <script src="js/ask.js?v=3.139.0"></script>
-  <script src="js/ask-workflow.js?v=3.139.0"></script>
-  <script src="js/ask-rail.js?v=3.139.0"></script>
-  <script src="js/helpers.js?v=3.139.0"></script>
-  <script src="js/graph.js?v=3.139.0"></script>
-  <script src="js/arch.js?v=3.139.0"></script>
-  <script src="js/docs.js?v=3.139.0"></script>
-  <script src="js/eval.js?v=3.139.0"></script>
-  <script src="js/feed.js?v=3.139.0"></script>
-  <script src="js/cve.js?v=3.139.0"></script>
-  <script src="js/risk.js?v=3.139.0"></script>
-  <script src="js/network.js?v=3.139.0"></script>
-  <script src="js/account.js?v=3.139.0"></script>
-  <script src="js/inventory.js?v=3.139.0"></script>
-  <script src="js/main.js?v=3.139.0"></script>
+  <script src="js/core.js?v=3.140.0"></script>
+  <script src="js/ask.js?v=3.140.0"></script>
+  <script src="js/ask-workflow.js?v=3.140.0"></script>
+  <script src="js/ask-rail.js?v=3.140.0"></script>
+  <script src="js/helpers.js?v=3.140.0"></script>
+  <script src="js/graph.js?v=3.140.0"></script>
+  <script src="js/arch.js?v=3.140.0"></script>
+  <script src="js/docs.js?v=3.140.0"></script>
+  <script src="js/eval.js?v=3.140.0"></script>
+  <script src="js/feed.js?v=3.140.0"></script>
+  <script src="js/cve.js?v=3.140.0"></script>
+  <script src="js/risk.js?v=3.140.0"></script>
+  <script src="js/network.js?v=3.140.0"></script>
+  <script src="js/account.js?v=3.140.0"></script>
+  <script src="js/inventory.js?v=3.140.0"></script>
+  <script src="js/main.js?v=3.140.0"></script>
 </body>
 
 </html>

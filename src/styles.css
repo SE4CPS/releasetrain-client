@@ -339,9 +339,7 @@ body.view-feed .layout > .feed-main { flex: 1 1 0; }
    a small muted, low-contrast dot while signed out, deliberately not
    an alarming color (red/orange) since "not signed in" is this app's
    normal, expected default state, not an error. */
-.auth-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.auth-dot-on { background: #1e8e3e; }
-.auth-dot-off { background: var(--border); }
+.auth-dot { flex-shrink: 0; }
 /* Set/updated by uaUpdateAskIntroSignin() below, from GET
    /api/ask/anon-quota; hidden whenever anonymous questions are off
    (limit 0) or the visitor is signed in. Inherits .ask-intro-panel's
@@ -476,7 +474,7 @@ body.view-feed .layout > .feed-main { flex: 1 1 0; }
      right side is just the question input, and the version number
      and sign-in live at the bottom of the sidebar instead. */
   .topbar { display: none; }
-  body { padding-left: 300px; }
+  body { padding-left: var(--sidebar-w, 300px); }
 }
 
 .sidebar-section { padding: 8px; }
@@ -658,7 +656,7 @@ body.view-feed .layout > .feed-main { flex: 1 1 0; }
      own content scrolling up behind this header is actually hidden
      by it, not visible through it. */
   #stickyAskHeader {
-    position: fixed; top: 0; left: 300px; right: 0; z-index: 400;
+    position: fixed; top: 0; left: var(--sidebar-w, 300px); right: 0; z-index: 400;
     background: var(--bg);
   }
 }
@@ -3147,3 +3145,39 @@ select.ua-settings-input { width: auto; max-width: 100%; }
 .ua-visits-cols { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
 @media (max-width: 900px) { .ua-visits-cols { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 640px) { #ua-visits-visitors tr > :nth-child(4), #ua-visits-visitors tr > :nth-child(6), #ua-visits-visitors tr > :nth-child(7) { display: none; } }
+
+/* ── Collapsible sidebar (desktop) ─────────────────────────────────────────
+   The sidebar shrinks to a slim rail that keeps the collapse toggle and the
+   signed-in status dot; the main column takes the freed space (body padding
+   and the sticky ask header follow --sidebar-w). Below 900px the sidebar is
+   the slide-in drawer, so none of this applies. */
+.sidebar-collapse-btn { display: none; }
+@media (min-width: 900px) {
+  body { --sidebar-w: 300px; }
+  body.sidebar-collapsed { --sidebar-w: 56px; }
+  #sidebar { width: var(--sidebar-w); }
+  .sidebar-collapse-btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border: 1px solid transparent; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; flex-shrink: 0; }
+  .sidebar-collapse-btn:hover { background: var(--chip-bg); color: var(--text); }
+  .sidebar-collapse-btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .sidebar-collapse-btn svg { width: 16px; height: 16px; }
+  body.sidebar-collapsed .sidebar-collapse-btn svg { transform: rotate(180deg); }
+  body.sidebar-collapsed #sidebar > :not(#sidebarFooter) { display: none !important; }
+  body.sidebar-collapsed #sidebarFooter { flex-direction: column; align-items: center; justify-content: flex-end; gap: 10px; padding: 10px 0; }
+  body.sidebar-collapsed #sidebarFooter .brand,
+  body.sidebar-collapsed #sidebarFooter .top-signin-btn,
+  body.sidebar-collapsed #sidebarFooter .ua-topbar-chip { display: none !important; }
+}
+@media (min-width: 900px) and (prefers-reduced-motion: no-preference) {
+  body, #sidebar { transition: padding-left .2s ease, width .2s ease; }
+}
+
+/* Signed-in status dot: a real button (opens Account) with a 24px target. Filled
+   green = signed in, hollow gray ring = signed out, so the state does not rely on
+   color alone; the accessible name says it in words. */
+button.auth-dot { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; }
+button.auth-dot::before { content: ""; box-sizing: border-box; width: 10px; height: 10px; border-radius: 50%; }
+button.auth-dot.auth-dot-on::before { background: #1e8e3e; }
+button.auth-dot.auth-dot-off::before { background: transparent; border: 2px solid var(--muted); }
+button.auth-dot:hover { background: var(--chip-bg); }
+button.auth-dot:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+@media (pointer: coarse) { button.auth-dot { width: 40px; height: 40px; } }

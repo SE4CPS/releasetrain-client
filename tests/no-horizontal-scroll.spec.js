@@ -21,7 +21,7 @@ const VIEWS = [
   'account',
 ];
 const ACCOUNT_TABS = ['saved', 'overview', 'visits', 'alerts', 'settings', 'bots', 'users'];
-const WIDTHS = [1300, 390];
+const WIDTHS = [1300, 1024, 768, 390];
 
 const VISITS = {
   days: 14,

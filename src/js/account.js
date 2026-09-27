@@ -55,6 +55,7 @@
         dot.classList.toggle("auth-dot-on", !!user);
         dot.classList.toggle("auth-dot-off", !user);
         dot.title = user ? "Signed in" : "Not signed in";
+        dot.setAttribute("aria-label", user ? "Signed in. Open Account" : "Not signed in. Open Account");
       }
     }
 
@@ -101,6 +102,7 @@
         dot.classList.toggle("auth-dot-on", signedIn);
         dot.classList.toggle("auth-dot-off", !signedIn);
         dot.title = signedIn ? "Signed in" : "Not signed in";
+        dot.setAttribute("aria-label", signedIn ? "Signed in. Open Account" : "Not signed in. Open Account");
       }
       if (!token || !user) uaLoadAnonQuota();
       // Guardrails is hidden entirely while signed out now, per explicit

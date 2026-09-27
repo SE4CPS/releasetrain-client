@@ -225,3 +225,11 @@ Nothing in the client scrolls sideways, at any window width from phone to deskto
 - `overflow` or `overflow-x` set to `auto` or `scroll` in a stylesheet fails `npm run lint`.
 - `tests/no-horizontal-scroll.spec.js` opens every view (and every admin tab) at 1300px and 390px and fails if the page or any scroll box scrolls sideways. Add new views to its list.
 - For a table with many columns, shrink the font, allow wrapping, and hide low-value columns on narrow screens (`@media (max-width: 640px)`) instead of adding a scroll box.
+
+
+## Every change works on phone, tablet and laptop (global rule)
+
+Every UI change must be checked at phone (390px), tablet (768px and 1024px) and laptop/desktop (1300px+) widths, with touch targets of at least 32px (40px on `pointer: coarse`), visible `:focus-visible` rings, and `prefers-reduced-motion` respected. All styling stays in `src/styles.css`.
+
+- `tests/no-horizontal-scroll.spec.js` runs every view at 390, 768, 1024 and 1300px.
+- `tests/sidebar.spec.js` covers the collapsible desktop sidebar and the phone drawer.
