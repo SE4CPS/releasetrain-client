@@ -226,6 +226,22 @@
        either, ReleaseTrain simply has no release data for them) as
        "on latest" in the table, which is a claim this system has no basis
        to make. */
+    /* aTypeLabel: the component's type, when the server actually recorded
+       one on the version object (classification.componentType, an array
+       like ["OS","BROWSER"], or the older versionProductType string) -
+       falls back to "" (rendered as a dash) rather than guessing. */
+    function aTypeLabel(v) {
+      const lv = (v.latestVersion || v.currentVersion || {});
+      const ct = (lv.classification && lv.classification.componentType) || [];
+      const tag = Array.isArray(ct) ? ct.find(t => t && !["OS", "HYPERVISOR"].includes(String(t).toUpperCase())) : null;
+      if (tag) {
+        const s = String(tag).trim();
+        return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+      }
+      const pt = String(lv.versionProductType || "").trim();
+      if (pt && !["OS", "Hypervisor"].includes(pt)) return pt;
+      return "";
+    }
     function aColorKey(version) {
       const cur = version.currentVersion || version.latestVersion, lat = version.latestVersion;
       if (!lat) return "nodata";
@@ -554,15 +570,22 @@
       return m;
     }
     // Overlay recorded installed versions onto each component as currentVersion.
+    // Used to require v.latestVersion (a real ReleaseTrain-tracked release) to
+    // even apply the user's OWN recorded install - so a real, uploaded version
+    // (e.g. "TeXInfo 6.8-4build1", scanned and uploaded via the CLI tool) was
+    // silently discarded and the table showed "?" for Installed, for every
+    // component ReleaseTrain simply doesn't track. Applying "what version did
+    // the user actually record" has nothing to do with whether ReleaseTrain
+    // separately tracks a latest release to compare it against.
     function aApplyInventory(vers) {
       const inv = aInventoryMap();
       vers.forEach(v => {
         const iv = inv.get(String(v.name).toLowerCase());
-        if (iv && v.latestVersion) {
+        if (iv) {
           v.currentVersion = {
             versionNumber: iv,
             versionReleaseDate: "",
-            versionProductName: v.latestVersion.versionProductName
+            versionProductName: (v.latestVersion && v.latestVersion.versionProductName) || v.name
           };
           v._hasInstalled = true;
         } else {
@@ -617,7 +640,7 @@
       el.innerHTML =
         `<div class="a-score">Freshness <b>${sc.score}/100</b> &nbsp;·&nbsp; ${sc.behind} behind &nbsp;·&nbsp; ${sc.current} current &nbsp;·&nbsp; ${sc.cve} CVE &nbsp;·&nbsp; ${sc.unknown} version unknown &nbsp;·&nbsp; median lag ${sc.medianLag}d</div>` +
         `<table class="a-drift"><thead><tr>` +
-        `<th>Component</th><th>Installed</th><th>Latest</th><th>Change</th><th>Behind</th><th>CVE</th><th>Community</th>` +
+        `<th>Component</th><th>Type</th><th>Installed</th><th>Latest</th><th>Change</th><th>Behind</th><th>CVE</th><th>Community</th>` +
         `</tr></thead><tbody>` +
         rows.map(r => {
           // Colour only marks a problem. Calm rows stay plain.
@@ -625,8 +648,10 @@
           const chip = r.gap.tier !== "none"
             ? `<span class="a-chip-t rt-bg" style="--rt-bg:${A_FILLS.behind}">${aEsc(aGapLabel(r.gap))}</span>`
             : `<span class="a-muted-note">${statusText}</span>`;
+          const typeLabel = aTypeLabel(r.v);
           return `<tr>` +
             `<td>${aEsc(r.v.name)}</td>` +
+            `<td>${typeLabel ? aEsc(typeLabel) : '<span class="a-muted-note">-</span>'}</td>` +
             `<td class="mono">${r.v._hasInstalled ? aEsc(r.cur.versionNumber) : '<span class="a-muted-note">?</span>'}</td>` +
             `<td class="mono">${aEsc(r.lat.versionNumber || "-")}</td>` +
             `<td>${chip}</td>` +
@@ -807,6 +832,22 @@
       }
       sel.appendChild(group);
     }
+
+    // Empty-state CTA ("Or use your own machine's real software"): jump to
+    // the Account page's own "Installed versions" section (data-ua-group
+    // "saved", selected via the same [data-ua-tab] mechanism the sub-tab
+    // nav buttons already use) rather than duplicating that form here.
+    document.getElementById("a-goToAccountBtn")?.addEventListener("click", () => {
+      if (typeof activateUsers === "function") activateUsers();
+      setTimeout(() => {
+        document.querySelector('[data-ua-tab="saved"]')?.click();
+        const details = document.getElementById("ua-inv-count")?.closest("details");
+        if (details) {
+          details.open = true;
+          details.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 50);
+    });
 
     document.getElementById("a-addStackBtn").addEventListener("click", () => {
       const sel = document.getElementById("a-stackSelect");

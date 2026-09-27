@@ -1871,6 +1871,17 @@ table.a-drift td.mono { font-family: Consolas, Monaco, monospace; }
 }
 .a-empty-foot { max-width: 780px; margin: 22px auto 0; text-align: center; }
 
+/* Real-machine CTA under the sample-stack grid: point at either the
+   Account tab's saved-inventory upload, or the CLI scanner package. */
+.a-empty-real { max-width: 780px; margin: 18px auto 0; padding-top: 18px; border-top: 1px solid var(--border); text-align: center; }
+.a-empty-real-title { margin: 0 0 10px; font-size: 13px; color: var(--muted); }
+.a-empty-real-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 14px; }
+.a-empty-real-cli { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.a-empty-real-cli code {
+  background: var(--chip-bg); border: 1px solid var(--border); border-radius: 6px;
+  padding: 3px 8px; font-family: var(--mono); font-size: 12px; color: var(--text);
+}
+
 /* ── Credits / Ack view ─────────────────────────────────── */
 #ackView {
   position: sticky;
