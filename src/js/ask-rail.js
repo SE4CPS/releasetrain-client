@@ -150,9 +150,9 @@
     });
     // The status dot opens the Account page (useful when the rail hides the Sign in button).
     document.getElementById("authStatusDot")?.addEventListener("click", () => activateUsers());
-    // Prototype Demo quick-load buttons (see their own markup comment):
-    // fills #askQuestion and re-runs the same preview logic typing
-    // would trigger, but never submits -- the presenter clicks Ask
+    // Reddit Update Questions quick-load buttons (see their own markup
+    // comment): fills #askQuestion and re-runs the same preview logic
+    // typing would trigger, but never submits -- the viewer clicks Ask
     // (or presses Enter) themselves, on their own timing.
     const demoQList = document.querySelector(".demo-q-list");
     if (demoQList) demoQList.addEventListener("click", (e) => {
@@ -165,6 +165,41 @@
       updateAskPreview();
       input.focus();
     });
+    // Populates the list above from real Reddit data: GET
+    // /api/reddit/query/questions already returns real, question-shaped
+    // posts the model has flagged metadata.predicted.isUpdateRelated for
+    // (see that route's own comment), newest first. Filtered further,
+    // client-side, to positiveScore > 0.5 - the same "risky post"
+    // threshold ask.js's own redditRisk() uses everywhere else in this
+    // system ("AI-detected isUpdateRelated or score > 0.5") - then
+    // sorted by date (newest first) with score as the tiebreak, per
+    // explicit request. Best-effort: a failed fetch just leaves the
+    // section empty rather than breaking the page.
+    const REDDIT_UPDATE_Q_LIMIT = 8;
+    async function loadRedditUpdateQuestions() {
+      if (!demoQList) return;
+      try {
+        const res = await fetch(`${API_BASE}reddit/query/questions?limit=200&fields=title,url,sourceUrl,created_utc,score,subreddit,metadata.predicted`);
+        if (!res.ok) return;
+        const body = await res.json();
+        const docs = Array.isArray(body.data) ? body.data : [];
+        const risky = docs
+          .map(d => ({ d, riskScore: (d.metadata && d.metadata.predicted && typeof d.metadata.predicted.positiveScore === "number") ? d.metadata.predicted.positiveScore : null }))
+          .filter(({ riskScore }) => riskScore != null && riskScore > 0.5)
+          .sort((a, b) => {
+            const dateDiff = new Date(b.d.created_utc || 0) - new Date(a.d.created_utc || 0);
+            return dateDiff !== 0 ? dateDiff : (b.riskScore - a.riskScore);
+          })
+          .slice(0, REDDIT_UPDATE_Q_LIMIT);
+        if (!risky.length) return;
+        demoQList.innerHTML = risky.map(({ d, riskScore }) => {
+          const dateStr = d.created_utc ? new Date(d.created_utc).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
+          const meta = [d.subreddit ? `r/${d.subreddit}` : null, `risk ${riskScore.toFixed(2)}`, dateStr].filter(Boolean).join(" &middot; ");
+          return `<button type="button" class="demo-q-btn" data-q="${uaEsc(d.title || "")}">${uaEsc(d.title || "")}<span class="demo-q-meta">${meta}</span></button>`;
+        }).join("");
+      } catch { /* best-effort: an empty section beats a broken page */ }
+    }
+    loadRedditUpdateQuestions();
     let askRailData = null; // { label, res, question } backing "Show full answer": re-renders untrimmed from the same data, no second request
     function wireAskRailBody(body) {
       askWireRateButtons(body);

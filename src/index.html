@@ -330,32 +330,29 @@
     <!-- ── Menu drawer: views + search/filters, opened via the ☰ button ── -->
     <aside class="sidebar" id="sidebar" aria-label="Menu">
 
-      <!-- Prototype Demo: quick-load buttons for the RISE seminar talk
-           (per explicit request, "to simplify the Presentation
-           tomorrow"), one per paper's own motivating question, so the
-           presenter can click instead of retyping a question live.
-           Loads the text into #askQuestion (and re-runs the same
-           preview update typing would trigger) but does NOT submit --
-           "load", not "run", so the presenter keeps control of timing.
-           Placed first, above Menu: relocateAskOptionsPanel (below)
-           always re-inserts #askOptionsPanel as navLinksDetails' own
-           next sibling, so anything placed after Menu in the markup
-           gets pushed below Model & pipeline/Advanced checks/Guardrails
-           at runtime regardless of source order -- putting this block
-           before navLinksDetails instead is the only placement that
-           reliably stays at the top. Open by default (unlike every
-           other .sb-details group here): this is the one thing that
-           actually needs to be visible without an extra click. -->
+      <!-- Reddit Update Questions (was "Prototype Demo": hand-written
+           RISE-seminar sample questions, replaced per explicit request
+           with real ones): quick-load buttons sourced live from GET
+           /api/reddit/query/questions, filtered client-side to
+           metadata.predicted.positiveScore > 0.5 (the same "risky post"
+           threshold used everywhere else in this system, see ask.js's
+           own redditRisk()) and sorted by date then score - see
+           loadRedditUpdateQuestions in ask-rail.js. Clicking one loads
+           the text into #askQuestion (and re-runs the same preview
+           update typing would trigger) but does NOT submit - "load", not
+           "run", so the viewer keeps control of timing. Placed first,
+           above Menu: relocateAskOptionsPanel (below) always re-inserts
+           #askOptionsPanel as navLinksDetails' own next sibling, so
+           anything placed after Menu in the markup gets pushed below
+           Model & pipeline/Advanced checks/Guardrails at runtime
+           regardless of source order -- putting this block before
+           navLinksDetails instead is the only placement that reliably
+           stays at the top. Open by default (unlike every other
+           .sb-details group here): this is the one thing that actually
+           needs to be visible without an extra click. -->
       <details class="sb-details" id="demoQuestionsDetails" open>
-        <summary>Prototype Demo</summary>
-        <div class="demo-q-list" role="list" aria-label="Example questions from the talk, one per question type">
-          <button type="button" class="demo-q-btn" data-q="Which is more stable right now, Zoom or Teams?">Which is more stable right now, Zoom or Teams?<span class="demo-q-meta">Comparison &middot; 1 agent (fixed path)</span></button>
-          <button type="button" class="demo-q-btn" data-q="Is there a known vulnerability in the latest Zoom update?">Is there a known vulnerability in the latest Zoom update?<span class="demo-q-meta">CVE &middot; Multi-agent</span></button>
-          <button type="button" class="demo-q-btn" data-q="Has Teams fixed the screen-share bug yet?">Has Teams fixed the screen-share bug yet?<span class="demo-q-meta">Patch &middot; Multi-agent</span></button>
-          <button type="button" class="demo-q-btn" data-q="What's the latest version of Teams?">What&rsquo;s the latest version of Teams?<span class="demo-q-meta">Version &middot; Single-agent</span></button>
-          <button type="button" class="demo-q-btn" data-q="Do you recommend browser-based Zoom for my important meeting?">Do you recommend browser-based Zoom for my important meeting?<span class="demo-q-meta">Opinion &middot; Single-agent</span></button>
-          <button type="button" class="demo-q-btn" data-q="What are people saying about Teams stability lately?">What are people saying about Teams stability lately?<span class="demo-q-meta">General &middot; Multi-agent</span></button>
-        </div>
+        <summary>Reddit Update Questions</summary>
+        <div class="demo-q-list" role="list" aria-label="Real community questions about a recent software update, ranked by update-risk score"></div>
       </details>
 
       <!-- Collapsed by default, same as every other .sb-details group in
