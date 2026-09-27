@@ -3141,3 +3141,6 @@ select.ua-settings-input { width: auto; max-width: 100%; }
 .ua-data-table .ua-num { text-align: right; padding-right: 0; padding-left: 8px; font-variant-numeric: tabular-nums; }
 .ua-mono { font-family: Consolas, ui-monospace, monospace; }
 .ua-visits-note { font-size: 12px; margin: 10px 0 0; }
+.ua-data-table tr.ua-row-today td { background: rgba(22, 163, 74, 0.10); }
+.ua-visits-today-key { margin-left: 8px; padding: 1px 8px; border-radius: 8px; background: rgba(22, 163, 74, 0.10); color: #166534; font-size: 11px; text-transform: none; letter-spacing: 0; font-weight: 500; }
+.ua-data-table .ua-num + td { padding-left: 16px; }

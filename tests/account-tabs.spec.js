@@ -52,6 +52,15 @@ const VISITS = {
       page: 'home',
       browser: 'Chrome',
     },
+    {
+      ip: '81.2.69.142',
+      country: 'GB',
+      visits: 3,
+      ask: 0,
+      last: new Date().toISOString(),
+      page: 'docs',
+      browser: 'Firefox',
+    },
   ],
 };
 
@@ -136,6 +145,9 @@ test('admin sees the 14-day unique and total visitors chart, and the Visits tab'
   await expect(page.locator('#ua-visits-countries')).toContainText('United States (US)');
   await expect(page.locator('#ua-visits-countries')).toContainText('Unknown');
   await expect(page.locator('#ua-visits-visitors')).toContainText('138.9.74.3');
+  // rows for visitors seen today get the subtle green background; older ones do not
+  await expect(page.locator('#ua-visits-visitors tr.ua-row-today')).toHaveCount(1);
+  await expect(page.locator('#ua-visits-visitors tr.ua-row-today')).toContainText('81.2.69.142');
 });
 
 test('a normal user does not see the visitors chart', async ({ page }) => {

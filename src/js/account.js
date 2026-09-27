@@ -932,7 +932,7 @@
       $("ua-visits-refs").innerHTML = uaVisitsTable(["Referrer", "Visits"],
         data.referrers.map((r) => `<tr><td>${uaEsc(r.host)}</td><td class="ua-num">${r.visits}</td></tr>`), "No visits yet.");
       $("ua-visits-visitors").innerHTML = uaVisitsTable(["IP address", "Country", "Visits", "Asked", "Last seen", "View", "Browser"],
-        data.visitors.map((v) => `<tr><td class="ua-mono">${uaEsc(v.ip)}</td><td>${uaEsc(uaCountryLabel(v.country))}</td><td class="ua-num">${v.visits}</td><td class="ua-num">${v.ask}</td><td>${uaEsc(new Date(v.last).toLocaleString())}</td><td>${uaEsc(v.page || "")}</td><td>${uaEsc(v.browser || "")}</td></tr>`),
+        data.visitors.map((v) => `<tr${new Date(v.last).toDateString() === new Date().toDateString() ? ' class="ua-row-today"' : ""}><td class="ua-mono">${uaEsc(v.ip)}</td><td>${uaEsc(uaCountryLabel(v.country))}</td><td class="ua-num">${v.visits}</td><td class="ua-num">${v.ask}</td><td>${uaEsc(new Date(v.last).toLocaleString())}</td><td>${uaEsc(v.page || "")}</td><td>${uaEsc(v.browser || "")}</td></tr>`),
         "No visitors in this period.");
     }
     document.getElementById("ua-refresh-visits")?.addEventListener("click", (e) => { e.preventDefault(); uaLoadVisitsTab(); uaLoadVisitsChart(); });
