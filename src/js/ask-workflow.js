@@ -432,26 +432,16 @@
       return parts.length ? `<div class="ask-query-preview">${parts.join(" · ")}</div>` : "";
     }
 
-    // One combined dropdown, two sources: real component names (the
-    // old Search box's own autocomplete, instant/local; see
-    // suggestionPool/getCurrentToken/replaceCurrentToken/highlightMatch
-    // further down this file) and real past community questions (GET
-    // /api/reddit/query/questions/suggest, public, no sign-in/LLM-call
-    // needed, a real relevance ranking server-side). Component matches
-    // show immediately since they cost nothing; question matches are
-    // appended once that request returns, without discarding whichever
-    // component matches are already on screen. Picking a question fills
-    // the whole input (it may already be answered); picking a component
-    // replaces just the current comma-separated token, so "chrome, fire"
-    // style multi-component entry still works.
-    // A local debounce timer rather than the shared debounce() helper
-    // further down this file. That's a `const`, and this code executes
-    // well before its declaration is reached, so referencing it here
-    // would throw (temporal dead zone), not silently do nothing.
+    // Dropdown source: real component names only (the old Search box's
+    // own autocomplete, instant/local; see suggestionPool/getCurrentToken/
+    // replaceCurrentToken/highlightMatch further down this file). Used to
+    // also merge in real past community questions (GET /api/reddit/query/
+    // questions/suggest) as a second, async-appended source, removed per
+    // explicit request - picking a component replaces just the current
+    // comma-separated token, so "chrome, fire" style multi-component entry
+    // still works.
     const askSuggestionsEl = document.getElementById("askSuggestions");
-    let askSuggestTimer = null;
     let askSuggestActiveIdx = -1;
-    let askSuggestSeq = 0; // guards against an earlier, slower request overwriting a later one
     // A component's own latest-version bracket (e.g. "Android (latest:
     // 17.0.0)"), shown both here in the Ask suggestion dropdown and on
     // each feed group's own header (see renderComponentNode further
@@ -551,21 +541,16 @@
     function showAskSuggestions(items) {
       askSuggestActiveIdx = -1;
       const gen = ++askSuggestRenderGen;
-      askSuggestionsEl.innerHTML = items.map((it, i) => it.kind === "component"
-        ? `<li role="option" data-kind="component" data-val="${uaEsc(it.value)}">
-             <span class="ask-suggestion-text">🧩 ${it.html}</span>
-             <span class="ask-suggestion-ver" data-ver-slot="${i}"></span>
-           </li>`
-        : `<li role="option" data-kind="question" data-question="${uaEsc(it.question)}" data-url="${uaEsc(it.url || "")}">
-             <span class="ask-suggestion-text">💬 ${uaEsc(it.question)}</span>
-             ${it.subreddit ? `<span class="ask-suggestion-sub">r/${uaEsc(it.subreddit)}</span>` : ""}
-           </li>`
+      askSuggestionsEl.innerHTML = items.map((it, i) => `
+        <li role="option" data-kind="component" data-val="${uaEsc(it.value)}">
+          <span class="ask-suggestion-text">🧩 ${it.html}</span>
+          <span class="ask-suggestion-ver" data-ver-slot="${i}"></span>
+        </li>`
       ).join("");
       askSuggestionsEl.classList.add("open");
-      // Shown always, for every component row, once it resolves; not
-      // conditional on anything beyond "this row is still on screen".
+      // Shown always, for every row, once it resolves; not conditional on
+      // anything beyond "this row is still on screen".
       items.forEach((it, i) => {
-        if (it.kind !== "component") return;
         fetchLatestVersionFor(it.value).then(({ version }) => {
           if (gen !== askSuggestRenderGen || !version) return;
           const slot = askSuggestionsEl.querySelector(`[data-ver-slot="${i}"]`);
@@ -574,41 +559,15 @@
       });
     }
     function pickAskSuggestion(li) {
-      if (li.dataset.kind === "component") {
-        askQuestionEl.value = replaceCurrentToken(askQuestionEl.value, li.dataset.val);
-      } else {
-        askQuestionEl.value = li.dataset.question;
-      }
+      askQuestionEl.value = replaceCurrentToken(askQuestionEl.value, li.dataset.val);
       hideAskSuggestions();
       updateAskPreview();
       askQuestionEl.focus();
     }
     askQuestionEl.addEventListener("input", () => {
-      clearTimeout(askSuggestTimer);
-      const raw = askQuestionEl.value;
-      const q = raw.trim();
-      const componentMatches = computeComponentMatches(raw);
-      if (q.length < 3) {
-        // Too short for a real-question search, so show component
-        // matches alone if there are any, since those cost nothing to compute.
-        if (componentMatches.length) showAskSuggestions(componentMatches);
-        else hideAskSuggestions();
-        return;
-      }
+      const componentMatches = computeComponentMatches(askQuestionEl.value);
       if (componentMatches.length) showAskSuggestions(componentMatches);
-      askSuggestTimer = setTimeout(async () => {
-        const seq = ++askSuggestSeq;
-        try {
-          const res = await fetch(`${API_BASE}reddit/query/questions/suggest?q=${encodeURIComponent(q)}&limit=6`);
-          if (!res.ok) return;
-          const data = await res.json();
-          if (seq !== askSuggestSeq) return; // a newer keystroke already fired its own request
-          const questionMatches = (data.results || []).map(it => ({ kind: "question", ...it }));
-          const combined = componentMatches.concat(questionMatches);
-          if (!combined.length) { hideAskSuggestions(); return; }
-          showAskSuggestions(combined);
-        } catch { /* best-effort: typeahead failing silently beats blocking on it */ }
-      }, 250);
+      else hideAskSuggestions();
     });
     askQuestionEl.addEventListener("keydown", e => {
       if (!askSuggestionsEl.classList.contains("open")) return;
