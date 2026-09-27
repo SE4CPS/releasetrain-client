@@ -1,10 +1,44 @@
 // inventory.js: part of the app script; classic script, loaded in order by index.html (see the script list at the end of the page).
 
     /* ── Installed versions (account inventory) ───────────────── */
-    // Shape: [{ component: string, version: string }]. Persisted on the user
-    // document via PUT users/:id and mirrored to localStorage so the Arch view
-    // (and offline reloads) can read it without a round-trip.
+    // Shape: [{ component: string, version: string, vendor?: string, machine?: string }].
+    // vendor/machine are both optional and omitted from a saved entry entirely
+    // when blank (see the server's identical rule in PUT users/:id). vendor
+    // exists because ReleaseTrain only tracks a bare product name, no
+    // publisher field, so "Google Chrome" needs somewhere to keep "Google"
+    // once matched down to "Chrome". machine exists for a user with more than
+    // one computer, where the same component can legitimately be a different
+    // version on each one. Persisted on the user document via PUT users/:id
+    // and mirrored to localStorage so the Arch view (and offline reloads) can
+    // read it without a round-trip.
     const RT_INV_KEY = "rt_inventory";
+    function uaInvKey(component, vendor, machine) {
+      return component.toLowerCase() + "|" + (vendor || "").toLowerCase() + "|" + (machine || "").toLowerCase();
+    }
+    // A row is no longer uniquely identified by component alone (two
+    // vendors, or two machines, can share one), so every lookup needs the
+    // full (component, vendor, machine) triple, not just a component match.
+    function uaInvFind(list, component, vendor, machine) {
+      return list.findIndex(e => e.component === component && (e.vendor || "") === (vendor || "") && (e.machine || "") === (machine || ""));
+    }
+    // Small relative-time label for a "when did ReleaseTrain last check
+    // this component" stamp. Not shared with uaLoadSearchEvents' own
+    // near-identical relTime() further down this file, which is scoped to
+    // that function's own event-timestamp formatting.
+    function uaRelTime(iso) {
+      if (!iso) return "";
+      const ms = Date.now() - new Date(iso).getTime();
+      if (!Number.isFinite(ms)) return "";
+      if (ms < 0) return "just now";
+      const min = Math.floor(ms / 60000);
+      if (min < 1) return "just now";
+      if (min < 60) return min + "m ago";
+      const hr = Math.floor(min / 60);
+      if (hr < 24) return hr + "h ago";
+      const day = Math.floor(hr / 24);
+      if (day < 30) return day + "d ago";
+      return new Date(iso).toISOString().slice(0, 10);
+    }
 
     // Pulls the server's copy of the inventory on Account-page load and
     // reconciles it into localStorage, so a user switching devices/browsers
@@ -31,16 +65,22 @@
       catch { return []; }
     }
     function uaInvNormalize(arr) {
-      const seen = new Set(), out = [];
+      const seen = new Map(), out = [];
       for (const raw of (Array.isArray(arr) ? arr : [])) {
         const component = String(raw && raw.component || "").trim().slice(0, 64);
         const version = String(raw && raw.version || "").trim().slice(0, 32);
+        const vendor = String(raw && raw.vendor || "").trim().slice(0, 64);
+        const machine = String(raw && raw.machine || "").trim().slice(0, 80);
         if (!component || !version) continue;
-        const key = component.toLowerCase();
-        if (seen.has(key)) { out[out.findIndex(e => e.component.toLowerCase() === key)] = { component, version }; continue; }
-        seen.add(key); out.push({ component, version });
+        const entry = { component, version };
+        if (vendor) entry.vendor = vendor;
+        if (machine) entry.machine = machine;
+        const key = uaInvKey(component, vendor, machine);
+        if (seen.has(key)) { out[seen.get(key)] = entry; continue; }
+        seen.set(key, out.length); out.push(entry);
       }
-      out.sort((a, b) => a.component.toLowerCase().localeCompare(b.component.toLowerCase()));
+      out.sort((a, b) => a.component.toLowerCase().localeCompare(b.component.toLowerCase())
+        || (a.machine || "").localeCompare(b.machine || "") || (a.vendor || "").localeCompare(b.vendor || ""));
       return out;
     }
     function uaInvValidVersion(v) { return /^[a-zA-Z0-9][a-zA-Z0-9 ._+:-]*$/.test(v); }
@@ -110,35 +150,51 @@
         return;
       }
       if (emptyEl) setDisplay(emptyEl, "none");
-      listEl.innerHTML = inv.map(e => `<div class="ua-bm-item" data-comp="${uaEsc(e.component)}">
+      listEl.innerHTML = inv.map(e => `<div class="ua-bm-item" data-comp="${uaEsc(e.component)}" data-vendor="${uaEsc(e.vendor || "")}" data-machine="${uaEsc(e.machine || "")}">
         <div class="st-255" >
           <span class="ua-bm-name" title="${uaEsc(e.component)}">${uaEsc(e.component)}</span>
+          ${e.vendor ? `<span class="ua-inv-vendor-chip" title="Vendor">${uaEsc(e.vendor)}</span>` : ""}
+          ${e.machine ? `<span class="ua-inv-machine-chip" title="Machine">${uaEsc(e.machine)}</span>` : ""}
           <span class="st-256 ua-org-chip" >${uaEsc(e.version)}</span>
           <span class="u-show-block st-257 ua-inv-drift ua-muted" >checking latest…</span>
         </div>
         <div class="ua-bm-actions">
-          <button class="st-258 btn btn-ghost ua-inv-edit-btn" data-comp="${uaEsc(e.component)}" data-ver="${uaEsc(e.version)}" >Edit</button>
-          <button class="st-259 btn btn-ghost ua-inv-del-btn" data-comp="${uaEsc(e.component)}" >Delete</button>
+          <button class="st-258 btn btn-ghost ua-inv-edit-btn" data-comp="${uaEsc(e.component)}" data-vendor="${uaEsc(e.vendor || "")}" data-machine="${uaEsc(e.machine || "")}" data-ver="${uaEsc(e.version)}" >Edit</button>
+          <button class="st-259 btn btn-ghost ua-inv-del-btn" data-comp="${uaEsc(e.component)}" data-vendor="${uaEsc(e.vendor || "")}" data-machine="${uaEsc(e.machine || "")}" >Delete</button>
         </div>
       </div>`).join("");
       uaInvAnnotate(inv);
 
       listEl.querySelectorAll(".ua-inv-del-btn").forEach(btn => {
         btn.addEventListener("click", async () => {
-          const comp = btn.dataset.comp;
-          await uaInvApply(uaInvGet().filter(e => e.component !== comp), "Removed " + comp + ".");
+          const { comp, vendor, machine } = btn.dataset;
+          const cur = uaInvGet();
+          const i = uaInvFind(cur, comp, vendor, machine);
+          if (i < 0) return;
+          cur.splice(i, 1);
+          await uaInvApply(cur, "Removed " + comp + ".");
         });
       });
       listEl.querySelectorAll(".ua-inv-edit-btn").forEach(btn => {
         btn.addEventListener("click", async () => {
-          const comp = btn.dataset.comp;
-          const next = prompt("Version for " + comp + ":", btn.dataset.ver);
-          if (next === null) return;
-          const v = next.trim();
+          const { comp, vendor, machine } = btn.dataset;
+          const nextVer = prompt("Version for " + comp + ":", btn.dataset.ver);
+          if (nextVer === null) return;
+          const v = nextVer.trim();
           if (!v || !uaInvValidVersion(v)) { uaInvMsg("Invalid version string.", "error"); return; }
+          const nextVendor = prompt("Vendor for " + comp + " (blank for none):", vendor);
+          if (nextVendor === null) return;
+          const nextMachine = prompt("Machine for " + comp + " (blank for none):", machine);
+          if (nextMachine === null) return;
           const cur = uaInvGet();
-          const i = cur.findIndex(e => e.component === comp);
-          if (i >= 0) cur[i] = { component: comp, version: v };
+          const i = uaInvFind(cur, comp, vendor, machine);
+          if (i >= 0) {
+            const entry = { component: comp, version: v };
+            const vd = nextVendor.trim(), mc = nextMachine.trim();
+            if (vd) entry.vendor = vd;
+            if (mc) entry.machine = mc;
+            cur[i] = entry;
+          }
           await uaInvApply(cur, "Updated " + comp + ".");
         });
       });
@@ -178,9 +234,9 @@
         }
       }
       document.querySelectorAll("#ua-inv-list .ua-bm-item").forEach(row => {
-        const comp = row.dataset.comp;
+        const { comp, vendor, machine } = row.dataset;
         const slot = row.querySelector(".ua-inv-drift");
-        const entry = rows.find(e => e.component === comp);
+        const entry = rows.find(e => e.component === comp && (e.vendor || "") === vendor && (e.machine || "") === machine);
         if (!slot || !entry) return;
         const rec = byName.get(String(comp).toLowerCase());
         const lv = rec && rec.latestVersion && rec.latestVersion.versionNumber;
@@ -188,16 +244,26 @@
           ? { code: aExtractCveCode(rec.latestCveVersion.versionUrl) }
           : cveByName.get(String(comp).toLowerCase());
         const cveHtml = cve ? ` <span class="st-260" >· ${uaEsc(cve.code)}${cve.date ? " (" + cve.date.slice(4, 6) + "/" + cve.date.slice(6, 8) + ")" : ""}</span>` : "";
+        // When ReleaseTrain itself last saw/updated this component's latest-
+        // release record, not when this browser happened to run the check
+        // just now - versionTimestampLastUpdate is the real per-component
+        // scrape time, versionTimestamp (epoch ms) is its own fallback.
+        const lvDoc = rec && rec.latestVersion;
+        const fetchedIso = lvDoc && (lvDoc.versionTimestampLastUpdate
+          || (lvDoc.versionTimestamp ? new Date(lvDoc.versionTimestamp).toISOString() : null));
+        const fetchedHtml = fetchedIso
+          ? ` <span class="ua-muted ua-inv-fetched" title="Checked ${uaEsc(fetchedIso)}">· checked ${uaEsc(uaRelTime(fetchedIso))}</span>`
+          : "";
         if (!lv) { slot.innerHTML = "no release data" + cveHtml; return; }
         const gap = aVerGap(entry.version, lv);
         if (gap.tier === "none") {
-          slot.innerHTML = `<span class="ua-muted">on latest (${uaEsc(lv)})</span>` + cveHtml;
+          slot.innerHTML = `<span class="ua-muted">on latest (${uaEsc(lv)})</span>` + cveHtml + fetchedHtml;
           return;
         }
         const color = A_FILLS.behind;
         slot.innerHTML =
           `<span class="st-261 ua-org-chip rt-bg" style="--rt-bg:${color}">→ ${uaEsc(lv)}</span> `
-          + `<span class="ua-muted">${uaEsc(aGapLabel(gap))} behind</span>` + cveHtml;
+          + `<span class="ua-muted">${uaEsc(aGapLabel(gap))} behind</span>` + cveHtml + fetchedHtml;
       });
     }
 
@@ -207,12 +273,19 @@
       e.preventDefault();
       const compEl = document.getElementById("ua-inv-comp");
       const verEl = document.getElementById("ua-inv-ver");
+      const vendorEl = document.getElementById("ua-inv-vendor");
+      const machineEl = document.getElementById("ua-inv-machine");
       const component = compEl.value.trim();
       const version = verEl.value.trim();
+      const vendor = vendorEl.value.trim();
+      const machine = machineEl.value.trim();
       if (!component || !version) return;
       if (!uaInvValidVersion(version)) { uaInvMsg("Version must start alphanumeric; letters, digits, . _ + : - only.", "error"); return; }
-      await uaInvApply([...uaInvGet(), { component, version }], "Added " + component + ".");
-      compEl.value = ""; verEl.value = ""; compEl.focus();
+      const entry = { component, version };
+      if (vendor) entry.vendor = vendor;
+      if (machine) entry.machine = machine;
+      await uaInvApply([...uaInvGet(), entry], "Added " + component + ".");
+      compEl.value = ""; verEl.value = ""; vendorEl.value = ""; machineEl.value = ""; compEl.focus();
     });
 
     document.getElementById("ua-inv-bulk-btn").addEventListener("click", async () => {
@@ -222,13 +295,29 @@
       const merged = uaInvGet();
       let added = 0, skipped = 0;
       for (const line of rows) {
-        const m = line.match(/^(.+?)\s*(?:@|,|\s)\s*([^\s,@]+)\s*$/);
-        if (!m) { skipped++; continue; }
-        const component = m[1].trim().slice(0, 64);
-        const version = m[2].trim().slice(0, 32);
+        // component@version@vendor@machine (3 or 4 @-separated segments; a
+        // blank segment, e.g. "apache@2.4.58@@Web Server", just skips that
+        // field) takes priority over the plain 2-field forms, since a bare
+        // "@"-joined line with 3+ parts can't also match the simple form.
+        const atParts = line.split("@");
+        let component, version, vendor = "", machine = "";
+        if (atParts.length >= 3) {
+          component = atParts[0].trim().slice(0, 64);
+          version = atParts[1].trim().slice(0, 32);
+          vendor = (atParts[2] || "").trim().slice(0, 64);
+          machine = (atParts[3] || "").trim().slice(0, 80);
+        } else {
+          const m = line.match(/^(.+?)\s*(?:@|,|\s)\s*([^\s,@]+)\s*$/);
+          if (!m) { skipped++; continue; }
+          component = m[1].trim().slice(0, 64);
+          version = m[2].trim().slice(0, 32);
+        }
         if (!component || !version || !uaInvValidVersion(version)) { skipped++; continue; }
-        const i = merged.findIndex(e => e.component.toLowerCase() === component.toLowerCase());
-        if (i >= 0) merged[i] = { component, version }; else merged.push({ component, version });
+        const entry = { component, version };
+        if (vendor) entry.vendor = vendor;
+        if (machine) entry.machine = machine;
+        const i = uaInvFind(merged, component, vendor, machine);
+        if (i >= 0) merged[i] = entry; else merged.push(entry);
         added++;
       }
       if (!added) { uaInvMsg("No valid lines found.", "error"); return; }

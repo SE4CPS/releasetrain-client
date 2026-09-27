@@ -17,7 +17,7 @@
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-P5E77Z7VG5"></script>
   
 
-  <link rel="stylesheet" href="styles.css?v=3.141.2">
+  <link rel="stylesheet" href="styles.css?v=3.142.0">
 </head>
 
 <body>
@@ -33,7 +33,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.141.2"><span class="brand-name">Releasetrain </span><em>v3.141.2</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.142.0"><span class="brand-name">Releasetrain </span><em>v3.142.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2037,6 +2037,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-09-26</div>
+              <div class="cl-ver cl-ver-minor">v3.142.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Installed versions: vendor and machine</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feature">feature</span> Installed versions now records an optional vendor and machine per entry (so a same-named component from a different vendor, or the same component on a different machine, no longer overwrites another saved entry), plus a per-component checked-at timestamp</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-09-26</div>
@@ -5941,6 +5953,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <form id="ua-inv-add-form"  class="u-show-flex st-133">
               <input id="ua-inv-comp" list="ua-comp-names" class="search-input st-134" placeholder="component (e.g. apache)" maxlength="64" autocomplete="off" required />
               <input id="ua-inv-ver" class="search-input st-135" placeholder="version (e.g. 2.4.58)" maxlength="32" autocomplete="off" required />
+              <input id="ua-inv-vendor" class="search-input ua-inv-field-sm" placeholder="vendor (optional)" maxlength="64" autocomplete="off" />
+              <input id="ua-inv-machine" class="search-input ua-inv-field-sm" placeholder="machine (optional)" maxlength="80" autocomplete="off" />
               <button class="btn btn-primary st-59" type="submit">Add</button>
             </form>
             <datalist id="ua-comp-names"></datalist>
@@ -5949,8 +5963,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                 <span class="st-138">›</span> Paste a list
               </summary>
               <div class="st-47">
-                <p class="ua-muted st-139">One per line: <code>component@version</code>, <code>component version</code>, or <code>component,version</code>. Existing entries are updated.</p>
-                <textarea id="ua-inv-bulk" class="search-input st-140" rows="5" placeholder="apache@2.4.58&#10;php 8.1.0&#10;nginx,1.27.2"></textarea>
+                <p class="ua-muted st-139">One per line: <code>component@version</code>, <code>component version</code>, or <code>component,version</code>. To also record vendor/machine, use <code>component@version@vendor@machine</code> (leave a segment blank to skip it, e.g. <code>apache@2.4.58@@Web Server</code>). Existing entries (matched by component + vendor + machine) are updated.</p>
+                <textarea id="ua-inv-bulk" class="search-input st-140" rows="5" placeholder="apache@2.4.58&#10;chrome@154.0.8037.58@Google@Laptop&#10;nginx,1.27.2"></textarea>
                 <button id="ua-inv-bulk-btn" class="btn btn-ghost st-141" type="button">Import</button>
               </div>
             </details>
@@ -6382,22 +6396,22 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
     <p class="st-181">Changing the PlantUML server updates where images are fetched from for this session.</p>
   </dialog>
 
-  <script src="js/core.js?v=3.141.2"></script>
-  <script src="js/ask.js?v=3.141.2"></script>
-  <script src="js/ask-workflow.js?v=3.141.2"></script>
-  <script src="js/ask-rail.js?v=3.141.2"></script>
-  <script src="js/helpers.js?v=3.141.2"></script>
-  <script src="js/graph.js?v=3.141.2"></script>
-  <script src="js/arch.js?v=3.141.2"></script>
-  <script src="js/docs.js?v=3.141.2"></script>
-  <script src="js/eval.js?v=3.141.2"></script>
-  <script src="js/feed.js?v=3.141.2"></script>
-  <script src="js/cve.js?v=3.141.2"></script>
-  <script src="js/risk.js?v=3.141.2"></script>
-  <script src="js/network.js?v=3.141.2"></script>
-  <script src="js/account.js?v=3.141.2"></script>
-  <script src="js/inventory.js?v=3.141.2"></script>
-  <script src="js/main.js?v=3.141.2"></script>
+  <script src="js/core.js?v=3.142.0"></script>
+  <script src="js/ask.js?v=3.142.0"></script>
+  <script src="js/ask-workflow.js?v=3.142.0"></script>
+  <script src="js/ask-rail.js?v=3.142.0"></script>
+  <script src="js/helpers.js?v=3.142.0"></script>
+  <script src="js/graph.js?v=3.142.0"></script>
+  <script src="js/arch.js?v=3.142.0"></script>
+  <script src="js/docs.js?v=3.142.0"></script>
+  <script src="js/eval.js?v=3.142.0"></script>
+  <script src="js/feed.js?v=3.142.0"></script>
+  <script src="js/cve.js?v=3.142.0"></script>
+  <script src="js/risk.js?v=3.142.0"></script>
+  <script src="js/network.js?v=3.142.0"></script>
+  <script src="js/account.js?v=3.142.0"></script>
+  <script src="js/inventory.js?v=3.142.0"></script>
+  <script src="js/main.js?v=3.142.0"></script>
 </body>
 
 </html>

@@ -2220,6 +2220,19 @@ select.ua-settings-input { width: auto; max-width: 100%; }
 .ua-why-list li { font-size: 12px; color: var(--muted); display: flex; gap: 8px; align-items: flex-start; }
 .ua-why-list li span { flex-shrink: 0; }
 
+/* Installed versions: the optional vendor/machine inputs on the add form
+   (#ua-inv-add-form), sized like #ua-inv-ver's own st-135 flex rule. The
+   vendor/machine chips on a saved row reuse .ua-org-chip's own look but in
+   a neutral gray, distinct from the version chip's brand color, since they
+   describe the entry rather than being the value itself. */
+.ua-inv-field-sm { flex: 0 1 130px !important; min-width: 0 !important; }
+.ua-inv-vendor-chip, .ua-inv-machine-chip {
+  display: inline-block; padding: 1px 7px; border-radius: var(--radius-full);
+  font-size: 11px; font-weight: 600; background: var(--chip-bg);
+  color: var(--muted); border: 1px solid var(--border);
+}
+.ua-inv-fetched { font-size: 11px; }
+
 /* ── Admin dashboard (system overview) ─────────────────────
    Cards use flex-wrap so they reflow to a single column on a
    narrow/phone screen with no separate media query needed - each
