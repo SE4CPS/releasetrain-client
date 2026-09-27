@@ -788,7 +788,6 @@
       return vers;
     }
 
-    let A_EMPTY_BUILT = false;
     const A_MODES = ["diagram", "table", "mermaid"];
     let A_MODE = A_MODES.includes(localStorage.getItem("rt_arch_mode")) ? localStorage.getItem("rt_arch_mode") : "diagram";
 
@@ -866,30 +865,14 @@
         }).join("") +
         `</tbody></table>`;
     }
-    function aBuildEmptyState() {
-      if (A_EMPTY_BUILT) return; A_EMPTY_BUILT = true;
-      const grid = aEl("stackGrid"); if (!grid) return;
-      grid.innerHTML = A_STACKS.map(s => `
-        <button type="button" class="a-stack-card" data-comps="${s.components.join(",")}">
-          <span class="a-stack-card-name">${s.name}</span>
-          <span class="a-stack-card-chips">${s.components.map(c => `<span class="a-chip">${c}</span>`).join("")}</span>
-        </button>`).join("");
-      grid.querySelectorAll(".a-stack-card").forEach(btn => {
-        btn.addEventListener("click", () => {
-          EL.components.value = btn.dataset.comps.split(",").join(", ");
-          aLoadAndRender();
-        });
-      });
-    }
     function aShowEmptyState() {
       const loader = aEl("loader"), titleEl = aEl("title");
       if (loader) setDisplay(loader, "none");
-      if (titleEl) titleEl.textContent = "Pick a stack to begin";
+      if (titleEl) titleEl.textContent = "Add your own components to begin";
       const c = aCanvasEl(); if (c) setDisplay(c, "none");
       const t = aEl("table"); if (t) setDisplay(t, "none");
       const m = aEl("mermaid"); if (m) setDisplay(m, "none");
       const e = aEl("empty"); if (e) setDisplay(e, "block");
-      aBuildEmptyState();
     }
 
     async function aLoadUpdatedToday() {

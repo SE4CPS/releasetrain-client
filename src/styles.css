@@ -1862,32 +1862,15 @@ table.a-drift td.mono { font-family: Consolas, Monaco, monospace; }
 .a-empty-head { max-width: 780px; margin: 0 auto 22px; text-align: center; }
 .a-empty-head h3 { margin: 0 0 6px; font-size: 16px; font-weight: 800; color: var(--text); }
 .a-empty-head p { margin: 0 auto; max-width: 620px; font-size: 12.5px; line-height: 1.6; color: var(--muted); }
-.a-stack-grid {
-  max-width: 780px; margin: 0 auto;
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px;
-}
-.a-stack-card {
-  display: flex; flex-direction: column; gap: 9px; align-items: flex-start;
-  padding: 14px; border: 1px solid var(--border); border-radius: var(--radius);
-  background: var(--surface); box-shadow: var(--shadow-sm); cursor: pointer;
-  text-align: left; font: inherit; color: inherit;
-  transition: border-color .15s, box-shadow .15s, transform .15s;
-}
-.a-stack-card:hover { border-color: var(--brand); box-shadow: var(--shadow-md); transform: translateY(-2px); }
-.a-stack-card:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-.a-stack-card-name { font-size: 13px; font-weight: 800; letter-spacing: .03em; color: var(--brand); }
-.a-stack-card-chips { display: flex; flex-wrap: wrap; gap: 5px; }
-.a-stack-card .a-chip {
-  font-size: 10.5px; font-weight: 600; padding: 2px 7px; border-radius: 999px;
-  background: var(--chip-bg); color: var(--chip-text); border: 1px solid var(--border);
-}
-.a-empty-foot { max-width: 780px; margin: 22px auto 0; text-align: center; }
-
-/* Real-machine CTA under the sample-stack grid: point at either the
+/* Real-machine CTA: the primary suggestion on this screen (no more
+   sample-stack cards to pick from instead) - point at either the
    Account tab's saved-inventory upload, or the CLI scanner package. */
-.a-empty-real { max-width: 780px; margin: 18px auto 0; padding-top: 18px; border-top: 1px solid var(--border); text-align: center; }
-.a-empty-real-title { margin: 0 0 10px; font-size: 13px; color: var(--muted); }
+.a-empty-real { max-width: 620px; margin: 0 auto; text-align: center; }
+.a-empty-real-title { margin: 0 0 8px; font-size: 13px; font-weight: 700; color: var(--text); }
+.a-empty-real-why { margin: 0 0 16px; font-size: 12.5px; line-height: 1.6; color: var(--muted); }
 .a-empty-real-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 14px; }
+/* Secondary action, visually separated below the primary CTA above it. */
+.a-empty-foot { max-width: 780px; margin: 26px auto 0; padding-top: 18px; border-top: 1px solid var(--border); text-align: center; }
 .a-empty-real-cli { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
 .a-empty-real-cli code {
   background: var(--chip-bg); border: 1px solid var(--border); border-radius: 6px;
