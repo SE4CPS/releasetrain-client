@@ -1,0 +1,40 @@
+name: deploy
+
+# Runs after the "ci" workflow succeeds on master. Off until the repository
+# variable DEPLOY_ENABLED is "true" and the secret DEPLOY_SSH_KEY is set.
+# The key is restricted on the server (rt-ci-shell): it can only run
+# deploy-server, deploy-client, health and status. deploy-client verifies the
+# live site after pulling and rolls back on failure.
+
+on:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
+    branches: [master]
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && vars.DEPLOY_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    env:
+      DEPLOY_HOST: 46.101.220.186
+    steps:
+      - name: Prepare SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          umask 077
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          # Pinned host key of the production server (public information).
+          echo "46.101.220.186 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICLCsMzRaaK9d097QBLEp8Vv6T70prO34bnMGszKVU0A" > ~/.ssh/known_hosts
+
+      - name: Deploy client
+        run: ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts deploy@$DEPLOY_HOST deploy-client
+
+      - name: Health check
+        run: ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts deploy@$DEPLOY_HOST health
