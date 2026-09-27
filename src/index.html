@@ -933,6 +933,7 @@
             <span class="st-61"></span>
             <button id="a-viewDiagram" class="btn btn-primary st-62" type="button">Diagram</button>
             <button id="a-viewTable" class="btn btn-ghost st-62" type="button">Table</button>
+            <button id="a-viewMermaid" class="btn btn-ghost st-62" type="button">Flowchart</button>
           </div>
         </div>
         <div class="a-canvas">
@@ -943,6 +944,11 @@
           <div id="a-ecosysImage" role="img" aria-label="Ecosystem architecture diagram"></div>
         </div>
         <div id="a-table" class="u-hide" ></div>
+        <!-- Same data as the PlantUML diagram (#a-ecosysImage), rendered as a
+             Mermaid flowchart instead - a second diagram option, entirely
+             client-side (no PlantUML server round-trip). See aRenderMermaid
+             in arch.js. -->
+        <div id="a-mermaid" class="u-hide" role="img" aria-label="Ecosystem flowchart"></div>
         <div id="a-empty" class="u-hide" >
           <div class="a-empty-head">
             <h3>Choose a stack to visualize</h3>

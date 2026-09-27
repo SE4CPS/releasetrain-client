@@ -1821,6 +1821,18 @@ button.chip.poll-btn.chip-err { border-color: var(--cve); color: var(--cve); bac
    The same visual spacing now comes from .a-score's own margin-top
    instead, which scrolls away normally with the rest of the content. */
 #a-table { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 0 14px 12px; background: var(--surface); }
+/* Mermaid flowchart view: same flex-child sizing as #a-table/.a-canvas so
+   it fills the same slot in #archView's layout regardless of which of the
+   three view modes is active. The SVG itself is left at its own natural
+   size (no forced width:100%, which would stretch a wide-and-short
+   flowchart into blurry oversized text) and just scrolls within this box
+   when it's larger than the available area - same reasoning as
+   #a-ecosysImage above it not being force-fit either. */
+#a-mermaid { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 14px; background: #fff; text-align: center; }
+/* Mermaid sets its own inline max-width (its "useMaxWidth" default) on the
+   rendered <svg> - !important is required here to actually override an
+   inline style, not just a matter of selector specificity. */
+#a-mermaid svg { max-width: none !important; height: auto; }
 .a-score { font-size: 12px; color: var(--muted); margin: 12px 0 10px; }
 .a-score b { color: var(--text); font-size: 13px; }
 /* "Lightweight to read": airier row padding, a lighter (600, not 700)

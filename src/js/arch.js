@@ -242,6 +242,21 @@
       if (pt && !["OS", "Hypervisor"].includes(pt)) return pt;
       return "";
     }
+    // Buckets a list of components by aTypeLabel, folding anything with no
+    // classification-derived type into one catch-all "Other" bucket. Used
+    // to cut diagram clutter: a flat list of a dozen unrelated leftover
+    // components (nothing else groups them into a named stack) reads much
+    // more clearly as a few named type clusters ("Browser (2)", "Database
+    // (3)") than as a dozen individual boxes.
+    function aGroupByType(list) {
+      const byType = new Map();
+      list.forEach(v => {
+        const t = aTypeLabel(v) || "Other";
+        if (!byType.has(t)) byType.set(t, []);
+        byType.get(t).push(v);
+      });
+      return byType;
+    }
     function aColorKey(version) {
       const cur = version.currentVersion || version.latestVersion, lat = version.latestVersion;
       if (!lat) return "nodata";
@@ -393,9 +408,35 @@
           members.forEach(v => { out += `${pad}  ${aComponentLine(v, fills)}\n`; });
           out += `${pad}}\n`;
         });
-        // Components not part of any detected stack render on their own, labelled by name.
-        list.filter(v => !groupedNames.has(v.name))
-            .forEach(v => { out += `${pad}${aComponentLine(v, fills)}\n`; });
+        // Leftovers (not part of any detected stack) used to render as one
+        // flat list of individually-unrelated boxes, which got cluttered
+        // fast on a real machine's real software list. Split them instead:
+        // components ReleaseTrain actually tracks a type for get grouped
+        // into named clusters ("Browser (2)", "Database (3)"); everything
+        // with no release data at all (untracked software - nothing wrong
+        // with it, ReleaseTrain just has no data to compare) is bucketed
+        // into one "No release data (N)" package instead of N separate
+        // boxes, since by-type grouping can't help there (no classification
+        // data exists for them either).
+        const leftovers = list.filter(v => !groupedNames.has(v.name));
+        const tracked = leftovers.filter(v => aColorKey(v) !== "nodata");
+        const untracked = leftovers.filter(v => aColorKey(v) === "nodata");
+        aGroupByType(tracked).forEach((members, type) => {
+          // A lone member of its own type isn't worth boxing on its own -
+          // that just trades one kind of clutter for another.
+          if (members.length < 2) {
+            members.forEach(v => { out += `${pad}${aComponentLine(v, fills)}\n`; });
+            return;
+          }
+          out += `${pad}package "${aSanitize(type)} (${members.length})" #transparent {\n`;
+          members.forEach(v => { out += `${pad}  ${aComponentLine(v, fills)}\n`; });
+          out += `${pad}}\n`;
+        });
+        if (untracked.length) {
+          out += `${pad}package "No release data (${untracked.length})" #transparent {\n`;
+          untracked.forEach(v => { out += `${pad}  ${aComponentLine(v, fills)}\n`; });
+          out += `${pad}}\n`;
+        }
         return out;
       };
 
@@ -453,6 +494,158 @@
       }
       uml += `}\n@enduml\n`;
       return uml;
+    }
+    // Second diagram option, per instructor/user request ("add option
+    // diagram (mermaid) keep diagram (plantuml) and structure it more
+    // readable and also hierarchical by type"): a Mermaid flowchart
+    // mirroring the exact same tiering aBuildUml uses (urgent -> hypervisor
+    // -> OS -> application, stacks first, then leftovers grouped by type,
+    // then untracked components bucketed together) - same information,
+    // rendered entirely client-side (no PlantUML server round-trip).
+    function aMermaidLabel(v) {
+      const cur = v.currentVersion || v.latestVersion, lat = v.latestVersion;
+      const esc = s => String(s == null ? "" : s).replace(/"/g, "'");
+      if (!cur || !lat) return `${esc(v.name)}<br/>no release data`;
+      const name = esc(cur.versionProductName || v.name);
+      const cv = esc(cur.versionNumber), lv = esc(lat.versionNumber);
+      const gap = aVerGap(cur.versionNumber, lat.versionNumber);
+      const days = aDaysBehind(v);
+      if (gap.tier !== "none") return `${name}<br/>${cv} to ${lv}<br/>${aGapLabel(gap)} - ${days}d behind`;
+      if (!v._hasInstalled) return `${name}<br/>${lv}<br/>installed version unknown`;
+      return `${name}<br/>${cv}<br/>on latest${aIsRecent(v) ? " [NEW]" : ""}`;
+    }
+    function aBuildMermaid(vers) {
+      const sorted = aSortByOS(vers), names = sorted.map(v => v.name);
+      const { groupedStacks } = aGetStack(names);
+      const groupedNames = new Set();
+      groupedStacks.forEach(s => s.matchedComponents.forEach(c => groupedNames.add(c)));
+
+      let idx = 0, sgIdx = 0;
+      const mEsc = s => String(s == null ? "" : s).replace(/"/g, "'");
+      const node = v => `n${idx++}["${aMermaidLabel(v)}"]:::${aColorKey(v)}`;
+      const sgOpen = label => `subgraph sg${sgIdx++}["${mEsc(label)}"]\n`;
+
+      // Same leftover split as aBuildUml's renderGroups: stacks first, then
+      // remaining tracked components grouped by type, then everything with
+      // no release data bucketed into one cluster.
+      const renderGroups = list => {
+        let out = "";
+        groupedStacks.forEach(s => {
+          const members = list.filter(v => s.matchedComponents.includes(v.name));
+          if (!members.length) return;
+          out += sgOpen(`${s.stackName} stack`);
+          members.forEach(v => { out += `${node(v)}\n`; });
+          out += `end\n`;
+        });
+        const leftovers = list.filter(v => !groupedNames.has(v.name));
+        const tracked = leftovers.filter(v => aColorKey(v) !== "nodata");
+        const untracked = leftovers.filter(v => aColorKey(v) === "nodata");
+        aGroupByType(tracked).forEach((members, type) => {
+          if (members.length < 2) {
+            members.forEach(v => { out += `${node(v)}\n`; });
+            return;
+          }
+          out += sgOpen(`${type} (${members.length})`);
+          members.forEach(v => { out += `${node(v)}\n`; });
+          out += `end\n`;
+        });
+        if (untracked.length) {
+          out += sgOpen(`No release data (${untracked.length})`);
+          untracked.forEach(v => { out += `${node(v)}\n`; });
+          out += `end\n`;
+        }
+        return out;
+      };
+
+      const isUrgent = v => {
+        const cur = v.currentVersion || v.latestVersion, lat = v.latestVersion;
+        return !!aCveOf(v) || (cur && lat && aVerGap(cur.versionNumber, lat.versionNumber).tier === "major");
+      };
+      const urgent = sorted.filter(isUrgent).sort((a, b) => aDaysBehind(b) - aDaysBehind(a));
+      const rest = sorted.filter(v => !isUrgent(v));
+      const hvVers  = rest.filter(aIsHypervisorComponent);
+      const osVers  = rest.filter(v => !aIsHypervisorComponent(v) && aIsOsComponent(v));
+      const appVers = rest.filter(v => !aIsHypervisorComponent(v) && !aIsOsComponent(v));
+
+      const osBlock = () => {
+        let out = "";
+        if (osVers.length) {
+          const osLabel = osVers.length === 1 ? `${osVers[0].name} - OS layer` : "OS layer";
+          out += sgOpen(osLabel);
+          osVers.forEach(v => { out += `${node(v)}\n`; });
+          if (appVers.length) {
+            out += sgOpen("Application layer");
+            out += renderGroups(appVers);
+            out += `end\n`;
+          }
+          out += `end\n`;
+        } else if (appVers.length) {
+          out += renderGroups(appVers);
+        }
+        return out;
+      };
+
+      // %%init%% must be the very first line. Overrides Mermaid's default
+      // pale-yellow cluster (subgraph) background, which otherwise clashes
+      // with the calm white style the PlantUML diagram already uses and
+      // makes nested tiers hard to tell apart (same background all the
+      // way down, distinguishable only by border lines).
+      let mmd = "%%{init: {'themeVariables': {'clusterBkg':'#ffffff','clusterBorder':'#cbd5e1','primaryTextColor':'#111827','fontFamily':'inherit'}}}%%\n" +
+        "graph TD\n" +
+        "classDef cve fill:#fca5a5,stroke:#dc2626,color:#111827;\n" +
+        "classDef behind fill:#fcd34d,stroke:#d97706,color:#111827;\n" +
+        "classDef current fill:#ffffff,stroke:#94a3b8,color:#111827;\n" +
+        "classDef unknown fill:#ffffff,stroke:#94a3b8,color:#111827;\n" +
+        "classDef nodata fill:#ffffff,stroke:#cbd5e1,color:#94a3b8;\n";
+      if (urgent.length) {
+        mmd += sgOpen(`Upgrade now (${urgent.length})`);
+        urgent.forEach(v => { mmd += `${node(v)}\n`; });
+        mmd += `end\n`;
+      }
+      if (hvVers.length) {
+        const hvLabel = hvVers.length === 1 ? `${hvVers[0].name} - Hypervisor layer` : "Hypervisor layer";
+        mmd += sgOpen(hvLabel);
+        hvVers.forEach(v => { mmd += `${node(v)}\n`; });
+        mmd += osBlock();
+        mmd += `end\n`;
+      } else {
+        mmd += osBlock();
+      }
+      return mmd;
+    }
+    let A_MERMAID_LOADED = false;
+    function aEnsureMermaid() {
+      return new Promise((resolve, reject) => {
+        if (window.mermaid) { A_MERMAID_LOADED = true; return resolve(); }
+        const sc = document.createElement("script");
+        sc.src = "https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js";
+        sc.crossOrigin = "anonymous";
+        sc.onload = () => { A_MERMAID_LOADED = true; resolve(); };
+        sc.onerror = reject;
+        document.head.appendChild(sc);
+      });
+    }
+    let A_MERMAID_SEQ = 0;
+    async function aRenderMermaid(vers) {
+      const host = aEl("mermaid"); if (!host) return;
+      const mySeq = ++A_MERMAID_SEQ;
+      const text = aBuildMermaid(vers);
+      try {
+        await aEnsureMermaid();
+        window.mermaid.initialize({ startOnLoad: false, securityLevel: "strict", flowchart: { curve: "linear", htmlLabels: false } });
+        await window.mermaid.parse(text);
+        const out = await window.mermaid.render(`archMermaidSvg${mySeq}`, text);
+        if (mySeq !== A_MERMAID_SEQ) return;  // a newer render started meanwhile
+        host.innerHTML = out.svg;
+        // Left at its own natural size (CSS overrides Mermaid's own inline
+        // max-width so a dense diagram doesn't get squashed illegibly) and
+        // scrolls within #a-mermaid when larger than the visible area -
+        // see the #a-mermaid/#a-mermaid svg rule in styles.css.
+      } catch (e) {
+        if (mySeq !== A_MERMAID_SEQ) return;
+        console.error("Mermaid render error:", e);
+        host.innerHTML = `<p class="a-muted-note">Could not render diagram.</p>`;
+      }
     }
     function aEncode6bit(b) {
       if (b < 10) return String.fromCharCode(48 + b);
@@ -596,23 +789,27 @@
     }
 
     let A_EMPTY_BUILT = false;
-    let A_MODE = (localStorage.getItem("rt_arch_mode") === "table") ? "table" : "diagram";
+    const A_MODES = ["diagram", "table", "mermaid"];
+    let A_MODE = A_MODES.includes(localStorage.getItem("rt_arch_mode")) ? localStorage.getItem("rt_arch_mode") : "diagram";
 
     const aCanvasEl = () => document.querySelector("#archView .a-canvas");
 
-    // Show the result area (canvas or table per A_MODE), hide the empty state.
+    // Show the result area (canvas, table, or mermaid flowchart per
+    // A_MODE), hide the empty state. Exactly one of the three is visible.
     function aShowResult() {
       const e = aEl("empty"); if (e) setDisplay(e, "none");
-      const c = aCanvasEl(), t = aEl("table");
-      if (c) setDisplay(c, (A_MODE === "table") ? "none" : "");
+      const c = aCanvasEl(), t = aEl("table"), m = aEl("mermaid");
+      if (c) setDisplay(c, (A_MODE === "diagram") ? "" : "none");
       if (t) setDisplay(t, (A_MODE === "table") ? "" : "none");
+      if (m) setDisplay(m, (A_MODE === "mermaid") ? "" : "none");
     }
     function aSetMode(mode) {
-      A_MODE = (mode === "table") ? "table" : "diagram";
+      A_MODE = A_MODES.includes(mode) ? mode : "diagram";
       try { localStorage.setItem("rt_arch_mode", A_MODE); } catch {}
-      const dg = document.getElementById("a-viewDiagram"), tb = document.getElementById("a-viewTable");
+      const dg = document.getElementById("a-viewDiagram"), tb = document.getElementById("a-viewTable"), mb = document.getElementById("a-viewMermaid");
       if (dg) dg.className = "btn" + (A_MODE === "diagram" ? " btn-primary" : " btn-ghost");
       if (tb) tb.className = "btn" + (A_MODE === "table" ? " btn-primary" : " btn-ghost");
+      if (mb) mb.className = "btn" + (A_MODE === "mermaid" ? " btn-primary" : " btn-ghost");
       const e = aEl("empty");
       if (e && !e.classList.contains("u-hide")) return;  // empty state stays put
       aShowResult();
@@ -622,6 +819,7 @@
       // canvas is actually visible and has a real size to fit against.
       if (A_MODE === "diagram") aFitDiagramSvg();
       if (A_MODE === "table") aRenderTable();
+      if (A_MODE === "mermaid" && Array.isArray(A_VERSIONS) && A_VERSIONS.length) aRenderMermaid(A_VERSIONS);
     }
     function aEsc(s) {
       return String(s == null ? "" : s)
@@ -689,6 +887,7 @@
       if (titleEl) titleEl.textContent = "Pick a stack to begin";
       const c = aCanvasEl(); if (c) setDisplay(c, "none");
       const t = aEl("table"); if (t) setDisplay(t, "none");
+      const m = aEl("mermaid"); if (m) setDisplay(m, "none");
       const e = aEl("empty"); if (e) setDisplay(e, "block");
       aBuildEmptyState();
     }
@@ -714,6 +913,7 @@
         aRenderDiagram(aBuildUml(vers));
         aUpdateMetrics(vers);
         if (A_MODE === "table") aRenderTable();
+        if (A_MODE === "mermaid") aRenderMermaid(vers);
       } catch (e) {
         console.error("Arch load error:", e);
         if (loader) setDisplay(loader, "none");
@@ -746,6 +946,7 @@
         aRenderDiagram(uml);
         aUpdateMetrics(vers);
         if (A_MODE === "table") aRenderTable();
+        if (A_MODE === "mermaid") aRenderMermaid(vers);
       } catch (e) {
         console.error("Arch load error:", e);
         if (loader) setDisplay(loader, "none");
@@ -867,6 +1068,7 @@
 
     document.getElementById("a-viewDiagram").addEventListener("click", () => aSetMode("diagram"));
     document.getElementById("a-viewTable").addEventListener("click", () => aSetMode("table"));
+    document.getElementById("a-viewMermaid")?.addEventListener("click", () => aSetMode("mermaid"));
 
     document.getElementById("a-metricsBtn").addEventListener("click", () => document.getElementById("a-metricsDialog").showModal());
     document.getElementById("a-codeBtn").addEventListener("click", () => document.getElementById("a-codeDialog").showModal());
