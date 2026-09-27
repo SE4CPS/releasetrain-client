@@ -169,9 +169,9 @@
       if (emptyEl) setDisplay(emptyEl, "none");
       listEl.innerHTML = inv.map(e => `<div class="ua-bm-item" data-comp="${uaEsc(e.component)}" data-vendor="${uaEsc(e.vendor || "")}" data-machine="${uaEsc(e.machine || "")}">
         <div class="st-255" >
-          <span class="ua-bm-name" title="${uaEsc(e.component)}">${uaEsc(e.component)}</span>
-          ${e.vendor ? `<span class="ua-inv-vendor-chip" title="Vendor">${uaEsc(e.vendor)}</span>` : ""}
           ${e.machine ? `<span class="ua-inv-machine-chip" title="Machine">${uaEsc(e.machine)}</span>` : ""}
+          ${e.vendor ? `<span class="ua-inv-vendor-chip" title="Vendor">${uaEsc(e.vendor)}</span>` : ""}
+          <span class="ua-bm-name" title="${uaEsc(e.component)}">${uaEsc(e.component)}</span>
           <span class="st-256 ua-org-chip" >${uaEsc(e.version)}</span>
           ${e.recordedAt ? `<span class="ua-muted ua-inv-fetched" title="Recorded ${uaEsc(uaLocalDateTime(e.recordedAt))}">recorded ${uaEsc(uaRelTime(e.recordedAt))}</span>` : ""}
           <span class="u-show-block st-257 ua-inv-drift ua-muted" >checking latest…</span>
@@ -226,9 +226,17 @@
       const names = rows.map(e => e.component);
       const start = new Date(Date.now() - 90 * 86400000).toISOString().slice(0, 10).replace(/-/g, "");
       let data, cves = [];
+      // The server compares each component against the whole release history
+      // with a per-component, unindexed regex scan (see its own code), so a
+      // larger inventory can genuinely take a while - but "checking latest…"
+      // must not sit there forever with no feedback if it ever really is
+      // stuck, so this is bounded rather than an unlimited wait.
+      const timeoutMs = 15000;
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
       try {
         const [rLatest, rCve] = await Promise.all([
-          fetch(API_BASE + "v/d/versionsByComponent?" + q, { headers: { Accept: "application/json" } }),
+          fetch(API_BASE + "v/d/versionsByComponent?" + q, { headers: { Accept: "application/json" }, signal: controller.signal }),
           fetch(API_BASE + "v/search?q=" + encodeURIComponent(names.join(",")) + "&isCve=true&start=" + start
             + "&limit=400&fields=versionProductName,versionProductBrand,versionReleaseDate,versionUrl,isCve",
             { headers: { Accept: "application/json" } }).catch(() => null),
@@ -236,9 +244,12 @@
         if (!rLatest.ok) throw 0;
         data = await rLatest.json();
         if (rCve && rCve.ok) { const b = await rCve.json(); cves = Array.isArray(b) ? b : (b.data || []); }
-      } catch {
-        document.querySelectorAll("#ua-inv-list .ua-inv-drift").forEach(s => { s.textContent = ""; });
+      } catch (e) {
+        const msg = e && e.name === "AbortError" ? "took too long to check" : "couldn't check";
+        document.querySelectorAll("#ua-inv-list .ua-inv-drift").forEach(s => { s.textContent = msg; });
         return;
+      } finally {
+        clearTimeout(timer);
       }
       const byName = new Map((Array.isArray(data) ? data : []).map(c => [String(c.name).toLowerCase(), c]));
       const cveByName = new Map();
