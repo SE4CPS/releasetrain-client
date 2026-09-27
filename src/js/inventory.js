@@ -71,10 +71,15 @@
         const version = String(raw && raw.version || "").trim().slice(0, 32);
         const vendor = String(raw && raw.vendor || "").trim().slice(0, 64);
         const machine = String(raw && raw.machine || "").trim().slice(0, 80);
+        // recordedAt: when this row's version was actually captured (a scan
+        // run, or a manual add/edit) - re-validated as a real date rather
+        // than trusted as any string, same as the server's own check.
+        const recordedAtMs = Date.parse((raw && raw.recordedAt) || "");
         if (!component || !version) continue;
         const entry = { component, version };
         if (vendor) entry.vendor = vendor;
         if (machine) entry.machine = machine;
+        if (Number.isFinite(recordedAtMs)) entry.recordedAt = new Date(recordedAtMs).toISOString();
         const key = uaInvKey(component, vendor, machine);
         if (seen.has(key)) { out[seen.get(key)] = entry; continue; }
         seen.set(key, out.length); out.push(entry);
@@ -156,6 +161,7 @@
           ${e.vendor ? `<span class="ua-inv-vendor-chip" title="Vendor">${uaEsc(e.vendor)}</span>` : ""}
           ${e.machine ? `<span class="ua-inv-machine-chip" title="Machine">${uaEsc(e.machine)}</span>` : ""}
           <span class="st-256 ua-org-chip" >${uaEsc(e.version)}</span>
+          ${e.recordedAt ? `<span class="ua-muted ua-inv-fetched" title="Recorded ${uaEsc(e.recordedAt)}">recorded ${uaEsc(uaRelTime(e.recordedAt))}</span>` : ""}
           <span class="u-show-block st-257 ua-inv-drift ua-muted" >checking latest…</span>
         </div>
         <div class="ua-bm-actions">
@@ -189,7 +195,7 @@
           const cur = uaInvGet();
           const i = uaInvFind(cur, comp, vendor, machine);
           if (i >= 0) {
-            const entry = { component: comp, version: v };
+            const entry = { component: comp, version: v, recordedAt: new Date().toISOString() };
             const vd = nextVendor.trim(), mc = nextMachine.trim();
             if (vd) entry.vendor = vd;
             if (mc) entry.machine = mc;
@@ -281,7 +287,7 @@
       const machine = machineEl.value.trim();
       if (!component || !version) return;
       if (!uaInvValidVersion(version)) { uaInvMsg("Version must start alphanumeric; letters, digits, . _ + : - only.", "error"); return; }
-      const entry = { component, version };
+      const entry = { component, version, recordedAt: new Date().toISOString() };
       if (vendor) entry.vendor = vendor;
       if (machine) entry.machine = machine;
       await uaInvApply([...uaInvGet(), entry], "Added " + component + ".");
@@ -313,7 +319,7 @@
           version = m[2].trim().slice(0, 32);
         }
         if (!component || !version || !uaInvValidVersion(version)) { skipped++; continue; }
-        const entry = { component, version };
+        const entry = { component, version, recordedAt: new Date().toISOString() };
         if (vendor) entry.vendor = vendor;
         if (machine) entry.machine = machine;
         const i = uaInvFind(merged, component, vendor, machine);
