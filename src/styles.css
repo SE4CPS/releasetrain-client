@@ -164,8 +164,23 @@ img { display: block; }
 .nav-link:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 /* #filtersToggleBtn (see its own markup comment): a real <button>,
    not an <a>, since it toggles a panel rather than navigating: reset
-   to plain button chrome so it reads identically to its <a> siblings. */
-button.nav-link { background: none; border: none; width: 100%; text-align: left; cursor: pointer; font-family: inherit; }
+   to plain button chrome so it reads identically to its <a> siblings.
+   `font: inherit` (the bare keyword as the WHOLE value - the only valid
+   way to use it here) is what actually matters: .nav-link's own
+   `font: 600 13px/1 inherit` above is invalid CSS (inherit can't be
+   embedded as one component inside the font shorthand) and the browser
+   silently drops that entire declaration, so every <a>.nav-link's
+   13px/system-ui look was never really coming from that rule at all -
+   it's pure ambient inheritance from the page's own default font, which
+   an <a> picks up automatically but a <button> does not (browsers give
+   buttons their own default control font instead, ~13.3333px Arial-ish
+   here). A bare `font-family: inherit` alone only fixed the family, not
+   the size, which is why this still measured 13.3333px vs the anchors'
+   13px (confirmed via getComputedStyle, not eyeballed) even after that
+   first attempt - `font: inherit` pulls the whole ambient value at
+   once, matching the anchors' actual rendered look exactly rather than
+   guessing at individual sub-properties. */
+button.nav-link { background: none; border: none; width: 100%; text-align: left; cursor: pointer; font: inherit; }
 
 /* Hamburger — the single control that opens the whole menu drawer
    (views + search/filters), at every screen width. */
