@@ -77,12 +77,27 @@
       // ("Vendor") a general audience has no reason to already know.
       // Every node name is a verb (Ask/Rewrite/Search/Verify/Retrieve/
       // Evaluate/Orchestrate), not a noun, per explicit follow-up
-      // request -- shorter labels, same reasoning.
+      // request -- shorter labels, same reasoning. (Retrieve's own box
+      // now reads "Find Facts and Artifacts" instead, per a later,
+      // more specific explicit request - see the retriever entry's own
+      // comment for why this one node's `name` here looks different
+      // from what's actually shown on the box.)
       { key: "vendor", name: "Ask" },
       { key: "rewriter", name: "Rewrite" },
       { key: "websearch", name: "Search" },
       { key: "verify", name: "Verify" },
-      { key: "retriever", name: "Retrieve" },
+      // `name` here is NOT the box's displayed text (that's
+      // "Find Facts and Artifacts", set server-side in
+      // langgraphLoop.js's PIPELINE_NODES and rendered by Mermaid as
+      // the node's raw, unescaped label) - it's the SAME escaped form
+      // Mermaid itself derives to build the diagram's own node id
+      // (spaces -> underscores, see graph_mermaid.cjs's
+      // _escapeNodeLabel, confirmed against that package's real source
+      // before this rename), used here to find this node's box in the
+      // rendered SVG (flowchart-${n.name}-) and as the matching key for
+      // this node's own "note" events from the server (see ask.js's
+      // matching node: 'Find_Facts_and_Artifacts' comment).
+      { key: "retriever", name: "Find_Facts_and_Artifacts" },
       // Classify (see classifySourcesTrust on the server): checks each
       // retrieved source's own url and classifies how trustworthy it is,
       // before Evaluate ever scores them. A different "Verify" than the

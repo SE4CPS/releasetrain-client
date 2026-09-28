@@ -12,7 +12,7 @@ const MERMAID = `graph TD;
 	Rewrite(Rewrite)
 	Search(Search)
 	Verify(Verify)
-	Retrieve(Retrieve)
+	Find_Facts_and_Artifacts(Find Facts and Artifacts)
 	Evaluate(Evaluate)
 	Orchestrate(Orchestrate)
 	__end__([<p>__end__</p>]):::last
@@ -21,9 +21,9 @@ const MERMAID = `graph TD;
 	Ask -.-> Search;
 	Search --> Verify;
 	Verify --> Rewrite;
-	Rewrite --> Retrieve;
-	Retrieve --> Evaluate;
-	Evaluate -.-> Retrieve;
+	Rewrite --> Find_Facts_and_Artifacts;
+	Find_Facts_and_Artifacts --> Evaluate;
+	Evaluate -.-> Find_Facts_and_Artifacts;
 	Evaluate -.-> Orchestrate;
 	Orchestrate --> __end__;
 	classDef default fill:#f2f0ff,line-height:1.2;`;
@@ -51,7 +51,7 @@ test('draws the LangGraph graph and colors only the agents that ran', async ({ p
   await stubApi(page);
   await page.goto('/');
   await expect(page.locator('#askWorkflowDiagram svg')).toBeVisible({ timeout: 30_000 });
-  expect(await nodeClass(page, 'Retrieve')).toContain('askwfg-idle');
+  expect(await nodeClass(page, 'Find_Facts_and_Artifacts')).toContain('askwfg-idle');
 
   await page.evaluate(() => {
     startAskWorkflow('Which is more stable, Zoom or Teams?');
@@ -62,7 +62,7 @@ test('draws the LangGraph graph and colors only the agents that ran', async ({ p
     finishAskWorkflow();
   });
   expect(await nodeClass(page, 'Ask')).toContain('askwfg-input');
-  expect(await nodeClass(page, 'Retrieve')).toContain('askwfg-input');
+  expect(await nodeClass(page, 'Find_Facts_and_Artifacts')).toContain('askwfg-input');
   expect(await nodeClass(page, 'Orchestrate')).toContain('askwfg-done');
   expect(await nodeClass(page, 'Search')).toContain('askwfg-skipped');
   expect(faults, faults.join('\n')).toHaveLength(0);
