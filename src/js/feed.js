@@ -1237,9 +1237,13 @@
       EL.components.value = "";
       // #components is the hidden internal-only mirror now (see
       // #filterForm's own comment). #askQuestion is what the user
-      // actually typed into and sees, so Clear needs to reset that too.
+      // actually typed into and sees, so Clear needs to reset that too -
+      // and #askContext beside it (its own optional field, not reset by
+      // clearing #askQuestion alone).
       const askQ = document.getElementById("askQuestion");
       if (askQ) askQ.value = "";
+      const askCtx = document.getElementById("askContext");
+      if (askCtx) askCtx.value = "";
       hideAskRail();
       STATE.filters.components = [];
       STATE.filters.toggles.clear();

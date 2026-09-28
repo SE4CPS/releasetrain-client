@@ -743,11 +743,24 @@ html::-webkit-scrollbar { display: none; }
    Narrow/default: question+Clear+Submit share one row, context sits full
    width below. */
 .ask-input-row {
-  display: grid; gap: 8px; align-items: center;
-  grid-template-columns: 1fr auto auto;
+  display: grid; gap: 10px; align-items: center;
+  /* minmax(0, 1fr), not a bare 1fr: a bare 1fr track still respects its
+     content's own min-content width first, so a long unbroken string can
+     stop the track (and its sibling) from actually filling 100% of the
+     row - minmax(0, ...) lets it shrink freely and genuinely claim all
+     available width, matching "both inputs should use the available
+     width more automatically" (the .search-input/.ask-context-input
+     children are width:100% of whatever their own track ends up, either
+     way - this is about the TRACK'S width, not the input's). */
+  grid-template-columns: minmax(0, 1fr) auto auto;
   grid-template-areas:
     "question clear submit"
     "context  context submit2";
+  /* A soft shared surface behind the whole control bar, not two isolated
+     white boxes floating on the page background - per explicit request
+     ("nicer and more integrated to the page"). */
+  background: var(--chip-bg); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 8px;
 }
 /* "submit2" is a throwaway area name, not a real duplicate of the submit
    button - grid-template-areas requires every cell in the ASCII grid to
@@ -772,7 +785,7 @@ html::-webkit-scrollbar { display: none; }
        the context placeholder ("Optional context (e.g. paste extra
        details)" -> "Add context (optional)") did more of the actual work
        than the column ratio did. */
-    grid-template-columns: 0.95fr 1fr auto auto;
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1fr) auto auto;
     grid-template-areas: "question context clear submit";
   }
 }
@@ -781,6 +794,11 @@ html::-webkit-scrollbar { display: none; }
      28px left padding makes room for 🔍) - back to a plain left inset. */
   width: 100%; padding-left: 10px; resize: vertical; min-height: 32px;
   font-family: inherit; line-height: 1.3;
+  /* No scrollbar once typed text exceeds the visible area - per explicit
+     request ("the corner works"): the resize handle already lets anyone
+     drag it taller to see everything, so a scrollbar is redundant chrome
+     on top of that, not a second way to reach the same content. */
+  overflow-y: hidden;
 }
 
 /* ── Answer rail tabs (Answer+workflow / Sources) ──────────── */
