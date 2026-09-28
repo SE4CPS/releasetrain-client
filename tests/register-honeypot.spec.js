@@ -22,7 +22,17 @@ test('a normal registration sends an empty website field', async ({ page }) => {
     route.fulfill({
       status: 201,
       contentType: 'application/json',
-      body: JSON.stringify({ success: true, user: { id: '1', email: posted.email, role: 'user', name: posted.name, orgs: [], inventory: [] } }),
+      body: JSON.stringify({
+        success: true,
+        user: {
+          id: '1',
+          email: posted.email,
+          role: 'user',
+          name: posted.name,
+          orgs: [],
+          inventory: [],
+        },
+      }),
     });
   });
   await page.goto('/?view=account');
@@ -34,11 +44,17 @@ test('a normal registration sends an empty website field', async ({ page }) => {
   expect(posted.website).toBe('');
 });
 
-test('a filled honeypot field is still submitted as-is (the server rejects it)', async ({ page }) => {
+test('a filled honeypot field is still submitted as-is (the server rejects it)', async ({
+  page,
+}) => {
   let posted = null;
   await page.route(/\/api\/auth\/register/, (route) => {
     posted = JSON.parse(route.request().postData());
-    route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ error: 'Invalid email format' }) });
+    route.fulfill({
+      status: 400,
+      contentType: 'application/json',
+      body: JSON.stringify({ error: 'Invalid email format' }),
+    });
   });
   await page.goto('/?view=account');
   await page.click('#ua-tab-register');
@@ -46,7 +62,9 @@ test('a filled honeypot field is still submitted as-is (the server rejects it)',
   await page.fill('#ua-reg-password', 'correcthorsebattery');
   // A real user never does this - simulates a scripted signup that
   // blindly fills every input it finds, including the hidden one.
-  await page.evaluate(() => { document.getElementById('ua-reg-website').value = 'http://spam.example'; });
+  await page.evaluate(() => {
+    document.getElementById('ua-reg-website').value = 'http://spam.example';
+  });
   await page.click('#ua-register-btn');
   await expect.poll(() => posted).not.toBeNull();
   expect(posted.website).toBe('http://spam.example');

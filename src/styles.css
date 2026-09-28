@@ -1294,6 +1294,12 @@ body.has-ask-console.has-ask-console-min .view-close-btn { bottom: 48px; }
    things instead of one flat, undifferentiated list. */
 .ask-source-group { margin: 0 0 12px; }
 .ask-source-group:last-child { margin-bottom: 10px; }
+/* Artifact always renders (see askRenderSources), even with nothing in
+   it - a dashed border reads as "checked, found nothing" rather than
+   looking like an accidentally-empty populated list. */
+.ask-source-group-empty { padding: 6px 8px; border: 1px dashed var(--border); border-radius: var(--radius-sm); }
+.ask-source-group-empty .ask-source-heading { margin-bottom: 4px; }
+.ask-source-group-empty .ask-muted { margin: 0; }
 .ask-source-heading {
   font: 700 10px/1 inherit; text-transform: uppercase; letter-spacing: .4px;
   color: var(--muted); margin-bottom: 6px;

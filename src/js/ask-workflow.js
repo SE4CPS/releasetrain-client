@@ -901,7 +901,17 @@
       const group = (label, list) => list.length
         ? `<div class="ask-source-group"><div class="ask-source-heading">${label}</div>${askRenderSourceItems(list)}</div>`
         : "";
-      return webVerifyHtml + webFallbackHtml + group("Artifact", artifact) + group("Documented", documented) + group("Discussion", discussion);
+      // Artifact always renders, even with nothing in it - per direct,
+      // repeated request ("i asked 5 times please add it at the
+      // beginning" / "i want artifacts and if there are none say so"):
+      // a section that only appears once something qualifies reads as
+      // simply missing on every run where nothing does, rather than as
+      // "checked, and there's genuinely nothing here." The empty state
+      // says so explicitly instead of silently omitting the heading.
+      const artifactHtml = artifact.length
+        ? `<div class="ask-source-group"><div class="ask-source-heading">Artifact</div>${askRenderSourceItems(artifact)}</div>`
+        : `<div class="ask-source-group ask-source-group-empty"><div class="ask-source-heading">Artifact</div><p class="ask-muted">No verified artifact link (a specific commit, release archive, or patch link) was found among these sources, only a general reference page.</p></div>`;
+      return webVerifyHtml + webFallbackHtml + artifactHtml + group("Documented", documented) + group("Discussion", discussion);
     }
 
     // "stackoverflow" was previously indistinguishable from "reddit": the
