@@ -151,9 +151,10 @@
     // The status dot opens the Account page (useful when the rail hides the Sign in button).
     document.getElementById("authStatusDot")?.addEventListener("click", () => activateUsers());
     // Recent Reddit Update Risk Questions quick-load buttons (see their own markup
-    // comment): fills #askQuestion and re-runs the same preview logic
-    // typing would trigger, but never submits -- the viewer clicks Ask
-    // (or presses Enter) themselves, on their own timing.
+    // comment): fills #askQuestion (and #askContext, when the source post
+    // had its own body text) and re-runs the same preview logic typing
+    // would trigger, but never submits -- the viewer clicks Ask (or
+    // presses Enter) themselves, on their own timing.
     const demoQList = document.querySelector(".demo-q-list");
     if (demoQList) demoQList.addEventListener("click", (e) => {
       const btn = e.target.closest(".demo-q-btn");
@@ -162,6 +163,8 @@
       const input = document.getElementById("askQuestion");
       if (!input) return;
       input.value = q;
+      const contextEl = document.getElementById("askContext");
+      if (contextEl) contextEl.value = btn.dataset.context || "";
       updateAskPreview();
       input.focus();
     });
@@ -179,7 +182,7 @@
     async function loadRedditUpdateQuestions() {
       if (!demoQList) return;
       try {
-        const res = await fetch(`${API_BASE}reddit/query/questions?limit=200&fields=title,url,sourceUrl,created_utc,score,subreddit,metadata.predicted`);
+        const res = await fetch(`${API_BASE}reddit/query/questions?limit=200&fields=title,url,sourceUrl,created_utc,score,subreddit,author_description,metadata.predicted`);
         if (!res.ok) return;
         const body = await res.json();
         const docs = Array.isArray(body.data) ? body.data : [];
@@ -202,8 +205,13 @@
           const link = postUrl
             ? `<a class="demo-q-link" href="${uaEsc(postUrl)}" target="_blank" rel="noopener noreferrer" title="Open on Reddit" aria-label="Open on Reddit">🔗</a>`
             : "";
+          // The post's own body text, if any, rides along as optional
+          // context (see #askContext's own markup comment) - not shown
+          // inline here, only carried on the button for the click handler
+          // below to fill the separate context field with.
+          const context = String(d.author_description || "").trim();
           return `<div class="demo-q-row">
-            <button type="button" class="demo-q-btn" data-q="${uaEsc(d.title || "")}">${uaEsc(d.title || "")}<span class="demo-q-meta">${meta}</span></button>
+            <button type="button" class="demo-q-btn" data-q="${uaEsc(d.title || "")}" data-context="${uaEsc(context)}">${uaEsc(d.title || "")}<span class="demo-q-meta">${meta}</span></button>
             ${link}
           </div>`;
         }).join("");
@@ -435,6 +443,11 @@
       e.preventDefault();
       const question = document.getElementById("askQuestion").value.trim();
       if (!question) return;
+      // Optional, always-available (see #askContext's own markup comment) -
+      // sent as its own field; the server merges it into the effective
+      // question text once, rather than the client baking it into
+      // `question` itself.
+      const context = (document.getElementById("askContext")?.value || "").trim();
       // The answer shows on the Ask home; every other view (feed, Docs,
       // Account, Graph, etc.) has no answer area of its own, and the
       // question input/pipeline diagram are reachable from all of them
@@ -563,7 +576,7 @@
         }
 
         const config = { preset, vendorCheck, temporalFilter, intentFilter, resolveVendor, resolveTemporal, provider, size };
-        const res = await uaRequest("ask", { method: "POST", body: JSON.stringify({ question, config }) });
+        const res = await uaRequest("ask", { method: "POST", body: JSON.stringify({ question, context, config }) });
         if (res.status === 401) {
           refreshQuotaAfter = false;
           // A signed-out visitor who has used up today's free questions

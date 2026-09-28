@@ -94,18 +94,35 @@
            below the input. No gear button, no popover to open first. -->
       <form id="askForm" class="topbar-form ask-form-stacked" aria-label="Search or ask a question">
         <div class="ask-input-row">
-          <div class="search-wrap">
-            <span class="search-icon" aria-hidden="true">🔍</span>
-            <input id="askQuestion" class="search-input" type="text" maxlength="500" autocomplete="off"
-              placeholder="What's the latest Linux version?" aria-label="Search components or ask a question"
-              aria-autocomplete="list" aria-controls="askSuggestions" />
-            <!-- Real past community questions, ranked by relevance to
-                 what's typed (GET /api/reddit/query/questions/suggest) -
-                 not a static "recent questions" list. Public, no
-                 sign-in/LLM-call needed, since it just reads existing
-                 Reddit data. Picking one may mean the question (or a
-                 close match) has already been discussed. -->
-            <ul id="askSuggestions" role="listbox" aria-label="Similar existing questions"></ul>
+          <div class="ask-input-split">
+            <div class="search-wrap">
+              <span class="search-icon" aria-hidden="true">🔍</span>
+              <input id="askQuestion" class="search-input" type="text" maxlength="500" autocomplete="off"
+                placeholder="What's the latest Linux version?" aria-label="Search components or ask a question"
+                aria-autocomplete="list" aria-controls="askSuggestions" />
+              <!-- Instant component-name matches only (see
+                   computeComponentMatches/suggestionPool in ask-workflow.js) -
+                   no longer merges in real past community questions from
+                   GET /api/reddit/query/questions/suggest, per explicit
+                   request to remove that source. -->
+              <ul id="askSuggestions" role="listbox" aria-label="Component suggestions"></ul>
+            </div>
+            <!-- Optional, always-available free-text context alongside the
+                 question itself - never required, never auto-applied to
+                 #askQuestion's own value. Auto-filled from a Reddit post's
+                 own body text when loaded from Recent Reddit Update Risk
+                 Questions (see loadRedditUpdateQuestions in ask-rail.js),
+                 but any user may also type their own, for any question.
+                 Sent as its own `context` field on submit (see the ask
+                 submit handler) - the server merges it into the effective
+                 question text once, server-side, rather than the client
+                 baking a "Context: ..." string into the visible question
+                 box itself, which read as confusing/cluttered for a
+                 regular typed question (caught via direct feedback). -->
+            <div class="ask-context-wrap">
+              <textarea id="askContext" class="search-input ask-context-input" maxlength="1000" rows="1"
+                placeholder="Optional context (e.g. paste extra details)" aria-label="Optional additional context"></textarea>
+            </div>
           </div>
           <!-- Core form controls, not agentic-AI configuration, so they
                stay on the input's own row on every screen size (unlike

@@ -739,6 +739,17 @@ html::-webkit-scrollbar { display: none; }
    of room; .search-wrap's own flex-basis:100% already absorbs the
    shrinking (same reasoning as #askIntentBadge's flex-shrink:0). */
 .ask-input-row .btn { flex-shrink: 0; }
+/* Question (left) + optional context (right), side by side - wraps to
+   stacked on a narrow screen via plain flex-wrap, same as every other
+   responsive row in this form, rather than a dedicated breakpoint. */
+.ask-input-split { display: flex; align-items: flex-start; gap: 8px; flex: 1 1 auto; min-width: 0; flex-wrap: wrap; }
+.ask-context-wrap { flex: 1 1 200px; min-width: 160px; }
+.ask-context-input {
+  /* No icon on this field (unlike .search-wrap's question input, whose
+     28px left padding makes room for 🔍) - back to a plain left inset. */
+  padding-left: 10px; resize: vertical; min-height: 32px;
+  font-family: inherit; line-height: 1.3;
+}
 
 /* ── Answer rail tabs (Answer+workflow / Sources) ──────────── */
 /* Negative margin matches .ask-answer-card's own 14px padding, so
