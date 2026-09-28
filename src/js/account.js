@@ -624,6 +624,16 @@
         label: "Allowed registration email domains",
         hint: "Comma-separated (e.g. gmail.com,outlook.com). Any .edu (or .edu.<country>) address is always allowed regardless of this list.",
       },
+      // Caps how many accounts one IP can create per hour (see app.js's
+      // RegisterAttempts/getRegisterAttemptCount) - a follow-up to the
+      // domain allowlist above, which does nothing against a scripted
+      // signup farm using a real allowed-domain address (e.g. Gmail
+      // dot-variants) with a gibberish username. 5/hour is the default.
+      registrationRateLimitPerHour: {
+        label: "Registration rate limit (accounts/hour per IP)",
+        hint: "How many accounts one IP address may successfully create per hour, to slow down a scripted signup farm. A failed attempt (bad email, duplicate address) never counts against this.",
+        min: 1, max: 1000,
+      },
       // Lets a signed-out visitor ask a small number of real questions
       // (not the free vendor/category lookups, which never needed
       // sign-in) before Ask falls back to requiring one. Enforced
@@ -1349,14 +1359,18 @@
       const name = document.getElementById("ua-reg-name").value.trim();
       const email = document.getElementById("ua-reg-email").value.trim();
       const password = document.getElementById("ua-reg-password").value;
+      // Honeypot: always empty for a real visitor (the field is hidden
+      // off-screen, see .ua-hp), sent along so the server can reject a
+      // scripted signup that blindly fills every input it finds.
+      const website = document.getElementById("ua-reg-website").value;
       const btn = document.getElementById("ua-register-btn");
       btn.disabled = true; btn.textContent = "Creating…";
       try {
-        const res = await uaRequest("auth/register", { method: "POST", body: JSON.stringify({ name, email, password }) });
+        const res = await uaRequest("auth/register", { method: "POST", body: JSON.stringify({ name, email, password, website }) });
         const data = await res.json();
         if (!res.ok) { uaShowMsg("ua-register-error", data.error || "Registration failed."); return; }
         uaShowMsg("ua-register-ok", "Account created. You can now sign in.");
-        ["ua-reg-name", "ua-reg-email", "ua-reg-password"].forEach(id => { document.getElementById(id).value = ""; });
+        ["ua-reg-name", "ua-reg-email", "ua-reg-password", "ua-reg-website"].forEach(id => { document.getElementById(id).value = ""; });
         document.getElementById("ua-tab-login").click();
       } catch { uaShowMsg("ua-register-error", "Network error. Try again."); }
       finally { btn.disabled = false; btn.textContent = "Create account"; }

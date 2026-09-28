@@ -2169,6 +2169,14 @@ table.a-drift td.mono { font-family: Consolas, Monaco, monospace; }
    not a one-line form field. */
 .ua-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; max-width: 420px; }
 .ua-field label { font: 600 12px/1 inherit; color: var(--text); }
+/* Honeypot for the register form (see ua-reg-website in index.html and
+   the server's own matching comment on the "website" field in
+   POST /api/auth/register). Off-screen via position, not display:none
+   or visibility:hidden - a bot script that checks computed visibility
+   before filling a field would skip either of those, but this still
+   renders (just off the visible viewport), so it still gets filled by a
+   naive "fill every input" script. */
+.ua-hp { position: absolute; left: -9999px; top: -9999px; width: 1px; height: 1px; overflow: hidden; }
 .ua-opt { font-weight: 400; color: var(--muted); }
 .ua-msg {
   padding: 8px 12px; border-radius: var(--radius-sm);
