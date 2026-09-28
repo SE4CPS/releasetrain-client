@@ -208,8 +208,20 @@
           // The post's own body text, if any, rides along as optional
           // context (see #askContext's own markup comment) - not shown
           // inline here, only carried on the button for the click handler
-          // below to fill the separate context field with.
-          const context = String(d.author_description || "").trim();
+          // below to fill the separate context field with. The subreddit
+          // name is prepended too (not just when there's body text -
+          // every post has a subreddit) since a bare reddit title alone
+          // often gives the Ask pipeline's own vendor-detection step
+          // nothing to match against (caught live: "Is it worth
+          // updating?" -> "No vendor matched" -> "I don't know", even
+          // though the r/macOS subreddit it came from names the product
+          // plainly). This context text is merged into the effective
+          // question server-side before vendor detection ever runs (see
+          // POST /api/ask's own context-merge), so naming the subreddit
+          // here gives that same existing matching logic a real signal
+          // to work with instead of adding a separate vendor-hint field.
+          const subredditNote = d.subreddit ? `Posted in r/${d.subreddit}.` : "";
+          const context = [subredditNote, String(d.author_description || "").trim()].filter(Boolean).join("\n\n");
           return `<div class="demo-q-row">
             <button type="button" class="demo-q-btn" data-q="${uaEsc(d.title || "")}" data-context="${uaEsc(context)}">${uaEsc(d.title || "")}<span class="demo-q-meta">${meta}</span></button>
             ${link}

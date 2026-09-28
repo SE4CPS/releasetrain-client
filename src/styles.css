@@ -764,7 +764,15 @@ html::-webkit-scrollbar { display: none; }
    sitting full-width below it. */
 @media (min-width: 900px) {
   .ask-input-row {
-    grid-template-columns: 1fr 1fr auto auto;
+    /* Context gets a bit more of the row than the question, not an even
+       split - a typed question is usually short, but context is often a
+       full pasted sentence/paragraph. Mild tilt (0.85fr vs 1fr), not a
+       stronger one: an earlier 0.7/1 split (paired with a much longer
+       placeholder) visibly cramped the question box instead - shortening
+       the context placeholder ("Optional context (e.g. paste extra
+       details)" -> "Add context (optional)") did more of the actual work
+       than the column ratio did. */
+    grid-template-columns: 0.95fr 1fr auto auto;
     grid-template-areas: "question context clear submit";
   }
 }
