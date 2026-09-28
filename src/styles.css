@@ -692,7 +692,11 @@ body.view-feed .layout > .feed-main { flex: 1 1 0; }
      hidden by it, not visible through it. */
   #stickyAskHeader {
     position: fixed; top: 0; left: var(--sidebar-w, 300px); right: 0; z-index: 400;
-    background: var(--surface);
+    /* Light green, per explicit request - reused from #askWorkflowDiagram's
+       own "done" node fill (g.askwfg-done rect) right below it, rather than
+       inventing an unrelated new green: this way the panel's background
+       and the diagram's own completed-step color read as the same family. */
+    background: #f0fdf4;
   }
 }
 /* The vertical scrollbar hidden, per explicit request, while
