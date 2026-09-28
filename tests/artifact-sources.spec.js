@@ -41,6 +41,21 @@ test('a CVE with a patchUrl and a release with a commit url are lifted into Arti
   expect(genericIdx).toBeGreaterThan(documentedIdx);
 });
 
+test('a release whose url is a tagged-release archive is also lifted into Artifact', async ({ page }) => {
+  // github.py's normal (non-rc) case: a real GitHub tag archive, not a
+  // specific commit - "they point the github project not the branch
+  // tag zip or tar file" was the real, reported gap this fixes.
+  const html = await page.evaluate(() => {
+    const sources = [
+      { kind: 'release', title: 'linux 7.2.0', date: '20260927', url: 'https://github.com/torvalds/linux/archive/refs/tags/v7.2.0.tar.gz' },
+    ];
+    return askRenderSources(sources, null, null);
+  });
+  expect(html.indexOf('Artifact')).toBeGreaterThan(-1);
+  expect(html).toContain('href="https://github.com/torvalds/linux/archive/refs/tags/v7.2.0.tar.gz"');
+  expect(html).not.toContain('Documented');
+});
+
 test('no Artifact group when nothing has a specific artifact link', async ({ page }) => {
   const html = await page.evaluate(() => {
     const sources = [

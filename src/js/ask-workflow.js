@@ -861,19 +861,21 @@
     // A "Documented" source's own url isn't always a specific artifact -
     // a CVE's url is always NVD's description page (see mitre.py's own
     // versionUrl comment), never the fix; a release's url used to always
-    // be a generic repo homepage too (github.py, before it started
-    // linking each commit specifically). Returns the real, specific
-    // artifact link when this source actually has one, null otherwise -
-    // a CVE's own separate patchUrl (see classifySourcesTrust in ask.js,
+    // be a generic repo homepage too. Returns the real, specific artifact
+    // link when this source actually has one, null otherwise - a CVE's
+    // own separate patchUrl (see classifySourcesTrust in ask.js,
     // populated from mitre.py's tagged NVD references), or a release
-    // whose url already points at a specific commit rather than a bare
-    // repo. Reported live: "where is the specific artifact link, link
-    // to the specific code not the generic github page" - this is what
-    // actually answers that, by only ever surfacing a link here when
-    // it's genuinely one.
+    // whose url already points at a real downloadable artifact: a tagged
+    // release's own archive (github.py's normal case, per direct
+    // follow-up - "they point the github project not the branch tag zip
+    // or tar file") or, for an in-progress rc/beta with no tag of its
+    // own yet, the specific commit. Reported live: "where is the
+    // specific artifact link, link to the specific code not the generic
+    // github page" - this is what actually answers that, by only ever
+    // surfacing a link here when it's genuinely one.
     function askArtifactUrl(s) {
       if (s.kind === "cve" && s.patchUrl) return s.patchUrl;
-      if (s.kind === "release" && /\/commit\//.test(s.url || "")) return s.url;
+      if (s.kind === "release" && /\/(commit|archive)\//.test(s.url || "")) return s.url;
       return null;
     }
     function askRenderSources(sources, webEvidence, webSearchFallback) {
