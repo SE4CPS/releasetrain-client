@@ -556,6 +556,7 @@
       viewEvalRewriterVisible: { label: "Show Eval Rewriter in the menu", type: "boolean" },
       viewEvalEvaluatorVisible: { label: "Show Eval Evaluator in the menu", type: "boolean" },
       viewEvalOrchestratorVisible: { label: "Show Eval Orchestrator in the menu", type: "boolean" },
+      viewFiltersVisible: { label: "Show Filters & Stats in the menu", type: "boolean" },
       // Eval tool API access: each of these calls a real LLM and runs a
       // real retrieval pass, so how open its raw HTTP endpoint is (not
       // the Eval Rewriter/Evaluator/Orchestrator nav link's own

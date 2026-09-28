@@ -105,7 +105,7 @@
       "btn-major", "btn-minor", "btn-patch", "btn-cve", "btn-llm", "btn-hv", "btn-potential-cve", "btn-reddit",
       "btn-reddit-risk", "btn-reddit-risk-latest", "btn-reddit-risk-cve", "btn-so-risk", "btn-so",
       "filterForm", "components", "clearBtn", "fixedToggles", "typeToggles",
-      "homeLink", "graphLink", "archLink", "cveLink", "dashboardLink", "docsLink", "changelogLink", "ackLink", "usersLink", "networkLink", "evalRewriterLink", "evalEvaluatorLink", "evalOrchestratorLink", "expandAllBtn", "feedSortSelect", "activeFilters", "afTags", "afClearAll", "emptyState", "emptyStateIcon", "emptyStateMsg", "emptyStateDetail"
+      "homeLink", "graphLink", "archLink", "cveLink", "dashboardLink", "docsLink", "changelogLink", "ackLink", "usersLink", "networkLink", "evalRewriterLink", "evalEvaluatorLink", "evalOrchestratorLink", "filtersToggleBtn", "expandAllBtn", "feedSortSelect", "activeFilters", "afTags", "afClearAll", "emptyState", "emptyStateIcon", "emptyStateMsg", "emptyStateDetail"
     ].forEach(id => { EL[id] = document.getElementById(id); });
 
     const $ = s => document.querySelector(s);
@@ -133,6 +133,9 @@
       // of this setting.
       viewEvalRewriterVisible: "evalRewriterLink", viewEvalEvaluatorVisible: "evalEvaluatorLink",
       viewEvalOrchestratorVisible: "evalOrchestratorLink",
+      // Filters & Stats - already a real Menu item (see its own markup
+      // comment), now toggleable the same way as every entry above it.
+      viewFiltersVisible: "filtersToggleBtn",
     };
     fetch(API_BASE + "views/visibility").then(r => r.ok ? r.json() : {}).then(flags => {
       for (const [key, elId] of Object.entries(VIEW_NAV_LINKS)) {
