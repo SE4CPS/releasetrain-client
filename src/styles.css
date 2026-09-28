@@ -653,9 +653,17 @@ body.view-feed .layout > .feed-main { flex: 1 1 0; }
 .ask-form-desktop-slot { display: none; }
 @media (min-width: 900px) {
   .ask-form-desktop-slot {
+    /* Was max-width:780px, centered - narrower than #askWorkflowTop
+       (the diagram right above it, which stretches the full available
+       width with no cap - see its own comment) for no real reason once
+       the input row grew a second field. Caught live from a screenshot:
+       a wide diagram sitting directly above a visibly much-narrower,
+       centered input row read as inconsistent, and the whole point of
+       giving context more room (a separate fix earlier) is undercut by
+       capping the row itself well below the space actually available.
+       Matches #askWorkflowTop's own treatment exactly now: same
+       padding, no max-width, so both align edge to edge. */
     display: block;
-    max-width: 780px;
-    margin: 0 auto;
     padding: 8px 24px 0;
   }
   /* #stickyAskHeader (see its own markup comment): position:fixed at
