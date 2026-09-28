@@ -873,9 +873,28 @@
     // specific artifact link, link to the specific code not the generic
     // github page" - this is what actually answers that, by only ever
     // surfacing a link here when it's genuinely one.
+    // Even a bare github.com/{owner}/{repo} url (no specific commit/tag
+    // in it) is a real downloadable artifact, not just a description
+    // page: GitHub's own "Code" dropdown offers a "Download ZIP" button
+    // on that exact page, backed by a predictable, always-available
+    // url (verified live: archive/HEAD.zip 302s to a real codeload.
+    // github.com zip for any public repo, no branch name needed).
+    // Reported live, with a GitHub screenshot proving it: saying "no
+    // artifact was found" for a source that's plainly a github.com repo
+    // was flatly untrue. A specific commit/tag archive (when the source
+    // already has one) is still preferred over this HEAD fallback,
+    // since it names the exact version rather than whatever the default
+    // branch currently points at.
+    function githubHeadZipUrl(url) {
+      const m = /^https?:\/\/github\.com\/([^/]+)\/([^/]+?)(?:\.git)?(?:[/?#].*)?$/i.exec(url || "");
+      return m ? `https://github.com/${m[1]}/${m[2]}/archive/HEAD.zip` : null;
+    }
     function askArtifactUrl(s) {
       if (s.kind === "cve" && s.patchUrl) return s.patchUrl;
-      if (s.kind === "release" && /\/(commit|archive)\//.test(s.url || "")) return s.url;
+      if (s.kind === "release") {
+        if (/\/(commit|archive)\//.test(s.url || "")) return s.url;
+        return githubHeadZipUrl(s.url);
+      }
       return null;
     }
     function askRenderSources(sources, webEvidence, webSearchFallback) {

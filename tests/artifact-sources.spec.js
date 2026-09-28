@@ -3,10 +3,14 @@ const { test, expect } = require('@playwright/test');
 /*
  * The Sources tab's "Artifact" group (see askArtifactUrl/askRenderSources
  * in ask-workflow.js): lifts a Documented source out into its own group,
- * at the top, when it actually has a specific code artifact behind it
- * (a CVE's own patchUrl, or a release whose url already points at a
- * specific commit) - reported live: "where is the specific artifact
- * link, link to the specific code not the generic github page".
+ * at the top, when it actually has a real download behind it (a CVE's
+ * own patchUrl, or a release whose url already points at a specific
+ * commit/tag archive) - reported live: "where is the specific artifact
+ * link, link to the specific code not the generic github page". A bare
+ * github.com/{owner}/{repo} url counts too (see githubHeadZipUrl): a
+ * screenshot of GitHub's own "Code > Download ZIP" button on that exact
+ * page proved saying "no artifact" for an ordinary repo link was simply
+ * wrong, so it's rewritten to a real archive/HEAD.zip download instead.
  */
 
 test.beforeEach(async ({ page }) => {
@@ -36,9 +40,9 @@ test('a CVE with a patchUrl and a release with a commit url are lifted into Arti
       },
       {
         kind: 'release',
-        title: 'linux 7.1.0',
+        title: 'gimp 3.0.0',
         date: '20260719',
-        url: 'https://github.com/torvalds/linux',
+        url: 'https://some-vendor.example/gimp/releases',
       },
     ];
     return askRenderSources(sources, null, null);
@@ -53,10 +57,33 @@ test('a CVE with a patchUrl and a release with a commit url are lifted into Arti
   expect(html).toContain('href="https://vendor.example/advisory/CVE-2026-1"');
   // The commit-linked release is in Artifact too.
   expect(html).toContain('href="https://github.com/torvalds/linux/commit/abc123"');
-  // The generic-repo release (no commit in its url) stays out of Artifact,
-  // still shown under Documented with its own (generic) url.
-  const genericIdx = html.indexOf('href="https://github.com/torvalds/linux"');
+  // The non-github, non-commit/archive release has no known artifact
+  // download and stays out of Artifact, shown under Documented instead.
+  const genericIdx = html.indexOf('href="https://some-vendor.example/gimp/releases"');
   expect(genericIdx).toBeGreaterThan(documentedIdx);
+});
+
+test('a bare github.com repo url is rewritten to a real archive/HEAD.zip download', async ({
+  page,
+}) => {
+  // Reported live, with a screenshot of GitHub's own "Download ZIP"
+  // button on that exact page: this used to be treated as "no artifact"
+  // just because the url had no /commit/ or /archive/ segment, which
+  // was simply not true.
+  const html = await page.evaluate(() => {
+    const sources = [
+      {
+        kind: 'release',
+        title: 'linux 7.1.0',
+        date: '20260719',
+        url: 'https://github.com/torvalds/linux',
+      },
+    ];
+    return askRenderSources(sources, null, null);
+  });
+  expect(html.indexOf('Artifact')).toBeGreaterThan(-1);
+  expect(html).toContain('href="https://github.com/torvalds/linux/archive/HEAD.zip"');
+  expect(html).not.toContain('Documented');
 });
 
 test('a release whose url is a tagged-release archive is also lifted into Artifact', async ({
@@ -101,7 +128,7 @@ test('Artifact still renders, with an explicit "none found" message, when nothin
         kind: 'release',
         title: 'zoom 7.2.2',
         date: '20260924',
-        url: 'https://github.com/zoom/zoom',
+        url: 'https://some-vendor.example/zoom/releases',
       },
     ];
     return askRenderSources(sources, null, null);
