@@ -179,6 +179,20 @@
     // explicit request. Best-effort: a failed fetch just leaves the
     // section empty rather than breaking the page.
     const REDDIT_UPDATE_Q_LIMIT = 8;
+    // Real Reddit titles sometimes carry a leading warning/attention emoji
+    // (e.g. "⚠️ AT&T - what is going on...") - stripped here, per explicit
+    // request, rather than shown verbatim in the button or loaded into
+    // #askQuestion. \p{Extended_Pictographic} covers the emoji itself;
+    // ️/‍ (variation selector, zero-width joiner) are leftover
+    // joiner characters some emoji sequences leave behind once the visible
+    // glyph is removed.
+    function stripEmoji(s) {
+      return String(s || "")
+        .replace(/\p{Extended_Pictographic}/gu, "")
+        .replace(/[️‍]/g, "")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+    }
     async function loadRedditUpdateQuestions() {
       if (!demoQList) return;
       try {
@@ -222,8 +236,9 @@
           // to work with instead of adding a separate vendor-hint field.
           const subredditNote = d.subreddit ? `Posted in r/${d.subreddit}.` : "";
           const context = [subredditNote, String(d.author_description || "").trim()].filter(Boolean).join("\n\n");
+          const title = stripEmoji(d.title);
           return `<div class="demo-q-row">
-            <button type="button" class="demo-q-btn" data-q="${uaEsc(d.title || "")}" data-context="${uaEsc(context)}">${uaEsc(d.title || "")}<span class="demo-q-meta">${meta}</span></button>
+            <button type="button" class="demo-q-btn" data-q="${uaEsc(title)}" data-context="${uaEsc(context)}">${uaEsc(title)}<span class="demo-q-meta">${meta}</span></button>
             ${link}
           </div>`;
         }).join("");

@@ -801,7 +801,22 @@ html::-webkit-scrollbar { display: none; }
   /* No icon on this field (unlike .search-wrap's question input, whose
      28px left padding makes room for 🔍) - back to a plain left inset. */
   width: 100%; padding-left: 10px; resize: vertical; min-height: 32px;
-  font-family: inherit; line-height: 1.3;
+  font-family: inherit;
+  /* !important needed: .search-input's own base rule (below this one in
+     the file) sets font:13px/1 ... - same specificity, later in source
+     order, so its line-height:1 (13px) was silently winning over this
+     rule's line-height:1.3 regardless. line-height:18px, not 1.3: an
+     <input> auto-centers its single line of text vertically, but a
+     <textarea> does NOT (renders text flush from the top of its content
+     box, browser default) - this is the standard fix for a single-line-
+     styled textarea, setting line-height to exactly the content box's
+     own height (32px box - 7px top/bottom padding = 18px) so its one
+     line of text centers the same way the question <input> beside it
+     already does natively. Caught live from a screenshot: both
+     placeholders read as sitting above center, though only the textarea
+     genuinely needed this fix - the question <input> already centers on
+     its own. */
+  line-height: 18px !important;
   /* No scrollbar once typed text exceeds the visible area - per explicit
      request ("the corner works"): the resize handle already lets anyone
      drag it taller to see everything, so a scrollbar is redundant chrome
