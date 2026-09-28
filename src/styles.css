@@ -734,20 +734,44 @@ html::-webkit-scrollbar { display: none; }
    flex-direction:column, overriding .topbar-form's default row-wrap
    behavior for just this form. */
 .ask-form-stacked { flex-direction: column; align-items: stretch; flex-wrap: nowrap; gap: 6px; }
-.ask-input-row { display: flex; align-items: center; gap: 8px; }
-/* Clear/bookmark/submit shouldn't get squeezed as the row runs out
-   of room; .search-wrap's own flex-basis:100% already absorbs the
-   shrinking (same reasoning as #askIntentBadge's flex-shrink:0). */
-.ask-input-row .btn { flex-shrink: 0; }
-/* Question (left) + optional context (right), side by side - wraps to
-   stacked on a narrow screen via plain flex-wrap, same as every other
-   responsive row in this form, rather than a dedicated breakpoint. */
-.ask-input-split { display: flex; align-items: flex-start; gap: 8px; flex: 1 1 auto; min-width: 0; flex-wrap: wrap; }
-.ask-context-wrap { flex: 1 1 200px; min-width: 160px; }
+/* Grid, not flex-wrap - see this row's own markup comment for why (a
+   flex-wrap version broke visibly at real container widths around
+   ~470px: question+context wrapped to uneven widths and Clear/Submit
+   ended up vertically centered against their combined two-line height,
+   floating in a gap). Named areas place all four pieces predictably at
+   every width instead of relying on wrap order + flex-basis arithmetic.
+   Narrow/default: question+Clear+Submit share one row, context sits full
+   width below. */
+.ask-input-row {
+  display: grid; gap: 8px; align-items: center;
+  grid-template-columns: 1fr auto auto;
+  grid-template-areas:
+    "question clear submit"
+    "context  context submit2";
+}
+/* "submit2" is a throwaway area name, not a real duplicate of the submit
+   button - grid-template-areas requires every cell in the ASCII grid to
+   be filled by some name, and the submit button (grid-area: submit) only
+   occupies the row-1 cell, leaving row 2's third column with nothing
+   assigned unless it's given its own placeholder name here. */
+.ask-input-row .search-wrap { grid-area: question; }
+.ask-input-row .ask-context-wrap { grid-area: context; }
+.ask-input-row #clearBtn { grid-area: clear; }
+.ask-input-row #askSubmitBtn { grid-area: submit; }
+/* Wide enough (this container is already known to comfortably fit both -
+   see .ask-form-desktop-slot's own max-width, which kicks in at this
+   same breakpoint) - context joins the question on one row instead of
+   sitting full-width below it. */
+@media (min-width: 900px) {
+  .ask-input-row {
+    grid-template-columns: 1fr 1fr auto auto;
+    grid-template-areas: "question context clear submit";
+  }
+}
 .ask-context-input {
   /* No icon on this field (unlike .search-wrap's question input, whose
      28px left padding makes room for 🔍) - back to a plain left inset. */
-  padding-left: 10px; resize: vertical; min-height: 32px;
+  width: 100%; padding-left: 10px; resize: vertical; min-height: 32px;
   font-family: inherit; line-height: 1.3;
 }
 

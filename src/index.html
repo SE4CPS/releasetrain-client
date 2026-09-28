@@ -93,36 +93,49 @@
            size, pipeline, the three toggles) stays visible in one row
            below the input. No gear button, no popover to open first. -->
       <form id="askForm" class="topbar-form ask-form-stacked" aria-label="Search or ask a question">
+        <!-- CSS Grid, not flex-wrap: an earlier flex-wrap version of this
+             row (question+context wrapped as one opaque flex item beside
+             Clear/Submit) broke visibly at real container widths around
+             ~470px (a plausible rail-column/split-window width, not just
+             an extreme edge case - reproduced directly by forcing
+             .ask-input-grid to a range of widths) - the two inputs wrapped
+             to uneven widths and Clear/Submit ended up vertically centered
+             against the combined two-line height, floating in a gap next
+             to nothing. Grid with explicit named areas places all four
+             pieces predictably at every width instead: question+Clear+
+             Submit share one row with context full-width below by
+             default, and only at >=900px (where this container is already
+             known to have enough room - see .ask-form-desktop-slot's own
+             max-width just below) does context join the same row beside
+             the question. See .ask-input-row's own grid CSS. -->
         <div class="ask-input-row">
-          <div class="ask-input-split">
-            <div class="search-wrap">
-              <span class="search-icon" aria-hidden="true">🔍</span>
-              <input id="askQuestion" class="search-input" type="text" maxlength="500" autocomplete="off"
-                placeholder="What's the latest Linux version?" aria-label="Search components or ask a question"
-                aria-autocomplete="list" aria-controls="askSuggestions" />
-              <!-- Instant component-name matches only (see
-                   computeComponentMatches/suggestionPool in ask-workflow.js) -
-                   no longer merges in real past community questions from
-                   GET /api/reddit/query/questions/suggest, per explicit
-                   request to remove that source. -->
-              <ul id="askSuggestions" role="listbox" aria-label="Component suggestions"></ul>
-            </div>
-            <!-- Optional, always-available free-text context alongside the
-                 question itself - never required, never auto-applied to
-                 #askQuestion's own value. Auto-filled from a Reddit post's
-                 own body text when loaded from Recent Reddit Update Risk
-                 Questions (see loadRedditUpdateQuestions in ask-rail.js),
-                 but any user may also type their own, for any question.
-                 Sent as its own `context` field on submit (see the ask
-                 submit handler) - the server merges it into the effective
-                 question text once, server-side, rather than the client
-                 baking a "Context: ..." string into the visible question
-                 box itself, which read as confusing/cluttered for a
-                 regular typed question (caught via direct feedback). -->
-            <div class="ask-context-wrap">
-              <textarea id="askContext" class="search-input ask-context-input" maxlength="1000" rows="1"
-                placeholder="Optional context (e.g. paste extra details)" aria-label="Optional additional context"></textarea>
-            </div>
+          <div class="search-wrap">
+            <span class="search-icon" aria-hidden="true">🔍</span>
+            <input id="askQuestion" class="search-input" type="text" maxlength="500" autocomplete="off"
+              placeholder="What's the latest Linux version?" aria-label="Search components or ask a question"
+              aria-autocomplete="list" aria-controls="askSuggestions" />
+            <!-- Instant component-name matches only (see
+                 computeComponentMatches/suggestionPool in ask-workflow.js) -
+                 no longer merges in real past community questions from
+                 GET /api/reddit/query/questions/suggest, per explicit
+                 request to remove that source. -->
+            <ul id="askSuggestions" role="listbox" aria-label="Component suggestions"></ul>
+          </div>
+          <!-- Optional, always-available free-text context alongside the
+               question itself - never required, never auto-applied to
+               #askQuestion's own value. Auto-filled from a Reddit post's
+               own body text when loaded from Recent Reddit Update Risk
+               Questions (see loadRedditUpdateQuestions in ask-rail.js),
+               but any user may also type their own, for any question.
+               Sent as its own `context` field on submit (see the ask
+               submit handler) - the server merges it into the effective
+               question text once, server-side, rather than the client
+               baking a "Context: ..." string into the visible question
+               box itself, which read as confusing/cluttered for a
+               regular typed question (caught via direct feedback). -->
+          <div class="ask-context-wrap">
+            <textarea id="askContext" class="search-input ask-context-input" maxlength="1000" rows="1"
+              placeholder="Optional context (e.g. paste extra details)" aria-label="Optional additional context"></textarea>
           </div>
           <!-- Core form controls, not agentic-AI configuration, so they
                stay on the input's own row on every screen size (unlike
