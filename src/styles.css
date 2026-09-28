@@ -679,13 +679,20 @@ body.view-feed .layout > .feed-main { flex: 1 1 0; }
      own width; --topbar-h (see updateOffsets in the script) still
      correctly tracks this element's real height either way, so
      .layout/every view's own top offset/height math is unaffected by
-     the switch from sticky to fixed. An opaque background (not
-     transparent, unlike the diagram/input themselves) so a view's
-     own content scrolling up behind this header is actually hidden
-     by it, not visible through it. */
+     the switch from sticky to fixed. Background is --surface (a light
+     card color, white), not --bg (the page's own darker blue-gray) -
+     per explicit request ("pick a consistent background for the
+     static part at the top... make it a light color"): this whole
+     fixed area (diagram + input row together) now reads as one
+     consistent light panel sitting above the page, rather than the
+     diagram floating on the plain page background while only the
+     input row had its own separate gray card (removed - see
+     .ask-input-row's own comment). Still opaque either way, so a
+     view's own content scrolling up behind this header is actually
+     hidden by it, not visible through it. */
   #stickyAskHeader {
     position: fixed; top: 0; left: var(--sidebar-w, 300px); right: 0; z-index: 400;
-    background: var(--bg);
+    background: var(--surface);
   }
 }
 /* The vertical scrollbar hidden, per explicit request, while
@@ -764,11 +771,12 @@ html::-webkit-scrollbar { display: none; }
   grid-template-areas:
     "question clear submit"
     "context  context submit2";
-  /* A soft shared surface behind the whole control bar, not two isolated
-     white boxes floating on the page background - per explicit request
-     ("nicer and more integrated to the page"). */
-  background: var(--chip-bg); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 8px;
+  /* No shared gray card here anymore - that was an earlier attempt at
+     "integrated," superseded by giving #stickyAskHeader itself (the
+     diagram + this row together) one consistent light background
+     instead, per explicit follow-up request ("remove the gray around
+     the two input boxes"). The two inputs go back to sitting directly
+     on that shared panel, same as the diagram above them. */
 }
 /* "submit2" is a throwaway area name, not a real duplicate of the submit
    button - grid-template-areas requires every cell in the ASCII grid to
