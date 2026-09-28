@@ -858,18 +858,48 @@
       const href = `https://www.google.com/search?q=${encodeURIComponent(q)}`;
       return `<p class="ask-muted">Web search for "${uaEsc(q)}" found no results. <a href="${uaEsc(href)}" target="_blank" rel="noopener">Search manually to verify</a>.</p>`;
     }
+    // A "Documented" source's own url isn't always a specific artifact -
+    // a CVE's url is always NVD's description page (see mitre.py's own
+    // versionUrl comment), never the fix; a release's url used to always
+    // be a generic repo homepage too (github.py, before it started
+    // linking each commit specifically). Returns the real, specific
+    // artifact link when this source actually has one, null otherwise -
+    // a CVE's own separate patchUrl (see classifySourcesTrust in ask.js,
+    // populated from mitre.py's tagged NVD references), or a release
+    // whose url already points at a specific commit rather than a bare
+    // repo. Reported live: "where is the specific artifact link, link
+    // to the specific code not the generic github page" - this is what
+    // actually answers that, by only ever surfacing a link here when
+    // it's genuinely one.
+    function askArtifactUrl(s) {
+      if (s.kind === "cve" && s.patchUrl) return s.patchUrl;
+      if (s.kind === "release" && /\/commit\//.test(s.url || "")) return s.url;
+      return null;
+    }
     function askRenderSources(sources, webEvidence, webSearchFallback) {
       const webVerifyHtml = askRenderWebVerification(webEvidence);
       const webFallbackHtml = askRenderWebSearchFallback(webSearchFallback);
       if (!sources || !sources.length) {
         return webVerifyHtml || webFallbackHtml || '<p class="ask-muted">No sources were found for this question.</p>';
       }
-      const documented = sources.filter(s => s.kind === "cve" || s.kind === "release");
+      // Artifact: lifted out of Documented (not just listed twice) so a
+      // reader sees at a glance which sources actually have a real,
+      // specific code artifact behind them, per explicit request ("add
+      // a section artifact at the beginning") - rendered with THIS
+      // source's own artifact url substituted in, since the item
+      // renderer just links whatever `.url` it's given.
+      const artifactUrlBySource = new Map();
+      for (const s of sources) {
+        const u = askArtifactUrl(s);
+        if (u) artifactUrlBySource.set(s, u);
+      }
+      const artifact = sources.filter(s => artifactUrlBySource.has(s)).map(s => ({ ...s, url: artifactUrlBySource.get(s) }));
+      const documented = sources.filter(s => (s.kind === "cve" || s.kind === "release") && !artifactUrlBySource.has(s));
       const discussion = sources.filter(s => s.kind !== "cve" && s.kind !== "release");
       const group = (label, list) => list.length
         ? `<div class="ask-source-group"><div class="ask-source-heading">${label}</div>${askRenderSourceItems(list)}</div>`
         : "";
-      return webVerifyHtml + webFallbackHtml + group("Documented", documented) + group("Discussion", discussion);
+      return webVerifyHtml + webFallbackHtml + group("Artifact", artifact) + group("Documented", documented) + group("Discussion", discussion);
     }
 
     // "stackoverflow" was previously indistinguishable from "reddit": the
