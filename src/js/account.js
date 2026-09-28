@@ -385,7 +385,7 @@
         return;
       }
       const data = await res.json();
-      const { botHealth, sourceAttribution, storage, counts, users, queries, botGapLog } = data;
+      const { botHealth, sourceAttribution, storage, counts, users, queries, botGapLog, askStats } = data;
 
       if (updatedEl) updatedEl.textContent = data.checkedAt ? "as of " + new Date(data.checkedAt).toLocaleTimeString() : "";
       uaRenderRegistrationNotice(users, queries, counts, botHealth, storage);
@@ -395,6 +395,11 @@
       const attrPct = sourceAttribution.pct || 0;
       const gap = botGapLog || { total: 0, success: 0, recent: [] };
       const gapFailRate = gap.total ? Math.round(((gap.total - gap.success) / gap.total) * 100) : 0;
+      // Ask vendor-match health: a rising noVendorRatePct means the
+      // catalog/matching logic in ask.js is degrading (the real "applehelp"
+      // vs "apple" bug this metric exists to catch), visible from real
+      // traffic instead of only from a user's own bad-answer screenshot.
+      const ask = askStats || { totalLast7Days: 0, noVendorDetectedLast7Days: 0, noVendorRatePct: 0, abstainRatePct: 0 };
 
       gridEl.innerHTML = `
         <div class="ua-dash-card ${staleCount ? "ua-dash-card-alert" : "ua-dash-card-ok"}">
@@ -422,6 +427,11 @@
           <div class="ua-dash-card-label">Vendor gap-fills</div>
           <div class="ua-dash-card-value">${gap.total ? gap.success + "/" + gap.total : "None yet"}</div>
           <div class="ua-dash-card-sub">${gap.total ? "resolved, wikipedia.py auto-fallback" : "no web-verified vendor has had zero tracked data yet"}</div>
+        </div>
+        <div class="ua-dash-card ${ask.totalLast7Days && ask.noVendorRatePct >= 10 ? "ua-dash-card-alert" : ""}">
+          <div class="ua-dash-card-label">Ask vendor-match rate</div>
+          <div class="ua-dash-card-value">${ask.totalLast7Days ? ask.noVendorRatePct + "% no match" : "No asks yet"}</div>
+          <div class="ua-dash-card-sub">${ask.totalLast7Days ? ask.noVendorDetectedLast7Days + " of " + ask.totalLast7Days + " asks, last 7 days · " + ask.abstainRatePct + "% abstained overall" : "past 7 days"}</div>
         </div>`;
 
       botsEl.innerHTML = uaRenderBotGroups(botHealth) ||

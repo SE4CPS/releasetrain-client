@@ -21,8 +21,28 @@ const ALERTS = [
   },
 ];
 
+// Dates are computed relative to whenever the suite actually runs, not
+// hardcoded to a calendar date that goes stale (and briefly collides with
+// "today") as real time passes. isoAtNoonOffset() also keeps the "is this
+// row today?" comparison (account.js's `toDateString()` check, which runs
+// in local time) safely clear of the midnight boundary in either
+// direction, instead of a bare `new Date().toISOString()` captured once
+// at fixture-build time that has no buffer if the comparison runs a moment
+// later and happens to straddle midnight.
+function isoAtNoonOffset(daysAgo) {
+  const d = new Date();
+  d.setHours(12, 0, 0, 0);
+  d.setDate(d.getDate() - daysAgo);
+  return d.toISOString();
+}
+function dayStrOffset(daysAgo) {
+  const d = new Date();
+  d.setDate(d.getDate() - daysAgo);
+  return d.toISOString().slice(0, 10);
+}
+
 const DAILY = Array.from({ length: 14 }, (_, i) => ({
-  date: `2026-09-${String(14 + i).padStart(2, '0')}`,
+  date: dayStrOffset(13 - i),
   visits: 10 + i,
   uniques: 5 + (i % 4),
   ask: 1,
@@ -30,8 +50,8 @@ const DAILY = Array.from({ length: 14 }, (_, i) => ({
 }));
 const VISITS = {
   days: 14,
-  from: '2026-09-14',
-  to: '2026-09-27',
+  from: DAILY[0].date,
+  to: DAILY[DAILY.length - 1].date,
   logsFound: 2,
   totals: { visits: 217, uniques: 40, ask: 14, api: 280, unverified: 96, unverifiedIps: 12 },
   daily: DAILY,
@@ -49,7 +69,7 @@ const VISITS = {
       city: 'Stockton',
       visits: 9,
       ask: 2,
-      last: '2026-09-27T09:00:00Z',
+      last: isoAtNoonOffset(2),
       page: 'home',
       browser: 'Chrome',
     },
@@ -59,7 +79,7 @@ const VISITS = {
       city: 'Ho Chi Minh City',
       visits: 12,
       ask: 4,
-      last: '2026-09-20T09:00:00Z',
+      last: isoAtNoonOffset(9),
       page: 'shared search',
       browser: 'Firefox',
     },
@@ -68,7 +88,7 @@ const VISITS = {
       country: 'GB',
       visits: 3,
       ask: 0,
-      last: new Date().toISOString(),
+      last: isoAtNoonOffset(0),
       page: 'docs',
       browser: 'Firefox',
     },
