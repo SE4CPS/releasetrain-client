@@ -678,6 +678,11 @@
       // phase of one loop. The role prefix is not optional for these.
       if (phase === "rewriting") return "Rewriter: choosing search terms";
       if (phase === "searching") return `${role("Retriever")}Searching ${ASK_TOOL_LABELS[detail] || detail || "sources"}`;
+      // Classify (see classifySourcesTrust on the server): a deterministic
+      // step between Retriever and Evaluator, not an LLM call - still
+      // multi-agent-only, since single_agent has no separate Retrieve/
+      // Evaluate phases for it to sit between.
+      if (phase === "classifying_sources") return `${tag("Classify")}: checking source links & trust`;
       if (phase === "evaluating") return `${tag("Evaluator")}: judging evidence`;
       if (phase === "retrying") return `${tag("Evaluator")}: requesting another search pass`;
       if (phase === "widening") return `${role("Evaluator")}Widening search window`;

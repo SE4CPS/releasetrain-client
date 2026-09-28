@@ -811,6 +811,17 @@
           // no need to say it a third time after the group header's own count.
           const cveHref = (it.url && it.url.startsWith("http")) ? it.url : (it.raw?._id ? `https://releasetrain.io/api/v/${it.raw._id}` : null);
           if (cveHref) chipsEl.insertAdjacentHTML("beforeend", `<span class="chip link"><a href="${cveHref}" target="_blank" rel="noopener">open ↗</a></span>`);
+          // versionPatchUrl (mitre.py's own extract_patch_url, see its
+          // comment there): the CVE link above is always just NVD's
+          // description page, never the actual fix - "CVE patch
+          // artifacts are hard to find" was a real, reported gap. A
+          // separate chip, not a replacement for the link above, since
+          // the description page is still useful on its own and only
+          // some CVE docs have a tagged patch reference to show here.
+          const patchHref = it.raw?.versionPatchUrl;
+          if (patchHref && String(patchHref).startsWith("http")) {
+            chipsEl.insertAdjacentHTML("beforeend", `<span class="chip link"><a href="${uaEsc(patchHref)}" target="_blank" rel="noopener">🩹 patch ↗</a></span>`);
+          }
         } else {
           // Channel (major/minor/patch) is the one row-level distinction with
           // no icon of its own, so it keeps a visual cue (the row's own

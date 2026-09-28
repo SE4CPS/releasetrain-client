@@ -30,8 +30,8 @@
     // next to it.
     // Lives in the persistent #askWorkflowTop, above the input (see that
     // element's own comment), not in the answer rail.
-    let askWorkflowState = null;      // { vendor, rewriter, retriever, evaluator, orchestrator, websearch, verify } -> idle|active|done
-    let askWorkflowTiming = null;     // { vendor, rewriter, retriever, evaluator, orchestrator, websearch, verify } -> { startedAt, doneMs } | null
+    let askWorkflowState = null;      // { vendor, rewriter, retriever, classify, evaluator, orchestrator, websearch, verify } -> idle|active|done
+    let askWorkflowTiming = null;     // { vendor, rewriter, retriever, classify, evaluator, orchestrator, websearch, verify } -> { startedAt, doneMs } | null
     let askWorkflowLabel = "";        // current phase's own label (askPhaseLabel), shown under the diagram
     let askWorkflowStartedAt = null;  // for the caption's live elapsed-seconds tick
     let askWorkflowTickTimer = null;
@@ -48,6 +48,12 @@
     const ASK_WORKFLOW_PHASE_NODE = {
       resolving_vendor: "vendor", rewriting: "rewriter",
       searching: "retriever",
+      // classifying_sources (see classifySourcesTrust on the server): a
+      // new deterministic step between Retriever and Evaluator, its own
+      // "classify" node below - not folded into "verify" (that node is
+      // specifically the earlier vendor-web-verification step, a
+      // different mechanism entirely; see that node's own history).
+      classifying_sources: "classify",
       evaluating: "evaluator", retrying: "evaluator", widening: "evaluator",
       generating: "orchestrator",
       web_searching: "websearch", web_verifying: "verify",
@@ -77,6 +83,14 @@
       { key: "websearch", name: "Search" },
       { key: "verify", name: "Verify" },
       { key: "retriever", name: "Retrieve" },
+      // Classify (see classifySourcesTrust on the server): checks each
+      // retrieved source's own url and classifies how trustworthy it is,
+      // before Evaluate ever scores them. A different "Verify" than the
+      // node above (that one is vendor-web-verification, not source
+      // trust), so this one is named "Classify" instead of reusing the
+      // word, per the same verb-only-labels convention as every node
+      // here.
+      { key: "classify", name: "Classify" },
       { key: "evaluator", name: "Evaluate" },
       { key: "orchestrator", name: "Orchestrate" },
     ];
@@ -163,7 +177,7 @@
       const el = document.getElementById("askWorkflowDiagram");
       if (!el) return;
       const state = askWorkflowState || {
-        vendor: "idle", rewriter: "idle", retriever: "idle",
+        vendor: "idle", rewriter: "idle", retriever: "idle", classify: "idle",
         evaluator: "idle", orchestrator: "idle", websearch: "idle", verify: "idle",
       };
       if (!askGraphSvg) { loadAskGraph(); return; }
@@ -250,9 +264,9 @@
       askWorkflowQuestion = question || "";
       askWorkflowNotes = {}; askWorkflowLog = []; askWorkflowFinished = false; askWorkflowAgentKeys = null; askWorkflowStartedRun = Date.now();
       askConsoleLog("Question received");
-      askWorkflowState = { vendor: "active", rewriter: "idle", retriever: "idle", evaluator: "idle", orchestrator: "idle", websearch: "idle", verify: "idle" };
+      askWorkflowState = { vendor: "active", rewriter: "idle", retriever: "idle", classify: "idle", evaluator: "idle", orchestrator: "idle", websearch: "idle", verify: "idle" };
       const now = Date.now();
-      askWorkflowTiming = { vendor: { startedAt: now, doneMs: null }, rewriter: null, retriever: null, evaluator: null, orchestrator: null, websearch: null, verify: null };
+      askWorkflowTiming = { vendor: { startedAt: now, doneMs: null }, rewriter: null, retriever: null, classify: null, evaluator: null, orchestrator: null, websearch: null, verify: null };
       askWorkflowLabel = ""; askWorkflowStartedAt = null;
       if (askWorkflowTickTimer) clearInterval(askWorkflowTickTimer);
       askWorkflowTickTimer = setInterval(() => { renderAskWorkflowCaption(); renderAskWorkflowDiagram(); }, 250);
@@ -1055,10 +1069,33 @@
             : "The model's own wording was replaced outright by a deterministic version-correctness rewrite.",
         "");
 
+      // Classify: unlike every row above, this one is NEVER a model
+      // judgment call by design (see classifySourcesTrust's own comment
+      // in ask.js: a fixed domain-match rule plus a known-platform list,
+      // never an LLM asked to guess trustworthiness) - Model stays
+      // unchecked on every single run. Runs on the same delegated
+      // architecture Rewriter/Evaluator do, so res.evaluatorRan (the
+      // same real-run proxy already used for those two rows) doubles as
+      // "did Classify run too", since both live in the same retrieval
+      // loop and always run together.
+      const classifyRan = !!res.evaluatorRan;
+      const sourcesClassified = (res.sources || []).filter((s) => s.trustTier);
+      const officialCount = sourcesClassified.filter((s) => s.trustTier === "official").length;
+      const communityCount = sourcesClassified.filter((s) => s.trustTier === "community").length;
+      const verifiedCount = sourcesClassified.filter((s) => s.urlVerified === true).length;
+      const classifyMeaning = classifyRan
+        ? askMvrMeaning(false, true, null,
+          sourcesClassified.length
+            ? `${sourcesClassified.length} source(s) checked: ${officialCount} official, ${communityCount} community, ${verifiedCount} with a live url confirmed.`
+            : "No sources were retrieved to classify.",
+          "")
+        : "This preset's architecture has no separate Classify step (single-agent loops and comparison questions skip it).";
+
       const rows = [
         ["Vendor resolution", vendorModel, vendorRule, vendorMeaning],
         ["Rewriter", rewriterModel, rewriterRule, rewriterMeaning],
         ["Retriever", retrieverModel, retrieverRule, retrieverMeaning],
+        ["Classify", false, classifyRan, classifyMeaning],
         ["Evaluator", evaluatorModel, evaluatorRule, evaluatorMeaning],
         ["Orchestrator", orchestratorModel, orchestratorRule, orchestratorMeaning],
       ];
