@@ -110,6 +110,59 @@ test('a release whose url is a tagged-release archive is also lifted into Artifa
   expect(html).not.toContain('Documented');
 });
 
+test('a "web" search result that is a real vendor installer or app store listing is lifted into Artifact', async ({
+  page,
+}) => {
+  // Reported live, with a real, verified example (statics.teams.cdn.
+  // office.net/.../MSTeamsSetup.exe, confirmed 200 OK): a product with
+  // no public code repo (Microsoft Teams) has no GitHub tag/commit to
+  // point at, so the real artifact only ever shows up as a search_web
+  // result (kind:"web") - a generic vendor "download" landing page
+  // still doesn't count (no direct file, no app-store listing), and
+  // must stay out of Artifact and out of Discussion both (it would
+  // otherwise render twice, once in each).
+  const html = await page.evaluate(() => {
+    const sources = [
+      {
+        kind: 'web',
+        title: 'Download Microsoft Teams',
+        date: null,
+        url: 'https://statics.teams.cdn.office.net/production-windows-x86/lkg/MSTeamsSetup.exe',
+      },
+      {
+        kind: 'web',
+        title: 'Microsoft Teams on the App Store',
+        date: null,
+        url: 'https://apps.apple.com/us/app/microsoft-teams/id1113153706',
+      },
+      {
+        kind: 'web',
+        title: 'Microsoft Teams | Download',
+        date: null,
+        url: 'https://www.microsoft.com/en-us/microsoft-teams/download-app',
+      },
+    ];
+    return askRenderSources(sources, null, null);
+  });
+  const artifactIdx = html.indexOf('Artifact');
+  const discussionIdx = html.indexOf('Discussion');
+  expect(artifactIdx).toBeGreaterThan(-1);
+  expect(html).toContain(
+    'href="https://statics.teams.cdn.office.net/production-windows-x86/lkg/MSTeamsSetup.exe"',
+  );
+  expect(html).toContain('href="https://apps.apple.com/us/app/microsoft-teams/id1113153706"');
+  // Each real artifact link appears exactly once, not duplicated into Discussion too.
+  expect(html.split('MSTeamsSetup.exe').length - 1).toBe(1);
+  expect(html.split('id1113153706').length - 1).toBe(1);
+  // The generic "download" landing page (no installer file, no app
+  // store) isn't a recognized artifact and stays in Discussion.
+  expect(discussionIdx).toBeGreaterThan(-1);
+  const genericIdx = html.indexOf(
+    'href="https://www.microsoft.com/en-us/microsoft-teams/download-app"',
+  );
+  expect(genericIdx).toBeGreaterThan(discussionIdx);
+});
+
 test('Artifact still renders, with an explicit "none found" message, when nothing qualifies', async ({
   page,
 }) => {

@@ -889,11 +889,31 @@
       const m = /^https?:\/\/github\.com\/([^/]+)\/([^/]+?)(?:\.git)?(?:[/?#].*)?$/i.exec(url || "");
       return m ? `https://github.com/${m[1]}/${m[2]}/archive/HEAD.zip` : null;
     }
+    // A product with no public code repository at all (Microsoft Teams,
+    // Zoom, ...) has no GitHub tag/commit to point at, but the vendor's
+    // own site or an app store listing is just as real a downloadable
+    // artifact. Recognized by shape (an installer-file extension, or a
+    // listing on one of the three major app stores), not a per-vendor
+    // lookup table, so it works for whatever a real web search turns up.
+    // Mirrors hasRealArtifact in ask.js; keep both in sync. Reported
+    // live, with a real, verified example (statics.teams.cdn.office.net
+    // /.../MSTeamsSetup.exe, confirmed 200 OK): "tell the artifact agent
+    // to go to the vendor website or app store and search the artifact
+    // that can be downloaded".
+    const ASK_INSTALLER_EXT_RE = /\.(exe|dmg|pkg|msi|deb|rpm|apk|appimage)(?:[?#].*)?$/i;
+    const ASK_APP_STORE_URL_RE = /^https?:\/\/(apps\.apple\.com|play\.google\.com|apps\.microsoft\.com)\//i;
     function askArtifactUrl(s) {
       if (s.kind === "cve" && s.patchUrl) return s.patchUrl;
-      if (s.kind === "release") {
+      // "release" is this system's own tracked release-notes documents;
+      // "web" is whatever search_web itself finds on the server (every
+      // search_web result is tagged kind:"web" regardless of what the
+      // page turns out to be, including a genuine vendor installer or
+      // app store link), so both need the same checks here.
+      if (s.kind === "release" || s.kind === "web") {
         if (/\/(commit|archive)\//.test(s.url || "")) return s.url;
-        return githubHeadZipUrl(s.url);
+        const headZip = githubHeadZipUrl(s.url);
+        if (headZip) return headZip;
+        if (ASK_INSTALLER_EXT_RE.test(s.url || "") || ASK_APP_STORE_URL_RE.test(s.url || "")) return s.url;
       }
       return null;
     }
@@ -903,11 +923,11 @@
       if (!sources || !sources.length) {
         return webVerifyHtml || webFallbackHtml || '<p class="ask-muted">No sources were found for this question.</p>';
       }
-      // Artifact: lifted out of Documented (not just listed twice) so a
-      // reader sees at a glance which sources actually have a real,
-      // specific code artifact behind them, per explicit request ("add
-      // a section artifact at the beginning") - rendered with THIS
-      // source's own artifact url substituted in, since the item
+      // Artifact: lifted out of Documented/Discussion (not just listed
+      // twice) so a reader sees at a glance which sources actually have
+      // a real, specific download behind them, per explicit request
+      // ("add a section artifact at the beginning") - rendered with
+      // THIS source's own artifact url substituted in, since the item
       // renderer just links whatever `.url` it's given.
       const artifactUrlBySource = new Map();
       for (const s of sources) {
@@ -916,7 +936,10 @@
       }
       const artifact = sources.filter(s => artifactUrlBySource.has(s)).map(s => ({ ...s, url: artifactUrlBySource.get(s) }));
       const documented = sources.filter(s => (s.kind === "cve" || s.kind === "release") && !artifactUrlBySource.has(s));
-      const discussion = sources.filter(s => s.kind !== "cve" && s.kind !== "release");
+      // A "web" source (search_web's own kind) can now also qualify for
+      // Artifact above (a vendor installer/app-store link found by a
+      // live search) - excluded here too, or it would render twice.
+      const discussion = sources.filter(s => s.kind !== "cve" && s.kind !== "release" && !artifactUrlBySource.has(s));
       const group = (label, list) => list.length
         ? `<div class="ask-source-group"><div class="ask-source-heading">${label}</div>${askRenderSourceItems(list)}</div>`
         : "";
