@@ -661,9 +661,19 @@
       }
       askDefaultSizePending = null;
     }
+    // Retries with backoff on failure (same pattern as loadAskGraph's own
+    // retry above) instead of leaving the Size dropdown silently,
+    // permanently empty - reported live: a rate-limit blip on this one
+    // GET request left a visitor staring at a blank Size field (the
+    // Provider select still showed its own hardcoded static fallback
+    // option, which is why only Size looked broken) with zero
+    // indication anything had failed, and no way to recover short of a
+    // manual page refresh, since this used to run exactly once.
+    let askProvidersRetryMs = 1500;
     async function askLoadProviders() {
       try {
         const res = await uaRequest("ask/providers");
+        if (!res.ok) throw new Error(String(res.status));
         const data = await res.json();
         ASK_PROVIDER_DATA = data.providers || [];
         const providerEl = document.getElementById("askProvider");
@@ -686,11 +696,20 @@
         if (data.defaultPreset && presetEl.querySelector(`option[value="${CSS.escape(data.defaultPreset)}"]`)) {
           presetEl.value = data.defaultPreset;
         }
+        askProvidersRetryMs = 1500; // reset backoff once a load actually succeeds
       } catch {
-        // Leave the two hardcoded fallback <option>s in place; Size stays
-        // empty in this case (no live provider/size data to build it
-        // from), same "degrade, don't crash" spirit as everywhere else
-        // in this form.
+        // A visible signal instead of silence, only while genuinely empty
+        // (never stomps a real, already-loaded list on a later transient
+        // failure - matches askDrawGraph's own "if (askGraphSvg) return"
+        // guard for the identical reason).
+        const sizeEl = document.getElementById("askSize");
+        if (sizeEl && !sizeEl.options.length) {
+          sizeEl.innerHTML = `<option value="">Could not load, retrying…</option>`;
+        }
+        setTimeout(() => {
+          askProvidersRetryMs = Math.min(askProvidersRetryMs * 2, 15000);
+          askLoadProviders().then(() => askRefreshQuota());
+        }, askProvidersRetryMs);
       }
     }
     document.getElementById("askProvider").addEventListener("change", askPopulateSizeOptions);
