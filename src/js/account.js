@@ -651,6 +651,44 @@
         hint: "How many real questions one IP address may ask per day while signed out. 0 has the same effect as turning the toggle above off.",
         min: 0, max: 50,
       },
+      // A self-hosted or institutional OpenAI-compatible endpoint (see
+      // getLocalProviderSettings/applyLocalProviderRegistration in
+      // ask.js) - reported live: a real, network-restricted university
+      // API key had nowhere to go, since the only "bring your own key"
+      // mechanism assumed one of the 3 hardcoded providers. Once
+      // enabled with a real base URL and model, it shows up as an extra
+      // option in the Ask page's own Model dropdown automatically (that
+      // list is read live from GET /api/ask/providers) - no separate
+      // wiring needed here beyond these four rows plus the key below.
+      localProviderEnabled: {
+        label: "Local / custom provider: enabled",
+        type: "boolean",
+        hint: "Adds a self-hosted or institutional OpenAI-compatible endpoint as an extra Model option on the Ask page, alongside Claude/Groq/Ollama.",
+      },
+      localProviderLabel: {
+        label: "Local / custom provider: display name",
+        hint: "Shown in the Ask page's Model dropdown, e.g. \"SOECS AI Portal\".",
+      },
+      localProviderBaseUrl: {
+        label: "Local / custom provider: base URL",
+        hint: "The OpenAI-compatible API base (requests go to <base>/chat/completions), e.g. https://your-gateway.example/v1.",
+      },
+      localProviderModel: {
+        label: "Local / custom provider: model name",
+        hint: "The exact model string this endpoint expects. Used for all three size tiers, since a self-hosted setup usually has just one model.",
+      },
+      // secret: true (see uaLoadSettings' own renderer/save-handler
+      // branches for what this changes) - the server never echoes the
+      // raw key back, only whether one is set and its last 4 characters
+      // (localProviderApiKeySet/localProviderApiKeyLast4, alongside this
+      // key in the same GET /api/admin/settings response), the same
+      // "is it set, not what it is" contract as every other stored
+      // secret in this server.
+      localProviderApiKey: {
+        label: "Local / custom provider: API key",
+        hint: "Stored server-side, never shown again once saved. Leave blank and Save to clear it.",
+        secret: true,
+      },
     };
     async function uaLoadSettings() {
       const listEl = document.getElementById("ua-settings-list");
@@ -668,7 +706,12 @@
       // fallback as a garbled "[object Object],[object Object]" string
       // before this filter existed. The dedicated Guardrails section
       // above (uaLoadGuardrails) already renders it properly.
-      const keys = Object.keys(settings).filter(k => k !== "guardrails");
+      // localProviderApiKeySet/localProviderApiKeyLast4 ride along in
+      // this same flat response purely as read-only status for the
+      // localProviderApiKey row's own secret-field rendering below, not
+      // as settings of their own - filtered out the same way guardrails
+      // already is, or they'd show up as two extra, redundant rows.
+      const keys = Object.keys(settings).filter(k => k !== "guardrails" && k !== "localProviderApiKeySet" && k !== "localProviderApiKeyLast4");
       if (countEl) countEl.textContent = keys.length ? "(" + keys.length + ")" : "";
       if (!keys.length) {
         listEl.innerHTML = `<p class="st-189 ua-muted" >No settings defined yet.</p>`;
@@ -677,12 +720,21 @@
       listEl.innerHTML = keys.map(key => {
         const meta = UA_SETTINGS_META[key] || {};
         const value = settings[key];
+        // meta.secret (e.g. localProviderApiKey): always starts blank,
+        // never prefilled with `value` (the server never sends the raw
+        // secret back at all, only the companion *Set/*Last4 fields
+        // read here) - the placeholder communicates current status
+        // instead, and saving an untouched blank box explicitly clears
+        // it, same "empty box clears it" contract as every other stored
+        // secret in this server.
         // meta.type === "boolean" renders a checkbox; a fixed-choice
         // value (meta.options) renders a <select> so an admin can't type
         // an invalid string the server would just silently reject; a
         // plain finite number is a number input; anything else falls
         // back to free text.
-        const inputHtml = meta.type === "boolean"
+        const inputHtml = meta.secret
+          ? `<input type="password" class="ua-settings-input" data-key="${uaEsc(key)}" autocomplete="off" placeholder="${settings[key + "Set"] ? "set (…" + uaEsc(String(settings[key + "Last4"] || "")) + "), leave blank to clear" : "not set"}">`
+          : meta.type === "boolean"
           ? `<input type="checkbox" class="ua-settings-input ua-settings-checkbox" data-key="${uaEsc(key)}"${value ? " checked" : ""}>`
           : Array.isArray(meta.options)
           ? `<select class="ua-settings-input" data-key="${uaEsc(key)}">${meta.options.map(o =>
@@ -719,7 +771,15 @@
             // recognizes; see setAskRuntimeSettings in ask.js), so the
             // input reflects what actually took effect, not necessarily
             // the raw value just submitted.
-            if (input.type === "checkbox" && typeof applied[key] === "boolean") input.checked = applied[key];
+            if (UA_SETTINGS_META[key]?.secret) {
+              // Never left sitting in the box after a successful save,
+              // and the applied[key] reflect-logic below doesn't apply
+              // here at all (the server never echoes a secret back) -
+              // the placeholder is refreshed from this same response's
+              // companion *Set/*Last4 fields instead.
+              input.value = "";
+              input.placeholder = applied[key + "Set"] ? "set (…" + String(applied[key + "Last4"] || "") + "), leave blank to clear" : "not set";
+            } else if (input.type === "checkbox" && typeof applied[key] === "boolean") input.checked = applied[key];
             else if (Number.isFinite(applied[key]) || typeof applied[key] === "string") input.value = applied[key];
             btn.textContent = "Saved";
             setTimeout(() => { btn.textContent = prevText; btn.disabled = false; }, 1200);
