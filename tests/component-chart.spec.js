@@ -243,3 +243,108 @@ test('a release/CVE outside the fixed 2-week window is dropped, not just unreach
   expect(result.hasCve).toBe(false);
   expect(result.lineSpansFullWidth).toBe(true);
 });
+
+test("shows a release/CVE's real semantic version as a label when one is available", async ({
+  page,
+}) => {
+  // Reported live: "if a semantic version is available show it."
+  const result = await page.evaluate(
+    ({ posts, releaseDate, cveDate }) => {
+      STATE.redditBySub = new Map([['linux', posts]]);
+      const group = {
+        name: 'Linux',
+        items: [
+          {
+            versionProductName: 'linux',
+            versionNumber: '7.1.0',
+            versionReleaseDate: releaseDate,
+            versionReleaseChannel: 'minor',
+            isCve: false,
+          },
+          {
+            versionProductName: 'linux',
+            versionNumber: '7.0.4',
+            versionReleaseDate: cveDate,
+            versionReleaseChannel: 'patch',
+            isCve: true,
+          },
+        ],
+      };
+      const el = renderComponentSentimentChart(group);
+      return Array.from(el.querySelectorAll('.component-chart-label')).map((s) => s.textContent);
+    },
+    { posts: makePosts(40, 10), releaseDate: daysAgoYYYYMMDD(5), cveDate: daysAgoYYYYMMDD(3) },
+  );
+  expect(result).toContain('7.1.0');
+  expect(result).toContain('7.0.4');
+});
+
+test('does not show a label when the version number is missing or not a real semantic version', async ({
+  page,
+}) => {
+  const result = await page.evaluate(
+    ({ posts, releaseDate }) => {
+      STATE.redditBySub = new Map([['linux', posts]]);
+      const group = {
+        name: 'Linux',
+        items: [
+          {
+            versionProductName: 'linux',
+            versionNumber: '',
+            versionReleaseDate: releaseDate,
+            isCve: false,
+          },
+        ],
+      };
+      const el = renderComponentSentimentChart(group);
+      return el.querySelectorAll('.component-chart-label').length;
+    },
+    { posts: makePosts(40, 10), releaseDate: daysAgoYYYYMMDD(5) },
+  );
+  expect(result).toBe(0);
+});
+
+test('a major release also shows its month/day date alongside the version; a minor one does not', async ({
+  page,
+}) => {
+  // Reported live: "also month, day for major updates."
+  const result = await page.evaluate(
+    ({ posts, majorDate, minorDate }) => {
+      STATE.redditBySub = new Map([['linux', posts]]);
+      const group = {
+        name: 'Linux',
+        items: [
+          {
+            versionProductName: 'linux',
+            versionNumber: '8.0.0',
+            versionReleaseDate: majorDate,
+            versionReleaseChannel: 'major',
+            isCve: false,
+          },
+          {
+            versionProductName: 'linux',
+            versionNumber: '7.1.1',
+            versionReleaseDate: minorDate,
+            versionReleaseChannel: 'patch',
+            isCve: false,
+          },
+        ],
+      };
+      const el = renderComponentSentimentChart(group);
+      const labels = Array.from(el.querySelectorAll('.component-chart-label')).map((s) => ({
+        text: s.textContent,
+        isMajor: s.classList.contains('major'),
+      }));
+      return labels;
+    },
+    { posts: makePosts(40, 10), majorDate: daysAgoYYYYMMDD(5), minorDate: daysAgoYYYYMMDD(3) },
+  );
+  const major = result.find((l) => l.text.startsWith('8.0.0'));
+  const minor = result.find((l) => l.text.startsWith('7.1.1'));
+  expect(major.isMajor).toBe(true);
+  expect(major.text).toContain('8.0.0');
+  // Separated by the middle-dot the chart uses, with a real month/day after it.
+  expect(major.text).toMatch(/^8\.0\.0 . [A-Za-z]{3} \d{1,2}$/);
+  expect(minor.isMajor).toBe(false);
+  expect(minor.text).toBe('7.1.1');
+});

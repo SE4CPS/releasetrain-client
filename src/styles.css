@@ -1866,6 +1866,22 @@ details[open] > summary { background: var(--view-card); color: var(--text); bord
 .groupSummaryText { display: flex; flex-direction: column; gap: 5px; flex: 0 1 auto; min-width: 0; }
 .component-chart-wrap { flex: 1 1 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; min-width: 0; }
 @media (max-width: 640px) { .component-chart-wrap { display: none; } }
+/* A slim strip above the plot for release/CVE version (and, for majors,
+   date) labels - reported live: "if a semantic version is available
+   show it also month, day for major updates." Real HTML text, not SVG
+   <text>, since the chart itself is only 36px tall (nowhere near enough
+   room to fit legible text) - sits in normal flow above the <svg>, not
+   absolutely/negatively positioned, so .feedGroup's own overflow:hidden
+   (sized to its content, not a fixed height) never clips it. Each label
+   is positioned by left:X% matching the same x-scale as the <svg>
+   below it, since both share the identical 100%-width box. */
+.component-chart-labels { position: relative; width: 100%; height: 11px; }
+.component-chart-label {
+  position: absolute; top: 0; left: var(--rt-left); transform: translateX(-50%);
+  font-size: 8px; font-weight: 600; line-height: 1; white-space: nowrap;
+}
+.component-chart-label.release { color: #16a34a; }
+.component-chart-label.cve { color: var(--cve); }
 .component-chart { width: 100%; height: 36px; display: block; overflow: visible; }
 .component-chart-line { fill: none; stroke: #2563eb; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
 /* A single post in the 2-week window can't draw a line (needs 2+ points) -

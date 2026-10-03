@@ -702,6 +702,14 @@
       try { return new Date(ms).toLocaleDateString(undefined, { month: "short", day: "numeric" }); }
       catch { return ""; }
     }
+    function fdEsc(s) {
+      return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+    // A real-looking semantic version (optionally "v"-prefixed, at least
+    // major.minor) - only the LEADING portion needs to match; the full
+    // string is still escaped before being shown, since matching a
+    // prefix doesn't guarantee nothing untrusted follows it.
+    const SEMVER_RE = /^v?\d+(?:\.\d+){1,3}/;
     const COMPONENT_CHART_W = 600, COMPONENT_CHART_H = 36;
     // Fixed 2-week window, not "last 50 posts" - reported live: "i want
     // to see the cadence of reddit posts and cve/changelog release from
@@ -725,15 +733,26 @@
       // Release/CVE markers use the SAME fixed window as the posts (not
       // derived from the posts' own span, which no longer exists as a
       // separate value) - still dropped entirely when outside it, not
-      // pinned to an edge they don't really belong at.
+      // pinned to an edge they don't really belong at. Each marker keeps
+      // its real version number (when it looks like a real semver - e.g.
+      // not a blank/placeholder value) and whether it's a major release
+      // (versionReleaseChannel === "major", the same field the group's
+      // own Major/Minor/Patch chips already read) - reported live: "if a
+      // semantic version is available show it also month, day for major
+      // updates."
+      const toEvent = (v) => {
+        const t = versionTime(v);
+        const ver = String(v.versionNumber || "").trim();
+        return { t, version: SEMVER_RE.test(ver) ? ver : null, isMajor: (v.versionReleaseChannel || "").toLowerCase() === "major" };
+      };
       const releaseEvents = (group.items || [])
         .filter((v) => !v.isCve && !v._synthetic)
-        .map((v) => versionTime(v))
-        .filter(inRange);
+        .map(toEvent)
+        .filter((e) => inRange(e.t));
       const cveEvents = (group.items || [])
         .filter((v) => v.isCve)
-        .map((v) => versionTime(v))
-        .filter(inRange);
+        .map(toEvent)
+        .filter((e) => inRange(e.t));
 
       if (!posts.length && !releaseEvents.length && !cveEvents.length) return null; // genuinely nothing in the last 2 weeks
 
@@ -750,16 +769,32 @@
         const linePoints = posts.map((p) => `${x(redditTime(p))},${y(p.sentiment.author)}`).join(" ");
         seriesMarkup = `<polyline class="component-chart-line" points="${linePoints}"></polyline>`;
       }
-      const eventLine = (t, cls) => `<line class="component-chart-event ${cls}" x1="${x(t)}" y1="0" x2="${x(t)}" y2="${COMPONENT_CHART_H}"></line>`;
+      const eventLine = (e, cls) => `<line class="component-chart-event ${cls}" x1="${x(e.t)}" y1="0" x2="${x(e.t)}" y2="${COMPONENT_CHART_H}"></line>`;
+      // A real HTML label, not an SVG <text> - the chart is only 36px
+      // tall, nowhere near enough room to fit legible in-SVG text, so
+      // this renders in its own slim strip above the plot instead. Major
+      // releases get the date added since they're the rarer, higher-
+      // impact marker worth the extra detail; minor/patch/CVE markers
+      // just get the bare version number to keep a dense chart readable.
+      const eventLabel = (e, cls) => {
+        if (!e.version) return "";
+        const text = e.isMajor ? `${e.version} · ${shortDate(e.t)}` : e.version;
+        return `<span class="component-chart-label ${cls}${e.isMajor ? " major" : ""}" style="--rt-left:${((e.t - windowStart) / COMPONENT_CHART_WINDOW_MS * 100).toFixed(2)}%">${fdEsc(text)}</span>`;
+      };
+      const allEvents = [...releaseEvents.map((e) => [e, "release"]), ...cveEvents.map((e) => [e, "cve"])];
+      const labelsHtml = allEvents.some(([e]) => e.version)
+        ? `<div class="component-chart-labels">${allEvents.map(([e, cls]) => eventLabel(e, cls)).join("")}</div>`
+        : "";
 
       const wrap = document.createElement("div");
       wrap.className = "component-chart-wrap";
       wrap.title = `${group.name}: title+description sentiment cadence over the last 2 weeks (${posts.length} Reddit post${posts.length === 1 ? "" : "s"})`;
       wrap.innerHTML =
+        labelsHtml +
         `<svg class="component-chart" viewBox="0 0 ${COMPONENT_CHART_W} ${COMPONENT_CHART_H}" preserveAspectRatio="none">` +
         `<line class="sentiment-zero" x1="0" y1="${COMPONENT_CHART_H / 2}" x2="${COMPONENT_CHART_W}" y2="${COMPONENT_CHART_H / 2}"></line>` +
-        releaseEvents.map((t) => eventLine(t, "release")).join("") +
-        cveEvents.map((t) => eventLine(t, "cve")).join("") +
+        releaseEvents.map((e) => eventLine(e, "release")).join("") +
+        cveEvents.map((e) => eventLine(e, "cve")).join("") +
         seriesMarkup +
         `</svg>` +
         `<div class="component-chart-meta">` +
