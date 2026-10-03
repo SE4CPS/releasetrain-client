@@ -668,6 +668,17 @@
       while (vi < vEntries.length) timeline.push(vEntries[vi++]);
       while (ri < rEntries.length) timeline.push(rEntries[ri++]);
 
+      // "Most comments" reorders the documents inside a component too,
+      // not just which component leads - reported live, right after the
+      // group-level version shipped: "most comments shall apply to both
+      // the component and documents inside each component." A CVE/patch
+      // entry has no num_comments of its own (treated as 0), so it still
+      // sorts below any actually-discussed post, falling back to recency
+      // among itself and any other 0-comment entries.
+      if (getFeedSort() === "comments") {
+        timeline.sort((a, b) => ((b.raw?.num_comments || 0) - (a.raw?.num_comments || 0)) || (b.t - a.t));
+      }
+
       const cveCount = timeline.filter(x => x.kind === "cve").length;
       const redditCount = timeline.filter(x => x.kind === "reddit").length;
       const soCount = timeline.filter(x => x.kind === "stackoverflow").length;

@@ -79,3 +79,46 @@ test('a group with no matching reddit posts sorts last, with a comment count of 
   });
   expect(order).toEqual([0]);
 });
+
+test('"Most comments" reorders the posts inside a component too, not just which component leads', async ({
+  page,
+}) => {
+  // Reported live, right after the group-level version shipped: "most
+  // comments shall apply to both the component and documents inside
+  // each component."
+  const titles = await page.evaluate(() => {
+    const now = Date.now();
+    STATE.redditBySub = new Map([
+      [
+        'chrome',
+        [
+          {
+            redditId: 'r1',
+            source: 'reddit',
+            title: 'Low comments post',
+            url: 'https://reddit.com/r1',
+            created_utc: new Date(now - 1000).toISOString(),
+            num_comments: 1,
+          },
+          {
+            redditId: 'r2',
+            source: 'reddit',
+            title: 'High comments post',
+            url: 'https://reddit.com/r2',
+            created_utc: new Date(now - 60000).toISOString(),
+            num_comments: 6,
+          },
+        ],
+      ],
+    ]);
+    setFeedSort('comments');
+    const group = {
+      name: 'Chrome',
+      items: [{ versionProductName: 'chrome', versionNumber: '1', versionReleaseDate: '' }],
+    };
+    const node = renderComponentNode(group, 0);
+    return Array.from(node.querySelectorAll('.titleRow a')).map((a) => a.textContent);
+  });
+  expect(titles[0]).toBe('High comments post');
+  expect(titles[1]).toBe('Low comments post');
+});
