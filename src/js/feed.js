@@ -679,6 +679,74 @@
       return wrap;
     }
 
+    /* ── Component-level sentiment trend chart ────────────────── */
+    // Reported live: "for each component in the feedview add the line
+    // chart with the sentiment of the last 50 reddit posts and their
+    // author title+description sentiment... reuse the same pip package"
+    // - sentiment.author (each post's own title+description score) is
+    // already computed server-side the same way the releasetrain-
+    // sentiment pip package's own score.py does (see src/sentiment.js on
+    // the server), just re-derived in JS for the live feed - there's no
+    // second computation to add here, only a new chart reading the field
+    // that already exists on every post. Time-based x-axis (unlike the
+    // per-post chart's comment-order one), since this spans real posts
+    // over real calendar time, with release (green) and CVE (red)
+    // vertical markers from this component's own version history
+    // overlaid at their real timestamps - reported live: "integrate...a
+    // subtle vertical line when a release was made (green) and CVE a
+    // red vertical line."
+    // A plain "MMM D" label, not dayLabelFromMillis's relative one
+    // ("Just now"/"Yesterday") - this spans a real date range that can
+    // be weeks or months wide, where a relative label stops being useful.
+    function shortDate(ms) {
+      try { return new Date(ms).toLocaleDateString(undefined, { month: "short", day: "numeric" }); }
+      catch { return ""; }
+    }
+    const COMPONENT_CHART_W = 600, COMPONENT_CHART_H = 36;
+    function renderComponentSentimentChart(group) {
+      const posts = postsForComponent(norm(group.name))
+        .filter((p) => getPostSource(p) === "reddit" && typeof p.sentiment?.author === "number")
+        .sort((a, b) => redditTime(a) - redditTime(b))
+        .slice(-50);
+      if (posts.length < 2) return null; // nothing meaningful to chart
+
+      const releaseEvents = (group.items || []).filter((v) => !v.isCve && !v._synthetic).map((v) => versionTime(v));
+      const cveEvents = (group.items || []).filter((v) => v.isCve).map((v) => versionTime(v));
+
+      const allTimes = [
+        ...posts.map((p) => redditTime(p)),
+        ...releaseEvents,
+        ...cveEvents,
+      ];
+      const minT = Math.min(...allTimes), maxT = Math.max(...allTimes);
+      const span = Math.max(1, maxT - minT);
+      const x = (t) => ((t - minT) / span) * COMPONENT_CHART_W;
+      const y = (v) => COMPONENT_CHART_H / 2 - Math.max(-1, Math.min(1, v)) * (COMPONENT_CHART_H / 2 - 3);
+
+      const linePoints = posts.map((p) => `${x(redditTime(p))},${y(p.sentiment.author)}`).join(" ");
+      const eventLine = (t, cls) => `<line class="component-chart-event ${cls}" x1="${x(t)}" y1="0" x2="${x(t)}" y2="${COMPONENT_CHART_H}"></line>`;
+
+      const wrap = document.createElement("div");
+      wrap.className = "component-chart-wrap";
+      wrap.title = `${group.name}: title+description sentiment of the last ${posts.length} Reddit posts`;
+      wrap.innerHTML =
+        `<svg class="component-chart" viewBox="0 0 ${COMPONENT_CHART_W} ${COMPONENT_CHART_H}" preserveAspectRatio="none">` +
+        `<line class="sentiment-zero" x1="0" y1="${COMPONENT_CHART_H / 2}" x2="${COMPONENT_CHART_W}" y2="${COMPONENT_CHART_H / 2}"></line>` +
+        releaseEvents.map((t) => eventLine(t, "release")).join("") +
+        cveEvents.map((t) => eventLine(t, "cve")).join("") +
+        `<polyline class="component-chart-line" points="${linePoints}"></polyline>` +
+        `</svg>` +
+        `<div class="component-chart-meta">` +
+        `<span class="component-chart-range">${shortDate(minT)} - ${shortDate(maxT)}</span>` +
+        `<span class="component-chart-legend">` +
+        `<span class="component-chart-swatch line"></span>sentiment ` +
+        `<span class="component-chart-swatch release"></span>release ` +
+        `<span class="component-chart-swatch cve"></span>CVE` +
+        `</span>` +
+        `</div>`;
+      return wrap;
+    }
+
     /* ── Render group ─────────────────────────────────────────── */
     function renderComponentNode(group, groupIndex = 0) {
       const onlyRedditRisks = STATE.filters.toggles.has("reddit-risk") ||
@@ -798,8 +866,17 @@
       // the far right via .group-latest-ver's own margin-left:auto);
       // the CVE/Reddit/SO/Major/Minor/Patch total chips get their own
       // row below rather than competing for space on the name's line.
-      sum.innerHTML = `<span class="groupHead">${safe(group.name, "")}<span class="group-latest-ver"></span></span>` +
+      // All three rows live in .groupSummaryText now, a flex sibling of
+      // the sentiment chart (if any) - reported live: "use the available
+      // space on the right" - the chart sits in exactly the blank space
+      // that used to sit unused to the right of this text block.
+      const textWrap = document.createElement("div");
+      textWrap.className = "groupSummaryText";
+      textWrap.innerHTML = `<span class="groupHead">${safe(group.name, "")}<span class="group-latest-ver"></span></span>` +
         (summaryChips ? `<div class="groupChips">${summaryChips}</div>` : "") + sourceLine;
+      sum.appendChild(textWrap);
+      const chartEl = renderComponentSentimentChart(group);
+      if (chartEl) sum.appendChild(chartEl);
       det.appendChild(sum);
       // Fetched live (fetchLatestVersionFor, shared with the Ask
       // suggestion dropdown's own version bracket, cached the same way)

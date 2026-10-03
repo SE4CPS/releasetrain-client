@@ -1849,6 +1849,29 @@ details[open] > summary { background: var(--view-card); color: var(--text); bord
 .sentiment-swatch { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 3px; }
 .sentiment-swatch.author { background: #2563eb; }
 .sentiment-swatch.community { background: #ea580c; }
+
+/* Component-level sentiment trend chart, in the group summary row (see
+   renderComponentSentimentChart in feed.js). Reported live: "use the
+   available space on the right" - .feedGroup's own summary switches from
+   a plain stacked column to a row, with the existing name/chips/sources
+   block (.groupSummaryText) on the left and this chart filling the
+   blank space that used to sit unused on the right. Tablet and up only,
+   same reasoning as the per-post chart: it needs real width to read. */
+.feedGroup > summary { flex-direction: row; align-items: center; gap: 10px; }
+.groupSummaryText { display: flex; flex-direction: column; gap: 5px; flex: 1 1 auto; min-width: 0; }
+.component-chart-wrap { flex: 0 0 260px; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+@media (max-width: 640px) { .component-chart-wrap { display: none; } }
+.component-chart { width: 100%; height: 36px; display: block; overflow: visible; }
+.component-chart-line { fill: none; stroke: #2563eb; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.component-chart-event { stroke-width: 1; vector-effect: non-scaling-stroke; opacity: 0.55; }
+.component-chart-event.release { stroke: #16a34a; }
+.component-chart-event.cve { stroke: var(--cve); }
+.component-chart-meta { display: flex; align-items: center; gap: 8px; font-size: 9px; color: var(--muted); white-space: nowrap; }
+.component-chart-legend { display: flex; align-items: center; gap: 6px; }
+.component-chart-swatch { display: inline-block; margin-right: 2px; }
+.component-chart-swatch.line { width: 8px; height: 2px; background: #2563eb; }
+.component-chart-swatch.release { width: 2px; height: 8px; background: #16a34a; }
+.component-chart-swatch.cve { width: 2px; height: 8px; background: var(--cve); }
 .chip.reddit { background: var(--chip-bg); border-color: var(--border); color: var(--chip-text); }
 .chip.llm { background: var(--chip-bg); border-color: var(--border); color: var(--chip-text); }
 .chip.hv { background: var(--chip-bg); border-color: var(--border); color: var(--chip-text); }
