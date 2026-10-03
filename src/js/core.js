@@ -23,16 +23,25 @@
       const raw = (fromQuery || fromMeta || "https://releasetrain.io/api/").trim();
       return raw.replace(/\/+$/, "") + "/";
     })();
-    // REDDIT_LIMIT raised 400 -> 2000, reported live: "can you pull more
-    // reddit posts to increase window" - the component sentiment chart's
-    // window is now each component's own earliest-to-latest Reddit post
-    // (see renderComponentSentimentChart in feed.js), so a small total
-    // fetch cap directly narrows how far back that window can ever reach
-    // for any one component, especially a lower-volume one sharing this
-    // same site-wide budget with every other component. The server
-    // allows up to 5000 per request (GET /api/reddit's own cap); 2000 is
-    // a generous step up without quintupling the page-load payload.
-    const GROUPS_BATCH = 6, PAGE_LIMIT = 150, TOP_TYPES = 10, REDDIT_LIMIT = 2000, MAX_VER_DESC = 220;
+    // REDDIT_LIMIT: reverted 2000 -> 400. Raising it to 2000 was tried to
+    // widen the component chart's earliest-to-latest post window, but
+    // measured live against production it made things catastrophically
+    // worse, not better: GET /api/reddit?limit=400 already took ~19s,
+    // and limit=2000 timed out entirely (nginx 504 past 60s). Root cause
+    // is server-side, not this constant - see attachSentiment() in
+    // releasetrain-server/src/sentiment.js, called synchronously inside
+    // the /api/reddit route: it runs VADER sentiment scoring in-request
+    // for every post (and its comments) that doesn't already have a
+    // cached, up-to-date score, which blocks Node's single-threaded
+    // event loop for the whole request - and the whole SERVER, for every
+    // other concurrent request too - while it runs. Raising the limit
+    // multiplies how many posts can need that synchronous first-time
+    // computation on any given request. The real fix is moving that
+    // computation out of the request path (a background job that
+    // pre-scores posts, so this route only ever reads already-cached
+    // values) - until that's done, this constant stays at its known-
+    // tolerable value rather than reopening the same regression.
+    const GROUPS_BATCH = 6, PAGE_LIMIT = 150, TOP_TYPES = 10, REDDIT_LIMIT = 400, MAX_VER_DESC = 220;
 
     /* ── Global fault surface ─────────────────────────────────── */
     // Uncaught errors and rejected promises otherwise fail silently, leaving an
