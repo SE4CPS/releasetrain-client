@@ -703,26 +703,29 @@
       catch { return ""; }
     }
     const COMPONENT_CHART_W = 600, COMPONENT_CHART_H = 36;
+    // Fixed 2-week window, not "last 50 posts" - reported live: "i want
+    // to see the cadence of reddit posts and cve/changelog release from
+    // the last 2 weeks." A post-count-based window let a bursty component
+    // collapse to "Oct 3 - Oct 3" (all 50 posts from the same day), which
+    // defeats the whole point of a cadence chart - a fixed calendar
+    // window makes every component's chart directly comparable, and a
+    // component with few/no posts in that window shows that plainly
+    // (sparse or empty) instead of silently reaching further back to
+    // fill a quota.
+    const COMPONENT_CHART_WINDOW_MS = 14 * 86400000;
     function renderComponentSentimentChart(group) {
-      const posts = postsForComponent(norm(group.name))
-        .filter((p) => getPostSource(p) === "reddit" && typeof p.sentiment?.author === "number")
-        .sort((a, b) => redditTime(a) - redditTime(b))
-        .slice(-50);
-      if (posts.length < 2) return null; // nothing meaningful to chart
+      const windowEnd = Date.now();
+      const windowStart = windowEnd - COMPONENT_CHART_WINDOW_MS;
+      const inRange = (t) => t >= windowStart && t <= windowEnd;
 
-      // The time range is defined by the reddit posts alone, never
-      // stretched by a release/CVE outside that window - reported live:
-      // "only show cve and change logs that are inside the reddit time
-      // range." A release from long before/after the posts being charted
-      // used to pull minT/maxT out to include it, compressing all the
-      // real sentiment data into a sliver of the chart's width. Events
-      // outside [minT, maxT] are dropped entirely, not just unreachable -
-      // showing a tick mark pinned to an edge it doesn't really belong at
-      // would be misleading, not just visually off.
-      const postTimes = posts.map((p) => redditTime(p));
-      const minT = Math.min(...postTimes), maxT = Math.max(...postTimes);
-      const span = Math.max(1, maxT - minT);
-      const inRange = (t) => t >= minT && t <= maxT;
+      const posts = postsForComponent(norm(group.name))
+        .filter((p) => getPostSource(p) === "reddit" && typeof p.sentiment?.author === "number" && inRange(redditTime(p)))
+        .sort((a, b) => redditTime(a) - redditTime(b));
+
+      // Release/CVE markers use the SAME fixed window as the posts (not
+      // derived from the posts' own span, which no longer exists as a
+      // separate value) - still dropped entirely when outside it, not
+      // pinned to an edge they don't really belong at.
       const releaseEvents = (group.items || [])
         .filter((v) => !v.isCve && !v._synthetic)
         .map((v) => versionTime(v))
@@ -731,24 +734,36 @@
         .filter((v) => v.isCve)
         .map((v) => versionTime(v))
         .filter(inRange);
-      const x = (t) => ((t - minT) / span) * COMPONENT_CHART_W;
+
+      if (!posts.length && !releaseEvents.length && !cveEvents.length) return null; // genuinely nothing in the last 2 weeks
+
+      const x = (t) => ((t - windowStart) / COMPONENT_CHART_WINDOW_MS) * COMPONENT_CHART_W;
       const y = (v) => COMPONENT_CHART_H / 2 - Math.max(-1, Math.min(1, v)) * (COMPONENT_CHART_H / 2 - 3);
 
-      const linePoints = posts.map((p) => `${x(redditTime(p))},${y(p.sentiment.author)}`).join(" ");
+      // A single post in the window can't draw a line (needs 2+ points),
+      // so it's a dot instead - same convention as the per-post trajectory
+      // chart's own single-point fallback.
+      let seriesMarkup = "";
+      if (posts.length === 1) {
+        seriesMarkup = `<circle class="component-chart-dot" cx="${x(redditTime(posts[0]))}" cy="${y(posts[0].sentiment.author)}" r="2"></circle>`;
+      } else if (posts.length >= 2) {
+        const linePoints = posts.map((p) => `${x(redditTime(p))},${y(p.sentiment.author)}`).join(" ");
+        seriesMarkup = `<polyline class="component-chart-line" points="${linePoints}"></polyline>`;
+      }
       const eventLine = (t, cls) => `<line class="component-chart-event ${cls}" x1="${x(t)}" y1="0" x2="${x(t)}" y2="${COMPONENT_CHART_H}"></line>`;
 
       const wrap = document.createElement("div");
       wrap.className = "component-chart-wrap";
-      wrap.title = `${group.name}: title+description sentiment of the last ${posts.length} Reddit posts`;
+      wrap.title = `${group.name}: title+description sentiment cadence over the last 2 weeks (${posts.length} Reddit post${posts.length === 1 ? "" : "s"})`;
       wrap.innerHTML =
         `<svg class="component-chart" viewBox="0 0 ${COMPONENT_CHART_W} ${COMPONENT_CHART_H}" preserveAspectRatio="none">` +
         `<line class="sentiment-zero" x1="0" y1="${COMPONENT_CHART_H / 2}" x2="${COMPONENT_CHART_W}" y2="${COMPONENT_CHART_H / 2}"></line>` +
         releaseEvents.map((t) => eventLine(t, "release")).join("") +
         cveEvents.map((t) => eventLine(t, "cve")).join("") +
-        `<polyline class="component-chart-line" points="${linePoints}"></polyline>` +
+        seriesMarkup +
         `</svg>` +
         `<div class="component-chart-meta">` +
-        `<span class="component-chart-range">${shortDate(minT)} - ${shortDate(maxT)}</span>` +
+        `<span class="component-chart-range">${shortDate(windowStart)} - ${shortDate(windowEnd)}</span>` +
         `<span class="component-chart-legend">` +
         `<span class="component-chart-swatch line"></span>sentiment ` +
         `<span class="component-chart-swatch release"></span>release ` +

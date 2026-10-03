@@ -10,6 +10,14 @@ const { test, expect } = require('@playwright/test');
  * line", "a simple timestamp", "a legend", and "use the available space
  * on the right" (the group header switches to a row layout, chart on
  * the right of the existing name/chips/sources block).
+ *
+ * Later changed from "last 50 posts" to a fixed 2-week calendar window,
+ * shared by every component - reported live: "for all component level
+ * linechart i want to see the cadance of reddit posts and cve/changelog
+ * release from the last 2 weeks." A post-count window let a bursty
+ * component collapse to a single-day range ("Oct 3 - Oct 3"); the fixed
+ * window makes cadence (including sparseness) visible and comparable
+ * across components.
  */
 
 test.beforeEach(async ({ page }) => {
@@ -19,15 +27,21 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/');
 });
 
-function makePosts(count) {
-  return Array.from({ length: count }, (_, i) => ({
-    redditId: `p${i}`,
-    source: 'reddit',
-    subreddit: 'linux',
-    title: `post ${i}`,
-    created_utc: new Date(Date.now() - (count - i) * 86400000).toISOString(),
-    sentiment: { author: 0.1 },
-  }));
+// Spreads `count` posts evenly from `spreadDays` ago (first post) up to
+// now (last post) - lets a test control whether the posts land inside or
+// outside the chart's fixed 14-day window, independent of how many there are.
+function makePosts(count, spreadDays = count) {
+  return Array.from({ length: count }, (_, i) => {
+    const daysAgo = count <= 1 ? 0 : (spreadDays * (count - 1 - i)) / (count - 1);
+    return {
+      redditId: `p${i}`,
+      source: 'reddit',
+      subreddit: 'linux',
+      title: `post ${i}`,
+      created_utc: new Date(Date.now() - daysAgo * 86400000).toISOString(),
+      sentiment: { author: 0.1 },
+    };
+  });
 }
 
 // YYYYMMDD, relative to now (matching versionTime()'s own parsing) - not
@@ -62,10 +76,11 @@ test('renders a chart line, release/CVE markers, a date range, and a legend', as
       const el = renderComponentSentimentChart(group);
       return el ? el.outerHTML : null;
     },
-    // Posts span the last 40 days; both events land inside that window
-    // (20 and 10 days ago respectively), same reference point (Date.now()
-    // at test-run time), not a hardcoded calendar date.
-    { posts: makePosts(40), releaseDate: daysAgoYYYYMMDD(20), cveDate: daysAgoYYYYMMDD(10) },
+    // Posts span the last 10 days (inside the chart's fixed 14-day
+    // window); both events land inside that window too (5 and 3 days
+    // ago), same reference point (Date.now() at test-run time), not a
+    // hardcoded calendar date.
+    { posts: makePosts(40, 10), releaseDate: daysAgoYYYYMMDD(5), cveDate: daysAgoYYYYMMDD(3) },
   );
   expect(html).not.toBeNull();
   expect(html).toContain('component-chart-line');
@@ -78,24 +93,57 @@ test('renders a chart line, release/CVE markers, a date range, and a legend', as
   expect(html).toContain('CVE');
 });
 
-test('uses only the most recent 50 posts, even when more are available', async ({ page }) => {
-  const pointCount = await page.evaluate((posts) => {
-    STATE.redditBySub = new Map([['linux', posts]]);
+test('only includes posts within the fixed 2-week window, dropping older ones', async ({
+  page,
+}) => {
+  const pointCount = await page.evaluate(() => {
+    const now = Date.now();
+    const recent = Array.from({ length: 5 }, (_, i) => ({
+      redditId: `recent${i}`,
+      source: 'reddit',
+      subreddit: 'linux',
+      created_utc: new Date(now - i * 86400000).toISOString(), // within last 14 days
+      sentiment: { author: 0.1 },
+    }));
+    const old = Array.from({ length: 5 }, (_, i) => ({
+      redditId: `old${i}`,
+      source: 'reddit',
+      subreddit: 'linux',
+      created_utc: new Date(now - (30 + i) * 86400000).toISOString(), // well outside the window
+      sentiment: { author: 0.1 },
+    }));
+    STATE.redditBySub = new Map([['linux', [...recent, ...old]]]);
     const el = renderComponentSentimentChart({ name: 'Linux', items: [] });
     const points = el.querySelector('.component-chart-line').getAttribute('points');
     return points.trim().split(/\s+/).length;
-  }, makePosts(80));
-  expect(pointCount).toBe(50);
+  });
+  expect(pointCount).toBe(5);
 });
 
-test('returns null (renders nothing) when there are fewer than 2 scored posts', async ({
+test('renders a single dot, not a line, when exactly one scored post falls in the window', async ({
   page,
 }) => {
-  const result = await page.evaluate((posts) => {
-    STATE.redditBySub = new Map([['linux', posts]]);
+  const result = await page.evaluate(
+    (posts) => {
+      STATE.redditBySub = new Map([['linux', posts]]);
+      const el = renderComponentSentimentChart({ name: 'Linux', items: [] });
+      return {
+        hasDot: !!el.querySelector('.component-chart-dot'),
+        hasLine: !!el.querySelector('.component-chart-line'),
+      };
+    },
+    makePosts(1, 1),
+  );
+  expect(result.hasDot).toBe(true);
+  expect(result.hasLine).toBe(false);
+});
+
+test('returns null (renders nothing) when nothing falls in the last 2 weeks', async ({ page }) => {
+  const result = await page.evaluate(() => {
+    STATE.redditBySub = new Map([['linux', []]]);
     const el = renderComponentSentimentChart({ name: 'Linux', items: [] });
     return el === null;
-  }, makePosts(1));
+  });
   expect(result).toBe(true);
 });
 
@@ -125,31 +173,35 @@ test('ignores reddit posts with no computed sentiment yet', async ({ page }) => 
 test('the summary row switches to a side-by-side layout so the chart uses the available right-hand space', async ({
   page,
 }) => {
-  const html = await page.evaluate((posts) => {
-    STATE.redditBySub = new Map([['linux', posts]]);
-    const group = { name: 'Linux', items: [] };
-    const node = renderComponentNode(group, 0);
-    return node.querySelector('summary').outerHTML;
-  }, makePosts(40));
+  const html = await page.evaluate(
+    (posts) => {
+      STATE.redditBySub = new Map([['linux', posts]]);
+      const group = { name: 'Linux', items: [] };
+      const node = renderComponentNode(group, 0);
+      return node.querySelector('summary').outerHTML;
+    },
+    makePosts(40, 10),
+  );
   expect(html).toContain('groupSummaryText');
   expect(html).toContain('component-chart-wrap');
 });
 
-test("a release/CVE outside the reddit posts' own time range is dropped, not just unreachable", async ({
+test('a release/CVE outside the fixed 2-week window is dropped, not just unreachable', async ({
   page,
 }) => {
-  // Reported live: "only show cve and change logs that are inside the
-  // reddit time range." A release from long before the posts being
-  // charted used to pull minT out to include it, compressing all the
-  // real sentiment data into a sliver of the chart's width.
+  // Reported live (originally): "only show cve and change logs that are
+  // inside the reddit time range." The window is now a fixed 14 days
+  // (not derived from the posts), but the same exclusion still applies:
+  // an event from long before/after that window must not render, and
+  // must not skew the axis.
   const result = await page.evaluate(
     ({ posts, oldReleaseDate, futureCveDate }) => {
       STATE.redditBySub = new Map([['linux', posts]]);
       const group = {
         name: 'Linux',
         items: [
-          // Posts span the last 40 days; this release is 400 days old -
-          // well outside that window - and this CVE is 400 days in the
+          // Posts span the full 14-day window; this release is 400 days
+          // old - well outside it - and this CVE is 400 days in the
           // future, also outside it.
           {
             versionProductName: 'linux',
@@ -182,7 +234,7 @@ test("a release/CVE outside the reddit posts' own time range is dropped, not jus
       };
     },
     {
-      posts: makePosts(40),
+      posts: makePosts(40, 14),
       oldReleaseDate: daysAgoYYYYMMDD(400),
       futureCveDate: daysAgoYYYYMMDD(-400),
     },

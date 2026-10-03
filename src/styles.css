@@ -1858,12 +1858,19 @@ details[open] > summary { background: var(--view-card); color: var(--text); bord
    blank space that used to sit unused on the right. Tablet and up only,
    same reasoning as the per-post chart: it needs real width to read. */
 .feedGroup > summary { flex-direction: row; align-items: center; gap: 10px; }
-.groupSummaryText { display: flex; flex-direction: column; gap: 5px; flex: 1 1 auto; min-width: 0; }
-.component-chart-wrap { flex: 0 0 480px; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
-@media (max-width: 900px) { .component-chart-wrap { flex-basis: 320px; } }
+/* Text block sized to its own content (not stretched), chart claims
+   100% of whatever space is left - reported live: "i want to use 100%
+   of the available horizontal space." Previously reversed (text grew to
+   fill, chart was a fixed 480px/320px box), which is why the chart never
+   actually used the full row width regardless of how wide the row was. */
+.groupSummaryText { display: flex; flex-direction: column; gap: 5px; flex: 0 1 auto; min-width: 0; }
+.component-chart-wrap { flex: 1 1 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; min-width: 0; }
 @media (max-width: 640px) { .component-chart-wrap { display: none; } }
 .component-chart { width: 100%; height: 36px; display: block; overflow: visible; }
 .component-chart-line { fill: none; stroke: #2563eb; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+/* A single post in the 2-week window can't draw a line (needs 2+ points) -
+   same blue as the line, just a dot so a lone data point isn't invisible. */
+.component-chart-dot { fill: #2563eb; }
 .component-chart-event { stroke-width: 1; vector-effect: non-scaling-stroke; opacity: 0.55; }
 .component-chart-event.release { stroke: #16a34a; }
 .component-chart-event.cve { stroke: var(--cve); }
