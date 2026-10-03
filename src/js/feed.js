@@ -714,29 +714,41 @@
     // prefix doesn't guarantee nothing untrusted follows it.
     const SEMVER_RE = /^v?\d+(?:\.\d+){1,3}/;
     const COMPONENT_CHART_W = 600, COMPONENT_CHART_H = 36;
-    // Fixed 2-week window, not "last 50 posts" - reported live: "i want
-    // to see the cadence of reddit posts and cve/changelog release from
-    // the last 2 weeks." A post-count-based window let a bursty component
-    // collapse to "Oct 3 - Oct 3" (all 50 posts from the same day), which
-    // defeats the whole point of a cadence chart - a fixed calendar
-    // window makes every component's chart directly comparable, and a
-    // component with few/no posts in that window shows that plainly
-    // (sparse or empty) instead of silently reaching further back to
-    // fill a quota.
-    const COMPONENT_CHART_WINDOW_MS = 14 * 86400000;
+    // The window spans this component's own earliest-to-latest Reddit
+    // post, not a fixed calendar window - reported live: "start with
+    // earliest reddit post (title+description) sentiment and end with
+    // the latest one. not a hard 3 weeks window." A fixed window was
+    // tried first (to fix an earlier "Oct 3 - Oct 3" complaint about a
+    // post-COUNT-based window truncating to one day), but the real ask
+    // was the opposite: show each component's genuine span of Reddit
+    // activity, however wide or narrow that actually is, not force every
+    // component onto the same artificial window.
     function renderComponentSentimentChart(group) {
-      const windowEnd = Date.now();
-      const windowStart = windowEnd - COMPONENT_CHART_WINDOW_MS;
-      const inRange = (t) => t >= windowStart && t <= windowEnd;
-
       const posts = postsForComponent(norm(group.name))
-        .filter((p) => getPostSource(p) === "reddit" && typeof p.sentiment?.author === "number" && inRange(redditTime(p)))
+        .filter((p) => getPostSource(p) === "reddit" && typeof p.sentiment?.author === "number")
         .sort((a, b) => redditTime(a) - redditTime(b));
 
-      // Release/CVE markers use the SAME fixed window as the posts (not
-      // derived from the posts' own span, which no longer exists as a
-      // separate value) - still dropped entirely when outside it, not
-      // pinned to an edge they don't really belong at. Each marker keeps
+      if (!posts.length) return null; // nothing to anchor a window to
+
+      const postTimes = posts.map((p) => redditTime(p));
+      const rawMinT = Math.min(...postTimes), rawMaxT = Math.max(...postTimes);
+      // A single post has no span of its own to show - padded with a day
+      // on each side so release/CVE markers from around the same time
+      // still have a sensible neighborhood to plot into, instead of an
+      // effectively zero-width window that would drop almost everything.
+      // The legend below still shows the real (unpadded) post range, not
+      // this internal plotting pad.
+      const MIN_SPAN_MS = 86400000;
+      const realSpan = rawMaxT - rawMinT;
+      const pad = realSpan >= MIN_SPAN_MS ? 0 : (MIN_SPAN_MS - realSpan) / 2;
+      const windowStart = rawMinT - pad, windowEnd = rawMaxT + pad;
+      const span = windowEnd - windowStart;
+      const inRange = (t) => t >= windowStart && t <= windowEnd;
+
+      // Release/CVE markers are kept only when they fall inside this
+      // component's own post-derived window (everything outside it is
+      // dropped, not pinned to an edge it doesn't really belong at).
+      // Each marker keeps
       // its real version number (when it looks like a real semver - e.g.
       // not a blank/placeholder value) and whether it's a major release
       // (versionReleaseChannel === "major", the same field the group's
@@ -757,9 +769,7 @@
         .map(toEvent)
         .filter((e) => inRange(e.t));
 
-      if (!posts.length && !releaseEvents.length && !cveEvents.length) return null; // genuinely nothing in the last 2 weeks
-
-      const x = (t) => ((t - windowStart) / COMPONENT_CHART_WINDOW_MS) * COMPONENT_CHART_W;
+      const x = (t) => ((t - windowStart) / span) * COMPONENT_CHART_W;
       const y = (v) => COMPONENT_CHART_H / 2 - Math.max(-1, Math.min(1, v)) * (COMPONENT_CHART_H / 2 - 3);
 
       // A single post in the window can't draw a line (needs 2+ points),
@@ -792,9 +802,24 @@
       // knows the chart's actual rendered width), but it directly fixes
       // the near-identical-timestamp case that was actually colliding.
       const ROW_HEIGHT_PX = 10;
-      const MIN_LABEL_GAP_MS = COMPONENT_CHART_WINDOW_MS * 0.05;
-      const labeledEvents = [...releaseEvents.map((e) => [e, "release"]), ...cveEvents.map((e) => [e, "cve"])]
-        .filter(([e]) => e.version)
+      const MIN_LABEL_GAP_MS = span * 0.05;
+      // A component with a dense CVE/release history (e.g. 100+ CVEs in
+      // one window) would otherwise try to stack one row per label,
+      // growing into an unreadable wall of text that dwarfs the rest of
+      // the feed - reported live with a screenshot (Linux: "CVE 127,"
+      // stacked into 15+ rows of overlapping numbers). Cap how many
+      // actually get a text label: every "major" release (rare, high-
+      // value) plus the most recent others, up to MAX_LABELED_EVENTS
+      // total. Every event still gets its vertical tick line regardless
+      // (eventLine, below) - only the TEXT label is capped, so cadence
+      // density is still visible, just not as a wall of numbers.
+      const MAX_LABELED_EVENTS = 6;
+      const allLabelCandidates = [...releaseEvents.map((e) => [e, "release"]), ...cveEvents.map((e) => [e, "cve"])]
+        .filter(([e]) => e.version);
+      const majors = allLabelCandidates.filter(([e]) => e.isMajor);
+      const nonMajorsByRecency = allLabelCandidates.filter(([e]) => !e.isMajor).sort((a, b) => b[0].t - a[0].t);
+      const labeledEvents = [...majors, ...nonMajorsByRecency]
+        .slice(0, MAX_LABELED_EVENTS)
         .sort((a, b) => a[0].t - b[0].t);
       const rowLastT = [];
       for (const pair of labeledEvents) {
@@ -805,7 +830,7 @@
       }
       const eventLabel = (e, cls, row) => {
         const text = e.isMajor ? `${e.version} · ${shortDate(e.t)}` : e.version;
-        return `<span class="component-chart-label ${cls}${e.isMajor ? " major" : ""}" style="--rt-left:${((e.t - windowStart) / COMPONENT_CHART_WINDOW_MS * 100).toFixed(2)}%;--rt-top:${row * ROW_HEIGHT_PX}px">${fdEsc(text)}</span>`;
+        return `<span class="component-chart-label ${cls}${e.isMajor ? " major" : ""}" style="--rt-left:${((e.t - windowStart) / span * 100).toFixed(2)}%;--rt-top:${row * ROW_HEIGHT_PX}px">${fdEsc(text)}</span>`;
       };
       const labelRows = rowLastT.length;
       const labelsHtml = labelRows
@@ -814,7 +839,7 @@
 
       const wrap = document.createElement("div");
       wrap.className = "component-chart-wrap";
-      wrap.title = `${group.name}: title+description sentiment cadence over the last 2 weeks (${posts.length} Reddit post${posts.length === 1 ? "" : "s"})`;
+      wrap.title = `${group.name}: title+description sentiment from its earliest to its latest Reddit post (${posts.length} Reddit post${posts.length === 1 ? "" : "s"})`;
       wrap.innerHTML =
         labelsHtml +
         `<svg class="component-chart" viewBox="0 0 ${COMPONENT_CHART_W} ${COMPONENT_CHART_H}" preserveAspectRatio="none">` +
@@ -824,7 +849,11 @@
         seriesMarkup +
         `</svg>` +
         `<div class="component-chart-meta">` +
-        `<span class="component-chart-range">${shortDate(windowStart)} - ${shortDate(windowEnd)}</span>` +
+        // The real (unpadded) post range, not the internal plotting
+        // window - "label range in legend," reported live. A single-post
+        // component legitimately shows the same date twice here; that's
+        // an honest reflection of there being exactly one post, not a bug.
+        `<span class="component-chart-range">${shortDate(rawMinT)} - ${shortDate(rawMaxT)}</span>` +
         `<span class="component-chart-legend">` +
         `<span class="component-chart-swatch line"></span>sentiment ` +
         `<span class="component-chart-swatch release"></span>release ` +
@@ -1242,14 +1271,23 @@
           // Merge: accumulate items into existing groups, collect truly new ones
           const existingMap = new Map(STATE.groupsFiltered.map(g => [g.key, g]));
           const brandNew = [];
+          let mergedIntoExisting = false;
           newGroups.forEach(g => {
-            if (existingMap.has(g.key)) existingMap.get(g.key).items.push(...g.items);
+            if (existingMap.has(g.key)) { existingMap.get(g.key).items.push(...g.items); mergedIntoExisting = true; }
             else brandNew.push(g);
           });
           STATE.groupsFiltered = STATE.groupsFiltered.concat(brandNew);
           EL["kpi-page"].textContent = STATE.groupsFiltered.length;
           updateFeedWindowLabel();
           updateRangeKpi(STATE.groupsFiltered.flatMap(g => g.items));
+
+          // A later page's new CVE/changelog items just got pushed into an
+          // already-rendered group's own items array above - the DOM node
+          // built from that group earlier won't reflect them (including
+          // its sentiment chart's release/CVE markers) without this.
+          // Reported live: "refresh the line chart after each data
+          // retrieval (eg cve, changelogs, etc)."
+          if (mergedIntoExisting) refreshRenderedGroups();
 
           if (brandNew.length) appendNextGroups();
           else if (!nextCursor) EL.sentinel.textContent = "";
@@ -1287,7 +1325,21 @@
     });
 
     /* ── Boot ─────────────────────────────────────────────────── */
-    function refreshRenderedGroupsWithReddit() {
+    // Re-renders every group card already in the DOM from the CURRENT
+    // STATE.groupsFiltered data - not reddit-specific despite its original
+    // name/call site, just "whatever's on screen may be stale, redraw it
+    // from the latest data." Each card (including its sentiment chart,
+    // since renderComponentNode rebuilds that too) is a one-time snapshot
+    // of its group's data at render time; later data arriving - reddit
+    // posts, or a later cursor-fetched page merging new CVE/changelog
+    // items into an already-displayed group's own items array - does NOT
+    // automatically update an already-built DOM node, so every such
+    // arrival needs to call this. Reported live: "refresh the line chart
+    // after each data retrieval (eg cve, changelogs, etc)" - reddit's own
+    // refresh already existed (ensureRedditLoaded calls this below); the
+    // gap was the cursor-fetch merge branch in appendNextGroups, which
+    // updated the data but never told the DOM.
+    function refreshRenderedGroups() {
       const rendered = Array.from(EL.feed.querySelectorAll(".feedGroup[data-component]"));
       rendered.forEach(existingNode => {
         const compName = existingNode.dataset.component;
@@ -1311,8 +1363,9 @@
           // Recompute sidebar toggle counts now that reddit index is populated
           const list = STATE.candidates.length ? STATE.candidates : STATE.rawVersions;
           if (list.length) paintFixedCounts(computeAggregates(list));
-          // Re-render rendered feed cards so reddit posts and chips appear
-          refreshRenderedGroupsWithReddit();
+          // Re-render rendered feed cards so reddit posts, chips, and the
+          // sentiment chart (which needs reddit data to draw anything) appear.
+          refreshRenderedGroups();
           updateCommunityBracket();
           if (G_ACTIVE && G_VIS_LOADED) gBuildAndRender(gGetVersions(), STATE.redditAll);
           // "Highest risk", "Most sources", and "Most comments" all read
@@ -1465,6 +1518,22 @@
 
         // First page only — renders immediately, more loaded lazily as user scrolls
         trackSearch(rawQ);
+        // Kicked off here, in parallel with the main versions fetch below,
+        // not after it finishes - reported live: "reddit/stackoverflow are
+        // loading very slow... since the linechart depends on them load
+        // them first." ensureRedditLoaded() used to run only after
+        // versions/applyFilters/renderHomeLatest had already completed,
+        // so the (often slower) reddit+stackoverflow fetch didn't even
+        // start until well into the page load - every component's
+        // sentiment chart then sat empty until that late start finally
+        // finished. Starting it here instead means it's already been
+        // loading for the same stretch of time the versions fetch took,
+        // so it lands sooner relative to first render. It's still
+        // fire-and-forget (ensureRedditLoaded returns a cached promise
+        // nothing here needs to await - see refreshRenderedGroups, which
+        // re-renders every visible group, charts included, once it
+        // resolves) so this doesn't delay the main feed render either.
+        ensureRedditLoaded();
         // Run alongside the feed's own fetch, not before it: neither
         // depends on the other, and every LOOKBACK_* consumer below
         // (sorting, applyFilters, the activity chart) only runs once
@@ -1487,8 +1556,10 @@
         applyFilters();
         renderHomeLatest();
 
-        // Reddit, LLM and hypervisor datasets load in background — never block the feed
-        ensureRedditLoaded();
+        // LLM and hypervisor datasets load in background — never block the
+        // feed. Reddit/stackoverflow's own ensureRedditLoaded() already
+        // started above, in parallel with the versions fetch - not
+        // repeated here.
         ensureLlmVersionsLoaded();
         ensureHvVersionsLoaded();
       } catch (e) {

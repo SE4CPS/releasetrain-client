@@ -16,8 +16,18 @@ const { test, expect } = require('@playwright/test');
  * linechart i want to see the cadance of reddit posts and cve/changelog
  * release from the last 2 weeks." A post-count window let a bursty
  * component collapse to a single-day range ("Oct 3 - Oct 3"); the fixed
- * window makes cadence (including sparseness) visible and comparable
+ * window made cadence (including sparseness) visible and comparable
  * across components.
+ *
+ * Changed again, reported live: "component level line chart for each
+ * component start with earliest reddit post (title+description)
+ * sentiment and end with the latest one. not a hard 3 weeks window.
+ * within this range keep CVE + changelogs vertical (everything outside
+ * this window ignore it) but label range in legend." The window is now
+ * each component's own earliest-to-latest Reddit post span, not a fixed
+ * calendar window shared by every component - release/CVE markers
+ * outside that span are still dropped, same as before, just relative to
+ * the new post-derived bounds instead of a fixed one.
  */
 
 test.beforeEach(async ({ page }) => {
@@ -28,8 +38,8 @@ test.beforeEach(async ({ page }) => {
 });
 
 // Spreads `count` posts evenly from `spreadDays` ago (first post) up to
-// now (last post) - lets a test control whether the posts land inside or
-// outside the chart's fixed 14-day window, independent of how many there are.
+// now (last post) - lets a test control the chart's own post-derived
+// window width directly, independent of how many posts there are.
 function makePosts(count, spreadDays = count) {
   return Array.from({ length: count }, (_, i) => {
     const daysAgo = count <= 1 ? 0 : (spreadDays * (count - 1 - i)) / (count - 1);
@@ -76,9 +86,9 @@ test('renders a chart line, release/CVE markers, a date range, and a legend', as
       const el = renderComponentSentimentChart(group);
       return el ? el.outerHTML : null;
     },
-    // Posts span the last 10 days (inside the chart's fixed 14-day
-    // window); both events land inside that window too (5 and 3 days
-    // ago), same reference point (Date.now() at test-run time), not a
+    // Posts span the last 10 days, so the chart's own window is roughly
+    // that same span; both events land inside it too (5 and 3 days ago),
+    // same reference point (Date.now() at test-run time), not a
     // hardcoded calendar date.
     { posts: makePosts(40, 10), releaseDate: daysAgoYYYYMMDD(5), cveDate: daysAgoYYYYMMDD(3) },
   );
@@ -93,23 +103,27 @@ test('renders a chart line, release/CVE markers, a date range, and a legend', as
   expect(html).toContain('CVE');
 });
 
-test('only includes posts within the fixed 2-week window, dropping older ones', async ({
+test("includes every post regardless of age - the window is the posts' own earliest-to-latest span, not a fixed recency cutoff", async ({
   page,
 }) => {
+  // Reported live: "start with earliest reddit post... end with the
+  // latest one. not a hard 3 weeks window." A post from a year ago is
+  // just as much a real boundary of this component's own history as one
+  // from yesterday - nothing gets dropped for being "too old."
   const pointCount = await page.evaluate(() => {
     const now = Date.now();
     const recent = Array.from({ length: 5 }, (_, i) => ({
       redditId: `recent${i}`,
       source: 'reddit',
       subreddit: 'linux',
-      created_utc: new Date(now - i * 86400000).toISOString(), // within last 14 days
+      created_utc: new Date(now - i * 86400000).toISOString(),
       sentiment: { author: 0.1 },
     }));
     const old = Array.from({ length: 5 }, (_, i) => ({
       redditId: `old${i}`,
       source: 'reddit',
       subreddit: 'linux',
-      created_utc: new Date(now - (30 + i) * 86400000).toISOString(), // well outside the window
+      created_utc: new Date(now - (365 + i) * 86400000).toISOString(), // about a year old
       sentiment: { author: 0.1 },
     }));
     STATE.redditBySub = new Map([['linux', [...recent, ...old]]]);
@@ -117,10 +131,10 @@ test('only includes posts within the fixed 2-week window, dropping older ones', 
     const points = el.querySelector('.component-chart-line').getAttribute('points');
     return points.trim().split(/\s+/).length;
   });
-  expect(pointCount).toBe(5);
+  expect(pointCount).toBe(10); // all 5 recent + all 5 year-old posts
 });
 
-test('renders a single dot, not a line, when exactly one scored post falls in the window', async ({
+test('renders a single dot, not a line, when there is exactly one scored post', async ({
   page,
 }) => {
   const result = await page.evaluate(
@@ -138,7 +152,7 @@ test('renders a single dot, not a line, when exactly one scored post falls in th
   expect(result.hasLine).toBe(false);
 });
 
-test('returns null (renders nothing) when nothing falls in the last 2 weeks', async ({ page }) => {
+test('returns null (renders nothing) when there are no scored posts at all', async ({ page }) => {
   const result = await page.evaluate(() => {
     STATE.redditBySub = new Map([['linux', []]]);
     const el = renderComponentSentimentChart({ name: 'Linux', items: [] });
@@ -186,22 +200,21 @@ test('the summary row switches to a side-by-side layout so the chart uses the av
   expect(html).toContain('component-chart-wrap');
 });
 
-test('a release/CVE outside the fixed 2-week window is dropped, not just unreachable', async ({
+test('a release/CVE outside the post-derived window is dropped, not just unreachable', async ({
   page,
 }) => {
   // Reported live (originally): "only show cve and change logs that are
-  // inside the reddit time range." The window is now a fixed 14 days
-  // (not derived from the posts), but the same exclusion still applies:
-  // an event from long before/after that window must not render, and
-  // must not skew the axis.
+  // inside the reddit time range." The window is each component's own
+  // earliest-to-latest post span; an event from long before/after that
+  // span must not render, and must not skew the axis.
   const result = await page.evaluate(
     ({ posts, oldReleaseDate, futureCveDate }) => {
       STATE.redditBySub = new Map([['linux', posts]]);
       const group = {
         name: 'Linux',
         items: [
-          // Posts span the full 14-day window; this release is 400 days
-          // old - well outside it - and this CVE is 400 days in the
+          // Posts span a 14-day window of their own; this release is 400
+          // days old - well outside it - and this CVE is 400 days in the
           // future, also outside it.
           {
             versionProductName: 'linux',
@@ -424,8 +437,95 @@ test('events spread well apart in time all land on the same row (no unnecessary 
         s.style.getPropertyValue('--rt-top'),
       );
     },
-    // 10 days apart inside the 14-day window - plenty of room, should not stagger.
-    { posts: makePosts(40, 12), releaseDate: daysAgoYYYYMMDD(12), cveDate: daysAgoYYYYMMDD(2) },
+    // Posts span 14 days; release/CVE sit well inside that (not flush
+    // against either edge - a release placed exactly at the oldest
+    // post's own timestamp is a boundary case: versionTime() reconstructs
+    // a date string at noon UTC, which can fall a few hours either side
+    // of the posts' own precise min/max depending on time-of-day the
+    // suite happens to run, flaking the "same row" assertion right at
+    // the edge). 8 days apart is still plenty of room to confirm no
+    // unnecessary staggering.
+    { posts: makePosts(40, 14), releaseDate: daysAgoYYYYMMDD(10), cveDate: daysAgoYYYYMMDD(2) },
   );
   expect(result[0]).toBe(result[1]);
+});
+
+test('a dense history (e.g. 100+ CVEs) caps how many get a text label, instead of stacking into a wall', async ({
+  page,
+}) => {
+  // Reported live, with a screenshot: Linux's own "CVE 127" rendered as
+  // 15+ stacked rows of overlapping version numbers, dwarfing the rest
+  // of the feed. Every event still gets its vertical tick line (checked
+  // separately below) - only the TEXT label is capped.
+  const result = await page.evaluate(
+    ({ posts, cveDates }) => {
+      STATE.redditBySub = new Map([['linux', posts]]);
+      const group = {
+        name: 'Linux',
+        items: cveDates.map((d, i) => ({
+          versionProductName: 'linux',
+          versionNumber: `6.${i}.0`,
+          versionReleaseDate: d,
+          versionReleaseChannel: 'patch',
+          isCve: true,
+        })),
+      };
+      const el = renderComponentSentimentChart(group);
+      return {
+        labelCount: el.querySelectorAll('.component-chart-label').length,
+        tickCount: el.querySelectorAll('.component-chart-event.cve').length,
+      };
+    },
+    {
+      // Posts span 15 days, wide enough that every CVE date below (out
+      // to ~12.6 days ago) falls inside the post-derived window.
+      posts: makePosts(40, 15),
+      // 30 CVEs spread across the window, all with real semver numbers.
+      cveDates: Array.from({ length: 30 }, (_, i) => daysAgoYYYYMMDD(1 + i * 0.4)),
+    },
+  );
+  expect(result.tickCount).toBe(30); // every event still gets a tick line
+  expect(result.labelCount).toBeLessThanOrEqual(6); // but text labels are capped
+});
+
+test('a dense history still labels its one major release, not just whichever is most recent', async ({
+  page,
+}) => {
+  const result = await page.evaluate(
+    ({ posts, majorDate, cveDates }) => {
+      STATE.redditBySub = new Map([['linux', posts]]);
+      const group = {
+        name: 'Linux',
+        items: [
+          {
+            versionProductName: 'linux',
+            versionNumber: '8.0.0',
+            versionReleaseDate: majorDate,
+            versionReleaseChannel: 'major',
+            isCve: false,
+          },
+          ...cveDates.map((d, i) => ({
+            versionProductName: 'linux',
+            versionNumber: `6.${i}.0`,
+            versionReleaseDate: d,
+            versionReleaseChannel: 'patch',
+            isCve: true,
+          })),
+        ],
+      };
+      const el = renderComponentSentimentChart(group);
+      return Array.from(el.querySelectorAll('.component-chart-label')).map((s) => s.textContent);
+    },
+    {
+      // Posts span 15 days, wide enough that the 13-days-ago major
+      // release below still falls inside the post-derived window.
+      posts: makePosts(40, 15),
+      // The major release is the OLDEST event here (13 days ago); every
+      // CVE is more recent than it - without special-casing majors, a
+      // pure most-recent-N selection would drop it entirely.
+      majorDate: daysAgoYYYYMMDD(13),
+      cveDates: Array.from({ length: 10 }, (_, i) => daysAgoYYYYMMDD(1 + i)),
+    },
+  );
+  expect(result.some((t) => t.startsWith('8.0.0'))).toBe(true);
 });
