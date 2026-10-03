@@ -248,13 +248,16 @@
     }
 
     /* ── Grouping ─────────────────────────────────────────────── */
-    // User-selectable, remembered across visits. "recency" is the
-    // default (see groupByComponentName's own comment for why); the
-    // others are for when a different question matters more than "what
-    // just changed"; alphabetical browsing, or triaging by risk.
+    // User-selectable, remembered across visits. "comments" (most
+    // discussed) is the default, reported live - surfaces whatever
+    // components people are actually talking about right now, ahead of
+    // "recency" (what just changed, which can be dominated by noisy
+    // low-signal patch-bump components); "alpha"/"cve"/"risk" are for
+    // when a different question matters more: predictable browsing, or
+    // triaging by vulnerability/risk instead of discussion volume.
     const FEED_SORT_KEY = "rt_feed_sort";
     function getFeedSort() {
-      try { return localStorage.getItem(FEED_SORT_KEY) || "recency"; } catch { return "recency"; }
+      try { return localStorage.getItem(FEED_SORT_KEY) || "comments"; } catch { return "comments"; }
     }
     function setFeedSort(mode) {
       try { localStorage.setItem(FEED_SORT_KEY, mode); } catch { /* best-effort only */ }

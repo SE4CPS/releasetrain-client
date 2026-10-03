@@ -20,6 +20,29 @@ test('"Most comments" option exists in the feed sort select', async ({ page }) =
   expect(options).toContain('Most comments');
 });
 
+test('"Most comments" is the default sort for a visitor with no saved preference', async ({
+  page,
+}) => {
+  // Reported live: "make the default option most comments" - was
+  // "recency" before. A fresh visitor (nothing in localStorage yet) must
+  // see this reflected both in getFeedSort() and in the select's own
+  // displayed value, not just one or the other.
+  const result = await page.evaluate(() => {
+    localStorage.removeItem('rt_feed_sort');
+    return { sort: getFeedSort(), selectValue: document.getElementById('feedSortSelect').value };
+  });
+  expect(result.sort).toBe('comments');
+  expect(result.selectValue).toBe('comments');
+});
+
+test('an existing saved preference still overrides the default', async ({ page }) => {
+  const sort = await page.evaluate(() => {
+    localStorage.setItem('rt_feed_sort', 'alpha');
+    return getFeedSort();
+  });
+  expect(sort).toBe('alpha');
+});
+
 test('groupByComponentName orders groups by their most-discussed post, with "comments" selected', async ({
   page,
 }) => {
