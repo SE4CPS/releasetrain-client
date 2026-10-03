@@ -810,14 +810,25 @@
       if (m) setDisplay(m, (A_MODE === "mermaid") ? "" : "none");
       if (tr) setDisplay(tr, (A_MODE === "triage") ? "" : "none");
     }
+    // Diagram/Table/Flowchart/Triage's display label - the <select>'s own
+    // option text already says this, but the chip (aSetMode below) needs
+    // it as plain text too, and "mermaid" (the internal mode id, kept for
+    // backward compatibility with already-saved localStorage values) reads
+    // oddly as a label where the UI has always called it "Flowchart".
+    const A_MODE_LABELS = { diagram: "Diagram", table: "Table", mermaid: "Flowchart", triage: "Triage" };
     function aSetMode(mode) {
       A_MODE = A_MODES.includes(mode) ? mode : "diagram";
       try { localStorage.setItem("rt_arch_mode", A_MODE); } catch {}
-      const dg = document.getElementById("a-viewDiagram"), tb = document.getElementById("a-viewTable"), mb = document.getElementById("a-viewMermaid"), tgb = document.getElementById("a-viewTriage");
-      if (dg) dg.className = "btn" + (A_MODE === "diagram" ? " btn-primary" : " btn-ghost");
-      if (tb) tb.className = "btn" + (A_MODE === "table" ? " btn-primary" : " btn-ghost");
-      if (mb) mb.className = "btn" + (A_MODE === "mermaid" ? " btn-primary" : " btn-ghost");
-      if (tgb) tgb.className = "btn" + (A_MODE === "triage" ? " btn-primary" : " btn-ghost");
+      // A single <select> (one mutually-exclusive choice) replaced the old
+      // 4 separate buttons each manually toggling btn-primary/btn-ghost -
+      // the select's own selected option already shows the active mode,
+      // and the chip right next to it repeats that as a small always-
+      // visible label so the active mode still reads at a glance without
+      // opening the dropdown.
+      const sel = document.getElementById("a-viewMode");
+      if (sel) sel.value = A_MODE;
+      const chip = document.getElementById("a-modeChip");
+      if (chip) chip.textContent = A_MODE_LABELS[A_MODE] || A_MODE;
       const e = aEl("empty");
       if (e && !e.classList.contains("u-hide")) return;  // empty state stays put
       aShowResult();
@@ -1161,13 +1172,17 @@
       aLoadUpdatedToday();
     });
 
-    document.getElementById("a-viewDiagram").addEventListener("click", () => aSetMode("diagram"));
-    document.getElementById("a-viewTable").addEventListener("click", () => aSetMode("table"));
-    document.getElementById("a-viewMermaid")?.addEventListener("click", () => aSetMode("mermaid"));
-    // Triage is the one mode that's also an action: clicking it both
+    // Diagram/Table/Flowchart/Triage used to be 4 separate buttons each
+    // doing their own aSetMode() call; now it's one mutually-exclusive
+    // <select>, so there's one change listener instead of 4 click ones.
+    // Triage is still the one mode that's also an action: picking it both
     // switches the visible panel AND fires the real model call (see
     // aRunTriage's own comment on why this isn't done inside aSetMode).
-    document.getElementById("a-viewTriage")?.addEventListener("click", () => { aSetMode("triage"); aRunTriage(); });
+    document.getElementById("a-viewMode")?.addEventListener("change", (e) => {
+      const mode = e.target.value;
+      aSetMode(mode);
+      if (mode === "triage") aRunTriage();
+    });
     // Changing "Optimize for" while already looking at a triage result
     // re-runs it with the new weighting; otherwise it's just remembered
     // for the next time the Triage button is clicked.

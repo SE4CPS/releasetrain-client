@@ -509,9 +509,10 @@
            feedback: a control for the CURRENT view's own display mode
            belongs with that view's content, on the right side of its
            own header, not buried in a sidebar section that looks the
-           same regardless of which view is active. IDs (a-viewDiagram/
-           a-viewTable) are unchanged, so aSetMode() and its click
-           handlers need no changes -- only the markup moved. -->
+           same regardless of which view is active. (The original move
+           kept the per-mode button IDs as-is; those 4 buttons were later
+           merged into the single #a-viewMode select + #a-modeChip pair
+           described above, in .a-view-header itself.) -->
       <!-- Stacks/Actions/Diagram+Table all moved out of this sidebar
            section entirely (2026-09-23, follow-up to the Diagram/Table
            move above) -- same reasoning: they're all controls for the
@@ -958,24 +959,36 @@
             <button id="a-configBtn" class="btn btn-ghost st-60" type="button">⚙ Config</button>
             <button id="a-copyLinkBtn" class="btn btn-ghost st-60" type="button">🔗 Copy link</button>
             <span class="st-61"></span>
-            <button id="a-viewDiagram" class="btn btn-primary st-62" type="button">Diagram</button>
-            <button id="a-viewTable" class="btn btn-ghost st-62" type="button">Table</button>
-            <button id="a-viewMermaid" class="btn btn-ghost st-62" type="button">Flowchart</button>
+            <!-- Diagram/Table/Flowchart/Triage are one mutually-exclusive
+                 "view mode" choice (see A_MODES in arch.js), so they're a
+                 single <select>, not 4 separate buttons fighting for
+                 attention - the active mode is still visible at a glance
+                 via the chip right after it, which also makes the active
+                 state readable without the select having to be open.
+                 Reported live, with a screenshot of the old 4-button row:
+                 "simplify this group exclusive options into select
+                 dropdown and when something is selected add a chip." -->
+            <select id="a-viewMode" class="a-stack-select st-59" title="View">
+              <option value="diagram">Diagram</option>
+              <option value="table">Table</option>
+              <option value="mermaid">Flowchart</option>
+              <option value="triage">Triage</option>
+            </select>
+            <span id="a-modeChip" class="a-chip-t rt-bg" style="--rt-bg:#e2e8f0;">Diagram</span>
             <!-- Update Triage: "here are my current installed software,
                  how would you recommend updating them in which order?
-                 with reasoning" - a 4th mode next to Diagram/Table/
-                 Flowchart, reusing the same already-loaded component list
-                 (A_VERSIONS) rather than a separate selection step. The
-                 select is its own control, not folded into the button,
-                 since "optimized by stability, security, or both" is
-                 picked once and can be changed without re-picking a
-                 machine. See aRunTriage/aRenderTriage in arch.js. -->
+                 with reasoning" - reuses the same already-loaded component
+                 list (A_VERSIONS) rather than a separate selection step.
+                 This select is its own control, not folded into the mode
+                 select above, since "optimized by stability, security, or
+                 both" is picked once and can be changed without
+                 re-picking a machine or leaving Triage mode. See
+                 aRunTriage/aRenderTriage in arch.js. -->
             <select id="a-triageOptimize" class="a-stack-select st-59" title="Optimize for">
               <option value="both" selected>Optimize: Both</option>
               <option value="security">Optimize: Security</option>
               <option value="stability">Optimize: Stability</option>
             </select>
-            <button id="a-viewTriage" class="btn btn-ghost st-62" type="button">Triage</button>
           </div>
         </div>
         <div class="a-canvas">

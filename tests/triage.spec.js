@@ -56,6 +56,16 @@ test('clicking Triage sends the loaded components and renders a sorted, reasoned
   await stubApi(page, triageResponse);
   await page.goto('/?view=arch', { waitUntil: 'load' });
   await expect(page.locator('#archView')).toBeVisible({ timeout: 20_000 });
+  // `?view=arch` boots asynchronously (main.js: boot().then(...) awaits
+  // aLoadPako() before its own aLoadAndRender() call renders the empty
+  // state since no components are loaded yet) - waiting for #archView
+  // alone does NOT mean that chain has finished. Racing it with the
+  // override below intermittently lost under load (the real bug behind
+  // an earlier "flaky" #a-triage failure): the app's own empty-state
+  // render would land AFTER this test's override and silently clobber
+  // it. Wait for the real empty state to actually show first, so the
+  // override below always runs after boot has settled, never before.
+  await expect(page.locator('#a-empty')).toBeVisible({ timeout: 20_000 });
 
   // Load the two components into A_VERSIONS the same shape aApplyInventory
   // produces, without going through a real inventory/search round trip.
@@ -80,11 +90,14 @@ test('clicking Triage sends the loaded components and renders a sorted, reasoned
     aShowResult();
   });
 
-  const triageBtn = page.locator('#a-viewTriage');
-  await expect(triageBtn).toBeVisible();
+  // Diagram/Table/Flowchart/Triage are one <select> (#a-viewMode), not 4
+  // separate buttons - picking "triage" fires the same aSetMode+aRunTriage
+  // combo the old dedicated button used to.
+  const viewMode = page.locator('#a-viewMode');
+  await expect(viewMode).toBeVisible();
   const [triageRequest] = await Promise.all([
     page.waitForRequest((req) => /\/ask\/triage$/.test(req.url()) && req.method() === 'POST'),
-    triageBtn.click(),
+    viewMode.selectOption('triage'),
   ]);
   const sentBody = JSON.parse(triageRequest.postData());
   expect(sentBody.optimizeFor).toBe('both');
@@ -92,6 +105,10 @@ test('clicking Triage sends the loaded components and renders a sorted, reasoned
     { name: 'Firefox', version: '100.0' },
     { name: 'OpenSSL', version: '1.1.0' },
   ]);
+
+  // The chip next to the mode select reflects the active mode, so it's
+  // still visible at a glance without opening the dropdown.
+  await expect(page.locator('#a-modeChip')).toHaveText('Triage');
 
   const triagePanel = page.locator('#a-triage');
   await expect(triagePanel).toBeVisible();
@@ -154,6 +171,9 @@ test('changing "Optimize for" while a result is showing re-runs triage with the 
   });
   await page.goto('/?view=arch', { waitUntil: 'load' });
   await expect(page.locator('#archView')).toBeVisible({ timeout: 20_000 });
+  // See the other test's comment: wait for boot's own async empty-state
+  // render to actually land before overriding it, so the two don't race.
+  await expect(page.locator('#a-empty')).toBeVisible({ timeout: 20_000 });
   await page.evaluate(() => {
     A_VERSIONS = [
       {
@@ -165,7 +185,7 @@ test('changing "Optimize for" while a result is showing re-runs triage with the 
     aShowResult();
   });
 
-  await page.locator('#a-viewTriage').click();
+  await page.locator('#a-viewMode').selectOption('triage');
   await expect(page.locator('#a-triage')).toBeVisible();
   await expect(page.locator('#a-triage')).toContainText('Both-mode reasoning.');
 
