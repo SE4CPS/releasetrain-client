@@ -776,14 +776,37 @@
       // releases get the date added since they're the rarer, higher-
       // impact marker worth the extra detail; minor/patch/CVE markers
       // just get the bare version number to keep a dense chart readable.
-      const eventLabel = (e, cls) => {
-        if (!e.version) return "";
+      //
+      // Two labels landing close together in time (a release and its own
+      // CVE record often share nearly the same date) otherwise render on
+      // top of each other, overlapping into illegible garbled text -
+      // reported live with a real screenshot of exactly that. Fixed by
+      // staggering labels into rows: walk them oldest-to-newest, and put
+      // each one in the first row whose last-placed label is at least
+      // MIN_LABEL_GAP_MS away; a label too close to every existing row's
+      // last entry starts a new row instead of overlapping it. This is a
+      // time-based heuristic, not a pixel-measured one (nothing here
+      // knows the chart's actual rendered width), but it directly fixes
+      // the near-identical-timestamp case that was actually colliding.
+      const ROW_HEIGHT_PX = 10;
+      const MIN_LABEL_GAP_MS = COMPONENT_CHART_WINDOW_MS * 0.05;
+      const labeledEvents = [...releaseEvents.map((e) => [e, "release"]), ...cveEvents.map((e) => [e, "cve"])]
+        .filter(([e]) => e.version)
+        .sort((a, b) => a[0].t - b[0].t);
+      const rowLastT = [];
+      for (const pair of labeledEvents) {
+        const t = pair[0].t;
+        let row = rowLastT.findIndex((lastT) => t - lastT >= MIN_LABEL_GAP_MS);
+        if (row === -1) { row = rowLastT.length; rowLastT.push(t); } else { rowLastT[row] = t; }
+        pair[2] = row;
+      }
+      const eventLabel = (e, cls, row) => {
         const text = e.isMajor ? `${e.version} · ${shortDate(e.t)}` : e.version;
-        return `<span class="component-chart-label ${cls}${e.isMajor ? " major" : ""}" style="--rt-left:${((e.t - windowStart) / COMPONENT_CHART_WINDOW_MS * 100).toFixed(2)}%">${fdEsc(text)}</span>`;
+        return `<span class="component-chart-label ${cls}${e.isMajor ? " major" : ""}" style="--rt-left:${((e.t - windowStart) / COMPONENT_CHART_WINDOW_MS * 100).toFixed(2)}%;--rt-top:${row * ROW_HEIGHT_PX}px">${fdEsc(text)}</span>`;
       };
-      const allEvents = [...releaseEvents.map((e) => [e, "release"]), ...cveEvents.map((e) => [e, "cve"])];
-      const labelsHtml = allEvents.some(([e]) => e.version)
-        ? `<div class="component-chart-labels">${allEvents.map(([e, cls]) => eventLabel(e, cls)).join("")}</div>`
+      const labelRows = rowLastT.length;
+      const labelsHtml = labelRows
+        ? `<div class="component-chart-labels" style="--rt-h:${labelRows * ROW_HEIGHT_PX}px">${labeledEvents.map(([e, cls, row]) => eventLabel(e, cls, row)).join("")}</div>`
         : "";
 
       const wrap = document.createElement("div");

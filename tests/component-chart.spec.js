@@ -348,3 +348,84 @@ test('a major release also shows its month/day date alongside the version; a min
   expect(minor.isMajor).toBe(false);
   expect(minor.text).toBe('7.1.1');
 });
+
+test('two release/CVE labels landing close together in time are staggered onto separate rows, not overlapped', async ({
+  page,
+}) => {
+  // Reported live, with a screenshot: a release and its own CVE record
+  // landing on nearly the same date rendered as garbled, overlapping
+  // text ("11.2.16" smashed together with the CVE's own version number).
+  const result = await page.evaluate(
+    ({ posts, releaseDate, cveDate }) => {
+      STATE.redditBySub = new Map([['linux', posts]]);
+      const group = {
+        name: 'Linux',
+        items: [
+          {
+            versionProductName: 'linux',
+            versionNumber: '11.2.16',
+            versionReleaseDate: releaseDate,
+            versionReleaseChannel: 'patch',
+            isCve: false,
+          },
+          // Same day as the release above - exactly the collision case reported live.
+          {
+            versionProductName: 'linux',
+            versionNumber: '11.2.16',
+            versionReleaseDate: cveDate,
+            versionReleaseChannel: 'patch',
+            isCve: true,
+          },
+        ],
+      };
+      const el = renderComponentSentimentChart(group);
+      const labels = Array.from(el.querySelectorAll('.component-chart-label')).map((s) => ({
+        text: s.textContent,
+        top: s.style.getPropertyValue('--rt-top'),
+      }));
+      return labels;
+    },
+    { posts: makePosts(40, 10), releaseDate: daysAgoYYYYMMDD(5), cveDate: daysAgoYYYYMMDD(5) },
+  );
+  expect(result.length).toBe(2);
+  // Both real labels still render (neither silently dropped)...
+  expect(result.every((l) => l.text === '11.2.16')).toBe(true);
+  // ...but on two different rows, so they don't sit on top of each other.
+  expect(result[0].top).not.toBe(result[1].top);
+});
+
+test('events spread well apart in time all land on the same row (no unnecessary staggering)', async ({
+  page,
+}) => {
+  const result = await page.evaluate(
+    ({ posts, releaseDate, cveDate }) => {
+      STATE.redditBySub = new Map([['linux', posts]]);
+      const group = {
+        name: 'Linux',
+        items: [
+          {
+            versionProductName: 'linux',
+            versionNumber: '7.0.0',
+            versionReleaseDate: releaseDate,
+            versionReleaseChannel: 'patch',
+            isCve: false,
+          },
+          {
+            versionProductName: 'linux',
+            versionNumber: '7.0.1',
+            versionReleaseDate: cveDate,
+            versionReleaseChannel: 'patch',
+            isCve: true,
+          },
+        ],
+      };
+      const el = renderComponentSentimentChart(group);
+      return Array.from(el.querySelectorAll('.component-chart-label')).map((s) =>
+        s.style.getPropertyValue('--rt-top'),
+      );
+    },
+    // 10 days apart inside the 14-day window - plenty of room, should not stagger.
+    { posts: makePosts(40, 12), releaseDate: daysAgoYYYYMMDD(12), cveDate: daysAgoYYYYMMDD(2) },
+  );
+  expect(result[0]).toBe(result[1]);
+});

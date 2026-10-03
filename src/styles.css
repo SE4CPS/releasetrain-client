@@ -1874,10 +1874,14 @@ details[open] > summary { background: var(--view-card); color: var(--text); bord
    absolutely/negatively positioned, so .feedGroup's own overflow:hidden
    (sized to its content, not a fixed height) never clips it. Each label
    is positioned by left:X% matching the same x-scale as the <svg>
-   below it, since both share the identical 100%-width box. */
-.component-chart-labels { position: relative; width: 100%; height: 11px; }
+   below it, since both share the identical 100%-width box. Height and
+   each label's own row (top offset) are both set per-chart via --rt-h/
+   --rt-top: two labels too close together in time are staggered onto
+   separate rows instead of rendering on top of each other, so the strip
+   grows as tall as however many rows that particular chart needed. */
+.component-chart-labels { position: relative; width: 100%; height: var(--rt-h, 11px); }
 .component-chart-label {
-  position: absolute; top: 0; left: var(--rt-left); transform: translateX(-50%);
+  position: absolute; top: var(--rt-top, 0); left: var(--rt-left); transform: translateX(-50%);
   font-size: 8px; font-weight: 600; line-height: 1; white-space: nowrap;
 }
 .component-chart-label.release { color: #16a34a; }
