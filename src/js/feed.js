@@ -291,6 +291,21 @@
           g._riskScore = posts.reduce((max, p) => Math.max(max, getUpdateScore(p) ?? 0), 0);
         });
         arr.sort((a, b) => (b._riskScore - a._riskScore) || (versionTime(b.items[0]) - versionTime(a.items[0])));
+      } else if (mode === "comments") {
+        // Reported live: "allow me to sort by most comments." Same shape
+        // as the "risk" mode just above (and the same reason it re-sorts
+        // once reddit data arrives - see that mode's own comment): a
+        // group's sort key is its single most-discussed recent post's
+        // comment count, not a sum across all its posts, so one busy
+        // thread surfaces the component even if its other posts are
+        // quiet - consistent with "risk" using a post's peak score, not
+        // a total, for the same reason.
+        arr.forEach(g => {
+          const posts = postsForComponent(norm(g.name))
+            .filter(p => getPostSource(p) === "reddit" && redditTime(p) >= LOOKBACK_AGO);
+          g._commentCount = posts.reduce((max, p) => Math.max(max, p.num_comments || 0), 0);
+        });
+        arr.sort((a, b) => (b._commentCount - a._commentCount) || (versionTime(b.items[0]) - versionTime(a.items[0])));
       } else if (mode === "activity") {
         arr.sort((a, b) => (b.items.length - a.items.length) || (versionTime(b.items[0]) - versionTime(a.items[0])));
       } else if (mode === "sources") {
@@ -1073,13 +1088,13 @@
           refreshRenderedGroupsWithReddit();
           updateCommunityBracket();
           if (G_ACTIVE && G_VIS_LOADED) gBuildAndRender(gGetVersions(), STATE.redditAll);
-          // "Highest risk" and "Most sources" both read reddit data that
-          // wasn't in yet on whichever earlier call actually computed the
-          // current group order, same pattern as ensureLlmVersionsLoaded
-          // re-running applyFilters() only when the LLM toggle is the
-          // reason its own data matters right now.
+          // "Highest risk", "Most sources", and "Most comments" all read
+          // reddit data that wasn't in yet on whichever earlier call
+          // actually computed the current group order, same pattern as
+          // ensureLlmVersionsLoaded re-running applyFilters() only when
+          // the LLM toggle is the reason its own data matters right now.
           const fs = getFeedSort();
-          if (fs === "risk" || fs === "sources") applyFilters();
+          if (fs === "risk" || fs === "sources" || fs === "comments") applyFilters();
         });
       }
       return STATE.redditReady;
