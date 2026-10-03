@@ -529,3 +529,66 @@ test('a dense history still labels its one major release, not just whichever is 
   );
   expect(result.some((t) => t.startsWith('8.0.0'))).toBe(true);
 });
+
+test('the sentiment line stretches full-width: earliest post at the left edge, latest at the right edge', async ({
+  page,
+}) => {
+  // Reported live, with a screenshot: a narrow real post span used to
+  // get padded out to a wider minimum, which visibly inset the plotted
+  // line from both edges instead of stretching it across 100% of the
+  // chart's own width (0 to 600 internal units).
+  const result = await page.evaluate(
+    (posts) => {
+      STATE.redditBySub = new Map([['linux', posts]]);
+      const el = renderComponentSentimentChart({ name: 'Linux', items: [] });
+      const xs = el
+        .querySelector('.component-chart-line')
+        .getAttribute('points')
+        .trim()
+        .split(/\s+/)
+        .map((pair) => Number(pair.split(',')[0]));
+      return { first: xs[0], last: xs[xs.length - 1] };
+    },
+    makePosts(6, 0.1),
+  ); // a narrow real span - under 3 hours total
+  expect(result.first).toBeCloseTo(0, 1);
+  expect(result.last).toBeCloseTo(600, 1);
+});
+
+test('the legend collapses a same-day range to a single label, "Today" when that day is today', async ({
+  page,
+}) => {
+  // Reported live: "if from and to date are the same just say today."
+  const result = await page.evaluate(() => {
+    const now = Date.now();
+    const sameDayPosts = Array.from({ length: 3 }, (_, i) => ({
+      redditId: `t${i}`,
+      source: 'reddit',
+      subreddit: 'linux',
+      created_utc: new Date(now - i * 3600000).toISOString(), // all within the last few hours
+      sentiment: { author: 0.1 },
+    }));
+    STATE.redditBySub = new Map([['linux', sameDayPosts]]);
+    const el = renderComponentSentimentChart({ name: 'Linux', items: [] });
+    return el.querySelector('.component-chart-range').textContent;
+  });
+  expect(result).toBe('Today');
+});
+
+test('a same-day-but-not-today range shows that single date, not "Today"', async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const threeDaysAgo = Date.now() - 3 * 86400000;
+    const sameDayPosts = Array.from({ length: 3 }, (_, i) => ({
+      redditId: `o${i}`,
+      source: 'reddit',
+      subreddit: 'linux',
+      created_utc: new Date(threeDaysAgo - i * 3600000).toISOString(),
+      sentiment: { author: 0.1 },
+    }));
+    STATE.redditBySub = new Map([['linux', sameDayPosts]]);
+    const el = renderComponentSentimentChart({ name: 'Linux', items: [] });
+    return el.querySelector('.component-chart-range').textContent;
+  });
+  expect(result).not.toBe('Today');
+  expect(result).not.toContain(' - '); // single date, not a duplicated "X - X" range
+});

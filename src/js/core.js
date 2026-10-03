@@ -23,7 +23,16 @@
       const raw = (fromQuery || fromMeta || "https://releasetrain.io/api/").trim();
       return raw.replace(/\/+$/, "") + "/";
     })();
-    const GROUPS_BATCH = 6, PAGE_LIMIT = 150, TOP_TYPES = 10, REDDIT_LIMIT = 400, MAX_VER_DESC = 220;
+    // REDDIT_LIMIT raised 400 -> 2000, reported live: "can you pull more
+    // reddit posts to increase window" - the component sentiment chart's
+    // window is now each component's own earliest-to-latest Reddit post
+    // (see renderComponentSentimentChart in feed.js), so a small total
+    // fetch cap directly narrows how far back that window can ever reach
+    // for any one component, especially a lower-volume one sharing this
+    // same site-wide budget with every other component. The server
+    // allows up to 5000 per request (GET /api/reddit's own cap); 2000 is
+    // a generous step up without quintupling the page-load payload.
+    const GROUPS_BATCH = 6, PAGE_LIMIT = 150, TOP_TYPES = 10, REDDIT_LIMIT = 2000, MAX_VER_DESC = 220;
 
     /* ── Global fault surface ─────────────────────────────────── */
     // Uncaught errors and rejected promises otherwise fail silently, leaving an

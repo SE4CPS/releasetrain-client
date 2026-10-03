@@ -705,6 +705,19 @@
       try { return new Date(ms).toLocaleDateString(undefined, { month: "short", day: "numeric" }); }
       catch { return ""; }
     }
+    // Collapses "Oct 3 - Oct 3" into a single label when both ends land
+    // on the same calendar day (every post happened today, or all on one
+    // other day) - reported live, with a screenshot: "if from and to
+    // date are the same just say today." Only says "Today" when that
+    // shared day actually IS today (the viewer's own local calendar
+    // day); any other single-day range still shows its real date rather
+    // than being mislabeled as "Today."
+    function rangeLabel(minT, maxT) {
+      const a = shortDate(minT), b = shortDate(maxT);
+      if (a !== b) return `${a} - ${b}`;
+      const isToday = new Date(minT).toDateString() === new Date().toDateString();
+      return isToday ? "Today" : a;
+    }
     function fdEsc(s) {
       return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     }
@@ -732,17 +745,17 @@
 
       const postTimes = posts.map((p) => redditTime(p));
       const rawMinT = Math.min(...postTimes), rawMaxT = Math.max(...postTimes);
-      // A single post has no span of its own to show - padded with a day
-      // on each side so release/CVE markers from around the same time
-      // still have a sensible neighborhood to plot into, instead of an
-      // effectively zero-width window that would drop almost everything.
-      // The legend below still shows the real (unpadded) post range, not
-      // this internal plotting pad.
-      const MIN_SPAN_MS = 86400000;
-      const realSpan = rawMaxT - rawMinT;
-      const pad = realSpan >= MIN_SPAN_MS ? 0 : (MIN_SPAN_MS - realSpan) / 2;
-      const windowStart = rawMinT - pad, windowEnd = rawMaxT + pad;
-      const span = windowEnd - windowStart;
+      // No padding - the earliest post sits at the chart's left edge and
+      // the latest at its right edge, using the full width, every time.
+      // Reported live, with a screenshot: an earlier version padded a
+      // narrow real span out to a minimum width, which visibly inset the
+      // plotted line from both edges instead of stretching it full-width.
+      // span still has a tiny floor (1ms, not a full day) purely to avoid
+      // a literal divide-by-zero when every post shares one timestamp -
+      // at that point there's only one on-screen point anyway, so the
+      // floor's size has no visible effect.
+      const windowStart = rawMinT, windowEnd = rawMaxT;
+      const span = Math.max(1, windowEnd - windowStart);
       const inRange = (t) => t >= windowStart && t <= windowEnd;
 
       // Release/CVE markers are kept only when they fall inside this
@@ -853,7 +866,7 @@
         // window - "label range in legend," reported live. A single-post
         // component legitimately shows the same date twice here; that's
         // an honest reflection of there being exactly one post, not a bug.
-        `<span class="component-chart-range">${shortDate(rawMinT)} - ${shortDate(rawMaxT)}</span>` +
+        `<span class="component-chart-range">${rangeLabel(rawMinT, rawMaxT)}</span>` +
         `<span class="component-chart-legend">` +
         `<span class="component-chart-swatch line"></span>sentiment ` +
         `<span class="component-chart-swatch release"></span>release ` +
