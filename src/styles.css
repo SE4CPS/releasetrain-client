@@ -1825,16 +1825,30 @@ details[open] > summary { background: var(--view-card); color: var(--text); bord
    not a value-colored bar anymore. Colors identify WHICH series (author
    vs community), not the sentiment value, since a line's own height
    already shows that. .sentiment-note is the one text exception (an
-   explicit "no author reply yet" label), not a chart label. */
-.sentiment-bar { display: flex; align-items: center; gap: 6px; margin: 4px 0 2px; }
-.sentiment-chart { display: block; overflow: visible; }
-.sentiment-zero { stroke: var(--border); stroke-width: 1; stroke-dasharray: 2 2; }
-.sentiment-line { fill: none; stroke-width: 1.5; }
+   explicit "no author reply yet" label), not a chart label.
+   Tablet and up only (reported live: "show the only on tablet and
+   higher resolutions, not on phone") - a stretched chart needs real row
+   width to be legible, which a phone-width post row doesn't have. */
+.sentiment-bar { display: flex; align-items: center; gap: 8px; margin: 4px 0 2px; }
+@media (max-width: 640px) { .sentiment-bar { display: none; } }
+.sentiment-chart { display: block; overflow: visible; flex: 1 1 auto; width: 100%; height: 28px; min-width: 0; }
+/* var(--border) (#dadce0) was tried first and found genuinely invisible
+   against this feed row's own background - confirmed with a real
+   screenshot, not assumed. var(--muted) (#5f6368) at low opacity is
+   dark enough to actually show while staying visually secondary to the
+   two real data lines. */
+.sentiment-zero { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 2 2; opacity: 0.45; }
+.sentiment-ref { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 1 3; opacity: 0.3; }
+.sentiment-line { fill: none; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
 .sentiment-line.author, .sentiment-dot.author { stroke: #2563eb; }
 .sentiment-dot.author { fill: #2563eb; }
 .sentiment-line.community, .sentiment-dot.community { stroke: #ea580c; }
 .sentiment-dot.community { fill: #ea580c; }
-.sentiment-note { font-size: 11px; color: var(--muted); }
+.sentiment-note { font-size: 11px; color: var(--muted); white-space: nowrap; }
+.sentiment-legend { display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--muted); white-space: nowrap; flex: 0 0 auto; }
+.sentiment-swatch { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 3px; }
+.sentiment-swatch.author { background: #2563eb; }
+.sentiment-swatch.community { background: #ea580c; }
 .chip.reddit { background: var(--chip-bg); border-color: var(--border); color: var(--chip-text); }
 .chip.llm { background: var(--chip-bg); border-color: var(--border); color: var(--chip-text); }
 .chip.hv { background: var(--chip-bg); border-color: var(--border); color: var(--chip-text); }

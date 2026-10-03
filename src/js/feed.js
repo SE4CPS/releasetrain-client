@@ -608,7 +608,11 @@
     // y = that comment's compound score. A series with zero points draws
     // nothing; exactly one point draws a dot (a <polyline> needs 2+
     // points to render a visible line).
-    const SENTIMENT_CHART_W = 150, SENTIMENT_CHART_H = 30;
+    // Internal coordinate space only (not the on-screen size - the SVG
+    // stretches to fill its row via CSS, see .sentiment-chart). Wider
+    // than the display will ever realistically be so a stretched chart's
+    // polylines still look smooth, not blocky, at full row width.
+    const SENTIMENT_CHART_W = 600, SENTIMENT_CHART_H = 30;
     function sentimentChartX(i, forCommentCount) {
       const span = Math.max(1, forCommentCount - 1);
       return (i / span) * SENTIMENT_CHART_W;
@@ -630,12 +634,42 @@
       wrap.className = "sentiment-bar";
       wrap.title = "Author vs. community sentiment over the comment thread";
       const n = sentiment.forCommentCount;
+      // Reported live: "every line chart starts with the author
+      // title+description, every chart shall have as the first data
+      // point the author sentiment." sentiment.author (the post's own
+      // title+description score, always present) is prepended to the
+      // author line at x=0; every actual comment's own index shifts by
+      // +1 so it sits to the right of that anchor instead of overlapping
+      // it. The shared x-axis span widens from n to n+1 positions to fit
+      // the extra anchor point - sentimentChartX's own "span = count - 1"
+      // math already does the right thing when handed n+1 here.
+      const authorPoints = [
+        { i: 0, v: sentiment.author },
+        ...((sentiment.authorTrajectory || []).map((p) => ({ i: p.i + 1, v: p.v }))),
+      ];
+      const communityPoints = (sentiment.communityTrajectory || []).map((p) => ({ i: p.i + 1, v: p.v }));
+      const span = n + 1;
+      // Reported live, with a screenshot: "stretch it there is room" (CSS
+      // width:100%, preserveAspectRatio="none" so it actually fills the
+      // row instead of staying pinned to its viewBox's own aspect ratio)
+      // and "show the baseline from negative to positive at .5" - two
+      // extra reference lines at +/-0.5, same muted dashed style as the
+      // existing zero line, still no numbers/labels on any of them.
       wrap.innerHTML =
-        `<svg class="sentiment-chart" viewBox="0 0 ${SENTIMENT_CHART_W} ${SENTIMENT_CHART_H}" width="${SENTIMENT_CHART_W}" height="${SENTIMENT_CHART_H}">` +
+        `<svg class="sentiment-chart" viewBox="0 0 ${SENTIMENT_CHART_W} ${SENTIMENT_CHART_H}" preserveAspectRatio="none">` +
+        `<line class="sentiment-ref" x1="0" y1="${sentimentChartY(0.5)}" x2="${SENTIMENT_CHART_W}" y2="${sentimentChartY(0.5)}"></line>` +
         `<line class="sentiment-zero" x1="0" y1="${SENTIMENT_CHART_H / 2}" x2="${SENTIMENT_CHART_W}" y2="${SENTIMENT_CHART_H / 2}"></line>` +
-        sentimentChartSeries(sentiment.communityTrajectory || [], n, "community") +
-        sentimentChartSeries(sentiment.authorTrajectory || [], n, "author") +
+        `<line class="sentiment-ref" x1="0" y1="${sentimentChartY(-0.5)}" x2="${SENTIMENT_CHART_W}" y2="${sentimentChartY(-0.5)}"></line>` +
+        sentimentChartSeries(communityPoints, span, "community") +
+        sentimentChartSeries(authorPoints, span, "author") +
         `</svg>`;
+      // Reported live: "add a legend which color is author vs others."
+      const legend = document.createElement("div");
+      legend.className = "sentiment-legend";
+      legend.innerHTML =
+        `<span class="sentiment-swatch author"></span>Author` +
+        `<span class="sentiment-swatch community"></span>Community`;
+      wrap.appendChild(legend);
       if (!sentiment.authorHasReplies) {
         const note = document.createElement("span");
         note.className = "sentiment-note";
