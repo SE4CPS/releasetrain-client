@@ -1859,7 +1859,8 @@ details[open] > summary { background: var(--view-card); color: var(--text); bord
    same reasoning as the per-post chart: it needs real width to read. */
 .feedGroup > summary { flex-direction: row; align-items: center; gap: 10px; }
 .groupSummaryText { display: flex; flex-direction: column; gap: 5px; flex: 1 1 auto; min-width: 0; }
-.component-chart-wrap { flex: 0 0 260px; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.component-chart-wrap { flex: 0 0 480px; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+@media (max-width: 900px) { .component-chart-wrap { flex-basis: 320px; } }
 @media (max-width: 640px) { .component-chart-wrap { display: none; } }
 .component-chart { width: 100%; height: 36px; display: block; overflow: visible; }
 .component-chart-line { fill: none; stroke: #2563eb; stroke-width: 1.5; vector-effect: non-scaling-stroke; }

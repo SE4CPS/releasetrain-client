@@ -30,29 +30,43 @@ function makePosts(count) {
   }));
 }
 
+// YYYYMMDD, relative to now (matching versionTime()'s own parsing) - not
+// a fixed calendar date, so this test keeps working regardless of what
+// "today" actually is whenever the suite runs, same reference point
+// makePosts() already uses for the posts themselves.
+function daysAgoYYYYMMDD(days) {
+  return new Date(Date.now() - days * 86400000).toISOString().slice(0, 10).replace(/-/g, '');
+}
+
 test('renders a chart line, release/CVE markers, a date range, and a legend', async ({ page }) => {
-  const html = await page.evaluate((posts) => {
-    STATE.redditBySub = new Map([['linux', posts]]);
-    const group = {
-      name: 'Linux',
-      items: [
-        {
-          versionProductName: 'linux',
-          versionNumber: '7.1.0',
-          versionReleaseDate: '20260824',
-          isCve: false,
-        },
-        {
-          versionProductName: 'linux',
-          versionNumber: 'CVE-2026-1',
-          versionReleaseDate: '20260913',
-          isCve: true,
-        },
-      ],
-    };
-    const el = renderComponentSentimentChart(group);
-    return el ? el.outerHTML : null;
-  }, makePosts(40));
+  const html = await page.evaluate(
+    ({ posts, releaseDate, cveDate }) => {
+      STATE.redditBySub = new Map([['linux', posts]]);
+      const group = {
+        name: 'Linux',
+        items: [
+          {
+            versionProductName: 'linux',
+            versionNumber: '7.1.0',
+            versionReleaseDate: releaseDate,
+            isCve: false,
+          },
+          {
+            versionProductName: 'linux',
+            versionNumber: 'CVE-2026-1',
+            versionReleaseDate: cveDate,
+            isCve: true,
+          },
+        ],
+      };
+      const el = renderComponentSentimentChart(group);
+      return el ? el.outerHTML : null;
+    },
+    // Posts span the last 40 days; both events land inside that window
+    // (20 and 10 days ago respectively), same reference point (Date.now()
+    // at test-run time), not a hardcoded calendar date.
+    { posts: makePosts(40), releaseDate: daysAgoYYYYMMDD(20), cveDate: daysAgoYYYYMMDD(10) },
+  );
   expect(html).not.toBeNull();
   expect(html).toContain('component-chart-line');
   expect(html).toContain('component-chart-event release');
@@ -119,4 +133,61 @@ test('the summary row switches to a side-by-side layout so the chart uses the av
   }, makePosts(40));
   expect(html).toContain('groupSummaryText');
   expect(html).toContain('component-chart-wrap');
+});
+
+test("a release/CVE outside the reddit posts' own time range is dropped, not just unreachable", async ({
+  page,
+}) => {
+  // Reported live: "only show cve and change logs that are inside the
+  // reddit time range." A release from long before the posts being
+  // charted used to pull minT out to include it, compressing all the
+  // real sentiment data into a sliver of the chart's width.
+  const result = await page.evaluate(
+    ({ posts, oldReleaseDate, futureCveDate }) => {
+      STATE.redditBySub = new Map([['linux', posts]]);
+      const group = {
+        name: 'Linux',
+        items: [
+          // Posts span the last 40 days; this release is 400 days old -
+          // well outside that window - and this CVE is 400 days in the
+          // future, also outside it.
+          {
+            versionProductName: 'linux',
+            versionNumber: '1.0.0',
+            versionReleaseDate: oldReleaseDate,
+            isCve: false,
+          },
+          {
+            versionProductName: 'linux',
+            versionNumber: 'CVE-9999-1',
+            versionReleaseDate: futureCveDate,
+            isCve: true,
+          },
+        ],
+      };
+      const el = renderComponentSentimentChart(group);
+      const line = el.querySelector('.component-chart-line');
+      const xs = line
+        .getAttribute('points')
+        .trim()
+        .split(/\s+/)
+        .map((pair) => Number(pair.split(',')[0]));
+      return {
+        hasRelease: !!el.querySelector('.component-chart-event.release'),
+        hasCve: !!el.querySelector('.component-chart-event.cve'),
+        // If the out-of-range events had skewed the time axis, the real
+        // posts' own points would be compressed into a narrow sliver
+        // instead of spanning close to the chart's full internal width.
+        lineSpansFullWidth: Math.max(...xs) - Math.min(...xs) > 500,
+      };
+    },
+    {
+      posts: makePosts(40),
+      oldReleaseDate: daysAgoYYYYMMDD(400),
+      futureCveDate: daysAgoYYYYMMDD(-400),
+    },
+  );
+  expect(result.hasRelease).toBe(false);
+  expect(result.hasCve).toBe(false);
+  expect(result.lineSpansFullWidth).toBe(true);
 });

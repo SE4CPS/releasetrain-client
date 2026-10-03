@@ -710,16 +710,27 @@
         .slice(-50);
       if (posts.length < 2) return null; // nothing meaningful to chart
 
-      const releaseEvents = (group.items || []).filter((v) => !v.isCve && !v._synthetic).map((v) => versionTime(v));
-      const cveEvents = (group.items || []).filter((v) => v.isCve).map((v) => versionTime(v));
-
-      const allTimes = [
-        ...posts.map((p) => redditTime(p)),
-        ...releaseEvents,
-        ...cveEvents,
-      ];
-      const minT = Math.min(...allTimes), maxT = Math.max(...allTimes);
+      // The time range is defined by the reddit posts alone, never
+      // stretched by a release/CVE outside that window - reported live:
+      // "only show cve and change logs that are inside the reddit time
+      // range." A release from long before/after the posts being charted
+      // used to pull minT/maxT out to include it, compressing all the
+      // real sentiment data into a sliver of the chart's width. Events
+      // outside [minT, maxT] are dropped entirely, not just unreachable -
+      // showing a tick mark pinned to an edge it doesn't really belong at
+      // would be misleading, not just visually off.
+      const postTimes = posts.map((p) => redditTime(p));
+      const minT = Math.min(...postTimes), maxT = Math.max(...postTimes);
       const span = Math.max(1, maxT - minT);
+      const inRange = (t) => t >= minT && t <= maxT;
+      const releaseEvents = (group.items || [])
+        .filter((v) => !v.isCve && !v._synthetic)
+        .map((v) => versionTime(v))
+        .filter(inRange);
+      const cveEvents = (group.items || [])
+        .filter((v) => v.isCve)
+        .map((v) => versionTime(v))
+        .filter(inRange);
       const x = (t) => ((t - minT) / span) * COMPONENT_CHART_W;
       const y = (v) => COMPONENT_CHART_H / 2 - Math.max(-1, Math.min(1, v)) * (COMPONENT_CHART_H / 2 - 3);
 
