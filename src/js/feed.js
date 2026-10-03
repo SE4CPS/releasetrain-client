@@ -596,35 +596,53 @@
     /* ── Chip builder ─────────────────────────────────────────── */
     const chip = (t, k) => `<span class="chip ${k || ""}">${t}</span>`;
 
-    /* ── Sentiment bar (author vs community, below a reddit post) ─ */
-    // One small fill per side, width proportional to |compound score|
-    // (4px floor so a near-zero score still shows a visible sliver, 24px
-    // ceiling at |score|=1), colored by sign - no numbers or words on the
-    // bars themselves, per direct instruction ("small line chart no text
-    // labels"). sentiment.community is null when every comment turned out
-    // to be from the author (not just the common "no comments at all"
-    // case, which is filtered out before this is ever called).
-    function sentimentFill(score, side) {
-      const el = document.createElement("span");
-      const clamped = Math.max(-1, Math.min(1, score || 0));
-      const cls = clamped > 0.05 ? "pos" : clamped < -0.05 ? "neg" : "neu";
-      el.className = `sentiment-fill ${side} ${cls}`;
-      el.style.setProperty("--rt-w", `${4 + Math.abs(clamped) * 20}px`);
-      return el;
+    /* ── Sentiment chart (author vs community, below a reddit post) ─ */
+    // Reported live, with a screenshot of a 135-comment thread, right
+    // after the single-bar version shipped: "show a thin 2 line chart on
+    // comment sentiment change." Replaces the old two-segment bar
+    // entirely - one chart, two overlaid polylines (author/community),
+    // x = each comment's own position in the full chronological comment
+    // sequence (shared across both series - sentiment.forCommentCount is
+    // the shared denominator, so a real gap between an author reply and
+    // the next community one is visible as a jump along x, not hidden),
+    // y = that comment's compound score. A series with zero points draws
+    // nothing; exactly one point draws a dot (a <polyline> needs 2+
+    // points to render a visible line).
+    const SENTIMENT_CHART_W = 150, SENTIMENT_CHART_H = 30;
+    function sentimentChartX(i, forCommentCount) {
+      const span = Math.max(1, forCommentCount - 1);
+      return (i / span) * SENTIMENT_CHART_W;
+    }
+    function sentimentChartY(v) {
+      return SENTIMENT_CHART_H / 2 - Math.max(-1, Math.min(1, v)) * (SENTIMENT_CHART_H / 2 - 2);
+    }
+    function sentimentChartSeries(points, forCommentCount, cls) {
+      if (!points.length) return "";
+      if (points.length === 1) {
+        const x = sentimentChartX(points[0].i, forCommentCount), y = sentimentChartY(points[0].v);
+        return `<circle class="sentiment-dot ${cls}" cx="${x}" cy="${y}" r="2"></circle>`;
+      }
+      const coords = points.map((p) => `${sentimentChartX(p.i, forCommentCount)},${sentimentChartY(p.v)}`).join(" ");
+      return `<polyline class="sentiment-line ${cls}" points="${coords}"></polyline>`;
     }
     function renderSentimentBar(sentiment) {
-      const bar = document.createElement("div");
-      bar.className = "sentiment-bar";
-      bar.title = "Author vs. community sentiment";
-      bar.appendChild(sentimentFill(sentiment.author, "author"));
-      if (sentiment.community != null) bar.appendChild(sentimentFill(sentiment.community, "community"));
+      const wrap = document.createElement("div");
+      wrap.className = "sentiment-bar";
+      wrap.title = "Author vs. community sentiment over the comment thread";
+      const n = sentiment.forCommentCount;
+      wrap.innerHTML =
+        `<svg class="sentiment-chart" viewBox="0 0 ${SENTIMENT_CHART_W} ${SENTIMENT_CHART_H}" width="${SENTIMENT_CHART_W}" height="${SENTIMENT_CHART_H}">` +
+        `<line class="sentiment-zero" x1="0" y1="${SENTIMENT_CHART_H / 2}" x2="${SENTIMENT_CHART_W}" y2="${SENTIMENT_CHART_H / 2}"></line>` +
+        sentimentChartSeries(sentiment.communityTrajectory || [], n, "community") +
+        sentimentChartSeries(sentiment.authorTrajectory || [], n, "author") +
+        `</svg>`;
       if (!sentiment.authorHasReplies) {
         const note = document.createElement("span");
         note.className = "sentiment-note";
         note.textContent = "no author reply yet";
-        bar.appendChild(note);
+        wrap.appendChild(note);
       }
-      return bar;
+      return wrap;
     }
 
     /* ── Render group ─────────────────────────────────────────── */

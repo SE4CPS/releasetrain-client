@@ -1820,15 +1820,21 @@ details[open] > summary { background: var(--view-card); color: var(--text); bord
 .chip.warn { background: var(--risk-bg); border-color: var(--risk); color: var(--risk); }
 .chip.ok { background: var(--chip-bg); border-color: var(--border); color: var(--chip-text); }
 /* Author-vs-community sentiment, below a reddit post's title (see
-   renderSentimentBar in feed.js) - two small fills, width proportional to
-   |score|, no text on the bars themselves. .sentiment-note is the one
-   exception (an explicit "no author reply yet" label), not a bar label. */
-.sentiment-bar { display: flex; align-items: center; gap: 3px; height: 8px; margin: 4px 0 2px; }
-.sentiment-fill { height: 6px; border-radius: 3px; min-width: 4px; width: var(--rt-w); }
-.sentiment-fill.pos { background: #16a34a; }
-.sentiment-fill.neg { background: var(--cve); }
-.sentiment-fill.neu { background: var(--muted); }
-.sentiment-note { font-size: 11px; color: var(--muted); margin-left: 4px; }
+   renderSentimentBar in feed.js) - a thin two-line chart, one polyline
+   per side plotted over the comment thread's own chronological order,
+   not a value-colored bar anymore. Colors identify WHICH series (author
+   vs community), not the sentiment value, since a line's own height
+   already shows that. .sentiment-note is the one text exception (an
+   explicit "no author reply yet" label), not a chart label. */
+.sentiment-bar { display: flex; align-items: center; gap: 6px; margin: 4px 0 2px; }
+.sentiment-chart { display: block; overflow: visible; }
+.sentiment-zero { stroke: var(--border); stroke-width: 1; stroke-dasharray: 2 2; }
+.sentiment-line { fill: none; stroke-width: 1.5; }
+.sentiment-line.author, .sentiment-dot.author { stroke: #2563eb; }
+.sentiment-dot.author { fill: #2563eb; }
+.sentiment-line.community, .sentiment-dot.community { stroke: #ea580c; }
+.sentiment-dot.community { fill: #ea580c; }
+.sentiment-note { font-size: 11px; color: var(--muted); }
 .chip.reddit { background: var(--chip-bg); border-color: var(--border); color: var(--chip-text); }
 .chip.llm { background: var(--chip-bg); border-color: var(--border); color: var(--chip-text); }
 .chip.hv { background: var(--chip-bg); border-color: var(--border); color: var(--chip-text); }
