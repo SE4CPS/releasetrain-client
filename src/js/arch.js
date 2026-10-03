@@ -9,6 +9,13 @@
     let A_ACTIVE = false, A_LOADED = false;
     let A_PLANTUML_SERVER = "https://www.plantuml.com/plantuml/svg/";
     let A_PLANTUML_URL = "", A_VERSIONS = [], A_UML_CODE = "";
+    // Cached last Update Triage result (POST /api/ask/triage), so
+    // switching back to the Triage mode (or any aSetMode() call that
+    // isn't the explicit button click) re-shows it instead of either
+    // re-firing a real model call or going blank. Cleared whenever a new
+    // component list loads (aLoadAndRender/aLoadUpdatedToday), since a
+    // stale triage for the previous machine/search would be misleading.
+    let A_TRIAGE_RESULTS = null;
     const aEl = id => document.getElementById("a-" + id);
 
     function aLoadPako() {
@@ -788,27 +795,29 @@
       return vers;
     }
 
-    const A_MODES = ["diagram", "table", "mermaid"];
+    const A_MODES = ["diagram", "table", "mermaid", "triage"];
     let A_MODE = A_MODES.includes(localStorage.getItem("rt_arch_mode")) ? localStorage.getItem("rt_arch_mode") : "diagram";
 
     const aCanvasEl = () => document.querySelector("#archView .a-canvas");
 
-    // Show the result area (canvas, table, or mermaid flowchart per
-    // A_MODE), hide the empty state. Exactly one of the three is visible.
+    // Show the result area (canvas, table, mermaid flowchart, or triage
+    // per A_MODE), hide the empty state. Exactly one of the four is visible.
     function aShowResult() {
       const e = aEl("empty"); if (e) setDisplay(e, "none");
-      const c = aCanvasEl(), t = aEl("table"), m = aEl("mermaid");
+      const c = aCanvasEl(), t = aEl("table"), m = aEl("mermaid"), tr = aEl("triage");
       if (c) setDisplay(c, (A_MODE === "diagram") ? "" : "none");
       if (t) setDisplay(t, (A_MODE === "table") ? "" : "none");
       if (m) setDisplay(m, (A_MODE === "mermaid") ? "" : "none");
+      if (tr) setDisplay(tr, (A_MODE === "triage") ? "" : "none");
     }
     function aSetMode(mode) {
       A_MODE = A_MODES.includes(mode) ? mode : "diagram";
       try { localStorage.setItem("rt_arch_mode", A_MODE); } catch {}
-      const dg = document.getElementById("a-viewDiagram"), tb = document.getElementById("a-viewTable"), mb = document.getElementById("a-viewMermaid");
+      const dg = document.getElementById("a-viewDiagram"), tb = document.getElementById("a-viewTable"), mb = document.getElementById("a-viewMermaid"), tgb = document.getElementById("a-viewTriage");
       if (dg) dg.className = "btn" + (A_MODE === "diagram" ? " btn-primary" : " btn-ghost");
       if (tb) tb.className = "btn" + (A_MODE === "table" ? " btn-primary" : " btn-ghost");
       if (mb) mb.className = "btn" + (A_MODE === "mermaid" ? " btn-primary" : " btn-ghost");
+      if (tgb) tgb.className = "btn" + (A_MODE === "triage" ? " btn-primary" : " btn-ghost");
       const e = aEl("empty");
       if (e && !e.classList.contains("u-hide")) return;  // empty state stays put
       aShowResult();
@@ -819,6 +828,12 @@
       if (A_MODE === "diagram") aFitDiagramSvg();
       if (A_MODE === "table") aRenderTable();
       if (A_MODE === "mermaid" && Array.isArray(A_VERSIONS) && A_VERSIONS.length) aRenderMermaid(A_VERSIONS);
+      // Triage is NOT re-run here (unlike table/mermaid, which just
+      // re-render already-fetched A_VERSIONS client-side) - it's a real
+      // model call, so it only runs when the Triage button itself is
+      // explicitly clicked (see its own listener below), never as a
+      // side effect of switching modes/restoring a saved mode on load.
+      if (A_MODE === "triage" && !A_TRIAGE_RESULTS) aRenderTriagePrompt();
     }
     function aEsc(s) {
       return String(s == null ? "" : s)
@@ -872,7 +887,100 @@
       const c = aCanvasEl(); if (c) setDisplay(c, "none");
       const t = aEl("table"); if (t) setDisplay(t, "none");
       const m = aEl("mermaid"); if (m) setDisplay(m, "none");
+      const tr = aEl("triage"); if (tr) setDisplay(tr, "none");
       const e = aEl("empty"); if (e) setDisplay(e, "block");
+    }
+
+    // ── Update Triage ("here are my current installed software, how
+    // would you recommend updating them in which order? with reasoning")
+    // ─────────────────────────────────────────────────────────────────
+    // A plain placeholder shown whenever the Triage panel is visible but
+    // has no (or stale) results yet - switching into Triage mode never
+    // auto-fires the real model call on its own (see aSetMode above).
+    function aRenderTriagePrompt() {
+      const el = aEl("triage"); if (!el) return;
+      const vers = Array.isArray(A_VERSIONS) ? A_VERSIONS : [];
+      el.innerHTML = !vers.length
+        ? `<p class="a-muted-note">No components.</p>`
+        : `<p class="a-muted-note">Click <b>Triage</b> to get a recommended update order for these ${vers.length} component(s).</p>`;
+    }
+
+    // Build the {name, version} list the server deterministically looks
+    // up facts for (POST /api/ask/triage never trusts a client-supplied
+    // version/CVE claim - see that route in src/app.js) and POST it,
+    // then render the sorted, reasoned result. A_TRIAGE_RESULTS caches
+    // the last response so switching modes away and back just re-shows
+    // it (see aSetMode) instead of re-running a real model call.
+    async function aRunTriage() {
+      const el = aEl("triage"); if (!el) return;
+      const vers = Array.isArray(A_VERSIONS) ? A_VERSIONS : [];
+      if (!vers.length) { aRenderTriagePrompt(); return; }
+      const components = vers
+        .map(v => ({ name: v.name, version: (v.currentVersion && v.currentVersion.versionNumber) || null }))
+        .filter(c => c.name);
+      const optimizeSel = document.getElementById("a-triageOptimize");
+      const optimizeFor = (optimizeSel && optimizeSel.value) || "both";
+      const loader = aEl("loader");
+      el.innerHTML = `<p class="a-muted-note">Analyzing update order...</p>`;
+      if (loader) setDisplay(loader, "block");
+      try {
+        const token = localStorage.getItem("rt_token");
+        const headers = { "Content-Type": "application/json", Accept: "application/json" };
+        if (token) headers["Authorization"] = "Bearer " + token;
+        const res = await fetch(`${API_BASE}ask/triage`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ components, optimizeFor }),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error || `${res.status}`);
+        }
+        const data = await res.json();
+        A_TRIAGE_RESULTS = data;
+        aRenderTriageResult(data);
+      } catch (e) {
+        console.error("Triage error:", e);
+        A_TRIAGE_RESULTS = null;
+        el.innerHTML = `<p class="a-muted-note">Could not run triage: ${aEsc(String(e.message || e))}</p>`;
+      } finally {
+        if (loader) setDisplay(loader, "none");
+      }
+    }
+
+    // Renders a cached/just-fetched triage response. Reuses the same
+    // .a-drift/.a-score table styling aRenderTable already established,
+    // so this reads as "the same kind of table, with an extra Order/
+    // Reasoning pair of columns" rather than an unrelated new widget.
+    function aRenderTriageResult(data) {
+      const el = aEl("triage"); if (!el) return;
+      const results = Array.isArray(data && data.results) ? data.results : [];
+      if (!results.length) { el.innerHTML = `<p class="a-muted-note">No components.</p>`; return; }
+      const optimizeLabel = { security: "Security", stability: "Stability", both: "Both" }[data.optimizeFor] || "Both";
+      const cveCount = results.filter(r => r.cve).length;
+      el.innerHTML =
+        `<div class="a-score">Update order &middot; optimized for <b>${aEsc(optimizeLabel)}</b> &nbsp;&middot;&nbsp; ${results.length} component(s) &nbsp;&middot;&nbsp; ${cveCount} with a known CVE</div>` +
+        `<table class="a-drift"><thead><tr>` +
+        `<th>#</th><th>Component</th><th>Installed</th><th>Latest</th><th>Change</th><th>CVE</th><th>Reasoning</th>` +
+        `</tr></thead><tbody>` +
+        results.map(r => {
+          const bumpChip = r.versionBump && r.versionBump !== "unknown"
+            ? `<span class="a-chip-t rt-bg" style="--rt-bg:${A_FILLS.behind}">${aEsc(r.versionBump)}</span>`
+            : `<span class="a-muted-note">-</span>`;
+          const cveChip = r.cve
+            ? `<span class="a-chip-t rt-bg" style="--rt-bg:${A_FILLS.cve}">${aEsc(r.cve.id)}</span>`
+            : "-";
+          return `<tr>` +
+            `<td class="mono">${aEsc(r.order)}</td>` +
+            `<td>${aEsc(r.name)}</td>` +
+            `<td class="mono">${aEsc(r.currentVersion || "?")}</td>` +
+            `<td class="mono">${aEsc(r.latestVersion || "-")}</td>` +
+            `<td>${bumpChip}</td>` +
+            `<td>${cveChip}</td>` +
+            `<td class="a-reasoning-cell">${aEsc(r.reasoning)}</td>` +
+            `</tr>`;
+        }).join("") +
+        `</tbody></table>`;
     }
 
     async function aLoadUpdatedToday() {
@@ -887,6 +995,7 @@
         const vers = aApplyInventory(aAttachRisk(aMapVers(data)));
         if (titleEl) titleEl.textContent = "Today's updated components";
         A_VERSIONS = vers;
+        A_TRIAGE_RESULTS = null;
         if (!vers.length) {
           if (titleEl) titleEl.textContent = "No components updated today";
           if (loader) setDisplay(loader, "none");
@@ -897,6 +1006,7 @@
         aUpdateMetrics(vers);
         if (A_MODE === "table") aRenderTable();
         if (A_MODE === "mermaid") aRenderMermaid(vers);
+        if (A_MODE === "triage") aRenderTriagePrompt();
       } catch (e) {
         console.error("Arch load error:", e);
         if (loader) setDisplay(loader, "none");
@@ -919,6 +1029,7 @@
         const vers = aApplyInventory(aAttachRisk(aMapVers(data)));
         if (titleEl) titleEl.textContent = names.join(", ");
         A_VERSIONS = vers;
+        A_TRIAGE_RESULTS = null;
         if (!vers.length) {
           if (titleEl) titleEl.textContent = "No data";
           if (loader) setDisplay(loader, "none");
@@ -930,6 +1041,7 @@
         aUpdateMetrics(vers);
         if (A_MODE === "table") aRenderTable();
         if (A_MODE === "mermaid") aRenderMermaid(vers);
+        if (A_MODE === "triage") aRenderTriagePrompt();
       } catch (e) {
         console.error("Arch load error:", e);
         if (loader) setDisplay(loader, "none");
@@ -1052,6 +1164,14 @@
     document.getElementById("a-viewDiagram").addEventListener("click", () => aSetMode("diagram"));
     document.getElementById("a-viewTable").addEventListener("click", () => aSetMode("table"));
     document.getElementById("a-viewMermaid")?.addEventListener("click", () => aSetMode("mermaid"));
+    // Triage is the one mode that's also an action: clicking it both
+    // switches the visible panel AND fires the real model call (see
+    // aRunTriage's own comment on why this isn't done inside aSetMode).
+    document.getElementById("a-viewTriage")?.addEventListener("click", () => { aSetMode("triage"); aRunTriage(); });
+    // Changing "Optimize for" while already looking at a triage result
+    // re-runs it with the new weighting; otherwise it's just remembered
+    // for the next time the Triage button is clicked.
+    document.getElementById("a-triageOptimize")?.addEventListener("change", () => { if (A_MODE === "triage" && A_TRIAGE_RESULTS) aRunTriage(); });
 
     document.getElementById("a-metricsBtn").addEventListener("click", () => document.getElementById("a-metricsDialog").showModal());
     document.getElementById("a-codeBtn").addEventListener("click", () => document.getElementById("a-codeDialog").showModal());

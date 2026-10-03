@@ -1965,6 +1965,10 @@ button.chip.poll-btn.chip-err { border-color: var(--cve); color: var(--cve); bac
    The same visual spacing now comes from .a-score's own margin-top
    instead, which scrolls away normally with the rest of the content. */
 #a-table { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 0 14px 12px; background: var(--surface); }
+/* Update Triage view: same flex-child/scroll sizing as #a-table above,
+   since it's the same .a-drift table layout with an extra Order/
+   Reasoning pair of columns - see aRenderTriageResult in arch.js. */
+#a-triage { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 0 14px 12px; background: var(--surface); }
 /* Mermaid flowchart view: same flex-child sizing as #a-table/.a-canvas so
    it fills the same slot in #archView's layout regardless of which of the
    three view modes is active. The SVG itself is left at its own natural
@@ -1989,6 +1993,12 @@ table.a-drift th { position: sticky; top: 0; z-index: 1; background: var(--chip-
 table.a-drift tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--surface) 97%, var(--text)); }
 table.a-drift tr:hover td { background: var(--bg); }
 table.a-drift td.mono { font-family: Consolas, Monaco, monospace; }
+/* Update Triage's Reasoning column: a real 2-4 sentence chain-of-thought
+   explanation (not a short label like every other .a-drift column), so
+   it overrides the table's own default nowrap to wrap within a capped
+   width instead of forcing the whole table wider - a long reasoning
+   sentence must never be the thing that triggers horizontal scroll. */
+table.a-drift td.a-reasoning-cell { white-space: normal; word-wrap: break-word; max-width: 420px; }
 .a-chip-t { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; color: #0f172a; border: 1px solid rgba(0,0,0,.12); }
 .a-muted-note { color: var(--muted); font-size: 12px; }
 .a-stack-select {
