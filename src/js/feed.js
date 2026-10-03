@@ -117,7 +117,11 @@
             created_utc,
             num_comments: p.num_comments, score: p.score,
             metadata: p.metadata, source: p.source,
-            isAboutLatestUpdate: p.isAboutLatestUpdate, isAboutCve: p.isAboutCve
+            isAboutLatestUpdate: p.isAboutLatestUpdate, isAboutCve: p.isAboutCve,
+            // Author-vs-community sentiment, computed server-side
+            // (src/sentiment.js) and already attached to the raw post -
+            // just passed through here like every other field above.
+            sentiment: p.sentiment || null
           };
         });
       }
@@ -577,6 +581,37 @@
     /* ── Chip builder ─────────────────────────────────────────── */
     const chip = (t, k) => `<span class="chip ${k || ""}">${t}</span>`;
 
+    /* ── Sentiment bar (author vs community, below a reddit post) ─ */
+    // One small fill per side, width proportional to |compound score|
+    // (4px floor so a near-zero score still shows a visible sliver, 24px
+    // ceiling at |score|=1), colored by sign - no numbers or words on the
+    // bars themselves, per direct instruction ("small line chart no text
+    // labels"). sentiment.community is null when every comment turned out
+    // to be from the author (not just the common "no comments at all"
+    // case, which is filtered out before this is ever called).
+    function sentimentFill(score, side) {
+      const el = document.createElement("span");
+      const clamped = Math.max(-1, Math.min(1, score || 0));
+      const cls = clamped > 0.05 ? "pos" : clamped < -0.05 ? "neg" : "neu";
+      el.className = `sentiment-fill ${side} ${cls}`;
+      el.style.setProperty("--rt-w", `${4 + Math.abs(clamped) * 20}px`);
+      return el;
+    }
+    function renderSentimentBar(sentiment) {
+      const bar = document.createElement("div");
+      bar.className = "sentiment-bar";
+      bar.title = "Author vs. community sentiment";
+      bar.appendChild(sentimentFill(sentiment.author, "author"));
+      if (sentiment.community != null) bar.appendChild(sentimentFill(sentiment.community, "community"));
+      if (!sentiment.authorHasReplies) {
+        const note = document.createElement("span");
+        note.className = "sentiment-note";
+        note.textContent = "no author reply yet";
+        bar.appendChild(note);
+      }
+      return bar;
+    }
+
     /* ── Render group ─────────────────────────────────────────── */
     function renderComponentNode(group, groupIndex = 0) {
       const onlyRedditRisks = STATE.filters.toggles.has("reddit-risk") ||
@@ -851,6 +886,16 @@
         const a = document.createElement("a"); a.href = it.url || "#"; a.target = "_blank"; a.rel = "noopener"; a.textContent = it.label;
         titleRow.appendChild(a);
         body.appendChild(titleRow);
+
+        // Author-vs-community sentiment, below the post - reported live,
+        // with a screenshot of a post row: "show a sentiment below the
+        // reddit post, author vs comments." A small bar pair, no text
+        // labels (per direct instruction) - hidden entirely when there
+        // are zero comments (nothing to compare against yet), since a
+        // half-empty indicator reads as broken, not as "no data."
+        if (it.kind === "reddit" && it.raw?.sentiment && it.raw.sentiment.forCommentCount > 0) {
+          body.appendChild(renderSentimentBar(it.raw.sentiment));
+        }
 
         // versionReleaseNotes is a human-readable summary for some bots (e.g. GitHub
         // commit messages) but a bare URL for others (python.py, java.py, eclipse.py,

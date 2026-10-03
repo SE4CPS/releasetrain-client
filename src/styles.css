@@ -1819,6 +1819,16 @@ details[open] > summary { background: var(--view-card); color: var(--text); bord
 .chip.bad { background: var(--cve-bg); border-color: var(--cve); color: var(--cve); }
 .chip.warn { background: var(--risk-bg); border-color: var(--risk); color: var(--risk); }
 .chip.ok { background: var(--chip-bg); border-color: var(--border); color: var(--chip-text); }
+/* Author-vs-community sentiment, below a reddit post's title (see
+   renderSentimentBar in feed.js) - two small fills, width proportional to
+   |score|, no text on the bars themselves. .sentiment-note is the one
+   exception (an explicit "no author reply yet" label), not a bar label. */
+.sentiment-bar { display: flex; align-items: center; gap: 3px; height: 8px; margin: 4px 0 2px; }
+.sentiment-fill { height: 6px; border-radius: 3px; min-width: 4px; width: var(--rt-w); }
+.sentiment-fill.pos { background: #16a34a; }
+.sentiment-fill.neg { background: var(--cve); }
+.sentiment-fill.neu { background: var(--muted); }
+.sentiment-note { font-size: 11px; color: var(--muted); margin-left: 4px; }
 .chip.reddit { background: var(--chip-bg); border-color: var(--border); color: var(--chip-text); }
 .chip.llm { background: var(--chip-bg); border-color: var(--border); color: var(--chip-text); }
 .chip.hv { background: var(--chip-bg); border-color: var(--border); color: var(--chip-text); }
@@ -3063,7 +3073,6 @@ select.ua-settings-input { width: auto; max-width: 100%; }
 .st-59 { font-size: 12px !important; } /* #a-stackSelect */
 .st-60 { font-size: 12px !important; padding: 5px 10px !important; } /* #a-addStackBtn */
 .st-61 { width: 1px !important; align-self: stretch !important; background: var(--border) !important; margin: 0 2px !important; } /* <span> */
-.st-62 { font-size: 12px !important; padding: 5px 14px !important; } /* #a-viewDiagram */
 .st-63 { margin-bottom: .35rem !important; } /* <h2> */
 .st-64 { margin-bottom: .3rem !important; } /* .small */
 .st-65 { margin-bottom: .15rem !important; } /* .small */
