@@ -56,6 +56,13 @@
       patch: ["patch", "patched", "hotfix", "fix", "fixed", "bugfix"],
       version: ["version", "release", "released", "changelog", "upgrade", "downgrade"],
       opinion: ["nightmare", "best", "worst", "should i", "recommend", "opinion", "prefer", "versus", " vs ", "better than", "worth it", "favorite", "favourite", "hate", "love", "annoying", "say goodbye"],
+      // Kept in sync with ask.js's own INTENT_KEYWORDS.triage
+      // (releasetrain-server) - this client-side badge is only a live
+      // preview while typing, so a keyword miss here is cosmetic (the
+      // server's own triageContextOverride guardrail is what actually
+      // decides the real answer, independent of this list), but it
+      // should still agree with the server as closely as practical.
+      triage: ["triage", "prioritize", "prioritise", "order to update", "order to apply updates", "order to apply the updates", "order should i update", "order should i apply", "which order to update", "what order to update", "which order should i update", "what order should i update", "update order", "order of updates", "order updates"],
     };
     const ASK_COMPARISON_SPLIT_RX = /\s+(?:or|vs\.?|versus)\s+/i;
     // Kept in sync by hand with ask.js's own COMPARISON_LEADIN_RX. See
@@ -102,11 +109,12 @@
     const ASK_INTENT_BADGE_LABELS = {
       cve: "CVE question", patch: "Patch question", version: "Version question",
       opinion: "Opinion (will decline)", comparison: "Comparison question",
+      triage: "Triage question",
     };
     function classifyIntentClient(question) {
       if (detectComparisonEntitiesClient(question)) return "comparison";
       const text = String(question || "").toLowerCase();
-      for (const intent of ["cve", "patch", "version", "opinion"]) {
+      for (const intent of ["cve", "patch", "triage", "version", "opinion"]) {
         if (ASK_INTENT_KEYWORDS[intent].some(kw => text.indexOf(kw) !== -1)) return intent;
       }
       return null; // "general" isn't worth badging - nothing distinctive to show

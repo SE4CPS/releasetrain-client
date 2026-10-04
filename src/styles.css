@@ -657,7 +657,7 @@ body.view-feed .layout > .feed-main { flex: 1 1 0; }
    exact same cascade bug already caught once this session on
    .ask-triage-callout, recurring here the moment this button's own
    `hidden` attribute needs to actually hide it again. */
-.ask-context-fill-btn:not([hidden]) { display: block; width: 100%; box-sizing: border-box; margin: 6px 12px 10px; }
+.ask-context-fill-btn:not([hidden]) { display: block; width: 100%; box-sizing: border-box; margin: 10px 12px 16px; }
 
 .sidebar-label {
   font: 700 9px/1 inherit; color: var(--muted);
