@@ -6017,11 +6017,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <div id="ua-reg-notice" class="u-hide ua-reg-notice" ></div>
             <div id="ua-reg-stats" class="ua-reg-stats"></div>
           </div>
-          <!-- Admin only: unique and total visitors, last 14 days (Chart.js), from GET /api/admin/visits -->
-          <div id="ua-visits-top" class="ua-visits-top u-hide">
-            <div class="ua-visits-top-head"><strong>Visitors, last 14 days</strong><span id="ua-visits-top-sum" class="ua-muted"></span></div>
-            <div class="ua-visits-chart-box"><canvas id="ua-visits-chart" aria-label="Unique and total visitors per day"></canvas></div>
-          </div>
           <div class="ua-tabs ua-subtabs" role="tablist" aria-label="Account sections">
             <button type="button" class="ua-tab ua-tab-active" data-ua-tab="account">Account</button>
             <button type="button" class="ua-tab" data-ua-tab="saved">Saved</button>
@@ -6032,7 +6027,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <button type="button" class="ua-tab ua-subtab-admin u-hide" data-ua-tab="bots">Bots</button>
             <button type="button" class="ua-tab ua-subtab-admin u-hide" data-ua-tab="users">Users</button>
           </div>
-          <details class="ua-admin-details" data-ua-group="account" open>
+          <details class="ua-admin-details" data-ua-group="account">
             <summary class="ua-admin-header">
               <span class="st-122">Change password</span>
             </summary>
@@ -6101,7 +6096,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               </div>
           </details>
           <!-- Bookmarks -->
-          <details class="ua-admin-details" data-ua-group="saved" open>
+          <details class="ua-admin-details" data-ua-group="saved">
             <summary class="ua-admin-header">
               <span class="st-122">Bookmarks</span>
               <span id="ua-bm-count" class="ua-muted st-59"></span>
@@ -6153,7 +6148,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                  on first expand, so the count next to a closed summary
                  (e.g. "All users (6)") is accurate without opening it. -->
             <!-- Visits: counted from the web server's access log (see releasetrain-server src/visits.js). -->
-            <details class="ua-admin-details" data-ua-group="visits" open>
+            <details class="ua-admin-details" data-ua-group="visits">
               <summary class="ua-admin-header">
                 <span class="st-122">Visitors</span>
                 <span id="ua-visits-summary" class="ua-muted st-59"></span>
@@ -6184,7 +6179,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
             <!-- Server alerts: written by the VM (watchdog, deploys, weekly report) to a
                  plain log file and read back by GET /api/admin/server-alerts.
                  Not stored in MongoDB, so outages are recorded while the API is down. -->
-            <details class="ua-admin-details" data-ua-group="alerts" open>
+            <details class="ua-admin-details" data-ua-group="alerts">
               <summary class="ua-admin-header">
                 <span class="st-122">Server alerts</span>
                 <span id="ua-alerts-count" class="ua-muted st-59"></span>
@@ -6193,7 +6188,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
               <p class="ua-muted ua-alerts-note">From the server watchdog, deploys and the weekly report. The same messages are emailed to the admin address.</p>
               <div id="ua-alerts-list" class="ua-alerts-list"><p class="ua-muted">Loading…</p></div>
             </details>
-            <details class="ua-admin-details" data-ua-group="overview" open>
+            <details class="ua-admin-details" data-ua-group="overview">
               <summary class="ua-admin-header">
                 <span class="st-122">System overview</span>
                 <span id="ua-dash-updated" class="ua-muted st-59"></span>
@@ -6262,7 +6257,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                  whatever GET /api/admin/settings actually returns, so a
                  new admin-tunable value added server-side needs no new
                  markup here (see uaLoadSettings/UA_SETTINGS_META). -->
-            <details class="ua-admin-details" data-ua-group="settings" open>
+            <details class="ua-admin-details" data-ua-group="settings">
               <summary class="ua-admin-header">
                 <span class="st-122">Settings</span>
                 <span id="ua-settings-count" class="ua-muted st-59"></span>
@@ -6279,7 +6274,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                  Loaded eagerly alongside the other admin sections (see
                  uaRender below) so its count is accurate before it's
                  ever opened, same reasoning as every other section here. -->
-            <details class="ua-admin-details" data-ua-group="bots" open>
+            <details class="ua-admin-details" data-ua-group="bots">
               <summary class="ua-admin-header">
                 <span class="st-122">Bot health thresholds</span>
                 <span id="ua-cadence-count" class="ua-muted st-59"></span>
@@ -6325,7 +6320,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                 </form>
               </div>
             </details>
-            <details class="ua-admin-details" data-ua-group="users" open>
+            <details class="ua-admin-details" data-ua-group="users">
               <summary class="ua-admin-header">
                 <span class="st-122">All users</span>
                 <span id="ua-user-count" class="ua-muted st-59"></span>

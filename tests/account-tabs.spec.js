@@ -95,10 +95,6 @@ const VISITS = {
   ],
 };
 
-// Chart.js comes from a CDN; replace it with a stub that records how it was called.
-const FAKE_CHART =
-  'window.Chart = function (ctx, cfg) { (window.__charts = window.__charts || []).push(cfg); this.destroy = function () {}; };';
-
 async function signIn(page, role) {
   await page.addInitScript((r) => {
     localStorage.setItem('rt_token', 't');
@@ -107,9 +103,6 @@ async function signIn(page, role) {
       JSON.stringify({ id: '1', email: 'a@example.com', name: 'A', role: r, orgs: [] }),
     );
   }, role);
-  await page.route(/chart\.umd/, (route) =>
-    route.fulfill({ contentType: 'application/javascript', body: FAKE_CHART }),
-  );
   await page.route(/\/api\//, (route) => {
     const url = route.request().url();
     let body = [];
@@ -150,24 +143,42 @@ test('a normal user only sees the Account and Saved tabs', async ({ page }) => {
   await expect(page.locator('[data-ua-tab="alerts"]')).toBeHidden();
 });
 
-test('admin sees the 14-day unique and total visitors chart, and the Visits tab', async ({
-  page,
-}) => {
+// "have all tabs closed all summary details by default" - every
+// <details class="ua-admin-details"> across every account sub-tab used
+// to have one section open="" by default (a different one per tab), an
+// inconsistency rather than a deliberate choice. All of them now load
+// collapsed; a visitor opens whichever one they actually want.
+test('every admin-details accordion starts collapsed on every sub-tab', async ({ page }) => {
   await signIn(page, 'admin');
   await page.goto('/?view=account');
-  await expect(page.locator('#ua-visits-top')).toBeVisible();
-  await expect(page.locator('#ua-visits-top-sum')).toContainText('217 visits');
-  await expect.poll(() => page.evaluate(() => (window.__charts || []).length)).toBeGreaterThan(0);
-  const cfg = await page.evaluate(() =>
-    window.__charts.find((c) => c.data.datasets.some((d) => d.label === 'Unique visitors')),
-  );
-  const byLabel = Object.fromEntries(cfg.data.datasets.map((d) => [d.label, d.data]));
-  expect(cfg.data.labels).toHaveLength(14);
-  expect(byLabel['Total visits']).toHaveLength(14);
-  expect(byLabel['Unique visitors']).toHaveLength(14);
-  expect(byLabel['Total visits'][13]).toBe(23);
+  const groups = ['account', 'saved', 'overview', 'visits', 'alerts', 'settings', 'bots', 'users'];
+  for (const group of groups) {
+    await page.locator(`[data-ua-tab="${group}"]`).click();
+    const openCount = await page
+      .locator(`details.ua-admin-details[data-ua-group="${group}"][open]`)
+      .count();
+    expect(openCount, `${group} tab should have no open details`).toBe(0);
+  }
+});
 
+// "delete this" (the empty "Visitors, last 14 days" chart card that sat
+// above the tabs) - the Visits tab's own cards/tables are unaffected,
+// only the redundant top-of-page chart is gone.
+test('the top-of-page visitors chart is removed; the Visits tab still works', async ({ page }) => {
+  await signIn(page, 'admin');
+  await page.goto('/?view=account');
+  await expect(page.locator('#ua-visits-top')).toHaveCount(0);
   await page.locator('[data-ua-tab="visits"]').click();
+  await page.locator('details[data-ua-group="visits"] summary .st-122').click();
+  await expect(page.locator('#ua-visits-n-visits')).toHaveText('217');
+});
+
+test('admin sees the Visits tab', async ({ page }) => {
+  await signIn(page, 'admin');
+  await page.goto('/?view=account');
+  await page.locator('[data-ua-tab="visits"]').click();
+  await page.locator('details[data-ua-group="visits"] summary .st-122').click();
+  await expect(page.locator('#ua-visits-n-visits')).toBeVisible();
   await expect(page.locator('#ua-visits-n-visits')).toHaveText('217');
   await expect(page.locator('#ua-visits-n-uniques')).toHaveText('40');
   await expect(page.locator('#ua-visits-unverified')).toContainText(
@@ -182,18 +193,16 @@ test('admin sees the 14-day unique and total visitors chart, and the Visits tab'
   await expect(page.locator('#ua-visits-visitors tr.ua-row-today')).toContainText('81.2.69.142');
 });
 
-test('a normal user does not see the visitors chart', async ({ page }) => {
-  await signIn(page, 'user');
-  await page.goto('/?view=account');
-  await expect(page.locator('#ua-visits-top')).toBeHidden();
-});
-
 for (const width of [1300, 390]) {
   test(`Visits tables never scroll sideways at ${width}px wide`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await signIn(page, 'admin');
     await page.goto('/?view=account');
     await page.locator('[data-ua-tab="visits"]').click();
+    // The Visits accordion now starts collapsed (see "every admin-details
+    // accordion starts collapsed" above) - expand it before checking the
+    // tables inside it for overflow.
+    await page.locator('details[data-ua-group="visits"] summary .st-122').click();
     await expect(page.locator('#ua-visits-visitors table')).toBeVisible();
     const overflow = await page.evaluate(() =>
       ['ua-visits-countries', 'ua-visits-pages', 'ua-visits-refs', 'ua-visits-visitors'].map(
