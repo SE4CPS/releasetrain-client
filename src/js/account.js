@@ -706,6 +706,23 @@
         hint: "Stored server-side, never shown again once saved. Leave blank and Save to clear it.",
         secret: true,
       },
+      // emailVerificationRequired (see guardrails.js): mails a one-time
+      // confirmation link on registration via Gmail SMTP (src/mailer.js)
+      // and blocks sign-in until it's clicked -- the real fix for the
+      // "RT Probe" fake-account incident, where the existing per-IP rate
+      // limit worked but nothing checked an address was a real mailbox.
+      // Entered here, not a server .env edit, so it doesn't need SSH/root
+      // access to the production host -- same reasoning and the same
+      // secret-field contract as the Local Provider API key above.
+      gmailUser: {
+        label: "Email verification: Gmail address",
+        hint: "The Gmail (or Google Workspace) address verification emails are sent FROM. Needs 2-Step Verification on, with an App Password generated at myaccount.google.com/apppasswords for the password field below.",
+      },
+      gmailAppPassword: {
+        label: "Email verification: Gmail App Password",
+        hint: "The 16-character App Password for the address above, not your real Gmail login password. Stored server-side, never shown again once saved. Leave blank and Save to clear it.",
+        secret: true,
+      },
     };
     async function uaLoadSettings() {
       const listEl = document.getElementById("ua-settings-list");
@@ -728,7 +745,7 @@
       // localProviderApiKey row's own secret-field rendering below, not
       // as settings of their own - filtered out the same way guardrails
       // already is, or they'd show up as two extra, redundant rows.
-      const keys = Object.keys(settings).filter(k => k !== "guardrails" && k !== "localProviderApiKeySet" && k !== "localProviderApiKeyLast4");
+      const keys = Object.keys(settings).filter(k => k !== "guardrails" && k !== "localProviderApiKeySet" && k !== "localProviderApiKeyLast4" && k !== "gmailAppPasswordSet" && k !== "gmailAppPasswordLast4");
       if (countEl) countEl.textContent = keys.length ? "(" + keys.length + ")" : "";
       if (!keys.length) {
         listEl.innerHTML = `<p class="st-189 ua-muted" >No settings defined yet.</p>`;
@@ -768,7 +785,40 @@
           ${inputHtml}
           <button type="button" class="st-249 btn btn-ghost ua-settings-save" data-key="${uaEsc(key)}" >Save</button>
         </div>`;
-      }).join("");
+      }).join("")
+      // Appended after the generic key-driven rows, not metadata-driven
+      // itself (no setting value to edit) - lets whoever just saved a
+      // Gmail address/App Password confirm it actually works by sending
+      // a real test email to their own signed-in account address
+      // (POST /api/admin/mailer/test), rather than finding out only the
+      // next time a real registration tries and silently fails.
+      + (keys.includes("gmailUser") ? `<div class="ua-settings-row">
+          <div class="ua-settings-info">
+            <strong>Email verification: send test email</strong>
+            <span class="ua-muted">Sends a real test email to your own signed-in account address, using the Gmail address/App Password saved above.</span>
+          </div>
+          <button type="button" class="st-249 btn btn-ghost" id="ua-mailer-test-btn">Send test email</button>
+        </div>` : "");
+
+      const mailerTestBtn = document.getElementById("ua-mailer-test-btn");
+      if (mailerTestBtn) {
+        mailerTestBtn.addEventListener("click", async () => {
+          mailerTestBtn.disabled = true;
+          const prevText = mailerTestBtn.textContent;
+          mailerTestBtn.textContent = "Sending…";
+          try {
+            const res = await uaRequest("admin/mailer/test", { method: "POST" });
+            const body = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(body.error || "Send failed.");
+            mailerTestBtn.textContent = `Sent to ${body.to}`;
+            setTimeout(() => { mailerTestBtn.textContent = prevText; mailerTestBtn.disabled = false; }, 2500);
+          } catch (err) {
+            alert(err.message || "Send failed.");
+            mailerTestBtn.textContent = prevText;
+            mailerTestBtn.disabled = false;
+          }
+        });
+      }
 
       listEl.querySelectorAll(".ua-settings-save").forEach(btn => {
         btn.addEventListener("click", async () => {
