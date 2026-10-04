@@ -638,6 +638,26 @@ body.view-feed .layout > .feed-main { flex: 1 1 0; }
   display: block; margin-top: 4px; font: 700 9px/1.3 inherit;
   color: var(--muted); text-transform: uppercase; letter-spacing: .4px;
 }
+/* #askIncludeInventoryBtn (see its own markup comment): shares
+   .demo-q-btn's exact look (chip-bg/border/padding/hover - reused
+   rather than duplicated, so it reads as a natural continuation of the
+   prompt list above it, not a jarring, differently-styled element) plus
+   this addendum, since it sits as its own standalone sidebar item
+   AFTER #triageDemoQList closes, not as a flex child inside it the way
+   the per-machine prompts are - width:100%/display:block/margin
+   reproduce that same full-width, aligned-with-the-list-above layout
+   without needing to be an actual flex item. Reported live: this lost
+   its own CSS entirely when relocated out of the Ask input row into the
+   sidebar, rendering as a bare, unstyled default <button> (a visible
+   border/background box with no custom styling at all).
+   :not([hidden]), not a bare element selector: an unconditional
+   `display: block` is an AUTHOR-origin rule, which beats the browser's
+   own `[hidden] { display: none }` UA-stylesheet default regardless of
+   specificity (origin wins before specificity is ever compared) - the
+   exact same cascade bug already caught once this session on
+   .ask-triage-callout, recurring here the moment this button's own
+   `hidden` attribute needs to actually hide it again. */
+.ask-context-fill-btn:not([hidden]) { display: block; width: 100%; box-sizing: border-box; margin: 6px 12px 10px; }
 
 .sidebar-label {
   font: 700 9px/1 inherit; color: var(--muted);
