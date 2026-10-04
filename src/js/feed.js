@@ -337,6 +337,49 @@
           g._communityPostCount = posts.length;
         });
         arr.sort((a, b) => (b._communityPostCount - a._communityPostCount) || (versionTime(b.items[0]) - versionTime(a.items[0])));
+      } else if (mode === "community-risk-post") {
+        // Reported live: "add an option community risk by post and sort
+        // by posts with most negative sentiments" - a component's sort
+        // key is its single MOST NEGATIVE post's own title+description
+        // sentiment (sentiment.author), ascending (most negative first) -
+        // the mirror image of "comments"/"community" above, which sort
+        // descending by a peak/total. A post with strongly negative
+        // sentiment is the clearest single signal that something's
+        // actually wrong, even if most of a component's other posts are
+        // neutral. Components with no scored posts sort last, not first
+        // (an absent signal isn't the same as a confirmed-negative one).
+        arr.forEach(g => {
+          const posts = postsForComponent(norm(g.name))
+            .filter(p => getPostSource(p) === "reddit" && redditTime(p) >= LOOKBACK_AGO && typeof p.sentiment?.author === "number");
+          g._mostNegativePostScore = posts.length ? Math.min(...posts.map(p => p.sentiment.author)) : null;
+        });
+        arr.sort((a, b) => {
+          const av = a._mostNegativePostScore, bv = b._mostNegativePostScore;
+          if (av == null) return bv == null ? (versionTime(b.items[0]) - versionTime(a.items[0])) : 1;
+          if (bv == null) return -1;
+          return av - bv;
+        });
+      } else if (mode === "community-risk-comment") {
+        // Same shape as "community-risk-post" just above, but reading
+        // each post's own COMMUNITY comment average (sentiment.community,
+        // already computed server-side from that post's non-author
+        // replies) instead of the post's own title+description score -
+        // reported live: "the same for community risk by comment and
+        // sort by component with the reddit post with most negative
+        // comments." A post with no community replies has a null
+        // sentiment.community (see sentiment.js) and is excluded, same as
+        // a component with no qualifying posts at all sorting last.
+        arr.forEach(g => {
+          const posts = postsForComponent(norm(g.name))
+            .filter(p => getPostSource(p) === "reddit" && redditTime(p) >= LOOKBACK_AGO && typeof p.sentiment?.community === "number");
+          g._mostNegativeCommentScore = posts.length ? Math.min(...posts.map(p => p.sentiment.community)) : null;
+        });
+        arr.sort((a, b) => {
+          const av = a._mostNegativeCommentScore, bv = b._mostNegativeCommentScore;
+          if (av == null) return bv == null ? (versionTime(b.items[0]) - versionTime(a.items[0])) : 1;
+          if (bv == null) return -1;
+          return av - bv;
+        });
       } else if (mode === "activity") {
         arr.sort((a, b) => (b.items.length - a.items.length) || (versionTime(b.items[0]) - versionTime(a.items[0])));
       } else if (mode === "sources") {
@@ -1454,14 +1497,13 @@
           refreshRenderedGroups();
           updateCommunityBracket();
           if (G_ACTIVE && G_VIS_LOADED) gBuildAndRender(gGetVersions(), STATE.redditAll);
-          // "Highest risk", "Most sources", "Most comments", and "Most
-          // community posts" all read reddit data that wasn't in yet on
-          // whichever earlier call actually computed the current group
-          // order, same pattern as ensureLlmVersionsLoaded re-running
-          // applyFilters() only when the LLM toggle is the reason its own
-          // data matters right now.
-          const fs = getFeedSort();
-          if (fs === "risk" || fs === "sources" || fs === "comments" || fs === "community") applyFilters();
+          // Every reddit-data-dependent sort mode reads data that wasn't
+          // in yet on whichever earlier call actually computed the
+          // current group order, same pattern as ensureLlmVersionsLoaded
+          // re-running applyFilters() only when the LLM toggle is the
+          // reason its own data matters right now.
+          const REDDIT_DEPENDENT_SORTS = new Set(["risk", "sources", "comments", "community", "community-risk-post", "community-risk-comment"]);
+          if (REDDIT_DEPENDENT_SORTS.has(getFeedSort())) applyFilters();
         });
       }
       return STATE.redditReady;
