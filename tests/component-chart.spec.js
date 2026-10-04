@@ -54,6 +54,14 @@ function makePosts(count, spreadDays = count) {
   });
 }
 
+// NOTE: the sentiment line is one short <polyline> per consecutive pair
+// of posts (colored individually - see sentimentBucket in feed.js), not
+// one long polyline - N posts means N-1 of these 2-point segments. Tests
+// below that need "how many posts/what x-range" reconstruct it inline,
+// inside their own page.evaluate callback (querySelectorAll over
+// .component-chart-line, flatMap its points) rather than sharing a
+// helper across the Node/browser boundary.
+
 // YYYYMMDD, relative to now (matching versionTime()'s own parsing) - not
 // a fixed calendar date, so this test keeps working regardless of what
 // "today" actually is whenever the suite runs, same reference point
@@ -128,8 +136,9 @@ test("includes every post regardless of age - the window is the posts' own earli
     }));
     STATE.redditBySub = new Map([['linux', [...recent, ...old]]]);
     const el = renderComponentSentimentChart({ name: 'Linux', items: [] });
-    const points = el.querySelector('.component-chart-line').getAttribute('points');
-    return points.trim().split(/\s+/).length;
+    // One 2-point segment per consecutive pair: N posts -> N-1 segments.
+    const segments = el.querySelectorAll('.component-chart-line');
+    return segments.length + 1;
   });
   expect(pointCount).toBe(10); // all 5 recent + all 5 year-old posts
 });
@@ -231,12 +240,13 @@ test('a release/CVE outside the post-derived window is dropped, not just unreach
         ],
       };
       const el = renderComponentSentimentChart(group);
-      const line = el.querySelector('.component-chart-line');
-      const xs = line
-        .getAttribute('points')
-        .trim()
-        .split(/\s+/)
-        .map((pair) => Number(pair.split(',')[0]));
+      const xs = Array.from(el.querySelectorAll('.component-chart-line')).flatMap((seg) =>
+        seg
+          .getAttribute('points')
+          .trim()
+          .split(/\s+/)
+          .map((pair) => Number(pair.split(',')[0])),
+      );
       return {
         hasRelease: !!el.querySelector('.component-chart-event.release'),
         hasCve: !!el.querySelector('.component-chart-event.cve'),
@@ -541,13 +551,14 @@ test('the sentiment line stretches full-width: earliest post at the left edge, l
     (posts) => {
       STATE.redditBySub = new Map([['linux', posts]]);
       const el = renderComponentSentimentChart({ name: 'Linux', items: [] });
-      const xs = el
-        .querySelector('.component-chart-line')
-        .getAttribute('points')
-        .trim()
-        .split(/\s+/)
-        .map((pair) => Number(pair.split(',')[0]));
-      return { first: xs[0], last: xs[xs.length - 1] };
+      const xs = Array.from(el.querySelectorAll('.component-chart-line')).flatMap((seg) =>
+        seg
+          .getAttribute('points')
+          .trim()
+          .split(/\s+/)
+          .map((pair) => Number(pair.split(',')[0])),
+      );
+      return { first: Math.min(...xs), last: Math.max(...xs) };
     },
     makePosts(6, 0.1),
   ); // a narrow real span - under 3 hours total
@@ -555,40 +566,210 @@ test('the sentiment line stretches full-width: earliest post at the left edge, l
   expect(result.last).toBeCloseTo(600, 1);
 });
 
-test('the legend collapses a same-day range to a single label, "Today" when that day is today', async ({
+test('the legend collapses a same-hour range to a single label, "Today" when that hour is today', async ({
   page,
 }) => {
-  // Reported live: "if from and to date are the same just say today."
+  // Reported live: "if from and to date are the same just say today." The
+  // hourly-granularity rule below means "same label" now requires the
+  // same HOUR, not just the same calendar day - these posts are minutes
+  // apart (genuinely indistinguishable at hour precision), not hours apart.
   const result = await page.evaluate(() => {
     const now = Date.now();
-    const sameDayPosts = Array.from({ length: 3 }, (_, i) => ({
+    const sameHourPosts = Array.from({ length: 3 }, (_, i) => ({
       redditId: `t${i}`,
       source: 'reddit',
       subreddit: 'linux',
-      created_utc: new Date(now - i * 3600000).toISOString(), // all within the last few hours
+      created_utc: new Date(now - i * 60000).toISOString(), // minutes apart
       sentiment: { author: 0.1 },
     }));
-    STATE.redditBySub = new Map([['linux', sameDayPosts]]);
+    STATE.redditBySub = new Map([['linux', sameHourPosts]]);
     const el = renderComponentSentimentChart({ name: 'Linux', items: [] });
     return el.querySelector('.component-chart-range').textContent;
   });
   expect(result).toBe('Today');
 });
 
-test('a same-day-but-not-today range shows that single date, not "Today"', async ({ page }) => {
+test('a same-hour-but-not-today range shows that single hour label, not "Today"', async ({
+  page,
+}) => {
   const result = await page.evaluate(() => {
     const threeDaysAgo = Date.now() - 3 * 86400000;
-    const sameDayPosts = Array.from({ length: 3 }, (_, i) => ({
+    const sameHourPosts = Array.from({ length: 3 }, (_, i) => ({
       redditId: `o${i}`,
       source: 'reddit',
       subreddit: 'linux',
-      created_utc: new Date(threeDaysAgo - i * 3600000).toISOString(),
+      created_utc: new Date(threeDaysAgo - i * 60000).toISOString(),
       sentiment: { author: 0.1 },
     }));
-    STATE.redditBySub = new Map([['linux', sameDayPosts]]);
+    STATE.redditBySub = new Map([['linux', sameHourPosts]]);
     const el = renderComponentSentimentChart({ name: 'Linux', items: [] });
     return el.querySelector('.component-chart-range').textContent;
   });
   expect(result).not.toBe('Today');
-  expect(result).not.toContain(' - '); // single date, not a duplicated "X - X" range
+  expect(result).not.toContain(' - '); // single label, not a duplicated "X - X" range
+});
+
+test('a span under 72 hours shows hour-level labels, splitting same-day posts that are genuinely hours apart', async ({
+  page,
+}) => {
+  // Reported live: "if all reddit posts are within 72 hours then split
+  // them by hours not days (at the x-axis) and use post created hour
+  // timestamp." Two posts a few hours apart, both well before today (so
+  // the "Today" collapse above can't mask this), must show distinct
+  // hour-level labels rather than collapsing to one calendar-day label.
+  const result = await page.evaluate(() => {
+    const base = Date.now() - 5 * 86400000;
+    const posts = [
+      {
+        redditId: 'h1',
+        source: 'reddit',
+        subreddit: 'linux',
+        created_utc: new Date(base).toISOString(),
+        sentiment: { author: 0.1 },
+      },
+      {
+        redditId: 'h2',
+        source: 'reddit',
+        subreddit: 'linux',
+        created_utc: new Date(base + 4 * 3600000).toISOString(),
+        sentiment: { author: 0.1 },
+      },
+    ];
+    STATE.redditBySub = new Map([['linux', posts]]);
+    const el = renderComponentSentimentChart({ name: 'Linux', items: [] });
+    return el.querySelector('.component-chart-range').textContent;
+  });
+  expect(result).toContain(' - '); // a real range, not collapsed
+  expect(result).toMatch(/\d+\s?(AM|PM)/i); // includes an hour, not just a bare date
+});
+
+test('a span over 72 hours falls back to plain day-level labels (no hour shown)', async ({
+  page,
+}) => {
+  const result = await page.evaluate(() => {
+    const now = Date.now();
+    const posts = [
+      {
+        redditId: 'd1',
+        source: 'reddit',
+        subreddit: 'linux',
+        created_utc: new Date(now - 10 * 86400000).toISOString(),
+        sentiment: { author: 0.1 },
+      },
+      {
+        redditId: 'd2',
+        source: 'reddit',
+        subreddit: 'linux',
+        created_utc: new Date(now - 1 * 86400000).toISOString(),
+        sentiment: { author: 0.1 },
+      },
+    ];
+    STATE.redditBySub = new Map([['linux', posts]]);
+    const el = renderComponentSentimentChart({ name: 'Linux', items: [] });
+    return el.querySelector('.component-chart-range').textContent;
+  });
+  expect(result).not.toMatch(/\d+\s?(AM|PM)/i);
+});
+
+test('the sentiment line is colored red/amber/green by value, using the +/-0.5 thresholds', async ({
+  page,
+}) => {
+  // Reported live: "change the color of the line from red to yellow to
+  // green depending if it is below at or above the .5 line" - "only for
+  // the component level sentiment line" (the per-post Author/Community
+  // chart is untouched). Three posts spanning all three zones; each
+  // segment is colored by its own later (right-hand) point's value.
+  const result = await page.evaluate(() => {
+    const now = Date.now();
+    const posts = [
+      {
+        redditId: 'n',
+        source: 'reddit',
+        subreddit: 'linux',
+        created_utc: new Date(now - 2000).toISOString(),
+        sentiment: { author: -0.8 },
+      },
+      {
+        redditId: 'u',
+        source: 'reddit',
+        subreddit: 'linux',
+        created_utc: new Date(now - 1000).toISOString(),
+        sentiment: { author: 0.0 },
+      },
+      {
+        redditId: 'p',
+        source: 'reddit',
+        subreddit: 'linux',
+        created_utc: new Date(now).toISOString(),
+        sentiment: { author: 0.9 },
+      },
+    ];
+    STATE.redditBySub = new Map([['linux', posts]]);
+    const el = renderComponentSentimentChart({ name: 'Linux', items: [] });
+    return Array.from(el.querySelectorAll('.component-chart-line')).map((seg) =>
+      seg.classList.contains('neg')
+        ? 'neg'
+        : seg.classList.contains('neu')
+          ? 'neu'
+          : seg.classList.contains('pos')
+            ? 'pos'
+            : 'none',
+    );
+  });
+  // Segment 1 ends at the neutral (0.0) post, segment 2 ends at the positive (0.9) post.
+  expect(result).toEqual(['neu', 'pos']);
+});
+
+test('values exactly at +/-0.5 count as neutral, not positive/negative (strict thresholds)', async ({
+  page,
+}) => {
+  const result = await page.evaluate(() => {
+    const now = Date.now();
+    const posts = [
+      {
+        redditId: 'a',
+        source: 'reddit',
+        subreddit: 'linux',
+        created_utc: new Date(now - 2000).toISOString(),
+        sentiment: { author: -0.5 },
+      },
+      {
+        redditId: 'b',
+        source: 'reddit',
+        subreddit: 'linux',
+        created_utc: new Date(now - 1000).toISOString(),
+        sentiment: { author: 0.5 },
+      },
+    ];
+    STATE.redditBySub = new Map([['linux', posts]]);
+    const el = renderComponentSentimentChart({ name: 'Linux', items: [] });
+    const seg = el.querySelector('.component-chart-line');
+    return seg.classList.contains('neu');
+  });
+  expect(result).toBe(true);
+});
+
+test('a single post renders a dot colored by its own value bucket', async ({ page }) => {
+  const result = await page.evaluate(
+    (posts) => {
+      STATE.redditBySub = new Map([['linux', posts]]);
+      const el = renderComponentSentimentChart({ name: 'Linux', items: [] });
+      const dot = el.querySelector('.component-chart-dot');
+      return {
+        hasNeg: dot.classList.contains('neg'),
+        hasLine: !!el.querySelector('.component-chart-line'),
+      };
+    },
+    [
+      {
+        redditId: 'x',
+        source: 'reddit',
+        subreddit: 'linux',
+        created_utc: new Date().toISOString(),
+        sentiment: { author: -0.9 },
+      },
+    ],
+  );
+  expect(result.hasNeg).toBe(true);
+  expect(result.hasLine).toBe(false);
 });

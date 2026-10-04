@@ -733,15 +733,30 @@
       try { return new Date(ms).toLocaleDateString(undefined, { month: "short", day: "numeric" }); }
       catch { return ""; }
     }
-    // Collapses "Oct 3 - Oct 3" into a single label when both ends land
-    // on the same calendar day (every post happened today, or all on one
-    // other day) - reported live, with a screenshot: "if from and to
-    // date are the same just say today." Only says "Today" when that
-    // shared day actually IS today (the viewer's own local calendar
-    // day); any other single-day range still shows its real date rather
-    // than being mislabeled as "Today."
+    // Hour-precision label ("Oct 3, 2 PM"), used instead of shortDate's
+    // bare day whenever the whole chart spans 72 hours or less - reported
+    // live: "if all reddit posts are within 72 hours then split them by
+    // hours not days (at the x-axis) and use post created hour
+    // timestamp." A day-only label loses real distinguishing information
+    // once several posts/releases/CVEs land within the same handful of
+    // hours, which a tight window makes common (day-level would show the
+    // same date on everything). Still includes the month/day, not just
+    // the hour, since a sub-72h window can still cross a calendar day
+    // boundary (e.g. 11 PM to 1 AM the next day).
+    function hourDate(ms) {
+      try { return new Date(ms).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric" }); }
+      catch { return ""; }
+    }
+    const HOURLY_LABEL_SPAN_MS = 72 * 3600000;
+    // Collapses "Oct 3 - Oct 3" into a single label when both ends format
+    // to the same thing (every post happened today, or all within the
+    // same hour) - reported live, with a screenshot: "if from and to date
+    // are the same just say today." Only says "Today" when that shared
+    // calendar day actually IS today; any other single label still shows
+    // its real date/hour rather than being mislabeled as "Today."
     function rangeLabel(minT, maxT) {
-      const a = shortDate(minT), b = shortDate(maxT);
+      const fmt = maxT - minT <= HOURLY_LABEL_SPAN_MS ? hourDate : shortDate;
+      const a = fmt(minT), b = fmt(maxT);
       if (a !== b) return `${a} - ${b}`;
       const isToday = new Date(minT).toDateString() === new Date().toDateString();
       return isToday ? "Today" : a;
@@ -812,16 +827,33 @@
 
       const x = (t) => ((t - windowStart) / span) * COMPONENT_CHART_W;
       const y = (v) => COMPONENT_CHART_H / 2 - Math.max(-1, Math.min(1, v)) * (COMPONENT_CHART_H / 2 - 3);
+      // Reported live: "change the color of the line... depending if it
+      // is below at or above the .5 line" - the same +/-0.5 thresholds
+      // already used as the "strongly positive/negative" boundary on the
+      // per-post Author/Community chart (its own reference lines), red/
+      // amber/green for negative/neutral/positive. Scoped to this
+      // component-level chart only, per direct follow-up - the per-post
+      // chart keeps its existing single-color lines.
+      const sentimentBucket = (v) => (v < -0.5 ? "neg" : v > 0.5 ? "pos" : "neu");
 
       // A single post in the window can't draw a line (needs 2+ points),
       // so it's a dot instead - same convention as the per-post trajectory
       // chart's own single-point fallback.
       let seriesMarkup = "";
       if (posts.length === 1) {
-        seriesMarkup = `<circle class="component-chart-dot" cx="${x(redditTime(posts[0]))}" cy="${y(posts[0].sentiment.author)}" r="2"></circle>`;
+        const v = posts[0].sentiment.author;
+        seriesMarkup = `<circle class="component-chart-dot ${sentimentBucket(v)}" cx="${x(redditTime(posts[0]))}" cy="${y(v)}" r="2"></circle>`;
       } else if (posts.length >= 2) {
-        const linePoints = posts.map((p) => `${x(redditTime(p))},${y(p.sentiment.author)}`).join(" ");
-        seriesMarkup = `<polyline class="component-chart-line" points="${linePoints}"></polyline>`;
+        // One short <polyline> per consecutive pair, not one long one -
+        // each segment colored by its own LATER (right-hand) point's
+        // value, so a run of same-zone points still reads as one
+        // continuous-looking line while a zone crossing changes color
+        // exactly where the data actually crosses it.
+        const pts = posts.map((p) => ({ x: x(redditTime(p)), y: y(p.sentiment.author), v: p.sentiment.author }));
+        seriesMarkup = pts.slice(1).map((pt, i) => {
+          const prev = pts[i];
+          return `<polyline class="component-chart-line ${sentimentBucket(pt.v)}" points="${prev.x},${prev.y} ${pt.x},${pt.y}"></polyline>`;
+        }).join("");
       }
       const eventLine = (e, cls) => `<line class="component-chart-event ${cls}" x1="${x(e.t)}" y1="0" x2="${x(e.t)}" y2="${COMPONENT_CHART_H}"></line>`;
       // A real HTML label, not an SVG <text> - the chart is only 36px
@@ -869,8 +901,9 @@
         if (row === -1) { row = rowLastT.length; rowLastT.push(t); } else { rowLastT[row] = t; }
         pair[2] = row;
       }
+      const dateFmt = span <= HOURLY_LABEL_SPAN_MS ? hourDate : shortDate;
       const eventLabel = (e, cls, row) => {
-        const text = e.isMajor ? `${e.version} · ${shortDate(e.t)}` : e.version;
+        const text = e.isMajor ? `${e.version} · ${dateFmt(e.t)}` : e.version;
         return `<span class="component-chart-label ${cls}${e.isMajor ? " major" : ""}" style="--rt-left:${((e.t - windowStart) / span * 100).toFixed(2)}%;--rt-top:${row * ROW_HEIGHT_PX}px">${fdEsc(text)}</span>`;
       };
       const labelRows = rowLastT.length;
