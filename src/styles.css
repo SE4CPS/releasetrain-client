@@ -2032,6 +2032,12 @@ button.chip.poll-btn.chip-err { border-color: var(--cve); color: var(--cve); bac
   display: flex; align-items: center; flex: 0 0 auto;
   padding: 8px 12px; border-bottom: 1px solid var(--border);
 }
+/* .a-mode-panels is the shared, always-rendered content area for all 4
+   mutually-exclusive mode panels (.a-canvas/#a-table/#a-mermaid/#a-triage) -
+   #a-loader is positioned relative to THIS, not .a-canvas specifically, so
+   it stays visible no matter which panel is currently showing. See its own
+   HTML comment for why this moved. */
+.a-mode-panels { position: relative; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
 #a-loader {
   position: absolute; top: 10px; right: 10px; z-index: 2;
   width: 16px; height: 16px; border-radius: 50%;
@@ -2040,7 +2046,7 @@ button.chip.poll-btn.chip-err { border-color: var(--cve); color: var(--cve); bac
 }
 @keyframes a-spin { to { transform: rotate(360deg); } }
 .a-canvas {
-  position: relative; flex: 1 1 auto; min-height: 0;
+  flex: 1 1 auto; min-height: 0;
   display: flex; align-items: center; justify-content: center;
   background: #fff; overflow-y: auto; overflow-x: hidden; padding: 2px;
 }

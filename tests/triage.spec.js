@@ -193,3 +193,210 @@ test('changing "Optimize for" while a result is showing re-runs triage with the 
   await expect(page.locator('#a-triage')).toContainText('Security-mode reasoning.');
   expect(callCount).toBe(2);
 });
+
+test('loading a new component list while already in Triage mode can be re-run via a real button, not just the mode select', async ({
+  page,
+}) => {
+  // Reported live, with a screenshot: picking a different machine while
+  // already on Triage mode left a "Click Triage..." prompt with no way
+  // to actually trigger it - the ONLY existing trigger was the mode
+  // <select>'s own "change" event (switching INTO triage from something
+  // else), which never fires again just because the underlying
+  // component list changed. aLoadAndRender() already correctly
+  // invalidates A_TRIAGE_RESULTS and re-shows the prompt when new data
+  // loads while in Triage mode - the missing piece was a real, clickable
+  // way to run it from that fresh prompt.
+  const requests = [];
+  await page.route(/\/api\//, (route) => {
+    const url = route.request().url();
+    if (/\/ask\/triage$/.test(url)) {
+      requests.push(JSON.parse(route.request().postData()));
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          optimizeFor: 'both',
+          results: [
+            {
+              name: 'First',
+              currentVersion: '1.0',
+              latestVersion: '1.0',
+              versionBump: 'patch',
+              cve: null,
+              order: 1,
+              reasoning: 'r',
+            },
+          ],
+        }),
+      });
+    }
+    return route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
+  });
+  await page.goto('/?view=arch', { waitUntil: 'load' });
+  await expect(page.locator('#archView')).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator('#a-empty')).toBeVisible({ timeout: 20_000 });
+  await page.evaluate(() => {
+    A_VERSIONS = [
+      {
+        name: 'First',
+        currentVersion: { versionNumber: '1.0' },
+        latestVersion: { versionNumber: '1.0' },
+      },
+    ];
+    aShowResult();
+  });
+
+  await page.locator('#a-viewMode').selectOption('triage');
+  await expect(page.locator('#a-triage')).toContainText('First');
+  expect(requests).toHaveLength(1);
+
+  // Simulate what aLoadAndRender() does when a NEW stack/search loads
+  // while already in Triage mode: new A_VERSIONS, results invalidated,
+  // fresh prompt re-shown - without ever touching #a-viewMode's own value.
+  await page.evaluate(() => {
+    A_VERSIONS = [
+      {
+        name: 'Second',
+        currentVersion: { versionNumber: '2.0' },
+        latestVersion: { versionNumber: '2.0' },
+      },
+    ];
+    A_TRIAGE_RESULTS = null;
+    aRenderTriagePrompt();
+  });
+  const runBtn = page.locator('#a-triage .a-run-triage-btn');
+  await expect(runBtn).toBeVisible();
+  await expect(page.locator('#a-triage')).toContainText('these 1 component(s)');
+
+  await Promise.all([
+    page.waitForRequest((req) => /\/ask\/triage$/.test(req.url()) && req.method() === 'POST'),
+    runBtn.click(),
+  ]);
+  expect(requests).toHaveLength(2);
+  expect(requests[1].components).toEqual([{ name: 'Second', version: '2.0' }]);
+});
+
+test('a visible spinner shows while a Triage request is in flight', async ({ page }) => {
+  // Reported live: "if something is working show a spinner." #a-loader
+  // already existed but lived inside .a-canvas, which this app hides
+  // (display:none) whenever any mode other than Diagram is active -
+  // toggling its own display had no visible effect while in Triage mode.
+  await page.route(/\/api\//, async (route) => {
+    const url = route.request().url();
+    if (/\/ask\/triage$/.test(url)) {
+      await new Promise((r) => setTimeout(r, 300)); // hold the response open briefly
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          optimizeFor: 'both',
+          results: [
+            {
+              name: 'A',
+              currentVersion: '1',
+              latestVersion: '1',
+              versionBump: 'patch',
+              cve: null,
+              order: 1,
+              reasoning: 'r',
+            },
+          ],
+        }),
+      });
+    }
+    return route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
+  });
+  await page.goto('/?view=arch', { waitUntil: 'load' });
+  await expect(page.locator('#archView')).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator('#a-empty')).toBeVisible({ timeout: 20_000 });
+  await page.evaluate(() => {
+    A_VERSIONS = [
+      { name: 'A', currentVersion: { versionNumber: '1' }, latestVersion: { versionNumber: '1' } },
+    ];
+    aShowResult();
+  });
+
+  await page.locator('#a-viewMode').selectOption('triage');
+  // toBeVisible() checks real computed visibility (including an ancestor
+  // display:none), not just the element's own inline style - this is
+  // exactly the check that would have caught the original bug.
+  await expect(page.locator('#a-loader')).toBeVisible();
+  await expect(page.locator('#a-triage table.a-drift')).toBeVisible({ timeout: 5_000 });
+  await expect(page.locator('#a-loader')).toBeHidden();
+});
+
+test('a failed Triage request shows a real Retry button, not just an error message', async ({
+  page,
+}) => {
+  let callCount = 0;
+  await page.route(/\/api\//, (route) => {
+    const url = route.request().url();
+    if (/\/ask\/triage$/.test(url)) {
+      callCount += 1;
+      if (callCount === 1) {
+        return route.fulfill({
+          status: 500,
+          contentType: 'application/json',
+          body: JSON.stringify({ error: 'boom' }),
+        });
+      }
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          optimizeFor: 'both',
+          results: [
+            {
+              name: 'A',
+              currentVersion: '1',
+              latestVersion: '1',
+              versionBump: 'patch',
+              cve: null,
+              order: 1,
+              reasoning: 'r',
+            },
+          ],
+        }),
+      });
+    }
+    return route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
+  });
+  await page.goto('/?view=arch', { waitUntil: 'load' });
+  await expect(page.locator('#archView')).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator('#a-empty')).toBeVisible({ timeout: 20_000 });
+  await page.evaluate(() => {
+    A_VERSIONS = [
+      { name: 'A', currentVersion: { versionNumber: '1' }, latestVersion: { versionNumber: '1' } },
+    ];
+    aShowResult();
+  });
+
+  await page.locator('#a-viewMode').selectOption('triage');
+  await expect(page.locator('#a-triage')).toContainText('Could not run triage');
+  const retryBtn = page.locator('#a-triage .a-run-triage-btn');
+  await expect(retryBtn).toBeVisible();
+  await retryBtn.click();
+  await expect(page.locator('#a-triage table.a-drift')).toBeVisible();
+  expect(callCount).toBe(2);
+});
+
+test('picking a machine stack keeps it selected after "+ Add Stack", not reset to the placeholder', async ({
+  page,
+}) => {
+  // Reported live: "when i pick a vm keep it selected until i change it."
+  await page.route(/\/api\//, (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }),
+  );
+  await page.goto('/?view=arch', { waitUntil: 'load' });
+  await expect(page.locator('#archView')).toBeVisible({ timeout: 20_000 });
+  await page.evaluate(() => {
+    const sel = document.getElementById('a-stackSelect');
+    const opt = document.createElement('option');
+    opt.value = 'firefox,chrome';
+    opt.textContent = 'test-machine (2)';
+    sel.appendChild(opt);
+    sel.value = 'firefox,chrome';
+  });
+  await page.locator('#a-addStackBtn').click();
+  await expect(page.locator('#a-stackSelect')).toHaveValue('firefox,chrome');
+});

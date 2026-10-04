@@ -991,20 +991,28 @@
             </select>
           </div>
         </div>
-        <div class="a-canvas">
-          <!-- Anchors to .a-canvas now (position:relative), not
-               #archView, so it never sits in the same corner as the
-               Diagram/Table toggle in .a-view-header above it. -->
+        <!-- Shared content area for all 4 mutually-exclusive mode panels
+             below (Diagram/Table/Flowchart/Triage) - #a-loader lives here,
+             not inside .a-canvas, so it stays visible regardless of which
+             panel is currently showing. Reported live: switching to Triage
+             and running it showed no spinner at all - #a-loader used to be
+             a child of .a-canvas specifically, which this same codebase
+             hides (display:none) whenever any OTHER mode is active, so
+             toggling the loader's own display had no visible effect outside
+             Diagram mode. -->
+        <div class="a-mode-panels">
           <div id="a-loader"></div>
-          <div id="a-ecosysImage" role="img" aria-label="Ecosystem architecture diagram"></div>
+          <div class="a-canvas">
+            <div id="a-ecosysImage" role="img" aria-label="Ecosystem architecture diagram"></div>
+          </div>
+          <div id="a-table" class="u-hide" ></div>
+          <!-- Same data as the PlantUML diagram (#a-ecosysImage), rendered as a
+               Mermaid flowchart instead - a second diagram option, entirely
+               client-side (no PlantUML server round-trip). See aRenderMermaid
+               in arch.js. -->
+          <div id="a-mermaid" class="u-hide" role="img" aria-label="Ecosystem flowchart"></div>
+          <div id="a-triage" class="u-hide" ></div>
         </div>
-        <div id="a-table" class="u-hide" ></div>
-        <!-- Same data as the PlantUML diagram (#a-ecosysImage), rendered as a
-             Mermaid flowchart instead - a second diagram option, entirely
-             client-side (no PlantUML server round-trip). See aRenderMermaid
-             in arch.js. -->
-        <div id="a-mermaid" class="u-hide" role="img" aria-label="Ecosystem flowchart"></div>
-        <div id="a-triage" class="u-hide" ></div>
         <div id="a-empty" class="u-hide" >
           <div class="a-empty-head">
             <h3>Add your own software to visualize</h3>

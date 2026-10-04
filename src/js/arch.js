@@ -913,7 +913,8 @@
       const vers = Array.isArray(A_VERSIONS) ? A_VERSIONS : [];
       el.innerHTML = !vers.length
         ? `<p class="a-muted-note">No components.</p>`
-        : `<p class="a-muted-note">Click <b>Triage</b> to get a recommended update order for these ${vers.length} component(s).</p>`;
+        : `<p class="a-muted-note">Get a recommended update order for these ${vers.length} component(s).</p>` +
+          `<button type="button" class="btn btn-primary a-run-triage-btn">Run Triage</button>`;
     }
 
     // Build the {name, version} list the server deterministically looks
@@ -953,7 +954,8 @@
       } catch (e) {
         console.error("Triage error:", e);
         A_TRIAGE_RESULTS = null;
-        el.innerHTML = `<p class="a-muted-note">Could not run triage: ${aEsc(String(e.message || e))}</p>`;
+        el.innerHTML = `<p class="a-muted-note">Could not run triage: ${aEsc(String(e.message || e))}</p>` +
+          `<button type="button" class="btn btn-ghost a-run-triage-btn">Retry</button>`;
       } finally {
         if (loader) setDisplay(loader, "none");
       }
@@ -970,7 +972,8 @@
       const optimizeLabel = { security: "Security", stability: "Stability", both: "Both" }[data.optimizeFor] || "Both";
       const cveCount = results.filter(r => r.cve).length;
       el.innerHTML =
-        `<div class="a-score">Update order &middot; optimized for <b>${aEsc(optimizeLabel)}</b> &nbsp;&middot;&nbsp; ${results.length} component(s) &nbsp;&middot;&nbsp; ${cveCount} with a known CVE</div>` +
+        `<div class="a-score">Update order &middot; optimized for <b>${aEsc(optimizeLabel)}</b> &nbsp;&middot;&nbsp; ${results.length} component(s) &nbsp;&middot;&nbsp; ${cveCount} with a known CVE ` +
+        `<button type="button" class="btn btn-ghost st-59 a-run-triage-btn" title="Re-run triage">&#8635; Re-run</button></div>` +
         `<table class="a-drift"><thead><tr>` +
         `<th>#</th><th>Component</th><th>Installed</th><th>Latest</th><th>Change</th><th>CVE</th><th>Reasoning</th>` +
         `</tr></thead><tbody>` +
@@ -1163,7 +1166,13 @@
       const existing = (EL.components.value || "").split(",").map(s => s.trim()).filter(Boolean);
       const merged = Array.from(new Set([...existing, ...toAdd]));
       EL.components.value = merged.join(", ");
-      sel.value = "";
+      // Not reset to "" anymore - reported live: "when i pick a vm keep
+      // it selected until i change it." The select's own value isn't
+      // used as a "change"-event trigger anywhere (this button's click
+      // handler reads it directly, every time), so leaving it selected
+      // costs nothing and gives a clear, persistent "this is the machine
+      // currently loaded" indicator instead of reverting to the bare
+      // placeholder right after use.
       if (A_ACTIVE) aLoadAndRender();
     });
 
@@ -1187,6 +1196,18 @@
     // re-runs it with the new weighting; otherwise it's just remembered
     // for the next time the Triage button is clicked.
     document.getElementById("a-triageOptimize")?.addEventListener("change", () => { if (A_MODE === "triage" && A_TRIAGE_RESULTS) aRunTriage(); });
+    // One delegated listener covers the "Run Triage"/"Retry"/"Re-run"
+    // button regardless of which of the three states (prompt/error/
+    // result) currently has it, since #a-triage's own innerHTML gets
+    // replaced wholesale by each of those - reported live: picking a new
+    // machine while already in Triage mode left a "Click Triage..."
+    // prompt with no actual way to trigger it (the bolded word "Triage"
+    // in that prompt was never a real button - the ONLY existing trigger
+    // was the mode <select>'s own "change" event, which doesn't fire
+    // again just because the underlying component list changed).
+    document.getElementById("a-triage")?.addEventListener("click", (e) => {
+      if (e.target.closest(".a-run-triage-btn")) aRunTriage();
+    });
 
     document.getElementById("a-metricsBtn").addEventListener("click", () => document.getElementById("a-metricsDialog").showModal());
     document.getElementById("a-codeBtn").addEventListener("click", () => document.getElementById("a-codeDialog").showModal());
