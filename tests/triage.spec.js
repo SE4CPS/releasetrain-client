@@ -20,8 +20,38 @@ async function stubApi(page) {
   );
 }
 
+// Reported live, with a screenshot: these per-machine prompts kept
+// showing a real signed-in account's own machine/software inventory to
+// a signed-OUT visitor on the same browser - a real privacy leak, not
+// just stale-cache cosmetics. They now require an actual signed-in
+// session (uaSignedIn() in ask-rail.js), not just cached inventory
+// data, so every test that expects prompts to render signs in first.
+async function signIn(page) {
+  await page.addInitScript(() => {
+    localStorage.setItem('rt_token', 't');
+    localStorage.setItem(
+      'rt_user',
+      JSON.stringify({ id: '1', email: 'a@example.com', name: 'A', role: 'user', orgs: [] }),
+    );
+  });
+}
+
 test('no prompts render with no inventory', async ({ page }) => {
   await stubApi(page);
+  await signIn(page);
+  await page.goto('/', { waitUntil: 'load' });
+  await expect(page.locator('#askForm')).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator('#triageDemoQList .demo-q-btn')).toHaveCount(0);
+});
+
+test('no prompts render with real inventory data when signed out', async ({ page }) => {
+  await stubApi(page);
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'rt_inventory',
+      JSON.stringify([{ component: 'Firefox', version: '100.0', machine: 'work-laptop' }]),
+    );
+  });
   await page.goto('/', { waitUntil: 'load' });
   await expect(page.locator('#askForm')).toBeVisible({ timeout: 20_000 });
   await expect(page.locator('#triageDemoQList .demo-q-btn')).toHaveCount(0);
@@ -31,6 +61,7 @@ test('one machine renders exactly a stability and a security prompt, capped at 2
   page,
 }) => {
   await stubApi(page);
+  await signIn(page);
   await page.addInitScript(() => {
     localStorage.setItem(
       'rt_inventory',
@@ -56,12 +87,19 @@ test('one machine renders exactly a stability and a security prompt, capped at 2
     ),
   );
   expect(machineNames.size).toBe(2);
+
+  // Requested directly: once there's real per-machine software to
+  // prioritize, these prompts should take visual priority over the
+  // generic Reddit sample questions, not sit below an already-open
+  // group a visitor has to scroll past.
+  await expect(page.locator('#demoQuestionsDetails')).not.toHaveJSProperty('open', true);
 });
 
 test("clicking a prompt fills the question and that machine's own components into context", async ({
   page,
 }) => {
   await stubApi(page);
+  await signIn(page);
   await page.addInitScript(() => {
     localStorage.setItem(
       'rt_inventory',

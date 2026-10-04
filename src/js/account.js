@@ -15,6 +15,17 @@
     function uaClearSession() {
       localStorage.removeItem("rt_token");
       localStorage.removeItem("rt_user");
+      // Reported live: signing out left the real signed-in account's
+      // synced machine/software inventory sitting in this same key
+      // (uaLoadInventoryFromServer writes the server's own inventory
+      // into RT_INV_KEY, the SAME key uaInvGet() falls back to for an
+      // anonymous visitor) - so it kept surfacing in the Ask box's
+      // "Prioritize <machine>'s updates..." prompts and "+Include my
+      // installed software" to anyone using this browser afterward,
+      // signed in or not. A real privacy leak on a shared/public
+      // machine, not just a stale-cache cosmetic issue - wiped here so
+      // signing out actually means signing out.
+      localStorage.removeItem("rt_inventory");
     }
 
     async function uaRequest(path, opts = {}) {

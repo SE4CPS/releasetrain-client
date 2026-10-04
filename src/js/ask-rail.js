@@ -212,10 +212,25 @@
     // no new UI mechanism, just more buttons in a second list of the
     // same kind. Capped at 2 machines so this can't crowd out the
     // Reddit-sourced list below it on an account with many machines.
+    // Reported live, with a screenshot: these machine-name prompts and
+    // "+Include my installed software" kept showing a real account's own
+    // VM/software inventory even while signed OUT - a real privacy leak
+    // on a shared/public machine, not just stale-cache cosmetics (see
+    // uaClearSession's own comment in account.js, which now also wipes
+    // the cached inventory on logout). Gated on an actual signed-in
+    // session here too, as a second, independent layer: unlike
+    // "+Include my installed software"'s OLD anonymous-local-inventory
+    // support (and Arch's own machine picker, left as-is - a deliberate
+    // click-to-open dropdown reads very differently from an always-
+    // visible sidebar list), these two sit in plain view on the Ask
+    // home with no click required, so they default to requiring a real
+    // account rather than trusting whatever happens to be cached
+    // locally.
+    function uaSignedIn() { return typeof uaUser === "function" && !!uaUser(); }
     function renderTriageDemoButtons() {
       const el = document.getElementById("triageDemoQList");
       if (!el) return;
-      if (typeof uaInvGet !== "function") { el.innerHTML = ""; return; }
+      if (typeof uaInvGet !== "function" || !uaSignedIn()) { el.innerHTML = ""; return; }
       const machines = Array.from(new Set(
         uaInvGet().filter((e) => e.machine && e.component && e.version).map((e) => e.machine)
       )).slice(0, 2);
@@ -223,15 +238,26 @@
         const q = `Prioritize ${m}'s updates by ${mode}`;
         return `<button type="button" class="demo-q-btn" data-q="${uaEsc(q)}" data-context="${uaEsc(formatInventoryForAskContext(m))}">${uaEsc(q)}</button>`;
       }).join("")).join("");
+      // Requested directly, with a screenshot: once there's real
+      // per-machine software to prioritize, give those prompts visual
+      // priority over the generic Reddit sample questions instead of
+      // making the visitor scroll past an already-open group to find
+      // them. Only ever auto-COLLAPSES it (never force-opens it back)
+      // so a visitor who already expanded it by hand isn't fighting
+      // this on every refresh.
+      const demoDetails = document.getElementById("demoQuestionsDetails");
+      if (demoDetails && machines.length) demoDetails.open = false;
     }
     // Called from account.js's uaRender()/uaUpdateAskIntroSignin() and
     // inventory.js's bootstrap: keeps every inventory-dependent piece of
     // the Ask box in sync in one place. #askIncludeInventoryBtn is hidden
     // entirely until there's at least one real component to include (a
-    // button that always does nothing isn't worth showing).
+    // button that always does nothing isn't worth showing) AND the
+    // visitor is actually signed in (see this function's own comment
+    // above on renderTriageDemoButtons).
     function refreshAskInventoryShortcuts() {
       const btn = document.getElementById("askIncludeInventoryBtn");
-      if (btn) btn.hidden = !(typeof uaInvGet === "function" && uaInvGet().some((e) => e.component && e.version));
+      if (btn) btn.hidden = !(uaSignedIn() && typeof uaInvGet === "function" && uaInvGet().some((e) => e.component && e.version));
       renderTriageDemoButtons();
     }
     document.getElementById("askIncludeInventoryBtn")?.addEventListener("click", async () => {
