@@ -209,3 +209,39 @@ test('no visible numbers or words appear in the chart markup itself (only the le
   });
   expect(chartHtml).not.toMatch(/>[-0-9.]+</);
 });
+
+test('a dot marks every point on a multi-point line, not just the line itself', async ({
+  page,
+}) => {
+  // Reported live: "make a small dot for every post / comment so it is
+  // clearer when a post/comment starts." Before this, a series with 2+
+  // points only drew the connecting line - the single-dot fallback only
+  // applied when there was exactly one point.
+  const counts = await page.evaluate(() => {
+    const bar = renderSentimentBar({
+      author: 0.1,
+      authorTrajectory: [
+        { i: 0, v: 0.2 },
+        { i: 1, v: -0.1 },
+      ],
+      communityTrajectory: [
+        { i: 0, v: -0.3 },
+        { i: 1, v: 0.4 },
+        { i: 2, v: 0.0 },
+      ],
+      authorHasReplies: true,
+      forCommentCount: 3,
+    });
+    return {
+      authorDots: bar.querySelectorAll('.sentiment-dot.author').length,
+      communityDots: bar.querySelectorAll('.sentiment-dot.community').length,
+      hasAuthorLine: !!bar.querySelector('.sentiment-line.author'),
+      hasCommunityLine: !!bar.querySelector('.sentiment-line.community'),
+    };
+  });
+  // authorPoints = the title+description anchor + 2 trajectory points = 3
+  expect(counts.authorDots).toBe(3);
+  expect(counts.communityDots).toBe(3);
+  expect(counts.hasAuthorLine).toBe(true);
+  expect(counts.hasCommunityLine).toBe(true);
+});

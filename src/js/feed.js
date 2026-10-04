@@ -658,7 +658,12 @@
         return `<circle class="sentiment-dot ${cls}" cx="${x}" cy="${y}" r="2"></circle>`;
       }
       const coords = points.map((p) => `${sentimentChartX(p.i, forCommentCount)},${sentimentChartY(p.v)}`).join(" ");
-      return `<polyline class="sentiment-line ${cls}" points="${coords}"></polyline>`;
+      // A small dot at every comment, not just the line connecting them -
+      // reported live: "make a small dot for every post / comment so it
+      // is clearer when a post/comment starts." Drawn after the line (SVG
+      // paints later elements on top) so dots sit above its stroke.
+      const dots = points.map((p) => `<circle class="sentiment-dot ${cls}" cx="${sentimentChartX(p.i, forCommentCount)}" cy="${sentimentChartY(p.v)}" r="1.5"></circle>`).join("");
+      return `<polyline class="sentiment-line ${cls}" points="${coords}"></polyline>` + dots;
     }
     function renderSentimentBar(sentiment) {
       const wrap = document.createElement("div");
@@ -850,10 +855,17 @@
         // continuous-looking line while a zone crossing changes color
         // exactly where the data actually crosses it.
         const pts = posts.map((p) => ({ x: x(redditTime(p)), y: y(p.sentiment.author), v: p.sentiment.author }));
-        seriesMarkup = pts.slice(1).map((pt, i) => {
+        const lines = pts.slice(1).map((pt, i) => {
           const prev = pts[i];
           return `<polyline class="component-chart-line ${sentimentBucket(pt.v)}" points="${prev.x},${prev.y} ${pt.x},${pt.y}"></polyline>`;
         }).join("");
+        // A small dot at every post, not just the line connecting them -
+        // reported live: "make a small dot for every post / comment so
+        // it is clearer when a post/comment starts." Drawn after the
+        // lines (SVG paints later elements on top) so dots sit above the
+        // line strokes instead of being covered by them.
+        const dots = pts.map((pt) => `<circle class="component-chart-dot ${sentimentBucket(pt.v)}" cx="${pt.x}" cy="${pt.y}" r="1.5"></circle>`).join("");
+        seriesMarkup = lines + dots;
       }
       const eventLine = (e, cls) => `<line class="component-chart-event ${cls}" x1="${x(e.t)}" y1="0" x2="${x(e.t)}" y2="${COMPONENT_CHART_H}"></line>`;
       // A real HTML label, not an SVG <text> - the chart is only 36px

@@ -773,3 +773,23 @@ test('a single post renders a dot colored by its own value bucket', async ({ pag
   expect(result.hasNeg).toBe(true);
   expect(result.hasLine).toBe(false);
 });
+
+test('a dot marks every post on a multi-post line, not just the line itself', async ({ page }) => {
+  // Reported live: "make a small dot for every post / comment so it is
+  // clearer when a post/comment starts." Before this, 2+ posts only drew
+  // the connecting line segments - the single-dot fallback only applied
+  // when there was exactly one post.
+  const result = await page.evaluate(
+    (posts) => {
+      STATE.redditBySub = new Map([['linux', posts]]);
+      const el = renderComponentSentimentChart({ name: 'Linux', items: [] });
+      return {
+        dotCount: el.querySelectorAll('.component-chart-dot').length,
+        lineSegmentCount: el.querySelectorAll('.component-chart-line').length,
+      };
+    },
+    makePosts(5, 4),
+  );
+  expect(result.dotCount).toBe(5); // one per post
+  expect(result.lineSegmentCount).toBe(4); // one per consecutive pair
+});
