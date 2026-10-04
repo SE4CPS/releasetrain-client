@@ -1042,6 +1042,20 @@
       // among itself and any other 0-comment entries.
       if (getFeedSort() === "comments") {
         timeline.sort((a, b) => ((b.raw?.num_comments || 0) - (a.raw?.num_comments || 0)) || (b.t - a.t));
+      } else if (getFeedSort() === "community-risk-comment") {
+        // Same "reorders documents inside a component too" treatment as
+        // "comments" above, for this mode - reported live: "for this
+        // sort the reddit posts by negative comment count desc order."
+        // Negative comment count (not the aggregate sentiment.community
+        // score the component-level sort itself uses) - how many of a
+        // post's own comments are individually negative, same -0.05
+        // VADER threshold the server's own "Negative" label uses
+        // (see _label_for in src/sentiment.js). A CVE/patch entry or a
+        // post with no community comments has 0, sorting below any post
+        // with at least one real negative reply.
+        const negativeCommentCount = (x) =>
+          (x.raw?.sentiment?.communityTrajectory || []).filter((c) => c.v <= -0.05).length;
+        timeline.sort((a, b) => (negativeCommentCount(b) - negativeCommentCount(a)) || (b.t - a.t));
       }
 
       const cveCount = timeline.filter(x => x.kind === "cve").length;

@@ -204,3 +204,62 @@ test('community-risk-comment: a post with no community replies (null sentiment.c
   expect(order[0]).toEqual({ name: 'Hasreplies', score: -0.3 });
   expect(order[1]).toEqual({ name: 'Noreplies', score: null });
 });
+
+test('"Community risk by comment" reorders the posts inside a component too, by negative comment count descending', async ({
+  page,
+}) => {
+  // Reported live: "for this sort the reddit posts by negative comment
+  // count desc order" - same "reorders documents inside a component too"
+  // treatment "Most community comments" already has, but by COUNT of
+  // negative comments (sentiment.communityTrajectory entries <= -0.05,
+  // the same VADER "Negative" threshold the server itself uses), not by
+  // num_comments or by the aggregate sentiment.community score.
+  const titles = await page.evaluate(() => {
+    const now = Date.now();
+    STATE.redditBySub = new Map([
+      [
+        'chrome',
+        [
+          {
+            redditId: 'r1',
+            source: 'reddit',
+            title: 'One negative reply',
+            url: 'https://reddit.com/r1',
+            created_utc: new Date(now - 1000).toISOString(),
+            num_comments: 10, // deliberately higher than r2's, to prove this isn't num_comments-based
+            sentiment: {
+              communityTrajectory: [
+                { i: 0, v: -0.3 },
+                { i: 1, v: 0.5 },
+              ],
+            },
+          },
+          {
+            redditId: 'r2',
+            source: 'reddit',
+            title: 'Three negative replies',
+            url: 'https://reddit.com/r2',
+            created_utc: new Date(now - 60000).toISOString(),
+            num_comments: 3,
+            sentiment: {
+              communityTrajectory: [
+                { i: 0, v: -0.1 },
+                { i: 1, v: -0.2 },
+                { i: 2, v: -0.9 },
+              ],
+            },
+          },
+        ],
+      ],
+    ]);
+    setFeedSort('community-risk-comment');
+    const group = {
+      name: 'Chrome',
+      items: [{ versionProductName: 'chrome', versionNumber: '1', versionReleaseDate: '' }],
+    };
+    const node = renderComponentNode(group, 0);
+    return Array.from(node.querySelectorAll('.titleRow a')).map((a) => a.textContent);
+  });
+  expect(titles[0]).toBe('Three negative replies');
+  expect(titles[1]).toBe('One negative reply');
+});
