@@ -815,7 +815,15 @@ html::-webkit-scrollbar { display: none; }
    occupies the row-1 cell, leaving row 2's third column with nothing
    assigned unless it's given its own placeholder name here. */
 .ask-input-row .search-wrap { grid-area: question; }
-.ask-input-row .ask-context-wrap { grid-area: context; }
+.ask-input-row .ask-context-wrap { grid-area: context; display: flex; flex-direction: column; gap: 3px; }
+/* #askIncludeInventoryBtn (see its own markup comment): a plain inline
+   text link under the textarea, not a real button, so it reads as a
+   small optional shortcut rather than competing with Clear/Submit. */
+.ask-context-fill-btn {
+  align-self: flex-start; font: inherit; font-size: 11px; color: var(--muted);
+  background: none; border: none; padding: 0; cursor: pointer; text-decoration: underline;
+}
+.ask-context-fill-btn:hover { color: var(--text); }
 .ask-input-row #clearBtn { grid-area: clear; }
 .ask-input-row #askSubmitBtn { grid-area: submit; }
 /* Wide enough (this container is already known to comfortably fit both -

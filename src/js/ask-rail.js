@@ -168,6 +168,53 @@
       updateAskPreview();
       input.focus();
     });
+    // "Include my installed software" (see #askIncludeInventoryBtn's own
+    // markup comment): formats the signed-in (or anonymous local)
+    // visitor's own Installed versions inventory as "Name: Version"
+    // lines, matching exactly what releasetrain-server's
+    // parseTriageComponentsFromContext (ask.js) parses back out of
+    // `context` for the 'triage' question intent. Deduped by component
+    // name across every machine (the "ecosystem" sense, not one machine) -
+    // first occurrence wins, since a 'triage' question has no per-machine
+    // concept the way the dedicated Triage view (triage.js) does.
+    function formatInventoryForAskContext() {
+      if (typeof uaInvGet !== "function") return "";
+      const seen = new Set();
+      const lines = [];
+      for (const e of uaInvGet()) {
+        if (!e.component || !e.version) continue;
+        const key = e.component.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        lines.push(`${e.component}: ${e.version}`);
+      }
+      // Server-side `context` is capped at 1000 chars (see POST /api/ask
+      // in app.js) - trim to whole lines that fit rather than letting the
+      // textarea's own maxlength silently cut one line in half.
+      let out = "";
+      for (const line of lines) {
+        const next = out ? `${out}\n${line}` : line;
+        if (next.length > 1000) break;
+        out = next;
+      }
+      return out;
+    }
+    // Called from account.js's uaRender()/uaUpdateAskIntroSignin() and
+    // inventory.js's bootstrap - the button is hidden entirely until
+    // there's at least one real component to include (a button that
+    // always does nothing isn't worth showing), same reasoning as
+    // #askTriageCallout's own visibility toggle.
+    function refreshAskIncludeInventoryBtn() {
+      const btn = document.getElementById("askIncludeInventoryBtn");
+      if (!btn) return;
+      btn.hidden = !(typeof uaInvGet === "function" && uaInvGet().some((e) => e.component && e.version));
+    }
+    document.getElementById("askIncludeInventoryBtn")?.addEventListener("click", () => {
+      const contextEl = document.getElementById("askContext");
+      if (!contextEl) return;
+      contextEl.value = formatInventoryForAskContext();
+      contextEl.focus();
+    });
     // Populates the list above from real Reddit data: GET
     // /api/reddit/query/questions already returns real, question-shaped
     // posts the model has flagged metadata.predicted.isUpdateRelated for

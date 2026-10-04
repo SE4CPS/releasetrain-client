@@ -133,6 +133,12 @@
       // inside it.
       const triageCallout = document.getElementById("askTriageCallout");
       if (triageCallout) triageCallout.hidden = !(token && user);
+      // "Include my installed software" (see ask-rail.js): unlike the
+      // Triage callout above, this isn't gated on sign-in - an anonymous
+      // visitor's own device-local Installed versions (see uaInvGet) are
+      // just as usable here as a signed-in account's, same as Arch's own
+      // aPopulateMachineStacks already treats both the same way.
+      if (typeof refreshAskIncludeInventoryBtn === "function") refreshAskIncludeInventoryBtn();
     }
     function uaSetAnonQuotaNote(remaining, limit) {
       const el = document.getElementById("askAnonQuotaNote");
