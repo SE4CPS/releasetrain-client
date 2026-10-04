@@ -1,11 +1,14 @@
 const { test, expect } = require('@playwright/test');
 
 /*
- * "Most comments" feed sort - reported live: "allow me to sort by most
- * comments, add that option." A component group's sort key is its
- * single most-discussed recent post's comment count (same shape as the
- * existing "Highest risk" mode's peak-score key), not a sum across all
- * its posts - see groupByComponentName's own comment in feed.js.
+ * "Most community comments" feed sort (value="comments", label later
+ * renamed for consistency with the "Most community posts" mode added
+ * alongside it - see feed-sort-community.spec.js) - reported live:
+ * "allow me to sort by most comments, add that option." A component
+ * group's sort key is its single most-discussed recent post's comment
+ * count (same shape as the existing "Highest risk" mode's peak-score
+ * key), not a sum across all its posts - see groupByComponentName's own
+ * comment in feed.js.
  */
 
 test.beforeEach(async ({ page }) => {
@@ -15,32 +18,26 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/');
 });
 
-test('"Most comments" option exists in the feed sort select', async ({ page }) => {
+test('"Most community comments" option exists in the feed sort select', async ({ page }) => {
   const options = await page.locator('#feedSortSelect option').allTextContents();
-  expect(options).toContain('Most comments');
+  expect(options).toContain('Most community comments');
 });
 
-test('"Most comments" is the default sort for a visitor with no saved preference', async ({
+test('a returning visitor with a saved "comments" preference is honored (not the default, but still selectable)', async ({
   page,
 }) => {
-  // Reported live: "make the default option most comments" - was
-  // "recency" before. A fresh visitor (nothing in localStorage yet) must
-  // see this reflected both in getFeedSort() and in the select's own
-  // displayed value, not just one or the other.
-  const result = await page.evaluate(() => {
-    localStorage.removeItem('rt_feed_sort');
-    return { sort: getFeedSort(), selectValue: document.getElementById('feedSortSelect').value };
-  });
+  // The select's own displayed value is only set once, at page init, from
+  // whatever getFeedSort() returns at that moment - so the preference has
+  // to exist in localStorage BEFORE navigation (a real returning visitor),
+  // not set mid-session after the select has already initialized.
+  await page.addInitScript(() => localStorage.setItem('rt_feed_sort', 'comments'));
+  await page.goto('/');
+  const result = await page.evaluate(() => ({
+    sort: getFeedSort(),
+    selectValue: document.getElementById('feedSortSelect').value,
+  }));
   expect(result.sort).toBe('comments');
   expect(result.selectValue).toBe('comments');
-});
-
-test('an existing saved preference still overrides the default', async ({ page }) => {
-  const sort = await page.evaluate(() => {
-    localStorage.setItem('rt_feed_sort', 'alpha');
-    return getFeedSort();
-  });
-  expect(sort).toBe('alpha');
 });
 
 test('groupByComponentName orders groups by their most-discussed post, with "comments" selected', async ({
@@ -103,7 +100,7 @@ test('a group with no matching reddit posts sorts last, with a comment count of 
   expect(order).toEqual([0]);
 });
 
-test('"Most comments" reorders the posts inside a component too, not just which component leads', async ({
+test('"Most community comments" reorders the posts inside a component too, not just which component leads', async ({
   page,
 }) => {
   // Reported live, right after the group-level version shipped: "most

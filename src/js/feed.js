@@ -257,16 +257,22 @@
     }
 
     /* ── Grouping ─────────────────────────────────────────────── */
-    // User-selectable, remembered across visits. "comments" (most
-    // discussed) is the default, reported live - surfaces whatever
-    // components people are actually talking about right now, ahead of
-    // "recency" (what just changed, which can be dominated by noisy
-    // low-signal patch-bump components); "alpha"/"cve"/"risk" are for
-    // when a different question matters more: predictable browsing, or
-    // triaging by vulnerability/risk instead of discussion volume.
+    // User-selectable, remembered across visits. "community" (most
+    // community posts, i.e. total Reddit discussion volume) is the
+    // default, reported live - surfaces whatever components people are
+    // actually talking about most right now, ahead of "recency" (what
+    // just changed, which can be dominated by noisy low-signal patch-bump
+    // components) and ahead of "comments" (a single busy thread can
+    // outrank a component with many smaller ongoing discussions, which
+    // isn't the "what's most talked-about" read most people want by
+    // default - "comments" stays available as its own explicit option
+    // for when that single-thread-engagement question is the one that
+    // matters). "alpha"/"cve"/"risk" are for when a different question
+    // matters more: predictable browsing, or triaging by vulnerability/
+    // risk instead of discussion volume.
     const FEED_SORT_KEY = "rt_feed_sort";
     function getFeedSort() {
-      try { return localStorage.getItem(FEED_SORT_KEY) || "comments"; } catch { return "comments"; }
+      try { return localStorage.getItem(FEED_SORT_KEY) || "community"; } catch { return "community"; }
     }
     function setFeedSort(mode) {
       try { localStorage.setItem(FEED_SORT_KEY, mode); } catch { /* best-effort only */ }
@@ -318,6 +324,19 @@
           g._commentCount = posts.reduce((max, p) => Math.max(max, p.num_comments || 0), 0);
         });
         arr.sort((a, b) => (b._commentCount - a._commentCount) || (versionTime(b.items[0]) - versionTime(a.items[0])));
+      } else if (mode === "community") {
+        // Reported live: "add option most community posts" - total Reddit
+        // discussion volume for this component (the same count the
+        // "Reddit N" chip itself shows), not "comments" mode's single
+        // busiest-thread comment count, and not "activity" mode's total
+        // version/CVE item count. Same reddit-data-may-not-be-in-yet
+        // re-sort pattern as "risk"/"comments" above.
+        arr.forEach(g => {
+          const posts = postsForComponent(norm(g.name))
+            .filter(p => getPostSource(p) === "reddit" && redditTime(p) >= LOOKBACK_AGO);
+          g._communityPostCount = posts.length;
+        });
+        arr.sort((a, b) => (b._communityPostCount - a._communityPostCount) || (versionTime(b.items[0]) - versionTime(a.items[0])));
       } else if (mode === "activity") {
         arr.sort((a, b) => (b.items.length - a.items.length) || (versionTime(b.items[0]) - versionTime(a.items[0])));
       } else if (mode === "sources") {
@@ -1390,13 +1409,14 @@
           refreshRenderedGroups();
           updateCommunityBracket();
           if (G_ACTIVE && G_VIS_LOADED) gBuildAndRender(gGetVersions(), STATE.redditAll);
-          // "Highest risk", "Most sources", and "Most comments" all read
-          // reddit data that wasn't in yet on whichever earlier call
-          // actually computed the current group order, same pattern as
-          // ensureLlmVersionsLoaded re-running applyFilters() only when
-          // the LLM toggle is the reason its own data matters right now.
+          // "Highest risk", "Most sources", "Most comments", and "Most
+          // community posts" all read reddit data that wasn't in yet on
+          // whichever earlier call actually computed the current group
+          // order, same pattern as ensureLlmVersionsLoaded re-running
+          // applyFilters() only when the LLM toggle is the reason its own
+          // data matters right now.
           const fs = getFeedSort();
-          if (fs === "risk" || fs === "sources" || fs === "comments") applyFilters();
+          if (fs === "risk" || fs === "sources" || fs === "comments" || fs === "community") applyFilters();
         });
       }
       return STATE.redditReady;
