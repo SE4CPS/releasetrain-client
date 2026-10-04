@@ -1673,7 +1673,23 @@
         vers.sort((a, b) => (versionTime(b) || +new Date(b.versionTimestampLastUpdate || b.versionTimestamp || 0)) - (versionTime(a) || +new Date(a.versionTimestampLastUpdate || a.versionTimestamp || 0)));
         STATE.rawVersions = vers;
         applyFilters();
-      } catch (e) { console.error(e); EL.status.textContent = friendlyFetchError(e).headline; }
+      } catch (e) {
+        // Reported live, with a screenshot: the URL/search box already
+        // show the new search (history.replaceState and
+        // STATE.filters.components above both run before this fetch),
+        // but on a failure (e.g. a 429 from the shared rate limiter) this
+        // used to only update a small status line, leaving whatever OLD,
+        // unfiltered feed was already on screen untouched - reading as
+        // "it should filter by q, but doesn't," when the real cause was a
+        // failed re-fetch silently leaving stale content in place. Same
+        // error-state handling boot()'s own catch block already uses:
+        // clear the stale list instead of leaving it looking live.
+        console.error(e);
+        EL.feed.innerHTML = "";
+        const { headline, detail } = friendlyFetchError(e);
+        showEmptyState(headline, { icon: "⚠️", detail, isError: true });
+        EL.status.textContent = "Failed to load";
+      }
       finally { EL.navLoader.classList.remove("active"); }
     });
 
