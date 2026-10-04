@@ -97,7 +97,16 @@
       },
       async reddit() {
         // Fetch all recent posts sorted by date; positiveScore filter was too strict
-        const res = await fetch(`${API_BASE}reddit?limit=${REDDIT_LIMIT}`, { headers: { Accept: "application/json" } });
+        // includeComments=false: measured live, the raw comments array
+        // (every comment's full body text) is by far the largest field on
+        // these documents and this map() below never reads it - this
+        // client only needs sentiment.authorTrajectory/communityTrajectory
+        // (precomputed server-side, far smaller) and num_comments (a plain
+        // count, already a separate field). Reported live: "the loading
+        // time of reddit is very slow" - the server's own GET /api/reddit
+        // measured at ~19s for 400 posts, almost entirely in transferring
+        // comments text this client throws away immediately.
+        const res = await fetch(`${API_BASE}reddit?limit=${REDDIT_LIMIT}&includeComments=false`, { headers: { Accept: "application/json" } });
         if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
         const list = await res.json();
         const arr = Array.isArray(list) ? list : (list.data || list.posts || list.results || []);
