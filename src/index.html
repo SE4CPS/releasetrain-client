@@ -145,7 +145,7 @@
                  a question like "How should I order updates for
                  stability?" so it has real components to triage, not
                  just prose. Hidden until there's at least one real
-                 component to include (see refreshAskIncludeInventoryBtn
+                 component to include (see refreshAskInventoryShortcuts
                  in ask-rail.js) - a button that always does nothing isn't
                  worth showing. -->
             <button type="button" id="askIncludeInventoryBtn" class="ask-context-fill-btn" hidden>+ Include my installed software</button>
@@ -393,6 +393,17 @@
            stays at the top. Open by default (unlike every other
            .sb-details group here): this is the one thing that actually
            needs to be visible without an extra click. -->
+      <!-- Up to 4 one-click "Prioritize <machine>'s updates by <mode>"
+           prompts, built from the visitor's own Installed versions
+           inventory (see renderTriageDemoButtons in ask-rail.js) - same
+           .demo-q-list/.demo-q-btn markup and click handling as the
+           Reddit-sourced list just below, so this needs no new CSS or
+           event wiring of its own. Empty (and so invisible) until
+           there's at least one real machine to build a prompt for. No
+           <details> wrapper needed, unlike the section below - there's
+           nothing to collapse when it's just a few buttons or none. -->
+      <div class="demo-q-list" id="triageDemoQList" role="list" aria-label="Prioritize your own installed software's updates"></div>
+
       <details class="sb-details" id="demoQuestionsDetails" open>
         <summary>Recent Reddit Update Risk Questions</summary>
         <div class="demo-q-list" role="list" aria-label="Real community questions about a recent software update, ranked by update-risk score"></div>
@@ -421,7 +432,6 @@
             title="Filters &amp; stats">🎚️ Filters &amp; Stats</button>
           <a id="graphLink" class="nav-link" href="#" title="Show component graph (in-page)">📊 Graph</a>
           <a id="archLink" class="nav-link" href="#" title="Show architecture diagram (in-page)">🏗 Arch</a>
-          <a id="triageLink" class="nav-link" href="#" title="Recommended update order for your own installed software (in-page)">🧭 Triage</a>
           <a id="cveLink" class="nav-link" href="#" title="Show CVE discussions (in-page)">🔐 CVE</a>
           <a id="dashboardLink" class="nav-link" href="#" title="Show release risk report (in-page)">🛡 Risk Report</a>
           <a id="docsLink" class="nav-link" href="#" title="Show API documentation (in-page)">📖 Docs</a>
@@ -1025,36 +1035,6 @@
           </div>
           <div class="a-empty-foot">
             <button id="a-todayBtn" class="btn btn-ghost st-59" type="button">📅 Show components updated today</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Triage view (shown only in triage view): "pick a VM, pick an
-           optimization, click Triage." Split out of what used to be one
-           of 4 modes inside the Arch view above, since it answers a
-           different question ("in what order should I update MY
-           software, and why") than Arch's diagram/table/flowchart do (a
-           visual map of a searched component list) - it never needed
-           the search box, "+ Add Stack", or the diagram/table/flowchart
-           machinery, just one machine and one weighting. See triage.js. -->
-      <div id="triageView" class="u-hide" >
-        <div class="a-view-header">
-          <div  class="u-show-flex st-58">
-            <select id="t-stackSelect" class="a-stack-select st-59">
-              <option value="">Pick a machine…</option>
-            </select>
-            <select id="t-optimize" class="a-stack-select st-59" title="Optimize for">
-              <option value="both" selected>Optimize: Both</option>
-              <option value="security">Optimize: Security</option>
-              <option value="stability">Optimize: Stability</option>
-            </select>
-            <button id="t-runBtn" class="btn btn-primary st-60" type="button">Run Triage</button>
-          </div>
-        </div>
-        <div class="t-body">
-          <div id="t-loader"></div>
-          <div id="t-result">
-            <p class="a-muted-note">Pick a machine, then click Run Triage.</p>
           </div>
         </div>
       </div>
@@ -6521,13 +6501,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
            enabled anonymous questions (the shipped default) shows
            nothing here at all, not an empty line. -->
       <span class="ask-anon-quota-note" id="askAnonQuotaNote" hidden></span>
-      <!-- Shown only when signed in (see uaUpdateAskIntroSignin in
-           account.js): Triage needs a saved inventory, so it's pointless
-           to a signed-out visitor - same reasoning already used for
-           #askGuardrailsDetails just above it. -->
-      <p class="ask-triage-callout" id="askTriageCallout" hidden>
-        <a href="#" id="askTriageCalloutLink">🧭 Triage: get a recommended update order for your installed software</a>
-      </p>
     </aside>
     </div><!-- /.ask-rail-col -->
 
@@ -6602,7 +6575,6 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
   <script src="js/helpers.js?v=3.144.1"></script>
   <script src="js/graph.js?v=3.144.1"></script>
   <script src="js/arch.js?v=3.144.1"></script>
-  <script src="js/triage.js?v=3.144.1"></script>
   <script src="js/docs.js?v=3.144.1"></script>
   <script src="js/eval.js?v=3.144.1"></script>
   <script src="js/feed.js?v=3.144.1"></script>

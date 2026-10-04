@@ -123,7 +123,7 @@
       "btn-major", "btn-minor", "btn-patch", "btn-cve", "btn-llm", "btn-hv", "btn-potential-cve", "btn-reddit",
       "btn-reddit-risk", "btn-reddit-risk-latest", "btn-reddit-risk-cve", "btn-so-risk", "btn-so",
       "filterForm", "components", "clearBtn", "fixedToggles", "typeToggles",
-      "homeLink", "graphLink", "archLink", "triageLink", "cveLink", "dashboardLink", "docsLink", "changelogLink", "ackLink", "usersLink", "networkLink", "evalRewriterLink", "evalEvaluatorLink", "evalOrchestratorLink", "filtersToggleBtn", "expandAllBtn", "feedSortSelect", "activeFilters", "afTags", "afClearAll", "emptyState", "emptyStateIcon", "emptyStateMsg", "emptyStateDetail"
+      "homeLink", "graphLink", "archLink", "cveLink", "dashboardLink", "docsLink", "changelogLink", "ackLink", "usersLink", "networkLink", "evalRewriterLink", "evalEvaluatorLink", "evalOrchestratorLink", "filtersToggleBtn", "expandAllBtn", "feedSortSelect", "activeFilters", "afTags", "afClearAll", "emptyState", "emptyStateIcon", "emptyStateMsg", "emptyStateDetail"
     ].forEach(id => { EL[id] = document.getElementById(id); });
 
     const $ = s => document.querySelector(s);

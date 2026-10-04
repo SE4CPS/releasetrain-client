@@ -33,7 +33,6 @@ const VIEWS = [
   { view: 'feed', selector: '#feedPanel' },
   { view: 'graph', selector: '#graphView' },
   { view: 'arch', selector: '#archView' },
-  { view: 'triage', selector: '#triageView' },
   { view: 'cve', selector: '#cveView' },
   { view: 'risk', selector: '#dashboardView' },
   { view: 'release', selector: '#networkView' },

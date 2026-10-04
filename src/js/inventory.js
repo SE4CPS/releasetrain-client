@@ -670,7 +670,6 @@
       if (ACK_ACTIVE) deactivateAck();
       if (CL_ACTIVE) deactivateChangelog();
       if (NET_ACTIVE) deactivateNetwork();
-      if (T_ACTIVE)   deactivateTriage();
       UA_ACTIVE = true;
       setViewParam("account");
       setDisplay(document.getElementById("usersView"), "block");

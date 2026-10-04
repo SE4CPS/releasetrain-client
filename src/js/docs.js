@@ -216,7 +216,6 @@
       if (CL_ACTIVE)  deactivateChangelog();
       if (UA_ACTIVE)  deactivateUsers();
       if (NET_ACTIVE) deactivateNetwork();
-      if (T_ACTIVE)   deactivateTriage();
       D_ACTIVE = true;
       setViewParam("docs");
       setDisplay(document.getElementById("docsView"), "block");
@@ -259,7 +258,6 @@
       if (ACK_ACTIVE) deactivateAck();
       if (UA_ACTIVE)  deactivateUsers();
       if (NET_ACTIVE) deactivateNetwork();
-      if (T_ACTIVE)   deactivateTriage();
       CL_ACTIVE = true;
       setViewParam("changelog");
       setDisplay(document.getElementById("changelogView"), "block");
@@ -300,7 +298,6 @@
       if (CL_ACTIVE) deactivateChangelog();
       if (UA_ACTIVE) deactivateUsers();
       if (NET_ACTIVE) deactivateNetwork();
-      if (T_ACTIVE) deactivateTriage();
       ACK_ACTIVE = true;
       setViewParam("credits");
       setDisplay(document.getElementById("ackView"), "block");

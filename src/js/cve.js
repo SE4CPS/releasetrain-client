@@ -600,7 +600,6 @@
       if (CL_ACTIVE)  deactivateChangelog();
       if (UA_ACTIVE)  deactivateUsers();
       if (NET_ACTIVE) deactivateNetwork();
-      if (T_ACTIVE)   deactivateTriage();
       CV_ACTIVE = true;
       setViewParam("cve");
       setDisplay(document.getElementById("cveView"), "flex");

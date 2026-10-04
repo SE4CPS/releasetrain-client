@@ -127,18 +127,12 @@
       // account to save a preference to.
       const guardrails = document.getElementById("askGuardrailsDetails");
       if (guardrails) setDisplay(guardrails, (token && user) ? "" : "none");
-      // Home-page Triage shortcut: pointless to a signed-out visitor
-      // (Triage needs a saved inventory), same reasoning as Guardrails
-      // just above - see triage.js's own click handler on the link
-      // inside it.
-      const triageCallout = document.getElementById("askTriageCallout");
-      if (triageCallout) triageCallout.hidden = !(token && user);
-      // "Include my installed software" (see ask-rail.js): unlike the
-      // Triage callout above, this isn't gated on sign-in - an anonymous
-      // visitor's own device-local Installed versions (see uaInvGet) are
-      // just as usable here as a signed-in account's, same as Arch's own
-      // aPopulateMachineStacks already treats both the same way.
-      if (typeof refreshAskIncludeInventoryBtn === "function") refreshAskIncludeInventoryBtn();
+      // Ask-box inventory shortcuts (see ask-rail.js): not gated on
+      // sign-in - an anonymous visitor's own device-local Installed
+      // versions (see uaInvGet) are just as usable here as a signed-in
+      // account's, same as Arch's own aPopulateMachineStacks already
+      // treats both the same way.
+      if (typeof refreshAskInventoryShortcuts === "function") refreshAskInventoryShortcuts();
     }
     function uaSetAnonQuotaNote(remaining, limit) {
       const el = document.getElementById("askAnonQuotaNote");

@@ -150,39 +150,45 @@
     });
     // The status dot opens the Account page (useful when the rail hides the Sign in button).
     document.getElementById("authStatusDot")?.addEventListener("click", () => activateUsers());
-    // Recent Reddit Update Risk Questions quick-load buttons (see their own markup
-    // comment): fills #askQuestion (and #askContext, when the source post
-    // had its own body text) and re-runs the same preview logic typing
-    // would trigger, but never submits -- the viewer clicks Ask (or
-    // presses Enter) themselves, on their own timing.
-    const demoQList = document.querySelector(".demo-q-list");
-    if (demoQList) demoQList.addEventListener("click", (e) => {
-      const btn = e.target.closest(".demo-q-btn");
-      if (!btn) return;
-      const q = btn.dataset.q || "";
-      const input = document.getElementById("askQuestion");
-      if (!input) return;
-      input.value = q;
-      const contextEl = document.getElementById("askContext");
-      if (contextEl) contextEl.value = btn.dataset.context || "";
-      updateAskPreview();
-      input.focus();
-    });
-    // "Include my installed software" (see #askIncludeInventoryBtn's own
-    // markup comment): formats the signed-in (or anonymous local)
-    // visitor's own Installed versions inventory as "Name: Version"
-    // lines, matching exactly what releasetrain-server's
-    // parseTriageComponentsFromContext (ask.js) parses back out of
-    // `context` for the 'triage' question intent. Deduped by component
-    // name across every machine (the "ecosystem" sense, not one machine) -
-    // first occurrence wins, since a 'triage' question has no per-machine
-    // concept the way the dedicated Triage view (triage.js) does.
-    function formatInventoryForAskContext() {
+    // Recent Reddit Update Risk Questions quick-load buttons, AND
+    // #triageDemoQList's own machine-based prompts below (same markup,
+    // same behavior: fills #askQuestion, and #askContext when the button
+    // carries one) - one shared handler attached to every ".demo-q-list"
+    // container found, rather than one bespoke click path per list, so
+    // adding a third such list later costs nothing here. Never submits --
+    // the viewer clicks Ask (or presses Enter) themselves, on their own
+    // timing.
+    function wireDemoQList(el) {
+      el.addEventListener("click", (e) => {
+        const btn = e.target.closest(".demo-q-btn");
+        if (!btn) return;
+        const input = document.getElementById("askQuestion");
+        if (!input) return;
+        input.value = btn.dataset.q || "";
+        const contextEl = document.getElementById("askContext");
+        if (contextEl) contextEl.value = btn.dataset.context || "";
+        updateAskPreview();
+        input.focus();
+      });
+    }
+    document.querySelectorAll(".demo-q-list").forEach(wireDemoQList);
+    const demoQList = document.querySelector(".demo-q-list:not(#triageDemoQList)");
+    // Formats the signed-in (or anonymous local) visitor's own Installed
+    // versions inventory as "Name: Version" lines, matching exactly what
+    // releasetrain-server's parseTriageComponentsFromContext (ask.js)
+    // parses back out of `context` for the 'triage' question intent. One
+    // shared helper for both consumers below: with no `machine` given,
+    // every machine's components are included, deduped by name (the
+    // "ecosystem" sense - #askIncludeInventoryBtn's own use); with one
+    // given, only that machine's own components (no cross-machine dedup
+    // needed - the per-machine prompts in #triageDemoQList's own use).
+    function formatInventoryForAskContext(machine) {
       if (typeof uaInvGet !== "function") return "";
       const seen = new Set();
       const lines = [];
       for (const e of uaInvGet()) {
         if (!e.component || !e.version) continue;
+        if (machine && e.machine !== machine) continue;
         const key = e.component.toLowerCase();
         if (seen.has(key)) continue;
         seen.add(key);
@@ -199,19 +205,48 @@
       }
       return out;
     }
-    // Called from account.js's uaRender()/uaUpdateAskIntroSignin() and
-    // inventory.js's bootstrap - the button is hidden entirely until
-    // there's at least one real component to include (a button that
-    // always does nothing isn't worth showing), same reasoning as
-    // #askTriageCallout's own visibility toggle.
-    function refreshAskIncludeInventoryBtn() {
-      const btn = document.getElementById("askIncludeInventoryBtn");
-      if (!btn) return;
-      btn.hidden = !(typeof uaInvGet === "function" && uaInvGet().some((e) => e.component && e.version));
+    // Up to 2 machines x 2 optimize-for modes = up to 4 one-click
+    // "Prioritize <machine>'s updates by <mode>" prompts, reusing the
+    // exact same .demo-q-list/.demo-q-btn markup and click handling the
+    // Reddit-sourced samples already use (see wireDemoQList above) -
+    // no new UI mechanism, just more buttons in a second list of the
+    // same kind. Capped at 2 machines so this can't crowd out the
+    // Reddit-sourced list below it on an account with many machines.
+    function renderTriageDemoButtons() {
+      const el = document.getElementById("triageDemoQList");
+      if (!el) return;
+      if (typeof uaInvGet !== "function") { el.innerHTML = ""; return; }
+      const machines = Array.from(new Set(
+        uaInvGet().filter((e) => e.machine && e.component && e.version).map((e) => e.machine)
+      )).slice(0, 2);
+      el.innerHTML = machines.map((m) => ["stability", "security"].map((mode) => {
+        const q = `Prioritize ${m}'s updates by ${mode}`;
+        return `<button type="button" class="demo-q-btn" data-q="${uaEsc(q)}" data-context="${uaEsc(formatInventoryForAskContext(m))}">${uaEsc(q)}</button>`;
+      }).join("")).join("");
     }
-    document.getElementById("askIncludeInventoryBtn")?.addEventListener("click", () => {
+    // Called from account.js's uaRender()/uaUpdateAskIntroSignin() and
+    // inventory.js's bootstrap: keeps every inventory-dependent piece of
+    // the Ask box in sync in one place. #askIncludeInventoryBtn is hidden
+    // entirely until there's at least one real component to include (a
+    // button that always does nothing isn't worth showing).
+    function refreshAskInventoryShortcuts() {
+      const btn = document.getElementById("askIncludeInventoryBtn");
+      if (btn) btn.hidden = !(typeof uaInvGet === "function" && uaInvGet().some((e) => e.component && e.version));
+      renderTriageDemoButtons();
+    }
+    document.getElementById("askIncludeInventoryBtn")?.addEventListener("click", async () => {
       const contextEl = document.getElementById("askContext");
       if (!contextEl) return;
+      // Refresh from the server first when signed in (same pattern
+      // aPopulateMachineStacks/tPopulateMachines already use) - uaInvGet()
+      // alone only reads whatever's cached in localStorage/rt_user, which
+      // is stale the moment inventory changes anywhere other than this
+      // browser (e.g. the CLI tool uploading from a second machine).
+      // Reported live: clicking this with a stale cache included only 2
+      // old components when the account's real inventory had 50.
+      if (typeof uaUser === "function" && uaUser() && typeof uaLoadInventoryFromServer === "function") {
+        await uaLoadInventoryFromServer();
+      }
       contextEl.value = formatInventoryForAskContext();
       contextEl.focus();
     });

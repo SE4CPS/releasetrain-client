@@ -962,7 +962,6 @@
       if (CL_ACTIVE)  deactivateChangelog();
       if (UA_ACTIVE)  deactivateUsers();
       if (NET_ACTIVE) deactivateNetwork();
-      if (T_ACTIVE)   deactivateTriage();
       A_ACTIVE = true;
       setViewParam("arch");
       setDisplay(document.getElementById("archView"), "flex");

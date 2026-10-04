@@ -18,7 +18,6 @@
       if (CL_ACTIVE)  deactivateChangelog();
       if (UA_ACTIVE)  deactivateUsers();
       if (NET_ACTIVE) deactivateNetwork();
-      if (T_ACTIVE)   deactivateTriage();
       if (EE_ACTIVE)  deactivateEvalEvaluator();
       if (EO_ACTIVE)  deactivateEvalOrchestrator();
       ER_ACTIVE = true;
@@ -60,7 +59,6 @@
       if (CL_ACTIVE)  deactivateChangelog();
       if (UA_ACTIVE)  deactivateUsers();
       if (NET_ACTIVE) deactivateNetwork();
-      if (T_ACTIVE)   deactivateTriage();
       if (ER_ACTIVE)  deactivateEvalRewriter();
       if (EO_ACTIVE)  deactivateEvalOrchestrator();
       EE_ACTIVE = true;
@@ -102,7 +100,6 @@
       if (CL_ACTIVE)  deactivateChangelog();
       if (UA_ACTIVE)  deactivateUsers();
       if (NET_ACTIVE) deactivateNetwork();
-      if (T_ACTIVE)   deactivateTriage();
       if (ER_ACTIVE)  deactivateEvalRewriter();
       if (EE_ACTIVE)  deactivateEvalEvaluator();
       EO_ACTIVE = true;

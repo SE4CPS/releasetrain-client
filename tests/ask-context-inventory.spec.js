@@ -27,7 +27,7 @@ test('the button is hidden with no inventory, and appears once one exists', asyn
       'rt_inventory',
       JSON.stringify([{ component: 'Firefox', version: '100.0', machine: 'work-laptop' }]),
     );
-    refreshAskIncludeInventoryBtn();
+    refreshAskInventoryShortcuts();
   });
   await expect(page.locator('#askIncludeInventoryBtn')).toBeVisible();
 });

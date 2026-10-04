@@ -201,7 +201,6 @@
       if (CL_ACTIVE)  deactivateChangelog();
       if (UA_ACTIVE)  deactivateUsers();
       if (NET_ACTIVE) deactivateNetwork();
-      if (T_ACTIVE)   deactivateTriage();
       DB_ACTIVE = true;
       setViewParam("risk");
       setDisplay(document.getElementById("dashboardView"), "block");

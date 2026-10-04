@@ -334,7 +334,6 @@
       if (CL_ACTIVE)  deactivateChangelog();
       if (UA_ACTIVE)  deactivateUsers();
       if (NET_ACTIVE) deactivateNetwork();
-      if (T_ACTIVE)   deactivateTriage();
       G_ACTIVE = true;
       setViewParam("graph");
       setDisplay(document.getElementById("graphView"), "block");
@@ -390,7 +389,6 @@
       else if (CL_ACTIVE)  deactivateChangelog();
       else if (UA_ACTIVE)  deactivateUsers();
       else if (NET_ACTIVE) deactivateNetwork();
-      else if (T_ACTIVE)   deactivateTriage();
     }
     EL.homeLink.addEventListener("click", e => {
       e.preventDefault();
