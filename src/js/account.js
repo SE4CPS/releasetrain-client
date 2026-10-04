@@ -723,6 +723,15 @@
         hint: "The 16-character App Password for the address above, not your real Gmail login password. Stored server-side, never shown again once saved. Leave blank and Save to clear it.",
         secret: true,
       },
+      // "can you always send me an email if a user creates an account" -
+      // fixed admin address (src/mailer.js's own ADMIN_NOTIFY_EMAIL),
+      // not a free-text field here, just an on/off toggle. Enabled by
+      // default per that same request.
+      notifyOnNewAccount: {
+        label: "Email me on new account registration",
+        type: "boolean",
+        hint: "Sends solomon.berhe@gmail.com a notification email every time a new account is created. Uses the Gmail address/App Password above, so it only actually sends once those are set.",
+      },
     };
     async function uaLoadSettings() {
       const listEl = document.getElementById("ua-settings-list");
