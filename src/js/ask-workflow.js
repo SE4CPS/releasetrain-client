@@ -1331,9 +1331,38 @@
       let para = [];
       const flushPara = () => { if (para.length) { out.push("<p>" + para.join("<br>") + "</p>"); para = []; } };
       const flushList = () => { if (list) { out.push(`<${list.type}>` + list.items.map(i => `<li>${i}</li>`).join("") + `</${list.type}>`); list = null; } };
-      for (const raw of lines) {
-        const line = raw.trim();
-        if (!line) { flushPara(); flushList(); continue; }
+      // A pipe row ("| a | b |"), split into its own cells - a leading/
+      // trailing "|" produces an empty first/last element from .split,
+      // sliced off (they're the row's own outer edges, not real cells).
+      const pipeCells = (line) => line.replace(/^\|/, "").replace(/\|$/, "").split("|").map(c => c.trim());
+      // A GFM separator row ("|---|---|...", optional ":" for alignment,
+      // which this renderer ignores - every column reads left-aligned).
+      const isTableSep = (line) => /^\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?$/.test(line);
+      let i = 0;
+      while (i < lines.length) {
+        const line = lines[i].trim();
+        if (!line) { flushPara(); flushList(); i++; continue; }
+        // A real markdown table: a header row immediately followed by a
+        // GFM separator row - added for Update Triage's own priority
+        // table (see formatTriageAnswer, releasetrain-server's ask.js),
+        // "the answer should be a priority table with reasoning,"
+        // reported live. Generic, not triage-specific: any answer using
+        // this same GFM pipe-table shape renders as a real <table> here.
+        if (/^\|.*\|$/.test(line) && lines[i + 1] && isTableSep(lines[i + 1].trim())) {
+          flushPara(); flushList();
+          const headCells = pipeCells(line);
+          const bodyRows = [];
+          let j = i + 2;
+          while (j < lines.length && /^\|.*\|$/.test(lines[j].trim())) {
+            bodyRows.push(pipeCells(lines[j].trim()));
+            j++;
+          }
+          const thead = "<thead><tr>" + headCells.map(c => `<th>${c}</th>`).join("") + "</tr></thead>";
+          const tbody = "<tbody>" + bodyRows.map(cells => "<tr>" + cells.map(c => `<td>${c}</td>`).join("") + "</tr>").join("") + "</tbody>";
+          out.push(`<table class="ask-answer-table">${thead}${tbody}</table>`);
+          i = j;
+          continue;
+        }
         const bullet = line.match(/^[-*]\s+(.*)$/);
         const numbered = line.match(/^\d+\.\s+(.*)$/);
         if (bullet) {
@@ -1348,6 +1377,7 @@
           flushList();
           para.push(line.replace(/^#{1,6}\s+(.*)$/, "<strong>$1</strong>"));
         }
+        i++;
       }
       flushPara(); flushList();
       return out.join("");

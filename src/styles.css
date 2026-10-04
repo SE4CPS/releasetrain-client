@@ -813,23 +813,8 @@ html::-webkit-scrollbar { display: none; }
    be filled by some name, and the submit button (grid-area: submit) only
    occupies the row-1 cell, leaving row 2's third column with nothing
    assigned unless it's given its own placeholder name here. */
-/* align-self: start on both (overriding .ask-input-row's own
-   align-items: center) so the question input and context textarea's top
-   edges always line up, regardless of which one is visually taller -
-   .ask-context-wrap grew taller than .search-wrap once
-   #askIncludeInventoryBtn was added below the textarea, which otherwise
-   left the (now shorter) question input vertically centered against it
-   instead of lining up at the top. */
-.ask-input-row .search-wrap { grid-area: question; align-self: start; }
-.ask-input-row .ask-context-wrap { grid-area: context; align-self: start; display: flex; flex-direction: column; gap: 3px; }
-/* #askIncludeInventoryBtn (see its own markup comment): a plain inline
-   text link under the textarea, not a real button, so it reads as a
-   small optional shortcut rather than competing with Clear/Submit. */
-.ask-context-fill-btn {
-  align-self: flex-start; font: inherit; font-size: 11px; color: var(--muted);
-  background: none; border: none; padding: 0; cursor: pointer; text-decoration: underline;
-}
-.ask-context-fill-btn:hover { color: var(--text); }
+.ask-input-row .search-wrap { grid-area: question; }
+.ask-input-row .ask-context-wrap { grid-area: context; }
 .ask-input-row #clearBtn { grid-area: clear; }
 .ask-input-row #askSubmitBtn { grid-area: submit; }
 /* Wide enough (this container is already known to comfortably fit both -
@@ -1290,6 +1275,23 @@ body.has-ask-console.has-ask-console-min .view-close-btn { bottom: 48px; }
 .ask-answer-summary p:last-child { margin-bottom: 0; }
 .ask-answer-summary ul, .ask-answer-summary ol { margin: 0 0 8px; padding-left: 20px; }
 .ask-answer-summary li { margin-bottom: 3px; }
+/* A real GFM pipe-table, rendered by mdLite (see its own comment in
+   ask-workflow.js) - currently only Update Triage's priority table
+   (formatTriageAnswer, releasetrain-server's ask.js) produces this
+   shape, but it's generic: any answer using the same markdown table
+   syntax renders this way. Same .a-drift table look this app already
+   established for the Arch view's own drift table, so a table reads
+   consistently wherever one shows up. */
+/* table-layout: fixed + overflow-wrap on cells (not table-layout: auto's
+   default "grow to fit content") so a long Reasoning sentence wraps
+   within its own column instead of forcing the whole table wider than
+   its container - this app never scrolls sideways (see
+   no-horizontal-scroll.spec.js), so a table has to fit its own column
+   the same way everything else here does. */
+.ask-answer-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 12px; margin: 0 0 10px; }
+.ask-answer-table th, .ask-answer-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; overflow-wrap: anywhere; }
+.ask-answer-table th { background: var(--chip-bg); font-weight: 600; color: var(--text); white-space: nowrap; }
+.ask-answer-table tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--surface) 97%, var(--text)); }
 .ask-answer-summary code {
   font-family: var(--mono); font-size: 12px; background: var(--chip-bg);
   color: var(--chip-text); padding: 1px 4px; border-radius: var(--radius-sm);

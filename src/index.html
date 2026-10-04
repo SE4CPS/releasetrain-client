@@ -136,19 +136,6 @@
           <div class="ask-context-wrap">
             <textarea id="askContext" class="search-input ask-context-input" maxlength="1000" rows="1"
               placeholder="Add context (optional)" aria-label="Optional additional context"></textarea>
-            <!-- "Ecosystem software" shortcut (see the 'triage' question
-                 intent, runTriageIntentAsk in releasetrain-server's
-                 ask.js): fills this textarea with the signed-in (or
-                 anonymous local) visitor's own Installed versions
-                 inventory, one "Name: Version" line per component - the
-                 exact format the server parses back out of `context` for
-                 a question like "How should I order updates for
-                 stability?" so it has real components to triage, not
-                 just prose. Hidden until there's at least one real
-                 component to include (see refreshAskInventoryShortcuts
-                 in ask-rail.js) - a button that always does nothing isn't
-                 worth showing. -->
-            <button type="button" id="askIncludeInventoryBtn" class="ask-context-fill-btn" hidden>+ Include my installed software</button>
           </div>
           <!-- Core form controls, not agentic-AI configuration, so they
                stay on the input's own row on every screen size (unlike
@@ -403,6 +390,21 @@
            <details> wrapper needed, unlike the section below - there's
            nothing to collapse when it's just a few buttons or none. -->
       <div class="demo-q-list" id="triageDemoQList" role="list" aria-label="Prioritize your own installed software's updates"></div>
+      <!-- "Ecosystem software" shortcut (see the 'triage' question intent,
+           runTriageIntentAsk in releasetrain-server's ask.js): fills
+           #askContext with the signed-in (or anonymous local) visitor's
+           own Installed versions inventory, one "Name: Version" line per
+           component - the exact format the server parses back out of
+           `context` for a typed question like "How should I order
+           updates for stability?" Moved here, right under the per-machine
+           prompts above (was next to #askContext itself) - redundant
+           there once those one-click prompts already cover the common
+           case; this stays as the manual fallback for a machine/mode
+           combo they don't cover. Hidden until there's at least one real
+           component to include (see refreshAskInventoryShortcuts in
+           ask-rail.js) - a button that always does nothing isn't worth
+           showing. -->
+      <button type="button" id="askIncludeInventoryBtn" class="ask-context-fill-btn" hidden>+ Include my installed software</button>
 
       <details class="sb-details" id="demoQuestionsDetails" open>
         <summary>Recent Reddit Update Risk Questions</summary>
