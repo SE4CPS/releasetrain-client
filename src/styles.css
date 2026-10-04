@@ -360,6 +360,18 @@ body.view-feed .layout > .feed-main { flex: 1 1 0; }
    (limit 0) or the visitor is signed in. Inherits .ask-intro-panel's
    own var(--muted) color, just needs its own spacing. */
 .ask-anon-quota-note { display: block; text-align: center; margin-top: 6px; font-size: 11px; }
+/* Set/updated by uaUpdateAskIntroSignin() in account.js: hidden whenever
+   the visitor isn't signed in (Triage needs a saved inventory, so the
+   shortcut is pointless to a signed-out visitor) - its own link inherits
+   .ask-intro-panel a's brand color/underline, no extra styling needed.
+   No explicit `display` here: a <p> is already block by default, and
+   setting one anyway would be an AUTHOR-origin rule, which beats the
+   browser's own `[hidden] { display: none }` UA-stylesheet rule
+   regardless of selector specificity - origin wins before specificity
+   is ever compared - so the element would render even while its real
+   `hidden` attribute is true. Caught live: toggling `.hidden = true`
+   had no visible effect once `display: block` was added here. */
+.ask-triage-callout { text-align: center; margin-top: 8px; font-size: 12px; }
 /* Its own tab bar, not a reuse of .ask-rail-tabs: that class's
    margin: -2px -14px 10px is a deliberate bleed-to-the-edge trick
    that cancels out .ask-answer-card's own 14px padding (see its own
@@ -2012,7 +2024,12 @@ button.chip.poll-btn.chip-err { border-color: var(--cve); color: var(--cve); bac
 .nav-link.nav-active { background: var(--brand-light); color: var(--brand); }
 
 /* ── Arch view ──────────────────────────────────────────── */
-#archView {
+/* #triageView (see triage.js) shares this exact container sizing - same
+   sticky-panel-filling-the-viewport treatment as Arch, just with a much
+   simpler header (machine + optimization + one button, no Diagram/
+   Table/Flowchart toggle) and body (#t-result instead of the 3-panel
+   .a-mode-panels switcher). */
+#archView, #triageView {
   position: sticky;
   top: calc(var(--topbar-h) + 8px);
   height: calc(100vh - var(--topbar-h) - 16px);
@@ -2023,7 +2040,7 @@ button.chip.poll-btn.chip-err { border-color: var(--cve); color: var(--cve); bac
   overflow: hidden;
   box-shadow: var(--shadow-sm);
 }
-@media (max-width: 640px) { #archView { position: static; height: 82vh; } }
+@media (max-width: 640px) { #archView, #triageView { position: static; height: 82vh; } }
 /* Real header row (not floating) so the Diagram/Table toggle has its
    own right-aligned slot that never competes for the same corner as
    #a-loader (which anchors to .a-canvas now, not #archView -- see
@@ -2032,13 +2049,18 @@ button.chip.poll-btn.chip-err { border-color: var(--cve); color: var(--cve); bac
   display: flex; align-items: center; flex: 0 0 auto;
   padding: 8px 12px; border-bottom: 1px solid var(--border);
 }
-/* .a-mode-panels is the shared, always-rendered content area for all 4
-   mutually-exclusive mode panels (.a-canvas/#a-table/#a-mermaid/#a-triage) -
+/* .a-mode-panels is the shared, always-rendered content area for the 3
+   mutually-exclusive mode panels (.a-canvas/#a-table/#a-mermaid) -
    #a-loader is positioned relative to THIS, not .a-canvas specifically, so
    it stays visible no matter which panel is currently showing. See its own
    HTML comment for why this moved. */
 .a-mode-panels { position: relative; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
-#a-loader {
+/* #triageView's own equivalent of .a-mode-panels above - just one result
+   panel (#t-result), not a 3-way switcher, but the same "loader anchored
+   to the shared body, not to whichever panel happens to be showing"
+   reasoning applies. */
+.t-body { position: relative; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+#a-loader, #t-loader {
   position: absolute; top: 10px; right: 10px; z-index: 2;
   width: 16px; height: 16px; border-radius: 50%;
   border: 2px solid var(--border); border-top-color: var(--brand);
@@ -2068,8 +2090,8 @@ button.chip.poll-btn.chip-err { border-color: var(--cve); color: var(--cve); bac
 #a-table { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 0 14px 12px; background: var(--surface); }
 /* Update Triage view: same flex-child/scroll sizing as #a-table above,
    since it's the same .a-drift table layout with an extra Order/
-   Reasoning pair of columns - see aRenderTriageResult in arch.js. */
-#a-triage { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 0 14px 12px; background: var(--surface); }
+   Reasoning pair of columns - see tRenderResult in triage.js. */
+#t-result { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 0 14px 12px; background: var(--surface); }
 /* Mermaid flowchart view: same flex-child sizing as #a-table/.a-canvas so
    it fills the same slot in #archView's layout regardless of which of the
    three view modes is active. The SVG itself is left at its own natural

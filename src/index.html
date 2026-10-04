@@ -408,6 +408,7 @@
             title="Filters &amp; stats">🎚️ Filters &amp; Stats</button>
           <a id="graphLink" class="nav-link" href="#" title="Show component graph (in-page)">📊 Graph</a>
           <a id="archLink" class="nav-link" href="#" title="Show architecture diagram (in-page)">🏗 Arch</a>
+          <a id="triageLink" class="nav-link" href="#" title="Recommended update order for your own installed software (in-page)">🧭 Triage</a>
           <a id="cveLink" class="nav-link" href="#" title="Show CVE discussions (in-page)">🔐 CVE</a>
           <a id="dashboardLink" class="nav-link" href="#" title="Show release risk report (in-page)">🛡 Risk Report</a>
           <a id="docsLink" class="nav-link" href="#" title="Show API documentation (in-page)">📖 Docs</a>
@@ -959,47 +960,35 @@
             <button id="a-configBtn" class="btn btn-ghost st-60" type="button">⚙ Config</button>
             <button id="a-copyLinkBtn" class="btn btn-ghost st-60" type="button">🔗 Copy link</button>
             <span class="st-61"></span>
-            <!-- Diagram/Table/Flowchart/Triage are one mutually-exclusive
-                 "view mode" choice (see A_MODES in arch.js), so they're a
-                 single <select>, not 4 separate buttons fighting for
+            <!-- Diagram/Table/Flowchart are one mutually-exclusive "view
+                 mode" choice (see A_MODES in arch.js), so they're a
+                 single <select>, not 3 separate buttons fighting for
                  attention - the active mode is still visible at a glance
                  via the chip right after it, which also makes the active
                  state readable without the select having to be open.
                  Reported live, with a screenshot of the old 4-button row:
                  "simplify this group exclusive options into select
-                 dropdown and when something is selected add a chip." -->
+                 dropdown and when something is selected add a chip."
+                 (Update Triage used to be a 4th mode here; it's now its
+                 own top-level view - see triage.js - since it answers a
+                 different question than a diagram/table/flowchart of a
+                 searched component list does.) -->
             <select id="a-viewMode" class="a-stack-select st-59" title="View">
               <option value="diagram">Diagram</option>
               <option value="table">Table</option>
               <option value="mermaid">Flowchart</option>
-              <option value="triage">Triage</option>
             </select>
             <span id="a-modeChip" class="a-chip-t rt-bg" style="--rt-bg:#e2e8f0;">Diagram</span>
-            <!-- Update Triage: "here are my current installed software,
-                 how would you recommend updating them in which order?
-                 with reasoning" - reuses the same already-loaded component
-                 list (A_VERSIONS) rather than a separate selection step.
-                 This select is its own control, not folded into the mode
-                 select above, since "optimized by stability, security, or
-                 both" is picked once and can be changed without
-                 re-picking a machine or leaving Triage mode. See
-                 aRunTriage/aRenderTriage in arch.js. -->
-            <select id="a-triageOptimize" class="a-stack-select st-59" title="Optimize for">
-              <option value="both" selected>Optimize: Both</option>
-              <option value="security">Optimize: Security</option>
-              <option value="stability">Optimize: Stability</option>
-            </select>
           </div>
         </div>
-        <!-- Shared content area for all 4 mutually-exclusive mode panels
-             below (Diagram/Table/Flowchart/Triage) - #a-loader lives here,
-             not inside .a-canvas, so it stays visible regardless of which
-             panel is currently showing. Reported live: switching to Triage
-             and running it showed no spinner at all - #a-loader used to be
-             a child of .a-canvas specifically, which this same codebase
-             hides (display:none) whenever any OTHER mode is active, so
-             toggling the loader's own display had no visible effect outside
-             Diagram mode. -->
+        <!-- Shared content area for the 3 mutually-exclusive mode panels
+             below (Diagram/Table/Flowchart) - #a-loader lives here, not
+             inside .a-canvas, so it stays visible regardless of which
+             panel is currently showing (it used to be a child of
+             .a-canvas specifically, which this same codebase hides
+             (display:none) whenever any OTHER mode is active, so toggling
+             the loader's own display had no visible effect outside
+             Diagram mode). -->
         <div class="a-mode-panels">
           <div id="a-loader"></div>
           <div class="a-canvas">
@@ -1011,7 +1000,6 @@
                client-side (no PlantUML server round-trip). See aRenderMermaid
                in arch.js. -->
           <div id="a-mermaid" class="u-hide" role="img" aria-label="Ecosystem flowchart"></div>
-          <div id="a-triage" class="u-hide" ></div>
         </div>
         <div id="a-empty" class="u-hide" >
           <div class="a-empty-head">
@@ -1024,6 +1012,36 @@
           </div>
           <div class="a-empty-foot">
             <button id="a-todayBtn" class="btn btn-ghost st-59" type="button">📅 Show components updated today</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Triage view (shown only in triage view): "pick a VM, pick an
+           optimization, click Triage." Split out of what used to be one
+           of 4 modes inside the Arch view above, since it answers a
+           different question ("in what order should I update MY
+           software, and why") than Arch's diagram/table/flowchart do (a
+           visual map of a searched component list) - it never needed
+           the search box, "+ Add Stack", or the diagram/table/flowchart
+           machinery, just one machine and one weighting. See triage.js. -->
+      <div id="triageView" class="u-hide" >
+        <div class="a-view-header">
+          <div  class="u-show-flex st-58">
+            <select id="t-stackSelect" class="a-stack-select st-59">
+              <option value="">Pick a machine…</option>
+            </select>
+            <select id="t-optimize" class="a-stack-select st-59" title="Optimize for">
+              <option value="both" selected>Optimize: Both</option>
+              <option value="security">Optimize: Security</option>
+              <option value="stability">Optimize: Stability</option>
+            </select>
+            <button id="t-runBtn" class="btn btn-primary st-60" type="button">Run Triage</button>
+          </div>
+        </div>
+        <div class="t-body">
+          <div id="t-loader"></div>
+          <div id="t-result">
+            <p class="a-muted-note">Pick a machine, then click Run Triage.</p>
           </div>
         </div>
       </div>
@@ -6490,6 +6508,13 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
            enabled anonymous questions (the shipped default) shows
            nothing here at all, not an empty line. -->
       <span class="ask-anon-quota-note" id="askAnonQuotaNote" hidden></span>
+      <!-- Shown only when signed in (see uaUpdateAskIntroSignin in
+           account.js): Triage needs a saved inventory, so it's pointless
+           to a signed-out visitor - same reasoning already used for
+           #askGuardrailsDetails just above it. -->
+      <p class="ask-triage-callout" id="askTriageCallout" hidden>
+        <a href="#" id="askTriageCalloutLink">🧭 Triage: get a recommended update order for your installed software</a>
+      </p>
     </aside>
     </div><!-- /.ask-rail-col -->
 
@@ -6564,6 +6589,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
   <script src="js/helpers.js?v=3.144.1"></script>
   <script src="js/graph.js?v=3.144.1"></script>
   <script src="js/arch.js?v=3.144.1"></script>
+  <script src="js/triage.js?v=3.144.1"></script>
   <script src="js/docs.js?v=3.144.1"></script>
   <script src="js/eval.js?v=3.144.1"></script>
   <script src="js/feed.js?v=3.144.1"></script>

@@ -127,6 +127,12 @@
       // account to save a preference to.
       const guardrails = document.getElementById("askGuardrailsDetails");
       if (guardrails) setDisplay(guardrails, (token && user) ? "" : "none");
+      // Home-page Triage shortcut: pointless to a signed-out visitor
+      // (Triage needs a saved inventory), same reasoning as Guardrails
+      // just above - see triage.js's own click handler on the link
+      // inside it.
+      const triageCallout = document.getElementById("askTriageCallout");
+      if (triageCallout) triageCallout.hidden = !(token && user);
     }
     function uaSetAnonQuotaNote(remaining, limit) {
       const el = document.getElementById("askAnonQuotaNote");

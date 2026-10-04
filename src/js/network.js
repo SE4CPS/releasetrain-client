@@ -183,6 +183,7 @@
       if (ACK_ACTIVE) deactivateAck();
       if (CL_ACTIVE)  deactivateChangelog();
       if (UA_ACTIVE)  deactivateUsers();
+      if (T_ACTIVE)   deactivateTriage();
       NET_ACTIVE = true;
       setViewParam("release");
       setDisplay(document.getElementById("networkView"), "block");

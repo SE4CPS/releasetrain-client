@@ -16,6 +16,8 @@ if (askGuardrailsDetailsEl && askGuardrailsDetailsEl.open) askLoadGuardrails();
         EL.navLoader.classList.add("active");
         try { await aLoadPako(); } finally { EL.navLoader.classList.remove("active"); }
         aLoadAndRender();
+      } else if (view === "triage") {
+        activateTriage();
       } else if (view === "docs") {
         activateDocs();
       } else if (view === "cve") {
