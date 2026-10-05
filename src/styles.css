@@ -657,7 +657,17 @@ body.view-feed .layout > .feed-main { flex: 1 1 0; }
    exact same cascade bug already caught once this session on
    .ask-triage-callout, recurring here the moment this button's own
    `hidden` attribute needs to actually hide it again. */
-.ask-context-fill-btn:not([hidden]) { display: block; width: 100%; box-sizing: border-box; margin: 10px 12px 16px; }
+/* flex: 0 0 auto overrides .demo-q-btn's own flex: 1 1 auto (meant for
+   a button inside .demo-q-list's bounded, max-height:260px column) -
+   this button sits as a direct child of #sidebar instead, which becomes
+   a flex column itself at wider widths (see #sidebar's own display:flex
+   rule); without this override the inherited flex-grow:1 stretched the
+   button to fill ALL of #sidebar's remaining vertical space (reported
+   live: a ~300px-tall button with its label stuck at the top and a huge
+   empty area below it) instead of sizing to its own one line of text.
+   Same bug class, same fix shape already applied once to .sb-details
+   inside #sidebar .ask-options-panel above. */
+.ask-context-fill-btn:not([hidden]) { display: block; width: 100%; box-sizing: border-box; margin: 10px 12px 16px; flex: 0 0 auto; }
 
 .sidebar-label {
   font: 700 9px/1 inherit; color: var(--muted);
