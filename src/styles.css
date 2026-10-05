@@ -644,11 +644,9 @@ body.view-feed .layout > .feed-main { flex: 1 1 0; }
    prompt list above it, not a jarring, differently-styled element) plus
    this addendum, since it sits as its own standalone sidebar item
    AFTER #triageDemoQList closes, not as a flex child inside it the way
-   the per-machine prompts are - width:100%/display:block/margin
-   reproduce that same full-width, aligned-with-the-list-above layout
-   without needing to be an actual flex item. Reported live: this lost
-   its own CSS entirely when relocated out of the Ask input row into the
-   sidebar, rendering as a bare, unstyled default <button> (a visible
+   the per-machine prompts are. Reported live: this lost its own CSS
+   entirely when relocated out of the Ask input row into the sidebar,
+   rendering as a bare, unstyled default <button> (a visible
    border/background box with no custom styling at all).
    :not([hidden]), not a bare element selector: an unconditional
    `display: block` is an AUTHOR-origin rule, which beats the browser's
@@ -667,7 +665,27 @@ body.view-feed .layout > .feed-main { flex: 1 1 0; }
    empty area below it) instead of sizing to its own one line of text.
    Same bug class, same fix shape already applied once to .sb-details
    inside #sidebar .ask-options-panel above. */
-.ask-context-fill-btn:not([hidden]) { display: block; width: 100%; box-sizing: border-box; margin: 10px 12px 16px; flex: 0 0 auto; }
+/* NO width:100% (a second real bug, caught live from a screenshot right
+   after the flex fix above shipped): every other inset element in this
+   sidebar (.sb-details > summary, .demo-q-list) gets its symmetric
+   12px left/right gap from its own PADDING, on a block that otherwise
+   spans the sidebar edge-to-edge with zero margin. This button instead
+   combined width:100% with margin-left/margin-right:12px - CSS applies
+   percentage width BEFORE adding margin, so the rendered box became
+   100% of #sidebar's content width *plus* 24px of margin, 24px wider
+   than #sidebar itself. .sidebar's own overflow-x:hidden silently
+   clipped the overflow instead of an visible scrollbar, so the button's
+   LEFT edge sat at the correct 12px inset (margin pushed it right) while
+   its RIGHT edge ran flush to the sidebar's true edge (the clipped 12px
+   of its own margin was never there to look at) - a dead giveaway once
+   compared against "RECENT REDDIT UPDATE RISK QUESTIONS" directly below
+   it, inset evenly on both sides via padding, not margin-on-100%-width.
+   Dropping width:100% restores plain block auto-sizing: with no
+   explicit width, a block's width is computed FROM its margins (fills
+   whatever space remains after margin-left + margin-right), the same
+   self-consistent box math every other inset sidebar element already
+   relies on - margin alone is enough, width:100% was never needed. */
+.ask-context-fill-btn:not([hidden]) { display: block; box-sizing: border-box; margin: 10px 12px 16px; flex: 0 0 auto; }
 
 .sidebar-label {
   font: 700 9px/1 inherit; color: var(--muted);
