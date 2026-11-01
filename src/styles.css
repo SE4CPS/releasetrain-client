@@ -997,6 +997,17 @@ html::-webkit-scrollbar { display: none; }
 .ask-input-row .search-wrap { grid-area: question; }
 .ask-input-row .ask-context-wrap { grid-area: context; }
 .ask-input-row #clearBtn { grid-area: clear; }
+/* Same slot as Clear, never both visible at once (ask-rail.js toggles
+   `hidden` on the pair as a run starts/ends), so the row keeps one
+   stable layout instead of growing a fourth column while running. */
+.ask-input-row #askStopBtn { grid-area: clear; }
+/* Explicit, same as .ask-rail-panel[hidden]: a later display rule on the
+   button would otherwise beat the browser's own [hidden] default. */
+.ask-input-row #askStopBtn[hidden], .ask-input-row #clearBtn[hidden] { display: none; }
+/* .btn-ghost.ask-stop-btn, not bare .ask-stop-btn: .btn-ghost's own color
+   rule comes later in this file at equal specificity and would win. */
+.btn-ghost.ask-stop-btn { color: var(--cve); border-color: var(--cve); }
+.btn-ghost.ask-stop-btn:hover { background: var(--cve-bg); color: var(--cve); }
 .ask-input-row #askSubmitBtn { grid-area: submit; }
 /* Wide enough (this container is already known to comfortably fit both -
    see .ask-form-desktop-slot's own max-width, which kicks in at this
@@ -1156,6 +1167,11 @@ html::-webkit-scrollbar { display: none; }
 #askWorkflowDiagram g.askwfg-input text { fill: var(--chip-text) !important; }
 #askWorkflowDiagram g.askwfg-skipped rect { fill: transparent !important; stroke: var(--faint) !important; stroke-dasharray: 4 3; }
 #askWorkflowDiagram g.askwfg-skipped text { fill: var(--muted) !important; }
+/* The node that was running when the viewer pressed Stop: kept visibly
+   distinct from "done" (it never finished) and from "skipped" (it did
+   start), using the same red the CVE chips already use. */
+#askWorkflowDiagram g.askwfg-stopped rect { fill: var(--cve-bg) !important; stroke: var(--cve) !important; }
+#askWorkflowDiagram g.askwfg-stopped text { fill: var(--cve) !important; }
 .ask-console { position: fixed; left: var(--console-left, 0px); right: 0; bottom: 0; z-index: 900; height: 170px; overflow-y: auto; border-radius: 10px 10px 0 0; box-shadow: 0 -6px 16px rgba(0,0,0,.25); background: #0a0a0a; color: #d4d4d4; padding: 10px 14px; font: 12px/1.5 Consolas, ui-monospace, monospace; white-space: pre-wrap; }
 body.has-ask-console { padding-bottom: 180px; }
 body.has-ask-console.has-ask-console-min { padding-bottom: 40px; }

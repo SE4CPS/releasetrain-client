@@ -241,7 +241,7 @@
           g.appendChild(t);
         }
         const note = askWorkflowNotes[n.name];
-        t.textContent = st === "skipped" ? "skipped" : (isCodeStep && !askWorkflowNotes[n.name]) ? [secs, "code"].join(" · ") : [secs, note].filter(Boolean).join(" · ");
+        t.textContent = st === "skipped" ? "skipped" : st === "stopped" ? [secs, "stopped"].filter(Boolean).join(" · ") : (isCodeStep && !askWorkflowNotes[n.name]) ? [secs, "code"].join(" · ") : [secs, note].filter(Boolean).join(" · ");
       }
     }
     // Writes into #askBenchmarkLiveStatus (see its own CSS comment), not a
@@ -389,6 +389,26 @@
       askWorkflowLabel = "";
       askWorkflowFinished = true;
       askConsoleLog("Done");
+      renderAskWorkflowCaption();
+      renderAskWorkflowDiagram();
+    }
+    // The Stop-button counterpart of finishAskWorkflow: the viewer aborted
+    // the request mid-run (see askAbortCtl in ask-rail.js). Whichever
+    // node was active is marked "stopped" rather than "done" (it never
+    // completed, so a green box would misreport the run), its elapsed
+    // time frozen at the moment of the abort; the nodes never reached
+    // read "skipped" exactly as after a finished run, and the diagram
+    // stays on screen for reference until the next question.
+    function stopAskWorkflow() {
+      if (askWorkflowTickTimer) { clearInterval(askWorkflowTickTimer); askWorkflowTickTimer = null; }
+      if (!askWorkflowState) return;
+      freezeActiveAskWorkflowTiming(Date.now());
+      for (const k of Object.keys(askWorkflowState)) {
+        if (askWorkflowState[k] === "active") askWorkflowState[k] = "stopped";
+      }
+      askWorkflowLabel = "";
+      askWorkflowFinished = true;
+      askConsoleLog("Stopped by the viewer");
       renderAskWorkflowCaption();
       renderAskWorkflowDiagram();
     }

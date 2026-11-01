@@ -608,6 +608,29 @@
       return finalResult;
     }
 
+    // The in-flight question's AbortController, null when nothing is
+    // running. Stop (#askStopBtn) aborts it: the fetch (or the stream
+    // read, whichever is in progress) rejects with an AbortError, the
+    // submit handler's catch recognizes that as a deliberate stop rather
+    // than a failure, and closing the connection is itself the signal
+    // the server acts on - POST /api/ask watches for the response
+    // socket closing mid-run and aborts at the next phase boundary
+    // (throwIfAskAborted in ask.js), so no separate cancel endpoint is
+    // needed. A model call already in flight on the server still runs to
+    // its own completion; only the phases after it are skipped.
+    let askAbortCtl = null;
+    // Stop and Clear share one grid slot (see .ask-input-row #askStopBtn):
+    // exactly one of the two is visible at any moment.
+    function askSetRunningControls(running) {
+      const stopBtn = document.getElementById("askStopBtn");
+      const clearBtn = document.getElementById("clearBtn");
+      if (stopBtn) stopBtn.hidden = !running;
+      if (clearBtn) clearBtn.hidden = !!running;
+    }
+    document.getElementById("askStopBtn").addEventListener("click", () => {
+      if (askAbortCtl) askAbortCtl.abort();
+    });
+
     document.getElementById("askForm").addEventListener("submit", async e => {
       e.preventDefault();
       const question = document.getElementById("askQuestion").value.trim();
@@ -681,6 +704,10 @@
       // double-submit), just with no accompanying visual change.
       const btn = document.getElementById("askSubmitBtn");
       btn.disabled = true;
+      askAbortCtl = new AbortController();
+      const askSignal = askAbortCtl.signal;
+      let askStopped = false;
+      askSetRunningControls(true);
       startAskWorkflow(question);
       // The rail opens immediately with a running skeleton (diagram +
       // live caption, or for Compare mode a plain "Running 5 pipelines…")
@@ -719,7 +746,7 @@
             resolveVendor: String(resolveVendor), resolveTemporal: String(resolveTemporal),
             provider, size,
           });
-          const res = await uaRequest("ask/compare?" + params.toString());
+          const res = await uaRequest("ask/compare?" + params.toString(), { signal: askSignal });
           const data = await askSafeJson(res);
           if (!res.ok) throw new Error(data.error || "Request failed.");
           if (useRail) {
@@ -745,7 +772,7 @@
         }
 
         const config = { preset, vendorCheck, temporalFilter, intentFilter, resolveVendor, resolveTemporal, provider, size };
-        const res = await uaRequest("ask", { method: "POST", body: JSON.stringify({ question, context, config }) });
+        const res = await uaRequest("ask", { method: "POST", body: JSON.stringify({ question, context, config }), signal: askSignal });
         if (res.status === 401) {
           refreshQuotaAfter = false;
           // A signed-out visitor who has used up today's free questions
@@ -868,6 +895,18 @@
           clearVendorFeedFilter();
         }
       } catch (err) {
+        // The viewer pressed Stop (see askAbortCtl above): not an error,
+        // so no error modal. The speculatively-opened running rail (or,
+        // for Compare on a narrow screen, the running modal) closes, the
+        // question stays in the box for a re-run, and the diagram keeps
+        // the stopped node (see stopAskWorkflow, called from `finally`).
+        if (askSignal.aborted || (err && err.name === "AbortError")) {
+          askStopped = true;
+          hideAskRail();
+          askOverlayEl.classList.remove("open");
+          askModalEl.classList.remove("open");
+          return;
+        }
         // Same reasoning as the "documents" branch above: a running rail
         // may already be open speculatively, and the error is shown in
         // the modal regardless of screen width, so a stale running
@@ -879,7 +918,9 @@
         askModalEl.classList.add("open");
       } finally {
         btn.disabled = false;
-        finishAskWorkflow();
+        askAbortCtl = null;
+        askSetRunningControls(false);
+        if (askStopped) stopAskWorkflow(); else finishAskWorkflow();
         // Every real ask attempt (success, abstain, or a rate-limit error
         // like "TPM: Limit 8000, Used 7333...") updates the provider's
         // quota. A plain document lookup or an unauthenticated attempt
