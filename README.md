@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/SE4CPS/releasetrain-client/actions/workflows/ci.yml/badge.svg)](https://github.com/SE4CPS/releasetrain-client/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/SE4CPS/releasetrain-client)](https://github.com/SE4CPS/releasetrain-client/releases)
-[![License: ISC](https://img.shields.io/github/license/SE4CPS/releasetrain-client)](LICENSE)
+[![License: MIT](https://img.shields.io/github/license/SE4CPS/releasetrain-client)](LICENSE)
 
 Static browser client for Releasetrain: software release activity, CVE
 advisories, and Reddit/Stack Overflow discussion signals from the
@@ -69,4 +69,4 @@ Edit files under `src/` only. `dist/` is generated; never commit it. See
 
 ## License
 
-ISC. See [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
