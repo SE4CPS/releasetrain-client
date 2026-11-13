@@ -717,5 +717,9 @@
       // this can fire on single_agent too, which is the whole point.
       if (phase === "web_searching") return "Web Search: searching for vendor evidence";
       if (phase === "web_verifying") return "Verify: judging vendor evidence";
+      // Server-side model-provider fallback (withProviderFallback in
+      // ask.js): the requested provider refused with a credits/quota
+      // error and the same call went to the next configured one.
+      if (phase === "provider_fallback") return `Model: ${detail || "provider"} out of credits, using ${(meta && meta.to) || "another provider"}`;
       return phase;
     }
