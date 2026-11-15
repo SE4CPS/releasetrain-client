@@ -473,7 +473,7 @@
               : `<span title="${esc(e.userId)}">${esc((e.userId || "").slice(-8))}</span>`;
           return `<tr>
             <td class="st-262" >${typeCell}</td>
-            <td title="${esc(q)}">${esc(q)}</td>
+            <td><button type="button" class="ua-se-ask-btn ua-se-q-btn" title="Click to paste into the Ask input (it is not run until you press Enter)" data-query="${esc(q)}">${esc(q)}</button></td>
             <td>${userCell}${ctxLine}</td>
             <td class="st-262"  title="${esc(e.timestamp ? new Date(e.timestamp).toLocaleString() : "")}">${esc(relTime(e.timestamp))}</td>
           </tr>`;
@@ -483,7 +483,11 @@
       // element visible from every view (see #stickyAskHeader's own
       // comment) -- including this Admin/Account view -- so pasting into
       // it and focusing it is enough; no view switch needed for the
-      // admin to see and use it.
+      // admin to see and use it. Every row's query text is such a button
+      // too (.ua-se-q-btn), not just the "ask" type cell: per request,
+      // one click puts any logged query into the input WITHOUT running
+      // it (setting .value fires no input/submit event), so the admin
+      // can edit it or just press Enter.
       listEl.querySelectorAll(".ua-se-ask-btn").forEach(btn => {
         btn.addEventListener("click", () => {
           const q = btn.getAttribute("data-query") || "";
