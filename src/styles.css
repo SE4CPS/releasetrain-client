@@ -2849,7 +2849,11 @@ details[open] > .ua-admin-header::before { transform: rotate(90deg); }
 .ua-se-ask-btn:hover { text-decoration: underline; }
 /* The query cell as a paste button: fills its fixed-width cell, keeps the
    cell's own one-line ellipsis, reads as plain text until hovered. */
-.ua-se-q-btn { display: block; width: 100%; max-width: 100%; text-align: left; color: inherit; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ua-se-q-btn { display: block; width: 100%; max-width: 100%; text-align: left; color: inherit; white-space: normal; overflow-wrap: anywhere; line-height: 1.35; }
+/* Per request, the query wraps onto more lines instead of ending in an
+   ellipsis: the column keeps its fixed width (table-layout: fixed), the
+   row grows taller. Only this cell wraps; type, user, time stay one line. */
+.ua-se-table td:nth-child(2) { white-space: normal; overflow-wrap: anywhere; }
 .ua-user-row {
   display: flex; align-items: center; gap: 10px; padding: 10px 14px;
   border: 1px solid var(--border); border-radius: var(--radius-sm);
