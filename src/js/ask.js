@@ -110,7 +110,11 @@
       cve: "CVE question", patch: "Patch question", version: "Version question",
       opinion: "Opinion (will decline)", comparison: "Comparison question",
       triage: "Triage question", cveimpact: "CVE Impact question",
+      count: "Count question",
     };
+    // Mirrors the server's detectCountQuestion (ask.js): "how many ..." is
+    // counted deterministically over tracked data, no model call.
+    const ASK_COUNT_QUESTION_RX = /\b(?:how many|number of|count of|total (?:number|count) of|how much)\b/i;
     // Kept in sync by hand with the server's own detectCveImpactCveId
     // (releasetrain-server src/ask.js): "which software is impacted by
     // CVE-X?" - shape-based (a literal CVE id plus impact phrasing), not
@@ -126,6 +130,7 @@
     function classifyIntentClient(question) {
       if (detectCveImpactClient(question)) return "cveimpact";
       if (detectComparisonEntitiesClient(question)) return "comparison";
+      if (ASK_COUNT_QUESTION_RX.test(String(question || ""))) return "count";
       const text = String(question || "").toLowerCase();
       for (const intent of ["cve", "patch", "triage", "version", "opinion"]) {
         if (ASK_INTENT_KEYWORDS[intent].some(kw => text.indexOf(kw) !== -1)) return intent;
