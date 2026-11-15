@@ -720,6 +720,11 @@
       // Server-side model-provider fallback (withProviderFallback in
       // ask.js): the requested provider refused with a credits/quota
       // error and the same call went to the next configured one.
-      if (phase === "provider_fallback") return `Model: ${detail || "provider"} out of credits, using ${(meta && meta.to) || "another provider"}`;
+      if (phase === "provider_fallback") {
+        // Same provider, other model size: a per-model rate limit, not an
+        // outage (Groq meters tokens per minute per model).
+        if (meta && meta.reason === "rate_limit") return `Model: ${detail || "provider"} rate limited, switched to ${meta.model || "another model"}`;
+        return `Model: ${detail || "provider"} unavailable, using ${(meta && meta.to) || "another provider"}`;
+      }
       return phase;
     }
