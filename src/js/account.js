@@ -277,6 +277,7 @@
         uaShowMsg("ua-keys-ok", value ? "Saved. Your " + provider + " key is now in use." : "Cleared. Back to the shared " + provider + " key.");
         uaShowMsg("ua-keys-error", "");
         await uaLoadProviderKeys();
+        if (typeof window.askReloadProviders === "function") window.askReloadProviders();
       } catch (err) {
         uaShowMsg("ua-keys-error", err.message || "Save failed.");
         uaShowMsg("ua-keys-ok", "");
@@ -509,6 +510,10 @@
           { value: "groq", label: "Groq (free tier)" },
           { value: "ollama", label: "Ollama Cloud (free tier)" },
         ],
+      },
+      askHiddenProviders: {
+        label: "Ask providers hidden from the public Model list",
+        hint: "Comma-separated provider ids (anthropic, groq, ollama, local). A hidden provider is never used with the shared server key: not listed for visitors, not a fallback, not a default. A signed-in user who saved their own key for it still gets it.",
       },
       askDefaultSize: {
         label: "Ask default model size",

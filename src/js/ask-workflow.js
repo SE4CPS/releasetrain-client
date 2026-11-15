@@ -695,7 +695,9 @@
         const res = await uaRequest("ask/providers");
         if (!res.ok) throw new Error(String(res.status));
         const data = await res.json();
-        ASK_PROVIDER_DATA = data.providers || [];
+        // `usable: false` = hidden from the public list (own-key only, see
+        // providerHidden on the server) and this visitor has no key for it.
+        ASK_PROVIDER_DATA = (data.providers || []).filter(p => p.usable !== false);
         const providerEl = document.getElementById("askProvider");
         const prevValue = providerEl.value;
         providerEl.innerHTML = ASK_PROVIDER_DATA.map(p => `<option value="${uaEsc(p.id)}">${uaEsc(p.label)}</option>`).join("");
@@ -733,6 +735,9 @@
       }
     }
     document.getElementById("askProvider").addEventListener("change", askPopulateSizeOptions);
+    // account.js re-runs this after a provider key is saved or cleared, so a
+    // hidden provider appears (or disappears) without a page reload.
+    window.askReloadProviders = askLoadProviders;
     askLoadProviders().then(() => askRefreshQuota());
 
     // Was also a visible "Usage: N call(s) today..." line; removed per
