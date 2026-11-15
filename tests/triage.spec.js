@@ -57,7 +57,7 @@ test('no prompts render with real inventory data when signed out', async ({ page
   await expect(page.locator('#triageDemoQList .demo-q-btn')).toHaveCount(0);
 });
 
-test('one machine renders exactly a stability and a security prompt, capped at 2 machines', async ({
+test('one machine renders one Prioritize button with stability and security chips, capped at 2 machines', async ({
   page,
 }) => {
   await stubApi(page);
@@ -76,10 +76,14 @@ test('one machine renders exactly a stability and a security prompt, capped at 2
   await page.goto('/', { waitUntil: 'load' });
   await expect(page.locator('#askForm')).toBeVisible({ timeout: 20_000 });
 
-  // 3 real machines above, capped at 2 x (stability, security) = 4
-  // buttons, not 6 - which 2 of the 3 survive isn't the contract (no
-  // ordering guarantee is made or needed), only the cap itself.
-  await expect(page.locator('#triageDemoQList .demo-q-btn')).toHaveCount(4);
+  // 3 real machines above, capped at 2: one Prioritize button per
+  // machine (rail simplified 2026-11-15), each with a hidden row of two
+  // mode chips (stability, security) - which 2 of the 3 survive isn't
+  // the contract (no ordering guarantee is made or needed), only the cap.
+  await page.locator('#questionsDetails > summary').click(); // the group starts closed
+  await expect(page.locator('#triageDemoQList .demo-q-machine')).toHaveCount(2);
+  await expect(page.locator('#triageDemoQList .demo-q-mode')).toHaveCount(4);
+  await expect(page.locator('#triageDemoQList .demo-q-modes:visible')).toHaveCount(0);
   const text = await page.locator('#triageDemoQList').innerText();
   const machineNames = new Set(
     (text.match(/Prioritize (\S+)'s/g) || []).map((m) =>
@@ -112,8 +116,12 @@ test("clicking a prompt fills the question and that machine's own components int
   await page.goto('/', { waitUntil: 'load' });
   await expect(page.locator('#askForm')).toBeVisible({ timeout: 20_000 });
 
+  // The machine button only reveals its mode chips; the chip carries
+  // the real question.
+  await page.locator('#questionsDetails > summary').click(); // the group starts closed
+  await page.locator('#triageDemoQList .demo-q-machine', { hasText: "work-laptop's updates" }).click();
   await page
-    .locator('#triageDemoQList .demo-q-btn', { hasText: "work-laptop's updates by stability" })
+    .locator('#triageDemoQList .demo-q-modes:not([hidden]) .demo-q-mode', { hasText: 'by stability' })
     .click();
   await expect(page.locator('#askQuestion')).toHaveValue(
     "Prioritize work-laptop's updates by stability",

@@ -17,7 +17,7 @@
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-P5E77Z7VG5"></script>
   
 
-  <link rel="stylesheet" href="styles.css?v=1ea3a0ee">
+  <link rel="stylesheet" href="styles.css?v=97851ebd">
 </head>
 
 <body>
@@ -402,7 +402,14 @@
            since relocateAskOptionsPanel inserts that panel at runtime
            (right after navLinksDetails) and a static label would end
            up on the wrong side of it. -->
-      <div class="sb-cluster-label" id="sbQuestionsClusterLabel" aria-hidden="true">Questions</div>
+      <!-- Rail simplified per request (2026-11-15: "too much content ...
+           even when logged out or in"): three closed groups, Questions /
+           Menu / Settings, instead of eyebrow labels over six stripes.
+           The question lists below are unchanged, only nested inside
+           this one group (their own <details> become sub-headers; the
+           Recent CVEs list still loads lazily on its own toggle). -->
+      <details class="sb-details sb-group" id="questionsDetails">
+        <summary>Questions</summary>
       <!-- Up to 4 one-click "Prioritize <machine>'s updates by <mode>"
            prompts, built from the visitor's own Installed versions
            inventory (see renderTriageDemoButtons in ask-rail.js) - same
@@ -450,6 +457,7 @@
         <summary>Recent Reddit Update Risk Questions</summary>
         <div class="demo-q-list" role="list" aria-label="Real community questions about a recent software update, ranked by update-risk score"></div>
       </details>
+      </details><!-- /#questionsDetails -->
 
       <!-- Collapsed by default, same as every other .sb-details group in
            this sidebar (per explicit request to collapse everything on
@@ -458,7 +466,6 @@
            after this wrapper, not after the bare <nav> anymore, so the
            options panel lands as #sidebar's own direct child rather than
            nesting inside this <details> too. -->
-      <div class="sb-cluster-label" aria-hidden="true">Navigate</div>
       <details class="sb-details" id="navLinksDetails">
         <summary>Menu</summary>
         <nav class="nav-links" id="navLinks" aria-label="Views">
@@ -491,6 +498,14 @@
           <a class="nav-link" href="https://github.com/SE4CPS/releasetrain-client"
             target="_blank" rel="noopener noreferrer">⭐ GitHub</a>
         </nav>
+      </details>
+      <!-- Settings group: relocateAskOptionsPanel (ask-rail.js) moves
+           #askOptionsPanel (Model & pipeline / Advanced checks /
+           Guardrails) inside this closed group at the rail breakpoint,
+           so the three settings read as sub-headers of one "Settings"
+           row rather than three more top-level stripes. -->
+      <details class="sb-details sb-group" id="settingsDetails">
+        <summary>Settings</summary>
       </details>
 
       <!-- Filters/Stats moved to their own panel (#filtersPanel, toggled
@@ -6672,8 +6687,8 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
 
   <script src="js/core.js?v=76ff1657"></script>
   <script src="js/ask.js?v=ebf5917e"></script>
-  <script src="js/ask-workflow.js?v=8d4b75bb"></script>
-  <script src="js/ask-rail.js?v=5057520b"></script>
+  <script src="js/ask-workflow.js?v=4ffa4b4e"></script>
+  <script src="js/ask-rail.js?v=62cbd307"></script>
   <script src="js/helpers.js?v=0a9e3a66"></script>
   <script src="js/graph.js?v=112cdccf"></script>
   <script src="js/arch.js?v=8cb5a53a"></script>

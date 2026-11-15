@@ -708,6 +708,20 @@ body.view-feed .layout > .feed-main { flex: 1 1 0; }
 /* First group at the very top of the drawer needs no divider/gap of
    its own; the drawer's own top edge already bounds it. */
 #sidebar > .sb-cluster-label:first-child { margin-top: 0; border-top: none; }
+/* Three top-level groups (Questions / Menu / Settings, .sb-group) are
+   the only rows a visitor sees with everything closed; the sections
+   nested inside a group lose their own card so they read as
+   sub-headers, indented under the group, not as more stripes. */
+#sidebar > .sb-group > summary { font-size: 10px; padding: 7px 12px; }
+.sb-group .sb-details { background: none; border: none; border-radius: 0; margin: 0 0 0 10px; }
+.sb-group .sb-details > summary { padding: 4px 12px; }
+.sb-group .demo-q-list, .sb-group > .ask-context-fill-btn { margin-left: 10px; }
+.sb-group > .ask-context-fill-btn { width: calc(100% - 30px); margin: 4px 12px 6px 22px; }
+/* Per-machine Prioritize button plus its mode chips (renderTriageDemoButtons). */
+.demo-q-machine[aria-expanded="true"] { border-color: var(--brand); }
+.demo-q-modes { display: flex; gap: 6px; padding: 0 0 2px 14px; }
+.demo-q-modes[hidden] { display: none; }
+.demo-q-mode { flex: 1 1 0; font-size: 11px; padding: 4px 8px; text-align: center; }
 /* (A border-top-dropping rule used to live here, from when .sb-details
    had only a 1px top divider instead of its current full card border -
    with real cards under each cluster label there's no doubled line to
@@ -1193,6 +1207,11 @@ body.has-ask-console.has-ask-console-min .view-close-btn { bottom: 48px; }
 .ask-console-close { position: sticky; top: 0; float: right; background: #262626; color: #d4d4d4; border: 0; border-radius: 4px; cursor: pointer; font-size: 12px; padding: 1px 7px; }
 .ask-console .ac-t { color: #7c7c7c; }
 .ask-console .ac-note { color: #7dd3fc; }
+/* Per request: outcome colors in the run log. Success green, a detour
+   or a stop amber, a failure red; plain steps keep the default gray. */
+.ask-console .ac-ok { color: #4ade80; }
+.ask-console .ac-warn { color: #fbbf24; }
+.ask-console .ac-error { color: #f87171; }
 #askWorkflowDiagram g.askwfg-active { animation: askwfRobotBlink 1.2s ease-in-out infinite; }
 /* Robot in front of each node's name (see renderAskWorkflowDiagram),
    per explicit request. Only the robot blinks while its own node is

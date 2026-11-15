@@ -42,6 +42,7 @@
     let askWorkflowQuestion = "";
     let askWorkflowNotes = {};        // node name -> short detail shown under the box
     let askWorkflowLog = [];          // console lines for the Short answer tab
+    let askWorkflowOutcome = "ok";   // ok | abstained | error, set by the stream reader (ask-rail.js), colors the Done line
     let askWorkflowAgentKeys = null;  // set when the answer arrives; null while running
     let askWorkflowFinished = false;  // true once the run is over (unvisited nodes turn "skipped")
 
@@ -277,7 +278,7 @@
     // (removed as a redundant second "something is happening" signal).
     function startAskWorkflow(question) {
       askWorkflowQuestion = question || "";
-      askWorkflowNotes = {}; askWorkflowLog = []; askWorkflowFinished = false; askWorkflowAgentKeys = null; askWorkflowStartedRun = Date.now();
+      askWorkflowNotes = {}; askWorkflowLog = []; askWorkflowFinished = false; askWorkflowAgentKeys = null; askWorkflowStartedRun = Date.now(); askWorkflowOutcome = "ok";
       askConsoleLog("Question received");
       askWorkflowState = { vendor: "active", rewriter: "idle", retriever: "idle", classify: "idle", evaluator: "idle", orchestrator: "idle", websearch: "idle", verify: "idle" };
       const now = Date.now();
@@ -333,6 +334,7 @@
       el.style.setProperty("--console-left", host ? Math.max(0, Math.round(host.getBoundingClientRect().left)) + "px" : "0px");
     }
     window.addEventListener("resize", () => { if (document.getElementById("askConsoleFixed")) renderAskConsole(); });
+    const ASK_CONSOLE_WARN_PHASES = new Set(["provider_fallback", "retrying", "widening", "web_searching", "web_verifying"]);
     function pushAskWorkflowPhase(phase, detail, preset, meta) {
       if (!askWorkflowState) return;
       if (phase === "note") {
@@ -342,7 +344,10 @@
       const now = Date.now();
       askWorkflowLabel = askPhaseLabel(phase, detail, preset, meta);
       askWorkflowStartedAt = now;
-      askConsoleLog(askWorkflowLabel);
+      // Color by meaning (per request): a detour the pipeline had to take
+      // is amber, a plain step stays neutral. Errors (ac-error) and the
+      // final Done (ac-ok / ac-warn / ac-error) are logged elsewhere.
+      askConsoleLog(askWorkflowLabel, ASK_CONSOLE_WARN_PHASES.has(phase) ? "ac-warn" : "");
       const node = ASK_WORKFLOW_PHASE_NODE[phase];
       if (node) {
         freezeActiveAskWorkflowTiming(now);
@@ -388,7 +393,9 @@
       // redundant trailing line.
       askWorkflowLabel = "";
       askWorkflowFinished = true;
-      askConsoleLog("Done");
+      if (askWorkflowOutcome === "error") askConsoleLog("Done with an error", "ac-error");
+      else if (askWorkflowOutcome === "abstained") askConsoleLog("Done: no answer (abstained)", "ac-warn");
+      else askConsoleLog("Done", "ac-ok");
       renderAskWorkflowCaption();
       renderAskWorkflowDiagram();
     }
@@ -408,7 +415,7 @@
       }
       askWorkflowLabel = "";
       askWorkflowFinished = true;
-      askConsoleLog("Stopped by the viewer");
+      askConsoleLog("Stopped by the viewer", "ac-warn");
       renderAskWorkflowCaption();
       renderAskWorkflowDiagram();
     }

@@ -33,12 +33,13 @@
       const panel = document.getElementById("askOptionsPanel");
       if (!panel) return;
       if (askRailMql.matches) {
-        // The <details> wrapper (see its own comment above the markup),
-        // not the bare #navLinks it now contains: anchoring on the
-        // inner <nav> would insert this panel inside that <details>,
-        // right along with the nav links it wraps.
+        // Inside the closed "Settings" group (see #settingsDetails in the
+        // markup); falls back to the old next-to-Menu slot if that group
+        // is ever missing.
+        const group = document.getElementById("settingsDetails");
         const nav = document.getElementById("navLinksDetails");
-        if (nav && nav.nextSibling !== panel) nav.parentElement.insertBefore(panel, nav.nextSibling);
+        if (group) { if (panel.parentElement !== group) group.appendChild(panel); }
+        else if (nav && nav.nextSibling !== panel) nav.parentElement.insertBefore(panel, nav.nextSibling);
       } else {
         // .ask-options-row holds nothing else (Clear/bookmark/submit
         // moved up to .ask-input-row, always on the input's own line,
@@ -162,6 +163,15 @@
       el.addEventListener("click", (e) => {
         const btn = e.target.closest(".demo-q-btn");
         if (!btn) return;
+        if (btn.dataset.machine !== undefined) {
+          // A per-machine Prioritize button: show/hide its mode chips.
+          const modes = btn.nextElementSibling;
+          if (modes && modes.classList.contains("demo-q-modes")) {
+            modes.hidden = !modes.hidden;
+            btn.setAttribute("aria-expanded", String(!modes.hidden));
+          }
+          return;
+        }
         const input = document.getElementById("askQuestion");
         if (!input) return;
         input.value = btn.dataset.q || "";
@@ -274,10 +284,17 @@
       const machines = Array.from(new Set(
         uaInvGet().filter((e) => e.machine && e.component && e.version).map((e) => e.machine)
       )).slice(0, 2);
-      el.innerHTML = machines.map((m) => ["stability", "security"].map((mode) => {
-        const q = `Prioritize ${m}'s updates by ${mode}`;
-        return `<button type="button" class="demo-q-btn" data-q="${uaEsc(q)}" data-context="${uaEsc(formatInventoryForAskContext(m))}">${uaEsc(q)}</button>`;
-      }).join("")).join("");
+      // One button per machine (was two: stability and security). The
+      // mode is picked on click: the button toggles a small row with the
+      // two mode chips under it, and those chips carry the real question
+      // (data-q) the shared wireDemoQList handler loads into the input.
+      el.innerHTML = machines.map((m) => {
+        const chips = ["stability", "security"].map((mode) => {
+          const q = `Prioritize ${m}'s updates by ${mode}`;
+          return `<button type="button" class="demo-q-btn demo-q-mode" data-q="${uaEsc(q)}" data-context="${uaEsc(formatInventoryForAskContext(m))}" title="${uaEsc(q)}">by ${mode}</button>`;
+        }).join("");
+        return `<button type="button" class="demo-q-btn demo-q-machine" data-machine="${uaEsc(m)}" aria-expanded="false">Prioritize ${uaEsc(m)}'s updates&hellip;</button><div class="demo-q-modes" hidden>${chips}</div>`;
+      }).join("");
       // #demoQuestionsDetails used to be force-collapsed here once real
       // per-machine prompts existed (it started open in the markup back
       // then). Every sidebar section now starts closed in the markup
@@ -599,8 +616,16 @@
               pushAskWorkflowPhase(evt.phase, evt.detail, preset, evt.meta);
             }
           }
-          else if (evt.type === "result") finalResult = evt;
-          else if (evt.type === "error") errorMessage = evt.error || "Request failed.";
+          else if (evt.type === "result") {
+            finalResult = evt;
+            const body = evt.result || evt;
+            askWorkflowOutcome = body && body.abstained ? "abstained" : "ok";
+          }
+          else if (evt.type === "error") {
+            errorMessage = evt.error || "Request failed.";
+            askWorkflowOutcome = "error";
+            askConsoleLog(`Error: ${errorMessage}`, "ac-error");
+          }
         }
       }
       if (errorMessage) throw new Error(errorMessage);
