@@ -2832,6 +2832,11 @@ details[open] > .ua-admin-header::before { transform: rotate(90deg); }
 .ua-se-table th:nth-child(3), .ua-se-table td:nth-child(3) { width: 24%; }
 .ua-se-table th:nth-child(4), .ua-se-table td:nth-child(4) { width: 16%; }
 .ua-se-anon { color: var(--muted); font-style: italic; }
+/* Second line under the user: location, OS, browser (or agent name).
+   A block inside the fixed-width cell, with its own ellipsis, so the
+   extra context adds row height, never column width. */
+.ua-se-ctx { display: block; font-size: 10.5px; line-height: 1.3; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ua-se-type-agent { color: var(--muted); }
 @media (max-width: 640px) { .ua-se-table { font-size: 11px; } }
 .ua-se-type { font-size: 11px; white-space: nowrap; }
 .ua-se-type-ask { color: var(--brand); font-weight: 600; }

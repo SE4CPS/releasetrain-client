@@ -447,9 +447,23 @@
           // what a user actually asked without retyping it. A plain
           // <button>, not a link/span with a click handler bolted on, so
           // it's keyboard-reachable and reads as interactive on its own.
-          const typeCell = isAsk
-            ? `<button type="button" class="ua-se-type ua-se-type-ask ua-se-ask-btn" title="Click to paste this question into the Ask input" data-query="${esc(q)}">💬 ask</button>`
-            : `<span class="ua-se-type" title="Vendor/component search">🔍 search</span>`;
+          // Context the server derives on read from the event's IP and
+          // user agent (see GET /api/events/search): location, OS,
+          // browser, and whether the client looked like a script. Shown
+          // as a second muted line under the user, never as new columns,
+          // so the table keeps its width (see .ua-se-table's comment).
+          const ctx = e.context || {};
+          const isAgent = !!ctx.agent;
+          const typeCell = isAgent
+            ? `<span class="ua-se-type ua-se-type-agent" title="Scripted client: ${esc(e.userAgent || "no user agent")}">🤖 agent</span>`
+            : isAsk
+              ? `<button type="button" class="ua-se-type ua-se-type-ask ua-se-ask-btn" title="Click to paste this question into the Ask input" data-query="${esc(q)}">💬 ask</button>`
+              : `<span class="ua-se-type" title="Vendor/component search">🔍 search</span>`;
+          const place = ctx.city && ctx.country ? `${ctx.city}, ${ctx.country}` : (ctx.country || "");
+          const ctxParts = [place, ctx.os, ctx.browser].filter(Boolean);
+          const ctxLine = ctxParts.length
+            ? `<span class="ua-se-ctx" title="${esc(ctxParts.join(" · "))}">${esc(ctxParts.join(" · "))}</span>`
+            : "";
           const isAnon = !e.userId || e.userId === "anonymous";
           const known = !isAnon && usersById.get(String(e.userId));
           const userCell = isAnon
@@ -460,7 +474,7 @@
           return `<tr>
             <td class="st-262" >${typeCell}</td>
             <td title="${esc(q)}">${esc(q)}</td>
-            <td>${userCell}</td>
+            <td>${userCell}${ctxLine}</td>
             <td class="st-262"  title="${esc(e.timestamp ? new Date(e.timestamp).toLocaleString() : "")}">${esc(relTime(e.timestamp))}</td>
           </tr>`;
         }).join("") +
