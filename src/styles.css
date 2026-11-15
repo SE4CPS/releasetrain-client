@@ -2835,7 +2835,10 @@ details[open] > .ua-admin-header::before { transform: rotate(90deg); }
 /* Second line under the user: location, OS, browser (or agent name).
    A block inside the fixed-width cell, with its own ellipsis, so the
    extra context adds row height, never column width. */
-.ua-se-ctx { display: block; font-size: 10.5px; line-height: 1.3; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ua-se-ctx { display: block; font-size: 10.5px; line-height: 1.3; color: var(--muted); white-space: normal; overflow-wrap: anywhere; }
+/* The user cell wraps too (name on the first line, context below it, as
+   many lines as needed) instead of cutting the context with an ellipsis. */
+.ua-se-table td:nth-child(3) { white-space: normal; overflow-wrap: anywhere; }
 .ua-se-type-agent { color: var(--muted); }
 @media (max-width: 640px) { .ua-se-table { font-size: 11px; } }
 .ua-se-type { font-size: 11px; white-space: nowrap; }
