@@ -1374,7 +1374,9 @@ body.has-ask-console.has-ask-console-min .view-close-btn { bottom: 48px; }
    this row to nothing, same reasoning already established for
    .ask-options-row just below it. gap: 6px added now that a second,
    independent chip (#askQuestionTypeBadge) can show alongside it. */
-.ask-intent-badge-row { display: flex; gap: 6px; margin-top: 4px; }
+.ask-intent-badge-row { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+/* Vendor-only hint: amber, since it asks the viewer to change the question. */
+.ask-intent-badge-warn { color: #92400e; background: #fef3c7; border-color: #f59e0b; }
 /* Was a fixed full-width strip below the header (any real overlay
    needs the page's own top padding bumped to make room for it, see
    .layout's own history); moved per explicit request to sit inline

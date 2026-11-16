@@ -420,8 +420,59 @@
       renderAskWorkflowDiagram();
     }
 
+    // Vendor-only hint, mirroring the server's detectVendorOnly (ask.js):
+    // GET /api/ask/brands lists each vendor-only brand with its product
+    // names; a question naming such a brand and none of its products
+    // (full name, or a distinctive first word like "intellij") gets the
+    // badge before it is ever submitted. Fetched once; silent on failure.
+    let ASK_BRANDS = null;
+    async function askLoadBrands() {
+      try {
+        const res = await uaRequest("ask/brands");
+        if (!res.ok) return;
+        const data = await res.json();
+        ASK_BRANDS = Array.isArray(data.brands) ? data.brands : [];
+        updateAskPreview();
+      } catch { /* badge stays hidden */ }
+    }
+    const askWordRx = (term) => new RegExp(`(^|[^a-z0-9])${String(term).toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z0-9]|$)`, "i");
+    function askVendorOnlyBrand(question) {
+      if (!ASK_BRANDS || !ASK_BRANDS.length) return null;
+      const text = String(question || "").toLowerCase();
+      for (const b of ASK_BRANDS) {
+        const bkey = String(b.name || "").toLowerCase();
+        if (bkey.length < 3 || !askWordRx(bkey).test(text)) continue;
+        const named = (b.products || []).some(p => {
+          const pk = String(p).toLowerCase();
+          if (pk === bkey) return false;
+          if (askWordRx(pk).test(text)) return true;
+          const first = pk.split(/[\s/-]+/)[0];
+          return first && first.length >= 4 && first !== bkey && askWordRx(first).test(text);
+        });
+        if (!named) return b;
+      }
+      return null;
+    }
+    function askUpdateVendorOnlyBadge(question) {
+      const el = document.getElementById("askVendorOnlyBadge");
+      if (!el) return;
+      const b = askVendorOnlyBrand(question);
+      if (b) {
+        const example = (b.products || [])[0];
+        el.textContent = `Vendor only: add a ${b.name} product${example ? ` (e.g. ${example})` : ""}`;
+        el.hidden = false;
+      } else {
+        el.hidden = true;
+      }
+    }
+    // uaRequest lives in account.js, which loads after this file: fetch
+    // once every script has run, not at this script's own evaluation.
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", askLoadBrands);
+    else askLoadBrands();
+
     function updateAskPreview() {
       const question = askQuestionEl.value;
+      askUpdateVendorOnlyBadge(question);
       const intent = classifyIntentClient(question);
       if (intent) {
         askIntentBadgeEl.textContent = ASK_INTENT_BADGE_LABELS[intent];
