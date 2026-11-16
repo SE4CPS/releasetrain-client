@@ -170,9 +170,12 @@
         setTimeout(() => window.dispatchEvent(new Event("resize")), 260);
       }
     }
+    // Collapsed by default (per request, 2026-11-16): <body> starts with the
+    // class in the markup so the first paint is already the rail, and only a
+    // viewer who expanded it before (localStorage "open") gets it open again.
     let sidebarStored = "";
     try { sidebarStored = localStorage.getItem("rt.sidebar") || ""; } catch { /* private mode */ }
-    setSidebarCollapsed(sidebarStored === "collapsed", false);
+    setSidebarCollapsed(sidebarStored !== "open", false);
     sidebarCollapseBtn?.addEventListener("click", () => {
       setSidebarCollapsed(!document.body.classList.contains("sidebar-collapsed"), true);
     });

@@ -28,6 +28,7 @@ async function stubApi(page) {
 // data, so every test that expects prompts to render signs in first.
 async function signIn(page) {
   await page.addInitScript(() => {
+    localStorage.setItem('rt.sidebar', 'open'); // the sidebar starts collapsed
     localStorage.setItem('rt_token', 't');
     localStorage.setItem(
       'rt_user',
@@ -47,6 +48,7 @@ test('no prompts render with no inventory', async ({ page }) => {
 test('no prompts render with real inventory data when signed out', async ({ page }) => {
   await stubApi(page);
   await page.addInitScript(() => {
+    localStorage.setItem('rt.sidebar', 'open'); // the sidebar starts collapsed
     localStorage.setItem(
       'rt_inventory',
       JSON.stringify([{ component: 'Firefox', version: '100.0', machine: 'work-laptop' }]),
@@ -63,6 +65,7 @@ test('one machine renders one Prioritize button with stability and security chip
   await stubApi(page);
   await signIn(page);
   await page.addInitScript(() => {
+    localStorage.setItem('rt.sidebar', 'open'); // the sidebar starts collapsed
     localStorage.setItem(
       'rt_inventory',
       JSON.stringify([
@@ -105,6 +108,7 @@ test("clicking a prompt fills the question and that machine's own components int
   await stubApi(page);
   await signIn(page);
   await page.addInitScript(() => {
+    localStorage.setItem('rt.sidebar', 'open'); // the sidebar starts collapsed
     localStorage.setItem(
       'rt_inventory',
       JSON.stringify([
@@ -119,9 +123,13 @@ test("clicking a prompt fills the question and that machine's own components int
   // The machine button only reveals its mode chips; the chip carries
   // the real question.
   await page.locator('#questionsDetails > summary').click(); // the group starts closed
-  await page.locator('#triageDemoQList .demo-q-machine', { hasText: "work-laptop's updates" }).click();
   await page
-    .locator('#triageDemoQList .demo-q-modes:not([hidden]) .demo-q-mode', { hasText: 'by stability' })
+    .locator('#triageDemoQList .demo-q-machine', { hasText: "work-laptop's updates" })
+    .click();
+  await page
+    .locator('#triageDemoQList .demo-q-modes:not([hidden]) .demo-q-mode', {
+      hasText: 'by stability',
+    })
     .click();
   await expect(page.locator('#askQuestion')).toHaveValue(
     "Prioritize work-laptop's updates by stability",

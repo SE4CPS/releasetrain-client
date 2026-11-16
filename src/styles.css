@@ -3922,6 +3922,7 @@ select.ua-settings-input { width: auto; max-width: 100%; }
   body.sidebar-collapsed #sidebar > :not(#sidebarFooter) { display: none !important; }
   body.sidebar-collapsed #sidebarFooter { flex-direction: column; align-items: center; justify-content: flex-end; gap: 10px; padding: 10px 0; }
   body.sidebar-collapsed #sidebarFooter .brand,
+  body.sidebar-collapsed #sidebarFooter .sb-updated,
   body.sidebar-collapsed #sidebarFooter .top-signin-btn,
   body.sidebar-collapsed #sidebarFooter .ua-topbar-chip { display: none !important; }
 }
