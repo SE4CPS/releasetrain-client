@@ -2919,6 +2919,9 @@ details[open] > .ua-admin-header::before { transform: rotate(90deg); }
    guardrail that actually did something for THIS specific answer,
    not just "is enabled in general". */
 .ask-guardrail-used { font-size: 11px; color: var(--ok); margin-top: 2px; }
+/* Short answer of an update-advice question: posts scanned and the most useful post (askShortTabHtml). */
+.ask-short-meta { margin: 4px 0 0; font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
+.ask-short-link { color: inherit; text-decoration: underline; }
 /* Which pipeline component owns a guardrail (GET /api/guardrails `component`). */
 .ask-guardrail-comp { display: inline-block; font-size: 10px; font-weight: 600; line-height: 1.4; padding: 0 5px; border-radius: 3px; background: rgba(124, 58, 237, .14); color: #7c3aed; vertical-align: middle; }
 .ask-guardrail-used a { color: inherit; text-decoration: underline; margin-left: 2px; }

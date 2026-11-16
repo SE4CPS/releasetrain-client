@@ -1752,8 +1752,29 @@
     // verdict as data (the winning app, and the component when a stack was resolved);
     // anything else uses the answer's own first sentence, with markdown, citation markers
     // and links stripped, capped at about 220 characters.
+    // An update-advice answer (res.updateAdvice, see runUpdateAdviceAsk on
+    // the server) carries its verdict and counts as data, so the short
+    // answer is built from them: the verdict sentence, how many posts were
+    // scanned (per request: always, even when it is zero), and the most
+    // useful post as a link. The generic sentence trimmer below would cut
+    // the counts off at "since"/"but".
+    function askAdviceShort(res) {
+      const u = res && res.updateAdvice;
+      if (!u) return null;
+      const name = `${u.product || "it"}${u.version ? ` ${u.version}` : ""}`;
+      const sentence = u.verdict === "wait"
+        ? `Based on community feedback, wait a few days before updating to ${name}.`
+        : u.verdict === "caution"
+          ? `Based on community feedback, nothing speaks against updating to ${name} yet, but it is only ${u.ageDays} day${u.ageDays === 1 ? "" : "s"} old.`
+          : `Based on community feedback, updating to ${name} looks safe.`;
+      // scannedText (communityCountDisclosure) and topPost (mostUsefulPostLink)
+      // are the server guardrails' own output: absent when one is switched off.
+      return { sentence, scanned: u.scannedText || "", topPost: u.topPost && u.topPost.url ? u.topPost : null };
+    }
     function askShortAnswer(res, question) {
       if (!res) return "";
+      const advice = askAdviceShort(res);
+      if (advice) return [advice.sentence, advice.scanned].filter(Boolean).join(" ");
       const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
       if (res.intent === "comparison" && !res.abstained) {
         const st = res.stack;
@@ -1798,6 +1819,15 @@
       return first;
     }
     function askShortTabHtml(res, question) {
+      const advice = askAdviceShort(res);
+      if (advice) {
+        const tp = advice.topPost;
+        return `<div class="ask-rail-panel" data-panel="short">
+          <p class="ask-short-answer">${uaEsc(advice.sentence)}</p>
+          ${advice.scanned ? `<p class="ask-short-meta">${uaEsc(advice.scanned)}</p>` : ""}
+          ${tp ? `<p class="ask-short-meta">Most useful post: <a class="ask-short-link" href="${uaEsc(tp.url)}" target="_blank" rel="noopener">${uaEsc(tp.title)}</a> (${uaEsc(tp.tone)}${tp.isRisky ? ", update-risk flagged" : ""}, ${Number(tp.score) || 0} upvotes)</p>` : ""}
+        </div>`;
+      }
       const sentence = askShortAnswer(res, question);
       if (!sentence) return "";
       // The explanatory line under the sentence ("The full answer,

@@ -370,6 +370,8 @@
         updateAdviceIntent: "Update-advice intent",
         communitySubredditEvidence: "Subreddit evidence",
         updateAdviceVerdict: "Update verdict rule",
+        communityCountDisclosure: "Posts-scanned count",
+        mostUsefulPostLink: "Most useful post",
       };
       const shortLabel = g => ASK_GUARDRAIL_SHORT[g.id] || String(g.label || g.id).split(/\s+/).slice(0, 3).join(" ");
       const optionalHtml = optional.length
@@ -458,6 +460,10 @@
           : `No subreddit of its own is tracked; read ${a.posts} post${a.posts === 1 ? "" : "s"} naming the product since the release.`;
       } else if (id === "updateAdviceVerdict" && a.applied) {
         text = `Verdict decided by rule: ${uaEsc(a.verdict)}${a.corrected ? " (the model's own wording was corrected to match)" : ""}.`;
+      } else if (id === "communityCountDisclosure" && a.applied) {
+        text = `Stated that ${a.posts} post${a.posts === 1 ? " was" : "s were"} scanned for this verdict.`;
+      } else if (id === "mostUsefulPostLink" && a.applied) {
+        text = `Linked the most useful post: ${uaEsc(a.title || a.url || "")}.`;
       } else if (id === "vendorWebProducts" && a.applied) {
         const why = a.trigger === "product_not_tracked" ? "the product asked about is not tracked" : a.trigger === "single_product_vendor" ? "only one of its products is tracked" : "the vendor is not tracked";
         text = `Looked "${uaEsc(a.vendor || "the vendor")}" up online because ${why}: found ${(a.products || []).length} product${(a.products || []).length === 1 ? "" : "s"} (${uaEsc((a.products || []).slice(0, 5).join(", "))}), saved to the vendor list.`;
