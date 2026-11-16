@@ -54,6 +54,8 @@
     const ASK_INTENT_KEYWORDS = {
       cve: ["cve", "vulnerability", "vulnerabilities", "exploit", "advisory", "attack", "breach", "rce", "zero-day"],
       patch: ["patch", "patched", "hotfix", "fix", "fixed", "bugfix"],
+      // Mirrors the server's INTENT_KEYWORDS.advice (updateAdviceIntent guardrail)
+      advice: ["should i update", "should i upgrade", "should we update", "should we upgrade", "should i install", "should we install", "should i move to", "should i switch to", "safe to update", "safe to upgrade", "safe to install", "worth updating", "worth upgrading", "worth the update", "worth the upgrade", "ok to update", "okay to update", "ok to upgrade", "okay to upgrade", "time to update", "time to upgrade", "recommend updating", "recommend upgrading", "can i update safely", "can i upgrade safely", "is it safe to", "should i wait", "wait before updating", "wait before upgrading"],
       version: ["version", "release", "released", "changelog", "upgrade", "downgrade"],
       opinion: ["nightmare", "best", "worst", "should i", "recommend", "opinion", "prefer", "versus", " vs ", "better than", "worth it", "favorite", "favourite", "hate", "love", "annoying", "say goodbye"],
       // Kept in sync with ask.js's own INTENT_KEYWORDS.triage
@@ -110,7 +112,7 @@
       cve: "CVE question", patch: "Patch question", version: "Version question",
       opinion: "Opinion (will decline)", comparison: "Comparison question",
       triage: "Triage question", cveimpact: "CVE Impact question",
-      count: "Count question",
+      count: "Count question", advice: "Update advice question",
     };
     // Mirrors the server's detectCountQuestion (ask.js): "how many ..." is
     // counted deterministically over tracked data, no model call.
@@ -132,7 +134,7 @@
       if (detectComparisonEntitiesClient(question)) return "comparison";
       if (ASK_COUNT_QUESTION_RX.test(String(question || ""))) return "count";
       const text = String(question || "").toLowerCase();
-      for (const intent of ["cve", "patch", "triage", "version", "opinion"]) {
+      for (const intent of ["cve", "patch", "triage", "advice", "version", "opinion"]) {
         if (ASK_INTENT_KEYWORDS[intent].some(kw => text.indexOf(kw) !== -1)) return intent;
       }
       return null; // "general" isn't worth badging - nothing distinctive to show
@@ -365,6 +367,9 @@
         nistTierFallbackSort: "NIST: fallback sort",
         vendorOnlyReply: "Vendor-only check",
         vendorWebProducts: "Vendor web lookup",
+        updateAdviceIntent: "Update-advice intent",
+        communitySubredditEvidence: "Subreddit evidence",
+        updateAdviceVerdict: "Update verdict rule",
       };
       const shortLabel = g => ASK_GUARDRAIL_SHORT[g.id] || String(g.label || g.id).split(/\s+/).slice(0, 3).join(" ");
       const optionalHtml = optional.length
@@ -445,6 +450,14 @@
         text = a.agreed === false
           ? `Checked a live web source too, found a disagreement (web said ${uaEsc(a.webVersion || "a different version")}), and let the Orchestrator reconcile it.`
           : "Checked a live web source too, which confirmed this answer's version number.";
+      } else if (id === "updateAdviceIntent" && a.applied) {
+        text = "Read this as an update-advice question, not a version lookup or an opinion.";
+      } else if (id === "communitySubredditEvidence" && a.applied) {
+        text = a.subreddit
+          ? `Read ${a.posts} r/${uaEsc(a.subreddit)} post${a.posts === 1 ? "" : "s"} since the release: ${a.negative} negative, ${a.positive} positive, ${a.flagged} flagged as update risks.`
+          : `No subreddit of its own is tracked; read ${a.posts} post${a.posts === 1 ? "" : "s"} naming the product since the release.`;
+      } else if (id === "updateAdviceVerdict" && a.applied) {
+        text = `Verdict decided by rule: ${uaEsc(a.verdict)}${a.corrected ? " (the model's own wording was corrected to match)" : ""}.`;
       } else if (id === "vendorWebProducts" && a.applied) {
         const why = a.trigger === "product_not_tracked" ? "the product asked about is not tracked" : a.trigger === "single_product_vendor" ? "only one of its products is tracked" : "the vendor is not tracked";
         text = `Looked "${uaEsc(a.vendor || "the vendor")}" up online because ${why}: found ${(a.products || []).length} product${(a.products || []).length === 1 ? "" : "s"} (${uaEsc((a.products || []).slice(0, 5).join(", "))}), saved to the vendor list.`;
