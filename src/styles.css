@@ -608,6 +608,8 @@ body.view-feed .layout > .feed-main { flex: 1 1 0; }
      heading, per explicit request ("make the version more subtle"). */
   .sidebar-footer .brand { font-size: 11px; font-weight: 400; color: var(--muted); }
   .sidebar-footer .brand em { color: var(--muted); }
+  /* Last-deploy stamp beside the version (loadDeployedStamp in ask-rail.js). */
+  .sidebar-footer .sb-updated { font-size: 9.5px; color: var(--muted); opacity: .85; white-space: nowrap; }
   /* Was margin-left:auto to push itself to the far right of a column
      layout; inert now that .sidebar-footer's own justify-content
      already pushes this to the row's right edge, so it's cleared

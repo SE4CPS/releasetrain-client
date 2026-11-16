@@ -121,6 +121,31 @@
     }
     relocateSidebarFooter();
     askRailMql.addEventListener("change", relocateSidebarFooter);
+    // "Last updated" stamp next to the version (per request, small font):
+    // deployed.json is written by the server's deploy step (rt-ctl
+    // deploy-client) after it verified the new files are being served,
+    // so its time is the real deploy time, not a build or commit time.
+    // Absent locally and on a failed fetch: nothing is shown.
+    async function loadDeployedStamp() {
+      const footer = document.getElementById("sidebarFooter");
+      if (!footer) return;
+      let info;
+      try {
+        const res = await fetch(`deployed.json?t=${Date.now()}`, { cache: "no-store" });
+        if (!res.ok) return;
+        info = await res.json();
+      } catch { return; }
+      const when = new Date(info && info.deployedAt);
+      if (!info || Number.isNaN(when.getTime())) return;
+      const text = when.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+      const span = document.createElement("span");
+      span.className = "sb-updated";
+      span.title = `Last deployed ${when.toLocaleString()}${info.commit ? ` (commit ${info.commit})` : ""}`;
+      span.textContent = `updated ${text}`;
+      const brand = footer.querySelector(".brand");
+      if (brand) brand.insertAdjacentElement("afterend", span); else footer.appendChild(span);
+    }
+    loadDeployedStamp();
 
     // Collapsible sidebar (desktop only; below 900px it is the slide-in drawer). The
     // state is a class on <body>, remembered in localStorage. The toggle stays visible

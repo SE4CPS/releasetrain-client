@@ -45,3 +45,17 @@ test('phone and tablet keep the drawer, no collapse toggle', async ({ page }) =>
     await expect(page.locator('#navToggle')).toBeVisible();
   }
 });
+
+test('footer shows the last deploy time from deployed.json, small, next to the version', async ({ page }) => {
+  await page.route(/\/api\//, (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
+  await page.route(/\/deployed\.json/, (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ deployedAt: '2026-11-16T18:44:00Z', commit: 'abc1234', version: '3.160.0' }) }),
+  );
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/', { waitUntil: 'load' });
+  const stamp = page.locator('#sidebarFooter .sb-updated');
+  await expect(stamp).toHaveText(/^updated Nov 16, /);
+  await expect(stamp).toHaveAttribute('title', /Last deployed .*\(commit abc1234\)/);
+  const size = await stamp.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+  expect(size).toBeLessThan(11);
+});
