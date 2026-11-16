@@ -1225,6 +1225,8 @@ body.has-ask-console.has-ask-console-min .view-close-btn { bottom: 48px; }
 .ask-console .ac-ok { color: #4ade80; }
 .ask-console .ac-warn { color: #fbbf24; }
 .ask-console .ac-error { color: #f87171; }
+/* A guardrail stepped in on this line (meta.guardrail on the progress event). */
+.ask-console .ac-guardrail { color: #f87171; }
 #askWorkflowDiagram g.askwfg-active { animation: askwfRobotBlink 1.2s ease-in-out infinite; }
 /* Robot in front of each node's name (see renderAskWorkflowDiagram),
    per explicit request. Only the robot blinks while its own node is

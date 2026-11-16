@@ -366,7 +366,11 @@
       // Color by meaning (per request): a detour the pipeline had to take
       // is amber, a plain step stays neutral. Errors (ac-error) and the
       // final Done (ac-ok / ac-warn / ac-error) are logged elsewhere.
-      askConsoleLog(askWorkflowLabel, ASK_CONSOLE_WARN_PHASES.has(phase) ? "ac-warn" : "", askWorkflowComponentOf(phase));
+      // A guardrail stepping in (meta.guardrail from the server) is red,
+      // per request; a detour that is not a guardrail (a model-provider
+      // fallback) stays amber; a plain step stays neutral.
+      const lineCls = (meta && meta.guardrail) ? "ac-guardrail" : ASK_CONSOLE_WARN_PHASES.has(phase) ? "ac-warn" : "";
+      askConsoleLog(askWorkflowLabel, lineCls, askWorkflowComponentOf(phase));
       // The Ask box itself says it: "vendor only" under its name, the
       // same way Rewrite shows its term count.
       if (phase === "vendor_only") askWorkflowNotes.Ask = "vendor only";

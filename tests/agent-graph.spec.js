@@ -111,6 +111,7 @@ test("every run-log line names the component in charge, and a vendor-only answer
     '"microsoft" is a vendor with 5 tracked products, not a product',
   );
   await expect(lines.nth(2)).toContainText('guardrail vendorOnlyReply');
+  await expect(lines.nth(2)).toHaveClass(/ac-guardrail/); // a guardrail stepping in is red
   await expect(lines.nth(3).locator('.ac-node')).toHaveText('Ask');
   await expect(lines.nth(3)).toContainText('Question received');
   // the Ask box carries the decision too
@@ -153,4 +154,7 @@ test('the component prefix follows the phase: Search/Verify for the web check, F
   await expect(page.locator('#askConsoleFixed > div').nth(2)).toContainText(
     'Searching release notes',
   );
+  // a provider fallback is a detour (amber), not a guardrail (red)
+  await expect(page.locator('#askConsoleFixed > div').nth(1)).toHaveClass(/ac-warn/);
+  await expect(page.locator('#askConsoleFixed > div').nth(1)).not.toHaveClass(/ac-guardrail/);
 });
