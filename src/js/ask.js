@@ -713,7 +713,24 @@
       // Never a role() prefix here: vendor resolution is a plain catalog
       // lookup on every preset, not a Rewriter LLM call (see the Vendor
       // node's own comment above ASK_WORKFLOW_PHASE_NODE).
-      if (phase === "resolving_vendor") return "Resolving vendor";
+      if (phase === "resolving_vendor") return "Resolving vendor name";
+      // Ask step, part 2 (server: emit('resolving_product')): what the
+      // resolved name turned out to be.
+      if (phase === "resolving_product") {
+        const m = meta || {};
+        const v = m.vendor || detail || "the vendor";
+        switch (m.status) {
+          case "vendor_only": return `Resolving vendor product: none named for "${v}" (${m.products || "several"} tracked products)`;
+          case "product": return `Resolving vendor product: "${v}" is a tracked product`;
+          case "category": return `Resolving vendor product: category "${m.categoryType || detail || ""}" (${m.members || 0} tracked products)`;
+          case "none": return "Resolving vendor product: no tracked vendor or product named";
+          case "skipped": return "Resolving vendor product: skipped (vendor check off), searching by the question's own terms";
+          case "vendor_not_tracked": return `Resolving vendor product: "${v}" has no tracked products, looking them up online`;
+          case "product_not_tracked": return `Resolving vendor product: "${detail || "it"}" is not a tracked ${v} product, looking it up online`;
+          case "single_product_vendor": return `Resolving vendor product: "${v}" has one tracked product, looking up the others online`;
+          default: return "Resolving vendor product";
+        }
+      }
       // vendorOnlyReply guardrail (server): the question named a vendor
       // and no product, so the Ask step answers with the product list.
       if (phase === "vendor_only") {

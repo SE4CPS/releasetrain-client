@@ -47,7 +47,7 @@
     let askWorkflowFinished = false;  // true once the run is over (unvisited nodes turn "skipped")
 
     const ASK_WORKFLOW_PHASE_NODE = {
-      resolving_vendor: "vendor", rewriting: "rewriter",
+      resolving_vendor: "vendor", resolving_product: "vendor", rewriting: "rewriter",
       // vendor_only (vendorOnlyReply guardrail on the server): the Ask
       // step answered a vendor-without-product question in code.
       vendor_only: "vendor",
@@ -376,12 +376,18 @@
       if (phase === "vendor_only") askWorkflowNotes.Ask = "vendor only";
       const node = ASK_WORKFLOW_PHASE_NODE[phase];
       if (node) {
+        const wasActive = askWorkflowState[node] === "active";
         freezeActiveAskWorkflowTiming(now);
         for (const k of Object.keys(askWorkflowState)) {
           if (askWorkflowState[k] === "active") askWorkflowState[k] = "done";
         }
+        // A second phase on the node already active (Ask: resolving the
+        // vendor name, then the vendor product) keeps its timer running
+        // instead of restarting it.
+        const continues = wasActive && askWorkflowTiming[node];
         askWorkflowState[node] = "active";
-        askWorkflowTiming[node] = { startedAt: now, doneMs: null };
+        if (continues) askWorkflowTiming[node].doneMs = null;
+        else askWorkflowTiming[node] = { startedAt: now, doneMs: null };
         // "retrying" means the Evaluator is sending the Retriever back
         // for another pass. The Retriever lighting up again (not
         // staying "done" from its first pass, with a fresh timer for

@@ -141,6 +141,11 @@ test('the component prefix follows the phase: Search/Verify for the web check, F
   await page.evaluate(() => {
     startAskWorkflow('q');
     pushAskWorkflowPhase('resolving_vendor', '', 'single_agent');
+    pushAskWorkflowPhase('resolving_product', null, 'single_agent', {
+      vendor: 'microsoft',
+      status: 'vendor_only',
+      products: 8,
+    });
     pushAskWorkflowPhase('web_searching', '', 'single_agent');
     pushAskWorkflowPhase('web_verifying', '', 'single_agent');
     pushAskWorkflowPhase('searching', 'search_release_notes', 'single_agent');
@@ -163,7 +168,14 @@ test('the component prefix follows the phase: Search/Verify for the web check, F
     'Search',
     'Ask',
     'Ask',
+    'Ask',
   ]);
+  // the Ask step is two lines: the vendor name, then what that name is
+  const askLines = page.locator('#askConsoleFixed > div');
+  await expect(askLines.nth(6)).toContainText('Resolving vendor name');
+  await expect(askLines.nth(5)).toContainText(
+    'Resolving vendor product: none named for "microsoft" (8 tracked products)',
+  );
   await expect(page.locator('#askConsoleFixed > div').nth(2)).toContainText(
     'Searching release notes',
   );
