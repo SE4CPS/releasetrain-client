@@ -436,12 +436,28 @@
       } catch { /* badge stays hidden */ }
     }
     const askWordRx = (term) => new RegExp(`(^|[^a-z0-9])${String(term).toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z0-9]|$)`, "i");
+    // Mirrors the server's VENDOR_ONLY_STOPWORDS: any other word left in
+    // the question beside the vendor's own name may be a product the
+    // tracker does not know ("microsoft windows"), so no badge then.
+    const ASK_VENDOR_ONLY_STOPWORDS = new Set(["what", "whats", "s", "is", "are", "was", "were", "be", "been", "being", "the", "a", "an", "of", "for", "in", "on", "to", "at", "by", "from", "with", "and", "or", "about", "tell", "me", "please", "info", "information", "it", "its", "this", "that", "these", "those", "there", "here", "any", "some", "all", "latest", "newest", "current", "recent", "recently", "new", "old", "version", "versions", "release", "releases", "released", "releasing", "update", "updates", "updated", "updating", "upgrade", "upgrades", "patch", "patches", "patched", "fix", "fixes", "fixed", "hotfix", "cve", "cves", "vulnerability", "vulnerabilities", "exploit", "advisory", "security", "secure", "insecure", "stable", "stability", "unstable", "risk", "risks", "risky", "safe", "unsafe", "should", "i", "we", "you", "my", "our", "your", "how", "many", "much", "number", "count", "total", "when", "did", "does", "do", "last", "past", "previous", "next", "day", "days", "week", "weeks", "month", "months", "year", "years", "today", "yesterday", "tomorrow", "ago", "since", "after", "before", "until", "has", "have", "had", "can", "could", "would", "will", "may", "might", "exist", "exists", "available", "out", "yet", "now", "still", "already", "software", "product", "products", "vendor", "vendors", "which", "who", "why", "where", "whether", "if", "need", "needs", "want", "wants", "know", "get", "got", "use", "using", "used", "install", "installed", "installing", "run", "running", "work", "works", "working", "problem", "problems", "issue", "issues", "bug", "bugs", "broken", "break", "breaks", "breaking", "change", "changes", "changed", "changelog", "note", "notes", "news", "status", "package", "packages", "component", "components", "tool", "tools", "app", "apps", "application", "applications"]);
+    function askQuestionHasOtherEntity(text, bkey) {
+      const brandWords = bkey.split(/[^a-z0-9]+/).filter(Boolean);
+      const tokens = text.split(/[^a-z0-9+.#-]+/).map(t => t.replace(/^[.+#-]+|[.+#-]+$/g, "")).filter(Boolean);
+      for (const t of tokens) {
+        if (t.length < 2 || /^\d[\d.]*$/.test(t) || ASK_VENDOR_ONLY_STOPWORDS.has(t)) continue;
+        if (brandWords.includes(t)) continue;
+        if (t.length >= 4 && (bkey.startsWith(t) || t.startsWith(bkey))) continue;
+        return true;
+      }
+      return false;
+    }
     function askVendorOnlyBrand(question) {
       if (!ASK_BRANDS || !ASK_BRANDS.length) return null;
       const text = String(question || "").toLowerCase();
       for (const b of ASK_BRANDS) {
         const bkey = String(b.name || "").toLowerCase();
         if (bkey.length < 3 || !askWordRx(bkey).test(text)) continue;
+        if (askQuestionHasOtherEntity(text, bkey)) continue;
         const named = (b.products || []).some(p => {
           const pk = String(p).toLowerCase();
           if (pk === bkey) return false;

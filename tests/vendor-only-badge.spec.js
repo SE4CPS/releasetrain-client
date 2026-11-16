@@ -8,6 +8,7 @@ test('the Ask input warns when the question names a vendor but none of its produ
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ brands: [
         { name: 'JetBrains', products: ['Rider', 'IntelliJ IDEA Ultimate', 'PyCharm Professional'] },
         { name: 'Mozilla', products: ['Firefox', 'Thunderbird'] },
+        { name: 'microsoft', products: ['vscode', 'PowerToys'] },
       ] }) });
     }
     return route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
@@ -23,4 +24,9 @@ test('the Ask input warns when the question names a vendor but none of its produ
   await expect(badge).toHaveText('Vendor only: add a Mozilla product (e.g. Firefox)');
   await page.locator('#askQuestion').fill('latest mozilla firefox?');
   await expect(badge).toBeHidden();
+  // a product the tracker does not know still counts as a product
+  await page.locator('#askQuestion').fill('Whats the latest microsoft windows version?');
+  await expect(badge).toBeHidden();
+  await page.locator('#askQuestion').fill('Whats the latest microsoft version?');
+  await expect(badge).toHaveText('Vendor only: add a microsoft product (e.g. vscode)');
 });
