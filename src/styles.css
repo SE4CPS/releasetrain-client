@@ -1218,6 +1218,8 @@ body.has-ask-console.has-ask-console-min .view-close-btn { bottom: 48px; }
 .ask-console-close { position: sticky; top: 0; float: right; background: #262626; color: #d4d4d4; border: 0; border-radius: 4px; cursor: pointer; font-size: 12px; padding: 1px 7px; }
 .ask-console .ac-t { color: #7c7c7c; }
 .ask-console .ac-note { color: #7dd3fc; }
+/* The component in charge of a run-log line (askWorkflowComponentOf in ask-workflow.js). */
+.ask-console .ac-node { color: #c4b5fd; font-weight: 600; }
 /* Per request: outcome colors in the run log. Success green, a detour
    or a stop amber, a failure red; plain steps keep the default gray. */
 .ask-console .ac-ok { color: #4ade80; }
@@ -2915,6 +2917,8 @@ details[open] > .ua-admin-header::before { transform: rotate(90deg); }
    guardrail that actually did something for THIS specific answer,
    not just "is enabled in general". */
 .ask-guardrail-used { font-size: 11px; color: var(--ok); margin-top: 2px; }
+/* Which pipeline component owns a guardrail (GET /api/guardrails `component`). */
+.ask-guardrail-comp { display: inline-block; font-size: 10px; font-weight: 600; line-height: 1.4; padding: 0 5px; border-radius: 3px; background: rgba(124, 58, 237, .14); color: #7c3aed; vertical-align: middle; }
 .ask-guardrail-used a { color: inherit; text-decoration: underline; margin-left: 2px; }
 /* Per-answer Feedback Loop tab only (askRenderFeedbackLoopTab): a
    vendor currently flagged by an admin-set threshold - a caution,

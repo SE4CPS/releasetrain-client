@@ -48,6 +48,9 @@
 
     const ASK_WORKFLOW_PHASE_NODE = {
       resolving_vendor: "vendor", rewriting: "rewriter",
+      // vendor_only (vendorOnlyReply guardrail on the server): the Ask
+      // step answered a vendor-without-product question in code.
+      vendor_only: "vendor",
       searching: "retriever",
       // classifying_sources (see classifySourcesTrust on the server): a
       // new deterministic step between Retriever and Evaluator, its own
@@ -113,6 +116,18 @@
     // A node that completed in well under a second still deserves a
     // real, honest reading rather than "0.0s". One decimal place is
     // the finest granularity worth showing a reader here.
+    // The component in charge of a progress event, named as the diagram
+    // names it: every run-log line carries it as a prefix (per request:
+    // "add a prefix highlighting which component is in charge"), so the
+    // log and the graph above it agree on who did what. A phase with no
+    // node of its own (a model-provider fallback) is the Model's.
+    const ASK_WORKFLOW_NODE_LABEL = Object.fromEntries(ASK_WORKFLOW_NODES.map(n => [n.key, n.name.replace(/_/g, " ")]));
+    function askWorkflowComponentOf(phase) {
+      const node = ASK_WORKFLOW_PHASE_NODE[phase];
+      if (node) return ASK_WORKFLOW_NODE_LABEL[node] || node;
+      if (phase === "provider_fallback") return "Model";
+      return "";
+    }
     function askWorkflowNodeSeconds(node) {
       const t = askWorkflowTiming && askWorkflowTiming[node];
       if (!t) return null;
@@ -279,7 +294,7 @@
     function startAskWorkflow(question) {
       askWorkflowQuestion = question || "";
       askWorkflowNotes = {}; askWorkflowLog = []; askWorkflowFinished = false; askWorkflowAgentKeys = null; askWorkflowStartedRun = Date.now(); askWorkflowOutcome = "ok";
-      askConsoleLog("Question received");
+      askConsoleLog("Question received", "", "Ask");
       askWorkflowState = { vendor: "active", rewriter: "idle", retriever: "idle", classify: "idle", evaluator: "idle", orchestrator: "idle", websearch: "idle", verify: "idle" };
       const now = Date.now();
       askWorkflowTiming = { vendor: { startedAt: now, doneMs: null }, rewriter: null, retriever: null, classify: null, evaluator: null, orchestrator: null, websearch: null, verify: null };
@@ -303,14 +318,18 @@
     // Console box under the Short answer: one timestamped line per progress
     // event, appended live. The box exists in the running card and in the
     // finished card's Short answer tab, so both are refreshed together.
-    function askConsoleLog(text, cls) {
+    // `pre`: the component in charge of the line (see
+    // askWorkflowComponentOf), rendered as its own highlighted span in
+    // front of the text; empty for a line about the run as a whole (Done,
+    // Stopped, an error).
+    function askConsoleLog(text, cls, pre) {
       const t = askWorkflowStartedRun ? ((Date.now() - askWorkflowStartedRun) / 1000).toFixed(1) : "0.0";
-      askWorkflowLog.push({ t, text, cls: cls || "" });
+      askWorkflowLog.push({ t, text, cls: cls || "", pre: pre || "" });
       renderAskConsole();
     }
     let askWorkflowStartedRun = 0;
     function askConsoleHtml() {
-      return askWorkflowLog.slice().reverse().map(l => `<div class="${l.cls}"><span class="ac-t">[${l.t}s]</span> ${uaEsc(l.text)}</div>`).join("");
+      return askWorkflowLog.slice().reverse().map(l => `<div class="${l.cls}"><span class="ac-t">[${l.t}s]</span> ${l.pre ? `<span class="ac-node">${uaEsc(l.pre)}</span> ` : ""}${uaEsc(l.text)}</div>`).join("");
     }
     let askConsoleMin = false;
     function renderAskConsole() {
@@ -338,7 +357,7 @@
     function pushAskWorkflowPhase(phase, detail, preset, meta) {
       if (!askWorkflowState) return;
       if (phase === "note") {
-        if (meta && meta.node) { askWorkflowNotes[meta.node] = meta.short || ""; askConsoleLog(`${meta.node}: ${meta.text || ""}`, "ac-note"); renderAskWorkflowDiagram(); }
+        if (meta && meta.node) { askWorkflowNotes[meta.node] = meta.short || ""; askConsoleLog(meta.text || "", "ac-note", String(meta.node).replace(/_/g, " ")); renderAskWorkflowDiagram(); }
         return;
       }
       const now = Date.now();
@@ -347,7 +366,10 @@
       // Color by meaning (per request): a detour the pipeline had to take
       // is amber, a plain step stays neutral. Errors (ac-error) and the
       // final Done (ac-ok / ac-warn / ac-error) are logged elsewhere.
-      askConsoleLog(askWorkflowLabel, ASK_CONSOLE_WARN_PHASES.has(phase) ? "ac-warn" : "");
+      askConsoleLog(askWorkflowLabel, ASK_CONSOLE_WARN_PHASES.has(phase) ? "ac-warn" : "", askWorkflowComponentOf(phase));
+      // The Ask box itself says it: "vendor only" under its name, the
+      // same way Rewrite shows its term count.
+      if (phase === "vendor_only") askWorkflowNotes.Ask = "vendor only";
       const node = ASK_WORKFLOW_PHASE_NODE[phase];
       if (node) {
         freezeActiveAskWorkflowTiming(now);

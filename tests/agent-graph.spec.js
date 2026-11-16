@@ -84,3 +84,73 @@ test('the run log is fixed to the bottom, newest line first, and minimizes', asy
   await log.locator('.ask-console-close').click();
   await expect(log).not.toHaveClass(/ask-console-min/);
 });
+
+test("every run-log line names the component in charge, and a vendor-only answer is the Ask step's own (2026-11-16)", async ({
+  page,
+}) => {
+  await stubApi(page);
+  await page.goto('/');
+  await page.evaluate(() => {
+    startAskWorkflow('Whats the latest microsoft version?');
+    pushAskWorkflowPhase('vendor_only', 'microsoft', 'single_agent', {
+      products: 5,
+      guardrail: 'vendorOnlyReply',
+    });
+    pushAskWorkflowPhase('generating', 'deterministic', 'single_agent');
+    finishAskWorkflow();
+  });
+  const lines = page.locator('#askConsoleFixed > div');
+  // newest first: Done, Orchestrate, Ask (vendor check), Ask (question received)
+  await expect(lines).toHaveCount(4);
+  await expect(lines.nth(0)).toHaveText(/Done$/);
+  await expect(lines.nth(0).locator('.ac-node')).toHaveCount(0);
+  await expect(lines.nth(1).locator('.ac-node')).toHaveText('Orchestrate');
+  await expect(lines.nth(1)).toContainText('Writing the answer in code, no model call');
+  await expect(lines.nth(2).locator('.ac-node')).toHaveText('Ask');
+  await expect(lines.nth(2)).toContainText(
+    '"microsoft" is a vendor with 5 tracked products, not a product',
+  );
+  await expect(lines.nth(2)).toContainText('guardrail vendorOnlyReply');
+  await expect(lines.nth(3).locator('.ac-node')).toHaveText('Ask');
+  await expect(lines.nth(3)).toContainText('Question received');
+  // the Ask box carries the decision too
+  await expect(page.locator('#askWorkflowDiagram g.node[id*="flowchart-Ask-"]')).toContainText(
+    'vendor only',
+  );
+});
+
+test('the component prefix follows the phase: Search/Verify for the web check, Find Facts and Artifacts for retrieval, Model for a provider fallback', async ({
+  page,
+}) => {
+  await stubApi(page);
+  await page.goto('/');
+  await page.evaluate(() => {
+    startAskWorkflow('q');
+    pushAskWorkflowPhase('resolving_vendor', '', 'single_agent');
+    pushAskWorkflowPhase('web_searching', '', 'single_agent');
+    pushAskWorkflowPhase('web_verifying', '', 'single_agent');
+    pushAskWorkflowPhase('searching', 'search_release_notes', 'single_agent');
+    pushAskWorkflowPhase('provider_fallback', 'ollama', 'single_agent', {
+      reason: 'unavailable',
+      to: 'groq',
+    });
+    pushAskWorkflowPhase('note', null, 'single_agent', {
+      node: 'Find_Facts_and_Artifacts',
+      text: 'round 1: 3 documents',
+      short: '3 docs',
+    });
+  });
+  const pre = page.locator('#askConsoleFixed > div .ac-node');
+  await expect(pre).toHaveText([
+    'Find Facts and Artifacts',
+    'Model',
+    'Find Facts and Artifacts',
+    'Verify',
+    'Search',
+    'Ask',
+    'Ask',
+  ]);
+  await expect(page.locator('#askConsoleFixed > div').nth(2)).toContainText(
+    'Searching release notes',
+  );
+});

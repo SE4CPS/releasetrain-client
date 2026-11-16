@@ -191,6 +191,16 @@ always reflect the current, real conventions of the repo, not lag behind what's 
   `gh release create --generate-notes` for the release notes (this repo's commit messages are already
   real/technical, so auto-generated notes come out genuinely useful, not filler). No version-bumping logic
   lives in the workflow itself; that's still done by hand per commit, per the rule above.
+- **GLOBAL RULE (every releasetrain repo; user, 2026-11-16): every task in the Ask pipeline belongs to one
+  named component, steered through a goal or a guardrail, and the UI always says which component is in
+  charge.** The server's `GUARDRAIL_DEFS` carry a `component` field (Ask, Rewrite, Search, Verify, Find
+  Facts and Artifacts, Classify, Evaluate, Orchestrate, Account); `src/js/ask.js` shows it as the
+  `.ask-guardrail-comp` tag in the per-answer Guardrails tab and as the hover text's prefix in the sidebar
+  list. Every run-log line carries the component as a highlighted `.ac-node` prefix
+  (`askWorkflowComponentOf` in `src/js/ask-workflow.js`, derived from `ASK_WORKFLOW_PHASE_NODE`), so a new
+  server phase must be added to that map or it logs with no owner. Lines about the run as a whole (Done,
+  Stopped, an error) stay unprefixed. See the server repo's CLAUDE.md for the server half of the rule and
+  the reference case (the vendor-vs-product check, owner Ask).
 
 ## Related repos
 

@@ -363,15 +363,16 @@
         orchestratorRevise: "Hedge retry",
         nistTierRetry: "NIST: retry loop",
         nistTierFallbackSort: "NIST: fallback sort",
+        vendorOnlyReply: "Vendor-only check",
       };
       const shortLabel = g => ASK_GUARDRAIL_SHORT[g.id] || String(g.label || g.id).split(/\s+/).slice(0, 3).join(" ");
       const optionalHtml = optional.length
-        ? optional.map(g => `<label class="ask-toggle-inline" title="${uaEsc(g.description || g.label || g.id)}">
+        ? optional.map(g => `<label class="ask-toggle-inline" title="${uaEsc(askGuardrailTitle(g))}">
             <input type="checkbox" class="ask-guardrail-input" data-id="${uaEsc(g.id)}"${g.effective ? " checked" : ""}${g.configurable ? "" : " disabled"}> ${uaEsc(shortLabel(g))}
             <span id="ask-guardrail-msg-${uaEsc(g.id)}" class="u-hide st-184 ua-muted" >Saved</span>
           </label>`).join("")
         : `<p class="st-183 ua-muted" >None you can change.</p>`;
-      const mandatoryHtml = mandatory.map(g => `<label class="st-185 ask-toggle-inline"  title="${uaEsc(g.description || g.label || g.id)}">
+      const mandatoryHtml = mandatory.map(g => `<label class="st-185 ask-toggle-inline"  title="${uaEsc(askGuardrailTitle(g))}">
             <input type="checkbox" checked disabled> ${uaEsc(shortLabel(g))}
           </label>`).join("");
       bodyEl.innerHTML = `
@@ -422,6 +423,13 @@
     // per-answer endpoint needed). Lazily rendered the first time this
     // tab is actually opened (see askWireRailTabs below), same reasoning
     // as the pre-question panel: most answers are never checked.
+    // "<component>: <description>": which pipeline step owns the check
+    // (GET /api/guardrails's own `component` field, see GUARDRAIL_DEFS on
+    // the server), in front of what it does.
+    function askGuardrailTitle(g) {
+      const desc = g.description || g.label || g.id;
+      return g.component ? `${g.component}: ${desc}` : desc;
+    }
     function askGuardrailUsedNoteHtml(id, activity, taggedTitles) {
       const a = activity && activity[id];
       if (!a) return "";
@@ -436,6 +444,8 @@
         text = a.agreed === false
           ? `Checked a live web source too, found a disagreement (web said ${uaEsc(a.webVersion || "a different version")}), and let the Orchestrator reconcile it.`
           : "Checked a live web source too, which confirmed this answer's version number.";
+      } else if (id === "vendorOnlyReply" && a.applied) {
+        text = `"${uaEsc(a.brand || "this vendor")}" is a vendor with ${a.products || "several"} tracked products, not a product: answered with the product list in code, no model call.`;
       } else if (id === "evaluatorWebOverride" && a.applied) {
         text = "Trusted a live web result the Evaluator judged insufficient for this answer.";
       } else if (id === "deterministicWebFallback" && a.applied) {
@@ -476,7 +486,7 @@
         const mine = taggedSources.filter(s => s.guardrail === g.id).map(s => s.title);
         return `<div class="st-190 ua-settings-row" >
             <div class="ua-settings-info">
-              <strong>${interactive ? "" : "&#128274; "}${uaEsc(g.label || g.id)}</strong>
+              <strong>${interactive ? "" : "&#128274; "}${g.component ? `<span class="ask-guardrail-comp">${uaEsc(g.component)}</span> ` : ""}${uaEsc(g.label || g.id)}</strong>
               <span class="ua-muted">${uaEsc(g.description || "")}</span>
               ${askGuardrailUsedNoteHtml(g.id, activity, mine)}
             </div>
@@ -700,6 +710,9 @@
       // lookup on every preset, not a Rewriter LLM call (see the Vendor
       // node's own comment above ASK_WORKFLOW_PHASE_NODE).
       if (phase === "resolving_vendor") return "Resolving vendor";
+      // vendorOnlyReply guardrail (server): the question named a vendor
+      // and no product, so the Ask step answers with the product list.
+      if (phase === "vendor_only") return `Vendor check: "${detail || "this vendor"}" is a vendor with ${(meta && meta.products) || "several"} tracked products, not a product, so the answer lists them (guardrail vendorOnlyReply)`;
       // "rewriting"/"evaluating"/"retrying" only ever fire on multi_agent/
       // multi_agent_feedback (see runDelegatedAsk on the server), where
       // each role really is its own separate model call, not just a
@@ -714,14 +727,16 @@
       if (phase === "evaluating") return `${tag("Evaluator")}: judging evidence`;
       if (phase === "retrying") return `${tag("Evaluator")}: requesting another search pass`;
       if (phase === "widening") return `${role("Evaluator")}Widening search window`;
-      if (phase === "generating") return `${role("Orchestrator")}Generating answer`;
+      // detail "deterministic": the answer is written in code (a count,
+      // a vendor-only product list), no model call at all.
+      if (phase === "generating") return detail === "deterministic" ? "Writing the answer in code, no model call" : `${role("Orchestrator")}Generating answer`;
       // Pipeline escalation: the vendor wasn't in this system's own
       // catalog, so it's being checked against a real web search before
       // the run is allowed to abstain. See verifyVendorViaWeb on the
       // server. Not gated by isMultiAgent/role() like the phases above:
       // this can fire on single_agent too, which is the whole point.
-      if (phase === "web_searching") return "Web Search: searching for vendor evidence";
-      if (phase === "web_verifying") return "Verify: judging vendor evidence";
+      if (phase === "web_searching") return "Searching the web for vendor evidence";
+      if (phase === "web_verifying") return "Judging the web evidence for the vendor";
       // Server-side model-provider fallback (withProviderFallback in
       // ask.js): the requested provider refused with a credits/quota
       // error and the same call went to the next configured one.
