@@ -118,6 +118,19 @@ test("every run-log line names the component in charge, and a vendor-only answer
   await expect(page.locator('#askWorkflowDiagram g.node[id*="flowchart-Ask-"]')).toContainText(
     'vendor only',
   );
+  // the web-lookup variant (vendorWebProducts) says why and that it searched
+  await page.evaluate(() => {
+    pushAskWorkflowPhase('vendor_only', 'Adobe', 'single_agent', {
+      products: 2,
+      web: 2,
+      guardrail: 'vendorWebProducts',
+      trigger: 'vendor_not_tracked',
+    });
+  });
+  await expect(lines.nth(0)).toContainText(
+    '"Adobe" is not tracked, so 2 products were looked up online and listed (guardrail vendorWebProducts)',
+  );
+  await expect(lines.nth(0)).toHaveClass(/ac-guardrail/);
 });
 
 test('the component prefix follows the phase: Search/Verify for the web check, Find Facts and Artifacts for retrieval, Model for a provider fallback', async ({

@@ -364,6 +364,7 @@
         nistTierRetry: "NIST: retry loop",
         nistTierFallbackSort: "NIST: fallback sort",
         vendorOnlyReply: "Vendor-only check",
+        vendorWebProducts: "Vendor web lookup",
       };
       const shortLabel = g => ASK_GUARDRAIL_SHORT[g.id] || String(g.label || g.id).split(/\s+/).slice(0, 3).join(" ");
       const optionalHtml = optional.length
@@ -444,6 +445,9 @@
         text = a.agreed === false
           ? `Checked a live web source too, found a disagreement (web said ${uaEsc(a.webVersion || "a different version")}), and let the Orchestrator reconcile it.`
           : "Checked a live web source too, which confirmed this answer's version number.";
+      } else if (id === "vendorWebProducts" && a.applied) {
+        const why = a.trigger === "product_not_tracked" ? "the product asked about is not tracked" : a.trigger === "single_product_vendor" ? "only one of its products is tracked" : "the vendor is not tracked";
+        text = `Looked "${uaEsc(a.vendor || "the vendor")}" up online because ${why}: found ${(a.products || []).length} product${(a.products || []).length === 1 ? "" : "s"} (${uaEsc((a.products || []).slice(0, 5).join(", "))}), saved to the vendor list.`;
       } else if (id === "vendorOnlyReply" && a.applied) {
         text = `"${uaEsc(a.brand || "this vendor")}" is a vendor with ${a.products || "several"} tracked products, not a product: answered with the product list in code, no model call.`;
       } else if (id === "evaluatorWebOverride" && a.applied) {
@@ -712,7 +716,15 @@
       if (phase === "resolving_vendor") return "Resolving vendor";
       // vendorOnlyReply guardrail (server): the question named a vendor
       // and no product, so the Ask step answers with the product list.
-      if (phase === "vendor_only") return `Vendor check: "${detail || "this vendor"}" is a vendor with ${(meta && meta.products) || "several"} tracked products, not a product, so the answer lists them (guardrail vendorOnlyReply)`;
+      if (phase === "vendor_only") {
+        // vendorWebProducts (owner Verify): the tracked data had no match,
+        // so the products came from one web search.
+        if (meta && meta.guardrail === "vendorWebProducts") {
+          const why = meta.trigger === "product_not_tracked" ? "names a product the tracker lacks" : meta.trigger === "single_product_vendor" ? "has one tracked product" : "is not tracked";
+          return `Vendor check: "${detail || "this vendor"}" ${why}, so ${meta.web || "its"} products were looked up online and listed (guardrail vendorWebProducts)`;
+        }
+        return `Vendor check: "${detail || "this vendor"}" is a vendor with ${(meta && meta.products) || "several"} tracked products, not a product, so the answer lists them (guardrail vendorOnlyReply)`;
+      }
       // "rewriting"/"evaluating"/"retrying" only ever fire on multi_agent/
       // multi_agent_feedback (see runDelegatedAsk on the server), where
       // each role really is its own separate model call, not just a
