@@ -596,7 +596,14 @@ body.view-feed .layout > .feed-main { flex: 1 1 0; }
      in a column (version above sign-in) per an earlier request to
      put sign-in at the actual bottom; superseded by this one. */
   .sidebar-footer {
-    display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 8px;
+    /* Grid, not a flex row: the version and its deploy stamp stack in
+       one middle column (stamp under version, same small font), the
+       collapse button and sign-in keep the two edges, and nothing can
+       spill past the rail's right edge (the middle column shrinks and
+       ellipsizes). Areas are assigned by class, so the order in which
+       relocateSidebarFooter appends the pieces does not matter. */
+    display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "btn ver right" "btn upd right";
+    align-items: center; column-gap: 8px; row-gap: 1px;
     position: sticky; bottom: 0; margin-top: auto;
     background: var(--surface);
     border-top: 1px solid var(--border);
@@ -606,10 +613,12 @@ body.view-feed .layout > .feed-main { flex: 1 1 0; }
      look .brand normally has (still true in the topbar on a narrow
      screen, where it never relocates) -- a footer detail, not a
      heading, per explicit request ("make the version more subtle"). */
-  .sidebar-footer .brand { font-size: 11px; font-weight: 400; color: var(--muted); }
+  .sidebar-footer .sidebar-collapse-btn { grid-area: btn; }
+  .sidebar-footer .brand { grid-area: ver; font-size: 10px; font-weight: 400; color: var(--muted); line-height: 1.3; min-width: 0; }
   .sidebar-footer .brand em { color: var(--muted); }
-  /* Last-deploy stamp beside the version (loadDeployedStamp in ask-rail.js). */
-  .sidebar-footer .sb-updated { font-size: 9.5px; color: var(--muted); opacity: .85; white-space: nowrap; }
+  .sidebar-footer .topbar-right { grid-area: right; }
+  /* Last-deploy stamp under the version (loadDeployedStamp in ask-rail.js), same size as the version. */
+  .sidebar-footer .sb-updated { grid-area: upd; font-size: 10px; line-height: 1.3; color: var(--muted); opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
   /* Was margin-left:auto to push itself to the far right of a column
      layout; inert now that .sidebar-footer's own justify-content
      already pushes this to the row's right edge, so it's cleared

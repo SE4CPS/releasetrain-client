@@ -54,8 +54,19 @@ test('footer shows the last deploy time from deployed.json, small, next to the v
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto('/', { waitUntil: 'load' });
   const stamp = page.locator('#sidebarFooter .sb-updated');
-  await expect(stamp).toHaveText(/^updated Nov 16, /);
+  await expect(stamp).toHaveText(/^updated Nov 16, \d{2}:\d{2} [A-Za-z0-9+\-:]+$/); // 24h clock + zone
   await expect(stamp).toHaveAttribute('title', /Last deployed .*\(commit abc1234\)/);
-  const size = await stamp.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
-  expect(size).toBeLessThan(11);
+  // same small font as the version, stacked under it, nothing past the rail's right edge
+  const sizes = await page.evaluate(() => [
+    parseFloat(getComputedStyle(document.querySelector('#sidebarFooter .sb-updated')).fontSize),
+    parseFloat(getComputedStyle(document.querySelector('#sidebarFooter .brand')).fontSize),
+  ]);
+  expect(sizes[0]).toBe(sizes[1]);
+  expect(sizes[0]).toBeLessThanOrEqual(10);
+  const [brandBox, stampBox, footerBox, signinBox] = await Promise.all([
+    page.locator('#sidebarFooter .brand').boundingBox(), stamp.boundingBox(),
+    page.locator('#sidebarFooter').boundingBox(), page.locator('#sidebarFooter .top-signin-btn').boundingBox(),
+  ]);
+  expect(stampBox.y).toBeGreaterThanOrEqual(brandBox.y + brandBox.height - 1);
+  expect(signinBox.x + signinBox.width).toBeLessThanOrEqual(footerBox.x + footerBox.width + 0.5);
 });

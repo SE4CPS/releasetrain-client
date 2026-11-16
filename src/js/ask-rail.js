@@ -137,7 +137,9 @@
       } catch { return; }
       const when = new Date(info && info.deployedAt);
       if (!info || Number.isNaN(when.getTime())) return;
-      const text = when.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+      // 24-hour clock plus the viewer's zone, short enough to sit under the
+      // version inside the 300px rail without pushing Sign in off the edge.
+      const text = when.toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false, timeZoneName: "short" });
       const span = document.createElement("span");
       span.className = "sb-updated";
       span.title = `Last deployed ${when.toLocaleString()}${info.commit ? ` (commit ${info.commit})` : ""}`;
