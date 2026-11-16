@@ -372,6 +372,7 @@
         updateAdviceVerdict: "Update verdict rule",
         communityCountDisclosure: "Posts-scanned count",
         mostUsefulPostLink: "Most useful post",
+        stackExchangeEvidence: "Stack Exchange evidence",
       };
       const shortLabel = g => ASK_GUARDRAIL_SHORT[g.id] || String(g.label || g.id).split(/\s+/).slice(0, 3).join(" ");
       const optionalHtml = optional.length
@@ -460,6 +461,8 @@
           : `No subreddit of its own is tracked; read ${a.posts} post${a.posts === 1 ? "" : "s"} naming the product since the release.`;
       } else if (id === "updateAdviceVerdict" && a.applied) {
         text = `Verdict decided by rule: ${uaEsc(a.verdict)}${a.corrected ? " (the model's own wording was corrected to match)" : ""}.`;
+      } else if (id === "stackExchangeEvidence" && a.applied) {
+        text = `Read ${a.questions} Stack Exchange question${a.questions === 1 ? "" : "s"} since the release${a.sites && a.sites.length ? ` (${uaEsc(a.sites.join(", "))})` : ""}.`;
       } else if (id === "communityCountDisclosure" && a.applied) {
         text = `Stated that ${a.posts} post${a.posts === 1 ? " was" : "s were"} scanned for this verdict.`;
       } else if (id === "mostUsefulPostLink" && a.applied) {
@@ -715,6 +718,7 @@
       search_community: "Reddit and StackOverflow",
       search_reddit_questions: "similar questions",
       search_web: "the web",
+      search_stackexchange: "Stack Exchange questions",
     };
     function askPhaseLabel(phase, detail, preset, meta) {
       const isMultiAgent = preset === "multi_agent_buggy" || preset === "multi_agent_fixed"

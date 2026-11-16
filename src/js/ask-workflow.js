@@ -1825,7 +1825,7 @@
         return `<div class="ask-rail-panel" data-panel="short">
           <p class="ask-short-answer">${uaEsc(advice.sentence)}</p>
           ${advice.scanned ? `<p class="ask-short-meta">${uaEsc(advice.scanned)}</p>` : ""}
-          ${tp ? `<p class="ask-short-meta">Most useful post: <a class="ask-short-link" href="${uaEsc(tp.url)}" target="_blank" rel="noopener">${uaEsc(tp.title)}</a> (${uaEsc(tp.tone)}${tp.isRisky ? ", update-risk flagged" : ""}, ${Number(tp.score) || 0} upvotes)</p>` : ""}
+          ${tp ? `<p class="ask-short-meta">Most useful post: <a class="ask-short-link" href="${uaEsc(tp.url)}" target="_blank" rel="noopener">${uaEsc(tp.title)}</a> (${tp.site ? `${uaEsc(tp.site)}, ` : ""}${uaEsc(tp.tone)}${tp.isRisky ? ", update-risk flagged" : ""}, ${Number(tp.score) || 0} ${tp.kind === "stackoverflow" ? "score" : "upvotes"})</p>` : ""}
         </div>`;
       }
       const sentence = askShortAnswer(res, question);
