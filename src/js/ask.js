@@ -381,6 +381,8 @@
         mostUsefulPostLink: "Most useful post",
         stackExchangeEvidence: "Stack Exchange evidence",
         cveListIntent: "CVE-list intent",
+        answerAddressesQuestion: "Answers the question",
+        vendorFragmentMatch: "No fragment vendor",
         cveSeverityFilter: "CVE severity filter",
       };
       const shortLabel = g => ASK_GUARDRAIL_SHORT[g.id] || String(g.label || g.id).split(/\s+/).slice(0, 3).join(" ");
@@ -502,6 +504,10 @@
         text = "Retried a malformed Evaluator response for this answer.";
       } else if (id === "orchestratorRevise" && a.applied) {
         text = "Regenerated this answer after an initial hedge despite real evidence.";
+      } else if (id === "answerAddressesQuestion" && a.applied) {
+        text = a.fixed
+          ? `The first draft did not answer the question (${uaEsc(String(a.reason || "").replace(/_/g, " "))}); the Orchestrator was asked again and this answer does.`
+          : `The draft still does not answer the question (${uaEsc(String(a.reason || "").replace(/_/g, " "))}) after a retry; shown as is.`;
       }
       if (!text) return "";
       const link = (taggedTitles && taggedTitles.length) ? ` <a href="#" class="ask-guardrail-goto-sources">View source</a>` : "";
