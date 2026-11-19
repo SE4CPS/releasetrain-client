@@ -117,6 +117,9 @@
     // Mirrors the server's detectCountQuestion (ask.js): "how many ..." is
     // counted deterministically over tracked data, no model call.
     const ASK_COUNT_QUESTION_RX = /\b(?:how many|number of|count of|total (?:number|count) of|how much)\b/i;
+    const ASK_CVE_SEVERITY_RX = /\b(?:critical|high|medium|moderate|low|kev|actively exploited|known exploited)\b/i;
+    const ASK_RELATIVE_WINDOW_RX = /\b(?:(?:last|past|previous)\s+(?:\w+\s+)?(?:day|week|month)s?|yesterday|today|this\s+(?:week|month)|\d{4}-\d{2}-\d{2})\b/i;
+    const ASK_CVE_LIST_EXCLUDE_RX = /\b(?:how (?:do|to|can|should|would)|why|fix(?:es|ed)?|patch(?:es|ed)?|mitigat\w*|workaround|remediat\w*|impact\w*|affect\w*|explain|detail\w*|describe|what is|what's|upgrade|update to)\b/i;
     // Kept in sync by hand with the server's own detectCveImpactCveId
     // (releasetrain-server src/ask.js): "which software is impacted by
     // CVE-X?" - shape-based (a literal CVE id plus impact phrasing), not
@@ -134,6 +137,10 @@
       if (detectComparisonEntitiesClient(question)) return "comparison";
       if (ASK_COUNT_QUESTION_RX.test(String(question || ""))) return "count";
       const text = String(question || "").toLowerCase();
+      // Mirrors the server's cveListIntent guardrail: a CVE question that names a
+      // window or a severity, and is not a fix/impact question, is a count/list.
+      if (ASK_INTENT_KEYWORDS.cve.some(kw => text.indexOf(kw) !== -1) && !ASK_CVE_LIST_EXCLUDE_RX.test(text)
+        && (ASK_CVE_SEVERITY_RX.test(text) || ASK_RELATIVE_WINDOW_RX.test(text))) return "count";
       for (const intent of ["cve", "patch", "triage", "advice", "version", "opinion"]) {
         if (ASK_INTENT_KEYWORDS[intent].some(kw => text.indexOf(kw) !== -1)) return intent;
       }
@@ -373,6 +380,8 @@
         communityCountDisclosure: "Posts-scanned count",
         mostUsefulPostLink: "Most useful post",
         stackExchangeEvidence: "Stack Exchange evidence",
+        cveListIntent: "CVE-list intent",
+        cveSeverityFilter: "CVE severity filter",
       };
       const shortLabel = g => ASK_GUARDRAIL_SHORT[g.id] || String(g.label || g.id).split(/\s+/).slice(0, 3).join(" ");
       const optionalHtml = optional.length
@@ -455,6 +464,10 @@
           : "Checked a live web source too, which confirmed this answer's version number.";
       } else if (id === "updateAdviceIntent" && a.applied) {
         text = "Read this as an update-advice question, not a version lookup or an opinion.";
+      } else if (id === "cveListIntent" && a.applied) {
+        text = `Read this as a CVE list question${a.window ? ` for ${uaEsc(a.window)}` : ""} and answered it from the tracked CVE records, no model call.`;
+      } else if (id === "cveSeverityFilter" && a.applied) {
+        text = `Filtered the records by ${a.severity === "KEV" ? "the CISA KEV tag" : `NVD base severity ${uaEsc(a.severity)}`}: ${a.rows} CVE${a.rows === 1 ? "" : "s"} matched.`;
       } else if (id === "communitySubredditEvidence" && a.applied) {
         text = a.subreddit
           ? `Read ${a.posts} r/${uaEsc(a.subreddit)} post${a.posts === 1 ? "" : "s"} since the release: ${a.negative} negative, ${a.positive} positive, ${a.flagged} flagged as update risks.`

@@ -41,7 +41,8 @@ test('advice short answer states the verdict, the posts scanned, and links the m
     const d = document.createElement('div');
     d.innerHTML = h;
     document.body.appendChild(d);
-    return (d.id = 'tmp-short');
+    d.id = 'tmp-short';
+    return d.id;
   }, html);
   const panel = page.locator('#tmp-short');
   await expect(panel.locator('.ask-short-answer')).toHaveText(

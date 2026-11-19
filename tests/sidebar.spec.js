@@ -81,8 +81,8 @@ test('footer shows the last deploy time from deployed.json, small, next to the v
   await expect(stamp).toHaveAttribute('title', /Last deployed .*\(commit abc1234\)/);
   // same small font as the version, stacked under it, nothing past the rail's right edge
   const sizes = await page.evaluate(() => [
-    parseFloat(getComputedStyle(document.querySelector('#sidebarFooter .sb-updated')).fontSize),
-    parseFloat(getComputedStyle(document.querySelector('#sidebarFooter .brand')).fontSize),
+    Number.parseFloat(getComputedStyle(document.querySelector('#sidebarFooter .sb-updated')).fontSize),
+    Number.parseFloat(getComputedStyle(document.querySelector('#sidebarFooter .brand')).fontSize),
   ]);
   expect(sizes[0]).toBe(sizes[1]);
   expect(sizes[0]).toBeLessThanOrEqual(10);
