@@ -355,6 +355,7 @@
       // never wraps or overflows the sidebar's own narrow column, per
       // explicit request. Hover for the full description either way.
       const ASK_GUARDRAIL_SHORT = {
+        recentEvidenceRanking: "Recent-evidence ranking",
         rewriterRetry: "Retry new terms",
         toolResultInjectionScan: "Injection scan",
         outputLeakScan: "Leak scan",

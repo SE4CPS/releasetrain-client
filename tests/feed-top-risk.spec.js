@@ -28,6 +28,17 @@ const DATA = {
       repo: 'redis/redis',
       primaryUrl: 'https://github.com/redis/redis/releases/tag/8.2.2',
       kevCveId: 'CVE-2025-49844',
+      evidence: {
+        tier: 0,
+        key: 'community-version',
+        label: 'community · version match',
+        date: '2026-10-10',
+        post: {
+          title: 'Redis 8.2.2 eats memory',
+          url: 'https://www.reddit.com/r/redis/comments/abc/',
+          date: '2026-10-10',
+        },
+      },
       status: 'ready',
       summary: {
         kind: 'pipeline',
@@ -45,6 +56,7 @@ const DATA = {
       primaryUrl: 'https://github.com/strapi/strapi',
       kevCveId: null,
       scoreCveId: null,
+      evidence: { tier: 4, key: 'none', label: null, date: null },
       status: 'pending',
       summary: {
         kind: 'facts',
@@ -206,4 +218,21 @@ test('the score’s own CVE is stated when the paragraph does not mention it (gh
     'href',
     'https://nvd.nist.gov/vuln/detail/CVE-2026-100504',
   );
+});
+
+test('evidence tier label after the score (server guardrail recentEvidenceRanking): the post or CVE that ranked it in the tooltip, nothing for the rest', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await open(page, '/');
+  const items = page.locator('#topRiskHome .tr-item');
+  await expect(items).toHaveCount(2, { timeout: 20_000 });
+  const tier = items.first().locator('.tr-tier');
+  await expect(tier).toHaveText('community · version match');
+  await expect(tier).toHaveClass(/tr-tier-community-version/);
+  await expect(tier).toHaveAttribute(
+    'title',
+    'ranked by very recent evidence: community · version match, Reddit: "Redis 8.2.2 eats memory" (2026-10-10)',
+  );
+  await expect(items.nth(1).locator('.tr-tier')).toHaveCount(0);
 });

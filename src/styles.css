@@ -1992,6 +1992,11 @@ body.has-ask-console.has-ask-console-min .view-close-btn { bottom: 48px; }
 .tr-score.stab-ok { color: var(--ok-strong); }
 .tr-score.stab-warn { color: var(--risk); }
 .tr-score.stab-bad { color: var(--cve); }
+/* Evidence tier that ranked the item (server guardrail recentEvidenceRanking). */
+.tr-tier { font-size: 10px; font-weight: 600; line-height: 1.5; padding: 0 6px; border-radius: 9px; white-space: nowrap; background: rgba(124, 58, 237, .12); color: #7c3aed; }
+.tr-tier-community-version, .tr-tier-community { background: rgba(217, 119, 6, .14); color: #b45309; }
+.tr-tier-cve { background: rgba(220, 38, 38, .12); color: var(--cve); }
+.tr-tier-major { background: rgba(100, 116, 139, .14); color: var(--muted); }
 .tr-story { margin: 6px 0 0; font-size: 13px; line-height: 1.55; color: var(--text); overflow-wrap: anywhere; }
 .tr-pending { color: var(--muted); font-size: 12px; }
 a.tr-src, a.tr-cve { color: var(--brand-strong); text-decoration: none; }
