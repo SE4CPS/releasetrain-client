@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "releasetrain: software ecosystem update monitoring (web client)"
+authors:
+  - family-names: Berhe
+    given-names: Solomon
+    affiliation: "University of the Pacific"
+  - name: "Software Engineering for Cyber-Physical Systems Lab, University of the Pacific"
+repository-code: "https://github.com/SE4CPS/releasetrain-client"
+url: "https://releasetrain.io"
+license: MIT
