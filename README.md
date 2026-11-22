@@ -41,15 +41,17 @@ Node.js 18+ required. Playwright needs its browser once: `npx playwright install
 
 ## Views
 
-Feed is the default view; every other view is reachable from the top nav or a `view` query param.
+Home is the default view; every other view is reachable from the menu or a `view` query param.
 
 | View | URL | Contents |
 | --- | --- | --- |
-| Feed | `/` | Grouped release cards, filters, activity chart. |
+| Home | `/` | Ask pipeline, least stable releases of the last 7 days. |
+| Recent updates | `/?view=feed` | Grouped release cards, filters, activity chart. |
 | Graph | `/?view=graph` | Component/release/post graph. |
 | Arch | `/?view=arch` | Layered architecture diagram. |
 | CVE | `/?view=cve` | CVE timeline. |
 | Risk Report | `/?view=risk` | Community risk summary. |
+| Release | `/?view=release` | Release network. |
 | Docs | `/?view=docs` | API reference. |
 | Account | `/?view=account` | Sign-in, saved searches, admin panel. |
 
