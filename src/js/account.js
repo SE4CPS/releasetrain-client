@@ -389,6 +389,47 @@
       </div>`;
     }
 
+    // Classify second opinions on release-naming community posts (server
+    // guardrail releaseMentionSecondOpinion, GET/PUT /api/admin/classify-
+    // reviews): each verdict with the post, the release it names, the
+    // TF-IDF score it overrode or confirmed, and Correct / Wrong buttons.
+    // "Wrong" flips the stored flag and keeps the review as a training
+    // label; the release's score is recounted on the next list request.
+    function uaRenderClassifyReviews(reviews) {
+      const head = (n) => `<div class="ua-dash-bot-group-title"><span>🧪</span> Classify second opinions (${n})</div>`;
+      if (!reviews.length) return `<div class="ua-dash-bot-group">${head(0)}<p class="st-189 ua-muted">No release-naming community post has been judged yet.</p></div>`;
+      const rows = reviews.map((r) => {
+        const c = r.classify || {};
+        const score = typeof c.tfidfScore === "number" ? c.tfidfScore.toFixed(2) : "n/a";
+        const verdict = c.releaseWarning ? "warning" : "not a warning";
+        const review = c.review ? ` · reviewed: ${uaEsc(c.review.verdict)}` : "";
+        const title = r.url ? `<a href="${uaEsc(r.url)}" target="_blank" rel="noopener">${uaEsc(r.title)}</a>` : uaEsc(r.title);
+        return `<div class="ua-bot-row ${c.releaseWarning ? "ua-bot-row-stale" : "ua-bot-row-healthy"} ua-review-row" data-id="${uaEsc(r.id)}">
+          <span class="ua-bot-row-name" title="${uaEsc(c.reason || "")}">${title}</span>
+          <span class="ua-bot-row-detail">${uaEsc(c.product || "")} ${uaEsc(c.version || "")} · ${verdict} (score ${score})${review}</span>
+          <span class="ua-review-actions"><button type="button" class="btn btn-ghost st-129 ua-review-btn" data-verdict="correct">Correct</button><button type="button" class="btn btn-ghost st-129 ua-review-btn" data-verdict="wrong">Wrong</button></span>
+        </div>`;
+      }).join("");
+      return `<div class="ua-dash-bot-group">${head(reviews.length)}${rows}</div>`;
+    }
+    async function uaLoadClassifyReviews() {
+      const el = document.getElementById("ua-dash-reviews");
+      if (!el) return;
+      const res = await uaRequest("admin/classify-reviews?limit=30").catch(() => null);
+      if (!res || !res.ok) { el.innerHTML = ""; return; }
+      const data = await res.json();
+      el.innerHTML = uaRenderClassifyReviews(data.reviews || []);
+    }
+    const uaReviewsEl = document.getElementById("ua-dash-reviews");
+    if (uaReviewsEl) uaReviewsEl.addEventListener("click", async (e) => {
+      const btn = e.target.closest(".ua-review-btn");
+      if (!btn) return;
+      const row = btn.closest(".ua-review-row");
+      btn.disabled = true;
+      const res = await uaRequest("admin/classify-reviews/" + encodeURIComponent(row.dataset.id), { method: "PUT", body: JSON.stringify({ verdict: btn.dataset.verdict }) }).catch(() => null);
+      if (res && res.ok) await uaLoadClassifyReviews(); else btn.disabled = false;
+    });
+
     async function uaLoadDashboard() {
       const gridEl = document.getElementById("ua-dash-grid");
       const botsEl = document.getElementById("ua-dash-bots");
@@ -454,6 +495,7 @@
       botsEl.innerHTML = uaRenderBotGroups(botHealth) ||
         `<p class="st-189 ua-muted" >No bot health data available.</p>`;
       if (botGapEl) botGapEl.innerHTML = uaRenderBotGapRecent(gap.recent);
+      uaLoadClassifyReviews();
     }
 
     const uaRefreshDashBtn = document.getElementById("ua-refresh-dash");
@@ -908,6 +950,7 @@
       const rowHtml = g => `<div class="ua-settings-row">
           <div class="ua-settings-info">
             <strong>${uaEsc(g.label || g.id)}</strong>
+            ${g.goal ? `<span class="ua-guardrail-goal">Goal: ${uaEsc(g.goal)}</span>` : ""}
             <span class="ua-muted">${uaEsc(g.description || "")}</span>
           </div>
           ${Number.isFinite(g.maxAttempts) ? `<label class="st-198 ua-muted" >max attempts

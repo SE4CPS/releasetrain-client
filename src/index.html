@@ -17,7 +17,7 @@
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-P5E77Z7VG5"></script>
   
 
-  <link rel="stylesheet" href="styles.css?v=b1fbf4ee">
+  <link rel="stylesheet" href="styles.css?v=e55c3f60">
 </head>
 
 <body class="sidebar-collapsed">
@@ -33,7 +33,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.171.0"><span class="brand-name">Releasetrain </span><em>v3.171.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.172.0"><span class="brand-name">Releasetrain </span><em>v3.172.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2177,6 +2177,21 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-11-22</div>
+              <div class="cl-ver cl-ver-minor">v3.172.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Second opinion on community posts that name a release</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> New mandatory guardrail <strong>releaseMentionSecondOpinion</strong> (Classify): when a Reddit post's title names a release the least-stable list is ranking, the model is asked once whether the post is a warning about that release; the verdict is stored on the post and decides its flag from then on, whatever the cheap per-post score said. The tier tooltip says when a verdict placed an item. Reported live: "PSA: kernel 7.3 in backports incompatible with zfs" scored 0.0005 and never reached the community tier</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Admin page, System overview: a <strong>Classify second opinions</strong> list with every verdict, the post, the release, the score and the reason, and Correct / Wrong buttons. Wrong flips the stored flag and keeps the review as a training label</li>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Guardrails list: each guardrail that pursues a stated goal shows it above its description (Insights ranking, Classify second opinion)</li>
+                <li><span class="cl-tag cl-tag-fix">fix</span> Least stable releases: a release whose score is less than a day old is still rescored when a post naming it was scored or judged after that, so community evidence shows up within the hour instead of the next day</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-11-01</div>
@@ -6308,6 +6323,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                 </div>
                 <div id="ua-dash-bots"></div>
                 <div id="ua-dash-botgap"></div>
+                <div id="ua-dash-reviews"></div>
               </div>
             </details>
             <!-- Guardrails: releasetrain-server's unified registry of
@@ -6693,7 +6709,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
   </dialog>
 
   <script src="js/core.js?v=76ff1657"></script>
-  <script src="js/ask.js?v=2fc185e3"></script>
+  <script src="js/ask.js?v=d09f256f"></script>
   <script src="js/ask-workflow.js?v=2e90e80c"></script>
   <script src="js/ask-rail.js?v=b4bd2fc8"></script>
   <script src="js/helpers.js?v=0a9e3a66"></script>
@@ -6702,11 +6718,11 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
   <script src="js/docs.js?v=86738136"></script>
   <script src="js/eval.js?v=3d147971"></script>
   <script src="js/regression.js?v=83d46414"></script>
-  <script src="js/feed.js?v=bb33d80b"></script>
+  <script src="js/feed.js?v=ea5311fe"></script>
   <script src="js/cve.js?v=c6393e6f"></script>
   <script src="js/risk.js?v=043ccbab"></script>
   <script src="js/network.js?v=0ee3bf97"></script>
-  <script src="js/account.js?v=19c54238"></script>
+  <script src="js/account.js?v=04a105a8"></script>
   <script src="js/inventory.js?v=2e8ed1b3"></script>
   <script src="js/main.js?v=a621d5da"></script>
 </body>

@@ -314,7 +314,7 @@
       const e = c.evidence;
       if (!e || !e.label) return "";
       const when = e.date ? ` (${/^\d{8}$/.test(String(e.date)) ? `${e.date.slice(0, 4)}-${e.date.slice(4, 6)}-${e.date.slice(6, 8)}` : e.date})` : "";
-      const why = e.post && e.post.title ? `Reddit: "${String(e.post.title).slice(0, 90)}"${when}`
+      const why = e.post && e.post.title ? `Reddit: "${String(e.post.title).slice(0, 90)}"${when}${e.post.judged ? ", judged a warning by Classify (second opinion)" : ""}`
         : e.cveId ? `${e.cveId}${when}`
         : e.key === "major" ? "a major version bump, no recent complaint or CVE" : "";
       return `<span class="tr-tier tr-tier-${uaEsc(e.key)}" title="${uaEsc(`ranked by very recent evidence: ${e.label}${why ? `, ${why}` : ""}`)}">${uaEsc(e.label)}</span>`;

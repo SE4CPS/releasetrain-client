@@ -37,6 +37,8 @@ const DATA = {
           title: 'Redis 8.2.2 eats memory',
           url: 'https://www.reddit.com/r/redis/comments/abc/',
           date: '2026-10-10',
+          // the Classify second opinion flagged it (guardrail releaseMentionSecondOpinion)
+          judged: true,
         },
       },
       status: 'ready',
@@ -232,7 +234,7 @@ test('evidence tier label after the score (server guardrail recentEvidenceRankin
   await expect(tier).toHaveClass(/tr-tier-community-version/);
   await expect(tier).toHaveAttribute(
     'title',
-    'ranked by very recent evidence: community · version match, Reddit: "Redis 8.2.2 eats memory" (2026-10-10)',
+    'ranked by very recent evidence: community · version match, Reddit: "Redis 8.2.2 eats memory" (2026-10-10), judged a warning by Classify (second opinion)',
   );
   await expect(items.nth(1).locator('.tr-tier')).toHaveCount(0);
 });

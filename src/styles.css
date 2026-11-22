@@ -3023,6 +3023,12 @@ select.ua-settings-input { width: auto; max-width: 100%; }
 .ua-bot-row-nodata  { border-left-color: var(--border); color: var(--muted); }
 .ua-bot-row-name { font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ua-bot-row-detail { flex-shrink: 0; white-space: nowrap; color: var(--muted); }
+/* Classify second opinions (admin System overview): a verdict row with its
+   Correct / Wrong buttons; wraps on narrow screens like every bot row. */
+.ua-review-row { flex-wrap: wrap; gap: 4px 10px; }
+.ua-review-row .ua-bot-row-name a { color: inherit; }
+.ua-review-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.ua-guardrail-goal { display: block; font-size: 12px; font-style: italic; color: var(--muted); margin: 2px 0; }
 @media (max-width: 640px) {
   .ua-dash-card { flex-basis: calc(50% - 5px); min-width: 0; }
   .ua-bot-row { flex-wrap: wrap; gap: 3px 10px; }

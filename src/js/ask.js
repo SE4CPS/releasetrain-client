@@ -356,6 +356,7 @@
       // explicit request. Hover for the full description either way.
       const ASK_GUARDRAIL_SHORT = {
         recentEvidenceRanking: "Recent-evidence ranking",
+        releaseMentionSecondOpinion: "Release-warning second opinion",
         rewriterRetry: "Retry new terms",
         toolResultInjectionScan: "Injection scan",
         outputLeakScan: "Leak scan",
