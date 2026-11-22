@@ -41,6 +41,22 @@ const DATA = {
           judged: true,
         },
       },
+      communityPosts: [
+        {
+          subreddit: 'redis',
+          title: 'Redis 8.2.2 eats memory',
+          url: 'https://www.reddit.com/r/redis/comments/abc/',
+          date: '2026-10-10',
+          versionMatch: true,
+          judged: true,
+        },
+        {
+          subreddit: 'selfhosted',
+          title: 'Redis broke my dashboard',
+          url: 'https://www.reddit.com/r/selfhosted/comments/def/',
+          date: '2026-10-11',
+        },
+      ],
       status: 'ready',
       summary: {
         kind: 'pipeline',
@@ -152,6 +168,8 @@ test('pipeline paragraphs only, project icons, emoji citations, clickable CVEs, 
     '(🔴 source: NVD)',
     '(🐙 source: GitHub)',
     '(⚠️ source: CISA)',
+    // the second counted post, appended; the first is already cited in the paragraph
+    '(💬 source: Reddit)',
   ]);
   await expect(story.locator('a.tr-cve').first()).toHaveAttribute(
     'href',
@@ -237,4 +255,34 @@ test('evidence tier label after the score (server guardrail recentEvidenceRankin
     'ranked by very recent evidence: community · version match, Reddit: "Redis 8.2.2 eats memory" (2026-10-10), judged a warning by Classify (second opinion)',
   );
   await expect(items.nth(1).locator('.tr-tier')).toHaveCount(0);
+});
+
+test('the community posts behind an item are cited with their thread links, and the tier label links to the ranking post', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await open(page, '/');
+  const first = page.locator('#topRiskHome .tr-item').first();
+  const story = first.locator('.tr-story');
+  await expect(story).toContainText(
+    'A r/selfhosted post flags this release: "Redis broke my dashboard" (2026-10-11)',
+    { timeout: 20_000 },
+  );
+  // the r/redis thread is already cited inside the paragraph: not cited twice
+  await expect(story).not.toContainText('A r/redis post names this version');
+  const links = story.locator('a.tr-src[href^="https://www.reddit.com/"]');
+  await expect(links).toHaveCount(2);
+  await expect(links.first()).toHaveAttribute(
+    'href',
+    'https://www.reddit.com/r/redis/comments/abc/',
+  );
+  await expect(links.nth(1)).toHaveAttribute(
+    'href',
+    'https://www.reddit.com/r/selfhosted/comments/def/',
+  );
+  await expect(links.nth(1)).toHaveText('(💬 source: Reddit)');
+  await expect(first.locator('a.tr-tier-link')).toHaveAttribute(
+    'href',
+    'https://www.reddit.com/r/redis/comments/abc/',
+  );
 });

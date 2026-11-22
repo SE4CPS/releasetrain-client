@@ -240,15 +240,17 @@
     // releasetrain.io links are dropped (primary sources only), CVE ids in
     // the prose link to NVD, the release's own page is appended when not
     // cited, and a CISA known-exploited CVE is always stated.
-    function renderStory(text, primaryUrl, kevCveId, scoreCveId) {
+    function renderStory(text, primaryUrl, kevCveId, scoreCveId, communityPosts) {
       const src = String(text || "").replace(/\s+/g, " ").trim().replace(/\*\*([^*]+)\*\*/g, "$1");
       const linkRx = /\s*\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)/g;
       let out = "", last = 0, cited = false, m;
+      const citedUrls = new Set();
       while ((m = linkRx.exec(src))) {
         out += linkCves(uaEsc(src.slice(last, m.index)));
         const url = m[2];
         if (!/(^|\.)releasetrain\.io\//i.test(url.replace(/^https?:\/\//, ""))) {
           if (primaryUrl && url === primaryUrl) cited = true;
+          citedUrls.add(url);
           out += ` ${citeLink(url)}`;
         }
         last = linkRx.lastIndex;
@@ -264,6 +266,7 @@
         const nvdUrl = `https://nvd.nist.gov/vuln/detail/${encodeURIComponent(scoreCveId)}`;
         out += ` NVD lists ${linkCves(uaEsc(scoreCveId))} for this version, which lowers its stability ${citeLink(nvdUrl)}.`;
       }
+      out += communitySentences(communityPosts, citedUrls);
       return `<p class="tr-story">${out}</p>`;
     }
 
@@ -317,7 +320,22 @@
       const why = e.post && e.post.title ? `Reddit: "${String(e.post.title).slice(0, 90)}"${when}${e.post.judged ? ", judged a warning by Classify (second opinion)" : ""}`
         : e.cveId ? `${e.cveId}${when}`
         : e.key === "major" ? "a major version bump, no recent complaint or CVE" : "";
-      return `<span class="tr-tier tr-tier-${uaEsc(e.key)}" title="${uaEsc(`ranked by very recent evidence: ${e.label}${why ? `, ${why}` : ""}`)}">${uaEsc(e.label)}</span>`;
+      const label = `<span class="tr-tier tr-tier-${uaEsc(e.key)}" title="${uaEsc(`ranked by very recent evidence: ${e.label}${why ? `, ${why}` : ""}`)}">${uaEsc(e.label)}</span>`;
+      return e.post && e.post.url ? `<a class="tr-tier-link" href="${uaEsc(e.post.url)}" target="_blank" rel="noopener">${label}</a>` : label;
+    }
+
+    // The flagged community posts the score counted, each with its thread
+    // link ("add the url to the reddit posts"): one sentence per post after
+    // the story, the same citation style as the CVE sentence.
+    function communitySentences(posts, citedUrls) {
+      // A thread the paragraph already cites is not cited twice.
+      return (Array.isArray(posts) ? posts : []).filter(p => p && p.title && p.url && !(citedUrls && citedUrls.has(p.url))).map(p => {
+        const where = p.subreddit ? `r/${p.subreddit}` : "Reddit";
+        const when = p.date ? ` (${p.date})` : "";
+        const why = p.versionMatch ? "names this version" : "flags this release";
+        const judged = p.judged ? ", judged a warning by Classify" : "";
+        return ` A ${uaEsc(where)} post ${why}: "${uaEsc(String(p.title).slice(0, 110))}"${uaEsc(when)}${judged} ${citeLink(p.url)}.`;
+      }).join("");
     }
 
     function renderTopRiskItem(c) {
@@ -325,7 +343,7 @@
       // Pipeline-written paragraphs only ("just use the pipeline ones");
       // until one exists the item says so instead of a stand-in story.
       const story = c.summary && c.summary.kind === "pipeline" && c.summary.answer
-        ? renderStory(c.summary.answer, c.primaryUrl, c.kevCveId, c.scoreCveId)
+        ? renderStory(c.summary.answer, c.primaryUrl, c.kevCveId, c.scoreCveId, c.communityPosts)
         : `<p class="tr-story tr-pending">${c.status === "failed"
           ? "The pipeline found no evidence to summarize yet; it tries again within the hour."
           : "The pipeline is preparing this summary…"}</p>`;
