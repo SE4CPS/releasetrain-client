@@ -1114,8 +1114,18 @@
         data.pages.map((p) => `<tr><td>${uaEsc(p.page)}</td><td class="ua-num">${p.visits}</td></tr>`), "No visits yet.");
       $("ua-visits-refs").innerHTML = uaVisitsTable(["Referrer", "Visits"],
         data.referrers.map((r) => `<tr><td>${uaEsc(r.host)}</td><td class="ua-num">${r.visits}</td></tr>`), "No visits yet.");
-      $("ua-visits-visitors").innerHTML = uaVisitsTable(["IP address", "Location", "Visits", "Asked", "Last seen", "View", "Browser"],
-        data.visitors.map((v) => `<tr${new Date(v.last).toDateString() === new Date().toDateString() ? ' class="ua-row-today"' : ""}><td class="ua-mono">${uaEsc(v.ip)}</td><td>${uaEsc(uaLocation(v))}</td><td class="ua-num">${v.visits}</td><td class="ua-num">${v.ask}</td><td>${uaEsc(new Date(v.last).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }))}</td><td>${uaEsc(v.page || "")}</td><td>${uaEsc(v.browser || "")}</td></tr>`),
+      // Likely user vs not: the server's verdict per visitor (visits.js likelyUser: a
+      // question asked, or enough API calls per visit for a real page load). Reported
+      // live: 14 home-page visits from one cloud address, 7 API calls each, listed next
+      // to real people. Non-users stay listed but muted, with the reason in the tooltip.
+      const likelyKey = document.getElementById("ua-visits-likely-key");
+      if (likelyKey) likelyKey.textContent = typeof data.likelyUsers === "number" ? `${data.likelyUsers} likely ${data.likelyUsers === 1 ? "user" : "users"}, ${data.likelyBots || 0} not` : "";
+      $("ua-visits-visitors").innerHTML = uaVisitsTable(["IP address", "Location", "Likely", "Visits", "Asked", "Last seen", "View", "Browser"],
+        data.visitors.map((v) => {
+          const cls = [new Date(v.last).toDateString() === new Date().toDateString() ? "ua-row-today" : "", v.likely === "bot" ? "ua-row-bot" : ""].filter(Boolean).join(" ");
+          const likely = v.likely === "user" ? "user" : v.likely === "bot" ? "not a user" : "";
+          return `<tr${cls ? ` class="${cls}"` : ""}><td class="ua-mono">${uaEsc(v.ip)}</td><td>${uaEsc(uaLocation(v))}</td><td class="ua-likely"${v.reason ? ` title="${uaEsc(v.reason)}"` : ""}>${uaEsc(likely)}</td><td class="ua-num">${v.visits}</td><td class="ua-num">${v.ask}</td><td>${uaEsc(new Date(v.last).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }))}</td><td>${uaEsc(v.page || "")}</td><td>${uaEsc(v.browser || "")}</td></tr>`;
+        }),
         "No visitors in this period.");
     }
     document.getElementById("ua-refresh-visits")?.addEventListener("click", (e) => { e.preventDefault(); uaLoadVisitsTab(); });

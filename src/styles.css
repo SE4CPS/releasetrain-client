@@ -3909,6 +3909,9 @@ select.ua-settings-input { width: auto; max-width: 100%; }
 .ua-mono { font-family: Consolas, ui-monospace, monospace; }
 .ua-visits-note { font-size: 12px; margin: 10px 0 0; }
 .ua-data-table tr.ua-row-today td { background: var(--ok-bg); }
+.ua-data-table tr.ua-row-bot td { color: var(--muted); }
+.ua-data-table td.ua-likely { white-space: nowrap; }
+.ua-visits-likely-key { margin-left: 8px; font-size: 11px; color: var(--muted); text-transform: none; letter-spacing: 0; font-weight: 500; }
 .ua-visits-today-key { margin-left: 8px; padding: 1px 8px; border-radius: 8px; background: var(--ok-bg); color: var(--ok-strong); font-size: 11px; text-transform: none; letter-spacing: 0; font-weight: 500; }
 .ua-data-table .ua-num + td { padding-left: 10px; }
 

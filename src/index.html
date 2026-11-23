@@ -17,7 +17,7 @@
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-P5E77Z7VG5"></script>
   
 
-  <link rel="stylesheet" href="styles.css?v=0be6ba66">
+  <link rel="stylesheet" href="styles.css?v=95e31ec4">
 </head>
 
 <body class="sidebar-collapsed">
@@ -33,7 +33,7 @@
     <div class="topbar-main">
       <button class="nav-toggle" type="button" id="navToggle"
         aria-label="Toggle menu" aria-expanded="false" aria-controls="sidebar">☰</button>
-      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.173.0"><span class="brand-name">Releasetrain </span><em>v3.173.0</em></a>
+      <a class="brand" href="/" aria-label="Releasetrain home" data-app-version="3.174.0"><span class="brand-name">Releasetrain </span><em>v3.174.0</em></a>
       <!-- Everything identity/mode-related is one right-aligned cluster
            (margin-left:auto on the wrapper, not on either child, since the
            chip is display:none when signed out, and a non-participating
@@ -2177,6 +2177,18 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
         </div>
         <div class="cl-body">
 
+          <div class="cl-release">
+            <div class="cl-date-col">
+              <div class="cl-date">2026-11-23</div>
+              <div class="cl-ver cl-ver-minor">v3.174.0</div>
+            </div>
+            <div class="cl-content">
+              <h3>Likely users vs not in Recent visitors</h3>
+              <ul>
+                <li><span class="cl-tag cl-tag-feat">feat</span> Admin Visits tab, Recent visitors: a <strong>Likely</strong> column says whether each address is a person (asked a question, or made enough API calls per visit for a real page load) or not (a crawler that runs the page's JavaScript gets past the visit counter with 5 to 20 calls where a real load makes about 100). Non-users stay listed but muted, the reason is in the tooltip, and the key counts both. Reported live: 14 home-page visits from one cloud address, no questions, listed next to real people</li>
+              </ul>
+            </div>
+          </div>
           <div class="cl-release">
             <div class="cl-date-col">
               <div class="cl-date">2026-11-22</div>
@@ -6296,7 +6308,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
                 <div><h4>Views</h4><div id="ua-visits-pages" class="ua-visits-table"></div></div>
                 <div><h4>Referrers</h4><div id="ua-visits-refs" class="ua-visits-table"></div></div>
               </div>
-              <h4 class="ua-visits-h">Recent visitors <span class="ua-visits-today-key">green = seen today</span></h4>
+              <h4 class="ua-visits-h">Recent visitors <span class="ua-visits-today-key">green = seen today</span><span id="ua-visits-likely-key" class="ua-visits-likely-key"></span></h4>
               <div id="ua-visits-visitors" class="ua-visits-table"></div>
               <p class="ua-muted ua-visits-note">Counted from the web server's access log. Bots, health checks and this server are excluded. IP addresses are personal data: they are shown to admins only and the log is kept 45 days. Country from IP: <a href="https://db-ip.com" target="_blank" rel="noopener">IP Geolocation by DB-IP</a>.</p>
             </details>
@@ -6723,7 +6735,7 @@ curl "https://releasetrain.io/api/reddit?fields=title,metadata.predicted.isUpdat
   <script src="js/cve.js?v=c6393e6f"></script>
   <script src="js/risk.js?v=043ccbab"></script>
   <script src="js/network.js?v=0ee3bf97"></script>
-  <script src="js/account.js?v=04a105a8"></script>
+  <script src="js/account.js?v=ff671b00"></script>
   <script src="js/inventory.js?v=2e8ed1b3"></script>
   <script src="js/main.js?v=a621d5da"></script>
 </body>

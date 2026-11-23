@@ -72,6 +72,9 @@ const VISITS = {
       last: isoAtNoonOffset(2),
       page: 'home',
       browser: 'Chrome',
+      likely: 'user',
+      apiPerVisit: 131,
+      reason: 'asked a question',
     },
     {
       ip: '2001:0db8:85a3:0000:0000:8a2e:0370:7334',
@@ -91,8 +94,13 @@ const VISITS = {
       last: isoAtNoonOffset(0),
       page: 'docs',
       browser: 'Firefox',
+      likely: 'bot',
+      apiPerVisit: 7,
+      reason: '7 API calls per visit (a real page load makes about 100)',
     },
   ],
+  likelyUsers: 2,
+  likelyBots: 1,
 };
 
 async function signIn(page, role) {
@@ -191,6 +199,34 @@ test('admin sees the Visits tab', async ({ page }) => {
   // rows for visitors seen today get the subtle green background; older ones do not
   await expect(page.locator('#ua-visits-visitors tr.ua-row-today')).toHaveCount(1);
   await expect(page.locator('#ua-visits-visitors tr.ua-row-today')).toContainText('81.2.69.142');
+});
+
+// Reported live: the Recent visitors table listed 14 home-page visits from one
+// cloud address (7 API calls each, no question) next to real people. The server
+// now says per row whether the address is likely a user; the table shows it,
+// mutes the rest, and the key counts both.
+test('Recent visitors: a Likely column separates users from crawlers that ran the page', async ({
+  page,
+}) => {
+  await signIn(page, 'admin');
+  await page.goto('/?view=account');
+  await page.locator('[data-ua-tab="visits"]').click();
+  await page.locator('details[data-ua-group="visits"] summary .st-122').click();
+  const rows = page.locator('#ua-visits-visitors tbody tr');
+  await expect(rows).toHaveCount(3);
+  await expect(page.locator('#ua-visits-visitors thead')).toContainText('Likely');
+  await expect(rows.nth(0).locator('td.ua-likely')).toHaveText('user');
+  await expect(rows.nth(0).locator('td.ua-likely')).toHaveAttribute('title', 'asked a question');
+  await expect(rows.nth(2).locator('td.ua-likely')).toHaveText('not a user');
+  await expect(rows.nth(2).locator('td.ua-likely')).toHaveAttribute(
+    'title',
+    '7 API calls per visit (a real page load makes about 100)',
+  );
+  await expect(rows.nth(2)).toHaveClass(/ua-row-bot/);
+  await expect(rows.nth(0)).not.toHaveClass(/ua-row-bot/);
+  // a row without a verdict (older server) shows an empty cell, no error
+  await expect(rows.nth(1).locator('td.ua-likely')).toHaveText('');
+  await expect(page.locator('#ua-visits-likely-key')).toHaveText('2 likely users, 1 not');
 });
 
 for (const width of [1300, 390]) {
